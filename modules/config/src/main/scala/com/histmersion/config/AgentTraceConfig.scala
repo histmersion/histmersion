@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored, and traced
@@ -15,8 +14,8 @@ final case class AgentTraceConfig(maxToolResultChars: AgentTraceConfig.MaxToolRe
 
 object AgentTraceConfig:
   type MaxToolResultChars = MaxToolResultChars.T
-  object MaxToolResultChars extends RefinedType[Int, Pure]
+  object MaxToolResultChars extends Newtype[Int, Pure]
   type KeepMessagesDays = KeepMessagesDays.T
-  object KeepMessagesDays extends RefinedType[Int, Pure]
+  object KeepMessagesDays extends Newtype[Int, Pure]
   type PruneEveryMinutes = PruneEveryMinutes.T
-  object PruneEveryMinutes extends RefinedType[Int, Pure]
+  object PruneEveryMinutes extends Newtype[Int, Pure]

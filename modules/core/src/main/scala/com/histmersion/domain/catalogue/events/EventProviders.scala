@@ -8,7 +8,6 @@ import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.EventSummary
 
@@ -18,16 +17,16 @@ import com.histmersion.api.catalogue.EventSummary
   */
 object EventProviders:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type WikidataProperty = WikidataProperty.T
-  object WikidataProperty extends RefinedType[String, Pure]
+  object WikidataProperty extends Newtype[String, Pure]
 
 
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   object WikidataEvents:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     /** Pure: the kind an item read in two classes keeps — the one whose class comes first in `order` (the configured
       * classes, the most specific first: a naval battle is also a battle, and stays a naval battle whichever class is
       * read last); a kind not in `order` yields to one that is.
@@ -104,13 +103,13 @@ object EventProviders:
 
   object Thresholds:
     type RegionVei = RegionVei.T
-    object RegionVei extends RefinedType[Int, Pure]
+    object RegionVei extends Newtype[Int, Pure]
     type OutsideVei = OutsideVei.T
-    object OutsideVei extends RefinedType[Int, Pure]
+    object OutsideVei extends Newtype[Int, Pure]
     type RegionMagnitude = RegionMagnitude.T
-    object RegionMagnitude extends RefinedType[Double, Pure]
+    object RegionMagnitude extends Newtype[Double, Pure]
     type OutsideMagnitude = OutsideMagnitude.T
-    object OutsideMagnitude extends RefinedType[Double, Pure]
+    object OutsideMagnitude extends Newtype[Double, Pure]
 
   /** #6561: what a read part was kept under. A part is recorded as read together with the thresholds that judged its
     * records, so widening the region (or lowering a VEI or magnitude floor) makes every part due again instead of

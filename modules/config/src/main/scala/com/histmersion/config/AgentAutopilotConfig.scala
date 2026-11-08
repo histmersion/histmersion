@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database
@@ -59,40 +58,40 @@ final case class AgentAutopilotConfig(
 
 object AgentAutopilotConfig:
   type EnsureMinutes = EnsureMinutes.T
-  object EnsureMinutes extends RefinedType[Int, Pure]
+  object EnsureMinutes extends Newtype[Int, Pure]
   type IngestPerDay = IngestPerDay.T
-  object IngestPerDay extends RefinedType[Int, Pure]
+  object IngestPerDay extends Newtype[Int, Pure]
   type WatchIngestPerDay = WatchIngestPerDay.T
-  object WatchIngestPerDay extends RefinedType[Int, Pure]
+  object WatchIngestPerDay extends Newtype[Int, Pure]
   type WatchCron = WatchCron.T
-  object WatchCron extends RefinedType[String, Pure]
+  object WatchCron extends Newtype[String, Pure]
   type SeedCron = SeedCron.T
-  object SeedCron extends RefinedType[String, Pure]
+  object SeedCron extends Newtype[String, Pure]
   type FinishedWatchCron = FinishedWatchCron.T
-  object FinishedWatchCron extends RefinedType[String, Pure]
+  object FinishedWatchCron extends Newtype[String, Pure]
   type ExtendMinNew = ExtendMinNew.T
-  object ExtendMinNew extends RefinedType[Int, Pure]
+  object ExtendMinNew extends Newtype[Int, Pure]
   type BackupHours = BackupHours.T
-  object BackupHours extends RefinedType[Int, Pure]
+  object BackupHours extends Newtype[Int, Pure]
   type LintHours = LintHours.T
-  object LintHours extends RefinedType[Int, Pure]
+  object LintHours extends Newtype[Int, Pure]
   type MaxActiveGoals = MaxActiveGoals.T
-  object MaxActiveGoals extends RefinedType[Int, Pure]
+  object MaxActiveGoals extends Newtype[Int, Pure]
   type FocusRatio = FocusRatio.T
-  object FocusRatio extends RefinedType[Int, Pure]
+  object FocusRatio extends Newtype[Int, Pure]
   type MaxOpenSubGoals = MaxOpenSubGoals.T
-  object MaxOpenSubGoals extends RefinedType[Int, Pure]
+  object MaxOpenSubGoals extends Newtype[Int, Pure]
   type FocusQueueShown = FocusQueueShown.T
-  object FocusQueueShown extends RefinedType[Int, Pure]
+  object FocusQueueShown extends Newtype[Int, Pure]
   type IngestBacklogShare = IngestBacklogShare.T
-  object IngestBacklogShare extends RefinedType[Double, Pure]
+  object IngestBacklogShare extends Newtype[Double, Pure]
   type IngestCeiling = IngestCeiling.T
-  object IngestCeiling extends RefinedType[Int, Pure]
+  object IngestCeiling extends Newtype[Int, Pure]
   type DigestHour = DigestHour.T
-  object DigestHour extends RefinedType[Int, Pure]
+  object DigestHour extends Newtype[Int, Pure]
   type StallDays = StallDays.T
-  object StallDays extends RefinedType[Int, Pure]
+  object StallDays extends Newtype[Int, Pure]
   type NextArticleHours = NextArticleHours.T
-  object NextArticleHours extends RefinedType[Int, Pure]
+  object NextArticleHours extends Newtype[Int, Pure]
   type MaxUnfinishedGoals = MaxUnfinishedGoals.T
-  object MaxUnfinishedGoals extends RefinedType[Int, Pure]
+  object MaxUnfinishedGoals extends Newtype[Int, Pure]

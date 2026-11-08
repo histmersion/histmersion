@@ -4,7 +4,6 @@ package util.data.exchange
 import scala.annotation.tailrec
 import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md
@@ -27,13 +26,13 @@ object BundlePlan:
 
 
   type EntityOwnBundle = EntityOwnBundle.T
-  object EntityOwnBundle extends RefinedType[Boolean, Pure]
+  object EntityOwnBundle extends Newtype[Boolean, Pure]
   type TombstoneOwnBundle = TombstoneOwnBundle.T
-  object TombstoneOwnBundle extends RefinedType[Boolean, Pure]
+  object TombstoneOwnBundle extends Newtype[Boolean, Pure]
 
   /** The stamp of a row's content that the ledger and the local row are compared by. */
   type Rev = Rev.T
-  object Rev extends RefinedType[String, Pure]
+  object Rev extends Newtype[String, Pure]
 
   enum Decision:
     case Insert, FastForward, Unchanged, KeepLocal, Conflict, SkipDeleted, Delete, RecordTombstone
@@ -78,7 +77,7 @@ object BundlePlan:
     type Rev = BundlePlan.Rev
     val Rev: BundlePlan.Rev.type = BundlePlan.Rev
     type Tombstoned = Tombstoned.T
-    object Tombstoned extends RefinedType[Boolean, Pure]
+    object Tombstoned extends Newtype[Boolean, Pure]
 
     val absent: Local = Local(None, tombstoned = Tombstoned(false), None)
 

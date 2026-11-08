@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `calibre` is the host-side Calibre integration (see [[CalibreCliConfig]]); the server never uses it. */
@@ -11,4 +10,4 @@ final case class CliConfig(serverUrl: CliConfig.ServerUrl, calibre: CalibreCliCo
 
 object CliConfig:
   type ServerUrl = ServerUrl.T
-  object ServerUrl extends RefinedType[String, Pure]
+  object ServerUrl extends Newtype[String, Pure]

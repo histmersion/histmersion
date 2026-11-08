@@ -3,7 +3,6 @@ package config.edit
 
 import com.histmersion.config.LoadedConfig
 import org.ekrich.config.{Config, ConfigOrigin}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The settings file a [[ConfigFileWriter]] reads and changes, wherever it is kept: the server's in the store of its
@@ -29,11 +28,11 @@ trait SettingsFile:
 
 object SettingsFile:
   type Existed = Existed.T
-  object Existed extends RefinedType[Boolean, Pure]
+  object Existed extends Newtype[Boolean, Pure]
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type Shown = Shown.T
-  object Shown extends RefinedType[String, Pure]
+  object Shown extends Newtype[String, Pure]
 
   /** The new text, written beside the file: as parsed with its includes (`Left` when it does not read), which origins
     * are the text itself (not a file it includes), and what loading it as the settings file gives under an environment,

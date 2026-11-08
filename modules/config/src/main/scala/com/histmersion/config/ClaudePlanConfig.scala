@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants the pool and its
@@ -24,14 +23,14 @@ final case class ClaudePlanConfig(
 
 object ClaudePlanConfig:
   type Floors = Floors.T
-  object Floors extends RefinedType[String, Pure]
+  object Floors extends Newtype[String, Pure]
   type MaxCallsInFlight = MaxCallsInFlight.T
-  object MaxCallsInFlight extends RefinedType[Int, Pure]
+  object MaxCallsInFlight extends Newtype[Int, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[String, Pure]
+  object Refresh extends Newtype[String, Pure]
   type ProbeModel = ProbeModel.T
-  object ProbeModel extends RefinedType[String, Pure]
+  object ProbeModel extends Newtype[String, Pure]
   type ProbeMaxTokens = ProbeMaxTokens.T
-  object ProbeMaxTokens extends RefinedType[Int, Pure]
+  object ProbeMaxTokens extends Newtype[Int, Pure]
   type ProbeTimeoutSeconds = ProbeTimeoutSeconds.T
-  object ProbeTimeoutSeconds extends RefinedType[Int, Pure]
+  object ProbeTimeoutSeconds extends Newtype[Int, Pure]

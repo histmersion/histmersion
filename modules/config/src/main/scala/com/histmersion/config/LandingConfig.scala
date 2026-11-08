@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step, how many it reads
@@ -32,7 +31,7 @@ final case class LandingConfig(
 
 object LandingConfig:
   type RefusingHost = RefusingHost.T
-  object RefusingHost extends RefinedType[String, Pure]
+  object RefusingHost extends Newtype[String, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]

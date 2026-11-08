@@ -1,7 +1,6 @@
 package com.histmersion
 package upstreams.media
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.WorkKey
@@ -10,13 +9,13 @@ import com.histmersion.plugin.WorkKey
   */
 object MediaText:
   type FileName = FileName.T
-  object FileName extends RefinedType[String, Pure]
+  object FileName extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type PlainText = PlainText.T
-  object PlainText extends RefinedType[String, Pure]
+  object PlainText extends Newtype[String, Pure]
   type PlainMax = PlainMax.T
-  object PlainMax extends RefinedType[Int, Pure]
+  object PlainMax extends Newtype[Int, Pure]
 
   private val Tag = "<[^>]*>".r
   private val Dec = "&#([0-9]{1,7});".r

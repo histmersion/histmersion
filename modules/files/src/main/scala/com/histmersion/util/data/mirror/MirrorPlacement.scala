@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.mirror
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the Markdown mirror puts the notes of one kind of record, under the directory `histmersion export <dir>` is
@@ -27,11 +26,11 @@ enum MirrorPlacement:
 
 object MirrorPlacement:
   type Directory = Directory.T
-  object Directory extends RefinedType[String, Pure]
+  object Directory extends Newtype[String, Pure]
   type NoteFile = NoteFile.T
-  object NoteFile extends RefinedType[String, Pure]
+  object NoteFile extends Newtype[String, Pure]
   type RecordId = RecordId.T
-  object RecordId extends RefinedType[String, Pure]
+  object RecordId extends Newtype[String, Pure]
 
   val SourcesDirectory: Directory = Directory("sources")
   val MetaDirectory: Directory = Directory("meta")

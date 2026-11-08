@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Memory settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its next start;
@@ -16,8 +15,8 @@ final case class PgTuning(sharedBuffers: PgTuning.SharedBuffers, effectiveCacheS
 
 object PgTuning:
   type SharedBuffers = SharedBuffers.T
-  object SharedBuffers extends RefinedType[String, Pure]
+  object SharedBuffers extends Newtype[String, Pure]
   type EffectiveCacheSize = EffectiveCacheSize.T
-  object EffectiveCacheSize extends RefinedType[String, Pure]
+  object EffectiveCacheSize extends Newtype[String, Pure]
   type WorkMem = WorkMem.T
-  object WorkMem extends RefinedType[String, Pure]
+  object WorkMem extends Newtype[String, Pure]

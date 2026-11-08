@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
@@ -14,9 +13,9 @@ enum SeaFloorSource(val wire: SeaFloorSource.Wire):
 
 object SeaFloorSource:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Either[Problem, SeaFloorSource] =

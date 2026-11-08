@@ -1,13 +1,12 @@
 package com.histmersion
 package upstreams.wikidata
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object WikidataClasses:
   type ClassLabel = ClassLabel.T
-  object ClassLabel extends RefinedType[String, Pure]
+  object ClassLabel extends Newtype[String, Pure]
   type WikidataText = WikidataText.T
-  object WikidataText extends RefinedType[String, Pure]
+  object WikidataText extends Newtype[String, Pure]
   /** Pure: `(qid, kind)` per well-formed entry, in order, each class once; the kind as written. */
 
   def parse(s: WikidataText): List[(WikidataItem.Id, ClassLabel)] =

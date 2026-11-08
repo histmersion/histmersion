@@ -3,7 +3,6 @@ package domain
 
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE outbound-HTTP policy (#1946): how every request the server makes to a third party — the acquisition APIs,
@@ -24,29 +23,29 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object HttpPolicy:
   type MaxRetries = MaxRetries.T
-  object MaxRetries extends RefinedType[Int, Pure]
+  object MaxRetries extends Newtype[Int, Pure]
   type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
-  object MaxRetryAfterSeconds extends RefinedType[Int, Pure]
+  object MaxRetryAfterSeconds extends Newtype[Int, Pure]
   type OsName = OsName.T
-  object OsName extends RefinedType[String, Pure]
+  object OsName extends Newtype[String, Pure]
   type PemCertificate = PemCertificate.T
-  object PemCertificate extends RefinedType[Array[Byte], Pure]
+  object PemCertificate extends Newtype[Array[Byte], Pure]
   type PemText = PemText.T
-  object PemText extends RefinedType[String, Pure]
+  object PemText extends Newtype[String, Pure]
   type RetryAfter = RetryAfter.T
-  object RetryAfter extends RefinedType[String, Pure]
+  object RetryAfter extends Newtype[String, Pure]
   type SlowDown = SlowDown.T
-  object SlowDown extends RefinedType[String, Pure]
+  object SlowDown extends Newtype[String, Pure]
   type StatusCode = StatusCode.T
-  object StatusCode extends RefinedType[Int, Pure]
+  object StatusCode extends Newtype[Int, Pure]
   type SystemTrust = SystemTrust.T
-  object SystemTrust extends RefinedType[Boolean, Pure]
+  object SystemTrust extends Newtype[Boolean, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends RefinedType[String, Pure]
+  object UserAgent extends Newtype[String, Pure]
 
   /** The number of the answer a step follows, counted from 0. */
   type Attempt = Attempt.T
-  object Attempt extends RefinedType[Int, Pure]
+  object Attempt extends Newtype[Int, Pure]
 
   /** What to do with an answer. */
   enum Step:
@@ -57,12 +56,12 @@ object HttpPolicy:
   object Step:
     object Wait:
       type Ms = Ms.T
-      object Ms extends RefinedType[Long, Pure]
+      object Ms extends Newtype[Long, Pure]
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
     object GiveUp:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
 
   /** The answers that mean "try again later". */
   val Throttled: Set[StatusCode] = Set(StatusCode(429), StatusCode(502), StatusCode(503), StatusCode(504))
@@ -139,13 +138,13 @@ object HttpPolicy:
   object Trust:
     object Keychains:
       type Paths = Paths.T
-      object Paths extends RefinedType[String, Pure]
+      object Paths extends Newtype[String, Pure]
     object Bundle:
       type Paths = Paths.T
-      object Paths extends RefinedType[String, Pure]
+      object Paths extends Newtype[String, Pure]
     object PemFile:
       type Path = Path.T
-      object Path extends RefinedType[String, Pure]
+      object Path extends Newtype[String, Pure]
 
   /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
   val MacKeychains: List[Trust.Keychains.Paths] =

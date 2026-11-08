@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =
@@ -15,10 +14,10 @@ final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: Age
 
 object AgentRuntimesConfig:
   type Dir = Dir.T
-  object Dir extends RefinedType[String, Pure]
+  object Dir extends Newtype[String, Pure]
   type Generate = Generate.T
-  object Generate extends RefinedType[Boolean, Pure]
+  object Generate extends Newtype[Boolean, Pure]
   type ClaudeMod = ClaudeMod.T
-  object ClaudeMod extends RefinedType[Boolean, Pure]
+  object ClaudeMod extends Newtype[Boolean, Pure]
   type InteractiveMod = InteractiveMod.T
-  object InteractiveMod extends RefinedType[Boolean, Pure]
+  object InteractiveMod extends Newtype[Boolean, Pure]

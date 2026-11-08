@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Refining Wikidata sites' types from their items' classes (`events.site-types`). */
@@ -11,6 +10,6 @@ final case class SiteTypesConfig(batch: SiteTypesConfig.Batch, superclassDepth: 
 
 object SiteTypesConfig:
   type Batch = Batch.T
-  object Batch extends RefinedType[Int, Pure]
+  object Batch extends Newtype[Int, Pure]
   type SuperclassDepth = SuperclassDepth.T
-  object SuperclassDepth extends RefinedType[Int, Pure]
+  object SuperclassDepth extends Newtype[Int, Pure]

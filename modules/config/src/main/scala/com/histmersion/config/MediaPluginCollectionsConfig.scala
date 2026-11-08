@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The media collections PLUGINS register (`media.collections`, docs/research-plugins.md §6): the licence families
@@ -19,9 +18,9 @@ final case class MediaPluginCollectionsConfig(licences: MediaPluginCollectionsCo
 object MediaPluginCollectionsConfig:
 
   type Licences = Licences.T
-  object Licences extends RefinedType[String, Pure]
+  object Licences extends Newtype[String, Pure]
   type PerCollectionKey = PerCollectionKey.T
-  object PerCollectionKey extends RefinedType[String, Pure]:
+  object PerCollectionKey extends Newtype[String, Pure]:
     given ConfigReader[Map[PerCollectionKey, Licences]] =
       ConfigReader.derived[Map[String, Licences]].emap { byName =>
         byName.foldLeft[Either[String, Map[PerCollectionKey, Licences]]](Right(Map.empty)) { case (acc, (name, v)) =>

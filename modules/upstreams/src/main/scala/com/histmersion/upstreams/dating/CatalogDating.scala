@@ -1,34 +1,33 @@
 package com.histmersion
 package upstreams.dating
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object CatalogDating:
   type AstronomicalYear = AstronomicalYear.T
-  object AstronomicalYear extends RefinedType[Long, Pure]:
+  object AstronomicalYear extends Newtype[Long, Pure]:
     extension (a: T)
       def +(d: YearShift): T = apply(a.value + d.value)
       def midpoint(o: T): T = apply(Math.floorDiv(a.value + o.value, 2L))
       def halfWidth(o: T): YearMargin = YearMargin((o.value - a.value) / 2)
   type HistoricalYear = HistoricalYear.T
-  object HistoricalYear extends RefinedType[Long, Pure]:
+  object HistoricalYear extends Newtype[Long, Pure]:
     extension (y: T)
       def <=(o: T): Boolean = y.value <= o.value
       def min(o: T): T = apply(y.value.min(o.value))
       def max(o: T): T = apply(y.value.max(o.value))
   type XsdYearText = XsdYearText.T
-  object XsdYearText extends RefinedType[String, Pure]
+  object XsdYearText extends Newtype[String, Pure]
   type YearMargin = YearMargin.T
-  object YearMargin extends RefinedType[Long, Pure]:
+  object YearMargin extends Newtype[Long, Pure]:
     extension (m: T) def forward: YearShift = YearShift(m.value)
   type YearShift = YearShift.T
-  object YearShift extends RefinedType[Long, Pure]:
+  object YearShift extends Newtype[Long, Pure]:
     extension (d: T) def unary_- : T = apply(-d.value)
 
   /** The years a start or an end may be, `lo ≤ hi`. */
 
   type WikidataPrecision = WikidataPrecision.T
-  object WikidataPrecision extends RefinedType[Int, Pure]
+  object WikidataPrecision extends Newtype[Int, Pure]
 
   final case class Bound(lo: HistoricalYear, hi: HistoricalYear)
 

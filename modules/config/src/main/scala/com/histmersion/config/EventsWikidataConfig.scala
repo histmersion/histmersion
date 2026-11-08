@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsWikidataConfig(
@@ -19,19 +18,19 @@ final case class EventsWikidataConfig(
 
 object EventsWikidataConfig:
   type Language = Language.T
-  object Language extends RefinedType[String, Pure]
+  object Language extends Newtype[String, Pure]
 
   type SparqlUrl = SparqlUrl.T
-  object SparqlUrl extends RefinedType[String, Pure]
+  object SparqlUrl extends Newtype[String, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends RefinedType[String, Pure]
+  object ApiUrl extends Newtype[String, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type ApiIntervalMs = ApiIntervalMs.T
-  object ApiIntervalMs extends RefinedType[Int, Pure]
+  object ApiIntervalMs extends Newtype[Int, Pure]
   type Classes = Classes.T
-  object Classes extends RefinedType[String, Pure]
+  object Classes extends Newtype[String, Pure]
   type Languages = Languages.T
-  object Languages extends RefinedType[String, Pure]
+  object Languages extends Newtype[String, Pure]
   type Batch = Batch.T
-  object Batch extends RefinedType[Int, Pure]
+  object Batch extends Newtype[Int, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is kept and the
@@ -21,14 +20,14 @@ final case class BasemapVectorConfig(
 
 object BasemapVectorConfig:
   type BuildsUrl = BuildsUrl.T
-  object BuildsUrl extends RefinedType[String, Pure]
+  object BuildsUrl extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Build = Build.T
-  object Build extends RefinedType[String, Pure]
+  object Build extends Newtype[String, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type Drop = Drop.T
-  object Drop extends RefinedType[String, Pure]
+  object Drop extends Newtype[String, Pure]
   type Attribution = Attribution.T
-  object Attribution extends RefinedType[String, Pure]
+  object Attribution extends Newtype[String, Pure]

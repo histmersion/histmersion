@@ -1,7 +1,6 @@
 package com.histmersion
 package upstreams.core
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum CoreFailure:
   /** Not asked, or refused for its rate: the budget or CORE itself said to wait. */
@@ -16,7 +15,7 @@ enum CoreFailure:
 
 object CoreFailure:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   object Skipped:
     export CoreFailure.{Problem as Why}
 

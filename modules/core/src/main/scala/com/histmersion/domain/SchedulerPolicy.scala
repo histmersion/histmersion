@@ -6,7 +6,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The central agent scheduler, pure (docs/research-goal-advancement.md "As built"): ONE decision per managers' tick
@@ -35,7 +34,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object SchedulerPolicy:
   type StartedNote = StartedNote.T
-  object StartedNote extends RefinedType[String, Pure]
+  object StartedNote extends Newtype[String, Pure]
   export SchedulerDefaults.{Strategy as StrategyName}
 
   /** A pin is worth this many priority levels. */
@@ -57,9 +56,9 @@ object SchedulerPolicy:
 
   object JobType:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
@@ -128,34 +127,34 @@ object SchedulerPolicy:
   object Candidate:
 
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type ManagerId = ManagerId.T
-    object ManagerId extends RefinedType[String, Pure]
+    object ManagerId extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Goal = Goal.T
-    object Goal extends RefinedType[String, Pure]
+    object Goal extends Newtype[String, Pure]
     type GoalPriority = GoalPriority.T
-    object GoalPriority extends RefinedType[Int, Pure]
+    object GoalPriority extends Newtype[Int, Pure]
     type Gathering = Gathering.T
-    object Gathering extends RefinedType[Boolean, Pure]
+    object Gathering extends Newtype[Boolean, Pure]
     type ItemPriority = ItemPriority.T
-    object ItemPriority extends RefinedType[Int, Pure]
+    object ItemPriority extends Newtype[Int, Pure]
     type Pools = Pools.T
-    object Pools extends RefinedType[String, Pure]
+    object Pools extends Newtype[String, Pure]
     type Person = Person.T
-    object Person extends RefinedType[Boolean, Pure]
+    object Person extends Newtype[Boolean, Pure]
 
   /** Why an item cannot start now whatever the order: a code and a sentence. */
   final case class Block(code: Block.Code, why: Block.Why)
 
   object Block:
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** The [[Block]] code of an item whose role chains are all below their plans' floors. */
   val QuotaBlock: Block.Code = Block.Code("quota")
@@ -193,21 +192,21 @@ object SchedulerPolicy:
   object Resources:
 
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends RefinedType[Int, Pure]
+    object MaxRuns extends Newtype[Int, Pure]
     type Occupied = Occupied.T
-    object Occupied extends RefinedType[Int, Pure]
+    object Occupied extends Newtype[Int, Pure]
     type Room = Room.T
-    object Room extends RefinedType[Int, Pure]
+    object Room extends Newtype[Int, Pure]
     type PoolCapValue = PoolCapValue.T
-    object PoolCapValue extends RefinedType[Int, Pure]
+    object PoolCapValue extends Newtype[Int, Pure]
     type PoolUsedValue = PoolUsedValue.T
-    object PoolUsedValue extends RefinedType[Int, Pure]
+    object PoolUsedValue extends Newtype[Int, Pure]
     type ManagerCapValue = ManagerCapValue.T
-    object ManagerCapValue extends RefinedType[Int, Pure]
+    object ManagerCapValue extends Newtype[Int, Pure]
     type ManagerUsedValue = ManagerUsedValue.T
-    object ManagerUsedValue extends RefinedType[Int, Pure]
+    object ManagerUsedValue extends Newtype[Int, Pure]
     type GatheringUsed = GatheringUsed.T
-    object GatheringUsed extends RefinedType[Int, Pure]
+    object GatheringUsed extends Newtype[Int, Pure]
 
   /** The scheduler's settings ([[AgentSchedulerConfig]] parsed). */
   final case class Settings(
@@ -232,9 +231,9 @@ object SchedulerPolicy:
     type MinShare = SchedulerDefaults.MinShare
     val MinShare: SchedulerDefaults.MinShare.type = SchedulerDefaults.MinShare
     type WeightsValue = WeightsValue.T
-    object WeightsValue extends RefinedType[Int, Pure]
+    object WeightsValue extends Newtype[Int, Pure]
     type TypePriorityValue = TypePriorityValue.T
-    object TypePriorityValue extends RefinedType[Int, Pure]
+    object TypePriorityValue extends Newtype[Int, Pure]
     type GatheringSlots = SchedulerDefaults.GatheringSlots
     val GatheringSlots: SchedulerDefaults.GatheringSlots.type = SchedulerDefaults.GatheringSlots
 
@@ -247,13 +246,13 @@ object SchedulerPolicy:
 
   object Scored:
     type WaitedMinutes = WaitedMinutes.T
-    object WaitedMinutes extends RefinedType[Long, Pure]
+    object WaitedMinutes extends Newtype[Long, Pure]
     type Aging = Aging.T
-    object Aging extends RefinedType[Int, Pure]
+    object Aging extends Newtype[Int, Pure]
     type Effective = Effective.T
-    object Effective extends RefinedType[Int, Pure]
+    object Effective extends Newtype[Int, Pure]
     type Overdue = Overdue.T
-    object Overdue extends RefinedType[Boolean, Pure]
+    object Overdue extends Newtype[Boolean, Pure]
 
   def score(c: Candidate, s: Settings, now: Instant): Scored =
     val mins = math.max(0L, Duration.between(c.waitingSince, now).toMinutes)
@@ -289,7 +288,7 @@ object SchedulerPolicy:
 
   object PassState:
     type StartedValue = StartedValue.T
-    object StartedValue extends RefinedType[Int, Pure]
+    object StartedValue extends Newtype[Int, Pure]
 
   /** A strategy picks the next candidate from those that may still start, and says why. The rest of the pass — the
     * resources, aging, max wait, minimum shares, the gathering places and the explanations — is the same for every
@@ -381,9 +380,9 @@ object SchedulerPolicy:
     type Why = Block.Why
     val Why: Block.Why.type = Block.Why
     type Behind = Behind.T
-    object Behind extends RefinedType[String, Pure]
+    object Behind extends Newtype[String, Pure]
     type Position = Position.T
-    object Position extends RefinedType[Int, Pure]
+    object Position extends Newtype[Int, Pure]
 
   object Code:
     val Blocked: Block.Code = Block.Code("blocked")

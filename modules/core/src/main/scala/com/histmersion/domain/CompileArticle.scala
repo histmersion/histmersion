@@ -19,7 +19,6 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import io.circe.KeyEncoder
 import io.circe.KeyDecoder
@@ -35,19 +34,19 @@ import com.histmersion.domain.automation.Run
   */
 object CompileArticle:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Last = Last.T
-  object Last extends RefinedType[Boolean, Pure]
+  object Last extends Newtype[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends RefinedType[String, Pure]
+  object LogLine extends Newtype[String, Pure]
   type MaxClaims = MaxClaims.T
-  object MaxClaims extends RefinedType[Int, Pure]
+  object MaxClaims extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Written = Written.T
-  object Written extends RefinedType[Boolean, Pure]
+  object Written extends Newtype[Boolean, Pure]
 
   given citekeyKeyEncoder: KeyEncoder[Citekey] = KeyEncoder.encodeKeyString.contramap(_.value)
   given citekeyKeyDecoder: KeyDecoder[Citekey] = KeyDecoder.instance(Citekey.option(_))
@@ -63,11 +62,11 @@ object CompileArticle:
   ) derives KindlingsCodecAsObject
   object ClaimAnswer:
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Date = Date.T
-    object Date extends RefinedType[String, Pure]
+    object Date extends Newtype[String, Pure]
     type Place = Place.T
-    object Place extends RefinedType[String, Pure]
+    object Place extends Newtype[String, Pure]
 
     given Schema[ClaimAnswer] = KindlingsSchema
       .derived[ClaimAnswer]
@@ -84,9 +83,9 @@ object CompileArticle:
       derives KindlingsCodecAsObject
   object ExtractAnswer:
     type Relevant = Relevant.T
-    object Relevant extends RefinedType[Boolean, Pure]
+    object Relevant extends Newtype[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     given Schema[ExtractAnswer] = KindlingsSchema
       .derived[ExtractAnswer]
@@ -189,7 +188,7 @@ object CompileArticle:
 
   object Evidence:
     type ClaimCount = ClaimCount.T
-    object ClaimCount extends RefinedType[Int, Pure]:
+    object ClaimCount extends Newtype[Int, Pure]:
       extension (n: ClaimCount) def hasClaims: Boolean = n.value > 0
 
   /** The statuses a first citation must state (writing guide rule 2). */

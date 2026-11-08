@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one tool call of an agent step may return (every runtime: the agent MCP endpoint a run token reaches and the
@@ -15,10 +14,10 @@ final case class AgentToolsConfig(resultMaxChars: AgentToolsConfig.ResultMaxChar
 object AgentToolsConfig:
   /** No cap (0 = off): what a tool returns is what the handler returned. */
   type ResultMaxChars = ResultMaxChars.T
-  object ResultMaxChars extends RefinedType[Int, Pure]
+  object ResultMaxChars extends Newtype[Int, Pure]
   type BodyChars = BodyChars.T
-  object BodyChars extends RefinedType[Int, Pure]
+  object BodyChars extends Newtype[Int, Pure]
   type QueryMaxRows = QueryMaxRows.T
-  object QueryMaxRows extends RefinedType[Int, Pure]
+  object QueryMaxRows extends Newtype[Int, Pure]
 
   val Off: AgentToolsConfig = AgentToolsConfig(ResultMaxChars(0), BodyChars(0), QueryMaxRows(0))

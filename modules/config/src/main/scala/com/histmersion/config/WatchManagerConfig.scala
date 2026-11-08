@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A research area's watcher (`agents.managers.watch`, docs/research-process-managers.md §4 (c)): its runs at once, the
@@ -17,10 +16,10 @@ final case class WatchManagerConfig(maxRuns: WatchManagerConfig.MaxRuns, cron: W
 
 object WatchManagerConfig:
   type MaxRuns = MaxRuns.T
-  object MaxRuns extends RefinedType[Int, Pure]
+  object MaxRuns extends Newtype[Int, Pure]
   type Cron = Cron.T
-  object Cron extends RefinedType[String, Pure]
+  object Cron extends Newtype[String, Pure]
   type AutoIngestPerDay = AutoIngestPerDay.T
-  object AutoIngestPerDay extends RefinedType[Int, Pure]
+  object AutoIngestPerDay extends Newtype[Int, Pure]
   type DrainPerTick = DrainPerTick.T
-  object DrainPerTick extends RefinedType[Int, Pure]
+  object DrainPerTick extends Newtype[Int, Pure]

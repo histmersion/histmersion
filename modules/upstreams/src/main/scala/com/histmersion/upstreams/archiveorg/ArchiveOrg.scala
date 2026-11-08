@@ -9,7 +9,6 @@ import com.histmersion.upstreams.http.json
 import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.ArchiveId
 import com.histmersion.upstreams.PageSize
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** archive.org's search, an item's metadata and a file of a public item. */
@@ -61,10 +60,10 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
 object ArchiveOrg:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type IdentifierS = IdentifierS.T
-  object IdentifierS extends RefinedType[String, Pure]
+  object IdentifierS extends Newtype[String, Pure]
   type SearchQuery = SearchQuery.T
-  object SearchQuery extends RefinedType[String, Pure]
+  object SearchQuery extends Newtype[String, Pure]
   type DownloadFile = DownloadFile.T
-  object DownloadFile extends RefinedType[String, Pure]
+  object DownloadFile extends Newtype[String, Pure]

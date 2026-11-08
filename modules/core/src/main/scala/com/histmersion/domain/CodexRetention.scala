@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How long the Codex home of the agent runs keeps what each run leaves behind (#2582): every `codex exec` writes a
@@ -14,20 +13,20 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object CodexRetention:
   type EveryHours = EveryHours.T
-  object EveryHours extends RefinedType[Int, Pure]
+  object EveryHours extends Newtype[Int, Pure]
   type FileName = FileName.T
-  object FileName extends RefinedType[String, Pure]
+  object FileName extends Newtype[String, Pure]
   type KeepDays = KeepDays.T
-  object KeepDays extends RefinedType[Int, Pure]
+  object KeepDays extends Newtype[Int, Pure]
   type LastMs = LastMs.T
-  object LastMs extends RefinedType[Long, Pure]
+  object LastMs extends Newtype[Long, Pure]
   type NowMs = NowMs.T
-  object NowMs extends RefinedType[Long, Pure]
+  object NowMs extends Newtype[Long, Pure]
 
   /** The directories of run transcripts, relative to the home. */
   type SessionDirs = SessionDirsValue
   type SessionDirsValue = SessionDirsValue.T
-  object SessionDirsValue extends RefinedType[String, Pure]
+  object SessionDirsValue extends Newtype[String, Pure]
 
   val SessionDirs: List[SessionDirs] = List(SessionDirsValue("sessions"), SessionDirsValue("archived_sessions"))
 
@@ -36,11 +35,11 @@ object CodexRetention:
 
   object FileInfo:
     type Rel = Rel.T
-    object Rel extends RefinedType[String, Pure]
+    object Rel extends Newtype[String, Pure]
     type Bytes = Bytes.T
-    object Bytes extends RefinedType[Long, Pure]
+    object Bytes extends Newtype[Long, Pure]
     type ModifiedMs = ModifiedMs.T
-    object ModifiedMs extends RefinedType[Long, Pure]
+    object ModifiedMs extends Newtype[Long, Pure]
 
   private val DayMs = 24L * 60 * 60 * 1000
 

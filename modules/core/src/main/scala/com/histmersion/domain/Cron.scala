@@ -3,7 +3,6 @@ package domain
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
@@ -63,27 +62,27 @@ final case class Cron(
 
 object Cron:
   type GapMinutes = GapMinutes.T
-  object GapMinutes extends RefinedType[Long, Pure]
+  object GapMinutes extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SampleCount = SampleCount.T
-  object SampleCount extends RefinedType[Int, Pure]
+  object SampleCount extends Newtype[Int, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Minutes = Minutes.T
-  object Minutes extends RefinedType[Int, Pure]
+  object Minutes extends Newtype[Int, Pure]
   type Hours = Hours.T
-  object Hours extends RefinedType[Int, Pure]
+  object Hours extends Newtype[Int, Pure]
   type Days = Days.T
-  object Days extends RefinedType[Int, Pure]
+  object Days extends Newtype[Int, Pure]
   type Months = Months.T
-  object Months extends RefinedType[Int, Pure]
+  object Months extends Newtype[Int, Pure]
   type Weekdays = Weekdays.T
-  object Weekdays extends RefinedType[Int, Pure]
+  object Weekdays extends Newtype[Int, Pure]
   type AnyDay = AnyDay.T
-  object AnyDay extends RefinedType[Boolean, Pure]
+  object AnyDay extends Newtype[Boolean, Pure]
   type AnyWeekday = AnyWeekday.T
-  object AnyWeekday extends RefinedType[Boolean, Pure]
+  object AnyWeekday extends Newtype[Boolean, Pure]
 
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
   val HorizonDays = 4 * 366 + 1

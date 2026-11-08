@@ -9,7 +9,6 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.PageSize
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** CORE's `search/works` with a key, through the server's CORE budget (`quota`) — the one way Histmersion calls CORE.
@@ -43,6 +42,6 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
 
 object CoreApi:
   type SearchWorksKey = SearchWorksKey.T
-  object SearchWorksKey extends RefinedType[String, Pure]
+  object SearchWorksKey extends Newtype[String, Pure]
   type SearchWorksQuery = SearchWorksQuery.T
-  object SearchWorksQuery extends RefinedType[String, Pure]
+  object SearchWorksQuery extends Newtype[String, Pure]

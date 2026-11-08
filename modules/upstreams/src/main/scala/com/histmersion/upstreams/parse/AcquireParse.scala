@@ -8,7 +8,6 @@ import com.histmersion.upstreams.identifiers.Identifiers
 import com.histmersion.upstreams.pmc.{PmcObject, PmcRecord}
 import com.histmersion.upstreams.unpaywall.OaAccess
 import com.histmersion.upstreams.Offset
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Year
 import com.histmersion.upstreams.landing.RepositoryLanding
@@ -27,15 +26,15 @@ import com.histmersion.upstreams.ArchiveId
   */
 object AcquireParse:
   type PmcVersion = PmcVersion.T
-  object PmcVersion extends RefinedType[Int, Pure]
+  object PmcVersion extends Newtype[Int, Pure]
   type WantedFileKind = WantedFileKind.T
-  object WantedFileKind extends RefinedType[String, Pure]
+  object WantedFileKind extends Newtype[String, Pure]
   type Wikitext = Wikitext.T
-  object Wikitext extends RefinedType[String, Pure]
+  object Wikitext extends Newtype[String, Pure]
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
   type AvailabilityCode = AvailabilityCode.T
-  object AvailabilityCode extends RefinedType[String, Pure]
+  object AvailabilityCode extends Newtype[String, Pure]
 
   private def str(c: ACursor, keys: String*): Option[String] =
     (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One LLM step's loop: iterations of the tool loop, output tokens per call, and how often a typed answer that fails
@@ -13,8 +12,8 @@ final case class AgentStepConfig(maxIterations: AgentStepConfig.MaxIterations, m
 
 object AgentStepConfig:
   type MaxIterations = MaxIterations.T
-  object MaxIterations extends RefinedType[Int, Pure]
+  object MaxIterations extends Newtype[Int, Pure]
   type MaxTokens = MaxTokens.T
-  object MaxTokens extends RefinedType[Int, Pure]
+  object MaxTokens extends Newtype[Int, Pure]
   type MaxRetries = MaxRetries.T
-  object MaxRetries extends RefinedType[Int, Pure]
+  object MaxRetries extends Newtype[Int, Pure]

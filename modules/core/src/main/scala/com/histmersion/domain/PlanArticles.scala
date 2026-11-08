@@ -15,7 +15,6 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.research.Article.Plans.{ArticlePlan, ProposedArticle}
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
@@ -28,13 +27,13 @@ import com.histmersion.domain.automation.Run
   */
 object PlanArticles:
   type LastRound = LastRound.T
-  object LastRound extends RefinedType[Boolean, Pure]
+  object LastRound extends Newtype[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends RefinedType[String, Pure]
+  object LogLine extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
 
@@ -49,19 +48,19 @@ object PlanArticles:
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
     given Schema[ArticleAnswer] = KindlingsSchema
       .derived[ArticleAnswer]
@@ -79,7 +78,7 @@ object PlanArticles:
   final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
   object ArticlesAnswer:
     type Rationale = Rationale.T
-    object Rationale extends RefinedType[String, Pure]
+    object Rationale extends Newtype[String, Pure]
 
     given Schema[ArticlesAnswer] = KindlingsSchema
       .derived[ArticlesAnswer]
@@ -94,11 +93,11 @@ object PlanArticles:
 
   object Limits:
     type MinSources = MinSources.T
-    object MinSources extends RefinedType[Int, Pure]
+    object MinSources extends Newtype[Int, Pure]
     type MaxOverlap = MaxOverlap.T
-    object MaxOverlap extends RefinedType[Double, Pure]
+    object MaxOverlap extends Newtype[Double, Pure]
     type MaxArticles = MaxArticles.T
-    object MaxArticles extends RefinedType[Int, Pure]
+    object MaxArticles extends Newtype[Int, Pure]
 
   /** One proposal whose shape passed: what [[verify]] measures. */
   final case class Candidate(

@@ -9,7 +9,6 @@ import com.histmersion.api.exchange.IssueDetail
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules of a plan can ask and add while the plan collects its questions about the rows, before any is
@@ -54,6 +53,6 @@ trait PlanQuestions extends PairQuestions:
 
 object PlanQuestions:
   type LabelTakenLabelResult = LabelTakenLabelResult.T
-  object LabelTakenLabelResult extends RefinedType[String, Pure]
+  object LabelTakenLabelResult extends Newtype[String, Pure]
   type LabelTakenWhat = LabelTakenWhat.T
-  object LabelTakenWhat extends RefinedType[String, Pure]
+  object LabelTakenWhat extends Newtype[String, Pure]

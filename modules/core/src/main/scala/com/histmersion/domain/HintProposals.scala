@@ -9,7 +9,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
@@ -20,13 +19,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object HintProposals:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Item = Item.T
-  object Item extends RefinedType[String, Pure]
+  object Item extends Newtype[String, Pure]
   type Last = Last.T
-  object Last extends RefinedType[Boolean, Pure]
+  object Last extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
 
@@ -43,21 +42,21 @@ object HintProposals:
   ) derives KindlingsCodecAsObject
   object HintAnswer:
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Targets = Targets.T
-    object Targets extends RefinedType[String, Pure]
+    object Targets extends Newtype[String, Pure]
     type Tag = Tag.T
-    object Tag extends RefinedType[String, Pure]
+    object Tag extends Newtype[String, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
-    object UntilSource extends RefinedType[String, Pure]
+    object UntilSource extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Settings = Settings.T
-    object Settings extends RefinedType[String, Pure]
+    object Settings extends Newtype[String, Pure]
 
     given Schema[HintAnswer] = KindlingsSchema
       .derived[HintAnswer]
@@ -155,4 +154,4 @@ object HintProposals:
 
   object Proposed:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]

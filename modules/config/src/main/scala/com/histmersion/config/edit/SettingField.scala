@@ -1,7 +1,6 @@
 package com.histmersion
 package config.edit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting the config file may hold, as reference.conf documents it.
@@ -27,11 +26,11 @@ final case class SettingField(
 
 object SettingField:
   type Section = Section.T
-  object Section extends RefinedType[String, Pure]
+  object Section extends Newtype[String, Pure]
 
   type Doc = Doc.T
-  object Doc extends RefinedType[String, Pure]
+  object Doc extends Newtype[String, Pure]
   type EnvVar = EnvVar.T
-  object EnvVar extends RefinedType[String, Pure]
+  object EnvVar extends Newtype[String, Pure]
   type Restart = Restart.T
-  object Restart extends RefinedType[String, Pure]
+  object Restart extends Newtype[String, Pure]

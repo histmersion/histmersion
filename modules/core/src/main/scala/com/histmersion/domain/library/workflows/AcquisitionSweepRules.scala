@@ -10,7 +10,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
@@ -25,23 +24,23 @@ import com.histmersion.domain.automation.Goal
 object AcquisitionSweepRules:
 
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Allowance = Allowance.T
-  object Allowance extends RefinedType[Int, Pure]
+  object Allowance extends Newtype[Int, Pure]
   type LastAttempt = LastAttempt.T
-  object LastAttempt extends RefinedType[Boolean, Pure]
+  object LastAttempt extends Newtype[Boolean, Pure]
   type SkipReason = SkipReason.T
-  object SkipReason extends RefinedType[String, Pure]
+  object SkipReason extends Newtype[String, Pure]
   type SkipCount = SkipCount.T
-  object SkipCount extends RefinedType[Int, Pure]
+  object SkipCount extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Dropped = Dropped.T
-  object Dropped extends RefinedType[String, Pure]
+  object Dropped extends Newtype[String, Pure]
   type IngestFailure = IngestFailure.T
-  object IngestFailure extends RefinedType[String, Pure]
+  object IngestFailure extends Newtype[String, Pure]
   type AcquireText = AcquireText.T
-  object AcquireText extends RefinedType[String, Pure]
+  object AcquireText extends Newtype[String, Pure]
 
   /** A candidate a sweep found, as the ranking step sees it. */
   final case class Candidate(
@@ -57,7 +56,7 @@ object AcquisitionSweepRules:
 
   object Candidate:
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
 
   /** The works a sweep may consider: with a DOI, not retracted, not in the corpus, not already in the acquisition queue
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
@@ -93,9 +92,9 @@ object AcquisitionSweepRules:
   final case class Pick(doi: Pick.DoiText, why: Pick.Why) derives KindlingsCodecAsObject
   object Pick:
     type DoiText = DoiText.T
-    object DoiText extends RefinedType[String, Pure]
+    object DoiText extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Pick]

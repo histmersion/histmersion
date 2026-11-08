@@ -1,7 +1,6 @@
 package com.histmersion
 package config.edit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting as it stands: what the settings file writes for it, what applies (the environment, the file, the
@@ -21,4 +20,4 @@ final case class SettingReading(
 
 object SettingReading:
   type Shown = Shown.T
-  object Shown extends RefinedType[String, Pure]
+  object Shown extends Newtype[String, Pure]

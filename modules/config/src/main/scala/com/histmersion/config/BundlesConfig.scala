@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle before it is
@@ -14,6 +13,6 @@ final case class BundlesConfig(dir: BundlesConfig.Dir, staleMinutes: BundlesConf
 
 object BundlesConfig:
   type Dir = Dir.T
-  object Dir extends RefinedType[String, Pure]
+  object Dir extends Newtype[String, Pure]
   type StaleMinutes = StaleMinutes.T
-  object StaleMinutes extends RefinedType[Int, Pure]
+  object StaleMinutes extends Newtype[Int, Pure]

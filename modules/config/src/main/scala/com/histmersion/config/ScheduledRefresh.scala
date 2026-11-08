@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How often a plan pool is read while the autopilot is on and queued work wants it, besides the reading a run's own
@@ -13,7 +12,7 @@ enum ScheduledRefresh:
 
 object ScheduledRefresh:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The configured minutes: 0 = off. */
 
   def fromMinutes(minutes: Minutes): Either[Problem, ScheduledRefresh] =

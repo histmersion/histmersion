@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`; `spoolDir` is where the
@@ -37,24 +36,24 @@ final case class ConverterConfig(
 
 object ConverterConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type Parallelism = Parallelism.T
-  object Parallelism extends RefinedType[Int, Pure]
+  object Parallelism extends Newtype[Int, Pure]
   type Dpi = Dpi.T
-  object Dpi extends RefinedType[Int, Pure]
+  object Dpi extends Newtype[Int, Pure]
   type MaxImagePx = MaxImagePx.T
-  object MaxImagePx extends RefinedType[Int, Pure]
+  object MaxImagePx extends Newtype[Int, Pure]
   type SpoolDir = SpoolDir.T
-  object SpoolDir extends RefinedType[String, Pure]
+  object SpoolDir extends Newtype[String, Pure]
   type HealthTimeoutMs = HealthTimeoutMs.T
-  object HealthTimeoutMs extends RefinedType[Int, Pure]
+  object HealthTimeoutMs extends Newtype[Int, Pure]
   type HealthCacheMs = HealthCacheMs.T
-  object HealthCacheMs extends RefinedType[Int, Pure]
+  object HealthCacheMs extends Newtype[Int, Pure]
   type SecondsPerPage = SecondsPerPage.T
-  object SecondsPerPage extends RefinedType[Int, Pure]
+  object SecondsPerPage extends Newtype[Int, Pure]
   type SecondsPerPageQuality = SecondsPerPageQuality.T
-  object SecondsPerPageQuality extends RefinedType[Int, Pure]
+  object SecondsPerPageQuality extends Newtype[Int, Pure]
   type SecondsPerScannedPage = SecondsPerScannedPage.T
-  object SecondsPerScannedPage extends RefinedType[Int, Pure]
+  object SecondsPerScannedPage extends Newtype[Int, Pure]

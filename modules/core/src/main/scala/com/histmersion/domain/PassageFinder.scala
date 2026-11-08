@@ -9,7 +9,6 @@ import com.histmersion.api.library.{PassageHit, PassageResult}
 import com.histmersion.api.given
 
 import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.time.Timer
@@ -36,21 +35,21 @@ import com.histmersion.util.time.Timer
   */
 object PassageFinder:
   type ContextChars = ContextChars.T
-  object ContextChars extends RefinedType[Int, Pure]
+  object ContextChars extends Newtype[Int, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type MaxMatches = MaxMatches.T
-  object MaxMatches extends RefinedType[Int, Pure]
+  object MaxMatches extends Newtype[Int, Pure]
   type Passage = Passage.T
-  object Passage extends RefinedType[String, Pure]
+  object Passage extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Regex = Regex.T
-  object Regex extends RefinedType[Boolean, Pure]
+  object Regex extends Newtype[Boolean, Pure]
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends RefinedType[Long, Pure]
+  object TimeoutMs extends Newtype[Long, Pure]
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
   def body(segments: Seq[Chunk]): Passage = Passage(segments.map(_.body.value).mkString(Separator))

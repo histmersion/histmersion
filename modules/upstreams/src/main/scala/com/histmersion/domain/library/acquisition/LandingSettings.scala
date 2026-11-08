@@ -3,7 +3,6 @@ package domain.library.acquisition
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.upstreams.landing.RepositoryLanding
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and
@@ -34,25 +33,25 @@ final case class LandingSettings(
 
 object LandingSettings:
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type MaxPages = MaxPages.T
-  object MaxPages extends RefinedType[Int, Pure]
+  object MaxPages extends Newtype[Int, Pure]
   type AllowHosts = AllowHosts.T
-  object AllowHosts extends RefinedType[String, Pure]
+  object AllowHosts extends Newtype[String, Pure]
   type DenyHosts = DenyHosts.T
-  object DenyHosts extends RefinedType[String, Pure]
+  object DenyHosts extends Newtype[String, Pure]
   type DenyHostsExtra = DenyHostsExtra.T
-  object DenyHostsExtra extends RefinedType[String, Pure]
+  object DenyHostsExtra extends Newtype[String, Pure]
   type AcademicHostWords = AcademicHostWords.T
-  object AcademicHostWords extends RefinedType[String, Pure]
+  object AcademicHostWords extends Newtype[String, Pure]
   type Generators = Generators.T
-  object Generators extends RefinedType[String, Pure]
+  object Generators extends Newtype[String, Pure]
   type DenyGenerators = DenyGenerators.T
-  object DenyGenerators extends RefinedType[String, Pure]
+  object DenyGenerators extends Newtype[String, Pure]
   type DenyHostWords = DenyHostWords.T
-  object DenyHostWords extends RefinedType[String, Pure]
+  object DenyHostWords extends Newtype[String, Pure]
   type OaPublisherHosts = OaPublisherHosts.T
-  object OaPublisherHosts extends RefinedType[String, Pure]
+  object OaPublisherHosts extends Newtype[String, Pure]
 
   /** A comma-separated list's entries, trimmed and lower-case. */
   private def entries(list: String): List[String] =

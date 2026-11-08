@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The source matcher of `merge plan` (docs/research-merge-import.md §5.2): Fellegi–Sunter-style log-weights with
@@ -38,18 +37,18 @@ final case class MergeConfig(
 
 object MergeConfig:
   type AutoMerge = AutoMerge.T
-  object AutoMerge extends RefinedType[Double, Pure]
+  object AutoMerge extends Newtype[Double, Pure]
   type NewAtMost = NewAtMost.T
-  object NewAtMost extends RefinedType[Double, Pure]
+  object NewAtMost extends Newtype[Double, Pure]
   type MinhashSize = MinhashSize.T
-  object MinhashSize extends RefinedType[Int, Pure]
+  object MinhashSize extends Newtype[Int, Pure]
   type FindingNearAtLeast = FindingNearAtLeast.T
-  object FindingNearAtLeast extends RefinedType[Double, Pure]
+  object FindingNearAtLeast extends Newtype[Double, Pure]
   type FindingWithinKm = FindingWithinKm.T
-  object FindingWithinKm extends RefinedType[Double, Pure]
+  object FindingWithinKm extends Newtype[Double, Pure]
   type PlaceWithinKm = PlaceWithinKm.T
-  object PlaceWithinKm extends RefinedType[Double, Pure]
+  object PlaceWithinKm extends Newtype[Double, Pure]
   type PlaceOverlapAtLeast = PlaceOverlapAtLeast.T
-  object PlaceOverlapAtLeast extends RefinedType[Double, Pure]
+  object PlaceOverlapAtLeast extends Newtype[Double, Pure]
   type ApplyWaitSeconds = ApplyWaitSeconds.T
-  object ApplyWaitSeconds extends RefinedType[Int, Pure]
+  object ApplyWaitSeconds extends Newtype[Int, Pure]

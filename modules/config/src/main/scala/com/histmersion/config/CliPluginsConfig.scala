@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion plugin …` (docs/research-plugins.md §7.2): the plugins of the Histmersion installed on THIS machine.
@@ -16,11 +15,11 @@ final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, maven
 
 object CliPluginsConfig:
   type MavenRepo = MavenRepo.T
-  object MavenRepo extends RefinedType[String, Pure]
+  object MavenRepo extends Newtype[String, Pure]
 
   type InstallDir = InstallDir.T
-  object InstallDir extends RefinedType[String, Pure]
+  object InstallDir extends Newtype[String, Pure]
   type MavenRepos = MavenRepos.T
-  object MavenRepos extends RefinedType[String, Pure]
+  object MavenRepos extends Newtype[String, Pure]
   type Curl = Curl.T
-  object Curl extends RefinedType[String, Pure]
+  object Curl extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a run may change without a person: `manual` (the default) records an approval and waits, `auto` applies at
@@ -23,7 +22,7 @@ final case class AgentApprovalsConfig(
 
 object AgentApprovalsConfig:
   type Gate = Gate.T
-  object Gate extends RefinedType[String, Pure]
+  object Gate extends Newtype[String, Pure]
   /** `auto` or `checked`, in any case. */
 
 

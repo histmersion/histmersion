@@ -7,7 +7,6 @@ import com.histmersion.api.library.UpstreamQuota
 import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The budget Histmersion keeps for CORE's API (api.core.ac.uk), shared by its two uses: the `core` step of the
@@ -29,19 +28,19 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object CoreQuota:
   type Cap = Cap.T
-  object Cap extends RefinedType[Int, Pure]
+  object Cap extends Newtype[Int, Pure]
   type Cost = Cost.T
-  object Cost extends RefinedType[Int, Pure]
+  object Cost extends Newtype[Int, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type HeaderName = HeaderName.T
-  object HeaderName extends RefinedType[String, Pure]
+  object HeaderName extends Newtype[String, Pure]
   type HeaderValue = HeaderValue.T
-  object HeaderValue extends RefinedType[String, Pure]
+  object HeaderValue extends Newtype[String, Pure]
   type Spent = Spent.T
-  object Spent extends RefinedType[Int, Pure]
+  object Spent extends Newtype[Int, Pure]
   type StatusCode = StatusCode.T
-  object StatusCode extends RefinedType[Int, Pure]
+  object StatusCode extends Newtype[Int, Pure]
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
   enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
@@ -53,9 +52,9 @@ object CoreQuota:
 
   object Purpose:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
   /** The limits Histmersion keeps to (`acquire.core.*`). */
   final case class Limits(
@@ -77,35 +76,35 @@ object CoreQuota:
   object Limits:
 
     type PerMinute = PerMinute.T
-    object PerMinute extends RefinedType[Int, Pure]
+    object PerMinute extends Newtype[Int, Pure]
     type DailyTokens = DailyTokens.T
-    object DailyTokens extends RefinedType[Int, Pure]
+    object DailyTokens extends Newtype[Int, Pure]
     type SearchDailyTokens = SearchDailyTokens.T
-    object SearchDailyTokens extends RefinedType[Int, Pure]
+    object SearchDailyTokens extends Newtype[Int, Pure]
     type LookupCost = LookupCost.T
-    object LookupCost extends RefinedType[Int, Pure]
+    object LookupCost extends Newtype[Int, Pure]
     type SearchCost = SearchCost.T
-    object SearchCost extends RefinedType[Int, Pure]
+    object SearchCost extends Newtype[Int, Pure]
     type ExhaustedPauseSeconds = ExhaustedPauseSeconds.T
-    object ExhaustedPauseSeconds extends RefinedType[Int, Pure]
+    object ExhaustedPauseSeconds extends Newtype[Int, Pure]
     type MaxWaitSeconds = MaxWaitSeconds.T
-    object MaxWaitSeconds extends RefinedType[Int, Pure]
+    object MaxWaitSeconds extends Newtype[Int, Pure]
 
   /** CORE asked not to be called until `until`; `why` says what it answered. */
   final case class Block(until: Instant, why: Block.Why)
 
   object Block:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** What the last answer's rate-limit headers said. */
   final case class Window(limit: Option[Window.Limit], remaining: Option[Window.Remaining], at: Instant)
 
   object Window:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Remaining = Remaining.T
-    object Remaining extends RefinedType[Int, Pure]
+    object Remaining extends Newtype[Int, Pure]
 
   /** The budget's state. `recent` — the slots of the calls of the last minute — lives in memory only: a restart forgets
     * at most one minute of pacing, which CORE's own 429 then covers. The rest is kept in the database, so a restart
@@ -127,9 +126,9 @@ object CoreQuota:
   object State:
 
     type LookupTokens = LookupTokens.T
-    object LookupTokens extends RefinedType[Int, Pure]
+    object LookupTokens extends Newtype[Int, Pure]
     type SearchTokens = SearchTokens.T
-    object SearchTokens extends RefinedType[Int, Pure]
+    object SearchTokens extends Newtype[Int, Pure]
 
     def fresh(day: LocalDate): State = State(day, LookupTokens(0), SearchTokens(0), None, None)
 
@@ -168,7 +167,7 @@ object CoreQuota:
 
   object Grant:
     type WaitMs = WaitMs.T
-    object WaitMs extends RefinedType[Long, Pure]
+    object WaitMs extends Newtype[Long, Pure]
 
   private val Minute = 60_000L
 

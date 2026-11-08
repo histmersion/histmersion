@@ -6,7 +6,6 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
@@ -16,15 +15,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Scheduling:
   type ActiveCount = ActiveCount.T
-  object ActiveCount extends RefinedType[Int, Pure]
+  object ActiveCount extends Newtype[Int, Pure]
   type Budget = Budget.T
-  object Budget extends RefinedType[Double, Pure]
+  object Budget extends Newtype[Double, Pure]
   type DailyBudget = DailyBudget.T
-  object DailyBudget extends RefinedType[Double, Pure]
+  object DailyBudget extends Newtype[Double, Pure]
   type MaxConcurrent = MaxConcurrent.T
-  object MaxConcurrent extends RefinedType[Int, Pure]
+  object MaxConcurrent extends Newtype[Int, Pure]
   type MonthlyBudget = MonthlyBudget.T
-  object MonthlyBudget extends RefinedType[Double, Pure]
+  object MonthlyBudget extends Newtype[Double, Pure]
 
   /** What the scheduler does with a due schedule. `Skip` moves the schedule on to its next time; `Defer` leaves it due,
     * for the next tick.
@@ -38,10 +37,10 @@ object Scheduling:
   object Decision:
     object Skip:
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
     object Defer:
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
 
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): Boolean = !s.isTerminal

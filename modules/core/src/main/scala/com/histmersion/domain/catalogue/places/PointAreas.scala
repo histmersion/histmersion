@@ -8,7 +8,6 @@ import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
 import com.histmersion.api.checks.Lint.{LintItem, LintRuleReport, Rule}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 
@@ -24,17 +23,17 @@ object PointAreas:
     * [[PlaceDating.EndOnly]]) or `undated` (an open range: the source said nothing).
     */
   type ReportMaxItems = ReportMaxItems.T
-  object ReportMaxItems extends RefinedType[Int, Pure]
+  object ReportMaxItems extends Newtype[Int, Pure]
   type FixedResult = FixedResult.T
-  object FixedResult extends RefinedType[String, Pure]
+  object FixedResult extends Newtype[String, Pure]
   type FixedRemoved = FixedRemoved.T
-  object FixedRemoved extends RefinedType[Int, Pure]
+  object FixedRemoved extends Newtype[Int, Pure]
   type FixedRemaining = FixedRemaining.T
-  object FixedRemaining extends RefinedType[Int, Pure]
+  object FixedRemaining extends Newtype[Int, Pure]
   type FixedFindings = FixedFindings.T
-  object FixedFindings extends RefinedType[Int, Pure]
+  object FixedFindings extends Newtype[Int, Pure]
   type FixedSources = FixedSources.T
-  object FixedSources extends RefinedType[Int, Pure]
+  object FixedSources extends Newtype[Int, Pure]
 
   enum Dating:
     case Dated, EndOnly, Undated
@@ -46,7 +45,7 @@ object PointAreas:
 
   object Dating:
     type WireResult = WireResult.T
-    object WireResult extends RefinedType[String, Pure]
+    object WireResult extends Newtype[String, Pure]
 
     def of(startUnknown: Boolean, lowerInf: Boolean, upperInf: Boolean): Dating =
       if startUnknown then EndOnly
@@ -58,11 +57,11 @@ object PointAreas:
 
   object Group:
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Places = Places.T
-    object Places extends RefinedType[Int, Pure]
+    object Places extends Newtype[Int, Pure]
 
   /** A listed place. `findings` are the findings matched to it (`finding_places`); `alone` how many of them it is the
     * ONLY place of — those would be left unplaced by a removal; `pinned` the attestations, asset links and place
@@ -96,22 +95,22 @@ object PointAreas:
 
   object Listed:
     type DetailResult = DetailResult.T
-    object DetailResult extends RefinedType[String, Pure]
+    object DetailResult extends Newtype[String, Pure]
 
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Alone = Alone.T
-    object Alone extends RefinedType[Int, Pure]
+    object Alone extends Newtype[Int, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Int, Pure]
+    object Pinned extends Newtype[Int, Pure]
 
   /** The rule's report. `count` is the true number of places; the items are the group lines (always), every place
     * holding a finding or pinned by evidence (always — they are what a person must see before a removal), then `sample`

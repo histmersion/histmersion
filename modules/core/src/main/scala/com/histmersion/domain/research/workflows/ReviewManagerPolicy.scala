@@ -11,7 +11,6 @@ import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.{Duration, Instant}
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.automation.Agents
@@ -23,11 +22,11 @@ import com.histmersion.api.automation.Agents
   */
 object ReviewManagerPolicy:
   type OpenPairs = OpenPairs.T
-  object OpenPairs extends RefinedType[Int, Pure]
+  object OpenPairs extends Newtype[Int, Pure]
 
   /** How many sources an article's coverage filter returns. */
   type FilterHits = FilterHits.T
-  object FilterHits extends RefinedType[Int, Pure]
+  object FilterHits extends Newtype[Int, Pure]
 
   /** A review manager's settings in effect: its saved config over research's defaults (`d`) and the engine's (`m`). */
   def settings(c: ManagerConfig, d: ReviewManagerDefaults, m: ManagerDefaults): ReviewSettings =
@@ -82,15 +81,15 @@ object ReviewManagerPolicy:
 
   object ReviewFacts:
     type OpenMajors = OpenMajors.T
-    object OpenMajors extends RefinedType[Int, Pure]
+    object OpenMajors extends Newtype[Int, Pure]
     type MaxReopened = MaxReopened.T
-    object MaxReopened extends RefinedType[Int, Pure]
+    object MaxReopened extends Newtype[Int, Pure]
     type Escalated = Escalated.T
-    object Escalated extends RefinedType[Int, Pure]
+    object Escalated extends Newtype[Int, Pure]
     type OnlyMissingCritiques = OnlyMissingCritiques.T
-    object OnlyMissingCritiques extends RefinedType[Boolean, Pure]
+    object OnlyMissingCritiques extends Newtype[Boolean, Pure]
     type OpenPairs = OpenPairs.T
-    object OpenPairs extends RefinedType[Int, Pure]
+    object OpenPairs extends Newtype[Int, Pure]
 
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
     def of(l: Ledger, openPairs: Option[OpenPairs] = None): ReviewFacts =
@@ -228,7 +227,7 @@ object ReviewManagerPolicy:
 
   object Pick:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).

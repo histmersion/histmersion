@@ -11,7 +11,6 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Year
 import com.histmersion.upstreams.PageSize
 import com.histmersion.plugin.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** OpenAlex and Crossref: search, a work's metadata, its deposited reference list, its amendment notices, and
@@ -122,8 +121,8 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
 object OpenAlexCrossref:
   type ReferenceSource = ReferenceSource.T
-  object ReferenceSource extends RefinedType[String, Pure]
+  object ReferenceSource extends Newtype[String, Pure]
   type SearchQuery = SearchQuery.T
-  object SearchQuery extends RefinedType[String, Pure]
+  object SearchQuery extends Newtype[String, Pure]
   type SearchSort = SearchSort.T
-  object SearchSort extends RefinedType[String, Pure]
+  object SearchSort extends Newtype[String, Pure]

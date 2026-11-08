@@ -10,7 +10,6 @@ import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Manager
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
@@ -20,51 +19,51 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object AutopilotPolicy:
   type ApprovedToday = ApprovedToday.T
-  object ApprovedToday extends RefinedType[Int, Pure]
+  object ApprovedToday extends Newtype[Int, Pure]
   type Backlog = Backlog.T
-  object Backlog extends RefinedType[Int, Pure]
+  object Backlog extends Newtype[Int, Pure]
   type Base = Base.T
-  object Base extends RefinedType[Int, Pure]
+  object Base extends Newtype[Int, Pure]
   type Cap = Cap.T
-  object Cap extends RefinedType[Int, Pure]
+  object Cap extends Newtype[Int, Pure]
   type CooldownDays = CooldownDays.T
-  object CooldownDays extends RefinedType[Int, Pure]
+  object CooldownDays extends Newtype[Int, Pure]
   type CooldownHours = CooldownHours.T
-  object CooldownHours extends RefinedType[Int, Pure]
+  object CooldownHours extends Newtype[Int, Pure]
   type Cron = Cron.T
-  object Cron extends RefinedType[String, Pure]
+  object Cron extends Newtype[String, Pure]
   type Days = Days.T
-  object Days extends RefinedType[Int, Pure]
+  object Days extends Newtype[Int, Pure]
   type DepthLimit = DepthLimit.T
-  object DepthLimit extends RefinedType[Int, Pure]
+  object DepthLimit extends Newtype[Int, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type DoneLast7 = DoneLast7.T
-  object DoneLast7 extends RefinedType[Int, Pure]
+  object DoneLast7 extends Newtype[Int, Pure]
   type EveryHours = EveryHours.T
-  object EveryHours extends RefinedType[Int, Pure]
+  object EveryHours extends Newtype[Int, Pure]
   type IngestedToday = IngestedToday.T
-  object IngestedToday extends RefinedType[Int, Pure]
+  object IngestedToday extends Newtype[Int, Pure]
   type Left = Left.T
-  object Left extends RefinedType[Int, Pure]
+  object Left extends Newtype[Int, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type MinSources = MinSources.T
-  object MinSources extends RefinedType[Int, Pure]
+  object MinSources extends Newtype[Int, Pure]
   type NewSources = NewSources.T
-  object NewSources extends RefinedType[Int, Pure]
+  object NewSources extends Newtype[Int, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type OpenCount = OpenCount.T
-  object OpenCount extends RefinedType[Int, Pure]
+  object OpenCount extends Newtype[Int, Pure]
   type Proposed = Proposed.T
-  object Proposed extends RefinedType[Int, Pure]
+  object Proposed extends Newtype[Int, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Share = Share.T
-  object Share extends RefinedType[Double, Pure]
+  object Share extends Newtype[Double, Pure]
   type Unfinished = Unfinished.T
-  object Unfinished extends RefinedType[Int, Pure]
+  object Unfinished extends Newtype[Int, Pure]
 
   private def counted(n: Int, singular: String, plural: String = ""): Plural.Phrase =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular), Plural.CountPlural(plural))
@@ -85,7 +84,7 @@ object AutopilotPolicy:
   val CapTextCeiling: Cap.type = Cap
   type NotePrefix = NotePrefixValue
   type NotePrefixValue = NotePrefixValue.T
-  object NotePrefixValue extends RefinedType[String, Pure]
+  object NotePrefixValue extends Newtype[String, Pure]
 
   enum Verdict:
     case Approve(reason: Verdict.Approve.Reason)
@@ -105,11 +104,11 @@ object AutopilotPolicy:
 
   object PlannedFacts:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type SlugFree = SlugFree.T
-    object SlugFree extends RefinedType[Boolean, Pure]
+    object SlugFree extends Newtype[Boolean, Pure]
     type Hits = Hits.T
-    object Hits extends RefinedType[Int, Pure]
+    object Hits extends Newtype[Int, Pure]
 
   /** An `article-plan` (propose-articles): approved when every article's slug is still free and its filter returns at
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
@@ -153,19 +152,19 @@ object AutopilotPolicy:
 
   object DraftFacts:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Create = Create.T
-    object Create extends RefinedType[Boolean, Pure]
+    object Create extends Newtype[Boolean, Pure]
     type FilterRecorded = FilterRecorded.T
-    object FilterRecorded extends RefinedType[Boolean, Pure]
+    object FilterRecorded extends Newtype[Boolean, Pure]
     type Hits = Hits.T
-    object Hits extends RefinedType[Int, Pure]
+    object Hits extends Newtype[Int, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
     type Cited = Cited.T
-    object Cited extends RefinedType[Int, Pure]
+    object Cited extends Newtype[Int, Pure]
     type SlugFree = SlugFree.T
-    object SlugFree extends RefinedType[Boolean, Pure]
+    object SlugFree extends Newtype[Boolean, Pure]
 
   /** An `article-publish`: approved when the run recorded a filter that returns at least `minSources` sources, the code
     * self-check left no problem, the text cites a source and (a new article) the slug is still free — within `cap`
@@ -198,15 +197,15 @@ object AutopilotPolicy:
 
   object GoalPlanFacts:
     type Goal = Goal.T
-    object Goal extends RefinedType[String, Pure]
+    object Goal extends Newtype[String, Pure]
     type SubGoals = SubGoals.T
-    object SubGoals extends RefinedType[Int, Pure]
+    object SubGoals extends Newtype[Int, Pure]
     type Queries = Queries.T
-    object Queries extends RefinedType[Int, Pure]
+    object Queries extends Newtype[Int, Pure]
     type Works = Works.T
-    object Works extends RefinedType[Int, Pure]
+    object Works extends Newtype[Int, Pure]
     type Depth = Depth.T
-    object Depth extends RefinedType[Int, Pure]
+    object Depth extends Newtype[Int, Pure]
 
   /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
     * within `cap` plans a day.
@@ -312,13 +311,13 @@ object AutopilotPolicy:
 
   object NextFacts:
     type Goal = Goal.T
-    object Goal extends RefinedType[String, Pure]
+    object Goal extends Newtype[String, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[Int, Pure]
+    object Articles extends Newtype[Int, Pure]
     type Unreviewed = Unreviewed.T
-    object Unreviewed extends RefinedType[Int, Pure]
+    object Unreviewed extends Newtype[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends RefinedType[Int, Pure]
+    object CompileOpen extends Newtype[Int, Pure]
 
   /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
     * still has unfinished articles); None when they are all done (or it has none).
@@ -391,15 +390,15 @@ object AutopilotPolicy:
 
   object GoalFacts:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Managed = Managed.T
-    object Managed extends RefinedType[Boolean, Pure]
+    object Managed extends Newtype[Boolean, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[Int, Pure]
+    object Articles extends Newtype[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends RefinedType[Boolean, Pure]
+    object CompileOpen extends Newtype[Boolean, Pure]
     type Reviewed = Reviewed.T
-    object Reviewed extends RefinedType[Boolean, Pure]
+    object Reviewed extends Newtype[Boolean, Pure]
 
   private def rank(s: Goal.Status.Wire): Int = Goal.Status.all.indexOf(s)
 
@@ -445,7 +444,7 @@ object AutopilotPolicy:
 
   object GoalRow:
     type NeedsPlan = NeedsPlan.T
-    object NeedsPlan extends RefinedType[Boolean, Pure]
+    object NeedsPlan extends Newtype[Boolean, Pure]
 
   /** A manager as the autopilot sees it. `planItem` = it has a plan-goal item (any status). */
   final case class ManagerRow(
@@ -461,13 +460,13 @@ object AutopilotPolicy:
 
   object ManagerRow:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]:
+    object Id extends Newtype[String, Pure]:
       def seed(goal: Goal.Slug): Id = Id(s"seed:${goal.value}")
       def watch(goal: Goal.Slug): Id = Id(s"watch:${goal.value}")
     type AutoIngest = AutoIngest.T
-    object AutoIngest extends RefinedType[Boolean, Pure]
+    object AutoIngest extends Newtype[Boolean, Pure]
     type PlanItem = PlanItem.T
-    object PlanItem extends RefinedType[Boolean, Pure]
+    object PlanItem extends Newtype[Boolean, Pure]
 
   /** The settings `ensure` works with. */
   final case class Settings(
@@ -480,9 +479,9 @@ object AutopilotPolicy:
 
   object Settings:
     type WatchIngestPerDay = WatchIngestPerDay.T
-    object WatchIngestPerDay extends RefinedType[Int, Pure]
+    object WatchIngestPerDay extends Newtype[Int, Pure]
     type ExtendMinNew = ExtendMinNew.T
-    object ExtendMinNew extends RefinedType[Int, Pure]
+    object ExtendMinNew extends Newtype[Int, Pure]
 
   /** One change `ensure` asks for. */
   enum Step:

@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type ItemKey = ItemKey.T
 
-object ItemKey extends RefinedType[String, Pure]
+object ItemKey extends Newtype[String, Pure]

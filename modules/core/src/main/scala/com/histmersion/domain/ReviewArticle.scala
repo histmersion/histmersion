@@ -30,7 +30,6 @@ import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.automation.Run
@@ -45,31 +44,31 @@ import com.histmersion.domain.automation.Run
   */
 object ReviewArticle:
   type CitedInCorpusCount = CitedInCorpusCount.T
-  object CitedInCorpusCount extends RefinedType[Int, Pure]
+  object CitedInCorpusCount extends Newtype[Int, Pure]
   type Criticised = com.histmersion.api.library.Citekey
   val Criticised: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
   type DefaultRounds = DefaultRounds.T
-  object DefaultRounds extends RefinedType[Int, Pure]
+  object DefaultRounds extends Newtype[Int, Pure]
   type FindingCount = FindingCount.T
-  object FindingCount extends RefinedType[Int, Pure]
+  object FindingCount extends Newtype[Int, Pure]
   type FixRun = FixRun.T
-  object FixRun extends RefinedType[Boolean, Pure]
+  object FixRun extends Newtype[Boolean, Pure]
   type LastRound = LastRound.T
-  object LastRound extends RefinedType[Boolean, Pure]
+  object LastRound extends Newtype[Boolean, Pure]
   type RequestedRounds = RequestedRounds.T
-  object RequestedRounds extends RefinedType[Int, Pure]
+  object RequestedRounds extends Newtype[Int, Pure]
   type RoundCap = RoundCap.T
-  object RoundCap extends RefinedType[Int, Pure]
+  object RoundCap extends Newtype[Int, Pure]
   type RoundCount = RoundCount.T
-  object RoundCount extends RefinedType[Int, Pure]
+  object RoundCount extends Newtype[Int, Pure]
   type Sentence = Sentence.T
-  object Sentence extends RefinedType[String, Pure]
+  object Sentence extends Newtype[String, Pure]
   type SpotCheckCount = SpotCheckCount.T
-  object SpotCheckCount extends RefinedType[Int, Pure]
+  object SpotCheckCount extends Newtype[Int, Pure]
   type SpotCheckMin = SpotCheckMin.T
-  object SpotCheckMin extends RefinedType[Int, Pure]
+  object SpotCheckMin extends Newtype[Int, Pure]
   type TurnCap = TurnCap.T
-  object TurnCap extends RefinedType[Int, Pure]
+  object TurnCap extends Newtype[Int, Pure]
 
   // ── vocabularies ───────────────────────────────────────────────────────────────────────────────
 
@@ -77,7 +76,7 @@ object ReviewArticle:
 
   type ExplainSlots = ExplainSlotsValue
   type ExplainSlotsValue = ExplainSlotsValue.T
-  object ExplainSlotsValue extends RefinedType[String, Pure]
+  object ExplainSlotsValue extends Newtype[String, Pure]
   export Article.{Body as MechanicalBody}
   export BodyCorpus.{Generated as MechanicalGenerated}
   type VerdictOfLast = LastRound
@@ -88,7 +87,7 @@ object ReviewArticle:
   export com.histmersion.domain.automation.agents.ToolUse.{Tool as SpotCheckToolsValue}
   type SpotVerdicts = SpotVerdictsValue
   type SpotVerdictsValue = SpotVerdictsValue.T
-  object SpotVerdictsValue extends RefinedType[String, Pure]
+  object SpotVerdictsValue extends Newtype[String, Pure]
   type CheckSpotChecksLast = LastRound
   val CheckSpotChecksLast: LastRound.type = LastRound
   type CheckColdReaderLast = LastRound
@@ -121,9 +120,9 @@ object ReviewArticle:
 
   object Reviewer:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Prefix = Prefix.T
-    object Prefix extends RefinedType[String, Pure]
+    object Prefix extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Reviewer] = values.find(_.wire.value == s.value.trim.toLowerCase)
@@ -141,7 +140,7 @@ object ReviewArticle:
 
   object Severity:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Severity] = values.find(_.wire.value == s.value.trim.toLowerCase)
@@ -161,9 +160,9 @@ object ReviewArticle:
 
   object Verdict:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Rank = Rank.T
-    object Rank extends RefinedType[Int, Pure]:
+    object Rank extends Newtype[Int, Pure]:
       extension (r: T) def >(o: T): Boolean = r.value > o.value
 
 
@@ -194,10 +193,10 @@ object ReviewArticle:
       derives KindlingsCodecAsObject
   object EvidenceAnswer:
     type Citekey = Citekey.T
-    object Citekey extends RefinedType[String, Pure]:
+    object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
 
@@ -314,11 +313,11 @@ object ReviewArticle:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
     type Filter = Filter.T
-    object Filter extends RefinedType[String, Pure]
+    object Filter extends Newtype[String, Pure]
     type UncitedRelevant = UncitedRelevant.T
-    object UncitedRelevant extends RefinedType[String, Pure]
+    object UncitedRelevant extends Newtype[String, Pure]
     type StatusesSilent = StatusesSilent.T
-    object StatusesSilent extends RefinedType[String, Pure]
+    object StatusesSilent extends Newtype[String, Pure]
 
     given Schema[RulesAnswer] = KindlingsSchema
       .derived[RulesAnswer]
@@ -346,7 +345,7 @@ object ReviewArticle:
       derives KindlingsCodecAsObject
   object SpotCheckAnswer:
     type Citekey = Citekey.T
-    object Citekey extends RefinedType[String, Pure]:
+    object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
     type Claim = SpotCheck.Claim
     val Claim: SpotCheck.Claim.type = SpotCheck.Claim
@@ -377,15 +376,15 @@ object ReviewArticle:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
     type ExplainBack = ExplainBack.T
-    object ExplainBack extends RefinedType[String, Pure]
+    object ExplainBack extends Newtype[String, Pure]
     type EmptySlots = ExplainSlotsValue
     val EmptySlots: ExplainSlotsValue.type = ExplainSlotsValue
     type TermsUndefined = TermsUndefined.T
-    object TermsUndefined extends RefinedType[Int, Pure]
+    object TermsUndefined extends Newtype[Int, Pure]
     type OpaqueSentences = OpaqueSentences.T
-    object OpaqueSentences extends RefinedType[Int, Pure]
+    object OpaqueSentences extends Newtype[Int, Pure]
     type LostAt = LostAt.T
-    object LostAt extends RefinedType[String, Pure]
+    object LostAt extends Newtype[String, Pure]
 
     given Schema[ColdReaderAnswer] = KindlingsSchema
       .derived[ColdReaderAnswer]
@@ -418,7 +417,7 @@ object ReviewArticle:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
     type ClaimsChecked = ClaimsChecked.T
-    object ClaimsChecked extends RefinedType[Int, Pure]
+    object ClaimsChecked extends Newtype[Int, Pure]
 
     given Schema[SkepticAnswer] = KindlingsSchema
       .derived[SkepticAnswer]
@@ -446,7 +445,7 @@ object ReviewArticle:
     type Pair = CritiqueRef.Wire
     val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     given Schema[NotMaterialAnswer] = KindlingsSchema
       .derived[NotMaterialAnswer]
@@ -516,7 +515,7 @@ object ReviewArticle:
       derives KindlingsCodecAsObject
   object RejectionAnswer:
     type Citekey = Citekey.T
-    object Citekey extends RefinedType[String, Pure]:
+    object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim
     type Id = Rejection.Id
     val Id: Rejection.Id.type = Rejection.Id
@@ -652,19 +651,19 @@ object ReviewArticle:
   object Finding:
 
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Where = Where.T
-    object Where extends RefinedType[String, Pure]
+    object Where extends Newtype[String, Pure]
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Fix = Fix.T
-    object Fix extends RefinedType[String, Pure]
+    object Fix extends Newtype[String, Pure]
     type Escalated = Escalated.T
-    object Escalated extends RefinedType[Boolean, Pure]
+    object Escalated extends Newtype[Boolean, Pure]
 
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
   final case class Evidence(citekey: com.histmersion.domain.library.Citekey, offset: Option[Evidence.Offset], quote: Evidence.Quote, ratio: Evidence.Ratio)
@@ -676,7 +675,7 @@ object ReviewArticle:
     type Offset = com.histmersion.Offset
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
     type Ratio = AgentVerify.Ratio
     val Ratio: AgentVerify.Ratio.type = AgentVerify.Ratio
 
@@ -694,7 +693,7 @@ object ReviewArticle:
 
   object SpotCheck:
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Verdict = SpotVerdictsValue
     val Verdict: SpotVerdictsValue.type = SpotVerdictsValue
     type RecordQuote = Evidence.Quote
@@ -733,11 +732,11 @@ object ReviewArticle:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
     type Fixed = Fixed.T
-    object Fixed extends RefinedType[Boolean, Pure]
+    object Fixed extends Newtype[Boolean, Pure]
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
   /** A verification pass's verified answer: one reviewer's checks, the new findings (scoped: a MAJOR outside the edited
     * passages that is not a factual error with evidence is recorded as minor) and its lessons.
@@ -751,7 +750,7 @@ object ReviewArticle:
 
   object Recheck:
     type Lessons = Lessons.T
-    object Lessons extends RefinedType[String, Pure]
+    object Lessons extends Newtype[String, Pure]
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(
@@ -780,9 +779,9 @@ object ReviewArticle:
     type Body = Fix.Body
     val Body: Fix.Body.type = Fix.Body
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Truncated = Truncated.T
-    object Truncated extends RefinedType[Boolean, Pure]
+    object Truncated extends Newtype[Boolean, Pure]
 
   /** One line per source the article cites — `[[citekey]] · year · status · title` — so a reviewer reads every cited
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
@@ -816,7 +815,7 @@ object ReviewArticle:
   object Merged:
 
     type Round = Round.T
-    object Round extends RefinedType[Int, Pure]
+    object Round extends Newtype[Int, Pure]
     type ExplainBack = ColdReaderAnswer.ExplainBack
     val ExplainBack: ColdReaderAnswer.ExplainBack.type = ColdReaderAnswer.ExplainBack
     type EmptySlots = ColdReaderAnswer.EmptySlots
@@ -831,7 +830,7 @@ object ReviewArticle:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
     type Ratio = AgentVerify.Ratio
@@ -877,9 +876,9 @@ object ReviewArticle:
     type Unverified = Finding.Id
     val Unverified: Finding.Id.type = Finding.Id
     type UnresolvedMoved = UnresolvedMoved.T
-    object UnresolvedMoved extends RefinedType[String, Pure]
+    object UnresolvedMoved extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type WordsBefore = Article.Edits.ArticleCheck.WordsBefore
     val WordsBefore: Article.Edits.ArticleCheck.WordsBefore.type = Article.Edits.ArticleCheck.WordsBefore
     type WordsAfter = Article.Edits.ArticleCheck.WordsAfter
@@ -887,7 +886,7 @@ object ReviewArticle:
     type Repaired = Finding.Id
     val Repaired: Finding.Id.type = Finding.Id
     type Repairs = Repairs.T
-    object Repairs extends RefinedType[String, Pure]
+    object Repairs extends Newtype[String, Pure]
 
   final case class WontFix(id: WontFix.Id, reason: WontFix.Reason) derives KindlingsCodecAsObject
 
@@ -895,7 +894,7 @@ object ReviewArticle:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
   final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: SetAside.Reason) derives KindlingsCodecAsObject
@@ -904,7 +903,7 @@ object ReviewArticle:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or why nothing was
     * written.
@@ -914,11 +913,11 @@ object ReviewArticle:
 
   object Patched:
     type Written = Written.T
-    object Written extends RefinedType[Boolean, Pure]
+    object Written extends Newtype[Boolean, Pure]
     type PreviousVersion = PreviousVersion.T
-    object PreviousVersion extends RefinedType[Long, Pure]
+    object PreviousVersion extends Newtype[Long, Pure]
     type Conflict = Conflict.T
-    object Conflict extends RefinedType[Boolean, Pure]
+    object Conflict extends Newtype[Boolean, Pure]
 
   /** The run's result, for its log line and its queue items. */
   final case class Outcome(
@@ -936,15 +935,15 @@ object ReviewArticle:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type Applied = Applied.T
-    object Applied extends RefinedType[Int, Pure]
+    object Applied extends Newtype[Int, Pure]
     type Rejected = Rejected.T
-    object Rejected extends RefinedType[Int, Pure]
+    object Rejected extends Newtype[Int, Pure]
     type Fixed = Fixed.T
-    object Fixed extends RefinedType[Boolean, Pure]
+    object Fixed extends Newtype[Boolean, Pure]
     type Approvals = Approvals.T
-    object Approvals extends RefinedType[Int, Pure]
+    object Approvals extends Newtype[Int, Pure]
 
   // ── mechanical checks (§4.3 step 2) ─────────────────────────────────────────────────────────────
 
@@ -1276,7 +1275,7 @@ object ReviewArticle:
 
   object SpotRule:
     type Required = Required.T
-    object Required extends RefinedType[Int, Pure]
+    object Required extends Newtype[Int, Pure]
     type Cited = com.histmersion.domain.library.Citekey
     val Cited: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
     type Body = Fix.Body
@@ -1474,7 +1473,7 @@ object ReviewArticle:
 
   object CritiqueRule:
     type Full = Full.T
-    object Full extends RefinedType[Boolean, Pure]
+    object Full extends Newtype[Boolean, Pure]
     type Body = Fix.Body
     val Body: Fix.Body.type = Fix.Body
     type MinRatio = AgentVerify.MinRatio
@@ -2012,10 +2011,10 @@ object ReviewArticle:
 
   object BodyCorpus:
     type FormatError = FormatError.T
-    object FormatError extends RefinedType[String, Pure]
+    object FormatError extends Newtype[String, Pure]
 
     type Generated = Generated.T
-    object Generated extends RefinedType[Boolean, Pure]
+    object Generated extends Newtype[Boolean, Pure]
 
   /** THE check of a draft — the fixer's edits against the body the round reviewed, or a whole body — shared by the
     * pipeline's validation of the fixer's answer and the `check_edits` tool, so the two can never disagree. Edits apply

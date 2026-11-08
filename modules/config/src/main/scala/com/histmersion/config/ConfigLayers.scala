@@ -21,7 +21,6 @@ import hearth.kindlings.sconfigderivation.ConfigDecodingError
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with the precedence
@@ -75,9 +74,9 @@ private[config] object ConfigLayers:
 
   object Keys:
     type Settings = Settings.T
-    object Settings extends RefinedType[String, Pure]
+    object Settings extends Newtype[String, Pure]
     type Unknown = Unknown.T
-    object Unknown extends RefinedType[String, Pure]
+    object Unknown extends Newtype[String, Pure]
 
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's environment), not a fixed
     * set of settings: any key under one is known, and its value — any string, or null — is left to the reader.

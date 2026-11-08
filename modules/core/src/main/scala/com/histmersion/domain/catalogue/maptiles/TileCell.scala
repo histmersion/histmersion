@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a tile's query answers before the tile is written: ONE item (`key` the item's, `n` 1) or a CELL of `n` items
@@ -27,24 +26,24 @@ final case class TileCell(
 object TileCell:
 
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type X = TilePoint.X
   val X: TilePoint.X.type = TilePoint.X
   type Y = TilePoint.Y
   val Y: TilePoint.Y.type = TilePoint.Y
   type N = N.T
-  object N extends RefinedType[Int, Pure]
+  object N extends Newtype[Int, Pure]
   type MidLo = MidLo.T
-  object MidLo extends RefinedType[Double, Pure]
+  object MidLo extends Newtype[Double, Pure]
   type MidHi = MidHi.T
-  object MidHi extends RefinedType[Double, Pure]
+  object MidHi extends Newtype[Double, Pure]
   type West = West.T
-  object West extends RefinedType[Double, Pure]
+  object West extends Newtype[Double, Pure]
   type South = South.T
-  object South extends RefinedType[Double, Pure]
+  object South extends Newtype[Double, Pure]
   type East = East.T
-  object East extends RefinedType[Double, Pure]
+  object East extends Newtype[Double, Pure]
   type North = North.T
-  object North extends RefinedType[Double, Pure]
+  object North extends Newtype[Double, Pure]
   type Undated = Undated.T
-  object Undated extends RefinedType[Int, Pure]
+  object Undated extends Newtype[Int, Pure]

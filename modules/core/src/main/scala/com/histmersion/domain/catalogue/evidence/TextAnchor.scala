@@ -3,7 +3,6 @@ package domain.catalogue.evidence
 
 import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.Anchor
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
@@ -17,20 +16,20 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object TextAnchor:
   type ChunkChars = ChunkChars.T
-  object ChunkChars extends RefinedType[Int, Pure]
+  object ChunkChars extends Newtype[Int, Pure]
   type Prefix = Prefix.T
-  object Prefix extends RefinedType[String, Pure]
+  object Prefix extends Newtype[String, Pure]
   type Quote = Quote.T
-  object Quote extends RefinedType[String, Pure]
+  object Quote extends Newtype[String, Pure]
   type Suffix = Suffix.T
-  object Suffix extends RefinedType[String, Pure]
+  object Suffix extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   type ReanchorText = Text
   val ReanchorText: Text.type = Text
   type ReanchorHint = ReanchorHint.T
-  object ReanchorHint extends RefinedType[Int, Pure]
+  object ReanchorHint extends Newtype[Int, Pure]
 
   def reanchor(
       text: ReanchorText,

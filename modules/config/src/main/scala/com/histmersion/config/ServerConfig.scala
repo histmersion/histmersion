@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env
@@ -29,16 +28,16 @@ final case class ServerConfig(
 
 object ServerConfig:
   type Host = Host.T
-  object Host extends RefinedType[String, Pure]
+  object Host extends Newtype[String, Pure]
   type Port = Port.T
-  object Port extends RefinedType[Int, Pure]
+  object Port extends Newtype[Int, Pure]
   type PublicUrl = PublicUrl.T
-  object PublicUrl extends RefinedType[String, Pure]
+  object PublicUrl extends Newtype[String, Pure]
   type RequestTimeoutSeconds = RequestTimeoutSeconds.T
-  object RequestTimeoutSeconds extends RefinedType[Int, Pure]
+  object RequestTimeoutSeconds extends Newtype[Int, Pure]
   type ShutdownGraceSeconds = ShutdownGraceSeconds.T
-  object ShutdownGraceSeconds extends RefinedType[Int, Pure]
+  object ShutdownGraceSeconds extends Newtype[Int, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]
   type RestartExitCode = RestartExitCode.T
-  object RestartExitCode extends RefinedType[Int, Pure]
+  object RestartExitCode extends Newtype[Int, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Pictures that depict an event (`media.depicts`): Commons files whose structured data says `P180 depicts` the event's
@@ -14,10 +13,10 @@ final case class MediaDepictsConfig(perEvent: MediaDepictsConfig.PerEvent, searc
 
 object MediaDepictsConfig:
   type PerEvent = PerEvent.T
-  object PerEvent extends RefinedType[Int, Pure]
+  object PerEvent extends Newtype[Int, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends RefinedType[Int, Pure]
+  object SearchLimit extends Newtype[Int, Pure]
   type DepictedBy = DepictedBy.T
-  object DepictedBy extends RefinedType[Boolean, Pure]
+  object DepictedBy extends Newtype[Boolean, Pure]
   type Licences = Licences.T
-  object Licences extends RefinedType[String, Pure]
+  object Licences extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place (a Pleiades site has
@@ -43,35 +42,35 @@ final case class PlacesConfig(
 
 object PlacesConfig:
   type GeoLimit = GeoLimit.T
-  object GeoLimit extends RefinedType[Int, Pure]:
+  object GeoLimit extends Newtype[Int, Pure]:
     extension (l: T)
       def isPositive: Boolean = l.value > 0
       def atLeastOne: T = GeoLimit(l.value.max(1))
       def atMost(cap: T): T = GeoLimit(l.value.min(cap.value))
 
   type PointToleranceKm = PointToleranceKm.T
-  object PointToleranceKm extends RefinedType[Double, Pure]
+  object PointToleranceKm extends Newtype[Double, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends RefinedType[Int, Pure]
+  object SearchLimit extends Newtype[Int, Pure]
   type ChildrenLimit = ChildrenLimit.T
-  object ChildrenLimit extends RefinedType[Int, Pure]
+  object ChildrenLimit extends Newtype[Int, Pure]
   type TreeLimit = TreeLimit.T
-  object TreeLimit extends RefinedType[Int, Pure]
+  object TreeLimit extends Newtype[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends RefinedType[Int, Pure]
+  object TreeDepth extends Newtype[Int, Pure]
   type SeedDir = SeedDir.T
-  object SeedDir extends RefinedType[String, Pure]
+  object SeedDir extends Newtype[String, Pure]
   type ImportBatch = ImportBatch.T
-  object ImportBatch extends RefinedType[Int, Pure]
+  object ImportBatch extends Newtype[Int, Pure]
   type GeocodePlaceholderMin = GeocodePlaceholderMin.T
-  object GeocodePlaceholderMin extends RefinedType[Int, Pure]
+  object GeocodePlaceholderMin extends Newtype[Int, Pure]
   type GeocodeRepairKm = GeocodeRepairKm.T
-  object GeocodeRepairKm extends RefinedType[Double, Pure]
+  object GeocodeRepairKm extends Newtype[Double, Pure]
   type ModernFrom = ModernFrom.T
-  object ModernFrom extends RefinedType[Long, Pure]
+  object ModernFrom extends Newtype[Long, Pure]
   type PlaceholderAreaShare = PlaceholderAreaShare.T
-  object PlaceholderAreaShare extends RefinedType[Double, Pure]
+  object PlaceholderAreaShare extends Newtype[Double, Pure]
   type FetchTimeoutSeconds = FetchTimeoutSeconds.T
-  object FetchTimeoutSeconds extends RefinedType[Int, Pure]
+  object FetchTimeoutSeconds extends Newtype[Int, Pure]
   type FetchConnectTimeoutSeconds = FetchConnectTimeoutSeconds.T
-  object FetchConnectTimeoutSeconds extends RefinedType[Int, Pure]
+  object FetchConnectTimeoutSeconds extends Newtype[Int, Pure]

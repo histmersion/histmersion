@@ -2,14 +2,13 @@ package com.histmersion
 package domain
 
 import com.histmersion.{Period, Year}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Years as the corpus stores them (signed `Long`s, BCE negative) made into the model's `Year` and `Period`.
   */
 object DeepTime:
   type SignedYear = SignedYear.T
-  object SignedYear extends RefinedType[Long, Pure]
+  object SignedYear extends Newtype[Long, Pure]
   /** `None` for a year beyond what a `Year` holds — no source dates anything to it. */
 
   def year(y: SignedYear): Option[Year] = yearOf(y.value)

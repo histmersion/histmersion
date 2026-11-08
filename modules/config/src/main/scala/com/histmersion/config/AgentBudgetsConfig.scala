@@ -4,7 +4,6 @@ package config
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.automation.Pipeline
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Per run defaults (overridable per run) and the global caps checked before every LLM call. */
@@ -26,17 +25,17 @@ object AgentBudgetsConfig:
   /** `"review-article=1200000, compile-article=800000"` → the map; malformed entries dropped. */
 
   type RunUsd = RunUsd.T
-  object RunUsd extends RefinedType[Double, Pure]
+  object RunUsd extends Newtype[Double, Pure]
   type RunTokens = RunTokens.T
-  object RunTokens extends RefinedType[Long, Pure]
+  object RunTokens extends Newtype[Long, Pure]
   type DailyUsd = DailyUsd.T
-  object DailyUsd extends RefinedType[Double, Pure]
+  object DailyUsd extends Newtype[Double, Pure]
   type MonthlyUsd = MonthlyUsd.T
-  object MonthlyUsd extends RefinedType[Double, Pure]
+  object MonthlyUsd extends Newtype[Double, Pure]
   type PipelineRunTokens = PipelineRunTokens.T
-  object PipelineRunTokens extends RefinedType[String, Pure]
+  object PipelineRunTokens extends Newtype[String, Pure]
   type CacheReadWeight = CacheReadWeight.T
-  object CacheReadWeight extends RefinedType[Double, Pure]
+  object CacheReadWeight extends Newtype[Double, Pure]
 
   def parsePipelineTokens(s: PipelineRunTokens): Map[Pipeline.Wire, RunTokens] =
     s.value.split(",")

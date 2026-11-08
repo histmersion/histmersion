@@ -4,7 +4,6 @@ package domain
 import com.histmersion.api.LatinFold
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
@@ -25,21 +24,21 @@ import com.histmersion.domain.library.Doi
   */
 object AcquireMatch:
   type DecimalText = DecimalText.T
-  object DecimalText extends RefinedType[String, Pure]
+  object DecimalText extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type DoiText = DoiText.T
-  object DoiText extends RefinedType[String, Pure]
+  object DoiText extends Newtype[String, Pure]
   type MatchText = MatchText.T
-  object MatchText extends RefinedType[String, Pure]
+  object MatchText extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ProposeThreshold = ProposeThreshold.T
-  object ProposeThreshold extends RefinedType[Double, Pure]
+  object ProposeThreshold extends Newtype[Double, Pure]
   type Surname = Surname.T
-  object Surname extends RefinedType[String, Pure]
+  object Surname extends Newtype[String, Pure]
   type Token = Token.T
-  object Token extends RefinedType[String, Pure]
+  object Token extends Newtype[String, Pure]
 
   /** What the job does about one item. */
   type ScoreAuthors = AuthorName
@@ -61,7 +60,7 @@ object AcquireMatch:
   object Decision:
     object Propose:
       type Score = Score.T
-      object Score extends RefinedType[Double, Pure]
+      object Score extends Newtype[Double, Pure]
       type OtherDoi = Doi
       val OtherDoi: Doi.type = Doi
 

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `claude-code` provider: the person's own `claude` CLI, run headlessly (`claude -p`) on their own Claude login
@@ -44,25 +43,25 @@ final case class ClaudeCodeConfig(
 
 object ClaudeCodeConfig:
   type Command = Command.T
-  object Command extends RefinedType[String, Pure]
+  object Command extends Newtype[String, Pure]
   type ConfigDir = ConfigDir.T
-  object ConfigDir extends RefinedType[String, Pure]
+  object ConfigDir extends Newtype[String, Pure]
   type ExtraArgs = ExtraArgs.T
-  object ExtraArgs extends RefinedType[String, Pure]
+  object ExtraArgs extends Newtype[String, Pure]
   type UseApiKey = UseApiKey.T
-  object UseApiKey extends RefinedType[Boolean, Pure]
+  object UseApiKey extends Newtype[Boolean, Pure]
   type AllowNonLoopback = AllowNonLoopback.T
-  object AllowNonLoopback extends RefinedType[Boolean, Pure]
+  object AllowNonLoopback extends Newtype[Boolean, Pure]
   type McpUrl = McpUrl.T
-  object McpUrl extends RefinedType[String, Pure]
+  object McpUrl extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type LimitCooldownMinutes = LimitCooldownMinutes.T
-  object LimitCooldownMinutes extends RefinedType[Int, Pure]
+  object LimitCooldownMinutes extends Newtype[Int, Pure]
   type DisableSlashCommands = DisableSlashCommands.T
-  object DisableSlashCommands extends RefinedType[Boolean, Pure]
+  object DisableSlashCommands extends Newtype[Boolean, Pure]
   type EnvKey = EnvKey.T
-  object EnvKey extends RefinedType[String, Pure]:
+  object EnvKey extends Newtype[String, Pure]:
     given ConfigReader[Map[EnvKey, Option[EnvValue]]] =
       ConfigReader.derived[Map[String, Option[EnvValue]]].emap { byName =>
         byName.foldLeft[Either[String, Map[EnvKey, Option[EnvValue]]]](Right(Map.empty)) { case (acc, (name, v)) =>
@@ -73,4 +72,4 @@ object ClaudeCodeConfig:
         }
       }
   type EnvValue = EnvValue.T
-  object EnvValue extends RefinedType[String, Pure]
+  object EnvValue extends Newtype[String, Pure]

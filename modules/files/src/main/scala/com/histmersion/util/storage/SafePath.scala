@@ -3,7 +3,6 @@ package util.storage
 import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Confining a caller-supplied path to a configured directory.
@@ -20,15 +19,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object SafePath:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** `Right(resolved)` when `candidate` is inside `base`, or when `base` is not configured. Relative candidates are
     * resolved against `base` when there is one.
     */
   type Base = Base.T
-  object Base extends RefinedType[String, Pure]
+  object Base extends Newtype[String, Pure]
   type Candidate = Candidate.T
-  object Candidate extends RefinedType[String, Pure]
+  object Candidate extends Newtype[String, Pure]
 
   def confine(base: Option[Base], candidate: Candidate): Either[Problem, Path] =
     val root = base.map(_.value.trim).filter(_.nonEmpty)

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** CORE's endpoint and its plain key (`histmersion.acquire.core.url`, `.api-key`); the budget's limits are the host's.
@@ -13,8 +12,8 @@ final case class CoreEndpoint(url: CoreEndpoint.Url, apiKey: CoreEndpoint.ApiKey
 object CoreEndpoint:
 
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]:
+  object Url extends Newtype[String, Pure]:
     given ConfigReader[Url] = summon[ConfigReader[String]].emap(Url.either)
   type ApiKey = ApiKey.T
-  object ApiKey extends RefinedType[String, Pure]:
+  object ApiKey extends Newtype[String, Pure]:
     given ConfigReader[ApiKey] = summon[ConfigReader[String]].emap(ApiKey.either)

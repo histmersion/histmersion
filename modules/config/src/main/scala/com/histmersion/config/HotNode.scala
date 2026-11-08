@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One node of the hot component graph (docs/research-plugins.md §3.6): its name, the nodes its value is built from,
@@ -12,8 +11,8 @@ final case class HotNode(name: HotNode.Name, deps: List[HotNode.Deps], keys: Lis
 
 object HotNode:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Deps = Deps.T
-  object Deps extends RefinedType[String, Pure]
+  object Deps extends Newtype[String, Pure]
   type Keys = Keys.T
-  object Keys extends RefinedType[String, Pure]
+  object Keys extends Newtype[String, Pure]

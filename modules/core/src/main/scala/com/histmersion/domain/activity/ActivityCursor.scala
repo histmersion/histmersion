@@ -2,7 +2,6 @@ package com.histmersion
 package domain.activity
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where an older page of the activity list starts: the entry it follows, by its time and its key (entries are ordered
@@ -13,12 +12,12 @@ final case class ActivityCursor(at: Instant, key: ActivityCursor.Key):
 
 object ActivityCursor:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
 
   def parse(s: Wire): Either[Problem, ActivityCursor] =
     s.value.trim.split("~", 2) match

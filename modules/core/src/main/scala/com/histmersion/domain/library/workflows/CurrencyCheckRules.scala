@@ -7,7 +7,6 @@ import com.histmersion.api.given
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
@@ -23,7 +22,7 @@ object CurrencyCheckRules:
     * records. Evidence is the citation context: code never invents a quote.
     */
   type AcquireText = AcquireText.T
-  object AcquireText extends RefinedType[String, Pure]
+  object AcquireText extends Newtype[String, Pure]
 
   enum CurrencyAction:
     case Propose(p: Proposal)

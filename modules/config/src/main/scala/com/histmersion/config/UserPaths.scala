@@ -6,7 +6,6 @@ import org.ekrich.config.Config
 
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and backups; the agent
@@ -22,13 +21,13 @@ final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
 
 object UserPaths:
   type BasemapDir = BasemapDir.T
-  object BasemapDir extends RefinedType[String, Pure]
+  object BasemapDir extends Newtype[String, Pure]
   type Lookup = Environment.VariablesKey => Option[Environment.VariablesValue]
   type HomeDir = HomeDir.T
-  object HomeDir extends RefinedType[String, Pure]
+  object HomeDir extends Newtype[String, Pure]
 
   type OsName = OsName.T
-  object OsName extends RefinedType[String, Pure]
+  object OsName extends Newtype[String, Pure]
 
   val ConfigEnv: Environment.VariablesKey = Environment.VariablesKey("HISTMERSION_CONFIG")
 

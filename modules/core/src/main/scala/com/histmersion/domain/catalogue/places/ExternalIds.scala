@@ -1,20 +1,19 @@
 package com.histmersion
 package domain.catalogue.places
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 
 /** Gazetteer ids in the URI forms providers write them. Pure. */
 object ExternalIds:
   type Scheme = Scheme.T
-  object Scheme extends RefinedType[String, Pure]
+  object Scheme extends Newtype[String, Pure]
   type ExternalId = ExternalId.T
-  object ExternalId extends RefinedType[String, Pure]
+  object ExternalId extends Newtype[String, Pure]
   type Uri = Uri.T
-  object Uri extends RefinedType[String, Pure]
+  object Uri extends Newtype[String, Pure]
   type Shown = Shown.T
-  object Shown extends RefinedType[String, Pure]
+  object Shown extends Newtype[String, Pure]
 
   val Pleiades: Scheme = Scheme("pleiades")
   val GeoNames: Scheme = Scheme("geonames")

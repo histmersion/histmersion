@@ -11,7 +11,6 @@ import java.time.{Duration, Instant}
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.domain.automation.Pipeline
@@ -24,61 +23,61 @@ import com.histmersion.domain.automation.Goal
   */
 object ManagerPolicy:
   type ActiveAll = ActiveAll.T
-  object ActiveAll extends RefinedType[Int, Pure]
+  object ActiveAll extends Newtype[Int, Pure]
   type BlockReason = BlockReason.T
-  object BlockReason extends RefinedType[String, Pure]
+  object BlockReason extends Newtype[String, Pure]
   type Capacity = Capacity.T
-  object Capacity extends RefinedType[Int, Pure]
+  object Capacity extends Newtype[Int, Pure]
   type DueCount = DueCount.T
-  object DueCount extends RefinedType[Int, Pure]
+  object DueCount extends Newtype[Int, Pure]
   type InFlightCount = InFlightCount.T
-  object InFlightCount extends RefinedType[Int, Pure]
+  object InFlightCount extends Newtype[Int, Pure]
   type InstantText = InstantText.T
-  object InstantText extends RefinedType[String, Pure]
+  object InstantText extends Newtype[String, Pure]
   type ItemId = ItemId.T
-  object ItemId extends RefinedType[Long, Pure]
+  object ItemId extends Newtype[Long, Pure]
   type MaxConcurrent = MaxConcurrent.T
-  object MaxConcurrent extends RefinedType[Int, Pure]
+  object MaxConcurrent extends Newtype[Int, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T
-  object MinIntervalMinutes extends RefinedType[Int, Pure]
+  object MinIntervalMinutes extends Newtype[Int, Pure]
   type MineOpen = MineOpen.T
-  object MineOpen extends RefinedType[Int, Pure]
+  object MineOpen extends Newtype[Int, Pure]
   type MineRunning = MineRunning.T
-  object MineRunning extends RefinedType[Int, Pure]
+  object MineRunning extends Newtype[Int, Pure]
   type PendingCount = PendingCount.T
-  object PendingCount extends RefinedType[Int, Pure]
+  object PendingCount extends Newtype[Int, Pure]
   type PoolCap = PoolCap.T
-  object PoolCap extends RefinedType[Int, Pure]
+  object PoolCap extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Quota = Quota.T
-  object Quota extends RefinedType[Int, Pure]
+  object Quota extends Newtype[Int, Pure]
   type Room = Room.T
-  object Room extends RefinedType[Int, Pure]
+  object Room extends Newtype[Int, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends RefinedType[String, Pure]
+  object StatusNote extends Newtype[String, Pure]
   type StepLabel = StepLabel.T
-  object StepLabel extends RefinedType[String, Pure]
+  object StepLabel extends Newtype[String, Pure]
   type Tag = Tag.T
-  object Tag extends RefinedType[String, Pure]
+  object Tag extends Newtype[String, Pure]
   type Topic = Topic.T
-  object Topic extends RefinedType[String, Pure]
+  object Topic extends Newtype[String, Pure]
   type Attempts = Attempts.T
-  object Attempts extends RefinedType[Int, Pure]
+  object Attempts extends Newtype[Int, Pure]
   type ApprovalId = ApprovalId.T
-  object ApprovalId extends RefinedType[Long, Pure]
+  object ApprovalId extends Newtype[Long, Pure]
   type ItemNote = ItemNote.T
-  object ItemNote extends RefinedType[String, Pure]
+  object ItemNote extends Newtype[String, Pure]
   type ItemOutcome = ItemOutcome.T
-  object ItemOutcome extends RefinedType[String, Pure]
+  object ItemOutcome extends Newtype[String, Pure]
   type ItemTask = ItemTask.T
-  object ItemTask extends RefinedType[String, Pure]
+  object ItemTask extends Newtype[String, Pure]
 
   /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its articles,
     * sweeps for acquisitions or checks currency.
     */
   type ItemKind = ItemKind.T
-  object ItemKind extends RefinedType[String, Pure]:
+  object ItemKind extends Newtype[String, Pure]:
     val ArticleReview: ItemKind = ItemKind(Managers.ArticleReview)
     val InferFilter: ItemKind = ItemKind(Managers.InferFilter)
     val ProposeArticles: ItemKind = ItemKind(Managers.ProposeArticles)
@@ -115,33 +114,33 @@ object ManagerPolicy:
   object ReviewSettings:
     /** The settings of a manager of kind `k`. */
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends RefinedType[Int, Pure]
+    object MaxRuns extends Newtype[Int, Pure]
     type MaxOpen = MaxOpen.T
-    object MaxOpen extends RefinedType[Int, Pure]
+    object MaxOpen extends Newtype[Int, Pure]
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type MaxRunsPerArticle = MaxRunsPerArticle.T
-    object MaxRunsPerArticle extends RefinedType[Int, Pure]
+    object MaxRunsPerArticle extends Newtype[Int, Pure]
     type NoProgressRuns = NoProgressRuns.T
-    object NoProgressRuns extends RefinedType[Int, Pure]
+    object NoProgressRuns extends Newtype[Int, Pure]
     type ReopenLimit = ReopenLimit.T
-    object ReopenLimit extends RefinedType[Int, Pure]
+    object ReopenLimit extends Newtype[Int, Pure]
     type CooldownMinutes = CooldownMinutes.T
-    object CooldownMinutes extends RefinedType[Int, Pure]
+    object CooldownMinutes extends Newtype[Int, Pure]
     type LowWater = LowWater.T
-    object LowWater extends RefinedType[Int, Pure]
+    object LowWater extends Newtype[Int, Pure]
     type RefillBatch = RefillBatch.T
-    object RefillBatch extends RefinedType[Int, Pure]
+    object RefillBatch extends Newtype[Int, Pure]
     type MaxFailures = MaxFailures.T
-    object MaxFailures extends RefinedType[Int, Pure]
+    object MaxFailures extends Newtype[Int, Pure]
     type BackoffMinutes = BackoffMinutes.T
-    object BackoffMinutes extends RefinedType[Int, Pure]
+    object BackoffMinutes extends Newtype[Int, Pure]
     type MaxBackoffMinutes = MaxBackoffMinutes.T
-    object MaxBackoffMinutes extends RefinedType[Int, Pure]
+    object MaxBackoffMinutes extends Newtype[Int, Pure]
     type StaleAfterDays = StaleAfterDays.T
-    object StaleAfterDays extends RefinedType[Int, Pure]
+    object StaleAfterDays extends Newtype[Int, Pure]
     type InferFilter = InferFilter.T
-    object InferFilter extends RefinedType[Boolean, Pure]
+    object InferFilter extends Newtype[Boolean, Pure]
 
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.fold(simple(k, m).maxRuns.value)(_.value))
@@ -259,7 +258,7 @@ object ManagerPolicy:
   object Next:
     object Retry:
       type Failures = Failures.T
-      object Failures extends RefinedType[Int, Pure]
+      object Failures extends Newtype[Int, Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
   def backoff(baseMinutes: ReviewSettings.BackoffMinutes, maxMinutes: ReviewSettings.MaxBackoffMinutes, failures: Next.Retry.Failures): Duration =
@@ -378,12 +377,12 @@ object ManagerPolicy:
 
   object Candidate:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]:
+    object Id extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
 
   /** May it start now? */
   def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))

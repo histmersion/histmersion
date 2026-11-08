@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `passages` (#954): the defaults and caps of a caller's `limit` (passages shown) and `context` (characters around a
@@ -29,14 +28,14 @@ final case class PassageLimits(
 object PassageLimits:
 
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type MaxLimit = MaxLimit.T
-  object MaxLimit extends RefinedType[Int, Pure]
+  object MaxLimit extends Newtype[Int, Pure]
   type Context = Context.T
-  object Context extends RefinedType[Int, Pure]
+  object Context extends Newtype[Int, Pure]
   type MaxContext = MaxContext.T
-  object MaxContext extends RefinedType[Int, Pure]
+  object MaxContext extends Newtype[Int, Pure]
   type MaxMatches = MaxMatches.T
-  object MaxMatches extends RefinedType[Int, Pure]
+  object MaxMatches extends Newtype[Int, Pure]
   type RegexTimeoutMs = RegexTimeoutMs.T
-  object RegexTimeoutMs extends RefinedType[Int, Pure]
+  object RegexTimeoutMs extends Newtype[Int, Pure]

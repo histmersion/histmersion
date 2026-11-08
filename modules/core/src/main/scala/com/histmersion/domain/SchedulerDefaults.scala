@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SchedulerDefaults(
@@ -18,20 +17,20 @@ final case class SchedulerDefaults(
 
 object SchedulerDefaults:
   type Strategy = Strategy.T
-  object Strategy extends RefinedType[String, Pure]
+  object Strategy extends Newtype[String, Pure]
   type AgingHours = AgingHours.T
-  object AgingHours extends RefinedType[Int, Pure]
+  object AgingHours extends Newtype[Int, Pure]
   type MaxWaitHours = MaxWaitHours.T
-  object MaxWaitHours extends RefinedType[Int, Pure]
+  object MaxWaitHours extends Newtype[Int, Pure]
   type MinShare = MinShare.T
-  object MinShare extends RefinedType[Double, Pure]
+  object MinShare extends Newtype[Double, Pure]
   type BuiltInWeights = BuiltInWeights.T
-  object BuiltInWeights extends RefinedType[String, Pure]
+  object BuiltInWeights extends Newtype[String, Pure]
   type TypeWeights = TypeWeights.T
-  object TypeWeights extends RefinedType[String, Pure]
+  object TypeWeights extends Newtype[String, Pure]
   type BuiltInPriorities = BuiltInPriorities.T
-  object BuiltInPriorities extends RefinedType[String, Pure]
+  object BuiltInPriorities extends Newtype[String, Pure]
   type TypePriorities = TypePriorities.T
-  object TypePriorities extends RefinedType[String, Pure]
+  object TypePriorities extends Newtype[String, Pure]
   type GatheringSlots = GatheringSlots.T
-  object GatheringSlots extends RefinedType[Int, Pure]
+  object GatheringSlots extends Newtype[Int, Pure]

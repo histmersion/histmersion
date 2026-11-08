@@ -8,7 +8,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 
@@ -33,15 +32,15 @@ import com.histmersion.domain.research.Slug
   */
 object GoalFocus:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Ratio = Ratio.T
-  object Ratio extends RefinedType[Int, Pure]
+  object Ratio extends Newtype[Int, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Recent = Recent.T
-  object Recent extends RefinedType[Boolean, Pure]
+  object Recent extends Newtype[Boolean, Pure]
   type WaitCode = WaitCode.T
-  object WaitCode extends RefinedType[String, Pure]
+  object WaitCode extends Newtype[String, Pure]
 
   private def counted(n: Int, singular: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular)).value
@@ -55,9 +54,9 @@ object GoalFocus:
 
   object Stage:
     type Rank = Rank.T
-    object Rank extends RefinedType[Int, Pure]
+    object Rank extends Newtype[Int, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Stage] = values.find(_.wire == Wire(s.value.trim.toLowerCase))
@@ -94,21 +93,21 @@ object GoalFocus:
   object Work:
 
     type ItemId = ItemId.T
-    object ItemId extends RefinedType[Long, Pure]:
+    object ItemId extends Newtype[Long, Pure]:
       given Ordering[T] = Ordering.by[T, Long](_.value)
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Person = Person.T
-    object Person extends RefinedType[Boolean, Pure]
+    object Person extends Newtype[Boolean, Pure]
     type FocusHeld = FocusHeld.T
-    object FocusHeld extends RefinedType[Boolean, Pure]
+    object FocusHeld extends Newtype[Boolean, Pure]
     type PersonHeld = PersonHeld.T
-    object PersonHeld extends RefinedType[Boolean, Pure]
+    object PersonHeld extends Newtype[Boolean, Pure]
     type Approval = Approval.T
-    object Approval extends RefinedType[Long, Pure]:
+    object Approval extends Newtype[Long, Pure]:
       given Ordering[T] = Ordering.by[T, Long](_.value)
     type ApprovalByPerson = ApprovalByPerson.T
-    object ApprovalByPerson extends RefinedType[Boolean, Pure]
+    object ApprovalByPerson extends Newtype[Boolean, Pure]
 
   /** A goal as the focus sees it. `articles` = its linked articles that exist, `unreviewed` = those not passed their
     * review; `compileOpen` = its approved articles not compiled yet; `work` = its open model-using items; `lastStop` =
@@ -134,25 +133,25 @@ object GoalFocus:
 
   object Facts:
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type Sources = Sources.T
-    object Sources extends RefinedType[Int, Pure]
+    object Sources extends Newtype[Int, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[Int, Pure]
+    object Articles extends Newtype[Int, Pure]
     type Unreviewed = Unreviewed.T
-    object Unreviewed extends RefinedType[Int, Pure]
+    object Unreviewed extends Newtype[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends RefinedType[Int, Pure]
+    object CompileOpen extends Newtype[Int, Pure]
     type LastStop = LastStop.T
-    object LastStop extends RefinedType[String, Pure]
+    object LastStop extends Newtype[String, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Boolean, Pure]
+    object Pinned extends Newtype[Boolean, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Active = Active.T
-    object Active extends RefinedType[Boolean, Pure]
+    object Active extends Newtype[Boolean, Pure]
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
 
   /** `max` goals at most (≤ 0: no cap); `minSources` = what a proposed article needs (`agents.seed.min-sources`);
     * `plansByPerson` = a person decides goal plans (`agents.approvals.goal-plan = manual`) and `openPersonPlans` of
@@ -162,13 +161,13 @@ object GoalFocus:
 
   object Settings:
     type Max = Max.T
-    object Max extends RefinedType[Int, Pure]
+    object Max extends Newtype[Int, Pure]
     type MinSources = MinSources.T
-    object MinSources extends RefinedType[Int, Pure]
+    object MinSources extends Newtype[Int, Pure]
     type PlansByPerson = PlansByPerson.T
-    object PlansByPerson extends RefinedType[Boolean, Pure]
+    object PlansByPerson extends Newtype[Boolean, Pure]
     type OpenPersonPlans = OpenPersonPlans.T
-    object OpenPersonPlans extends RefinedType[Int, Pure]
+    object OpenPersonPlans extends Newtype[Int, Pure]
 
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
   enum Fit:

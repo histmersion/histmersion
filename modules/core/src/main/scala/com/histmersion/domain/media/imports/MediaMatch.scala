@@ -7,7 +7,6 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.Period
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a collection record is tied to a place on the map — conservatively, and with the reason recorded (#1446). Pure.
@@ -28,29 +27,29 @@ object MediaMatch:
 
   /** Why a record is not tied to the place. */
   type Refusal = Refusal.T
-  object Refusal extends RefinedType[String, Pure]
+  object Refusal extends Newtype[String, Pure]
   /** What ties a record to the place: the field and value (or the id) that name it, and the dates. */
   type Basis = Basis.T
-  object Basis extends RefinedType[String, Pure]
+  object Basis extends Newtype[String, Pure]
   /** A period as a person reads it (`1400–1200 BCE`). */
   type PeriodText = PeriodText.T
-  object PeriodText extends RefinedType[String, Pure]
+  object PeriodText extends Newtype[String, Pure]
   /** One signed year as a person reads it (`1500 CE`). */
   type YearText = YearText.T
-  object YearText extends RefinedType[String, Pure]
+  object YearText extends Newtype[String, Pure]
   type GeographySpecific = GeographySpecific.T
-  object GeographySpecific extends RefinedType[Boolean, Pure]
+  object GeographySpecific extends Newtype[Boolean, Pure]
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
   final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
 
   object PlaceInfo:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Keys = Keys.T
-    object Keys extends RefinedType[String, Pure]
+    object Keys extends Newtype[String, Pure]
 
   private val Uncertain =
     List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")

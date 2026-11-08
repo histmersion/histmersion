@@ -1,7 +1,6 @@
 package com.histmersion
 package config.edit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A setting as it may be SHOWN — to a person, a client or an agent: its values as HOCON writes them, and for a
@@ -28,11 +27,11 @@ final case class SettingShown(
 
 object SettingShown:
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type CredentialRule = CredentialRule.T
-  object CredentialRule extends RefinedType[String, Pure]
+  object CredentialRule extends Newtype[String, Pure]
   type CredentialForm = CredentialForm.T
-  object CredentialForm extends RefinedType[String, Pure]
+  object CredentialForm extends Newtype[String, Pure]
 
   def of(r: SettingReading): SettingShown =
     val f = r.field

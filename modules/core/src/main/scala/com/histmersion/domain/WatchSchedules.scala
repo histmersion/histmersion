@@ -9,7 +9,6 @@ import com.histmersion.api.automation.Managers.*
 import java.time.Instant
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.Manager
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)): the pure half of
@@ -38,7 +37,7 @@ object WatchSchedules:
 
   object Plan:
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
 
   /** A goal's schedules into its watcher. The watcher's own settings win (an existing one keeps its cron; as a bundle
     * import keeps this collection's schedules, #881): its sweeps gain the ENABLED schedules' kinds; a disabled schedule

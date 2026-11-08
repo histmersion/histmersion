@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on the user's machine,
@@ -31,10 +30,10 @@ final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calib
 object CalibreCliConfig:
 
   type LibraryDir = LibraryDir.T
-  object LibraryDir extends RefinedType[String, Pure]
+  object LibraryDir extends Newtype[String, Pure]
   type Calibredb = Calibredb.T
-  object Calibredb extends RefinedType[String, Pure]
+  object Calibredb extends Newtype[String, Pure]
   type Sqlite = Sqlite.T
-  object Sqlite extends RefinedType[String, Pure]
+  object Sqlite extends Newtype[String, Pure]
   type OriginalsDir = OriginalsDir.T
-  object OriginalsDir extends RefinedType[String, Pure]
+  object OriginalsDir extends Newtype[String, Pure]

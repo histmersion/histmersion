@@ -25,7 +25,6 @@ import scala.collection.mutable
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.exchange.MergeTally
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
@@ -201,13 +200,13 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 object FindingPlan:
 
   type ClaimKey = ClaimKey.T
-  object ClaimKey extends RefinedType[String, Pure]
+  object ClaimKey extends Newtype[String, Pure]
   type IdCount = IdCount.T
-  object IdCount extends RefinedType[Int, Pure]
+  object IdCount extends Newtype[Int, Pure]
 
   /** A great-circle distance in km. */
   type Distance = Distance.T
-  object Distance extends RefinedType[Double, Pure]:
+  object Distance extends Newtype[Double, Pure]:
     extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
@@ -228,7 +227,7 @@ object FindingPlan:
   object Match:
     object Near:
       type Jaccard = Jaccard.T
-      object Jaccard extends RefinedType[Double, Pure]
+      object Jaccard extends Newtype[Double, Pure]
 
   private def text(o: Option[Bundle.Finding.Region]): Option[Bundle.Finding.Region] =
     o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)

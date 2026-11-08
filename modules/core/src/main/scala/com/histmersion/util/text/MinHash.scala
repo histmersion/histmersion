@@ -1,7 +1,6 @@
 package com.histmersion
 package util.text
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
@@ -15,16 +14,16 @@ final case class MinHash(mins: Vector[MinHash.Mins]):
 object MinHash:
 
   type Similarity = Similarity.T
-  object Similarity extends RefinedType[Double, Pure]
+  object Similarity extends Newtype[Double, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Size = Size.T
-  object Size extends RefinedType[Int, Pure]
+  object Size extends Newtype[Int, Pure]
   type ShingleLength = ShingleLength.T
-  object ShingleLength extends RefinedType[Int, Pure]
+  object ShingleLength extends Newtype[Int, Pure]
 
   type Mins = Mins.T
-  object Mins extends RefinedType[Int, Pure]
+  object Mins extends Newtype[Int, Pure]
 
   /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
     * hashed as one. Pure and deterministic.

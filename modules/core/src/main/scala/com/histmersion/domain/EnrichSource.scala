@@ -15,7 +15,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -27,32 +26,32 @@ import com.histmersion.domain.research.Slug
   */
 object EnrichSource:
   type Century = Century.T
-  object Century extends RefinedType[Int, Pure]
+  object Century extends Newtype[Int, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type FindingCount = FindingCount.T
-  object FindingCount extends RefinedType[Int, Pure]
+  object FindingCount extends Newtype[Int, Pure]
   type Last = Last.T
-  object Last extends RefinedType[Boolean, Pure]
+  object Last extends Newtype[Boolean, Pure]
   type MaxWindows = MaxWindows.T
-  object MaxWindows extends RefinedType[Int, Pure]
+  object MaxWindows extends Newtype[Int, Pure]
   type MaxAbsYear = AgentVerify.MaxAbsYear
   val MaxAbsYear: AgentVerify.MaxAbsYear.type = AgentVerify.MaxAbsYear
   export AgentVerify.{MinRatio, Problem, SourceBody}
   type Topic = Topic.T
-  object Topic extends RefinedType[String, Pure]
+  object Topic extends Newtype[String, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type PlaceQuery = FindingProposal.Place
   val PlaceQuery: FindingProposal.Place.type = FindingProposal.Place
   type Tag = Tag.T
-  object Tag extends RefinedType[String, Pure]
+  object Tag extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type WindowChars = WindowChars.T
-  object WindowChars extends RefinedType[Int, Pure]
+  object WindowChars extends Newtype[Int, Pure]
 
   type CheckClassificationMaxAbsYear = MaxAbsYear
   val CheckClassificationMaxAbsYear: MaxAbsYear.type = MaxAbsYear
@@ -65,7 +64,7 @@ object EnrichSource:
   type CheckFindingsMaxAbsYear = MaxAbsYear
   val CheckFindingsMaxAbsYear: MaxAbsYear.type = MaxAbsYear
   type PatchNotes = PatchNotes.T
-  object PatchNotes extends RefinedType[String, Pure]
+  object PatchNotes extends Newtype[String, Pure]
 
   import AgentVerify.*
 
@@ -88,7 +87,7 @@ object EnrichSource:
 
   object StatedPeriod:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
 
 
   final case class Classification(
@@ -102,9 +101,9 @@ object EnrichSource:
   ) derives KindlingsCodecAsObject
   object Classification:
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type StatusEvidence = StatusEvidence.T
-    object StatusEvidence extends RefinedType[String, Pure]
+    object StatusEvidence extends Newtype[String, Pure]
 
     given Schema[Classification] = KindlingsSchema
       .derived[Classification]
@@ -132,11 +131,11 @@ object EnrichSource:
   ) derives KindlingsCodecAsObject
   object FindingProposal:
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Place = Place.T
-    object Place extends RefinedType[String, Pure]
+    object Place extends Newtype[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends RefinedType[String, Pure]
+    object PeriodName extends Newtype[String, Pure]
 
     given Schema[FindingProposal] = KindlingsSchema
       .derived[FindingProposal]
@@ -158,7 +157,7 @@ object EnrichSource:
 
   object Notes:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
 
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
@@ -168,11 +167,11 @@ object EnrichSource:
 
   object Window:
     type Index = Index.T
-    object Index extends RefinedType[Int, Pure]
+    object Index extends Newtype[Int, Pure]
     type Heading = Heading.T
-    object Heading extends RefinedType[String, Pure]
+    object Heading extends Newtype[String, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
 
   /** What `load` records: enough of the source for every later step, and its `updatedAt` for the final patch's
     * precondition.
@@ -200,19 +199,19 @@ object EnrichSource:
 
   object Loaded:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Venue = Venue.T
-    object Venue extends RefinedType[String, Pure]
+    object Venue extends Newtype[String, Pure]
     type HasSummary = HasSummary.T
-    object HasSummary extends RefinedType[Boolean, Pure]
+    object HasSummary extends Newtype[Boolean, Pure]
     type HasNotes = HasNotes.T
-    object HasNotes extends RefinedType[Boolean, Pure]
+    object HasNotes extends Newtype[Boolean, Pure]
     type HasPeriod = HasPeriod.T
-    object HasPeriod extends RefinedType[Boolean, Pure]
+    object HasPeriod extends Newtype[Boolean, Pure]
     type ExistingClaims = ExistingClaims.T
-    object ExistingClaims extends RefinedType[String, Pure]
+    object ExistingClaims extends Newtype[String, Pure]
     type Head = Head.T
-    object Head extends RefinedType[String, Pure]
+    object Head extends Newtype[String, Pure]
 
   /** A finding that passed verification, with its quote's match ratio. `placeKind` is the model's judgement of what
     * `place` is (`None` = no hint; absent from checkpoints older than #981).
@@ -238,15 +237,15 @@ object EnrichSource:
 
   object VerifiedFinding:
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
     type Place = Place.T
-    object Place extends RefinedType[String, Pure]
+    object Place extends Newtype[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends RefinedType[String, Pure]
+    object PeriodName extends Newtype[String, Pure]
     type Confidence = Confidence.T
-    object Confidence extends RefinedType[String, Pure]
+    object Confidence extends Newtype[String, Pure]
 
   /** One window's verified findings. `proposed` = how many the accepted answer held, `quoteFailed` = how many of those
     * quotes were not found in the window (dropped on a last attempt) — what `agent compare` reads the verifier's pass
@@ -260,9 +259,9 @@ object EnrichSource:
 
   object VerifiedFindings:
     type Proposed = Proposed.T
-    object Proposed extends RefinedType[Int, Pure]
+    object Proposed extends Newtype[Int, Pure]
     type QuoteFailed = QuoteFailed.T
-    object QuoteFailed extends RefinedType[Int, Pure]
+    object QuoteFailed extends Newtype[Int, Pure]
 
   /** What the geocoder chose for one finding's place, for a person to audit in the run trace: `placeId`/`label` empty
     * when the name is unknown, `approximate` saying why the point is only near what was asked (a qualifier dropped, a
@@ -278,13 +277,13 @@ object EnrichSource:
 
   object GeocodeChoice:
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Asked = Asked.T
-    object Asked extends RefinedType[String, Pure]
+    object Asked extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Approximate = Approximate.T
-    object Approximate extends RefinedType[String, Pure]
+    object Approximate extends Newtype[String, Pure]
 
   /** The `geocode` step: the findings with their points, and every choice behind them. */
   final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
@@ -303,20 +302,20 @@ object EnrichSource:
 
   object Classified:
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type StatusEvidence = StatusEvidence.T
-    object StatusEvidence extends RefinedType[String, Pure]
+    object StatusEvidence extends Newtype[String, Pure]
 
   final case class Patched(findingsAdded: Patched.FindingsAdded, fieldsSet: List[Patched.FieldsSet], statusProposal: Option[Patched.StatusProposal])
       derives KindlingsCodecAsObject
 
   object Patched:
     type FindingsAdded = FindingsAdded.T
-    object FindingsAdded extends RefinedType[Int, Pure]
+    object FindingsAdded extends Newtype[Int, Pure]
     type FieldsSet = FieldsSet.T
-    object FieldsSet extends RefinedType[String, Pure]
+    object FieldsSet extends Newtype[String, Pure]
     type StatusProposal = StatusProposal.T
-    object StatusProposal extends RefinedType[String, Pure]
+    object StatusProposal extends Newtype[String, Pure]
 
   /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it could not be
     * (no DOI, upstream off or down); the differences are run warnings, never writes.
@@ -326,22 +325,22 @@ object EnrichSource:
 
   object MetaChecked:
     type Checked = Checked.T
-    object Checked extends RefinedType[Boolean, Pure]
+    object Checked extends Newtype[Boolean, Pure]
     type Differences = Differences.T
-    object Differences extends RefinedType[String, Pure]
+    object Differences extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
   /** What `refs` / `assess` did (or why they were skipped). */
   final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)) derives KindlingsCodecAsObject
 
   object Upstreamed:
     type Ran = Ran.T
-    object Ran extends RefinedType[Boolean, Pure]
+    object Ran extends Newtype[Boolean, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends RefinedType[Boolean, Pure]
+    object Retracted extends Newtype[Boolean, Pure]
 
   /** The `status` step: whether the classify step's status proposal was applied, recorded for a person (`approval` id),
     * or needed nothing.
@@ -351,22 +350,22 @@ object EnrichSource:
 
   object StatusRouted:
     type Applied = Applied.T
-    object Applied extends RefinedType[String, Pure]
+    object Applied extends Newtype[String, Pure]
     type Approval = Approval.T
-    object Approval extends RefinedType[Long, Pure]
+    object Approval extends Newtype[Long, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
   /** The `close` step: the per-source lint, the acquisition item and the log line. */
   final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives KindlingsCodecAsObject
 
   object Closed:
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]
     type Lint = Lint.T
-    object Lint extends RefinedType[String, Pure]
+    object Lint extends Newtype[String, Pure]
     type Acquire = Acquire.T
-    object Acquire extends RefinedType[String, Pure]
+    object Acquire extends Newtype[String, Pure]
 
   // ── pure logic ─────────────────────────────────────────────────────────────────────────────────
 
@@ -481,11 +480,11 @@ object EnrichSource:
     val PlaceQuery: EnrichSource.PlaceQuery.type = EnrichSource.PlaceQuery
 
     type MinPlacedShare = MinPlacedShare.T
-    object MinPlacedShare extends RefinedType[Double, Pure]
+    object MinPlacedShare extends Newtype[Double, Pure]
     type CenturyGapYears = CenturyGapYears.T
-    object CenturyGapYears extends RefinedType[Long, Pure]
+    object CenturyGapYears extends Newtype[Long, Pure]
     type PointerPhrases = PointerPhrases.T
-    object PointerPhrases extends RefinedType[String, Pure]
+    object PointerPhrases extends Newtype[String, Pure]
 
   private val CenturyMention = "(?i)\\bcentur(?:y|ies)\\b|\\b\\d{1,2}\\s*(?:st|nd|rd|th)\\s*c\\.".r
   private val OrdinalDigits = "(?i)\\b(\\d{1,2})\\s*(?:st|nd|rd|th)\\b".r

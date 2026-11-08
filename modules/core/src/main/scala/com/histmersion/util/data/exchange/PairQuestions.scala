@@ -7,7 +7,6 @@ import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.domain.MergePlanner
 
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules can ask and add while a plan looks at what a pair of sources owns: the input, the revs, which
@@ -36,4 +35,4 @@ trait PairQuestions:
 
 object PairQuestions:
   type InfoLine = InfoLine.T
-  object InfoLine extends RefinedType[String, Pure]
+  object InfoLine extends Newtype[String, Pure]

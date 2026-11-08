@@ -2,7 +2,6 @@ package com.histmersion
 package config
 
 import org.ekrich.config.Config
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The process environment, read once by the entry point and passed to whatever needs a variable. */
@@ -17,9 +16,9 @@ final case class Environment(variables: Map[Environment.VariablesKey, Environmen
 object Environment:
 
   type VariablesKey = VariablesKey.T
-  object VariablesKey extends RefinedType[String, Pure]
+  object VariablesKey extends Newtype[String, Pure]
   type VariablesValue = VariablesValue.T
-  object VariablesValue extends RefinedType[String, Pure]
+  object VariablesValue extends Newtype[String, Pure]
 
   val empty: Environment = Environment(Map.empty)
 

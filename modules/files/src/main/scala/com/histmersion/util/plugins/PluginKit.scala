@@ -11,7 +11,6 @@ import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ProviderKind
 
@@ -22,7 +21,7 @@ import com.histmersion.api.automation.ProviderKind
   */
 object PluginKit:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   extension (id: PluginDescription.Id)
     private def isEmpty: Boolean = id.value.isEmpty
@@ -169,11 +168,11 @@ object PluginKit:
 
   object Coordinates:
     type Group = Group.T
-    object Group extends RefinedType[String, Pure]
+    object Group extends Newtype[String, Pure]
     type Artifact = Artifact.T
-    object Artifact extends RefinedType[String, Pure]
+    object Artifact extends Newtype[String, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
 
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
@@ -193,10 +192,10 @@ object PluginKit:
   object Origin:
     object File:
       type Path = Path.T
-      object Path extends RefinedType[String, Pure]
+      object Path extends Newtype[String, Pure]
     object Url:
       type Value = Value.T
-      object Value extends RefinedType[String, Pure]
+      object Value extends Newtype[String, Pure]
 
   /** Pure: what `plugin add <arg>` names. An `http(s)://` URL is downloaded; anything that exists as a file, ends with
     * `.jar` or holds a `/` is a path; else Maven coordinates.
@@ -248,11 +247,11 @@ object PluginKit:
     type Sha256 = com.histmersion.Sha256
     val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type AddedAt = AddedAt.T
-    object AddedAt extends RefinedType[String, Pure]
+    object AddedAt extends Newtype[String, Pure]
     type Signer = Signer.T
-    object Signer extends RefinedType[String, Pure]
+    object Signer extends Newtype[String, Pure]
 
   final case class Index(jars: List[Installed] = Nil) derives KindlingsCodecAsObject:
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file.value))
@@ -318,7 +317,7 @@ object PluginKit:
 
   object KitFile:
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Sha256 = com.histmersion.Sha256
     val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
 
@@ -338,15 +337,15 @@ object PluginKit:
 
   object KitManifest:
     type Format = Format.T
-    object Format extends RefinedType[Int, Pure]
+    object Format extends Newtype[Int, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type Commit = Commit.T
-    object Commit extends RefinedType[String, Pure]
+    object Commit extends Newtype[String, Pure]
     type Graalvm = Graalvm.T
-    object Graalvm extends RefinedType[String, Pure]
+    object Graalvm extends Newtype[String, Pure]
     type MainClass = MainClass.T
-    object MainClass extends RefinedType[String, Pure]
+    object MainClass extends Newtype[String, Pure]
 
   val KitFormat: KitManifest.Format = KitManifest.Format(1)
 

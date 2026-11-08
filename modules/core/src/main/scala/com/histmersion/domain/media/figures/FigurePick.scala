@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.figures
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come from the OCR
@@ -18,15 +17,15 @@ import io.github.iltotore.iron.constraint.any.Pure
 object FigurePick:
 
   type Page = Page.T
-  object Page extends RefinedType[Int, Pure]
+  object Page extends Newtype[Int, Pure]
   type Order = Order.T
-  object Order extends RefinedType[Int, Pure]
+  object Order extends Newtype[Int, Pure]
   type Rejection = Rejection.T
-  object Rejection extends RefinedType[String, Pure]
+  object Rejection extends Newtype[String, Pure]
   type Score = Score.T
-  object Score extends RefinedType[Double, Pure]
+  object Score extends Newtype[Double, Pure]
   type ConvertedText = ConvertedText.T
-  object ConvertedText extends RefinedType[String, Pure]
+  object ConvertedText extends Newtype[String, Pure]
 
   /** One stored figure of a source. `refs`: how many times the text links it; `firstAt`: where the first link sits, as
     * a share of the text (0 = its start); both `None`/0 when the text has none.
@@ -41,15 +40,15 @@ object FigurePick:
 
   object Figure:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Width = Width.T
-    object Width extends RefinedType[Int, Pure]
+    object Width extends Newtype[Int, Pure]
     type Height = Height.T
-    object Height extends RefinedType[Int, Pure]
+    object Height extends Newtype[Int, Pure]
     type Refs = Refs.T
-    object Refs extends RefinedType[Int, Pure]
+    object Refs extends Newtype[Int, Pure]
     type FirstAt = FirstAt.T
-    object FirstAt extends RefinedType[Double, Pure]
+    object FirstAt extends Newtype[Double, Pure]
 
   /** The thresholds (`media.illustrations`). */
   final case class Rules(
@@ -63,17 +62,17 @@ object FigurePick:
 
   object Rules:
     type MinSide = MinSide.T
-    object MinSide extends RefinedType[Int, Pure]
+    object MinSide extends Newtype[Int, Pure]
     type MinArea = MinArea.T
-    object MinArea extends RefinedType[Int, Pure]
+    object MinArea extends Newtype[Int, Pure]
     type MaxAspect = MaxAspect.T
-    object MaxAspect extends RefinedType[Double, Pure]
+    object MaxAspect extends Newtype[Double, Pure]
     type MaxRefs = MaxRefs.T
-    object MaxRefs extends RefinedType[Int, Pure]
+    object MaxRefs extends Newtype[Int, Pure]
     type EarlyPages = EarlyPages.T
-    object EarlyPages extends RefinedType[Int, Pure]
+    object EarlyPages extends Newtype[Int, Pure]
     type PageScanMin = PageScanMin.T
-    object PageScanMin extends RefinedType[Int, Pure]
+    object PageScanMin extends Newtype[Int, Pure]
 
   private val PageName = """^fig-(\d{1,5})-\d+(?:-\d+)?\.[A-Za-z0-9]+$""".r
   private val SeqName = """^image_(\d{1,7})(?:_.*)?\.[A-Za-z0-9]+$""".r

@@ -4,7 +4,6 @@ package domain.media.covers
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
 
@@ -15,15 +14,15 @@ import com.histmersion.domain.library.Isbn
   */
 object OpenLibrary:
   type BaseUrl = BaseUrl.T
-  object BaseUrl extends RefinedType[String, Pure]
+  object BaseUrl extends Newtype[String, Pure]
   type CoverSize = CoverSize.T
-  object CoverSize extends RefinedType[String, Pure]
+  object CoverSize extends Newtype[String, Pure]
   type CoverUrl = CoverUrl.T
-  object CoverUrl extends RefinedType[String, Pure]
+  object CoverUrl extends Newtype[String, Pure]
   type Oclc = Oclc.T
-  object Oclc extends RefinedType[String, Pure]
+  object Oclc extends Newtype[String, Pure]
   type PageUrl = PageUrl.T
-  object PageUrl extends RefinedType[String, Pure]
+  object PageUrl extends Newtype[String, Pure]
 
   /** Pure: an ISBN as the API takes it — digits (and a final X), hyphens and spaces dropped; `None` unless it is 10 or
     * 13 long.

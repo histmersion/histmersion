@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Named periods (#719): where `periods fetch periodo` downloads the PeriodO dump, the authorities it imports by
@@ -14,14 +13,14 @@ final case class PeriodsConfig(periodoUrl: PeriodsConfig.PeriodoUrl, periodoColl
 
 object PeriodsConfig:
   type Collection = Collection.T
-  object Collection extends RefinedType[String, Pure]
+  object Collection extends Newtype[String, Pure]
 
   type PeriodoUrl = PeriodoUrl.T
-  object PeriodoUrl extends RefinedType[String, Pure]
+  object PeriodoUrl extends Newtype[String, Pure]
   type PeriodoCollections = PeriodoCollections.T
-  object PeriodoCollections extends RefinedType[String, Pure]
+  object PeriodoCollections extends Newtype[String, Pure]
   type SeedFile = SeedFile.T
-  object SeedFile extends RefinedType[String, Pure]
+  object SeedFile extends Newtype[String, Pure]
 
   private[config] def split(s: PeriodoCollections): List[Collection] =
     Option(s).toList.flatMap(_.value.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(Collection(_))

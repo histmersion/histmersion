@@ -5,7 +5,6 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules of a plan see when the bundle's labels a different record has here are given new ones: the rows
@@ -30,6 +29,6 @@ trait PlanRelabels:
 
 object PlanRelabels:
   type InfoLine = InfoLine.T
-  object InfoLine extends RefinedType[String, Pure]
+  object InfoLine extends Newtype[String, Pure]
   type RelabelledLine = RelabelledLine.T
-  object RelabelledLine extends RefinedType[String, Pure]
+  object RelabelledLine extends Newtype[String, Pure]

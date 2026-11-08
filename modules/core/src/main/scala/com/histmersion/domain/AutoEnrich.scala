@@ -4,7 +4,6 @@ package domain
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Manager
 
@@ -22,15 +21,15 @@ import com.histmersion.domain.automation.Manager
   */
 object AutoEnrich:
   type FindingCount = FindingCount.T
-  object FindingCount extends RefinedType[Int, Pure]
+  object FindingCount extends Newtype[Int, Pure]
   type ItemId = ItemId.T
-  object ItemId extends RefinedType[Long, Pure]
+  object ItemId extends Newtype[Long, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
 
   /** Why no run is queued. `Off` is silent: nothing was asked for. */
 
@@ -47,7 +46,7 @@ object AutoEnrich:
 
   object PriorRun:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
 
   /** Whether to queue; Left = why not. */
   def decide(

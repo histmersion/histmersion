@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Storage part of About (`histmersion about`, `/api/about`, the web About window): how often the server measures
@@ -25,14 +24,14 @@ final case class StorageConfig(
 object StorageConfig:
 
   type TtlSeconds = TtlSeconds.T
-  object TtlSeconds extends RefinedType[Int, Pure]
+  object TtlSeconds extends Newtype[Int, Pure]
   type WaitMillis = WaitMillis.T
-  object WaitMillis extends RefinedType[Int, Pure]
+  object WaitMillis extends Newtype[Int, Pure]
   type MaxMillis = MaxMillis.T
-  object MaxMillis extends RefinedType[Int, Pure]
+  object MaxMillis extends Newtype[Int, Pure]
   type MaxEntries = MaxEntries.T
-  object MaxEntries extends RefinedType[Int, Pure]
+  object MaxEntries extends Newtype[Int, Pure]
   type TopTables = TopTables.T
-  object TopTables extends RefinedType[Int, Pure]
+  object TopTables extends Newtype[Int, Pure]
   type LowFreeGb = LowFreeGb.T
-  object LowFreeGb extends RefinedType[Double, Pure]
+  object LowFreeGb extends Newtype[Double, Pure]

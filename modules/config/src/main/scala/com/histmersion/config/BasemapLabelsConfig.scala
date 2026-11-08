@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The physical names (seas, ranges, deserts, lakes, rivers, peaks …): Natural Earth's label layers, `url` with
@@ -20,12 +19,12 @@ final case class BasemapLabelsConfig(
 
 object BasemapLabelsConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Files = Files.T
-  object Files extends RefinedType[String, Pure]
+  object Files extends Newtype[String, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type Language = Language.T
-  object Language extends RefinedType[String, Pure]
+  object Language extends Newtype[String, Pure]
   type Attribution = Attribution.T
-  object Attribution extends RefinedType[String, Pure]
+  object Attribution extends Newtype[String, Pure]

@@ -7,21 +7,20 @@ import io.circe.ACursor
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Shared reading helpers for the collection APIs. Pure. */
 private[domain] object JsonRead:
   type Encoded = Encoded.T
-  object Encoded extends RefinedType[String, Pure]
+  object Encoded extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Number = Number.T
-  object Number extends RefinedType[Long, Pure]
+  object Number extends Newtype[Long, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Unencoded = Unencoded.T
-  object Unencoded extends RefinedType[String, Pure]
+  object Unencoded extends Newtype[String, Pure]
 
   def str(c: ACursor, k: Key): Option[Text] =
     c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(Text(_))

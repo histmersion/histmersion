@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 given ConfigReader[ScheduledRefresh] = summon[ConfigReader[Minutes]].emap(m => ScheduledRefresh.fromMinutes(m).left.map(_.value))
@@ -48,20 +47,20 @@ final case class AgentsConfig(
 
 object AgentsConfig:
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type AutoEnrich = AutoEnrich.T
-  object AutoEnrich extends RefinedType[Boolean, Pure]
+  object AutoEnrich extends Newtype[Boolean, Pure]
   type PromptsDir = PromptsDir.T
-  object PromptsDir extends RefinedType[String, Pure]
+  object PromptsDir extends Newtype[String, Pure]
   type Prices = Prices.T
-  object Prices extends RefinedType[String, Pure]
+  object Prices extends Newtype[String, Pure]
   type Allowances = Allowances.T
-  object Allowances extends RefinedType[String, Pure]
+  object Allowances extends Newtype[String, Pure]
   type AllowanceCheckSeconds = AllowanceCheckSeconds.T
-  object AllowanceCheckSeconds extends RefinedType[Int, Pure]
+  object AllowanceCheckSeconds extends Newtype[Int, Pure]
   type DoctorTimeoutSeconds = DoctorTimeoutSeconds.T
-  object DoctorTimeoutSeconds extends RefinedType[Int, Pure]
+  object DoctorTimeoutSeconds extends Newtype[Int, Pure]
   type MaxConcurrentRuns = MaxConcurrentRuns.T
-  object MaxConcurrentRuns extends RefinedType[Int, Pure]
+  object MaxConcurrentRuns extends Newtype[Int, Pure]
   type MaxLlmCallsInFlight = MaxLlmCallsInFlight.T
-  object MaxLlmCallsInFlight extends RefinedType[Int, Pure]
+  object MaxLlmCallsInFlight extends Newtype[Int, Pure]

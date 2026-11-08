@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Book covers (`media.covers`): the Open Library Covers API and its own, slower pace. */
@@ -17,12 +16,12 @@ final case class MediaCoversConfig(
 
 object MediaCoversConfig:
   type OpenLibraryUrl = OpenLibraryUrl.T
-  object OpenLibraryUrl extends RefinedType[String, Pure]
+  object OpenLibraryUrl extends Newtype[String, Pure]
   type OpenLibraryPage = OpenLibraryPage.T
-  object OpenLibraryPage extends RefinedType[String, Pure]
+  object OpenLibraryPage extends Newtype[String, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type Size = Size.T
-  object Size extends RefinedType[String, Pure]
+  object Size extends Newtype[String, Pure]
   type ThumbSize = ThumbSize.T
-  object ThumbSize extends RefinedType[String, Pure]
+  object ThumbSize extends Newtype[String, Pure]

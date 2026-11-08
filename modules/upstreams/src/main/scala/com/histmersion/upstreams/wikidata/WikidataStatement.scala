@@ -1,7 +1,6 @@
 package com.histmersion
 package upstreams.wikidata
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class WikidataStatement(property: WikidataStatement.Property, file: WikidataStatement.File, preferred: WikidataStatement.Preferred, order: WikidataStatement.Order)
 
@@ -10,16 +9,16 @@ object WikidataStatement:
     * rule for "the" value), else the normal ones — at most `per`.
     */
   type BestPer = BestPer.T
-  object BestPer extends RefinedType[Int, Pure]
+  object BestPer extends Newtype[Int, Pure]
 
   type Property = Property.T
-  object Property extends RefinedType[String, Pure]
+  object Property extends Newtype[String, Pure]
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]
   type Preferred = Preferred.T
-  object Preferred extends RefinedType[Boolean, Pure]
+  object Preferred extends Newtype[Boolean, Pure]
   type Order = Order.T
-  object Order extends RefinedType[Int, Pure]:
+  object Order extends Newtype[Int, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
 
   def best(statements: List[WikidataStatement], per: BestPer): List[WikidataStatement] =

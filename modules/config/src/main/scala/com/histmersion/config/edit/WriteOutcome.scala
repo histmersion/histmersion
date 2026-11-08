@@ -2,7 +2,6 @@ package com.histmersion
 package config.edit
 
 import org.ekrich.config.Config
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a write did to the config file.
@@ -39,9 +38,9 @@ object WriteOutcome:
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
   type Backup = Backup.T
-  object Backup extends RefinedType[String, Pure]
+  object Backup extends Newtype[String, Pure]
   type Created = Created.T
-  object Created extends RefinedType[Boolean, Pure]
+  object Created extends Newtype[Boolean, Pure]
 
   def of(
       file: SettingsFile.Shown,

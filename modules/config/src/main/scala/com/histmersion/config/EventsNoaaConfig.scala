@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsNoaaConfig(
@@ -17,14 +16,14 @@ final case class EventsNoaaConfig(
 
 object EventsNoaaConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type PageSize = PageSize.T
-  object PageSize extends RefinedType[Int, Pure]
+  object PageSize extends Newtype[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type Datasets = Datasets.T
-  object Datasets extends RefinedType[String, Pure]
+  object Datasets extends Newtype[String, Pure]
   type RegionMinMagnitude = RegionMinMagnitude.T
-  object RegionMinMagnitude extends RefinedType[Double, Pure]
+  object RegionMinMagnitude extends Newtype[Double, Pure]
   type OutsideMinMagnitude = OutsideMinMagnitude.T
-  object OutsideMinMagnitude extends RefinedType[Double, Pure]
+  object OutsideMinMagnitude extends Newtype[Double, Pure]

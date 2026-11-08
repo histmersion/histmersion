@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Limits(
@@ -41,27 +40,27 @@ final case class Limits(
 
 object Limits:
   type SnippetWords = SnippetWords.T
-  object SnippetWords extends RefinedType[Int, Pure]
+  object SnippetWords extends Newtype[Int, Pure]
 
   type MaxPage = MaxPage.T
-  object MaxPage extends RefinedType[Int, Pure]
+  object MaxPage extends Newtype[Int, Pure]
   type Search = Search.T
-  object Search extends RefinedType[Int, Pure]
+  object Search extends Newtype[Int, Pure]
   type Findings = Findings.T
-  object Findings extends RefinedType[Int, Pure]
+  object Findings extends Newtype[Int, Pure]
   type SnippetChars = SnippetChars.T
-  object SnippetChars extends RefinedType[Int, Pure]
+  object SnippetChars extends Newtype[Int, Pure]
   type ChunkChars = ChunkChars.T
-  object ChunkChars extends RefinedType[Int, Pure]
+  object ChunkChars extends Newtype[Int, Pure]
   type ReindexChars = ReindexChars.T
-  object ReindexChars extends RefinedType[Long, Pure]
+  object ReindexChars extends Newtype[Long, Pure]
   type UploadBytes = UploadBytes.T
-  object UploadBytes extends RefinedType[Long, Pure]
+  object UploadBytes extends Newtype[Long, Pure]
   type InlineBytes = InlineBytes.T
-  object InlineBytes extends RefinedType[Long, Pure]
+  object InlineBytes extends Newtype[Long, Pure]
   type AssetBytes = AssetBytes.T
-  object AssetBytes extends RefinedType[Long, Pure]
+  object AssetBytes extends Newtype[Long, Pure]
   type FullTextChars = FullTextChars.T
-  object FullTextChars extends RefinedType[Int, Pure]
+  object FullTextChars extends Newtype[Int, Pure]
   type CoverageSources = CoverageSources.T
-  object CoverageSources extends RefinedType[Int, Pure]
+  object CoverageSources extends Newtype[Int, Pure]

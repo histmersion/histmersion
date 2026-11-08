@@ -6,7 +6,6 @@ import com.histmersion.api.given
 import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a STREAM, so 1.6 GB
@@ -22,7 +21,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object BundleTar:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   val Block = 512
   val MaxName = 100
@@ -58,7 +57,7 @@ object BundleTar:
 
   object Entry:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Size = ByteCount
     val Size: ByteCount.type = ByteCount
 

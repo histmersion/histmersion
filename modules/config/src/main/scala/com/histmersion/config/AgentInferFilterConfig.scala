@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `infer-filter`: a proposed filter must return at least `minHits` and at most `maxHits` sources, and at least
@@ -15,10 +14,10 @@ final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits,
 
 object AgentInferFilterConfig:
   type MinHits = MinHits.T
-  object MinHits extends RefinedType[Int, Pure]
+  object MinHits extends Newtype[Int, Pure]
   type MaxHits = MaxHits.T
-  object MaxHits extends RefinedType[Int, Pure]
+  object MaxHits extends Newtype[Int, Pure]
   type MinCitedShare = MinCitedShare.T
-  object MinCitedShare extends RefinedType[Double, Pure]
+  object MinCitedShare extends Newtype[Double, Pure]
   type Sample = Sample.T
-  object Sample extends RefinedType[Int, Pure]
+  object Sample extends Newtype[Int, Pure]

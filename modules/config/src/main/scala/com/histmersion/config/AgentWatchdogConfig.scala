@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest provider timeout plus 5
@@ -32,12 +31,12 @@ final case class AgentWatchdogConfig(
 object AgentWatchdogConfig:
 
   type StallMinutes = StallMinutes.T
-  object StallMinutes extends RefinedType[Int, Pure]
+  object StallMinutes extends Newtype[Int, Pure]
   type ResumeMinutes = ResumeMinutes.T
-  object ResumeMinutes extends RefinedType[Int, Pure]
+  object ResumeMinutes extends Newtype[Int, Pure]
   type MaxStalls = MaxStalls.T
-  object MaxStalls extends RefinedType[Int, Pure]
+  object MaxStalls extends Newtype[Int, Pure]
   type HeartbeatSeconds = HeartbeatSeconds.T
-  object HeartbeatSeconds extends RefinedType[Int, Pure]
+  object HeartbeatSeconds extends Newtype[Int, Pure]
   type InterruptedResumeMinutes = InterruptedResumeMinutes.T
-  object InterruptedResumeMinutes extends RefinedType[Int, Pure]
+  object InterruptedResumeMinutes extends Newtype[Int, Pure]
