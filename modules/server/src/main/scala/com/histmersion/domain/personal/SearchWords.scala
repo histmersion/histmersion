@@ -1,4 +1,8 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The words a search over marks asks for, lower-cased, each to be found (case does not matter). */
 final case class SearchWords(words: List[SearchWords.Words]):
@@ -10,12 +14,12 @@ final case class SearchWords(words: List[SearchWords.Words]):
 
 object SearchWords:
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
 
   type Words = Words.T
-  object Words extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Words extends RefinedType[String, Pure]
 
   val Everything: SearchWords = SearchWords(Nil)
 
-  def of(q: Option[com.histmersion.domain.personal.SearchWords.Query]): SearchWords =
+  def of(q: Option[Query]): SearchWords =
     SearchWords(q.toList.flatMap(_.value.toLowerCase.split("\\s+").toList).map(_.trim).filter(_.nonEmpty).map(Words(_)))

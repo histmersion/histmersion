@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import scala.annotation.tailrec
 import com.histmersion.api.automation.Agents.Role
@@ -6,6 +7,8 @@ import com.histmersion.domain.automation.workflows.ToolName
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One canonical agent definition, `agents/<name>.md`: a runtime-neutral manifest in the YAML header and the prompt
   * body, which speaks of tools by `{{tool:<name>}}` placeholder.
@@ -32,7 +35,7 @@ final case class AgentDef(
     * called (`Search`) — the fingerprint installed trees and their manifests were generated under, so a tree generated
     * from the same definitions is not rewritten.
     */
-  def fingerprint: com.histmersion.domain.automation.agents.AgentDef.Fingerprint =
+  def fingerprint: AgentDef.Fingerprint =
     AgentDef.Fingerprint(
       productIterator.zipWithIndex
         .map((v, i) =>
@@ -46,23 +49,23 @@ final case class AgentDef(
 
 object AgentDef:
   type Fingerprint = Fingerprint.T
-  object Fingerprint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fingerprint extends RefinedType[String, Pure]
   /** `get_source` as `GetSource`. */
 
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Skills = Skills.T
-  object Skills extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Skills extends RefinedType[String, Pure]
   type Include = Include.T
-  object Include extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Include extends RefinedType[String, Pure]
   type MaxTurns = MaxTurns.T
-  object MaxTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxTurns extends RefinedType[Int, Pure]
   type Answer = Answer.T
-  object Answer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Answer extends RefinedType[String, Pure]
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
 
   def enumerated(t: ToolName): String = t.value.split('_').map(_.capitalize).mkString
 

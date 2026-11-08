@@ -1,6 +1,9 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the focus recorded about one goal, as [[FocusService.InMemory]] holds it. */
 final case class FocusRecord(
@@ -15,14 +18,14 @@ final case class FocusRecord(
 
 object FocusRecord:
   type Active = Active.T
-  object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Active extends RefinedType[Boolean, Pure]
   type Pinned = Pinned.T
-  object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pinned extends RefinedType[Boolean, Pure]
   type Priority = Priority.T
-  object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Priority extends RefinedType[Int, Pure]
   type Why = Why.T
-  object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Why extends RefinedType[String, Pure]
   type LeftWhy = LeftWhy.T
-  object LeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LeftWhy extends RefinedType[String, Pure]
 
-  val none: FocusRecord = FocusRecord(com.histmersion.domain.automation.goals.FocusRecord.Active(false), com.histmersion.domain.automation.goals.FocusRecord.Pinned(false), com.histmersion.domain.automation.goals.FocusRecord.Priority(0), None, None, None, None)
+  val none: FocusRecord = FocusRecord(Active(false), Pinned(false), Priority(0), None, None, None, None)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*
@@ -22,6 +23,11 @@ import io.circe.syntax.*
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Article
+import com.histmersion.domain.Title
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.automation.Approval
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -97,7 +103,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
           .map(_.value.value)
       Loaded(
         canonical,
-        com.histmersion.domain.Title(a.title.value),
+        Title(a.title.value),
         com.histmersion.domain.research.Article.Kind(a.kind.value),
         a.summary.map(s => Loaded.Summary(s.value)),
         a.tags.map(t => Loaded.Tags(t.value)),
@@ -167,12 +173,12 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         )
       case Some(p) =>
         val json = p.asJson.noSpaces
-        val jobId = Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value))
+        val jobId = Some(Job.Id.assume(ctx.run.id.value))
         val subject = ApprovalQuery.Subject(slug.value)
         val what =
           s"${p.filter.line} → ${Plural.count(Plural.CountN(p.total.value.toLong), Plural.CountSingular("source"))}, ${p.citedIn} of ${p.cited} cited"
         cfg.approvals.filterMode match
-          case com.histmersion.domain.automation.Approval.Mode.Auto =>
+          case Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
               site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message.value).map { _ =>
                 val a = ctx.approvalStore.openSubject(
@@ -198,7 +204,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
                 )
               )
             )
-          case com.histmersion.domain.automation.Approval.Mode.Manual =>
+          case Approval.Mode.Manual =>
             ctx.write(s"${ApprovalKind.ArticleFilter.wire} approval for [[$slug]]", p.asJson)(
               Right(
                 ctx.approvalStore.openSubject(jobId, ApprovalKind.ArticleFilter, subject, ApprovalService.Payload(json))
@@ -241,7 +247,7 @@ object InferFilterPipeline:
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
       slug: Slug,
-      title: com.histmersion.domain.Title,
+      title: Title,
       kind: com.histmersion.domain.research.Article.Kind,
       summary: Option[Loaded.Summary],
       tags: List[Loaded.Tags],
@@ -255,15 +261,15 @@ object InferFilterPipeline:
 
   object Loaded:
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type CitedLines = CitedLines.T
-    object CitedLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CitedLines extends RefinedType[String, Pure]
     type Excerpt = Excerpt.T
-    object Excerpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Excerpt extends RefinedType[String, Pure]
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
 
   /** What the record step did: the approval it opened (or recorded approved), whether the filter is on the article now,
     * and the line for the log.
@@ -273,7 +279,7 @@ object InferFilterPipeline:
 
   object Recorded:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]
 
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.

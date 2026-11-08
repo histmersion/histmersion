@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.util.database.Transactor
 
@@ -7,6 +8,8 @@ import com.histmersion.util.jobs.JobRepo
 
 import javax.sql.DataSource
 import java.util.concurrent.LinkedBlockingQueue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The bounded OCR worker pool (plan §1.8).
   *
@@ -25,13 +28,13 @@ final class JobPool(
     ds: DataSource,
     parallelism: JobPool.Parallelism,
     run: Job.Id => Unit,
-    pins: com.histmersion.util.jobs.Pinning = com.histmersion.util.jobs.Pinning.none
+    pins: Pinning = Pinning.none
 ):
 
   /** A job id and the generation it was submitted on: it runs there — on the database its row is in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: Job.Id, work: com.histmersion.util.jobs.Carried[Unit])
+  final private case class Queued(id: Job.Id, work: Carried[Unit])
 
   private val queue = LinkedBlockingQueue[Queued]()
 
@@ -64,7 +67,7 @@ final class JobPool(
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart had to fail.
     * Idempotent: calling it twice does not start a second pool.
     */
-  def start(): com.histmersion.RowCount =
+  def start(): RowCount =
     import scala.jdk.CollectionConverters.*
     val interrupted = Transactor(ds).transact(JobRepo.failInterrupted(held.asScala.toList))
     if scope.isEmpty then
@@ -110,7 +113,7 @@ final class JobPool(
     scope.foreach(_.interrupt())
     scope = None
 
-  def queued: com.histmersion.util.jobs.JobPool.QueueDepth = JobPool.QueueDepth(queue.size)
+  def queued: JobPool.QueueDepth = JobPool.QueueDepth(queue.size)
 
   private def pool(): Unit =
     try
@@ -138,6 +141,6 @@ final class JobPool(
 
 object JobPool:
   type QueueDepth = QueueDepth.T
-  object QueueDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueueDepth extends RefinedType[Int, Pure]
   type Parallelism = Parallelism.T
-  object Parallelism extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Parallelism extends RefinedType[Int, Pure]

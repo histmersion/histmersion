@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 
@@ -10,6 +11,10 @@ import org.yaml.snakeyaml.constructor.SafeConstructor
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.AgentRole
+import com.histmersion.util.storage.SafePath
 
 /** The pure half of the definitions: parsing a definition and a skill, the placeholders, and the system prompt a
   * headless run of a definition gets (the same function for every runtime, so the generated Claude Code agent and the
@@ -17,13 +22,13 @@ import scala.jdk.CollectionConverters.*
   */
 object AgentDefinitions:
   type FragmentBody = FragmentBody.T
-  object FragmentBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FragmentBody extends RefinedType[String, Pure]
   type FragmentName = FragmentName.T
-  object FragmentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FragmentName extends RefinedType[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
   type ResourcePath = ResourcePath.T
-  object ResourcePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResourcePath extends RefinedType[String, Pure]
 
   /** The MCP server's name in every runtime's configuration. */
 
@@ -46,18 +51,18 @@ object AgentDefinitions:
   /** `text` as `keep` reads it: a part marked for an audience not in `keep` is removed, a kept one loses its markers.
     * Removing a part never leaves more than one blank line behind.
     */
-  def forAudience(text: com.histmersion.domain.automation.agents.AgentDef.Body, keep: Set[Audience]): com.histmersion.domain.automation.agents.AgentDef.Body =
+  def forAudience(text: AgentDef.Body, keep: Set[Audience]): AgentDef.Body =
     if !text.value.contains("<!-- only:") then text
     else
       val out = Marked.replaceAllIn(
         text.value,
         m => java.util.regex.Matcher.quoteReplacement(if keep.exists(_.wire.value == m.group(1)) then m.group(2) else "")
       )
-      com.histmersion.domain.automation.agents.AgentDef.Body(out.replaceAll("\n{3,}", "\n\n"))
+      AgentDef.Body(out.replaceAll("\n{3,}", "\n\n"))
 
   /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong prompt.
     */
-  def markerProblems(text: com.histmersion.domain.automation.agents.AgentDef.Body): List[String] =
+  def markerProblems(text: AgentDef.Body): List[String] =
     val ms = Marker.findAllMatchIn(text.value).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
       ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire.value == a)).map(a => s"names no audience: only:$a")
@@ -81,8 +86,8 @@ object AgentDefinitions:
           case "*" =>
             style match
               case ToolStyle.Bare => "the histmersion tools"
-              case s              => s.tool(com.histmersion.domain.automation.agents.ToolUse.Tool("*"))
-          case t => style.tool(com.histmersion.domain.automation.agents.ToolUse.Tool(t)))
+              case s              => s.tool(ToolUse.Tool("*"))
+          case t => style.tool(ToolUse.Tool(t)))
     )
 
   /** Every tool a text names by placeholder (`*` left out). */
@@ -114,7 +119,7 @@ object AgentDefinitions:
     case other                       => Left(s"expected a list, not '$other'")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
-  def parse(name: com.histmersion.domain.automation.agents.AgentDef.Name, md: Markdown, known: List[ToolName]): Either[String, AgentDef] =
+  def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[String, AgentDef] =
     def fail(m: String) = Left(s"agents/$name.md: $m")
     split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.map(m => s"agents/$name.md: $m").flatMap { (m, body) =>
       def str(k: String) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
@@ -135,7 +140,7 @@ object AgentDefinitions:
           .flatMap(fail)
         desc <- str("description").toRight(s"agents/$name.md: no description")
         role <- str("model-role")
-          .flatMap(r => Role.parse(com.histmersion.api.automation.AgentRole.Wire(r)))
+          .flatMap(r => Role.parse(AgentRole.Wire(r)))
           .toRight(s"agents/$name.md: model-role is not one of ${Role.values.map(_.wire.value).mkString(", ")}")
         sk <- strings(m.getOrElse("skills", null)).left.flatMap(e => fail(s"skills: $e"))
         inc <- strings(m.getOrElse("include", null)).left.flatMap(e => fail(s"include: $e"))
@@ -246,44 +251,44 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   val tools: List[ToolName] = roster.tools
 
   /** Every bundled file, relative to `agents/`. */
-  def index: List[com.histmersion.domain.automation.agents.AgentDefinitions.ResourcePath] =
+  def index: List[AgentDefinitions.ResourcePath] =
     prompts
-      .bundledText(com.histmersion.util.storage.SafePath.Candidate("index.txt"))
+      .bundledText(SafePath.Candidate("index.txt"))
       .toOption
       .toList
       .flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty).map(AgentDefinitions.ResourcePath(_)))
 
-  def agentNames: List[com.histmersion.domain.automation.agents.AgentDef.Name] =
+  def agentNames: List[AgentDef.Name] =
     index
       .map(_.value)
       .filter(r => !r.contains('/') && r.endsWith(".md"))
-      .map(r => com.histmersion.domain.automation.agents.AgentDef.Name(r.stripSuffix(".md")))
+      .map(r => AgentDef.Name(r.stripSuffix(".md")))
   def skillNames: List[SkillDef.Name] =
     index.map(_.value).collect { case r if r.startsWith("skills/") => SkillDef.Name(r.split('/')(1)) }.distinct
-  def fragmentNames: List[com.histmersion.domain.automation.agents.AgentDefinitions.FragmentName] =
+  def fragmentNames: List[AgentDefinitions.FragmentName] =
     index.map(_.value).collect {
       case r if r.startsWith("_shared/") =>
         AgentDefinitions.FragmentName(r.stripPrefix("_shared/").stripSuffix(".md"))
     }
 
-  def agent(name: com.histmersion.domain.automation.agents.AgentDef.Name): Either[String, AgentDef] =
+  def agent(name: AgentDef.Name): Either[String, AgentDef] =
     prompts
-      .load(com.histmersion.util.storage.SafePath.Candidate(s"$name.md"))
+      .load(SafePath.Candidate(s"$name.md"))
       .left
       .map(_.value)
       .flatMap(text => AgentDefinitions.parse(name, AgentDefinitions.Markdown(text), tools))
       .flatMap(d =>
         Either.cond(
-          roster.roles.contains(io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.AgentRole, com.histmersion.domain.automation.AgentRole].transform(d.role)),
+          roster.roles.contains(io.scalaland.chimney.Transformer.derive[AgentRole, com.histmersion.domain.automation.AgentRole].transform(d.role)),
           d,
           s"agents/$name.md: role ${d.role.wire} is no contributed workflow's " +
             s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"
         )
       )
-  def agent(s: StepAgent): Either[String, AgentDef] = agent(com.histmersion.domain.automation.agents.AgentDef.Name(s.wire.value))
+  def agent(s: StepAgent): Either[String, AgentDef] = agent(AgentDef.Name(s.wire.value))
   def skill(name: SkillDef.Name): Either[String, SkillDef] =
     prompts
-      .load(com.histmersion.util.storage.SafePath.Candidate(s"skills/$name/SKILL.md"))
+      .load(SafePath.Candidate(s"skills/$name/SKILL.md"))
       .left
       .map(_.value)
       .flatMap(text => AgentDefinitions.parseSkill(name, AgentDefinitions.Markdown(text)))
@@ -291,7 +296,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   def fragments: Either[String, Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody]] =
     all(fragmentNames)(n =>
       prompts
-        .load(com.histmersion.util.storage.SafePath.Candidate(s"_shared/$n.md"))
+        .load(SafePath.Candidate(s"_shared/$n.md"))
         .left
         .map(_.value)
         .map(text => n -> AgentDefinitions.FragmentBody(text))

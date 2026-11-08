@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -30,32 +31,32 @@ class OnDemandTilesSuite extends munit.FunSuite:
       enabled,
       maxZoom,
       BasemapOnDemandConfig.CacheGb(cacheBytes.value / 1e9),
-      concurrency = com.histmersion.config.BasemapOnDemandConfig.Concurrency(2),
+      concurrency = BasemapOnDemandConfig.Concurrency(2),
       requestsPerSecond = rps,
-      retryAfterSeconds = com.histmersion.config.BasemapOnDemandConfig.RetryAfterSeconds(30)
+      retryAfterSeconds = BasemapOnDemandConfig.RetryAfterSeconds(30)
     )
 
   test("the cache keeps tiles to its ceiling, dropping the least recently used first; the order survives a restart"):
     val root = Files.createTempDirectory("lru")
-    val lru = DiskLru(BasemapFixtures.store(root), () => com.histmersion.util.basemap.DiskLru.MaxBytes(30))(using java.time.Clock.systemUTC())
-    lru.put(com.histmersion.util.basemap.DiskLru.Key("1/0/0"), Some(ByteSource.Content(Array.fill(10)(1))))
+    val lru = DiskLru(BasemapFixtures.store(root), () => DiskLru.MaxBytes(30))(using java.time.Clock.systemUTC())
+    lru.put(DiskLru.Key("1/0/0"), Some(ByteSource.Content(Array.fill(10)(1))))
     Thread.sleep(5)
-    lru.put(com.histmersion.util.basemap.DiskLru.Key("1/0/1"), Some(ByteSource.Content(Array.fill(10)(2))))
+    lru.put(DiskLru.Key("1/0/1"), Some(ByteSource.Content(Array.fill(10)(2))))
     Thread.sleep(5)
-    lru.put(com.histmersion.util.basemap.DiskLru.Key("1/1/0"), None) // a missing tile: remembered, no bytes
+    lru.put(DiskLru.Key("1/1/0"), None) // a missing tile: remembered, no bytes
     assertEquals((lru.entries, lru.bytes), (3L, 20L))
     Thread.sleep(5)
-    assert(lru.get(com.histmersion.util.basemap.DiskLru.Key("1/0/0")).exists(_.exists(_.value.head == 1)), "read: now the most recently used")
+    assert(lru.get(DiskLru.Key("1/0/0")).exists(_.exists(_.value.head == 1)), "read: now the most recently used")
     Thread.sleep(5)
-    lru.put(com.histmersion.util.basemap.DiskLru.Key("1/1/1"), Some(ByteSource.Content(Array.fill(15)(3)))) // 35 > 30: the least recently used (1/0/1) goes
-    assertEquals(lru.get(com.histmersion.util.basemap.DiskLru.Key("1/0/1")), None)
+    lru.put(DiskLru.Key("1/1/1"), Some(ByteSource.Content(Array.fill(15)(3)))) // 35 > 30: the least recently used (1/0/1) goes
+    assertEquals(lru.get(DiskLru.Key("1/0/1")), None)
     assert(!Files.exists(root.resolve("1/0/1.webp")))
-    assertEquals(lru.get(com.histmersion.util.basemap.DiskLru.Key("1/1/0")), Some(None))
+    assertEquals(lru.get(DiskLru.Key("1/1/0")), Some(None))
     assertEquals(lru.bytes, 25L)
     // a restart: the index is read from the disk, in the order of use
-    val again = DiskLru(BasemapFixtures.store(root), () => com.histmersion.util.basemap.DiskLru.MaxBytes(20))(using java.time.Clock.systemUTC())
+    val again = DiskLru(BasemapFixtures.store(root), () => DiskLru.MaxBytes(20))(using java.time.Clock.systemUTC())
     assertEquals(again.entries, 1L, "over the new ceiling at once: the eldest dropped (the missing 1/1/0, then 1/0/0)")
-    assert(again.get(com.histmersion.util.basemap.DiskLru.Key("1/1/1")).isDefined)
+    assert(again.get(DiskLru.Key("1/1/1")).isDefined)
     assertEquals(again.clear(), 15L)
     assertEquals(again.entries, 0L)
 
@@ -77,7 +78,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val od = OnDemandTiles(
       BasemapFixtures.store(dir),
       () => c,
-      OnDemandTiles.Source.Planet(() => com.histmersion.util.basemap.RangeHttp.Url("fake://planet")),
+      OnDemandTiles.Source.Planet(() => RangeHttp.Url("fake://planet")),
       () => p,
       () => OnDemandTiles.Instant(clock.get.toLong),
       ms => { slept.addAndGet(ms.value.toInt); () }
@@ -86,23 +87,23 @@ class OnDemandTilesSuite extends munit.FunSuite:
 
   test("a tile is read once from the provider and then from the cache — also by a new instance (offline)"):
     val (od, p, dir, _, _) = setup()
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
+    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
     val first = p.local.requests.get
     assert(first >= 2, "the header and root, then the tile")
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
+    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
     assertEquals(p.local.requests.get, first, "the second time from the cache")
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
+    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
     assertEquals(p.local.requests.get, first + 1, "the planet's directory is read once: one request a tile")
     p.fail = true
     val restarted =
       OnDemandTiles(
         BasemapFixtures.store(dir),
         () => cfg(),
-        OnDemandTiles.Source.Planet(() => com.histmersion.util.basemap.RangeHttp.Url("fake://planet")),
+        OnDemandTiles.Source.Planet(() => RangeHttp.Url("fake://planet")),
         () => p
       )(using java.time.Clock.systemUTC())
     assertEquals(
-      restarted.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).map(_.map(b => String(b.value))),
+      restarted.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))),
       Right(Some("RIFF5/18/12")),
       "an area seen once, offline"
     )
@@ -119,20 +120,20 @@ class OnDemandTilesSuite extends munit.FunSuite:
   test("offline: one failed request, then none for retry-after-seconds; the page gets no tile meanwhile"):
     val (od, p, _, clock, _) = setup()
     p.fail = true
-    assert(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).isLeft)
+    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).isLeft)
     assert(od.status.offlineUntil.isDefined)
     p.fail = false
     val before = p.local.requests.get
-    assert(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).isLeft, "still within the pause")
+    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).isLeft, "still within the pause")
     assertEquals(p.local.requests.get, before)
     clock.addAndGet(31000)
-    assert(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).toOption.flatten.isDefined, "asked again after the pause")
+    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).toOption.flatten.isDefined, "asked again after the pause")
 
   test("the provider replaced its file (another ETag): its directory is read again, the tile still served"):
     val (od, p, _, _, _) = setup()
-    assert(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(12)).toOption.flatten.isDefined)
+    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).toOption.flatten.isDefined)
     p.local.etag = RemoteFile.Etag("\"v2\"")
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(18), com.histmersion.util.basemap.PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
+    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
 
   test("the request rate: requests begin at most requests-per-second apart"):
     val (od, _, _, _, slept) = setup(cfg(rps = BasemapOnDemandConfig.RequestsPerSecond(4)))
@@ -142,11 +143,11 @@ class OnDemandTilesSuite extends munit.FunSuite:
 
   test("a tile asked for by several requests at once is read once"):
     val (od, p, _, _, _) = setup()
-    assert(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)).isRight) // the directory read
+    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(0), PmTiles.TileRow(0)).isRight) // the directory read
     val before = p.local.requests.get
     val ts = (1 to 8).map(_ =>
       Thread.ofVirtual().start { () =>
-        val _ = od.tile(com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.TileColumn(20), com.histmersion.util.basemap.PmTiles.TileRow(12))
+        val _ = od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(20), PmTiles.TileRow(12))
       }
     )
     ts.foreach(_.join())
@@ -156,36 +157,36 @@ class OnDemandTilesSuite extends munit.FunSuite:
     "focus regions: a named one, a new one with its box, one named after a deep regional relief fetch; refused without a box"
   ):
     val t = BasemapTerrainConfig(
-      com.histmersion.config.BasemapTerrainConfig.Url("u"),
-      com.histmersion.config.BasemapTerrainConfig.MaxZoom(8),
-      com.histmersion.config.BasemapTerrainConfig.Attribution(""),
+      BasemapTerrainConfig.Url("u"),
+      BasemapTerrainConfig.MaxZoom(8),
+      BasemapTerrainConfig.Attribution(""),
       cfg(maxZoom = BasemapOnDemandConfig.MaxZoom(12)),
-      List(com.histmersion.config.BasemapTerrainConfig.FocusRegions("aegean 21.5,35,28.5,41.5"), com.histmersion.config.BasemapTerrainConfig.FocusRegions("argolid 22.5,37.4,23.2,37.9"))
+      List(BasemapTerrainConfig.FocusRegions("aegean 21.5,35,28.5,41.5"), BasemapTerrainConfig.FocusRegions("argolid 22.5,37.4,23.2,37.9"))
     )
     val box = BBox(Longitude(22.5), Latitude(37.4), Longitude(23.2), Latitude(37.9))
     assertEquals(
-      BasemapService.focusOf(Some(com.histmersion.api.basemap.Basemap.Focus.Name("Aegean")), None, false, None, t),
+      BasemapService.focusOf(Some(Basemap.Focus.Name("Aegean")), None, false, None, t),
       Right(Some(("aegean", BBox(Longitude(21.5), Latitude(35), Longitude(28.5), Latitude(41.5)))))
     )
-    assertEquals(BasemapService.focusOf(Some(com.histmersion.api.basemap.Basemap.Focus.Name("mine")), Some(box), false, None, t), Right(Some(("mine", box))))
-    assert(BasemapService.focusOf(Some(com.histmersion.api.basemap.Basemap.Focus.Name("nowhere")), None, false, None, t).left.exists(_.value.contains("give its --bbox")))
-    assert(BasemapService.focusOf(Some(com.histmersion.api.basemap.Basemap.Focus.Name("bad name!")), Some(box), false, None, t).isLeft)
+    assertEquals(BasemapService.focusOf(Some(Basemap.Focus.Name("mine")), Some(box), false, None, t), Right(Some(("mine", box))))
+    assert(BasemapService.focusOf(Some(Basemap.Focus.Name("nowhere")), None, false, None, t).left.exists(_.value.contains("give its --bbox")))
+    assert(BasemapService.focusOf(Some(Basemap.Focus.Name("bad name!")), Some(box), false, None, t).isLeft)
     assertEquals(
-      BasemapService.focusOf(None, Some(box), true, Some(com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom(12)), t),
+      BasemapService.focusOf(None, Some(box), true, Some(BasemapFetch.Plan.MaxZoom(12)), t),
       Right(Some(("bbox-22p5-37p4-23p2-37p9", box)))
     )
     assertEquals(
-      BasemapService.focusOf(None, Some(box), true, Some(com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom(8)), t),
+      BasemapService.focusOf(None, Some(box), true, Some(BasemapFetch.Plan.MaxZoom(8)), t),
       Right(None),
       "not deeper than the extract: the extract itself"
     )
     assertEquals(
-      BasemapService.focusOf(None, Some(box), false, Some(com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom(12)), t),
+      BasemapService.focusOf(None, Some(box), false, Some(BasemapFetch.Plan.MaxZoom(12)), t),
       Right(None),
       "with other layers: the extract"
     )
-    assertEquals(Basemap.focusRegion(com.histmersion.api.basemap.Basemap.Focus.Spec("nile-delta 29,30,32.5,31.7")), Right(("nile-delta", BBox(Longitude(29), Latitude(30), Longitude(32.5), Latitude(31.7)))))
-    assert(Basemap.focusRegion(com.histmersion.api.basemap.Basemap.Focus.Spec("x")).isLeft && Basemap.focusRegion(com.histmersion.api.basemap.Basemap.Focus.Spec("x 1,2,3")).isLeft)
+    assertEquals(Basemap.focusRegion(Basemap.Focus.Spec("nile-delta 29,30,32.5,31.7")), Right(("nile-delta", BBox(Longitude(29), Latitude(30), Longitude(32.5), Latitude(31.7)))))
+    assert(Basemap.focusRegion(Basemap.Focus.Spec("x")).isLeft && Basemap.focusRegion(Basemap.Focus.Spec("x 1,2,3")).isLeft)
 
   test("#3760: a tile URL source — one GET a tile, a 404 kept as none, each transformed before it is kept"):
     val dir = Files.createTempDirectory("ondemand-get")
@@ -200,15 +201,15 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val od = OnDemandTiles(
       BasemapFixtures.store(dir),
       () => cfg(),
-      OnDemandTiles.Source.Template(() => com.histmersion.util.basemap.OnDemandTiles.UrlTemplate("fake://sea/{z}/{x}/{y}.png")),
+      OnDemandTiles.Source.Template(() => OnDemandTiles.UrlTemplate("fake://sea/{z}/{x}/{y}.png")),
       () => http,
-      ext = com.histmersion.util.basemap.DiskLru.Ext("png"),
+      ext = DiskLru.Ext("png"),
       transform = b => Right(Some(PmTiles.TileBytes(("T:" + String(b.value)).getBytes)))
     )(using java.time.Clock.systemUTC())
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), Right(None))
-    assertEquals(od.tile(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), Right(None))
+    assertEquals(od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
+    assertEquals(od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
+    assertEquals(od.tile(PmTiles.Zoom(1), PmTiles.TileColumn(0), PmTiles.TileRow(0)), Right(None))
+    assertEquals(od.tile(PmTiles.Zoom(1), PmTiles.TileColumn(0), PmTiles.TileRow(0)), Right(None))
     assertEquals(gets.get, 2, "each tile asked once")
     assert(Files.isRegularFile(dir.resolve("tiles/2/1/3.png")) && Files.isRegularFile(dir.resolve("tiles/1/0/0.none")))
-    assert(od.servesAt(com.histmersion.util.basemap.PmTiles.Zoom(3)) && !od.servesAt(PmTiles.Zoom(cfg().maxZoom.value + 1)))
+    assert(od.servesAt(PmTiles.Zoom(3)) && !od.servesAt(PmTiles.Zoom(cfg().maxZoom.value + 1)))

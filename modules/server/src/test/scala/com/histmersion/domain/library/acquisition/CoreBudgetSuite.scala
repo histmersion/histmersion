@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,6 +20,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin
+import com.histmersion.pluginhost.PolicyHttp
+import com.histmersion.pluginhost.Registries
+import com.histmersion.util.plugins.Plugins
+import com.histmersion.plugin.Access
+import com.histmersion.domain.library.search.Search
 
 /** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over ONE key and
   * ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its retry time,
@@ -105,27 +111,27 @@ class CoreBudgetSuite extends munit.FunSuite:
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
     def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms.value)) })
 
-  private val Ctx: com.histmersion.plugin.Fetch.Context = new com.histmersion.plugin.Fetch.Context:
-    private val m = scala.collection.mutable.Map.empty[com.histmersion.plugin.Fetch.Context.MemoKey, Any] // one fetch's memo
-    def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
+  private val Ctx: Fetch.Context = new Fetch.Context:
+    private val m = scala.collection.mutable.Map.empty[Fetch.Context.MemoKey, Any] // one fetch's memo
+    def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
     val log: Plugin.Log = new Plugin.Log { def info(message: Plugin.Log.InfoMessage) = (); def warn(message: Plugin.Log.WarnMessage) = () }
 
   private def generation(
       cfg: LoadedConfig,
       budget: CoreBudget,
-      extra: List[com.histmersion.plugin.Plugin] = Nil
+      extra: List[Plugin] = Nil
   ): Generation =
-    val http = SttpHttp(cfg.config.acquire, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
+    val http = SttpHttp(cfg.config.acquire, tries = PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
     ServerPlugins.fetchers(cfg, () => HttpPlugin(http), budget, extra)
 
   private val work = WorkKey(doi = Some(Doi("10.1/x")))
 
-  private def lookup(g: Generation): Fetch = g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("core")).fetch(work, Ctx)
+  private def lookup(g: Generation): Fetch = g.registries.sourceFetchers(Registries.SourceFetchersKey("core")).fetch(work, Ctx)
 
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
     Indexes
-      .of(cfg, SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value))), budget)
+      .of(cfg, SttpHttp(cfg, tries = PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())), Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), budget)
       ._1
       .find(_.name.value == "core")
 
@@ -151,9 +157,9 @@ class CoreBudgetSuite extends munit.FunSuite:
         )
       )
       val next = new SourceFetcher:
-        val access = com.histmersion.plugin.Access.Open
-        def fetch(w: WorkKey, ctx: com.histmersion.plugin.Fetch.Context) = Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("nothing here either"))
-      val chain = FetchChain(List(FetchChain.Step.Id("core") -> g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("core")), FetchChain.Step.Id("next") -> next))
+        val access = Access.Open
+        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("nothing here either"))
+      val chain = FetchChain(List(FetchChain.Step.Id("core") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("core")), FetchChain.Step.Id("next") -> next))
       val out = chain.fetchWorkExplained(work, legalOnly = FetchChain.LegalOnly(true))
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
@@ -167,7 +173,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       assert(missWhy(lookup(g)).contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)"))
       val idx = coreIndex(cfg, g, budget).get
       assert(idx.unavailable.exists(_.value.contains("2026-10-26T18:52:11Z")), idx.unavailable.toString)
-      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.value.startsWith("CORE not asked")))
+      assert(idx.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10)).left.exists(_.value.startsWith("CORE not asked")))
       assertEquals(core.asked.size, 1)
       // after it, CORE is asked again: here it has the PDF
       clock.advance(90)
@@ -217,9 +223,9 @@ class CoreBudgetSuite extends munit.FunSuite:
       val cfg = acquire(core, key = "k", daily = 3, searches = 1)
       val g = generation(cfg, budget)
       val idx = coreIndex(cfg, g, budget).get
-      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).isRight)
+      assert(idx.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10)).isRight)
       assert(idx.unavailable.exists(_.value.contains("search-daily-tokens")), idx.unavailable.toString)
-      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.value.contains("search-daily-tokens")))
+      assert(idx.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10)).left.exists(_.value.contains("search-daily-tokens")))
       lookup(g); lookup(g)
       assert(missWhy(lookup(g)).contains("acquire.core.daily-tokens"))
       assertEquals(core.asked.size, 3)
@@ -267,11 +273,11 @@ class CoreBudgetSuite extends munit.FunSuite:
       val g = generation(cfg, budget, extra = List(MakerPlugin()))
       assert(g.report.ok, g.report.toString)
       assertEquals(
-        com.histmersion.util.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value))),
+        Plugins.coreKey(g, cfg.config.acquire.core.key.map(k => Plugins.CoreKey(k.value))),
         Some("v(Work/Histmersion/CORE#password)")
       )
       lookup(g)
-      coreIndex(cfg, g, budget).getOrElse(fail("no core index")).search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10))
+      coreIndex(cfg, g, budget).getOrElse(fail("no core index")).search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10))
       assertEquals(core.asked.asScala.toList.map(_._2), List.fill(2)("Bearer v(Work/Histmersion/CORE#password)"))
       assert(core.asked.asScala.toList.map(_._1).contains("""doi:"10.1/x""""))
       assert(!g.report.toString.contains("v(Work"), "the report shows the reference, never the value")
@@ -283,7 +289,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       val keyed = acquire(core, key = "k-plain")
       val g = generation(keyed, budget)
       lookup(g)
-      coreIndex(keyed, g, budget).getOrElse(fail("no core index")).search(com.histmersion.domain.library.search.Search.Query("q"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10))
+      coreIndex(keyed, g, budget).getOrElse(fail("no core index")).search(Search.Query("q"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10))
       assertEquals(core.asked.asScala.toList.map(_._2), List("Bearer k-plain", "Bearer k-plain"))
       // the index alone (oa-core switched off): the plain key still serves the search
       val off = generation(acquire(core, key = "k-plain", user = "histmersion.plugins.oa-core.enabled = false"), budget)

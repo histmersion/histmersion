@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
@@ -9,6 +10,12 @@ import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import hearth.kindlings.optics.syntax.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.pluginhost.SystemProcesses
+import com.histmersion.api.plugins.PluginsReport
+import com.histmersion.plugin.UpstreamQuota
 
 /** The plugin generations: discover the providers on the server's class path — the first-party fetchers, event
   * catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin — add the plugins
@@ -19,7 +26,7 @@ import com.histmersion.plugin.Plugin
   */
 object Plugins:
   type CoreKey = CoreKey.T
-  object CoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CoreKey extends RefinedType[String, Pure]
 
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
@@ -75,13 +82,13 @@ object Plugins:
       all,
       legacy.user,
       legacy.env,
-      HostServices(http, loaded.env, log, quotaOf(quota), files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses),
+      HostServices(http, loaded.env, log, quotaOf(quota), files = new DiskLocalFiles, processes = new SystemProcesses),
       errors ++ legacy.warnings.map(w => PluginHost.Problem(w.value)),
       carry,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)
     )
-    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError.map(e => com.histmersion.api.plugins.PluginsReport.Warnings(e.value)))
+    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError.map(e => PluginsReport.Warnings(e.value)))
 
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
@@ -160,7 +167,7 @@ object Plugins:
   /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,
     * `acquire.core.api-key`): the new-source search's `core` index asks with it too. `None` when the plugin is off.
     */
-  def coreKey(g: Generation, hostKey: Option[com.histmersion.util.plugins.Plugins.CoreKey]): Option[com.histmersion.util.plugins.Plugins.CoreKey] =
+  def coreKey(g: Generation, hostKey: Option[CoreKey]): Option[CoreKey] =
     Option
       .when(g.registered(CorePlugin))(
         g.secret(CorePlugin, PluginHost.ConfigPath("api-key"))
@@ -214,9 +221,9 @@ object Plugins:
 
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
   def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
-    HostServices(http, env, log, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
+    HostServices(http, env, log, files = new DiskLocalFiles, processes = new SystemProcesses)
 
-  private def quotaOf(quota: HostServices.Quotas): HostServices.QuotaArg1 => com.histmersion.plugin.UpstreamQuota =
+  private def quotaOf(quota: HostServices.Quotas): HostServices.QuotaArg1 => UpstreamQuota =
     upstream => quota(upstream.value)
 
   private def log(id: HostServices.LogArg1, warn: HostServices.LogArg2, message: HostServices.LogArg3): Unit =

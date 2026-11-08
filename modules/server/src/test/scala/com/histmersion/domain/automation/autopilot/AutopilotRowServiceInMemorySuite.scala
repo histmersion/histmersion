@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.autopilot
+package com.histmersion
+package domain.automation.autopilot
 
 import com.histmersion.domain.automation.EngineStoreSuite
 

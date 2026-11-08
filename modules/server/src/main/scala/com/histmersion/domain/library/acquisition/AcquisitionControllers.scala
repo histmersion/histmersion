@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import io.scalaland.chimney.dsl.*
 
@@ -53,6 +54,20 @@ import com.histmersion.api.library.{
 import com.histmersion.api.Api
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
+import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.Goal
+import com.histmersion.api.library.AcquireApi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.ArxivId
+import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.domain.Title
+import com.histmersion.api.ByteCount
+import com.histmersion.domain.AcquireMatch
+import com.histmersion.util.jobs.Job
+import com.histmersion.plugin.WorkKey
+import com.histmersion.domain.AcquireRecheck
 
 /** Every acquisition & assessment operation (stream 2.6): discovery, a paper's references and follow-ups, its
   * assessment, the Retraction Watch mirror, an ingest by identifier, archive.org's import, the goals' candidates. REST
@@ -71,7 +86,7 @@ final class AcquisitionControllers(
     cfg: () => AppConfig,
     maintenance: WriteGate,
     pins: Pinning,
-    goals: com.histmersion.domain.automation.goals.GoalService,
+    goals: GoalService,
     articles: ArticleCitations,
     // by name: the server passes the acquisition node's clients, read at each use, so a reload that
     // changed `acquire.*` or the plugins (the chain) takes effect without rebuilding this
@@ -106,8 +121,8 @@ final class AcquisitionControllers(
 
   private def held(k: com.histmersion.api.library.Citekey): Boolean = Citekey.option(k.value).exists(sources.exists)
 
-  private def goalSlug(raw: String): Either[Api.Error, com.histmersion.domain.automation.Goal.Slug] =
-    com.histmersion.domain.automation.Goal.Slug
+  private def goalSlug(raw: String): Either[Api.Error, Goal.Slug] =
+    Goal.Slug
       .either(raw)
       .left
       .map(_ => Write.invalid(Api.Error.Message(s"invalid goal '$raw'")))
@@ -121,7 +136,7 @@ final class AcquisitionControllers(
   def candidates(
       goal: Option[com.histmersion.api.automation.Goal.Slug],
       state: Option[Candidates.State.Wire],
-      limit: Option[com.histmersion.api.library.AcquireApi.Limit],
+      limit: Option[AcquireApi.Limit],
       offset: Option[CandidateList.Offset]
   ): Either[Api.Error, CandidateList] =
     val st = state.map(_.value.trim).filter(_.nonEmpty).getOrElse(Candidates.State.New.wire.value)
@@ -137,15 +152,15 @@ final class AcquisitionControllers(
       g <- goal
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold[Either[Api.Error, Option[com.histmersion.domain.automation.Goal.Slug]]](Right(None))(x =>
+        .fold[Either[Api.Error, Option[Goal.Slug]]](Right(None))(x =>
           goalSlug(x).map(Some(_))
         )
     yield
       val n = cfg().limits.page(
-        limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
-        com.histmersion.PageSize.applyUnsafe(math.max(1, cfg().limits.search.value))
+        limit.flatMap(l => PageSize.option(l.value)),
+        PageSize.applyUnsafe(math.max(1, cfg().limits.search.value))
       )
-      val from = offset.flatMap(o => com.histmersion.Offset.option(o.value)).getOrElse(com.histmersion.Offset.Start)
+      val from = offset.flatMap(o => Offset.option(o.value)).getOrElse(Offset.Start)
       val page = candidateStore.list(
         g,
         Source.Candidate.State(s.wire.value),
@@ -164,12 +179,12 @@ final class AcquisitionControllers(
   /** Read a goal's watches from their watermarks and store what is new (no model). */
   def sweepCandidates(r: CandidateSweep.Request): Either[Api.Error, CandidateSweep] =
     goalSlug(r.goal.value.trim).flatMap { g =>
-      if r.dryRun.value then search.sweep(g, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(true))
-      else maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("candidates/sweep"))(search.sweep(g, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)))
+      if r.dryRun.value then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
+      else maintenance.guard(WriteGate.OperationName("candidates/sweep"))(search.sweep(g, dryRun = CandidateSearch.SweepDryRun(false)))
     }
 
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("candidates/mark")):
+    maintenance.guard(WriteGate.OperationName("candidates/mark")):
       Candidates.State
         .parse(Candidates.State.Wire(m.state.value))
         .toRight(
@@ -184,10 +199,10 @@ final class AcquisitionControllers(
 
   /** OpenAlex search, with each hit marked `inDb` so a queue-builder can skip what we already have. */
   def discover(
-      q: com.histmersion.api.library.AcquireApi.Query,
-      since: Option[com.histmersion.api.catalogue.Year],
-      sort: Option[com.histmersion.api.library.AcquireApi.Filter],
-      limit: Option[com.histmersion.api.library.AcquireApi.Limit],
+      q: AcquireApi.Query,
+      since: Option[Year],
+      sort: Option[AcquireApi.Filter],
+      limit: Option[AcquireApi.Limit],
       notInDb: Boolean
   ): Either[Api.Error, DiscoverResult] =
     val query = q.value.trim
@@ -195,14 +210,14 @@ final class AcquisitionControllers(
     else
       discovery
         .search(
-          com.histmersion.domain.library.search.Search.Query(query),
+          Search.Query(query),
           since.map(y => com.histmersion.Year(y.value.toInt)),
           sort.map(x => DiscoveryClient.SearchSort(x.value)),
           DiscoveryClient.SearchLimit(
             cfg().limits
               .page(
-                limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
-                com.histmersion.PageSize.applyUnsafe(math.max(1, acq.defaults.searchLimit.value))
+                limit.flatMap(l => PageSize.option(l.value)),
+                PageSize.applyUnsafe(math.max(1, acq.defaults.searchLimit.value))
               )
               .value
           )
@@ -218,7 +233,7 @@ final class AcquisitionControllers(
           DiscoverResult(DiscoverResult.Query(query), DiscoverResult.Count(kept.size), kept)
         }
 
-  def meta(id: com.histmersion.api.library.AcquireApi.Identifier): Either[Api.Error, WorkRef] =
+  def meta(id: AcquireApi.Identifier): Either[Api.Error, WorkRef] =
     Ident.parse(Ident.Written(id.value)).left.map(e => err(e.value)).flatMap {
       case Ident.Doi(doi) => discovery.meta(doi).left.map(e => err(e.value)).map(mark(_, sources.doiIndex))
       case Ident.Arxiv(a) =>
@@ -230,7 +245,7 @@ final class AcquisitionControllers(
           .toRight(Write.notFound(com.histmersion.api.library.Citekey(k.value)))
           .flatMap { s =>
             s.doi
-              .flatMap(d => com.histmersion.domain.library.Doi.option(d.value))
+              .flatMap(d => Doi.option(d.value))
               .toRight(err(s"'$k' has no DOI recorded — nothing to look up upstream"))
               .flatMap(discovery.meta(_).left.map(e => err(e.value)))
               .map(mark(_, sources.doiIndex))
@@ -240,14 +255,14 @@ final class AcquisitionControllers(
   def wikirefs(url: com.histmersion.api.library.Title): Either[Api.Error, WikirefsResult] =
     wiki.refs(WikiClient.ArticleUrl(url.value)).left.map(e => err(e.value)).map { r =>
       val index = sources.doiIndex
-      r.modify(_.known).setTo(r.dois.filter(d => com.histmersion.domain.library.Doi.option(d.value).exists(index.contains)).map(d => WikirefsResult.Known(d.value)))
+      r.modify(_.known).setTo(r.dois.filter(d => Doi.option(d.value).exists(index.contains)).map(d => WikirefsResult.Known(d.value)))
     }
 
   /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller marking a whole page
     * reads the DOI index once.
     */
-  private def mark(w: WorkRef, index: Map[com.histmersion.domain.library.Doi, Citekey]): WorkRef =
-    val byDoi = w.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value)).flatMap(index.get).map(c => com.histmersion.api.library.Citekey(c.value))
+  private def mark(w: WorkRef, index: Map[Doi, Citekey]): WorkRef =
+    val byDoi = w.doi.flatMap(d => Doi.option(d.value)).flatMap(index.get).map(c => com.histmersion.api.library.Citekey(c.value))
     // the generated key, or the pre-#878 key a record with an accented author may still carry
     val keys = w.citekey.toList ++
       Option.when(w.citekey.isDefined)(Acquire.legacyCitekey(w.authors, w.year, w.title)).toList
@@ -261,7 +276,7 @@ final class AcquisitionControllers(
   private def stored(
       generated: com.histmersion.api.library.Citekey,
       authors: List[com.histmersion.api.library.AuthorName],
-      year: Option[com.histmersion.api.catalogue.Year],
+      year: Option[Year],
       title: Option[com.histmersion.api.library.Title]
   ): com.histmersion.api.library.Citekey =
     val legacy = Acquire.legacyCitekey(authors, year, title)
@@ -278,11 +293,11 @@ final class AcquisitionControllers(
       t.doi.toRight(err(s"no DOI for '${req.id}' — a reference list needs one")).flatMap { doi =>
         discovery.references(doi).left.map(e => err(e.value)).map { (backend, rows) =>
           val resolved = resolveRefs(rows)
-          val added: com.histmersion.RowCount =
-            if !req.apply.value then com.histmersion.RowCount(0)
+          val added: RowCount =
+            if !req.apply.value then RowCount(0)
             else
               t.citekey match
-                case None      => com.histmersion.RowCount(0)
+                case None      => RowCount(0)
                 case Some(src) =>
                   sources.addEdges(
                     resolved.flatMap(_.citekey).distinct.filter(_.value != src.value).map(Edge(com.histmersion.api.library.Citekey(src.value), _, Edge.Kind.References)),
@@ -309,7 +324,7 @@ final class AcquisitionControllers(
     val index = sources.doiIndex
     val citekeys = sources.citekeys
     rows.map { r =>
-      val byDoi = r.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value)).flatMap(index.get)
+      val byDoi = r.doi.flatMap(d => Doi.option(d.value)).flatMap(index.get)
       // the current key first, then the pre-#878 one (accented letters dropped) older records carry
       val guesses = Acquire.citekeyCandidates(r.authors, r.year, r.title)
       val byKey = guesses.flatMap(g => Citekey.option(g.value)).find(citekeys.contains)
@@ -346,7 +361,7 @@ final class AcquisitionControllers(
           year,
           Acquire.CitationThreshold(d.wellCitedAt.value),
           Acquire.CitationThreshold(d.lowCitedAt.value),
-          com.histmersion.api.catalogue.Year(d.staleBefore.value.toLong)
+          Year(d.staleBefore.value.toLong)
         )
 
         val checkedAt = t.citekey.filter(_ => store).map { ck =>
@@ -396,7 +411,7 @@ final class AcquisitionControllers(
 
   /** The notices, verbatim, so a later reader sees WHY a verdict was reached without asking Crossref again.
     */
-  private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson =
+  private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): AssessmentRecord.NoticesJson =
     AssessmentRecord.NoticesJson(Json.obj("retractionWatch" -> rw.asJson, "crossrefUpdates" -> up.asJson).noSpaces)
 
   /** Refresh the local Retraction Watch mirror — our ground truth, so an assessment never depends on a third party
@@ -452,8 +467,8 @@ final class AcquisitionControllers(
           val cap = CitationsClient.CitingLimit(
             cfg().limits
               .page(
-                req.limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
-                com.histmersion.PageSize.applyUnsafe(math.max(1, acq.defaults.followupsLimit.value))
+                req.limit.flatMap(l => PageSize.option(l.value)),
+                PageSize.applyUnsafe(math.max(1, acq.defaults.followupsLimit.value))
               )
               .value
           )
@@ -475,11 +490,11 @@ final class AcquisitionControllers(
                   )
                 )
                 .modify(_.citekey)
-                .setTo(r.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value)).flatMap(index.get).map(c => com.histmersion.api.library.Citekey(c.value)))
+                .setTo(r.doi.flatMap(d => Doi.option(d.value)).flatMap(index.get).map(c => com.histmersion.api.library.Citekey(c.value)))
             }
             // an edge can only start at a source we actually hold: the citing paper must be in the
             // corpus, and so must the target
-            val added: com.histmersion.RowCount = (req.apply.value, t.citekey) match
+            val added: RowCount = (req.apply.value, t.citekey) match
               case (true, Some(dst)) =>
                 sources.addEdges(
                   enriched.flatMap(r =>
@@ -493,7 +508,7 @@ final class AcquisitionControllers(
                   ),
                   Caller.Local
                 )
-              case _ => com.histmersion.RowCount(0)
+              case _ => RowCount(0)
             FollowupsResult(
               FollowupsResult.Target(req.id.value),
               Some(com.histmersion.api.library.Doi(doi.value)),
@@ -521,7 +536,7 @@ final class AcquisitionControllers(
         case Ident.Arxiv(a)   => (Some(arxivDoi(a)), Some(a))
         case Ident.Citekey(k) =>
           (
-            Citekey.option(k.value).flatMap(sources.load).flatMap(_.doi).flatMap(d => com.histmersion.domain.library.Doi.option(d.value)),
+            Citekey.option(k.value).flatMap(sources.load).flatMap(_.doi).flatMap(d => Doi.option(d.value)),
             req.arxiv.flatMap(a => Ident.arxiv(Ident.Written(a.value)))
           )
 
@@ -565,7 +580,7 @@ final class AcquisitionControllers(
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
-  private def acquireOnce(doi: com.histmersion.domain.library.Doi, text: Queue.QueueItem.Text): (Queue.QueueItem.Id, Boolean) =
+  private def acquireOnce(doi: Doi, text: Queue.QueueItem.Text): (Queue.QueueItem.Id, Boolean) =
     queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
@@ -576,10 +591,10 @@ final class AcquisitionControllers(
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
   private def ingestWith(
-      doi: Option[com.histmersion.domain.library.Doi],
-      arxiv: Option[com.histmersion.domain.library.ArxivId],
+      doi: Option[Doi],
+      arxiv: Option[ArxivId],
       work: Option[WorkRef],
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]],
       refetch: Boolean,
       path: IngestPath
@@ -587,7 +602,7 @@ final class AcquisitionControllers(
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
     // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
     val original =
-      AcquisitionControllers.originalOf(sources.load(citekey).map(_.ocrMarkdown), sources.original(citekey).map(o => com.histmersion.Sha256.applyUnsafe(o.value)))
+      AcquisitionControllers.originalOf(sources.load(citekey).map(_.ocrMarkdown), sources.original(citekey).map(o => Sha256.applyUnsafe(o.value)))
     val skip = original.filter(_ => !refetch)
 
     // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
@@ -603,7 +618,7 @@ final class AcquisitionControllers(
           Left(OaFetcher.Problem(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")),
           Nil
         )
-      case None => oa.fetchWorkExplained(key, com.histmersion.pluginhost.FetchChain.LegalOnly(path.legalChain.value))
+      case None => oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value))
     if skip.isEmpty && path == IngestPath.PersonLegal && acq.allowUnauthorised.value then
       steps += step("legal-only", true, "the legal chain only: the fetchers the config marks unauthorised were not asked")
     val fetched = chain.file
@@ -630,10 +645,10 @@ final class AcquisitionControllers(
           w,
           citekey,
           location =>
-            com.histmersion.upstreams.landing.RepositoryLanding
+            RepositoryLanding
               .onHost(
-                com.histmersion.upstreams.landing.RepositoryLanding.OnHostUrl(location.value),
-                acq.landing.refusingHosts.map(h => com.histmersion.upstreams.landing.RepositoryLanding.HostPattern(h.value))
+                RepositoryLanding.OnHostUrl(location.value),
+                acq.landing.refusingHosts.map(h => RepositoryLanding.HostPattern(h.value))
               )
               .map(h => BrowserDownload.Host(h.value))
         )
@@ -692,7 +707,7 @@ final class AcquisitionControllers(
           if sources.recordLicence(citekey, Licence.Id(l), Caller.Local) then
             steps += step("licence", true, s"recorded ${l.trim}")
         }
-        steps ++= acquireSteps(doi, com.histmersion.domain.Title(meta.title.value), meta.authors.map(a => AcquireMatch.DecideAuthors(a.value)), outcome.jobId)
+        steps ++= acquireSteps(doi, Title(meta.title.value), meta.authors.map(a => AcquireMatch.DecideAuthors(a.value)), outcome.jobId)
         // an open-access work no script may download goes to the acquisition list once, as a download
         // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
         if fetched.isLeft && skip.isEmpty && !path.needsFile.value && browserOnly.isEmpty then
@@ -739,7 +754,7 @@ final class AcquisitionControllers(
             PdfInfo(
               PdfInfo.Source(f.source.value),
               f.url.map(u => PdfInfo.Url(u.value)),
-              com.histmersion.api.ByteCount(f.bytes.value.length.toLong),
+              ByteCount(f.bytes.value.length.toLong),
               spooled.map(c => PdfInfo.SpoolPath(c.where.value))
             )
           ),
@@ -762,10 +777,10 @@ final class AcquisitionControllers(
     * alone does not fulfil it.
     */
   private def acquireSteps(
-      doi: Option[com.histmersion.domain.library.Doi],
-      title: com.histmersion.domain.Title,
-      authors: List[com.histmersion.domain.AcquireMatch.DecideAuthors],
-      jobId: Option[com.histmersion.util.jobs.Job.Id]
+      doi: Option[Doi],
+      title: Title,
+      authors: List[AcquireMatch.DecideAuthors],
+      jobId: Option[Job.Id]
   ): List[Ingest.Step] =
     val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
     AcquireMatch.decide(items, doi, title, authors, AcquireMatch.ProposeThreshold(acq.defaults.titleMatchAt.value)).map {
@@ -781,8 +796,8 @@ final class AcquisitionControllers(
     }
 
   /** arXiv mints a DataCite DOI for every submission, which is how OpenAlex indexes preprints. */
-  private def arxivDoi(id: com.histmersion.domain.library.ArxivId): com.histmersion.domain.library.Doi =
-    com.histmersion.domain.library.Doi.applyUnsafe(s"10.48550/arxiv.${id.value}")
+  private def arxivDoi(id: ArxivId): Doi =
+    Doi.applyUnsafe(s"10.48550/arxiv.${id.value}")
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -811,14 +826,14 @@ final class AcquisitionControllers(
       )
       // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
       oa.fetchWork(
-        com.histmersion.plugin.WorkKey(
-          archive = Some(com.histmersion.plugin.WorkKey.Archive(item.identifier.value)),
-          format = req.format.map(f => com.histmersion.plugin.WorkKey.Format(f.value)),
-          title = item.title.map(t => com.histmersion.plugin.WorkKey.Title(t.value)),
-          authors = item.creator.map(c => com.histmersion.plugin.WorkKey.Authors(c.value)),
+        WorkKey(
+          archive = Some(WorkKey.Archive(item.identifier.value)),
+          format = req.format.map(f => WorkKey.Format(f.value)),
+          title = item.title.map(t => WorkKey.Title(t.value)),
+          authors = item.creator.map(c => WorkKey.Authors(c.value)),
           year = item.year.map(y => com.histmersion.plugin.Year(y.value.toInt))
         ),
-        com.histmersion.pluginhost.FetchChain.LegalOnly(true)
+        FetchChain.LegalOnly(true)
       ).left
         .map(e => err(s"'${item.identifier}': $e"))
         .flatMap { f =>
@@ -841,7 +856,7 @@ final class AcquisitionControllers(
             .map(e => err(e.value))
             .map { outcome =>
               steps += step("store", true, s"${outcome.detail}")
-              steps ++= acquireSteps(None, com.histmersion.domain.Title(item.title.fold(citekey.value: String)(_.value)), item.creator.map(c => AcquireMatch.DecideAuthors(c.value)), outcome.jobId)
+              steps ++= acquireSteps(None, Title(item.title.fold(citekey.value: String)(_.value)), item.creator.map(c => AcquireMatch.DecideAuthors(c.value)), outcome.jobId)
               Ingest.Report(
                 com.histmersion.api.library.Citekey(citekey.value),
                 None,
@@ -851,7 +866,7 @@ final class AcquisitionControllers(
                   PdfInfo(
                     PdfInfo.Source("archive_org"),
                     None,
-                    com.histmersion.api.ByteCount(f.bytes.value.length.toLong),
+                    ByteCount(f.bytes.value.length.toLong),
                     spooled.map(c => PdfInfo.SpoolPath(c.where.value))
                   )
                 ),
@@ -865,7 +880,7 @@ final class AcquisitionControllers(
 
   /** The fetched copy in the acquisition spool; a failure to write it is a step of the report. */
   private def spoolCopy(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       f: com.histmersion.plugin.FetchedFile,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]]
   ): Option[FetchedCopy] =
@@ -876,13 +891,13 @@ final class AcquisitionControllers(
 
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything else. */
   private def setStatus(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       status: com.histmersion.domain.library.Source.Status
   ): Either[Api.Error, Source.UpdatedAt] =
     sources.patch(
       citekey,
       Source.Patch(metadata =
-        Some(MetadataPatch(status = Some(status.transformInto[com.histmersion.api.library.Source.Status])))
+        Some(MetadataPatch(status = Some(status.transformInto[Source.Status])))
       ),
       Caller.Local
     )
@@ -890,18 +905,18 @@ final class AcquisitionControllers(
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
 
   def assess(req: AssessRequest): Either[Api.Error, Assessment] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("assess"))(assessNow(req))
+    maintenance.guard(WriteGate.OperationName("assess"))(assessNow(req))
 
   /** The verdict alone: nothing applied, nothing recorded (what an agent's dry run reads). */
   def assessReadOnly(id: AssessRequest.Id): Either[Api.Error, Assessment] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("assess"))(assessNow(AssessRequest(id), store = false))
+    maintenance.guard(WriteGate.OperationName("assess"))(assessNow(AssessRequest(id), store = false))
 
   def followups(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("followups"))(followupsNow(req))
+    maintenance.guard(WriteGate.OperationName("followups"))(followupsNow(req))
 
   /** A person's ingest; `legalOnly` asks the legal chain alone, and is otherwise the same. */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("acquire/ingest"))(
+    maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
         req,
         if req.legalOnly.value then IngestPath.PersonLegal else IngestPath.Person
@@ -915,22 +930,22 @@ final class AcquisitionControllers(
     * fetched again; a metadata-only one named by `req.citekey` is fetched and converted into, keeping its enrichment.
     */
   def ingestLegal(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("acquire/ingest"))(ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch(false)), IngestPath.Watcher))
+    maintenance.guard(WriteGate.OperationName("acquire/ingest"))(ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch(false)), IngestPath.Watcher))
 
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
     * settings or key change, which makes the acquisition list's items due for a re-check again.
     */
-  def fetcherGeneration: com.histmersion.domain.AcquireRecheck.LastCheck.Generation = com.histmersion.domain.AcquireRecheck.LastCheck.Generation(generation)
+  def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation(generation)
 
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("archive/import"))(archiveImportNow(item, file, req))
+    maintenance.guard(WriteGate.OperationName("archive/import"))(archiveImportNow(item, file, req))
 
   def updateRetractions(): Either[Api.Error, RetractionsUpdate] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("retractions/update"))(updateRetractionsNow())
+    maintenance.guard(WriteGate.OperationName("retractions/update"))(updateRetractionsNow())
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 
-  final private case class Target(doi: Option[com.histmersion.domain.library.Doi], citekey: Option[com.histmersion.domain.library.Citekey])
+  final private case class Target(doi: Option[Doi], citekey: Option[Citekey])
 
   /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the writes),
     * whichever of the two the caller happened to give us.
@@ -944,7 +959,7 @@ final class AcquisitionControllers(
         Target(Some(doi), sources.doiIndex.get(doi))
       case Ident.Citekey(k) =>
         val ck = Citekey.option(k.value)
-        Target(ck.flatMap(sources.load).flatMap(_.doi).flatMap(d => com.histmersion.domain.library.Doi.option(d.value)), ck.filter(sources.exists))
+        Target(ck.flatMap(sources.load).flatMap(_.doi).flatMap(d => Doi.option(d.value)), ck.filter(sources.exists))
     }
 
 object AcquisitionControllers:
@@ -957,7 +972,7 @@ object AcquisitionControllers:
   /** What original an existing source already has, in words — a converted body, else a stored file (`sources.sha256`) —
     * or None for a metadata-only source (or no source at all). `body` is None when the source does not exist.
     */
-  def originalOf(body: Option[Option[com.histmersion.api.library.Source.OcrMarkdown]], sha256: Option[com.histmersion.Sha256]): Option[String] =
+  def originalOf(body: Option[Option[Source.OcrMarkdown]], sha256: Option[Sha256]): Option[String] =
     body.flatMap { b =>
       if b.exists(_.value.trim.nonEmpty) then Some("a converted body")
       else sha256.map(sha => s"a stored original (sha256 ${sha.value.take(12)}…)")

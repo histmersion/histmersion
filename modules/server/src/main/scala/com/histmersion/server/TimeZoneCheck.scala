@@ -1,8 +1,11 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.zone.ZoneRulesProvider
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The binary's time zones come from the JDK's own tzdb (`lib/tzdb.dat`, which native-image embeds). The build excludes
   * `scala-java-time-tzdb` — a time-zone database for Scala.js that scribe's perfolation drags onto the JVM class path,
@@ -13,19 +16,19 @@ import scala.util.Try
   */
 object TimeZoneCheck:
   type Report = Report.T
-  object Report extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Report extends RefinedType[String, Pure]
 
   /** Why a zone could not be resolved. */
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** How many region ids the JDK knows. */
   type ZoneCount = ZoneCount.T
-  object ZoneCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoneCount extends RefinedType[Int, Pure]
 
   /** The tzdb version the JDK carries. */
   type TzdbVersion = TzdbVersion.T
-  object TzdbVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TzdbVersion extends RefinedType[String, Pure]
 
   /** A zone, an instant, and the offset the zone has then (tzdb rules in force since 2008 or earlier). */
 
@@ -33,19 +36,19 @@ object TimeZoneCheck:
 
   object Probe:
     type Zone = Zone.T
-    object Zone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Zone extends RefinedType[String, Pure]
 
   private val Winter = Instant.parse("2026-01-15T12:00:00Z")
   private val Summer = Instant.parse("2026-07-15T12:00:00Z")
 
   val Probes: List[Probe] = List(
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Winter, ZoneOffset.ofHours(1)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Summer, ZoneOffset.ofHours(2)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("America/New_York"), Winter, ZoneOffset.ofHours(-5)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("America/New_York"), Summer, ZoneOffset.ofHours(-4)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Asia/Kolkata"), Summer, ZoneOffset.ofHoursMinutes(5, 30)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Australia/Lord_Howe"), Winter, ZoneOffset.ofHours(11)),
-    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Australia/Lord_Howe"), Summer, ZoneOffset.ofHoursMinutes(10, 30))
+    Probe(Probe.Zone("Europe/Warsaw"), Winter, ZoneOffset.ofHours(1)),
+    Probe(Probe.Zone("Europe/Warsaw"), Summer, ZoneOffset.ofHours(2)),
+    Probe(Probe.Zone("America/New_York"), Winter, ZoneOffset.ofHours(-5)),
+    Probe(Probe.Zone("America/New_York"), Summer, ZoneOffset.ofHours(-4)),
+    Probe(Probe.Zone("Asia/Kolkata"), Summer, ZoneOffset.ofHoursMinutes(5, 30)),
+    Probe(Probe.Zone("Australia/Lord_Howe"), Winter, ZoneOffset.ofHours(11)),
+    Probe(Probe.Zone("Australia/Lord_Howe"), Summer, ZoneOffset.ofHoursMinutes(10, 30))
   )
 
   /** Pure over the lookups: (ok, the self-check line). `offset` resolves a zone at an instant, `zones` is how many
@@ -53,11 +56,11 @@ object TimeZoneCheck:
     */
   def report(
       probes: List[Probe],
-      offset: (com.histmersion.server.TimeZoneCheck.Probe.Zone, Instant) => Either[com.histmersion.server.TimeZoneCheck.Problem, ZoneOffset],
-      zones: com.histmersion.server.TimeZoneCheck.ZoneCount,
-      version: Option[com.histmersion.server.TimeZoneCheck.TzdbVersion],
-      default: Either[com.histmersion.server.TimeZoneCheck.Problem, com.histmersion.server.TimeZoneCheck.Probe.Zone]
-  ): (Boolean, com.histmersion.server.TimeZoneCheck.Report) =
+      offset: (Probe.Zone, Instant) => Either[Problem, ZoneOffset],
+      zones: ZoneCount,
+      version: Option[TzdbVersion],
+      default: Either[Problem, Probe.Zone]
+  ): (Boolean, Report) =
     val wrong = probes.flatMap { p =>
       offset(p.zone, p.at) match
         case Right(o) if o == p.offset => Nil
@@ -76,7 +79,7 @@ object TimeZoneCheck:
     else (false, Report(s"time zones: BROKEN — ${problems.mkString("; ")}"))
 
   /** The check against this JDK (or binary). */
-  def jdk(): (Boolean, com.histmersion.server.TimeZoneCheck.Report) =
+  def jdk(): (Boolean, Report) =
     def err(t: Throwable) = Problem(s"${t.getClass.getSimpleName}: ${t.getMessage}")
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)
     val version = Try(ZoneRulesProvider.getVersions("Europe/Warsaw").lastKey).toOption

@@ -1,7 +1,10 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The server's files: a [[Store]] for each named [[Location]], and scratch stores that are removed when they close.
   * Where each location lives is the composition root's to say (from the configuration, read again at each call, so a
@@ -18,13 +21,13 @@ trait Storage:
     find(location).getOrElse(throw IllegalStateException(s"no directory is configured for $location"))
 
   /** A new temporary store, its directory named after `purpose`. */
-  def scratch(purpose: com.histmersion.util.storage.Storage.ScratchPurpose): Scratch
+  def scratch(purpose: Storage.ScratchPurpose): Scratch
 
 object Storage:
 
   /** Stores on disk: `roots` says where each location is now, `temp` where scratch stores are made. */
   type ScratchPurpose = ScratchPurpose.T
-  object ScratchPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScratchPurpose extends RefinedType[String, Pure]
 
   def apply(roots: Location => Option[Path], temp: () => Path): Storage = Implementation(roots, temp)
 
@@ -36,7 +39,7 @@ object Storage:
   final private class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
     def find(location: Location): Option[Store] = roots(location).map(DiskStore(location, _))
 
-    def scratch(purpose: Storage.ScratchPurpose): Scratch =
+    def scratch(purpose: ScratchPurpose): Scratch =
       val base = temp()
       Files.createDirectories(base)
       val dir = Files.createTempDirectory(base, purpose.value)
@@ -53,7 +56,7 @@ object Storage:
     def find(location: Location): Option[Store] =
       Some(stores.computeIfAbsent(location, l => MemoryStore(l, s"memory:$l")))
 
-    def scratch(purpose: Storage.ScratchPurpose): Scratch =
+    def scratch(purpose: ScratchPurpose): Scratch =
       val s = MemoryStore(Location.Scratch, s"memory:scratch:$purpose")
       new Scratch:
         def store: Store = s

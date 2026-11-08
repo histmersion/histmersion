@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,6 +16,14 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.tapir.Schema
+import com.histmersion.domain.EnrichSource
+import com.histmersion.domain.research.workflows.ResearchAgentTools
+import com.histmersion.domain.ReviewArticle
+import com.histmersion.domain.CompileArticle
+import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Source
 
 /** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the MCP tools
   * advertise — no second schema stack.
@@ -59,31 +68,31 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
     val js = sttp.apispec.circe
-      .encoderSchema(ResponseSchema.derived[com.histmersion.domain.EnrichSource.Findings]().schema)
+      .encoderSchema(ResponseSchema.derived[EnrichSource.Findings]().schema)
       .noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
   test("followups as an agent tool has no apply flag"):
-    val t = TestToolbox(null).tool(com.histmersion.domain.library.workflows.LibraryAgentTools.Followups).get
+    val t = TestToolbox(null).tool(LibraryAgentTools.Followups).get
     assert(!t.rawJsonSchema.noSpaces.contains("apply"), t.rawJsonSchema.noSpaces)
 
   test("check_edits as an agent tool takes the MCP tool's input: slug, edits (op, anchor, text) or a body"):
-    val t = TestToolbox(null).tool(com.histmersion.domain.research.workflows.ResearchAgentTools.CheckEdits).get
+    val t = TestToolbox(null).tool(ResearchAgentTools.CheckEdits).get
     val js = t.rawJsonSchema.noSpaces
     assertEquals(t.name, "check_edits")
     assert(List("\"slug\"", "\"edits\"", "\"anchor\"", "\"body\"", "insertBefore").forall(js.contains), js)
 
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
     def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
-    val fixer = js(ResponseSchema.derived[com.histmersion.domain.ReviewArticle.FixerAnswer]())
+    val fixer = js(ResponseSchema.derived[ReviewArticle.FixerAnswer]())
     assert(
       fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"),
       fixer
     )
-    val draft = js(ResponseSchema.derived[com.histmersion.domain.CompileArticle.DraftAnswer]())
+    val draft = js(ResponseSchema.derived[CompileArticle.DraftAnswer]())
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
-    val t = TestToolbox(null).tool(com.histmersion.domain.research.workflows.ResearchAgentTools.ArticleCoverage).get
+    val t = TestToolbox(null).tool(ResearchAgentTools.ArticleCoverage).get
     assertEquals(t.name, "article_coverage")
     assert(t.rawJsonSchema.noSpaces.contains("\"slug\""), t.rawJsonSchema.noSpaces)
 
@@ -98,7 +107,7 @@ class AgentSchemaSuite extends munit.FunSuite:
       assert(!js.contains("$schema") && !js.contains("\"title\":\""), s"${t.value}: $js")
     }
     assert(
-      schema(com.histmersion.domain.research.workflows.ResearchAgentTools.CheckEdits).contains("\"anchor\""),
+      schema(ResearchAgentTools.CheckEdits).contains("\"anchor\""),
       "the $defs survive, only their titles go"
     )
 
@@ -109,17 +118,17 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(js.hcursor.downField("title").failed, js.noSpaces)
 
   test("the agent search, facets and get_source take what steps use, mapped onto the same handlers"):
-    val search = schema(com.histmersion.domain.library.workflows.LibraryAgentTools.Search)
+    val search = schema(LibraryAgentTools.Search)
     List("\"query\"", "\"topics\"", "\"status\"", "\"limit\"", "\"offset\"").foreach(k => assert(search.contains(k), k))
     List("groupBy", "minLon", "samples", "verbose", "asOf").foreach(k => assert(!search.contains(k), k))
     val f = AgentSearchInput(
-      query = Some(com.histmersion.api.library.Filter.Q("Hittite")),
-      topics = List(com.histmersion.api.library.Filter.Topics("a,b")),
-      status = List(com.histmersion.api.library.Filter.Status("contested")),
-      from = Some(com.histmersion.api.catalogue.Year(-1600)),
-      to = Some(com.histmersion.api.catalogue.Year(-1200)),
-      limit = Some(com.histmersion.api.library.Filter.Limit(30)),
-      offset = Some(com.histmersion.api.library.Filter.Offset(30))
+      query = Some(Filter.Q("Hittite")),
+      topics = List(Filter.Topics("a,b")),
+      status = List(Filter.Status("contested")),
+      from = Some(Year(-1600)),
+      to = Some(Year(-1200)),
+      limit = Some(Filter.Limit(30)),
+      offset = Some(Filter.Offset(30))
     ).toFilter
     assertEquals(
       (f.q, f.topics, f.status, f.limit, f.offset),
@@ -127,26 +136,26 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
     assert(f.period.isDefined && f.bbox.isEmpty && f.places.isEmpty)
     assert(
-      !schema(com.histmersion.domain.library.workflows.LibraryAgentTools.Facets).contains("minLon") && schema(
-        com.histmersion.domain.library.workflows.LibraryAgentTools.Facets
+      !schema(LibraryAgentTools.Facets).contains("minLon") && schema(
+        LibraryAgentTools.Facets
       ).contains("\"prefix\"")
     )
-    assert(!schema(com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource).contains("fullText"))
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x")).sectionOrBody, None, "no section: summary, findings and notes")
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"), section = Some(com.histmersion.api.library.Source.Section.Wire("all")), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("all"))
+    assert(!schema(LibraryAgentTools.GetSource).contains("fullText"))
+    assertEquals(AgentGetSourceInput(Citekey.assume("x")).sectionOrBody, None, "no section: summary, findings and notes")
+    assertEquals(AgentGetSourceInput(Citekey.assume("x"), offset = Some(Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
+    assertEquals(AgentGetSourceInput(Citekey.assume("x"), section = Some(Source.Section.Wire("all")), offset = Some(Offset(120))).sectionOrBody, Some("all"))
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
     import io.circe.parser.decode
     // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
     assertEquals(
       decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
-      Right(AgentSearchInput(topics = List(com.histmersion.api.library.Filter.Topics("dragon_slaying_myth")), limit = Some(com.histmersion.api.library.Filter.Limit(50))))
+      Right(AgentSearchInput(topics = List(Filter.Topics("dragon_slaying_myth")), limit = Some(Filter.Limit(50))))
     )
-    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"))))
-    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput(com.histmersion.domain.library.workflows.AgentFacetsInput.Field("tags"))))
-    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(com.histmersion.domain.library.workflows.FollowupsInput.Id("x"))))
-    val t = box.tool(com.histmersion.domain.library.workflows.LibraryAgentTools.Search).get
+    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(Citekey.assume("x"))))
+    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput(AgentFacetsInput.Field("tags"))))
+    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
+    val t = box.tool(LibraryAgentTools.Search).get
     assert(
       t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
       "the codec the agent endpoints decode with"

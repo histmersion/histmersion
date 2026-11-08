@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,6 +12,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.Pipeline
 
 /** What the automation engine is fed and what it generates, recorded on the code before the engine took contributions:
   * the agent definitions generator's trees for every runtime, written into a scratch directory (every file's path, size
@@ -20,10 +25,10 @@ import scala.jdk.CollectionConverters.*
   */
 class AutomationOracleSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val dir = Path.of("modules/server/src/test/resources/oracle/automation")
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 
@@ -72,7 +77,7 @@ class AutomationOracleSuite extends munit.FunSuite:
   test("workflows.txt: every workflow the engine runs, its roles and the tools its agents may use"):
     val defs = Generated.defs()
     val agents = defs.agents.sortBy(_.name.value).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
-    val pipelines = com.histmersion.domain.automation.Pipeline.values.toList.map { p =>
+    val pipelines = Pipeline.values.toList.map { p =>
       s"workflow ${p.wire}\tv${p.version}\t${p.targetKind.wire}\troles=${p.roles.map(_.wire).mkString(",")}\n  ${p.describe}"
     }
     val tools = ToolboxOrder.names.map(t => s"tool ${t.value}")

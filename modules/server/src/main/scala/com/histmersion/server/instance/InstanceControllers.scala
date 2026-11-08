@@ -1,4 +1,5 @@
-package com.histmersion.server.instance
+package com.histmersion
+package server.instance
 
 import com.histmersion.util.database.Transactor
 
@@ -25,6 +26,8 @@ import com.histmersion.api.settings.ReloadReport
 import com.histmersion.api.Api
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.maintenance.Storage
+import com.histmersion.util.database.Migrate
+import com.histmersion.util.data.maintenance.WriteGate
 
 /** This server as REST, MCP and the CLI ask about it, over the diagnostics: its version and health, About (the build,
   * the job queue, the newest backup, the store's counts, the storage, the plugins, the agent lease, the metered
@@ -83,7 +86,7 @@ final class InstanceControllers(
 
   def health: Health =
     val conv = converter()
-    Try(com.histmersion.util.database.Migrate.current(deps.ds)) match
+    Try(Migrate.current(deps.ds)) match
       case scala.util.Success(v) =>
         Health(
           if conv.healthy then Health.Status("ok") else Health.Status("degraded"),
@@ -191,7 +194,7 @@ final class InstanceControllers(
     * counters after the mark moved.
     */
   def markSeen(board: UiNotices.Board.Wire, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
-    deps.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("mark_seen")):
+    deps.maintenance.guard(WriteGate.OperationName("mark_seen")):
       for
         b <- UiNotices.Board
           .parse(board)

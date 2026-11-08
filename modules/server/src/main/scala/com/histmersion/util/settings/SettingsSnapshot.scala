@@ -1,6 +1,9 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.config.edit.{FileVersion, SettingReading}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The settings as the settings file and the environment have them now: where the file is (as messages name it), every
   * setting (or those asked for), the file's version a change is made against, what is wrong with the file, and whether
@@ -17,10 +20,10 @@ final case class SettingsSnapshot(
 
 object SettingsSnapshot:
   type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object File extends RefinedType[String, Pure]
   type Exists = Exists.T
-  object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Exists extends RefinedType[Boolean, Pure]
   type Problems = Problems.T
-  object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problems extends RefinedType[String, Pure]
   type SetupDue = SetupDue.T
-  object SetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetupDue extends RefinedType[Boolean, Pure]

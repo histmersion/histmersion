@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,9 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import com.histmersion.api.backup.Backup
 import com.histmersion.util.storage.Store
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.config.Environment
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
@@ -38,7 +42,7 @@ import com.histmersion.util.storage.Store
   */
 object Supervisor:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   private def command(text: String): ProcessLaunch.Command = ProcessLaunch.Command(text)
 
@@ -61,7 +65,7 @@ object Supervisor:
       exe: Option[Path],
       env: UserPaths.Lookup,
       osName: UserPaths.OsName
-  ): Either[com.histmersion.server.Supervisor.Problem, Layout] =
+  ): Either[Problem, Layout] =
     val home = Option(rc.home.value)
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -103,7 +107,7 @@ object Supervisor:
   /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the `-o` string),
     * `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the machine's memory is unknown).
     */
-  private def size(v: String, auto: Long => Long, ramBytes: Option[com.histmersion.ByteCount]): Option[String] =
+  private def size(v: String, auto: Long => Long, ramBytes: Option[ByteCount]): Option[String] =
     v.trim match
       case ""                                         => None
       case a if a.equalsIgnoreCase("auto")            => ramBytes.map(r => mb(auto(r.value)))
@@ -120,7 +124,7 @@ object Supervisor:
     *   - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
     *   - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory).
     */
-  private[server] def pgSettings(t: PgTuning, ramBytes: Option[com.histmersion.ByteCount]): List[(String, String)] =
+  private[server] def pgSettings(t: PgTuning, ramBytes: Option[ByteCount]): List[(String, String)] =
     List(
       "shared_buffers" -> size(t.sharedBuffers.value, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
       "effective_cache_size" -> size(t.effectiveCacheSize.value, r => math.max(512 * MB, r / 2), ramBytes),
@@ -128,12 +132,12 @@ object Supervisor:
     ).collect { case (k, Some(v)) => k -> v }
 
   /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. */
-  private def physicalMemory(osName: UserPaths.OsName): Option[com.histmersion.ByteCount] =
+  private def physicalMemory(osName: UserPaths.OsName): Option[ByteCount] =
     scala.util
       .Try {
         if UserPaths.isMac(osName) then
           processes
-            .run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("/usr/sbin/sysctl"), com.histmersion.util.process.ProcessLaunch.Command("-n"), com.histmersion.util.process.ProcessLaunch.Command("hw.memsize"))))
+            .run(ProcessLaunch(List(ProcessLaunch.Command("/usr/sbin/sysctl"), ProcessLaunch.Command("-n"), ProcessLaunch.Command("hw.memsize"))))
             .toOption
             .flatMap(_.lines.mkString("\n").trim.toLongOption)
         else
@@ -144,7 +148,7 @@ object Supervisor:
       }
       .toOption
       .flatten
-      .flatMap(com.histmersion.ByteCount.option(_))
+      .flatMap(ByteCount.option(_))
 
   private[server] def pgStop(l: Layout): List[ProcessLaunch.Command] =
     List(command(l.pgBin.resolve("pg_ctl").toString), command("-D"), command(l.cluster.toString), command("-m"), command("fast"), command("-w"), command("stop"))
@@ -253,7 +257,7 @@ object Supervisor:
           s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
         )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
-    val configured = configure(cfg, l, paths.environment.get(com.histmersion.config.Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value)))
+    val configured = configure(cfg, l, paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value)))
     ensureDatabase(configured)
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
@@ -270,7 +274,7 @@ object Supervisor:
   def reloadSource(started: AppConfig, read: () => Either[ConfigSource.Problem, LoadedConfig], paths: UserPaths): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e.value), identity)
-    val bind = paths.environment.get(com.histmersion.config.Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
+    val bind = paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
     ConfigSource(
       read,
       c => configure(c, l, bind),
@@ -339,7 +343,7 @@ object Supervisor:
     stopping.set(true)
     converter.get().foreach { p =>
       p.destroy()
-      if !p.waitFor(com.histmersion.util.process.Processes.WaitTimeout(10), TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
+      if !p.waitFor(Processes.WaitTimeout(10), TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
     }
     val (rc, out) = run(pgStop(l), l)
     if rc != 0 then scribe.error(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")

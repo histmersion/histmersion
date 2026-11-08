@@ -1,4 +1,5 @@
-package com.histmersion.util.ocr
+package com.histmersion
+package util.ocr
 
 import io.github.iltotore.iron.*
 

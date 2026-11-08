@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,16 +9,31 @@ import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.DbSuite
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.views.QueueListing
+import com.histmersion.api.automation.GoalsExport
+import com.histmersion.server.agents.Generated
+import com.histmersion.domain.automation.agents.AgentDefinitions
+import com.histmersion.domain.automation.agents.Prompts
+import com.histmersion.server.agents.EngineContributions
+import com.histmersion.api.research.Article
 
 /** The stream-2.8 surface over real HTTP: status codes and JSON shapes are part of the contract, so they are asserted
   * through the wire rather than through the handlers. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class OpsHttpSuite extends com.histmersion.db.DbSuite:
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+class OpsHttpSuite extends DbSuite:
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private val testDb = com.histmersion.db.TestDb.url
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -43,7 +59,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      lock = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get))).getConnection
+      lock = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))).getConnection
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") }
       finally st.close()
@@ -58,9 +74,9 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("lint · queue · query · schema over HTTP"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       // ── lint ───────────────────────────────────────────────────────────────────────────────
@@ -166,15 +182,15 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
   // goals, their links and the linked queue items' state.
   test("GET /api/export/goals renders the goal tree with its links and queue-item state"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       def put(u: String, body: String) = send(json(u).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
       def idOf(body: String) =
         """"id"\s*:\s*(\d+)""".r
           .findFirstMatchIn(body)
-          .map(m => com.histmersion.api.automation.Queue.QueueItem.Id(m.group(1).toInt))
+          .map(m => Queue.QueueItem.Id(m.group(1).toInt))
           .getOrElse(fail(body))
       val (ok, gone) = (
         idOf(post(s"$url/api/queue/tasks", """{"text":"zzgoals done item"}""")._2),
@@ -200,7 +216,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         // the web UI's links both ways: an item names the goals that link it; a goal's link names the item's list
         val listing = io.circe.parser
-          .decode[com.histmersion.api.views.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
+          .decode[QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
           .fold(e => fail(e.toString), identity)
         assertEquals(listing.goals.find(_.item == gone).map(_.goals.map(_.slug)), Some(List("zzgoals-sub")))
         assertEquals(listing.goals.find(_.item == ok).flatMap(_.goals.headOption).map(_.title), Some("ZZ sub goal"))
@@ -209,7 +225,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         val (es, eb) = get(s"$url/api/export/goals")
         assertEquals(es, 200, eb)
-        assert(eb.startsWith(com.histmersion.api.automation.GoalsExport.Header), eb.take(200))
+        assert(eb.startsWith(GoalsExport.Header), eb.take(200))
         assert(eb.contains("Do not edit"), eb.take(400))
         val top = eb.indexOf("\n## ZZ top goal\n")
         val sub = eb.indexOf("\n### ZZ sub goal\n")
@@ -234,9 +250,9 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
   // tools/list is the authority — every tool it advertises must be documented, with the right count.
   test("every MCP tool the server advertises is documented in the docs and the plugin README, with the right count"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val req = HttpRequest
         .newBuilder(URI.create(s"http://127.0.0.1:${b.port}/mcp"))
         .header("content-type", "application/json")
@@ -254,11 +270,11 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
         .getOrElse(Nil)
       assert(tools.size > 40, tools.toString)
       // every {{tool:x}} placeholder in the canonical agents and skills names a tool /mcp really has
-      val named = com.histmersion.server.agents.Generated
+      val named = Generated
         .known(
-          com.histmersion.domain.automation.agents.AgentDefinitions(
-            new com.histmersion.domain.automation.agents.Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")),
-            com.histmersion.server.agents.EngineContributions.roster
+          AgentDefinitions(
+            new Prompts(Prompts.OverrideDir("")),
+            EngineContributions.roster
           )
         )
       assertEquals(named.map(_.value).filterNot(tools.toSet).toList.sorted, Nil, "placeholders naming no MCP tool")
@@ -276,9 +292,9 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the MCP tool list advertises lint, queue and query"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/mcp"
       val req = HttpRequest
         .newBuilder(URI.create(url))
@@ -296,9 +312,9 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   test("POST /api/articles/{slug}/check and the check_edits MCP tool dry-run edits, writing nothing"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val body = "Tin reached the Aegean by sea.\n\n## Disagreements\n\nNone.\n"
@@ -322,7 +338,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
           """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
         val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
         assertEquals(s, 200, r)
-        val check = io.circe.parser.decode[com.histmersion.api.research.Article.Edits.ArticleCheck](r).toOption.get
+        val check = io.circe.parser.decode[Article.Edits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
           check.problems.exists(_.value.contains("zzhttp_ghost")) && check.problems.exists(_.value.startsWith("edit 2 (delete")),

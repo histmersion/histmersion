@@ -1,4 +1,5 @@
-package com.histmersion.util.data
+package com.histmersion
+package util.data
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,11 @@ import com.histmersion.config.AppConfig
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.server.Deps
 import com.augustnagro.magnum.*
+import com.histmersion.util.data.diagnostics.DataFigures
+import com.histmersion.config.DbConfig
+import com.histmersion.util.database.Migrate
+import com.histmersion.util.data.exchange.CarriedKinds
+import com.histmersion.api.exchange.Bundle
 
 /** The registry: one contribution per owner, one owner per table, and — on a migrated database — every table of the
   * schema owned by exactly one contributor. The schema part is skipped without HISTMERSION_TEST_DB_URL.
@@ -14,7 +20,7 @@ class DataContributionsSuite extends DbSuite:
   private val testDb = TestDb.url
 
   final private class Fixed(val owner: DataOwner, val tables: List[OwnedTable]) extends DataContribution:
-    def figures(using DbCon): diagnostics.DataFigures = diagnostics.DataFigures.empty
+    def figures(using DbCon): DataFigures = DataFigures.empty
 
   test("an owner registered twice and a table claimed twice are refused, each named"):
     val a = Fixed(DataOwner("a"), OwnedTable.all("t1", "t2"))
@@ -47,8 +53,8 @@ class DataContributionsSuite extends DbSuite:
 
   test("every table of the migrated schema has exactly one owner"):
     assume(testDb.isDefined, "HISTMERSION_TEST_DB_URL is not set")
-    val ds = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
-    com.histmersion.util.database.Migrate.run(ds)
+    val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
+    Migrate.run(ds)
     val schema = connect(ds)(
       sql"""SELECT table_name::text FROM information_schema.tables WHERE table_schema = 'public'
             AND table_type = 'BASE TABLE' ORDER BY 1""".query[String].run().toList
@@ -58,9 +64,9 @@ class DataContributionsSuite extends DbSuite:
     assertEquals(owned.filterNot(schema.contains), Nil, "registered tables the schema does not have")
 
   test("today's registry carries every entry of the bundle format once, and a merge rule for every kind of record"):
-    val carried = exchange.CarriedKinds(Deps.data.carried)
-    assertEquals(carried.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.Bundle.Files.all)
+    val carried = CarriedKinds(Deps.data.carried)
+    assertEquals(carried.inBundleOrder.map(_.entry.value), Bundle.Files.all)
     assertEquals(
       Deps.data.mergeRules.map(_.kind).sortBy(_.ordinal),
-      com.histmersion.api.exchange.Bundle.Kind.values.toList
+      Bundle.Kind.values.toList
     )

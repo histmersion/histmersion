@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
@@ -7,6 +8,12 @@ import com.histmersion.api.checks.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.Title
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
   * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the
@@ -14,7 +21,7 @@ import com.histmersion.api.backup.Backup
   */
 trait AutomationHost:
   /** Is there an article with this slug? */
-  def articleExists(slug: com.histmersion.domain.research.Slug): Boolean
+  def articleExists(slug: Slug): Boolean
 
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
   def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal]
@@ -30,22 +37,22 @@ trait AutomationHost:
   /** The target as pipeline `p` names it: an existing source or article, a goal — or, for compile-article, any valid
     * slug (a new article is created, an existing one extended). None: a target kind the engine resolves itself.
     */
-  def runTarget(p: Pipeline, raw: com.histmersion.domain.automation.workflows.AutomationHost.RunTargetRaw): Option[Either[Api.Error, com.histmersion.domain.automation.workflows.AutomationHost.RunTargetResultPart2]]
+  def runTarget(p: Pipeline, raw: AutomationHost.RunTargetRaw): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]]
 
   /** The options pipeline `p` understands, checked before a run is queued (`roundsCap`: the review's round cap). */
-  def runOptions(p: Pipeline, req: RunRequest, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget, roundsCap: com.histmersion.domain.automation.workflows.AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit]
+  def runOptions(p: Pipeline, req: RunRequest, target: ManagerContext.ItemTarget, roundsCap: AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit]
 
   /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains. */
   def runRoles(p: Pipeline): List[Role]
 
   /** A source or an article a goal links, as its canonical key (a citekey, a slug). */
-  def linkRef(kind: LinkKind, raw: com.histmersion.domain.automation.workflows.AutomationHost.LinkRefRaw): Either[Api.Error, com.histmersion.domain.automation.workflows.AutomationHost.LinkRefResultPart2]
+  def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.LinkRefResultPart2]
 
   /** What the probe asks a model about one source, and the answer it must give: (citekey, title, year). */
-  def probeSubject(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, ProbeAnswer]
+  def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer]
 
   /** Whether a model's title names the record's (after normalisation). */
-  def sameTitle(answered: com.histmersion.domain.Title, record: com.histmersion.domain.Title): Boolean
+  def sameTitle(answered: Title, record: Title): Boolean
 
   /** A goal plan's works looked up by DOI (the library's metadata: title, year, authors, whether the corpus holds it,
     * whether it is open access or retracted).
@@ -53,12 +60,12 @@ trait AutomationHost:
   def workLookup: PlanGoal.Lookup
 
   /** The values of a search field the corpus uses, the most used first (a plan's vocabulary). */
-  def vocabulary(field: com.histmersion.domain.automation.workflows.AutomationHost.VocabularyField): List[com.histmersion.domain.automation.workflows.AutomationHost.VocabularyResult]
+  def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.VocabularyResult]
 
   // ── the autopilot's housekeeping (util.data) ─────────────────────────────────────────────────
 
   /** Why the housekeeping may not run now (a maintenance operation holds the database), if it may not. */
-  def housekeepingBlock: Option[com.histmersion.domain.automation.workflows.AutomationHost.HousekeepingBlockResult]
+  def housekeepingBlock: Option[AutomationHost.HousekeepingBlockResult]
 
   /** Start a backup; its status at once. */
   def backup(): Either[Api.Error, Backup.Status]
@@ -71,18 +78,18 @@ trait AutomationHost:
 
 object AutomationHost:
   type RunTargetResultPart2 = RunTargetResultPart2.T
-  object RunTargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunTargetResultPart2 extends RefinedType[String, Pure]
   type RunTargetRaw = RunTargetRaw.T
-  object RunTargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunTargetRaw extends RefinedType[String, Pure]
   type RunOptionsRoundsCap = RunOptionsRoundsCap.T
-  object RunOptionsRoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunOptionsRoundsCap extends RefinedType[Int, Pure]
   type LinkRefResultPart2 = LinkRefResultPart2.T
-  object LinkRefResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkRefResultPart2 extends RefinedType[String, Pure]
   type LinkRefRaw = LinkRefRaw.T
-  object LinkRefRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkRefRaw extends RefinedType[String, Pure]
   type VocabularyResult = VocabularyResult.T
-  object VocabularyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VocabularyResult extends RefinedType[String, Pure]
   type VocabularyField = VocabularyField.T
-  object VocabularyField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VocabularyField extends RefinedType[String, Pure]
   type HousekeepingBlockResult = HousekeepingBlockResult.T
-  object HousekeepingBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HousekeepingBlockResult extends RefinedType[String, Pure]

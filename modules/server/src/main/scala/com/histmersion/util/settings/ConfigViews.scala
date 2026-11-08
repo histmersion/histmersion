@@ -1,4 +1,5 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.config.UserConfigFile

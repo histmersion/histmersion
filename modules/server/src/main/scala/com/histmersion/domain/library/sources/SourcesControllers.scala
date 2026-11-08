@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.aliases.AliasKinds
 
@@ -24,6 +25,9 @@ import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.util.time.Timer
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -42,7 +46,7 @@ final class SourcesControllers(
     cfg: () => AppConfig,
     maintenance: WriteGate,
     clock: Clock
-)(using timer: com.histmersion.util.time.Timer):
+)(using timer: Timer):
 
   /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one. */
   def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
@@ -95,7 +99,7 @@ final class SourcesControllers(
     * source it was renamed to — it never creates a second source under the old name, which the alias would then shadow.
     */
   def put(citekey: Citekey, in: Source.Put, strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict(false)): Either[Api.Error, Source.WithFindings] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_source")):
+    maintenance.guard(WriteGate.OperationName("put_source")):
       val ck = current(AliasKinds.SourceRecords, citekey)
       Source.Write
         .applyPut(apiCk(ck), in, sources.aliasesOf(ck).map(apiCk))
@@ -108,7 +112,7 @@ final class SourcesControllers(
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patch(citekey: Citekey, p: Source.Patch, strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict(false)): Either[Api.Error, Source.WithFindings] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_source")):
+    maintenance.guard(WriteGate.OperationName("patch_source")):
       // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
       strictGate(strict.value, issuesOf(p.summary, p.notes))
         .flatMap(_ => sources.patch(citekey, p, Caller.Local))
@@ -117,7 +121,7 @@ final class SourcesControllers(
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
   def rename(citekey: Citekey, req: Rename.Request): Either[Api.Error, Source.Renamed] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_source")):
+    maintenance.guard(WriteGate.OperationName("rename_source")):
       val from = current(AliasKinds.SourceRecords, citekey)
       Citekeys
         .renameTo(from, Citekeys.RenameToNewRaw(req.newCitekey.value))
@@ -139,7 +143,7 @@ final class SourcesControllers(
     val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply.value then sources.deletion(ck).map(p => p.deletion.modify(_.files).setTo(originals.find(p).map(f => Source.Deletion.Files(f.value))))
     else
-      maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_source")):
+      maintenance.guard(WriteGate.OperationName("delete_source")):
         val today = LocalDate.now(clock.withZone(ZoneOffset.UTC)).toString
         // the files are named inside the transaction (they are in its log line) and go only after it committed
         sources
@@ -164,7 +168,7 @@ final class SourcesControllers(
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
-  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("import")):
+  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard(WriteGate.OperationName("import")):
     SourceNote.parseNote(SourceNote.Text(req.text.value), req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))) match
       case None         => Left(Api.Error(Api.Error.Message("no YAML frontmatter in the note")))
       case Some(parsed) =>
@@ -224,7 +228,7 @@ final class SourcesControllers(
     * guarded by the `updatedAt` just read, then the report of what is left.
     */
   def fix(citekey: Citekey): Either[Api.Error, FormatReport] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("fix_source_format")):
+    maintenance.guard(WriteGate.OperationName("fix_source_format")):
       val ck = canonical(citekey)
       sources.load(ck).toRight(notFound(citekey)).flatMap { s =>
         val (summary, fs) =
@@ -262,7 +266,7 @@ final class SourcesControllers(
       fullText: SourcesControllers.MarkdownFullText,
       section: Option[Source.Section.Wire] = None,
       heading: Option[SourceService.Heading] = None,
-      offset: Option[com.histmersion.Offset] = None,
+      offset: Option[Offset] = None,
       chars: Option[SourcesControllers.Chars] = None
   ): Either[Api.Error, SourcesControllers.Markdown] =
     val sec = section.flatMap(Source.Section.parse).map(_.value)
@@ -355,7 +359,7 @@ final class SourcesControllers(
       }
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */
-  private def bodySlice(citekey: Citekey, heading: Option[SourceService.Heading], offset: Option[com.histmersion.Offset], chars: Option[SourcesControllers.Chars]): String =
+  private def bodySlice(citekey: Citekey, heading: Option[SourceService.Heading], offset: Option[Offset], chars: Option[SourcesControllers.Chars]): String =
     val raw = (heading match
       case Some(h) => sources.bodyUnderHeading(citekey, h)
       case None    => sources.bodyText(citekey)
@@ -368,15 +372,15 @@ final class SourcesControllers(
 
 object SourcesControllers:
   type Chars = Chars.T
-  object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Chars extends RefinedType[Int, Pure]
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
   type GetBody = GetBody.T
-  object GetBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetBody extends RefinedType[Boolean, Pure]
   type PutStrict = PutStrict.T
-  object PutStrict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PutStrict extends RefinedType[Boolean, Pure]
   type PatchStrict = PatchStrict.T
-  object PatchStrict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PatchStrict extends RefinedType[Boolean, Pure]
   type MarkdownFullText = MarkdownFullText.T
-  object MarkdownFullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkdownFullText extends RefinedType[Boolean, Pure]

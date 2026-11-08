@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.domain.media.MediaState
 import com.histmersion.domain.media.assets.MediaItemRow
@@ -8,6 +9,12 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.places.ExternalIds
+import com.histmersion.domain.catalogue.places.Wikidata
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
   * provider has not been asked about, the facts a collection's match reads of a place, and the checks — that a provider
@@ -17,49 +24,49 @@ trait ImportService:
 
   /** The places (one per Wikidata item) and events a provider asks about: one by id, or those not asked yet. */
   def targets(
-      provider: com.histmersion.domain.media.imports.ImportService.Provider,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
-      limit: com.histmersion.domain.media.imports.ImportService.TargetsLimit,
-      refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-      since: Option[com.histmersion.domain.media.imports.ImportService.Since]
-  ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]]
+      provider: ImportService.Provider,
+      place: Option[Place.Id],
+      event: Option[Event.Id],
+      limit: ImportService.TargetsLimit,
+      refresh: ImportService.Refresh,
+      since: Option[ImportService.Since]
+  ): Either[ImportService.TargetsText, List[Target]]
 
-  def pending(provider: com.histmersion.domain.media.imports.ImportService.Provider, since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount
+  def pending(provider: ImportService.Provider, since: Option[ImportService.Since]): ImportService.PendingCount
 
   /** The places on the map (`places`) or the events with an item a collection asks about. */
   def collectionTargets(
-      check: com.histmersion.domain.media.imports.ImportService.CheckName,
-      places: com.histmersion.domain.media.imports.ImportService.Places,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
-      limit: com.histmersion.domain.media.imports.ImportService.CollectionTargetsLimit,
-      refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-      since: Option[com.histmersion.domain.media.imports.ImportService.Since],
-      pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly
-  ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]]
+      check: ImportService.CheckName,
+      places: ImportService.Places,
+      place: Option[Place.Id],
+      event: Option[Event.Id],
+      limit: ImportService.CollectionTargetsLimit,
+      refresh: ImportService.Refresh,
+      since: Option[ImportService.Since],
+      pleiadesOnly: ImportService.PleiadesOnly
+  ): Either[ImportService.TargetsText, List[Target]]
 
-  def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CheckName, places: com.histmersion.domain.media.imports.ImportService.Places, since: Option[com.histmersion.domain.media.imports.ImportService.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly): com.histmersion.domain.media.imports.ImportService.PendingCount
+  def collectionPending(check: ImportService.CheckName, places: ImportService.Places, since: Option[ImportService.Since], pleiadesOnly: ImportService.PleiadesOnly): ImportService.PendingCount
 
-  def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts]
-  def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.PlaceKey]): Map[com.histmersion.domain.media.imports.ImportService.PlaceKey, List[PlaceFacts]]
-  def placeExternalIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, Set[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]]
-  def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, List[com.histmersion.domain.media.imports.ImportService.ExternalId]]
-  def mapPlacesWithIds(ids: List[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]): Map[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId), List[PlaceFacts]]
+  def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts]
+  def mapPlacesNamed(keys: List[ImportService.PlaceKey]): Map[ImportService.PlaceKey, List[PlaceFacts]]
+  def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ImportService.ExternalId)]]
+  def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ImportService.ExternalId]]
+  def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ImportService.ExternalId)]): Map[(ExternalIds.Scheme, ImportService.ExternalId), List[PlaceFacts]]
 
   /** A place's Commons category recorded as a link of the place; whether it is new. */
-  def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategory, qid: com.histmersion.domain.catalogue.places.Wikidata.Id): Boolean
+  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id): Boolean
 
   /** That `provider` was asked about a target, and how many pictures it gave. */
-  def checked(provider: com.histmersion.domain.media.imports.ImportService.Provider, targetType: com.histmersion.domain.media.imports.ImportService.TargetType, targetId: com.histmersion.domain.media.imports.ImportService.TargetId, found: com.histmersion.domain.media.imports.ImportService.FoundCount, qid: Option[com.histmersion.domain.catalogue.places.Wikidata.Id]): Unit
+  def checked(provider: ImportService.Provider, targetType: ImportService.TargetType, targetId: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]): Unit
 
 object ImportService:
-  type ExternalId = com.histmersion.domain.catalogue.places.ExternalIds.ExternalId
-  val ExternalId: com.histmersion.domain.catalogue.places.ExternalIds.ExternalId.type = com.histmersion.domain.catalogue.places.ExternalIds.ExternalId
-  type FoundCount = com.histmersion.RowCount
-  val FoundCount: com.histmersion.RowCount.type = com.histmersion.RowCount
-  type PendingCount = com.histmersion.RowCount
-  val PendingCount: com.histmersion.RowCount.type = com.histmersion.RowCount
+  type ExternalId = ExternalIds.ExternalId
+  val ExternalId: ExternalIds.ExternalId.type = ExternalIds.ExternalId
+  type FoundCount = RowCount
+  val FoundCount: RowCount.type = RowCount
+  type PendingCount = RowCount
+  val PendingCount: RowCount.type = RowCount
   type Provider = MediaItemRow.Provider
   val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
   type TargetId = Target.Id
@@ -67,61 +74,61 @@ object ImportService:
   type TargetType = Target.TargetType
   val TargetType: Target.TargetType.type = Target.TargetType
   type CheckName = CheckName.T
-  object CheckName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CheckName extends RefinedType[String, Pure]
   type CommonsCategory = CommonsCategory.T
-  object CommonsCategory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CommonsCategory extends RefinedType[String, Pure]
   type PlaceKey = PlaceKey.T
-  object PlaceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceKey extends RefinedType[String, Pure]
   type Places = Places.T
-  object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Places extends RefinedType[Boolean, Pure]
   type PleiadesOnly = PleiadesOnly.T
-  object PleiadesOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PleiadesOnly extends RefinedType[Boolean, Pure]
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[Boolean, Pure]
   type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Since extends RefinedType[Long, Pure]
   type TargetsText = TargetsText.T
-  object TargetsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetsText extends RefinedType[String, Pure]
   type TargetsLimit = TargetsLimit.T
-  object TargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetsLimit extends RefinedType[Int, Pure]
   type CollectionTargetsLimit = CollectionTargetsLimit.T
-  object CollectionTargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CollectionTargetsLimit extends RefinedType[Int, Pure]
 
   def apply(db: Transactor): ImportService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends ImportService:
     def targets(
-        provider: com.histmersion.domain.media.imports.ImportService.Provider,
-        place: Option[com.histmersion.domain.catalogue.Place.Id],
-        event: Option[com.histmersion.domain.catalogue.Event.Id],
-        limit: com.histmersion.domain.media.imports.ImportService.TargetsLimit,
-        refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-        since: Option[com.histmersion.domain.media.imports.ImportService.Since]
-    ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] = db.read(ImportRepo.targets(provider, place, event, ImportRepo.Limit(limit.value), ImportRepo.Refresh(refresh.value), since.map(s => ImportRepo.Since(s.value)))).left.map(p => TargetsText(p.value))
-    def pending(provider: com.histmersion.domain.media.imports.ImportService.Provider, since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount = db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
+        provider: Provider,
+        place: Option[Place.Id],
+        event: Option[Event.Id],
+        limit: TargetsLimit,
+        refresh: Refresh,
+        since: Option[Since]
+    ): Either[TargetsText, List[Target]] = db.read(ImportRepo.targets(provider, place, event, ImportRepo.Limit(limit.value), ImportRepo.Refresh(refresh.value), since.map(s => ImportRepo.Since(s.value)))).left.map(p => TargetsText(p.value))
+    def pending(provider: Provider, since: Option[Since]): PendingCount = db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
     def collectionTargets(
-        check: com.histmersion.domain.media.imports.ImportService.CheckName,
-        places: com.histmersion.domain.media.imports.ImportService.Places,
-        place: Option[com.histmersion.domain.catalogue.Place.Id],
-        event: Option[com.histmersion.domain.catalogue.Event.Id],
-        limit: com.histmersion.domain.media.imports.ImportService.CollectionTargetsLimit,
-        refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-        since: Option[com.histmersion.domain.media.imports.ImportService.Since],
-        pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly
-    ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] =
+        check: CheckName,
+        places: Places,
+        place: Option[Place.Id],
+        event: Option[Event.Id],
+        limit: CollectionTargetsLimit,
+        refresh: Refresh,
+        since: Option[Since],
+        pleiadesOnly: PleiadesOnly
+    ): Either[TargetsText, List[Target]] =
       db.read(ImportRepo.collectionTargets(MediaItemRow.Provider(check.value), ImportRepo.Places(places.value), place, event, ImportRepo.Limit(limit.value), ImportRepo.Refresh(refresh.value), since.map(s => ImportRepo.Since(s.value)), ImportRepo.PleiadesOnly(pleiadesOnly.value))).left.map(p => TargetsText(p.value))
-    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CheckName, places: com.histmersion.domain.media.imports.ImportService.Places, since: Option[com.histmersion.domain.media.imports.ImportService.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly): com.histmersion.domain.media.imports.ImportService.PendingCount =
+    def collectionPending(check: CheckName, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly): PendingCount =
       db.read(ImportRepo.collectionPending(MediaItemRow.Provider(check.value), ImportRepo.Places(places.value), since.map(s => ImportRepo.Since(s.value)), ImportRepo.PleiadesOnly(pleiadesOnly.value)))
-    def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
-    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.PlaceKey]): Map[com.histmersion.domain.media.imports.ImportService.PlaceKey, List[PlaceFacts]] = db.read(ImportRepo.mapPlacesNamed(keys.map(k => ImportRepo.NameKey(k.value)))).map((k, v) => PlaceKey(k.value) -> v)
-    def placeExternalIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, Set[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]] =
+    def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
+    def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = db.read(ImportRepo.mapPlacesNamed(keys.map(k => ImportRepo.NameKey(k.value)))).map((k, v) => PlaceKey(k.value) -> v)
+    def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalId)]] =
       db.read(ImportRepo.placeExternalIds(ids))
-    def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, List[com.histmersion.domain.media.imports.ImportService.ExternalId]] = db.read(ImportRepo.pleiadesIds(ids))
-    def mapPlacesWithIds(ids: List[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]): Map[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId), List[PlaceFacts]] =
+    def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ExternalId]] = db.read(ImportRepo.pleiadesIds(ids))
+    def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalId)]): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] =
       db.read(ImportRepo.mapPlacesWithIds(ids))
-    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategory, qid: com.histmersion.domain.catalogue.places.Wikidata.Id): Boolean =
+    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean =
       db.transact(ImportRepo.commonsCategory(placeId, ImportRepo.Category(category.value), Target.Qid(qid.value)))
-    def checked(provider: com.histmersion.domain.media.imports.ImportService.Provider, targetType: com.histmersion.domain.media.imports.ImportService.TargetType, targetId: com.histmersion.domain.media.imports.ImportService.TargetId, found: com.histmersion.domain.media.imports.ImportService.FoundCount, qid: Option[com.histmersion.domain.catalogue.places.Wikidata.Id]): Unit =
+    def checked(provider: Provider, targetType: TargetType, targetId: TargetId, found: FoundCount, qid: Option[Wikidata.Id]): Unit =
       db.transact(ImportRepo.checked(provider, targetType, targetId, found, qid.map(q => Target.Qid(q.value))))
 
   /** Media's checks alone, in memory: no place, event or finding is held, so nothing is on the map to ask about — a
@@ -129,7 +136,7 @@ object ImportService:
     * place to be recorded on. `clock` stamps a check as the database's `clock_timestamp()` does.
     */
   final class InMemory(state: AtomicReference[MediaState], clock: Clock) extends ImportService:
-    private def one(place: Option[com.histmersion.domain.catalogue.Place.Id], event: Option[com.histmersion.domain.catalogue.Event.Id]): Option[com.histmersion.domain.media.imports.ImportService.TargetsText] =
+    private def one(place: Option[Place.Id], event: Option[Event.Id]): Option[TargetsText] =
       place
         .map(_.value.trim)
         .filter(_.nonEmpty)
@@ -137,37 +144,37 @@ object ImportService:
         .orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => TargetsText(s"No event '$e'")))
 
     def targets(
-        provider: com.histmersion.domain.media.imports.ImportService.Provider,
-        place: Option[com.histmersion.domain.catalogue.Place.Id],
-        event: Option[com.histmersion.domain.catalogue.Event.Id],
-        limit: com.histmersion.domain.media.imports.ImportService.TargetsLimit,
-        refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-        since: Option[com.histmersion.domain.media.imports.ImportService.Since]
-    ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] = one(place, event).toLeft(Nil)
-    def pending(provider: com.histmersion.domain.media.imports.ImportService.Provider, since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount = com.histmersion.domain.media.imports.ImportService.PendingCount(0)
+        provider: Provider,
+        place: Option[Place.Id],
+        event: Option[Event.Id],
+        limit: TargetsLimit,
+        refresh: Refresh,
+        since: Option[Since]
+    ): Either[TargetsText, List[Target]] = one(place, event).toLeft(Nil)
+    def pending(provider: Provider, since: Option[Since]): PendingCount = PendingCount(0)
     def collectionTargets(
-        check: com.histmersion.domain.media.imports.ImportService.CheckName,
-        places: com.histmersion.domain.media.imports.ImportService.Places,
-        place: Option[com.histmersion.domain.catalogue.Place.Id],
-        event: Option[com.histmersion.domain.catalogue.Event.Id],
-        limit: com.histmersion.domain.media.imports.ImportService.CollectionTargetsLimit,
-        refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
-        since: Option[com.histmersion.domain.media.imports.ImportService.Since],
-        pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly
-    ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] =
+        check: CheckName,
+        places: Places,
+        place: Option[Place.Id],
+        event: Option[Event.Id],
+        limit: CollectionTargetsLimit,
+        refresh: Refresh,
+        since: Option[Since],
+        pleiadesOnly: PleiadesOnly
+    ): Either[TargetsText, List[Target]] =
       (place.map(_.value.trim).filter(_.nonEmpty), event.map(_.value.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places.value   => Left(com.histmersion.domain.media.imports.ImportService.TargetsText("this import is about events: name one with --event"))
-        case (None, Some(_)) if places.value => Left(com.histmersion.domain.media.imports.ImportService.TargetsText("this import is about places: name one with --place"))
+        case (Some(_), _) if !places.value   => Left(TargetsText("this import is about events: name one with --event"))
+        case (None, Some(_)) if places.value => Left(TargetsText("this import is about places: name one with --place"))
         case _                         => one(place, event).toLeft(Nil)
-    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CheckName, places: com.histmersion.domain.media.imports.ImportService.Places, since: Option[com.histmersion.domain.media.imports.ImportService.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly): com.histmersion.domain.media.imports.ImportService.PendingCount = com.histmersion.domain.media.imports.ImportService.PendingCount(0)
-    def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] = Map.empty
-    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.PlaceKey]): Map[com.histmersion.domain.media.imports.ImportService.PlaceKey, List[PlaceFacts]] = Map.empty
-    def placeExternalIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, Set[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]] = Map.empty
-    def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, List[com.histmersion.domain.media.imports.ImportService.ExternalId]] = Map.empty
-    def mapPlacesWithIds(ids: List[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId)]): Map[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.media.imports.ImportService.ExternalId), List[PlaceFacts]] = Map.empty
-    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategory, qid: com.histmersion.domain.catalogue.places.Wikidata.Id): Boolean = false
+    def collectionPending(check: CheckName, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly): PendingCount = PendingCount(0)
+    def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = Map.empty
+    def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = Map.empty
+    def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalId)]] = Map.empty
+    def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ExternalId]] = Map.empty
+    def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalId)]): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] = Map.empty
+    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean = false
 
-    def checked(provider: com.histmersion.domain.media.imports.ImportService.Provider, targetType: com.histmersion.domain.media.imports.ImportService.TargetType, targetId: com.histmersion.domain.media.imports.ImportService.TargetId, found: com.histmersion.domain.media.imports.ImportService.FoundCount, qid: Option[com.histmersion.domain.catalogue.places.Wikidata.Id]): Unit =
+    def checked(provider: Provider, targetType: TargetType, targetId: TargetId, found: FoundCount, qid: Option[Wikidata.Id]): Unit =
       val at = Instant.now(clock)
       val held = HeldCheck(HeldCheck.Provider(provider.value), HeldCheck.TargetType(targetType.value), HeldCheck.TargetId(targetId.value), HeldCheck.Found(found.value), qid.map(q => HeldCheck.Qid(q.value)), at)
       def same(c: HeldCheck) = c.provider == held.provider && c.targetType == held.targetType && c.targetId == held.targetId

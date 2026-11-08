@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
@@ -7,6 +8,7 @@ import com.histmersion.api.automation.ManagersApi
 import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentAutopilotConfig
 import com.histmersion.{Offset, PageSize}
+import com.histmersion.domain.automation.ItemStatus
 
 /** REST wiring of the process managers — every route delegates to [[ManagersControllers]]. The fixed paths come before
   * `{id}/{action}`.
@@ -36,7 +38,7 @@ object ManagersRoutes:
       ManagersApi.items.serverLogic[Identity]((id, status, offset, limit) =>
           m.items(
             light(id),
-            status.map(_.transformInto[com.histmersion.domain.automation.ItemStatus.Wire]),
+            status.map(_.transformInto[ItemStatus.Wire]),
             offset.flatMap(o => Offset.option(o.value)),
             pageSize(limit.map(_.value))
           )),

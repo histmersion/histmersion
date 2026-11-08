@@ -1,15 +1,18 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, ReviewArticle}
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The typed answers of research's LLM steps (compile, review, infer-filter, propose), one value each, beside its
   * pipelines (the engine's own are `AnswerSchemas`, the library's `LibraryAnswers`).
   */
 object ResearchAnswers:
   type AnswerKind = AnswerKind.T
-  object AnswerKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AnswerKind extends RefinedType[String, Pure]
 
   val extract: ResponseSchema[CompileArticle.ExtractAnswer] = ResponseSchema.derived[CompileArticle.ExtractAnswer]()
   val draft: ResponseSchema[CompileArticle.DraftAnswer] = ResponseSchema.derived[CompileArticle.DraftAnswer]()
@@ -23,7 +26,7 @@ object ResearchAnswers:
   val articles: ResponseSchema[PlanArticles.ArticlesAnswer] = ResponseSchema.derived[PlanArticles.ArticlesAnswer]()
 
   /** Its step schemas, by name. */
-  val all: List[(com.histmersion.domain.research.workflows.ResearchAnswers.AnswerKind, ResponseSchema[?])] = List(
+  val all: List[(AnswerKind, ResponseSchema[?])] = List(
     AnswerKind("extract") -> extract,
     AnswerKind("draft") -> draft,
     AnswerKind("rules") -> rules,

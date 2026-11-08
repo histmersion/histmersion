@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
@@ -10,6 +11,10 @@ import com.histmersion.{Offset, PageSize, WireEnumValues, Year}
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.AuthorName
 
 /** The sources a person has not marked read, by title, as "Not read yet" lists them. */
 final class SourceReadable(db: Transactor) extends Readable:
@@ -31,11 +36,11 @@ final class SourceReadable(db: Transactor) extends Readable:
           .query[(String, String, List[String], Option[Int], Option[String], Option[Long], Option[Long])]
           .run()
           .toList
-      val total = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
+      val total = (Sql.raw(Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
       UnreadItems(
         rows.map((ck, title, authors, year, status, start, end) =>
           SourceReadable.row(
-            com.histmersion.domain.library.Citekey.assume(ck),
+            Citekey.assume(ck),
             Title(title),
             authors.map(a => FullSourceRow.Authors(a)),
             year.map(Year(_)),
@@ -50,23 +55,23 @@ final class SourceReadable(db: Transactor) extends Readable:
 
 object SourceReadable:
   type RowStart = RowStart.T
-  object RowStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RowStart extends RefinedType[Long, Pure]
   type RowEnd = RowEnd.T
-  object RowEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RowEnd extends RefinedType[Long, Pure]
 
   private[sources] def row(
-      ck: com.histmersion.domain.library.Citekey,
-      title: com.histmersion.domain.Title,
-      authors: List[com.histmersion.domain.library.sources.FullSourceRow.Authors],
-      year: Option[com.histmersion.Year],
-      status: Option[com.histmersion.domain.library.Source.Status.Wire],
-      start: Option[com.histmersion.domain.library.sources.SourceReadable.RowStart],
-      end: Option[com.histmersion.domain.library.sources.SourceReadable.RowEnd]
+      ck: Citekey,
+      title: Title,
+      authors: List[FullSourceRow.Authors],
+      year: Option[Year],
+      status: Option[Source.Status.Wire],
+      start: Option[RowStart],
+      end: Option[RowEnd]
   ): UnreadItem =
     UnreadItem(
       ItemKey(ck.value),
       title,
-      authors.map(a => com.histmersion.domain.AuthorName(a.value)),
+      authors.map(a => AuthorName(a.value)),
       year,
       status.flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value))).map(s => UnreadItem.Status(s.wire.value)),
       start.map(y => Year(y.value.toInt)),

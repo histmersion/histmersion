@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,6 +14,18 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.library.Source
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Doi
+import com.histmersion.config.ServerConfig
+import com.histmersion.pluginhost.Generation
+import com.histmersion.server.ServerPlugins
+import com.histmersion.plugins.calibre.CalibrePlugin
+import com.histmersion.pluginhost.Registries
 
 /** Every `histmersion calibre …` command, run end to end over a fixture library: a server on port 0 over a database of
   * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what
@@ -21,8 +34,8 @@ import com.histmersion.api.library.Source
   * compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it); only what differs between runs is normalised:
   * the scratch directories, the server's port, job ids and timestamps.
   */
-class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class CalibreCommandsSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(15, "min")
 
@@ -37,13 +50,13 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
 
   private def source(ck: String, title: String, authors: List[String], year: Option[Int]) =
     Source(
-      com.histmersion.api.library.Citekey(ck),
-      com.histmersion.api.library.Title(title),
-      (authors).map(com.histmersion.api.library.AuthorName.apply),
+      Citekey(ck),
+      Title(title),
+      (authors).map(AuthorName.apply),
       None,
-      (year).map(com.histmersion.api.catalogue.Year.apply),
+      (year).map(Year.apply),
       None,
-      com.histmersion.api.library.Source.Status.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       Nil,
@@ -67,36 +80,36 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
           sql"UPDATE sources SET sha256 = $sha WHERE citekey = ${s.citekey}".update.run(): Unit
     put(
       source("zzcal_linked", "Bronze Age tin and its trade", List("Stocker, Sharon R."), Some(2019))
-        .modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1/zzcal.1"))).modify(_.topics).setTo(List(com.histmersion.api.library.Source.Topics("tin"), com.histmersion.api.library.Source.Topics("trade"))).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("unpaywall"))).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("1"))).modify(_.summary).setTo(Some(com.histmersion.api.library.Source.Summary("Tin routes."))
+        .modify(_.doi).setTo(Some(Doi("10.1/zzcal.1"))).modify(_.topics).setTo(List(Source.Topics("tin"), Source.Topics("trade"))).modify(_.provenance).setTo(Some(Source.Provenance("unpaywall"))).modify(_.calibreId).setTo(Some(Source.CalibreId("1"))).modify(_.summary).setTo(Some(Source.Summary("Tin routes."))
         ),
       stored = true
     )
     put(
-      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("2")))
+      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).modify(_.calibreId).setTo(Some(Source.CalibreId("2")))
     )
     put(
-      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("2")))
+      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).modify(_.calibreId).setTo(Some(Source.CalibreId("2")))
     )
-    put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("99"))))
-    put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("3"))))
-    put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("4"))))
-    put(source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020)).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("7"))))
+    put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).modify(_.calibreId).setTo(Some(Source.CalibreId("99"))))
+    put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).modify(_.calibreId).setTo(Some(Source.CalibreId("3"))))
+    put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).modify(_.calibreId).setTo(Some(Source.CalibreId("4"))))
+    put(source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020)).modify(_.calibreId).setTo(Some(Source.CalibreId("7"))))
     put(
       source("zzcal_stored", "Stored paper", List("Ann Store"), Some(2010))
-        .modify(_.topics).setTo(List(com.histmersion.api.library.Source.Topics("metal"))).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("unpaywall"))).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1/zzcal.stored"))),
+        .modify(_.topics).setTo(List(Source.Topics("metal"))).modify(_.provenance).setTo(Some(Source.Provenance("unpaywall"))).modify(_.doi).setTo(Some(Doi("10.1/zzcal.stored"))),
       stored = true
     )
-    put(source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012)).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("oa"))), stored = true)
-    put(source("zzcal_nofile", "Metadata only", List("No File"), Some(2013)).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("openalex"))))
-    put(source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014)).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))))
+    put(source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012)).modify(_.provenance).setTo(Some(Source.Provenance("oa"))), stored = true)
+    put(source("zzcal_nofile", "Metadata only", List("No File"), Some(2013)).modify(_.provenance).setTo(Some(Source.Provenance("openalex"))))
+    put(source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))))
     put(
-      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015)).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))),
+      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))),
       stored = true
     )
-    put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))))
+    put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))))
     put(
       source("zzcal2001_collision", "Collision of keys", List("Jane Zzcal"), Some(2001))
-        .modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre")))
+        .modify(_.provenance).setTo(Some(Source.Provenance("calibre")))
     )
 
   /** One step of the scenario: a CLI command (with the host-side originals directory or not), or a change made through
@@ -201,7 +214,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
       val b = Composition
-        .server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
         .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
@@ -285,11 +298,11 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
       List("update", "--all")
     )
     def runAll(
-        plugins: com.histmersion.pluginhost.Generation,
+        plugins: Generation,
         tools: Map[String, String]
     ): List[(Int, String, String)] =
       supervised {
-        val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = plugins).start()
+        val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = plugins).start()
         val url = s"http://127.0.0.1:${b.port}"
         try
           commands.map { args =>
@@ -308,7 +321,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val onServer = runAll(CalibreCommandsSuite.plugins(lib), CalibreCommandsSuite.tools(lib, hostSide = false))
     assertEquals(lib.takeLog().size, 4, "the server read the library once per command but the gaps")
     val onHost =
-      runAll(com.histmersion.server.ServerPlugins.offline, CalibreCommandsSuite.tools(lib, hostSide = true))
+      runAll(ServerPlugins.offline, CalibreCommandsSuite.tools(lib, hostSide = true))
     assertEquals(lib.takeLog().size, 4, "the CLI read the library once per command but the gaps")
     assertEquals(onHost, onServer)
     assertEquals(onServer.map(_._1), List(0, 0, 0, 0, 1, 0))
@@ -318,10 +331,10 @@ object CalibreCommandsSuite:
   /** The plugins the test server runs with: the offline generation and the calibre plugin over the fixture library,
     * with a GUI process that never runs.
     */
-  def plugins(lib: CalibreFixture): com.histmersion.pluginhost.Generation =
+  def plugins(lib: CalibreFixture): Generation =
     CalibreFixture.refuseRealLibrary(lib.dir)
-    val g = com.histmersion.server.ServerPlugins.offlineWith(
-      List(com.histmersion.plugins.calibre.CalibrePlugin()),
+    val g = ServerPlugins.offlineWith(
+      List(CalibrePlugin()),
       org.ekrich.config.ConfigFactory.parseString(
         s"""histmersion.plugins.calibre {
            |  library-path = "${lib.dir}"
@@ -331,7 +344,7 @@ object CalibreCommandsSuite:
            |}""".stripMargin
       )
     )
-    assert(g.registries.sourceCollections.contains(com.histmersion.pluginhost.Registries.SourceCollectionsKey("calibre")), g.report.toString)
+    assert(g.registries.sourceCollections.contains(Registries.SourceCollectionsKey("calibre")), g.report.toString)
     g
 
   /** The CLI's own Calibre tools: the fixture's where the command runs on this machine (a host-side original), else

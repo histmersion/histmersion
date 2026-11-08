@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -10,6 +11,17 @@ import com.histmersion.api.automation.Agents.Role
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.util.storage.SafePath
+import com.histmersion.domain.automation.agents.AgentDef
+import com.histmersion.domain.automation.agents.AgentDefinitions
+import com.histmersion.domain.automation.agents.GenSettings
+import com.histmersion.config.AppConfig
+import com.histmersion.config.CodexConfig
+import com.histmersion.util.storage.Location
+import com.histmersion.domain.automation.workflows.ToolName
 
 /** The canonical definitions and the per-runtime trees generated from them (docs/research-agent-runtimes.md §2):
   * parsing, placeholders, the system prompt every runtime gets, the trees' restrictions, the writer — and that the
@@ -17,10 +29,10 @@ import scala.jdk.CollectionConverters.*
   */
 class AgentGeneratorSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
@@ -32,7 +44,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(Prompts.bundled.map(_.value).contains("index.txt") || Prompts.bundled.nonEmpty)
     Prompts.bundled.foreach(rel =>
       assert(
-        new Prompts(Prompts.OverrideDir("")).load(com.histmersion.util.storage.SafePath.Candidate(rel.value)).exists(_.trim.nonEmpty),
+        new Prompts(Prompts.OverrideDir("")).load(SafePath.Candidate(rel.value)).exists(_.trim.nonEmpty),
         s"missing or empty: agents/$rel"
       )
     )
@@ -111,13 +123,13 @@ class AgentGeneratorSuite extends munit.FunSuite:
       "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
     )
     assert(
-      AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), bad, ToolboxOrder.names).left.exists(_.contains("patch_source")),
-      AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), bad, ToolboxOrder.names)
+      AgentDefinitions.parse(AgentDef.Name("x"), bad, ToolboxOrder.names).left.exists(_.contains("patch_source")),
+      AgentDefinitions.parse(AgentDef.Name("x"), bad, ToolboxOrder.names)
     )
-    assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("y"), bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
-    assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), com.histmersion.domain.automation.agents.AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft)
+    assert(AgentDefinitions.parse(AgentDef.Name("y"), bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
+    assert(AgentDefinitions.parse(AgentDef.Name("x"), AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft)
     val noRole = AgentDefinitions.Markdown(bad.value.replace("model-role: reviewer", "model-role: boss"))
-    assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
+    assert(AgentDefinitions.parse(AgentDef.Name("x"), noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
 
   test("placeholders render per runtime"):
     val t = "call {{tool:get_source}} then {{tool:*}}"
@@ -141,17 +153,17 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(common > 0 && notes > common && guide > notes, (common, notes, guide))
     assert(!d.system(agent(StepAgent.ColdReader), ToolStyle.Bare).contains("# The writing guide"))
     assert(d.system(sk, ToolStyle.Claude).contains("`mcp__histmersion__get_source`"), "placeholders follow the runtime")
-    val withSkill = sk.copy(skills = List(com.histmersion.domain.automation.agents.AgentDef.Skills("histmersion-query")))
+    val withSkill = sk.copy(skills = List(AgentDef.Skills("histmersion-query")))
     assert(d.system(withSkill, ToolStyle.Bare).contains("# Skill: histmersion-query"))
-    assert(AgentDefinitions.system(sk.copy(include = List(com.histmersion.domain.automation.agents.AgentDef.Include("nope"))), d.fragments, d.skills, ToolStyle.Bare).isLeft)
+    assert(AgentDefinitions.system(sk.copy(include = List(AgentDef.Include("nope"))), d.fragments, d.skills, ToolStyle.Bare).isLeft)
 
   private val Settings = GenSettings(
-    com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"),
-    Some(com.histmersion.domain.automation.agents.GenSettings.McpUrl("http://127.0.0.1:18000/mcp")),
-    com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:18000/api/agents/quota/claude"),
-    claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(true),
-    interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
-    com.histmersion.domain.automation.agents.GenSettings.Version("0.3.0+t")
+    GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"),
+    Some(GenSettings.McpUrl("http://127.0.0.1:18000/mcp")),
+    GenSettings.QuotaUrl("http://127.0.0.1:18000/api/agents/quota/claude"),
+    claudeMod = GenSettings.ClaudeMod(true),
+    interactiveMod = GenSettings.InteractiveMod(false),
+    GenSettings.Version("0.3.0+t")
   )
 
   test("Claude Code: the generated agent carries EXACTLY the prompt the engine sends, its tools, and the mod"):
@@ -189,7 +201,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(tree("claude-code/histmersion/.mcp.json").contains("http://127.0.0.1:18000/mcp\""))
     assert(tree("claude-code/.claude-plugin/marketplace.json").contains("\"histmersion-local\""))
     assert(!tree.values.exists(_.contains("{{tool:")), "no placeholder survives")
-    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false)))
+    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(GenSettings.ClaudeMod(false)))
     assert(!noMod.keys.exists(_.contains("quota-guard")))
 
   test("Codex: everything off in the base, one profile per role with its prompt and tools"):
@@ -241,7 +253,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val base = AgentGenerator.codexBase(Settings)
     assert(base.contains("[skills]\ninclude_instructions = false\n\n[skills.bundled]\nenabled = false"), base)
     assert(!base.contains("tool_output_token_limit"), "0: the model's own limit")
-    val limited = AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(6000)))
+    val limited = AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000)))
     assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
     assert(
       limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"),
@@ -249,7 +261,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
 
   test("Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither"):
-    val lean = Settings.modify(_.codexLeanBase).setTo(com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(true)).modify(_.codexToolOutputTokens).setTo(com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(6000))
+    val lean = Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true)).modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000))
     val tree = AgentGenerator.codex(d, lean)
     val base = tree("codex/home/config.toml")
     assert(base.contains("\nmodel_instructions_file = \"base-instructions.md\"\n"), base)
@@ -275,7 +287,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
     assert(file.length < 1600, s"${file.length} characters")
     assertEquals(
-      AgentGenerator.codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(true))).contains("@exec"),
+      AgentGenerator.codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true))).contains("@exec"),
       false,
       "no output limit: no budget line"
     )
@@ -284,9 +296,9 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(!builtin.contains("codex/home/base-instructions.md"))
 
   test("agents.providers.codex.base-instructions: lean by default, builtin by config"):
-    val c = com.histmersion.config.AppConfig.load().agents.providers.codex
+    val c = AppConfig.load().agents.providers.codex
     assertEquals((c.baseInstructions, c.leanBase), ("lean", true))
-    assert(!c.modify(_.baseInstructions).setTo(com.histmersion.config.CodexConfig.BaseInstructions(" Builtin ")).leanBase && c.modify(_.baseInstructions).setTo(com.histmersion.config.CodexConfig.BaseInstructions("lean")).leanBase)
+    assert(!c.modify(_.baseInstructions).setTo(CodexConfig.BaseInstructions(" Builtin ")).leanBase && c.modify(_.baseInstructions).setTo(CodexConfig.BaseInstructions("lean")).leanBase)
 
   test("TOML strings hold any text"):
     assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
@@ -306,16 +318,16 @@ class AgentGeneratorSuite extends munit.FunSuite:
     Files.createDirectories(auth.getParent)
     Files.writeString(auth, "{\"never\":\"read\"}")
     val r1 = AgentTrees
-      .write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"), List("codex"), com.histmersion.Sha256.assume("sha1"))
+      .write(summon[Stores].at(Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"), List("codex"), Sha256.assume("sha1"))
       .toOption
       .get
     assertEquals((r1.files, r1.written, r1.removed), (2, 2, 0))
-    val r2 = AgentTrees.write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1"), List("codex"), com.histmersion.Sha256.assume("sha2")).toOption.get
+    val r2 = AgentTrees.write(summon[Stores].at(Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1"), List("codex"), Sha256.assume("sha2")).toOption.get
     assertEquals((r2.written, r2.removed), (0, 1), "unchanged files are not rewritten; the stale one goes")
     assert(!Files.exists(dir.resolve("codex/home/b.toml")))
     assertEquals(Files.readString(auth), "{\"never\":\"read\"}")
     assert(Files.readString(dir.resolve("manifest.json")).contains("\"definitions\": \"sha2\""))
-    val r3 = AgentTrees.write(summon[com.histmersion.util.storage.Stores].at(com.histmersion.util.storage.Location.AgentHomes, dir), Map("claude-code/x" -> "y"), List("claude-code"), com.histmersion.Sha256.assume("s")).toOption.get
+    val r3 = AgentTrees.write(summon[Stores].at(Location.AgentHomes, dir), Map("claude-code/x" -> "y"), List("claude-code"), Sha256.assume("s")).toOption.get
     assert(Files.isDirectory(dir.resolve("claude-code/login")), "the empty login dir for CLAUDE_CONFIG_DIR")
     assert(Files.exists(dir.resolve("codex/home/a.toml")), "another runtime's files stay")
     assertEquals(r3.removed, 0)
@@ -328,7 +340,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))
     assertEquals(rt.trees.codexHome, Some(dir.resolve("codex/home")))
-    val unknown = rt.trees.generate(Set(com.histmersion.domain.automation.workflows.ToolName("get_source")))
+    val unknown = rt.trees.generate(Set(ToolName("get_source")))
     assert(unknown.left.exists(_.value.contains("which is not an MCP tool")), "a placeholder naming nothing fails generation")
 
 /** The checked-in `plugin/` and `.claude-plugin/marketplace.json` are the generator's interactive Claude Code flavour,
@@ -336,10 +348,10 @@ class AgentGeneratorSuite extends munit.FunSuite:
   */
 class PluginTreeSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val root: Path =
     Iterator
       .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
@@ -365,7 +377,7 @@ class PluginTreeSuite extends munit.FunSuite:
             .toList
         finally all.close()
       }
-      .filterNot(p => tree.contains(com.histmersion.util.storage.SafePath.Candidate(p)))
+      .filterNot(p => tree.contains(SafePath.Candidate(p)))
     assertEquals(extra, Nil, "files in plugin/ the generator does not write")
 
   test("the interactive review agents are the hand-written definitions, byte for byte"):

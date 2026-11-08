@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match

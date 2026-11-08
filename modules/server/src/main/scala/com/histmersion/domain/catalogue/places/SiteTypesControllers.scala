@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.{CatalogRecord, EventCount, SiteTypes}
 import com.histmersion.api.jobs.{JobInfo, JobKinds}
@@ -14,6 +15,7 @@ import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
 import java.time.Clock
 import scala.annotation.tailrec
 import com.histmersion.api.Api
+import com.histmersion.api.catalogue.PlacesJobKinds
 
 /** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes
   * (P31) and their superclasses (P279), and given the curated type they fall under.
@@ -76,7 +78,7 @@ final class SiteTypesControllers(
             walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
         walk(math.max(0, ec.siteTypes.superclassDepth.value), unknown, Nil)
       def next(limit: Int) =
-        com.histmersion.PageSize.option(limit).fold(Nil)(size => sites.sitesToType(size, refresh, Some(started)))
+        PageSize.option(limit).fold(Nil)(size => sites.sitesToType(size, refresh, Some(started)))
       // `var`s: the walk
       var report = SiteTypes.Report(dryRun = SiteTypes.Report.DryRun(false))
       var batch = next(math.min(ec.siteTypes.batch.value, cap))
@@ -100,4 +102,4 @@ final class SiteTypesControllers(
       report.copy(pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, Some(started)).value), requests = SiteTypes.Report.Requests(c.requests.value))
 
 object SiteTypesControllers:
-  val SiteTypesJobKind: Job.Kind = Job.Kind.assume(com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value)
+  val SiteTypesJobKind: Job.Kind = Job.Kind.assume(PlacesJobKinds.SiteTypes.kind.value)

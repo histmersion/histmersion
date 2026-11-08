@@ -1,15 +1,19 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
 import com.histmersion.config.AppConfig
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and hits every
   * surface. Skipped when no test DB is configured.
   */
 class SmokeSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private def get(url: String): (Int, String) =
@@ -22,9 +26,9 @@ class SmokeSuite extends munit.FunSuite:
 
   test("server migrates, binds port 0, answers health / index / api / mcp"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start() // never the live sidecar
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start() // never the live sidecar
       val url = s"http://127.0.0.1:${b.port}"
       val (hs, hb) = get(s"$url/api/health"); assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
       val (is, ib) = get(url); assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))

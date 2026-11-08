@@ -1,9 +1,12 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.api.catalogue.{Attestation, CatalogRecord, Correction, EventLinkCandidate}
 import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
   * changes its own part, through lenses): the named periods and the bundled seeds' versions; the attestations and the
@@ -20,7 +23,7 @@ final case class CatalogueState(
     events: Vector[HeldEvent] = Vector.empty,
     eventAliases: Map[CatalogueState.EventAliasesKey, CatalogueState.EventAliasesValue] = Map.empty,
     corrections: Vector[Correction] = Vector.empty,
-    lastCorrectionId: CatalogueState.LastCorrectionId = com.histmersion.domain.catalogue.CatalogueState.LastCorrectionId(0L),
+    lastCorrectionId: CatalogueState.LastCorrectionId = CatalogueState.LastCorrectionId(0L),
     catalogueRecords: Vector[(CatalogueState.CatalogueRecordsPart1, CatalogRecord)] = Vector.empty,
     importParts: Map[CatalogueState.ImportPartsKey, Map[CatalogueState.ImportPartsValueKey, CatalogueState.ImportPartsValueValue]] = Map.empty,
     candidates: Vector[EventLinkCandidate] = Vector.empty,
@@ -34,32 +37,32 @@ final case class CatalogueState(
 
 object CatalogueState:
   type SeedVersionsKey = SeedVersionsKey.T
-  object SeedVersionsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedVersionsKey extends RefinedType[String, Pure]
   type SeedVersionsValue = SeedVersionsValue.T
-  object SeedVersionsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedVersionsValue extends RefinedType[Int, Pure]
   type LastAttestationId = LastAttestationId.T
-  object LastAttestationId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastAttestationId extends RefinedType[Long, Pure]
   type EventAliasesKey = EventAliasesKey.T
-  object EventAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventAliasesKey extends RefinedType[String, Pure]
   type EventAliasesValue = EventAliasesValue.T
-  object EventAliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventAliasesValue extends RefinedType[String, Pure]
   type LastCorrectionId = LastCorrectionId.T
-  object LastCorrectionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastCorrectionId extends RefinedType[Long, Pure]
   type CatalogueRecordsPart1 = CatalogueRecordsPart1.T
-  object CatalogueRecordsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CatalogueRecordsPart1 extends RefinedType[String, Pure]
   type ImportPartsKey = ImportPartsKey.T
-  object ImportPartsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportPartsKey extends RefinedType[String, Pure]
   type ImportPartsValueKey = ImportPartsValueKey.T
-  object ImportPartsValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportPartsValueKey extends RefinedType[String, Pure]
   type ImportPartsValueValue = ImportPartsValueValue.T
-  object ImportPartsValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportPartsValueValue extends RefinedType[Int, Pure]
   type Checked = Checked.T
-  object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Checked extends RefinedType[String, Pure]
   type PlaceAliasesKey = PlaceAliasesKey.T
-  object PlaceAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceAliasesKey extends RefinedType[String, Pure]
   type PlaceAliasesValue = PlaceAliasesValue.T
-  object PlaceAliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceAliasesValue extends RefinedType[String, Pure]
   type PlaceRemovals = PlaceRemovals.T
-  object PlaceRemovals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceRemovals extends RefinedType[String, Pure]
 
-  val empty: CatalogueState = CatalogueState(Vector.empty, Map.empty, Vector.empty, com.histmersion.domain.catalogue.CatalogueState.LastAttestationId(0L))
+  val empty: CatalogueState = CatalogueState(Vector.empty, Map.empty, Vector.empty, LastAttestationId(0L))

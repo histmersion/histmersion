@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,6 +14,8 @@ import com.histmersion.domain.ItemRef
 import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.domain.Title
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.
@@ -91,14 +94,14 @@ enum MarkTarget:
 
 object MarkTarget:
   type ZoomProblem = ZoomProblem.T
-  object ZoomProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoomProblem extends RefinedType[String, Pure]
 
   /** The deepest zoom the map has; a target's zoom is between 0 and this. */
 
   val MaxZoom = 24.0
 
   /** The target, when its zoom (if any) is one the map has. */
-  def zoomChecked(t: Target): Either[com.histmersion.domain.personal.MarkTarget.ZoomProblem, Target] =
+  def zoomChecked(t: Target): Either[ZoomProblem, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
       case Some(z) => Left(ZoomProblem(s"zoom $z: between 0 and ${MaxZoom.toInt}"))
       case None    => Right(t)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 
 import com.histmersion.domain.library.sources.{SourceDeletePlan, SourceOriginals}
 import com.histmersion.util.storage.Store
@@ -67,12 +68,12 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Every content hash the originals' store holds a file for (`<sha>.<ext>`, one listing) — what the Calibre gaps
     * listing marks as downloadable. Empty when the store cannot be read.
     */
-  def hashes: Set[com.histmersion.Sha256] =
+  def hashes: Set[Sha256] =
     originals()
       .names()
       .map(_.value)
       .filter(_.contains('.'))
       .map(n => n.substring(0, n.indexOf('.')))
       .filter(_.nonEmpty)
-      .flatMap(com.histmersion.Sha256.option(_))
+      .flatMap(Sha256.option(_))
       .toSet

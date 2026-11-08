@@ -1,17 +1,22 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import java.time.Instant
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.DeepTime
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A picture as the in-memory store holds it: a row of `assets` — a source's figure (its `citekey`) or a provider's
   * picture (its `provider` and key) — with its point and inclusive span when it has them.
   */
 final case class HeldAsset(
     uid: AssetService.AssetUid,
-    citekey: Option[com.histmersion.domain.library.Citekey],
+    citekey: Option[Citekey],
     name: AssetService.AssetName,
     mime: AssetService.Mime,
     bytes: AssetService.Bytes,
-    sha256: com.histmersion.Sha256,
+    sha256: Sha256,
     width: Option[HeldAsset.Width],
     height: Option[HeldAsset.Height],
     kind: Option[HeldAsset.Kind] = None,
@@ -30,31 +35,31 @@ final case class HeldAsset(
     thumbWidth: Option[ProviderAsset.ThumbWidth] = None,
     thumbHeight: Option[ProviderAsset.ThumbHeight] = None,
     point: Option[(HeldAsset.Latitude, HeldAsset.Longitude)] = None,
-    period: Option[(Option[com.histmersion.domain.DeepTime.SignedYear], Option[com.histmersion.domain.DeepTime.SignedYear])] = None
+    period: Option[(Option[DeepTime.SignedYear], Option[DeepTime.SignedYear])] = None
 )
 
 object HeldAsset:
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Int, Pure]
   type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Height extends RefinedType[Int, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Caption = Caption.T
-  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Caption extends RefinedType[String, Pure]
   type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object License extends RefinedType[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LicenseUrl extends RefinedType[String, Pure]
   type Author = Author.T
-  object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Author extends RefinedType[String, Pure]
   type Credit = Credit.T
-  object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Credit extends RefinedType[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceUrl extends RefinedType[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OriginalUrl extends RefinedType[String, Pure]
   type Latitude = Latitude.T
-  object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Latitude extends RefinedType[Double, Pure]
   type Longitude = Longitude.T
-  object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Longitude extends RefinedType[Double, Pure]

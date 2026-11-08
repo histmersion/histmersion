@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.config.{AgentManagersConfig, AgentSchedulerConfig}
 import com.histmersion.domain.{ManagerDefaults, SchedulerDefaults}

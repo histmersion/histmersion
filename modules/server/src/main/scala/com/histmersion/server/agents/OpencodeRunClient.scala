@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
@@ -24,7 +25,7 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
       .getOrElse(
         throw java.io.IOException(s"opencode: no generated agent ${agent.name} — run `histmersion agent generate`")
       )
-    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-opencode-")) { dir =>
+    CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-opencode-")) { dir =>
       val timeout = CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)
       val grant = rt.grant(call, Some(agent), timeout)
       try

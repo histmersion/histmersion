@@ -1,21 +1,24 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 /** What a goal's links point at, as other domains know it: the title of a linked source, article or queue item (`None`
   * when it no longer exists; a query has none) and a queue item's list. The database joins them; an in-memory goal
   * store is given them.
   */
 import com.histmersion.domain.automation.Goal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 trait GoalLinkTargets:
-  def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.TitleResult]
-  def queueList(ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult]
+  def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult]
+  def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueListResult]
 
 object GoalLinkTargets:
   /** Nothing exists anywhere. */
   type TitleResult = TitleResult.T
-  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleResult extends RefinedType[String, Pure]
   type QueueListResult = QueueListResult.T
-  object QueueListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueueListResult extends RefinedType[String, Pure]
 
   val none: GoalLinkTargets = new GoalLinkTargets:
-    def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.TitleResult] = None
-    def queueList(ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult] = None
+    def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[TitleResult] = None
+    def queueList(ref: BGoalLinkRow.Ref): Option[QueueListResult] = None

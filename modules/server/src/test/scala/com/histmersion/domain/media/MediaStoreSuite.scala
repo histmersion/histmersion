@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,12 +14,14 @@ import com.augustnagro.magnum.*
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
 
 /** A contract of media's services, run once on the in-memory stores and once on the database (a scratch database per
   * test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with no such
   * store.
   */
-abstract class MediaStoreSuite extends com.histmersion.db.DbSuite:
+abstract class MediaStoreSuite extends DbSuite:
   protected def fresh(test: String): Option[MediaStores]
 
   protected def stest(title: String)(body: MediaStores => Unit): Unit =
@@ -48,7 +51,7 @@ object MediaStoreSuite:
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends MediaStoreSuite:
-    private val testDb = com.histmersion.db.TestDb.url
+    private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
     private lazy val scratch =
       ScratchDatabases(

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -7,6 +8,11 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.Correction
 
 /** The corrections by hand of catalogue events, for agents. The import and the re-derivation are not tools, on purpose:
   * an import is an operator's decision that sends traffic to a third party (`histmersion events import`), a
@@ -22,11 +28,11 @@ object CorrectionsTools:
   ) derives KindlingsCodecAsObject
   object EventCorrectionsInput:
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
 
     given Schema[EventCorrectionsInput] = KindlingsSchema
       .derived[EventCorrectionsInput]
@@ -49,22 +55,22 @@ object CorrectionsTools:
         )
         .input[EventCorrectionsInput]
         .handle { in =>
-          val event: Either[com.histmersion.api.Api.Error, Option[com.histmersion.domain.catalogue.Event.Id]] =
+          val event: Either[Api.Error, Option[Event.Id]] =
             in.id.map(_.value.trim).filter(_.nonEmpty) match
               case None    => Right(None)
               case Some(i) =>
-                com.histmersion.domain.catalogue.Event.Id
+                Event.Id
                   .either(i)
                   .left
-                  .map(e => com.histmersion.api.Api.Error(com.histmersion.api.Api.Error.Message(e)))
+                  .map(e => Api.Error(Api.Error.Message(e)))
                   .map(Some(_))
           ToolResult.text(
             event
               .flatMap(e =>
                 imports.corrections(
-                  in.status.map(s => com.histmersion.api.catalogue.Correction.StatusValue(s.value)),
+                  in.status.map(s => Correction.StatusValue(s.value)),
                   e,
-                  in.limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
+                  in.limit.flatMap(l => PageSize.option(l.value)),
                   None
                 )
               )

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -19,6 +20,16 @@ import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
+import com.histmersion.config.DbConfig
+import com.histmersion.config.BackupsConfig
+import com.histmersion.config.BundlesConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.AcquireConfig
+import com.histmersion.config.InitConfig
+import com.histmersion.config.RuntimeConfig
+import com.histmersion.config.BasemapConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.data.exchange.BundleFormat
 
 /** What the library answers, on a crafted collection, recorded on the code before the library's sources, findings,
   * citations, labels and search moved into their own domain:
@@ -61,7 +72,7 @@ class LibraryOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-library-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s10o", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val scratch = ScratchDatabases("histmersion_s10o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -70,12 +81,12 @@ class LibraryOracleSuite extends DbSuite:
 
   private def cfgFor(name: String): AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
     )
 
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition.server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -1538,7 +1549,7 @@ class LibraryOracleSuite extends DbSuite:
       (w + "== every rule\n" + report + "\n", fix, byName, get(s"$url/api/lint"))
     }
     val n = xnames(all)
-    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
+    def shaOf(b: Array[Byte]) = BundleFormat.sha256Hex(b)
     val names2 = issueNames(merged.map(_._2)) ++ n ++
       Map(shaOf(whole).value -> "BUNDLE-WHOLE", shaOf(first).value -> "BUNDLE-FIRST", shaOf(part).value -> "BUNDLE-PART")
     // the resolution file lists its issues in the order of their ids

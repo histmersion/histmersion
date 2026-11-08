@@ -1,10 +1,14 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 
 import java.util.Locale
+import com.histmersion.api.catalogue.Period
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place as the in-memory catalogue holds it: the row an import or a person wrote, the dataset it came in with, its
   * names (a name a person added is `manual`, which no import deletes), the edges to its parents and its links.
@@ -49,18 +53,18 @@ object HeldPlace:
   final case class Name(
       name: Place.Name.Value,
       lang: Place.Name.Lang,
-      period: Option[com.histmersion.api.catalogue.Period],
+      period: Option[Period],
       manual: Name.Manual
   )
 
   object Name:
     type Manual = Manual.T
-    object Manual extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Manual extends RefinedType[Boolean, Pure]
 
-    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Name.Manual(false))
+    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual(false))
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
-  def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[DeepTime.SignedYear]): Boolean =
+  def covers(period: Option[Period], asOf: Option[DeepTime.SignedYear]): Boolean =
     asOf.forall(y => period.forall(p => p.start.value <= y.value && y.value <= p.end.value))
 
   /** The case-insensitive form a search compares. */

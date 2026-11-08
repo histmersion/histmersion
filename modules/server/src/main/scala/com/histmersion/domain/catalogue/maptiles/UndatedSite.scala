@@ -1,10 +1,14 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One site of no known date, as the map draws it: its id, point and type. */
-final case class UndatedSite(id: UndatedSite.Id, lat: com.histmersion.Latitude, lon: com.histmersion.Longitude, siteType: Option[UndatedSite.SiteType])
+final case class UndatedSite(id: UndatedSite.Id, lat: Latitude, lon: Longitude, siteType: Option[UndatedSite.SiteType])
 
 object UndatedSite:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SiteType extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{
@@ -23,6 +24,9 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.upstreams.dating.CatalogDating
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
@@ -51,7 +55,7 @@ final class EventImports(
   /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for every catalogue,
     * and the catalogue's own floor (the GVP's Holocene one) while it is registered.
     */
-  private def limitsOf(provider: CatalogRecord.Provider, present: SignedYear): com.histmersion.upstreams.dating.CatalogDating.Limits =
+  private def limitsOf(provider: CatalogRecord.Provider, present: SignedYear): CatalogDating.Limits =
     PluginEvents.limits(registered().get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
@@ -71,7 +75,7 @@ final class EventImports(
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
   /** One catalogue part read: its key and the records (or why not). */
-  private type Fetched = Either[com.histmersion.pluginhost.PluginEvents.Problem, List[CatalogRecord]]
+  private type Fetched = Either[PluginEvents.Problem, List[CatalogRecord]]
 
   /** The import itself — blocking; the job runs it. Part by part: read, keep what passes the thresholds and the years,
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry
@@ -176,8 +180,8 @@ final class EventImports(
                 id,
                 StoredEvent.Kind(rs.head._2.kind.value),
                 rs.head._2.timeSpan,
-                rs.head._2.lat.flatMap(l => com.histmersion.Latitude.option(l.value)),
-                rs.head._2.lon.flatMap(l => com.histmersion.Longitude.option(l.value)),
+                rs.head._2.lat.flatMap(l => Latitude.option(l.value)),
+                rs.head._2.lon.flatMap(l => Longitude.option(l.value)),
                 rs.head._2.wikidata,
                 rs.map(_._2.key).toSet,
                 StoredEvent.Catalogue(true),
@@ -192,7 +196,7 @@ final class EventImports(
               store.markPart(
                 provider,
                 EventImportRepo.PartName(EventProviders.scopedPart(part.value, scope)),
-                com.histmersion.RowCount(recs.size)
+                RowCount(recs.size)
               )
               Some(s)
           report = EventImportReport.combine(
@@ -387,4 +391,4 @@ final class EventImports(
 
 object EventImports:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

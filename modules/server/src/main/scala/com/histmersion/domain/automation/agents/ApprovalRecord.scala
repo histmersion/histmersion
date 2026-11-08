@@ -1,14 +1,19 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import java.time.Instant
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An approval as [[ApprovalService.InMemory]] holds it: its columns, the payload as written, and its times. */
 final case class ApprovalRecord(
     id: ApprovalRecord.Id,
-    jobId: Option[com.histmersion.util.jobs.Job.Id],
+    jobId: Option[Job.Id],
     seq: Option[ApprovalRecord.Seq],
     kind: ApprovalRecord.Kind,
-    citekey: Option[com.histmersion.domain.library.Citekey],
+    citekey: Option[Citekey],
     status: Option[ApprovalRecord.Status],
     current: Option[ApprovalRecord.Current],
     edgeKind: Option[ApprovalRecord.EdgeKind],
@@ -24,26 +29,26 @@ final case class ApprovalRecord(
 
 object ApprovalRecord:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[Long, Pure]
   type Seq = Seq.T
-  object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Seq extends RefinedType[Int, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Current = Current.T
-  object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Current extends RefinedType[String, Pure]
   type EdgeKind = EdgeKind.T
-  object EdgeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgeKind extends RefinedType[String, Pure]
   type Target = Target.T
-  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Target extends RefinedType[String, Pure]
   type Subject = Subject.T
-  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Subject extends RefinedType[String, Pure]
   type Proposal = Proposal.T
-  object Proposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Proposal extends RefinedType[String, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type Result = Result.T
-  object Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Result extends RefinedType[String, Pure]

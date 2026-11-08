@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.api.automation.AgentStateEntry
 import com.histmersion.domain.automation.AutomationState
@@ -9,31 +10,33 @@ import io.circe.{Json, JsonObject}
 import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The agents' scratch state: a JSON value under a key, by key. */
 trait AgentStateService:
   def list(): List[AgentStateEntry]
-  def get(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Option[AgentStateEntry]
+  def get(key: AgentStateRecord.Key): Option[AgentStateEntry]
 
   /** Set a key's value; a value that is not JSON fails, as the database's cast to `jsonb` does. */
-  def set(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key, value: com.histmersion.domain.automation.agents.AgentStateService.SetValue): Unit
+  def set(key: AgentStateRecord.Key, value: AgentStateService.SetValue): Unit
 
   /** Remove a key; false when there was none. */
-  def delete(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Boolean
+  def delete(key: AgentStateRecord.Key): Boolean
 
 object AgentStateService:
   type SetValue = SetValue.T
-  object SetValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetValue extends RefinedType[String, Pure]
 
   def apply(db: Transactor): AgentStateService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AgentStateService:
     def list(): List[AgentStateEntry] = db.read(AgentStateRepo.list())
-    def get(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Option[AgentStateEntry] =
+    def get(key: AgentStateRecord.Key): Option[AgentStateEntry] =
       db.read(AgentStateRepo.get(AgentStateRepo.StateKey(key.value)))
-    def set(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key, value: SetValue): Unit =
+    def set(key: AgentStateRecord.Key, value: SetValue): Unit =
       db.transact(AgentStateRepo.set(AgentStateRepo.StateKey(key.value), AgentStateRepo.SetValue(value.value)))
-    def delete(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Boolean = db.transact(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
+    def delete(key: AgentStateRecord.Key): Boolean = db.transact(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
 
   /** The values in memory, printed back as `jsonb::text` prints them (an object's keys shortest first, then in byte
     * order, the last of a repeated key kept; `", "` and `": "` between); `clock` stands in for the database's `now()`.
@@ -48,7 +51,7 @@ object AgentStateService:
       AgentStateEntry.UpdatedAt(s"${Updated.format(at)}$fraction+00")
 
     /** jsonb's order of an object's keys: the shorter first, then by their UTF-8 bytes (unsigned, as `memcmp`). */
-    private def keyOrder(k: com.histmersion.domain.automation.agents.AgentStateRecord.Key): (Int, String) =
+    private def keyOrder(k: AgentStateRecord.Key): (Int, String) =
       val b = k.value.getBytes("UTF-8")
       (b.length, b.map(x => f"${x & 0xff}%02x").mkString)
 
@@ -67,16 +70,16 @@ object AgentStateService:
     private val printer =
       io.circe.Printer.noSpaces.copy(colonRight = " ", objectCommaRight = " ", arrayCommaRight = " ")
 
-    private def entry(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(AgentStateEntry.Key(key.value), AgentStateEntry.Value(r.value.value), Some(updatedText(r.updatedAt)))
+    private def entry(key: AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(AgentStateEntry.Key(key.value), AgentStateEntry.Value(r.value.value), Some(updatedText(r.updatedAt)))
 
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1.value).map(entry)
-    def get(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
-    def set(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key, value: SetValue): Unit =
+    def get(key: AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
+    def set(key: AgentStateRecord.Key, value: SetValue): Unit =
       val j = io.circe.parser
         .parse(value.value)
         .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
       val at = Instant.now(clock)
       val _ =
         state.updateAndGet(_.modify(_.agentState).using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(printer.print(jsonb(j))), at))))
-    def delete(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Boolean =
+    def delete(key: AgentStateRecord.Key): Boolean =
       state.getAndUpdate(_.modify(_.agentState).using(_ - key)).agentState.contains(key)

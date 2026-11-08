@@ -1,10 +1,14 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the live PeriodO dump is and which of its collections are imported when none is named. */
 final case class PeriodSources(periodoUrl: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections])
 
 object PeriodSources:
   type PeriodoUrl = PeriodoUrl.T
-  object PeriodoUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodoUrl extends RefinedType[String, Pure]
   type Collections = Collections.T
-  object Collections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Collections extends RefinedType[String, Pure]

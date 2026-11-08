@@ -1,9 +1,12 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.pluginhost.OaFetcher
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition clients of one config and one plugin generation (the server's `acquisition` hot node): rebuilt
   * together when `acquire.*` or the plugins change.
@@ -18,9 +21,9 @@ final case class AcquireClients(
     indexes: List[ScholarlyIndex] = Nil,
     alerts: CitationAlerts = NoAlerts,
     /** The legal chain's generation ([[FetcherGeneration]]): what makes the acquisition list due again. */
-    generation: AcquireClients.Generation = com.histmersion.domain.library.acquisition.AcquireClients.Generation("")
+    generation: AcquireClients.Generation = AcquireClients.Generation("")
 )
 
 object AcquireClients:
   type Generation = Generation.T
-  object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Generation extends RefinedType[String, Pure]

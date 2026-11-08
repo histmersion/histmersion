@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,8 @@ import com.histmersion.domain.*
 import java.nio.file.{Files, Path}
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.storage.Store
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.
@@ -25,7 +28,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     _ => ()
   )
   private val overfetch = BasemapFetch.Pace.Overfetch(0.05)
-  private val aegean = BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(35), com.histmersion.api.catalogue.Longitude(29), com.histmersion.api.catalogue.Latitude(41))
+  private val aegean = BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41))
   private val dropRules = Basemap
     .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
     .fold(e => fail(e.value), identity)
@@ -63,10 +66,10 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(
       Basemap.tileRange(
         BBox(
-          com.histmersion.api.catalogue.Longitude(-180),
-          com.histmersion.api.catalogue.Latitude(-85),
-          com.histmersion.api.catalogue.Longitude(180),
-          com.histmersion.api.catalogue.Latitude(85)
+          Longitude(-180),
+          Latitude(-85),
+          Longitude(180),
+          Latitude(85)
         ),
         Basemap.Zoom(2)
       ),

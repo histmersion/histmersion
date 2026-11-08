@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,8 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import com.histmersion.api.media.Iiif
+import com.histmersion.api.library.ArchiveFile
+import com.histmersion.api.media.ImageSize
 
 /** Unit tests for [[IiifHandler]]'s pure image processing: region cropping, size scaling, and format encoding. No
   * database — a synthetic test image is used.
@@ -34,37 +37,37 @@ class IiifHandlerSuite extends munit.FunSuite:
   test("parseFilename: default.jpg"):
     // This is a private method — test indirectly through .image with a None DB hit.
     // Instead, test the Iiif parsing which IS accessible.
-    assertEquals(Iiif.parseFormat(com.histmersion.api.library.ArchiveFile.Format.Wire("jpg")), Right("jpg"))
-    assertEquals(Iiif.parseFormat(com.histmersion.api.library.ArchiveFile.Format.Wire("png")), Right("png"))
+    assertEquals(Iiif.parseFormat(ArchiveFile.Format.Wire("jpg")), Right("jpg"))
+    assertEquals(Iiif.parseFormat(ArchiveFile.Format.Wire("png")), Right("png"))
 
   test("parseFilename: rejects non-default quality"):
     // The filename must be default.{format}
-    assert(Iiif.parseFormat(com.histmersion.api.library.ArchiveFile.Format.Wire("tiff")).isLeft)
+    assert(Iiif.parseFormat(ArchiveFile.Format.Wire("tiff")).isLeft)
 
   // ── Region parsing edge cases ─────────────────────────────────────────────────────────────
 
   test("Region: case insensitive"):
-    assertEquals(Iiif.Region.parse(com.histmersion.api.media.Iiif.Region.Wire("FULL")), Right(Iiif.Region.Full))
-    assertEquals(Iiif.Region.parse(com.histmersion.api.media.Iiif.Region.Wire("Full")), Right(Iiif.Region.Full))
+    assertEquals(Iiif.Region.parse(Iiif.Region.Wire("FULL")), Right(Iiif.Region.Full))
+    assertEquals(Iiif.Region.parse(Iiif.Region.Wire("Full")), Right(Iiif.Region.Full))
 
   test("Region: whitespace tolerance"):
-    assertEquals(Iiif.Region.parse(com.histmersion.api.media.Iiif.Region.Wire(" full ")), Right(Iiif.Region.Full))
+    assertEquals(Iiif.Region.parse(Iiif.Region.Wire(" full ")), Right(Iiif.Region.Full))
 
   // ── Size edge cases ───────────────────────────────────────────────────────────────────────
 
   test("Size: best fit with equal dimensions"):
-    assertEquals(Iiif.Size.parse(com.histmersion.api.media.Iiif.Size.Wire("!100,100")), Right(Iiif.Size.BestFit(com.histmersion.api.media.Iiif.Size.BestFit.W(100), com.histmersion.api.media.Iiif.Size.BestFit.H(100))))
+    assertEquals(Iiif.Size.parse(Iiif.Size.Wire("!100,100")), Right(Iiif.Size.BestFit(Iiif.Size.BestFit.W(100), Iiif.Size.BestFit.H(100))))
 
   test("Size: single dimension w"):
-    assertEquals(Iiif.Size.parse(com.histmersion.api.media.Iiif.Size.Wire("50,")), Right(Iiif.Size.Width(com.histmersion.api.media.Iiif.Size.Width.W(50))))
+    assertEquals(Iiif.Size.parse(Iiif.Size.Wire("50,")), Right(Iiif.Size.Width(Iiif.Size.Width.W(50))))
 
   test("Size: single dimension h"):
-    assertEquals(Iiif.Size.parse(com.histmersion.api.media.Iiif.Size.Wire(",75")), Right(Iiif.Size.Height(com.histmersion.api.media.Iiif.Size.Height.H(75))))
+    assertEquals(Iiif.Size.parse(Iiif.Size.Wire(",75")), Right(Iiif.Size.Height(Iiif.Size.Height.H(75))))
 
   // ── info.json ─────────────────────────────────────────────────────────────────────────────
 
   test("infoJson includes IIIF required fields"):
-    val json = Iiif.infoJson(com.histmersion.api.media.Iiif.ImageId("http://localhost:8000/iiif/test2024/fig1.png"), com.histmersion.api.media.ImageSize.Width(1024), com.histmersion.api.media.ImageSize.Height(768))
+    val json = Iiif.infoJson(Iiif.ImageId("http://localhost:8000/iiif/test2024/fig1.png"), ImageSize.Width(1024), ImageSize.Height(768))
     val c = json.hcursor
     assert(c.get[String]("@context").isRight)
     assert(c.get[String]("type").isRight)
@@ -74,7 +77,7 @@ class IiifHandlerSuite extends munit.FunSuite:
     assert(c.get[String]("profile").contains("level1"))
 
   test("infoJson extraFeatures lists Level 1 features"):
-    val json = Iiif.infoJson(com.histmersion.api.media.Iiif.ImageId("http://x/iiif/a/b"), com.histmersion.api.media.ImageSize.Width(100), com.histmersion.api.media.ImageSize.Height(100))
+    val json = Iiif.infoJson(Iiif.ImageId("http://x/iiif/a/b"), ImageSize.Width(100), ImageSize.Height(100))
     val features = json.hcursor.downField("extraFeatures").as[List[String]]
     assert(features.isRight)
     assert(features.toOption.get.contains("regionByPx"))

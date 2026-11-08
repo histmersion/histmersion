@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.ocr.{

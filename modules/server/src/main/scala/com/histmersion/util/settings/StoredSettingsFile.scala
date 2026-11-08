@@ -1,4 +1,5 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.config.AppConfig
 import com.histmersion.config.ConfigProblem

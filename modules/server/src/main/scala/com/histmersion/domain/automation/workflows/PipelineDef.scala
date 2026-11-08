@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import com.histmersion.domain.automation.agents.{Halt, RunCtx}
 
@@ -11,6 +12,8 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A pipeline: Scala code that calls [[RunCtx.code]] and [[RunCtx.llm]] steps in a FIXED order (the step number is the
   * order, so a resumed run lines its steps up with its checkpoints). Returns a one-line summary for the run's log
@@ -22,4 +25,4 @@ trait PipelineDef:
 
 object PipelineDef:
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]

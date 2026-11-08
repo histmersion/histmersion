@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,6 +24,24 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.automation.Managers
+import com.histmersion.util.storage.Blob
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.AgentsConfig
+import com.histmersion.config.AgentRolesConfig
+import com.histmersion.config.AgentManagersConfig
+import com.histmersion.config.AgentEnrichConfig
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.library.ingest.Upload
+import com.histmersion.util.storage.HandedFile
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.api.catalogue.Year
 
 /** #986 `agents.auto-enrich` against a `*_test` database, the converter stubbed: an ingest job that stores a source
   * queues exactly one `enrich-source` run for it and says so in its progress line; nothing is queued with the switch
@@ -30,23 +49,23 @@ import com.histmersion.api.library.Source
   * model is a note on the job, never a failed ingest. The run pool is never started, so no model is called. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
-  private val testDb = com.histmersion.db.TestDb.url
+class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Ck = com.histmersion.domain.library.Citekey("zzautoenrich2020_tin")
+  private val Ck = Citekey("zzautoenrich2020_tin")
   private val IngestCk = com.histmersion.api.library.Citekey("zzautoenrich2020_tin")
   private val RunTarget = RunInfo.Target("zzautoenrich2020_tin")
-  private val ItemTarget = com.histmersion.api.automation.Managers.ManagerItem.Target("zzautoenrich2020_tin")
+  private val ItemTarget = Managers.ManagerItem.Target("zzautoenrich2020_tin")
 
   private object Stub extends ConverterClient:
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+    def health = Right(ConverterClient.HealthSummary("ok"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       Right(
         ConvertedDoc(
-          markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Tin\n\nThe Uluburun ship carried ten tons of copper.\n"),
-          pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1),
+          markdown = ConvertedDoc.Markdown("# Tin\n\nThe Uluburun ship carried ten tons of copper.\n"),
+          pages = ConvertedDoc.Pages(1),
           filename = Some(ConvertedDoc.Filename(filename.value))
         )
       )
@@ -54,14 +73,14 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-autoenrich").toString))).modify(_.agents).setTo(b.agents.copy(
-        enabled = com.histmersion.config.AgentsConfig.Enabled(true),
-        autoEnrich = com.histmersion.config.AgentsConfig.AutoEnrich(true),
-        prices = com.histmersion.config.AgentsConfig.Prices("zzautoenrich=0/0"),
-        roles = b.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor("local:zzautoenrich")),
+      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1"))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-autoenrich").toString))).modify(_.agents).setTo(b.agents.copy(
+        enabled = AgentsConfig.Enabled(true),
+        autoEnrich = AgentsConfig.AutoEnrich(true),
+        prices = AgentsConfig.Prices("zzautoenrich=0/0"),
+        roles = b.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("local:zzautoenrich")),
         // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
-        managers = b.agents.managers.modify(_.enabled).setTo(com.histmersion.config.AgentManagersConfig.Enabled(false))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
+        managers = b.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(false))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -95,10 +114,10 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(Ingest.Params(IngestCk, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("tin.pdf"))), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
+      .ingest(Ingest.Params(IngestCk, Some(Bundle.Asset.FileName("tin.pdf"))), Upload.handed(HandedFile.snapshot(pdf.toFile)))
       .fold(e => fail(e.message.value), identity)
     def go(n: Int): JobInfo =
-      val j = h.jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).fold(e => fail(e.message.value), identity)
+      val j = h.jobs.job(Job.Id.applyUnsafe(accepted.jobId.value)).fold(e => fail(e.message.value), identity)
       if j.isTerminal || n > 600 then j else { Thread.sleep(50); go(n + 1) }
     val j = go(0)
     assertEquals(j.state, JobState.Done, j.toString)
@@ -127,16 +146,16 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test(
     "managers on (phase 2): the ingest hands the source to the enrich manager — an item, no run — and says it is paused"
   ):
-    val on = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(com.histmersion.config.AgentManagersConfig.Enabled(true))))
+    val on = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(true))))
     withHandlers(on) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil, "the manager starts it, not the ingest")
       val item = com.augustnagro.magnum
         .connect(ds)(
-          com.histmersion.domain.automation.managers.ManagerRepo
+          ManagerRepo
             .itemFor(
-              com.histmersion.api.automation.Managers.ManagerInfo.Id(com.histmersion.api.automation.Managers.EnrichId),
-              com.histmersion.api.automation.Managers.ManagerItem.Kind(com.histmersion.api.automation.Managers.SourceEnrich),
+              Managers.ManagerInfo.Id(Managers.EnrichId),
+              Managers.ManagerItem.Kind(Managers.SourceEnrich),
               ItemTarget
             )
         )
@@ -151,13 +170,13 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     }
 
   test("switch off, or agents off: nothing queued and nothing said"):
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(com.histmersion.config.AgentsConfig.AutoEnrich(false)))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(AgentsConfig.AutoEnrich(false)))
     withHandlers(off) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
       assert(!job.progress.exists(_.value.contains("enrichment")), job.progress)
     }
-    val disabled = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false)))
+    val disabled = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(false)))
     withHandlers(disabled) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
@@ -172,8 +191,8 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             Ck,
             Source.Put(
               title = com.histmersion.api.library.Title("Bronze Age tin"),
-              year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
-              findings = List(Finding.Input(com.histmersion.api.library.Finding.Claim("The Uluburun ship carried copper.")))
+              year = (Some(2020)).map(Year.apply),
+              findings = List(Finding.Input(Finding.Claim("The Uluburun ship carried copper.")))
             )
           )
           .isRight
@@ -184,7 +203,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     }
 
   test("a chain with no model that can run is a note on the job — the ingest is done all the same"):
-    val unpriced = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("")))
+    val unpriced = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(AgentsConfig.Prices("")))
     withHandlers(unpriced) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)

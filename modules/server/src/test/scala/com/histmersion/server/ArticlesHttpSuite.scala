@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,13 +7,16 @@ import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status codes, and the
   * rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a `[[slug]]` resolve to DIFFERENT
   * places. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class ArticlesHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -33,9 +37,9 @@ class ArticlesHttpSuite extends munit.FunSuite:
 
   test("put → get → patch → page → export → delete over HTTP"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       // a previous (failed) run may have left the fixtures behind, and the first assertion below is

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.domain.media.assets.AssetsData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable, TableName}
@@ -24,7 +25,7 @@ object MediaData extends DataContribution:
   override val mergeRules: List[MergeRules] = MediaExchange.mergeRules
 
   override val caches: List[CacheSpec] = List(
-    CacheSpec(owner, CacheName("thumbnails"), com.histmersion.util.data.maintenance.CacheSpec.Label("picture thumbnails"), CacheHolding.InTables(List(TableName("assets"))))
+    CacheSpec(owner, CacheName("thumbnails"), CacheSpec.Label("picture thumbnails"), CacheHolding.InTables(List(TableName("assets"))))
   )
 
   override val checks: List[CheckRule] = AssetsData.checks(owner)

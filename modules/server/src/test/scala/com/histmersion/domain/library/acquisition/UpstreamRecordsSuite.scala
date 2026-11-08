@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,6 +8,9 @@ import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.identifiers.Identifiers
 
 import io.circe.parser.parse
+import com.histmersion.api.library.Acquire
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.Doi
 
 /** The upstreams' records as the wire shows them: a work keyed by the citekey the corpus gives it, a citing work and a
   * reference with the wire's defaults; and the upstreams' identifier rules equal to the wire's own over the same
@@ -34,15 +38,15 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     assert(r.forall(_.citekey.isEmpty))
 
   test("a retraction notice reads as a retraction; the real citation contexts classify"):
-    val ups = com.histmersion.domain.library.acquisition.DiscoveryClient
+    val ups = DiscoveryClient
       .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
-      api.library.Acquire.verdict(Nil, ups, false, Some(com.histmersion.api.library.Acquire.CitedByCount(5)), Some(com.histmersion.api.catalogue.Year(2019)), com.histmersion.api.library.Acquire.CitationThreshold(50), com.histmersion.api.library.Acquire.CitationThreshold(3), com.histmersion.api.catalogue.Year(2018)),
-      api.library.Acquire.Verdicts.Retracted
+      Acquire.verdict(Nil, ups, false, Some(Acquire.CitedByCount(5)), Some(Year(2019)), Acquire.CitationThreshold(50), Acquire.CitationThreshold(3), Year(2018)),
+      Acquire.Verdicts.Retracted
     )
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    val kinds = rows.map(r => api.library.Acquire.classify(r.intents.map(i => api.library.Acquire.Intent.Wire(i.value)), r.contexts.map(c => api.library.Acquire.CitationContext(c.value)), r.isInfluential.value, r.year, Some(com.histmersion.api.catalogue.Year(2015))))
-    assert(kinds.forall(api.library.Acquire.EdgeKinds.all.contains), kinds)
+    val kinds = rows.map(r => Acquire.classify(r.intents.map(i => Acquire.Intent.Wire(i.value)), r.contexts.map(c => Acquire.CitationContext(c.value)), r.isInfluential.value, r.year, Some(Year(2015))))
+    assert(kinds.forall(Acquire.EdgeKinds.all.contains), kinds)
 
   test("the upstreams' DOI and arXiv rules are the wire's"):
     val inputs = List(
@@ -60,6 +64,6 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(Identifiers.DoiText(s)), com.histmersion.domain.library.Doi.normalize(s), s)
+      assertEquals(Identifiers.doi(Identifiers.DoiText(s)), Doi.normalize(s), s)
       assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)), Ident.arxiv(Ident.Written(s)), s)
     }

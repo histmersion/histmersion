@@ -1,10 +1,12 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.util.storage.Store
 
 /** Builds a physical-names archive from Natural Earth GeoJSON files already on disk, with the fetch's own code — how
   * the browser fixture (modules/web/test/fixtures/basemap/labels.pmtiles) was made and how the sizes in
@@ -28,7 +30,7 @@ import java.nio.file.{Files, Path}
   val to = Path.of(out).toAbsolutePath
   val (tiles, bytes) = BasemapLabels.write(
     BasemapFixtures.store(to.getParent),
-    com.histmersion.util.storage.Store.Key.applyUnsafe(to.getFileName.toString),
+    Store.Key.applyUnsafe(to.getFileName.toString),
     kept,
     b,
     PmTiles.Zoom(maxZoom.toInt),

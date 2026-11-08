@@ -1,9 +1,16 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.Ingest
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Doi
+import com.histmersion.util.jobs.Job
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *
@@ -29,7 +36,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
 
   private val skeleton = SkeletonIngest(sources)
 
-  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome] =
+  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -49,7 +56,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
 
   private def convert(
       file: FetchedCopy,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       meta: IngestMeta,
       base: IngestOutcome
   ): Either[IngestJobs.Problem, IngestOutcome] =
@@ -61,10 +68,10 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
           citekey = com.histmersion.api.library.Citekey(citekey.value),
           filename = Some(Ingest.Params.Filename(file.key.name.value)),
           force = Ingest.Params.Force(true), // the channel chose the citekey; the duplicate guard is for human uploads
-          title = Some(meta.title).filter(_.value.nonEmpty).map(t => com.histmersion.api.library.Title(t.value)),
-          authors = meta.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
-          year = meta.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
-          doi = meta.doi.map(d => com.histmersion.api.library.Doi(d.value))
+          title = Some(meta.title).filter(_.value.nonEmpty).map(t => Title(t.value)),
+          authors = meta.authors.map(a => AuthorName(a.value)),
+          year = meta.year.map(y => Year(y.value.toLong)),
+          doi = meta.doi.map(d => Doi(d.value))
         ),
         upload
       )
@@ -73,7 +80,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       .map(a =>
         base
           .modify(_.jobId)
-          .setTo(Some(com.histmersion.util.jobs.Job.Id.assume(a.jobId.value)))
+          .setTo(Some(Job.Id.assume(a.jobId.value)))
           .modify(_.detail)
           .setTo(
             IngestOutcome.Detail(

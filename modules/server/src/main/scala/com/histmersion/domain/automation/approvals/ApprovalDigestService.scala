@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import io.scalaland.chimney.dsl.*
 
@@ -15,6 +16,8 @@ import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.Api
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.worklists.WorkListControllers
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
@@ -33,7 +36,7 @@ final class ApprovalDigestService(
       .parse(k)
       .exists(kk =>
         agents.autoApprovals.Kinds.contains(kk) && cfg.approvals
-          .checked(kk.transformInto[com.histmersion.domain.automation.Approval.Kind])
+          .checked(kk.transformInto[Approval.Kind])
       )
 
   /** The digest as of `now`. */
@@ -62,7 +65,7 @@ final class ApprovalDigestService(
     else
       val line = ApprovalDigest.line(digest(now))
       agents.autopilotRow.digested(now)
-      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.value.take(1000))))
+      val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.value.take(1000))))
       scribe.info(line.value)
       List("approval digest written")
 
@@ -130,7 +133,7 @@ final class ApprovalDigestService(
           val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
           val _ = agents.workLists.add(
-            com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
+            WorkListControllers.ListName("log"),
             QueueAdd(QueueItem.Text(line.take(1000)))
           )
           scribe.info(line)

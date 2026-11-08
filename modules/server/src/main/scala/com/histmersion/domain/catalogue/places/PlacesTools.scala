@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
@@ -16,6 +17,8 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -34,15 +37,15 @@ object PlacesTools:
   ) derives KindlingsCodecAsObject
   object PlacesInput:
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type AsOf = AsOf.T
-    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AsOf extends RefinedType[Long, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
 
     given Schema[PlacesInput] = KindlingsSchema
       .derived[PlacesInput]
@@ -67,21 +70,21 @@ object PlacesTools:
   )
   object PlaceOverrideInput:
     type PlaceId = PlaceId.T
-    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlaceId extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
     type Reset = Reset.T
-    object Reset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reset extends RefinedType[Boolean, Pure]
     type MergeInto = MergeInto.T
-    object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MergeInto extends RefinedType[String, Pure]
     type Remove = Remove.T
-    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Remove extends RefinedType[Boolean, Pure]
     type PointLat = PointLat.T
-    object PointLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PointLat extends RefinedType[Double, Pure]
     type PointLon = PointLon.T
-    object PointLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PointLon extends RefinedType[Double, Pure]
 
     given Schema[PlaceOverrideInput] = KindlingsSchema
       .derived[PlaceOverrideInput]
@@ -111,13 +114,13 @@ object PlacesTools:
   )
   object PlaceNamesInput:
     type PlaceId = PlaceId.T
-    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlaceId extends RefinedType[String, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Lang = Lang.T
-    object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lang extends RefinedType[String, Pure]
     type Remove = Remove.T
-    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Remove extends RefinedType[Boolean, Pure]
 
     given Schema[PlaceNamesInput] = KindlingsSchema
       .derived[PlaceNamesInput]
@@ -172,7 +175,7 @@ object PlacesTools:
                     .search(
                       in.name.map(_.value).orElse(in.query.map(_.value)).map(PlaceService.SearchQ(_)),
                       asOf,
-                      in.limit.flatMap(l => com.histmersion.PageSize.option(l.value))
+                      in.limit.flatMap(l => PageSize.option(l.value))
                     )
                     .toVector,
                   in.asOf.map(y => Year(y.value))

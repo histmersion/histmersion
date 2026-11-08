@@ -1,4 +1,5 @@
-package com.histmersion.server.instance
+package com.histmersion
+package server.instance
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,14 +14,16 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
 
 /** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
   * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark
   * for every board, and each counter carries the seen mark it is given. Assertions are about this suite's own rows
   * (other suites write approvals and goals at the same time).
   */
-class UiRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class UiRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
@@ -132,6 +135,6 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(g.count, None, "goals are not counted")
 
   test("a board's counter carries the seen mark it is given, and none for a board never opened"):
-    val cs = Transactor(ds).read(UiRepo.counters(Map(Board.Log.wire -> com.histmersion.api.instance.UiNotices.Counter.Seen("2026-10-31T12:00:00.000000Z")))).boards
+    val cs = Transactor(ds).read(UiRepo.counters(Map(Board.Log.wire -> UiNotices.Counter.Seen("2026-10-31T12:00:00.000000Z")))).boards
     assertEquals(cs.find(_.key == Board.Log.wire).flatMap(_.seen), Some("2026-10-31T12:00:00.000000Z"))
     assertEquals(cs.find(_.key == Board.Tasks.wire).flatMap(_.seen), None)

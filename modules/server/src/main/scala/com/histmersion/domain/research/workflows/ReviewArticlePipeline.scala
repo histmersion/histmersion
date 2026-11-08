@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -42,6 +43,10 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.articles.ArticlesControllers
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.Title
+import com.histmersion.api.text.WikiLinks
+import com.histmersion.domain.library.sources.SourcesControllers
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -140,7 +145,7 @@ final class ReviewArticlePipeline(
       line <- ctx.code[String](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, end))
     yield PipelineDef.Summary(line)
 
-  private def runId(ctx: RunCtx): com.histmersion.domain.automation.Run.Id = ctx.runId
+  private def runId(ctx: RunCtx): Run.Id = ctx.runId
 
   private def minRatio: AgentVerify.MinRatio = AgentVerify.MinRatio(lib.verify.quoteMinRatio.value)
 
@@ -461,7 +466,7 @@ final class ReviewArticlePipeline(
         Right(
           Snapshot(
             canonical,
-            com.histmersion.domain.Title(a.title.value),
+            Title(a.title.value),
             Snapshot.Kind(a.kind.value),
             text,
             a.updatedAt.map(u => Snapshot.UpdatedAt(u.value)),
@@ -507,11 +512,11 @@ final class ReviewArticlePipeline(
           Finding.Id(s"M${body.size + drift.size + i + 1}"),
           Reviewer.Mechanical,
           Severity.Minor,
-          com.histmersion.domain.ReviewArticle.Finding.Kind("formatting"),
-          com.histmersion.domain.ReviewArticle.Finding.Where("body"),
-          com.histmersion.domain.ReviewArticle.Finding.Quote(""),
+          Finding.Kind("formatting"),
+          Finding.Where("body"),
+          Finding.Quote(""),
           Finding.Problem(s"a formatting error the last edits introduced: $e"),
-          com.histmersion.domain.ReviewArticle.Finding.Fix("repair the markup")
+          Finding.Fix("repair the markup")
         )
       }
     body ++ drift ++ formatting
@@ -521,16 +526,16 @@ final class ReviewArticlePipeline(
     */
   private def isTarget(body: ReviewArticle.Fix.Body): Slug => Boolean =
     val resolve = site.articles.pageLinks(
-      AgentVerify.wikilinks(AgentVerify.Text(body.value)).map(w => com.histmersion.api.text.WikiLinks.Occurrence.Target(w.value))
+      AgentVerify.wikilinks(AgentVerify.Text(body.value)).map(w => WikiLinks.Occurrence.Target(w.value))
     )
-    t => resolve(com.histmersion.api.text.WikiLinks.Occurrence.Target(t.value)).isDefined
+    t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined
 
-  private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   private def recordText(ck: Citekey): Option[AgentVerify.SourceBody] =
-    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).toOption.map { s =>
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).toOption.map { s =>
       AgentVerify.SourceBody(
         (s.source.summary.toList.map(_.value) ++ s.findings.map(_.claim.value) ++ s.source.notes.toList.map(_.value) ++
           s.source.ocrMarkdown.toList.map(_.value)).mkString("\n\n")

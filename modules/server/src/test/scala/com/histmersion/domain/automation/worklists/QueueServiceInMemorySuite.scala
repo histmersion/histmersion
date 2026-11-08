@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import java.time.Clock
 import java.util.concurrent.atomic.AtomicReference

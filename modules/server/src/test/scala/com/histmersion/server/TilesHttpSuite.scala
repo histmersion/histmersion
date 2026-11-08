@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,13 +13,17 @@ import ox.supervised
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.util.database.Db
+import com.histmersion.config.ServerConfig
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` through the wire: a vector tile of the layer, its ETag and the browser's
   * revalidation (304), a write that makes the kept tile stale, a filter that changes the tile, and a bad layer or tile
   * refused. Fixtures `zztilehttp` at 100°E 70°S. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class TilesHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -29,13 +34,13 @@ class TilesHttpSuite extends munit.FunSuite:
     (r.statusCode, r.body, opt(r.headers.firstValue("ETag")), opt(r.headers.firstValue("Content-Type")))
   private def opt(o: java.util.Optional[String]): Option[String] = if o.isPresent then Some(o.get) else None
 
-  private val lon = com.histmersion.Longitude(100.0)
-  private val lat = com.histmersion.Latitude(-70.0)
+  private val lon = Longitude(100.0)
+  private val lat = Latitude(-70.0)
 
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
-    val ds = com.histmersion.util.database.Db.pool(cfg.db)
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val ds = Db.pool(cfg.db)
     try
       Migrate.run(ds)
       connect(ds):
@@ -44,7 +49,7 @@ class TilesHttpSuite extends munit.FunSuite:
                       ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint(${lon.value: Double}, ${lat.value: Double}), 4326))""".update
           .run()
       supervised {
-        val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+        val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
         try f(s"http://127.0.0.1:${b.port}", ds)
         finally b.stop()
       }

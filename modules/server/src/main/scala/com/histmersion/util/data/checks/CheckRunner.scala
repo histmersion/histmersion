@@ -1,7 +1,10 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.Transactor
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies
   * the safe fixes into one fix result.
@@ -18,7 +21,7 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** The rules a request names, in the order it names them — all of them when it names none. An unknown name is
     * refused, so a typo never reads as a clean corpus.
     */
-  def select(requested: List[com.histmersion.util.data.checks.CheckRule.Name]): Either[com.histmersion.util.data.checks.CheckRunner.Problem, List[CheckRule]] =
+  def select(requested: List[CheckRule.Name]): Either[CheckRunner.Problem, List[CheckRule]] =
     val wanted = requested.map(_.value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(rules)
     else
@@ -30,7 +33,7 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
       else Right(wanted.flatMap(named).distinct)
 
   /** The report of `selected`, on one connection: what several rules read is read once. */
-  def report(selected: List[CheckRule], context: CheckContext, maxItems: com.histmersion.util.data.checks.CheckRule.MaxItems): LintReport =
+  def report(selected: List[CheckRule], context: CheckContext, maxItems: CheckRule.MaxItems): LintReport =
     transactor.read:
       val run = CheckRun()
       LintReport(selected.map(_.report(context, maxItems)(using run)))
@@ -38,7 +41,7 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** The safe fixes: every rule's that runs on every call, and those of the rules `requested` names (by name, ignoring
     * case; an unknown name selects nothing), in fix order.
     */
-  def fix(requested: List[com.histmersion.util.data.checks.CheckRule.Name], context: CheckContext): LintFixResult =
+  def fix(requested: List[CheckRule.Name], context: CheckContext): LintFixResult =
     def asked(rule: CheckRule) = requested.exists(_.value.trim.equalsIgnoreCase(rule.rule.name.value))
     val results = order.fixing(rules).flatMap { r =>
       r.fix.collect { case f if f.when == FixWhen.EveryFix || asked(r) => f.run(context) }
@@ -60,4 +63,4 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
 
 object CheckRunner:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

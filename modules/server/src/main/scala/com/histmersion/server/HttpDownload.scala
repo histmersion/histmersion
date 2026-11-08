@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
@@ -9,6 +10,8 @@ import java.net.{HttpURLConnection, URI}
 import java.util.zip.ZipInputStream
 import scala.annotation.tailrec
 import scala.util.Using
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The plain downloads the gazetteer, the land and PeriodO use: a generic User-Agent ([[HttpPolicy]]), never a personal
   * one; redirects followed by THIS connection (the JVM-wide default it used to flip as well changed every other
@@ -49,11 +52,11 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
 
 object HttpDownload:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
 
   def apply(): HttpDownload = new HttpDownload(
     HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (gazetteer import)"))
@@ -78,6 +81,6 @@ object HttpDownload:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(com.histmersion.server.HttpDownload.Problem("zip contains no usable file"))
+        case None    => Left(Problem("zip contains no usable file"))
         case Some(_) => Right(Text(new String(readAll(zis), "UTF-8")))
     catch case e: Exception => Left(Problem(s"unzip failed: ${e.getMessage}"))

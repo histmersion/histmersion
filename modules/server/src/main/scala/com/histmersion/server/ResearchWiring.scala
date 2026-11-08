@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.catalogue.{ArticleEventLead, Period}
 import com.histmersion.domain.research.articles.{
@@ -11,6 +12,9 @@ import com.histmersion.domain.research.articles.{
 import com.histmersion.domain.research.articles.review.ReviewStateService
 import com.histmersion.domain.research.workflows.ReviewLedgerService
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.research.Article
 
 /** Research's services and controllers, built over one server's `deps`: the sources, their filters and citations are
   * the library's, an article's event leads the catalogue's; its note as the mirror renders it is handed in.
@@ -18,8 +22,8 @@ import com.histmersion.api.Api
 final class ResearchWiring(
     deps: Deps,
     library: LibraryWiring,
-    articleLeads: (ArticleEventLead.Body, List[com.histmersion.domain.library.Citekey], Option[Period]) => List[ArticleEventLead],
-    note: com.histmersion.domain.research.Slug => Either[Api.Error, com.histmersion.domain.research.Article.Note]
+    articleLeads: (ArticleEventLead.Body, List[Citekey], Option[Period]) => List[ArticleEventLead],
+    note: Slug => Either[Api.Error, Article.Note]
 ):
 
   /** The articles as research stores them. */

@@ -1,10 +1,14 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The tiles a server keeps, by key, the least recently asked for going first once they hold more than `maxBytes`. A
   * tile's key carries the versions of what it was cut from, so a write makes the tiles it touched unreachable at once;
   * they age out. Thread-safe.
   */
-final class TileCache(maxBytes: () => com.histmersion.ByteCount):
+final class TileCache(maxBytes: () => ByteCount):
   private val tiles = new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true)
   // `var`: the bytes held
   private var held = 0L
@@ -25,8 +29,8 @@ final class TileCache(maxBytes: () => com.histmersion.ByteCount):
     tiles.clear()
     held = 0L
 
-  def stats: (TileCache.EntryCount, com.histmersion.ByteCount) = synchronized((TileCache.EntryCount(tiles.size), com.histmersion.ByteCount.assume(held)))
+  def stats: (TileCache.EntryCount, ByteCount) = synchronized((TileCache.EntryCount(tiles.size), ByteCount.assume(held)))
 
 object TileCache:
   type EntryCount = EntryCount.T
-  object EntryCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EntryCount extends RefinedType[Int, Pure]

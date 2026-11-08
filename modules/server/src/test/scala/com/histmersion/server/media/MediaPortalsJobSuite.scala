@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -29,6 +30,10 @@ import com.histmersion.db.*
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{MediaImportReport, MediaItem, MediaProvider}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.server.ServerPlugins
+import com.histmersion.config.ServerConfig
 
 /** The keyless portals (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * Pleiades ids and gazetteer ids places carry, the places on the map an id names, the Pleiades import's targets
@@ -37,8 +42,8 @@ import com.histmersion.api.media.{MediaImportReport, MediaItem, MediaProvider}
   * (the config's URLs point at it) — no request leaves it. Fixtures: ids `zqmp_*` and `pleiades_9990000…`, names
   * `Zqmp…`.
   */
-class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class MediaPortalsJobSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -136,7 +141,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
-  private lazy val plugins = com.histmersion.server.ServerPlugins.offlineWith(
+  private lazy val plugins = ServerPlugins.offlineWith(
     Nil,
     org.ekrich.config.ConfigFactory.parseString(
       s"""histmersion.media {
@@ -170,7 +175,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     val _ = sql"DELETE FROM place_links WHERE place_id = ANY($IdTexts::text[])".update.run()
     val _ = sql"DELETE FROM places WHERE id = ANY($IdTexts::text[])".update.run()
 
-  private def pt(lon: com.histmersion.Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-42]}"""))
+  private def pt(lon: Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-42]}"""))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -179,16 +184,16 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), com.histmersion.api.catalogue.Place.Label("Zqmpetra"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(140.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpetra")))
+            Place(Place.Id("zqmp_site"), Place.Label("Zqmpetra"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(140.0))),
+            List(Place.Name(Place.Name.Value("Zqmpetra")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), com.histmersion.api.catalogue.Place.Label("Zqmpjordan"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(com.histmersion.Longitude(141.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpjordan")))
+            Place(Place.Id("zqmp_region"), Place.Label("Zqmpjordan"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(Longitude(141.0))),
+            List(Place.Name(Place.Name.Value("Zqmpjordan")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), com.histmersion.api.catalogue.Place.Label("Zqmp Zygouries"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(142.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmp Zygouries")))
+            Place(Place.Id("pleiades_99900002"), Place.Label("Zqmp Zygouries"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(142.0))),
+            List(Place.Name(Place.Name.Value("Zqmp Zygouries")))
           )
         )
       )
@@ -261,7 +266,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)

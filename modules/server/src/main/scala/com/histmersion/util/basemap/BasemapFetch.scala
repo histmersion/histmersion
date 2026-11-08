@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import hearth.kindlings.optics.syntax.*
 
@@ -19,6 +20,9 @@ import scala.util.Using
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Plural
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
   * requests — the way `pmtiles extract` reads it, and what both providers document for a partial download — and written
@@ -36,25 +40,25 @@ import com.histmersion.api.library.Source
   */
 object BasemapFetch:
   type Attribution = Attribution.T
-  object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attribution extends RefinedType[String, Pure]
   type ChunkCount = ChunkCount.T
-  object ChunkCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChunkCount extends RefinedType[Int, Pure]
   type Dropped = Basemap.LayerInfo.Dropped
   val Dropped: Basemap.LayerInfo.Dropped.type = Basemap.LayerInfo.Dropped
   type FetchedAt = FetchedAt.T
-  object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FetchedAt extends RefinedType[String, Pure]
   type FilterSpec = FilterSpec.T
-  object FilterSpec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FilterSpec extends RefinedType[String, Pure]
   type Filtered = Filtered.T
-  object Filtered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Filtered extends RefinedType[Boolean, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileCount = TileCount.T
-  object TileCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TileCount extends RefinedType[Long, Pure]
   type ZoomSummary = ZoomSummary.T
-  object ZoomSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoomSummary extends RefinedType[String, Pure]
 
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
@@ -65,9 +69,9 @@ object BasemapFetch:
     type Url = RangeHttp.Url
     val Url: RangeHttp.Url.type = RangeHttp.Url
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type ExpectedSize = ExpectedSize.T
-    object ExpectedSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExpectedSize extends RefinedType[Long, Pure]
 
   /** One stored tile of the remote archive that the region needs. */
   final case class Wanted(id: Wanted.Id, offset: Wanted.Offset, length: Wanted.Length)
@@ -75,8 +79,8 @@ object BasemapFetch:
   object Wanted:
     type Id = PmTiles.Entry.TileId
     val Id: PmTiles.Entry.TileId.type = PmTiles.Entry.TileId
-    type Offset = com.histmersion.ByteOffset
-    val Offset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
+    type Offset = ByteOffset
+    val Offset: ByteOffset.type = ByteOffset
     type Length = PmTiles.Entry.Length
     val Length: PmTiles.Entry.Length.type = PmTiles.Entry.Length
 
@@ -102,11 +106,11 @@ object BasemapFetch:
 
   object Plan:
     type DirectoryRequests = DirectoryRequests.T
-    object DirectoryRequests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DirectoryRequests extends RefinedType[Int, Pure]
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxZoom extends RefinedType[Int, Pure]
     type MinZoom = MinZoom.T
-    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinZoom extends RefinedType[Int, Pure]
 
   /** The politeness of the requests: the pause between two, the largest, and how much of a gap is read through rather
     * than split.
@@ -120,9 +124,9 @@ object BasemapFetch:
 
   object Pace:
     type GapMs = GapMs.T
-    object GapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object GapMs extends RefinedType[Long, Pure]
     type Overfetch = Overfetch.T
-    object Overfetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Overfetch extends RefinedType[Double, Pure]
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -143,7 +147,7 @@ object BasemapFetch:
     ZoomSummary(
       rows
         .map((z, n, b) =>
-          s"zoom ${z.value}: ${com.histmersion.api.Plural.count(com.histmersion.api.Plural.CountN(n.value), com.histmersion.api.Plural.CountSingular("tile"))}, ${Backup.humanBytes(com.histmersion.api.ByteCount(b.value))}"
+          s"zoom ${z.value}: ${Plural.count(Plural.CountN(n.value), Plural.CountSingular("tile"))}, ${Backup.humanBytes(com.histmersion.api.ByteCount(b.value))}"
         )
         .mkString(" · ")
     )

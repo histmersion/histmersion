@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import hearth.kindlings.optics.syntax.*
 
@@ -7,12 +8,14 @@ import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object MapTiles:
   type Etag = Etag.T
-  object Etag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Etag extends RefinedType[String, Pure]
   type TileKey = TileKey.T
-  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TileKey extends RefinedType[String, Pure]
   /** A tile's caching rule: the browser asks again each time and the server answers 304 while the data's version is
     * unchanged — never a stale tile after a write, a few bytes when nothing changed.
     */
@@ -26,7 +29,7 @@ object MapTiles:
     * (the rest — a filter's paging, another layer's options — left out, so they never split one tile into many) and the
     * versions of the groups it reads.
     */
-  def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[TileRepo.GroupName, UndatedBuild.Version]): MapTiles.TileKey =
+  def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[TileRepo.GroupName, UndatedBuild.Version]): TileKey =
     val f = q.filter
     val time = f.period.fold("")(p => s"${p.start}..${p.end}")
     val undated = if q.withUndated then "undated" else ""
@@ -49,10 +52,10 @@ object MapTiles:
     TileKey((List(layer.wire.value, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|"))
 
   /** Pure: a key's ETag (a strong one: the tile's bytes follow from the key). */
-  def etag(key: MapTiles.TileKey): MapTiles.Etag =
+  def etag(key: TileKey): Etag =
     val d = MessageDigest.getInstance("SHA-256").digest(key.value.getBytes(StandardCharsets.UTF_8))
     Etag("\"" + d.take(12).map(b => f"${b & 0xff}%02x").mkString + "\"")
 
   /** Pure: does the browser's `If-None-Match` name `tag` (one of a list, or `*`)? */
-  def matches(ifNoneMatch: Option[MapTiles.Etag], tag: MapTiles.Etag): Boolean =
+  def matches(ifNoneMatch: Option[Etag], tag: Etag): Boolean =
     ifNoneMatch.exists(h => h.value.split(",").map(_.trim.stripPrefix("W/")).exists(t => t == tag.value || t == "*"))

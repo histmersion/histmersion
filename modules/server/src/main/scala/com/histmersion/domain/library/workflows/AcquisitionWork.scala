@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.AgentsControllers

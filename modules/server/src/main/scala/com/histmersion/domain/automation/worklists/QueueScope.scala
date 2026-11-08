@@ -1,4 +1,8 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which items of a list a listing shows. Every scope reads in id order; only [[All]] shows the `note` blocks. */
 enum QueueScope:
@@ -19,11 +23,11 @@ enum QueueScope:
 object QueueScope:
   object ForJob:
     type Job = Job.T
-    object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Job extends RefinedType[String, Pure]
   object ForGoal:
     type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Goal extends RefinedType[String, Pure]
     type Linked = Linked.T
-    object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Linked extends RefinedType[String, Pure]
     type WithDone = WithDone.T
-    object WithDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WithDone extends RefinedType[Boolean, Pure]

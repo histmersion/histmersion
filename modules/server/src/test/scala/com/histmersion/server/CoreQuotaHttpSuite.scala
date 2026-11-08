@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,12 +14,17 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.util.database.Db
+import com.histmersion.util.database.Migrate
+import com.histmersion.config.ServerConfig
 
 /** The CORE budget through a running server: kept in the database it opens (a restart reads it back), and shown by
   * `/api/about` once CORE was asked. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class CoreQuotaHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -27,18 +33,18 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
 
   test("the budget is kept in the server's database, read back by the next server, and shown by about"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     import com.augustnagro.magnum.*
-    val clean = com.histmersion.util.database.Db.pool(cfg.db)
+    val clean = Db.pool(cfg.db)
     try {
-      val _ = com.histmersion.util.database.Migrate.run(clean);
+      val _ = Migrate.run(clean);
       val _ = connect(clean)(sql"DELETE FROM upstream_quota WHERE upstream = 'core'".update.run())
     } finally clean.close()
     val now = AtomicReference(Instant.now())
     val limits = CoreBudget.limits(cfg.acquire.core)
     val first = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), core = Some(first)).start()
+      val s = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), core = Some(first)).start()
       try
         val url = s"http://127.0.0.1:${s.port}"
         assert(!get(s"$url/api/about").contains("\"upstreams\":[{"), "nothing shown before CORE was asked")
@@ -46,7 +52,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         assert(first.take(limits, CoreQuota.Purpose.Search).isRight)
         first.observe(
           limits,
-          com.histmersion.domain.CoreQuota.StatusCode(429),
+          CoreQuota.StatusCode(429),
           Map(
             CoreQuota.HeaderName("x-ratelimit-limit") -> CoreQuota.HeaderValue("25"),
             CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("0"),
@@ -61,7 +67,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     // a restart: a fresh budget, the same database
     val second = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), core = Some(second)).start()
+      val s = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), core = Some(second)).start()
       try
         assertEquals(second.state.searchTokens, 1)
         assert(second.unavailable(limits, CoreQuota.Purpose.Lookup).exists(_.isInstanceOf[CoreQuota.Refusal.Blocked]))

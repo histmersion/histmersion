@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.exchange.Bundle
 
@@ -30,6 +31,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.personal.UnreadPage
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
@@ -74,7 +76,7 @@ final class EventsControllers(
   def list(q: Api.EventQuery): EventList =
     val f = resolve(q.filter)
     selection(q, f).fold(
-      EventList.of(EventList.Total(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(f.offset.value))
+      EventList.of(EventList.Total(0), Nil, UnreadPage.Offset(f.offset.value))
     )(sel =>
       events.list(
         sel,
@@ -126,34 +128,34 @@ final class EventsControllers(
         Left(invalid(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)"))
       case _ => Right(())
 
-  private def now(id: com.histmersion.domain.catalogue.Event.Id): com.histmersion.domain.catalogue.Event.Id = current(AliasKinds.EventRecords, id)
+  private def now(id: Event.Id): Event.Id = current(AliasKinds.EventRecords, id)
 
-  def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventEntry] =
+  def get(id: Event.Id): Either[Api.Error, EventEntry] =
     events.get(now(id)).map(card).toRight(notFound(s"No event '$id'"))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
-  def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_event")):
+  def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
+    maintenance.guard(WriteGate.OperationName("put_event")):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
         events.put(to, in)
         get(to)
       }
 
-  def patch(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, EventEntry] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_event")):
+  def patch(caller: Caller, id: Event.Id, p: EventPatch): Either[Api.Error, EventEntry] =
+    maintenance.guard(WriteGate.OperationName("patch_event")):
       val to = now(id)
       validScale(p.scale)
         .flatMap(_ => validWikidata(p.wikidata))
         .flatMap(_ => validGeometry(p.geometry))
         .flatMap(_ => events.patch(to, p).flatMap(_ => get(to)))
 
-  def delete(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDeleted] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_event")):
+  def delete(caller: Caller, id: Event.Id): Either[Api.Error, EventDeleted] =
+    maintenance.guard(WriteGate.OperationName("delete_event")):
       val to = now(id)
       if events.delete(to) then
         Right(
-          EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), com.histmersion.api.catalogue.EventDeleted.Deleted(true))
+          EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), EventDeleted.Deleted(true))
         )
       else Left(notFound(s"No event '$id'"))
 
@@ -161,7 +163,7 @@ final class EventsControllers(
     * keeps resolving. Answers the event's id before and after.
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
-  def renamed(id: com.histmersion.domain.catalogue.Event.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
+  def renamed(id: Event.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(
       Caller.Local,
       id,
@@ -171,8 +173,8 @@ final class EventsControllers(
           .flatMap(l => Event.Id.either(l.value).left.map(why => invalid(s"'${l.value}' is not an event id: $why")))
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 
-  def rename(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id => Either[Api.Error, com.histmersion.domain.catalogue.Event.Id]): Either[Api.Error, (com.histmersion.domain.catalogue.Event.Id, com.histmersion.domain.catalogue.Event.Id)] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_event")):
+  def rename(caller: Caller, id: Event.Id, to: Event.Id => Either[Api.Error, Event.Id]): Either[Api.Error, (Event.Id, Event.Id)] =
+    maintenance.guard(WriteGate.OperationName("rename_event")):
       val from = now(id)
       for
         newId <- to(from)

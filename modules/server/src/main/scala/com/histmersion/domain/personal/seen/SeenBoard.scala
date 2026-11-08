@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.seen
+package com.histmersion
+package domain.personal.seen
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure

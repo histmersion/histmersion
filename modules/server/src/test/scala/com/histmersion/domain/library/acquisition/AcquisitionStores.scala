@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.library.sources.SourceService

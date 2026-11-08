@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunInfo}
 import com.histmersion.api.automation.Managers.*
@@ -12,6 +13,8 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.automation.{Goal, Run, Manager as DomainManager}
 import io.scalaland.chimney.dsl.*
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Pipeline
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
@@ -29,7 +32,7 @@ trait ManagerService:
   /** A manager's first `limit` items, the most urgent first: active, pending, held, then the rest; by priority, the
     * earliest not-before (none first), the latest change, the id.
     */
-  def items(managerId: ManagerInfo.Id, limit: com.histmersion.PageSize): List[ManagerItem]
+  def items(managerId: ManagerInfo.Id, limit: PageSize): List[ManagerItem]
 
   /** Every manager without its counts, by id. */
   def light(): List[ManagerLight]
@@ -38,7 +41,7 @@ trait ManagerService:
   def create(
       id: ManagerInfo.Id,
       kind: Kind,
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       state: State,
       config: ManagerConfig,
       cron: Option[ManagerInfo.Cron] = None,
@@ -73,17 +76,17 @@ trait ManagerService:
   /** How many of a manager's items of these kinds are in these states (`focusHeld`: one the focus holds counts as
     * held).
     */
-  def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean = true): com.histmersion.RowCount
-  def event(managerId: ManagerInfo.Id, itemId: Option[ManagerItem.Id], runId: Option[com.histmersion.domain.automation.Run.Id], kind: ManagerEvent.Kind, text: ManagerEvent.Text): Unit
+  def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean = true): RowCount
+  def event(managerId: ManagerInfo.Id, itemId: Option[ManagerItem.Id], runId: Option[Run.Id], kind: ManagerEvent.Kind, text: ManagerEvent.Text): Unit
 
   /** A manager's newest event of `kind`. */
   def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent]
 
   /** Every manager's events of `kind` since `since`. */
-  def countEventsAll(kind: ManagerEvent.Kind, since: Instant): com.histmersion.RowCount
+  def countEventsAll(kind: ManagerEvent.Kind, since: Instant): RowCount
 
   /** Per watcher: its ingest backlog's (pending, held) items. */
-  def backlogCounts(): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount)]
+  def backlogCounts(): Map[ManagerInfo.Id, (RowCount, RowCount)]
 
   /** Every pending item of the ingest backlog of an active watcher, the most urgent first (priority, then the oldest).
     */
@@ -93,7 +96,7 @@ trait ManagerService:
   def backlogOpen(): List[ManagerItem]
 
   /** The open backlog item of any watcher for `doi`, the oldest. */
-  def backlogOpenFor(doi: com.histmersion.domain.library.Doi): Option[ManagerItem]
+  def backlogOpenFor(doi: Doi): Option[ManagerItem]
 
   /** A pending backlog item tried again later: one more attempt, its failures, not before `notBefore`, why; false = it
     * was not pending.
@@ -101,7 +104,7 @@ trait ManagerService:
   def backlogRetry(itemId: ManagerItem.Id, failures: ManagerItem.Failures, notBefore: Instant, outcome: ManagerItem.Outcome): Boolean
 
   /** Per manager: its events of `kind` since `since`. */
-  def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, com.histmersion.RowCount]
+  def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount]
 
   /** An item's state replaced while it is in one of `from`; false = it was not. */
   def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean
@@ -112,7 +115,7 @@ trait ManagerService:
   /** Per manager: its open items, the items it settled since `since`, and its last event's time (the backlog not
     * counted).
     */
-  def pace(since: Instant): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount, Option[ManagerRepo.ProgressText])]
+  def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])]
 
   /** A person's (or a hint's) hold of a pending or held item; false = it was neither. */
   def hold(itemId: ManagerItem.Id, h: Hold): Boolean
@@ -124,38 +127,38 @@ trait ManagerService:
   def settle(itemId: ManagerItem.Id, status: ItemStatus, outcome: ManagerItem.Outcome, from: List[ItemStatus]): Boolean
 
   /** A pending item active with run `run`, one more attempt, `state` its state; false = it was not pending. */
-  def dispatch(itemId: ManagerItem.Id, run: com.histmersion.domain.automation.Run.Id, state: ItemState): Boolean
+  def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState): Boolean
 
   /** Hold a pending item for the focus; false = it was not pending. */
   def focusHold(itemId: ManagerItem.Id, h: Hold): Boolean
 
   /** Release the focus's holds among `ids`; how many. */
-  def focusRelease(ids: List[ManagerItem.Id]): com.histmersion.RowCount
+  def focusRelease(ids: List[ManagerItem.Id]): RowCount
 
   /** Release every focus hold; how many. */
-  def focusReleaseAll(): com.histmersion.RowCount
-  def focusHeldCount(): com.histmersion.RowCount
+  def focusReleaseAll(): RowCount
+  def focusHeldCount(): RowCount
 
   /** Items that wait for a person and hold no place. */
-  def forPerson(): com.histmersion.RowCount
+  def forPerson(): RowCount
 
   /** Per goal: when it last progressed (an ISO instant). */
   def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText]
 
   /** Every agent run that occupies a place: its pipeline and its manager's goal. */
-  def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])]
+  def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])]
 
   /** Per goal: its items a person holds. */
-  def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount]
+  def personHeldByGoal(): Map[Goal.Slug, RowCount]
 
   /** The item kinds of the managers' last `n` runs, newest first. */
-  def recentKinds(n: com.histmersion.PageSize): List[ManagerItem.Kind]
+  def recentKinds(n: PageSize): List[ManagerItem.Kind]
 
   /** A manager's runs that occupy a place. */
-  def running(id: ManagerInfo.Id): com.histmersion.RowCount
+  def running(id: ManagerInfo.Id): RowCount
 
   /** Per goal: its items whose run is queued or running. */
-  def runningByGoal(): Map[Goal.Slug, com.histmersion.RowCount]
+  def runningByGoal(): Map[Goal.Slug, RowCount]
 
   /** Per goal: its watcher's settled acquisition sweep's outcome. */
   def sweepOutcomes(): Map[Goal.Slug, ManagerItem.Outcome]
@@ -167,8 +170,8 @@ object ManagerService:
     def get(id: ManagerInfo.Id): Option[ManagerInfo] = db.read(ManagerRepo.get(id))
     def list(): List[ManagerInfo] = db.read(ManagerRepo.list())
     def pending(managerId: ManagerInfo.Id): List[ManagerItem] = db.read(ManagerRepo.pending(managerId))
-    def items(managerId: ManagerInfo.Id, limit: com.histmersion.PageSize): List[ManagerItem] =
-      db.read(ManagerRepo.itemPage(managerId, None, com.histmersion.Offset(0), limit))._1
+    def items(managerId: ManagerInfo.Id, limit: PageSize): List[ManagerItem] =
+      db.read(ManagerRepo.itemPage(managerId, None, Offset(0), limit))._1
     def light(): List[ManagerLight] = db.read(ManagerRepo.light())
     def create(
         id: ManagerInfo.Id,
@@ -197,25 +200,25 @@ object ManagerService:
       db.read(ManagerRepo.itemFor(managerId, kind, target))
     def openFor(target: ManagerItem.Target): List[ManagerItem] = db.read(ManagerRepo.openFor(target))
     def openKeys(managerId: ManagerInfo.Id): List[(ManagerItem.Kind, ManagerItem.Target)] = db.read(ManagerRepo.openKeys(managerId))
-    def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean): com.histmersion.RowCount =
+    def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean): RowCount =
       db.read(ManagerRepo.openOf(managerId, kinds, statuses, focusHeld))
     def event(managerId: ManagerInfo.Id, itemId: Option[ManagerItem.Id], runId: Option[Run.Id], kind: ManagerEvent.Kind, text: ManagerEvent.Text): Unit =
       db.transact(ManagerRepo.event(managerId, itemId, runId.map(r => RunInfo.Id(r.value)), kind, text))
     def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent] =
       db.read(ManagerRepo.lastEventOf(managerId, kind))
-    def countEventsAll(kind: ManagerEvent.Kind, since: Instant): com.histmersion.RowCount = db.read(ManagerRepo.countEventsAll(kind, since))
-    def backlogCounts(): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount)] = db.read(ManagerRepo.backlogCounts())
+    def countEventsAll(kind: ManagerEvent.Kind, since: Instant): RowCount = db.read(ManagerRepo.countEventsAll(kind, since))
+    def backlogCounts(): Map[ManagerInfo.Id, (RowCount, RowCount)] = db.read(ManagerRepo.backlogCounts())
     def backlogPending(): List[ManagerItem] = db.read(ManagerRepo.backlogPendingIn())
     def backlogOpen(): List[ManagerItem] = db.read(ManagerRepo.backlogOpenIn())
-    def backlogOpenFor(doi: com.histmersion.domain.library.Doi): Option[ManagerItem] = db.read(ManagerRepo.backlogOpenForIn(doi))
+    def backlogOpenFor(doi: Doi): Option[ManagerItem] = db.read(ManagerRepo.backlogOpenForIn(doi))
     def backlogRetry(itemId: ManagerItem.Id, failures: ManagerItem.Failures, notBefore: Instant, outcome: ManagerItem.Outcome): Boolean =
       db.transact(ManagerRepo.backlogRetryIn(itemId, failures, notBefore, outcome))
-    def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, com.histmersion.RowCount] =
+    def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount] =
       db.read(ManagerRepo.countEventsByIn(kind, since))
     def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean =
       db.transact(ManagerRepo.setItemStateIn(itemId, state, from))
     def sweepAcquireItems(): List[SweepAcquireItem] = db.read(ManagerRepo.sweepAcquireItemsIn())
-    def pace(since: Instant): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount, Option[ManagerRepo.ProgressText])] = db.read(ManagerRepo.pace(since))
+    def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])] = db.read(ManagerRepo.pace(since))
     def hold(itemId: ManagerItem.Id, h: Hold): Boolean = db.transact(ManagerRepo.hold(itemId, h))
     def release(itemId: ManagerItem.Id): Boolean = db.transact(ManagerRepo.release(itemId))
     def settle(itemId: ManagerItem.Id, status: ItemStatus, outcome: ManagerItem.Outcome, from: List[ItemStatus]): Boolean =
@@ -223,16 +226,16 @@ object ManagerService:
     def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState): Boolean =
       db.transact(ManagerRepo.dispatchIn(itemId, run, state))
     def focusHold(itemId: ManagerItem.Id, h: Hold): Boolean = db.transact(ManagerRepo.focusHold(itemId, h))
-    def focusRelease(ids: List[ManagerItem.Id]): com.histmersion.RowCount = db.transact(ManagerRepo.focusRelease(ids))
-    def focusReleaseAll(): com.histmersion.RowCount = db.transact(ManagerRepo.focusReleaseAll())
-    def focusHeldCount(): com.histmersion.RowCount = db.read(ManagerRepo.focusHeldCount())
-    def forPerson(): com.histmersion.RowCount = db.read(ManagerRepo.forPerson())
+    def focusRelease(ids: List[ManagerItem.Id]): RowCount = db.transact(ManagerRepo.focusRelease(ids))
+    def focusReleaseAll(): RowCount = db.transact(ManagerRepo.focusReleaseAll())
+    def focusHeldCount(): RowCount = db.read(ManagerRepo.focusHeldCount())
+    def forPerson(): RowCount = db.read(ManagerRepo.forPerson())
     def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText] = db.read(ManagerRepo.lastProgress())
-    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] = db.read(ManagerRepo.occupyingRuns())
-    def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount] = db.read(ManagerRepo.personHeldByGoal())
-    def recentKinds(n: com.histmersion.PageSize): List[ManagerItem.Kind] = db.read(ManagerRepo.recentKinds(n))
-    def running(id: ManagerInfo.Id): com.histmersion.RowCount = db.read(ManagerRepo.running(id))
-    def runningByGoal(): Map[Goal.Slug, com.histmersion.RowCount] = db.read(ManagerRepo.runningByGoal())
+    def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] = db.read(ManagerRepo.occupyingRuns())
+    def personHeldByGoal(): Map[Goal.Slug, RowCount] = db.read(ManagerRepo.personHeldByGoal())
+    def recentKinds(n: PageSize): List[ManagerItem.Kind] = db.read(ManagerRepo.recentKinds(n))
+    def running(id: ManagerInfo.Id): RowCount = db.read(ManagerRepo.running(id))
+    def runningByGoal(): Map[Goal.Slug, RowCount] = db.read(ManagerRepo.runningByGoal())
     def sweepOutcomes(): Map[Goal.Slug, ManagerItem.Outcome] = db.read(ManagerRepo.sweepOutcomes())
 
   /** The managers in memory, with the runs they dispatched (the jobs area's in-memory runs) and the shared state's
@@ -342,7 +345,7 @@ object ManagerService:
       case "pending" => 1
       case "held"    => 2
       case _         => 3
-    def items(managerId: ManagerInfo.Id, limit: com.histmersion.PageSize): List[ManagerItem] =
+    def items(managerId: ManagerInfo.Id, limit: PageSize): List[ManagerItem] =
       items
         .filter(_.managerId.value == managerId.value)
         .sortBy[(Int, Int, Long, Long, Long)](i =>
@@ -508,8 +511,8 @@ object ManagerService:
         .filter(i => i.managerId.value == managerId.value && Open(i.status.value))
         .toList
         .map(i => (ManagerItem.Kind(i.kind.value), ManagerItem.Target(i.target.value)))
-    def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean): com.histmersion.RowCount =
-      com.histmersion.RowCount(
+    def openOf(managerId: ManagerInfo.Id, kinds: List[ManagerItem.Kind], statuses: List[ManagerItem.Status], focusHeld: Boolean): RowCount =
+      RowCount(
         items.count(i =>
           i.managerId.value == managerId.value && kinds.exists(_.value == i.kind.value) &&
             statuses.exists(_.value == i.status.value) &&
@@ -540,17 +543,17 @@ object ManagerService:
         .filter(e => e.managerId.value == managerId.value && e.kind.value == kind.value)
         .maxByOption[Long](_.id.value)
         .map(viewEvent)
-    def countEventsAll(kind: ManagerEvent.Kind, since: Instant): com.histmersion.RowCount =
-      com.histmersion.RowCount(events.count(e => e.kind.value == kind.value && !e.at.isBefore(since)))
-    def backlogCounts(): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount)] =
+    def countEventsAll(kind: ManagerEvent.Kind, since: Instant): RowCount =
+      RowCount(events.count(e => e.kind.value == kind.value && !e.at.isBefore(since)))
+    def backlogCounts(): Map[ManagerInfo.Id, (RowCount, RowCount)] =
       items
         .filter(i => i.kind.value == OaIngest && (i.status.value == "pending" || i.status.value == "held"))
         .groupBy(_.managerId.value)
         .view
         .map((m, is) =>
           ManagerInfo.Id(m) -> (
-            com.histmersion.RowCount(is.count(_.status.value == "pending")),
-            com.histmersion.RowCount(is.count(_.status.value == "held"))
+            RowCount(is.count(_.status.value == "pending")),
+            RowCount(is.count(_.status.value == "held"))
           )
         )
         .toMap
@@ -566,7 +569,7 @@ object ManagerService:
         .toList
         .map(viewItem)
     def backlogOpen(): List[ManagerItem] = items.filter(backlog).sortBy[Long](_.id.value).toList.map(viewItem)
-    def backlogOpenFor(doi: com.histmersion.domain.library.Doi): Option[ManagerItem] =
+    def backlogOpenFor(doi: Doi): Option[ManagerItem] =
       items.filter(i => backlog(i) && i.target.value == doi.value).minByOption[Long](_.id.value).map(viewItem)
     def backlogRetry(itemId: ManagerItem.Id, failures: ManagerItem.Failures, notBefore: Instant, outcome: ManagerItem.Outcome): Boolean =
       val at = now
@@ -582,9 +585,9 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, com.histmersion.RowCount] =
+    def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount] =
       counted(events.filter(e => e.kind.value == kind.value && !e.at.isBefore(since)).map(_.managerId.value))
-        .map((m, n) => ManagerInfo.Id(m) -> com.histmersion.RowCount(n))
+        .map((m, n) => ManagerInfo.Id(m) -> RowCount(n))
     def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
@@ -594,12 +597,12 @@ object ManagerService:
     /** The acquisition items are the work lists', which this state does not hold: none. */
     def sweepAcquireItems(): List[SweepAcquireItem] = Nil
 
-    def pace(since: Instant): Map[ManagerInfo.Id, (com.histmersion.RowCount, com.histmersion.RowCount, Option[ManagerRepo.ProgressText])] =
+    def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])] =
       managers.map { m =>
         val mine = items.filter(i => i.managerId.value == m.id.value && i.kind.value != OaIngest)
         ManagerInfo.Id(m.id.value) -> (
-          com.histmersion.RowCount(mine.count(i => Open(i.status.value))),
-          com.histmersion.RowCount(
+          RowCount(mine.count(i => Open(i.status.value))),
+          RowCount(
             mine.count(i => Set("done", "stopped", "failed")(i.status.value) && !i.updatedAt.isBefore(since))
           ),
           events.filter(_.managerId.value == m.id.value).map(_.at).maxOption.map(t => ManagerRepo.ProgressText(text(t)))
@@ -662,15 +665,15 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def focusRelease(ids: List[ManagerItem.Id]): com.histmersion.RowCount =
-      com.histmersion.RowCount(
+    def focusRelease(ids: List[ManagerItem.Id]): RowCount =
+      RowCount(
         if ids.isEmpty then 0
         else changeItems(i => ids.exists(_.value == i.id.value) && focusHeld(i))(released(now))
       )
-    def focusReleaseAll(): com.histmersion.RowCount = com.histmersion.RowCount(changeItems(focusHeld)(released(now)))
-    def focusHeldCount(): com.histmersion.RowCount = com.histmersion.RowCount(items.count(focusHeld))
-    def forPerson(): com.histmersion.RowCount =
-      com.histmersion.RowCount(
+    def focusReleaseAll(): RowCount = RowCount(changeItems(focusHeld)(released(now)))
+    def focusHeldCount(): RowCount = RowCount(items.count(focusHeld))
+    def forPerson(): RowCount =
+      RowCount(
         items.count(i =>
           manager(i.managerId.value).exists(_.state != DomainManager.State.Stopped) &&
             ((i.status.value == "held" && i.hold.forall(_.focus.isEmpty)) ||
@@ -688,21 +691,21 @@ object ManagerService:
         .view
         .map((g, ts) => com.histmersion.api.automation.Goal.Slug(g) -> ManagerRepo.ProgressText(text(ts.map(_._2).max)))
         .toMap
-    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] =
+    def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] =
       runs
         .filter(occupying)
         .map(r =>
           (
-            com.histmersion.api.automation.Pipeline.Wire(r.row.pipeline.value),
+            Pipeline.Wire(r.row.pipeline.value),
             r.row.managerId
               .flatMap(id => manager(id.value))
               .flatMap(_.goal)
               .map(g => com.histmersion.api.automation.Goal.Slug(g.value))
           )
         )
-    def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount] =
-      counted(items.filter(personHeld).flatMap(goalOf)).map((g, n) => Goal.Slug.assume(g) -> com.histmersion.RowCount(n))
-    def recentKinds(n: com.histmersion.PageSize): List[ManagerItem.Kind] =
+    def personHeldByGoal(): Map[Goal.Slug, RowCount] =
+      counted(items.filter(personHeld).flatMap(goalOf)).map((g, n) => Goal.Slug.assume(g) -> RowCount(n))
+    def recentKinds(n: PageSize): List[ManagerItem.Kind] =
       runs
         .sortBy[(java.time.Instant, Long)](r => (r.createdAt, r.created.value))
         .reverse
@@ -712,9 +715,9 @@ object ManagerService:
             .map(i => ManagerItem.Kind(i.kind.value))
         )
         .take(math.max(0, n.value))
-    def running(id: ManagerInfo.Id): com.histmersion.RowCount =
-      com.histmersion.RowCount(runs.count(r => r.row.managerId.exists(_.value == id.value) && occupying(r)))
-    def runningByGoal(): Map[Goal.Slug, com.histmersion.RowCount] =
+    def running(id: ManagerInfo.Id): RowCount =
+      RowCount(runs.count(r => r.row.managerId.exists(_.value == id.value) && occupying(r)))
+    def runningByGoal(): Map[Goal.Slug, RowCount] =
       counted(
         items
           .filter(i =>
@@ -722,7 +725,7 @@ object ManagerService:
               runOf(i).exists(r => r.row.status.value == "queued" || r.row.status.value == "running")
           )
           .flatMap(goalOf)
-      ).map((g, n) => Goal.Slug.assume(g) -> com.histmersion.RowCount(n))
+      ).map((g, n) => Goal.Slug.assume(g) -> RowCount(n))
     def sweepOutcomes(): Map[Goal.Slug, ManagerItem.Outcome] =
       items
         .filter(i => i.kind.value == AcquisitionSweep && Set("done", "stopped", "failed")(i.status.value))

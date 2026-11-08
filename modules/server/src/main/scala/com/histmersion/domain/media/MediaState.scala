@@ -1,8 +1,11 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.assets.{HeldAsset, HeldMediaLink}
 import com.histmersion.domain.media.imports.HeldCheck
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Media's rows held in memory, one record the `InMemory` services of its features share (each reads and changes its
   * own part, through lenses): the pictures, where they are shown, the figures' links and the last id given one, and
@@ -18,6 +21,6 @@ final case class MediaState(
 
 object MediaState:
   type LastAssetLinkId = LastAssetLinkId.T
-  object LastAssetLinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastAssetLinkId extends RefinedType[Long, Pure]
 
-  val empty: MediaState = MediaState(Vector.empty, Vector.empty, Vector.empty, com.histmersion.domain.media.MediaState.LastAssetLinkId(0L), Vector.empty)
+  val empty: MediaState = MediaState(Vector.empty, Vector.empty, Vector.empty, LastAssetLinkId(0L), Vector.empty)

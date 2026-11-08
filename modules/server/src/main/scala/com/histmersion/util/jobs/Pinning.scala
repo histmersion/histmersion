@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 /** Keeping work on the generation it started on (docs/research-plugins.md §3.6). The server's [[HotGraph]] is one;
   * [[Pinning.none]] is for code running without a graph (a test's fixed `Deps`).

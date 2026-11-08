@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,14 +18,18 @@ import com.histmersion.api.library.SearchResult
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The alias rule over real HTTP and MCP (#1799, #890): for every renamed kind — source, article, event, goal, place —
   * a put, a patch, a delete and a rename naming the OLD identifier go to the record under its current one, and the
   * answer names the current one; a reference (an attestation's target) is stored against the current id; a
   * `place=<old id>` filter selects what `place=<new id>` does. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
-  private val testDb = com.histmersion.db.TestDb.url
+class AliasRuleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -53,9 +58,9 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -179,12 +184,12 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zz_alias_p1"),
-              com.histmersion.api.catalogue.Place.Label("Zzalias Hill"),
+              Place.Id("zz_alias_p1"),
+              Place.Label("Zzalias Hill"),
               Place.KindValue(Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[30.5,39.5]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzalias Hill")))
+            List(Place.Name(Place.Name.Value("Zzalias Hill")))
           )
         )
       )

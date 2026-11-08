@@ -1,4 +1,5 @@
-package com.histmersion.server.events
+package com.histmersion
+package server.events
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -20,6 +21,9 @@ import org.ekrich.config.ConfigFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.{CatalogRecord, EventImportRequest}
+import com.histmersion.db.DbSuite
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.domain.DeepTime
 
 /** The recorded traffic and the stored results of the event catalogues: imports of GVP, NOAA and Wikidata from the
   * fixtures (no socket) on the stock generation's catalogues — every request with its headers, in order — then the
@@ -28,7 +32,7 @@ import com.histmersion.api.catalogue.{CatalogRecord, EventImportRequest}
   * otherwise). The transcript is `traffic/events.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites
   * it): moving the catalogues changes no request and no stored result.
   */
-class EventTrafficSuite extends com.histmersion.db.DbSuite:
+class EventTrafficSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -112,21 +116,21 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    val plugins = ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
-    def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => com.histmersion.domain.DeepTime.SignedYear(2026L))
+    val plugins = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => DeepTime.SignedYear(2026L))
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)
       val r = handlers(f).eventImporter.runImport(CatalogRecord.Provider(req.provider.value), req, None, _ => ())
       sb ++= s"## import $name\n" + requests(f) + s"report: ${r.asJson.noSpaces}\n"
     sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
-    run("gvp (dry run)", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(true)))
-    run("gvp", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
-    run("noaa", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("noaa"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
-    run("wikidata", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("wikidata"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
-    run("gvp again", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
-    run("noaa again", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("noaa"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
-    run("wikidata again, --refresh", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("wikidata"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), refresh = com.histmersion.api.catalogue.EventImportRequest.Refresh(true)))
-    run("smithsonian, --limit 1", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("smithsonian"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), refresh = com.histmersion.api.catalogue.EventImportRequest.Refresh(true), limit = Some(com.histmersion.api.catalogue.EventImportRequest.Limit(1))))
+    run("gvp (dry run)", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(true)))
+    run("gvp", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
+    run("noaa", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false)))
+    run("wikidata", EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false)))
+    run("gvp again", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
+    run("noaa again", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false)))
+    run("wikidata again, --refresh", EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)))
+    run("smithsonian, --limit 1", EventImportRequest(EventImportRequest.Provider("smithsonian"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true), limit = Some(EventImportRequest.Limit(1))))
     sb ++= "## stored after the imports\n" + stored
     // stale rows: a GVP record as V085 stored it, spans that no longer match the catalogues' own records
     connect(ds):
@@ -143,7 +147,7 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
     val r = handlers(offline).eventImporter.runRederive(None, dryRun = false, _ => ())
     sb ++= s"## rederive\n" + requests(offline) + s"report: ${r.asJson.noSpaces}\n"
-    val one = handlers(FakeMediaHttp(route)).eventImporter.runRederive(Some(com.histmersion.api.catalogue.CatalogRecord.Provider("noaa")), dryRun = false, _ => ())
+    val one = handlers(FakeMediaHttp(route)).eventImporter.runRederive(Some(CatalogRecord.Provider("noaa")), dryRun = false, _ => ())
     sb ++= s"## rederive noaa\nreport: ${one.asJson.noSpaces}\n"
     sb ++= "## stored after rederive\n" + stored
     sb.result()

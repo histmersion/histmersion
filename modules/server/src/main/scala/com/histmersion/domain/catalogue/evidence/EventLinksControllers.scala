@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Place
@@ -47,6 +48,11 @@ import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.evidence.passages.Passage
+import com.histmersion.domain.catalogue.evidence.passages.PassageReader
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.util.jobs.BackgroundJob
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.catalogue.EvidenceJobKinds
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -74,7 +80,7 @@ final class EventLinksControllers(
   /** The id of an event read from the store. */
   private def idOf(d: EventEntry): Event.Id = Event.Id.assume(d.event.id.value)
 
-  private def eventOrFail(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventEntry] =
+  private def eventOrFail(id: Event.Id): Either[Api.Error, EventEntry] =
     events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(s"No event '$id'"))
 
   /** The names of an event worth searching for. */
@@ -88,7 +94,7 @@ final class EventLinksControllers(
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive match of each
     * name.
     */
-  private def passagesIn(citekey: com.histmersion.domain.library.Citekey, names: List[String]): List[EventPassage] =
+  private def passagesIn(citekey: Citekey, names: List[String]): List[EventPassage] =
     val text = sources.reader(citekey)
     names
       .flatMap { n =>
@@ -96,12 +102,12 @@ final class EventLinksControllers(
         val rx = words.mkString("\\b", "\\s+", "\\b")
         text
           .find(
-            passages.PassageReader.Query(rx),
-            regex = passages.PassageReader.Regex(true),
-            limit = com.histmersion.PageSize(5),
-            context = passages.PassageReader.Context(160),
-            maxMatches = passages.PassageReader.MaxMatches(50),
-            passages.PassageReader.TimeoutMs(settings().limits.passages.regexTimeoutMs.value.toLong)
+            PassageReader.Query(rx),
+            regex = PassageReader.Regex(true),
+            limit = PageSize(5),
+            context = PassageReader.Context(160),
+            maxMatches = PassageReader.MaxMatches(50),
+            PassageReader.TimeoutMs(settings().limits.passages.regexTimeoutMs.value.toLong)
           )
           .toOption
           .toList
@@ -135,7 +141,7 @@ final class EventLinksControllers(
         id,
         CatalogMerge.Tolerance.Km(w.km.value),
         CatalogMerge.Tolerance.Years(w.years.value),
-        com.histmersion.PageSize(500)
+        PageSize(500)
       )
       .map(f =>
         EventMatcher.NearFinding(
@@ -158,7 +164,7 @@ final class EventLinksControllers(
     listOf(d)
 
   /** An event's candidates — computed on the first ask, stored after. */
-  def links(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventLinkList] =
+  def links(id: Event.Id): Either[Api.Error, EventLinkList] =
     eventOrFail(id).map { d =>
       if links.isChecked(idOf(d)) then listOf(d)
       else compute(d)
@@ -168,8 +174,8 @@ final class EventLinksControllers(
     * (not the stored evidence): the attestation carries that passage's quote and offsets. A source with none is
     * refused, with why.
     */
-  def applyLinks(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("event_links")) {
+  def applyLinks(caller: Caller, id: Event.Id, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
+    maintenance.guard(WriteGate.OperationName("event_links")) {
       eventOrFail(id).map { d =>
         val eid = idOf(d)
         if req.recompute.value then compute(d)
@@ -179,7 +185,7 @@ final class EventLinksControllers(
             None,
             Some(Attestation.TargetType(AttestationTarget.Event)),
             Some(Attestation.TargetId(eid.value)),
-            com.histmersion.PageSize(1000),
+            PageSize(1000),
             Offset.Start
           )
           .attestations
@@ -253,17 +259,17 @@ final class EventLinksControllers(
     req.event.map(_.value.trim).filter(_.nonEmpty) match
       case Some(one) =>
         Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail).flatMap(_ =>
-          jobs.start(EventLinksControllers.CandidatesJobKind, com.histmersion.api.jobs.JobKinds.Subject(s"candidates of $one"), write = true) { (_, _) =>
+          jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) { (_, _) =>
             Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail)
-              .map(d => com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}"))
+              .map(d => BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}"))
               .left
-              .map(e => com.histmersion.util.jobs.BackgroundJob.Outcome.Error(e.message.value))
+              .map(e => BackgroundJob.Outcome.Error(e.message.value))
           }
         )
       case None =>
         jobs.start(
           EventLinksControllers.CandidatesJobKind,
-          com.histmersion.api.jobs.JobKinds.Subject(
+          JobKinds.Subject(
             s"candidate links of ${if req.all.value then "every event" else "the events not checked yet"}"
           ),
           write = true
@@ -281,7 +287,7 @@ final class EventLinksControllers(
             }
             progress(JobInfo.Progress(s"$n of ${ids.size} event(s) checked · $found candidate(s)"))
           }
-          Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(s"$n event(s) checked · $found candidate(s)"))
+          Right(BackgroundJob.Outcome.Summary(s"$n event(s) checked · $found candidate(s)"))
         }
 
   private def leadOf(r: LeadRow): Option[EventLead] =
@@ -327,16 +333,16 @@ final class EventLinksControllers(
     val selected = q.placeId.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Some(selection(None))
       case Some(p) => Place.Id.option(p).map(id => selection(Some(id)))
-    selected.fold(EventLead.List(com.histmersion.api.catalogue.EventLead.List.Total(0), Nil)) { sel =>
+    selected.fold(EventLead.List(EventLead.List.Total(0), Nil)) { sel =>
       val (total, rows) =
         leadFacts.leads(
           sel,
           CatalogMerge.Tolerance.Km(ec.leads.km.value),
           CatalogMerge.Tolerance.Years(ec.leads.years.value),
-          settings().limits.page(PageSize.option(f.limit.value), com.histmersion.PageSize(50)),
+          settings().limits.page(PageSize.option(f.limit.value), PageSize(50)),
           Offset.option(f.offset.value).getOrElse(Offset.Start)
         )
-      EventLead.List(com.histmersion.api.catalogue.EventLead.List.Total(total.value), rows.flatMap(leadOf))
+      EventLead.List(EventLead.List.Total(total.value), rows.flatMap(leadOf))
     }
 
   // ── an event's card ─────────────────────────────────────────────────────────────────────────
@@ -393,7 +399,7 @@ final class EventLinksControllers(
       .setTo(lead)
 
   /** The catalogue events an article's period and region hold that its body never names. */
-  def articleLeads(body: ArticleEventLead.Body, citekeys: List[com.histmersion.domain.library.Citekey], period: Option[Period]): List[ArticleEventLead] =
+  def articleLeads(body: ArticleEventLead.Body, citekeys: List[Citekey], period: Option[Period]): List[ArticleEventLead] =
     PageSize
       .option(ec.leads.articleLimit.value * 3)
       .fold(Nil)(candidateLimit =>
@@ -425,5 +431,5 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
-  val CandidatesJobKind: com.histmersion.util.jobs.Job.Kind =
-    com.histmersion.util.jobs.Job.Kind.applyUnsafe(com.histmersion.api.catalogue.EvidenceJobKinds.EventsCandidates.kind.value)
+  val CandidatesJobKind: Job.Kind =
+    Job.Kind.applyUnsafe(EvidenceJobKinds.EventsCandidates.kind.value)

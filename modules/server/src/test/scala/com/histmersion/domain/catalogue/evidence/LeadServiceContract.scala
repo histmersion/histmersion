@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,8 @@ import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.events.{CatalogMerge, EventSelection, EventSql}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.library.Citekey
 
 /** The contract of the facts the leads and an event's card are computed from: the sources attesting an event (its own
   * first), and each event's lead — its tier, its catalogue's size, the sources proposed and confirmed — the catalogue's
@@ -19,13 +22,13 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
 
   stest("the attesting sources, and the leads' facts in their order") { s =>
     List("zzld2020_own", "zzld2021_att").foreach(s.source)
-    s.events.put(com.histmersion.domain.catalogue.Event.Id("zz_attested"), EventPut(com.histmersion.api.catalogue.EventSummary.Label("Zz attested"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), span(Year(-1300), Year(-1290)), citekey = Some(com.histmersion.api.library.Citekey("zzld2020_own"))))
+    s.events.put(Event.Id("zz_attested"), EventPut(EventSummary.Label("Zz attested"), EventSummary.Kind("battle"), span(Year(-1300), Year(-1290)), citekey = Some(Citekey("zzld2020_own"))))
     val _ = s.attestations.create(
       Attestation.Put(
-        com.histmersion.api.library.Citekey("zzld2021_att"),
-        com.histmersion.api.catalogue.Attestation.TargetType("event"),
-        com.histmersion.api.catalogue.Attestation.TargetId("zz_attested"),
-        Some(com.histmersion.api.catalogue.Attestation.Quote("the battle")),
+        Citekey("zzld2021_att"),
+        Attestation.TargetType("event"),
+        Attestation.TargetId("zz_attested"),
+        Some(Attestation.Quote("the battle")),
         None,
         None,
         None,
@@ -39,18 +42,18 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       )
     )
     val big =
-      CatalogRecord(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), com.histmersion.api.catalogue.CatalogRecord.ProviderId("9"), com.histmersion.api.catalogue.CatalogRecord.Url("u"), com.histmersion.api.catalogue.CatalogRecord.Label("Zz big"), com.histmersion.api.catalogue.CatalogRecord.Kind("eruption"), span(Year(-1500), Year(-1500)), Some(Latitude(1.0)), Some(Longitude(1.0)), vei = Some(CatalogRecord.Vei(6)))
+      CatalogRecord(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("9"), CatalogRecord.Url("u"), CatalogRecord.Label("Zz big"), CatalogRecord.Kind("eruption"), span(Year(-1500), Year(-1500)), Some(Latitude(1.0)), Some(Longitude(1.0)), vei = Some(CatalogRecord.Vei(6)))
     val small =
-      CatalogRecord(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), com.histmersion.api.catalogue.CatalogRecord.ProviderId("8"), com.histmersion.api.catalogue.CatalogRecord.Url("u"), com.histmersion.api.catalogue.CatalogRecord.Label("Zz small"), com.histmersion.api.catalogue.CatalogRecord.Kind("eruption"), span(Year(-1400), Year(-1400)), Some(Latitude(1.0)), Some(Longitude(1.0)), vei = Some(CatalogRecord.Vei(3)))
+      CatalogRecord(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("8"), CatalogRecord.Url("u"), CatalogRecord.Label("Zz small"), CatalogRecord.Kind("eruption"), span(Year(-1400), Year(-1400)), Some(Latitude(1.0)), Some(Longitude(1.0)), vei = Some(CatalogRecord.Vei(3)))
     val _ =
-      s.eventImports.save(List(big, small).map(r => r -> CatalogMerge.Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), com.histmersion.domain.catalogue.events.CatalogMerge.Placement.Why("new"))))
-    s.eventLinks.saveCandidates(com.histmersion.domain.catalogue.Event.Id("gvp_8"), List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("gvp_8"), com.histmersion.api.library.Citekey("zzld2020_own"), EventLinkCandidate.Score(0.5))))
+      s.eventImports.save(List(big, small).map(r => r -> CatalogMerge.Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), CatalogMerge.Placement.Why("new"))))
+    s.eventLinks.saveCandidates(Event.Id("gvp_8"), List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("gvp_8"), Citekey("zzld2020_own"), EventLinkCandidate.Score(0.5))))
     assertEquals(
-      s.leads.attestingSources(com.histmersion.domain.catalogue.Event.Id("zz_attested")).map(r => (r.citekey, r.via, r.title)),
+      s.leads.attestingSources(Event.Id("zz_attested")).map(r => (r.citekey, r.via, r.title)),
       List(("zzld2020_own", "citekey", Some("zzld2020_own")), ("zzld2021_att", "attestation", Some("zzld2021_att")))
     )
-    assertEquals(s.leads.nearFindings(com.histmersion.domain.catalogue.Event.Id("zz_attested"), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(50), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(50), com.histmersion.PageSize(10)), Nil)
-    val (total, rows) = s.leads.leads(EventSelection(Filter()), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(50), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(50), com.histmersion.PageSize(10), com.histmersion.Offset(0))
+    assertEquals(s.leads.nearFindings(Event.Id("zz_attested"), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50), PageSize(10)), Nil)
+    val (total, rows) = s.leads.leads(EventSelection(Filter()), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50), PageSize(10), Offset(0))
     assertEquals(total.value, 3)
     assertEquals(
       rows.map(r => (r.id, r.tier)),
@@ -58,9 +61,9 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(rows.map(_.findingsNear).distinct, List(0))
     val catalogueOnly =
-      s.leads.leads(EventSelection(Filter(), narrow = EventSql.Narrow(tier = Some(EventSql.Narrow.Tier(EventTier.Catalogue)))), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(50), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(50), com.histmersion.PageSize(10), com.histmersion.Offset(0))
+      s.leads.leads(EventSelection(Filter(), narrow = EventSql.Narrow(tier = Some(EventSql.Narrow.Tier(EventTier.Catalogue)))), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50), PageSize(10), Offset(0))
     assertEquals(catalogueOnly._1.value, 2)
-    assertEquals(s.leads.leadOf(com.histmersion.domain.catalogue.Event.Id("gvp_8"), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(50), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(50)).map(r => (r.vei, r.proposed, r.attesting)), List((Some(3), 1, 0)))
-    assert(s.eventLinks.setStatus(com.histmersion.domain.catalogue.Event.Id("gvp_8"), com.histmersion.domain.library.Citekey("zzld2020_own"), Event.LinkStatus.Wire(Event.LinkStatus.Confirmed)))
-    assertEquals(s.leads.leadOf(com.histmersion.domain.catalogue.Event.Id("gvp_8"), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(50), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(50)).map(r => (r.proposed, r.attesting)), List((0, 1)))
+    assertEquals(s.leads.leadOf(Event.Id("gvp_8"), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50)).map(r => (r.vei, r.proposed, r.attesting)), List((Some(3), 1, 0)))
+    assert(s.eventLinks.setStatus(Event.Id("gvp_8"), com.histmersion.domain.library.Citekey("zzld2020_own"), Event.LinkStatus.Wire(Event.LinkStatus.Confirmed)))
+    assertEquals(s.leads.leadOf(Event.Id("gvp_8"), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50)).map(r => (r.proposed, r.attesting)), List((0, 1)))
   }

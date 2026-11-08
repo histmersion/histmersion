@@ -1,9 +1,12 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.{CliOutcomes, Codex}
 
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.VocabularyCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's `--output-schema`
   * is accepted in. Codex sends the file as `text.format` with `strict: true`, and the Responses API refuses anything
@@ -32,39 +35,39 @@ object StrictJsonSchema:
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */
   type Keywords = KeywordsValue
   type KeywordsValue = KeywordsValue.T
-  object KeywordsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeywordsValue extends RefinedType[String, Pure]
   type StringFormats = StringFormatsValue
   type StringFormatsValue = StringFormatsValue.T
-  object StringFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StringFormatsValue extends RefinedType[String, Pure]
 
-  val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("type"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("description"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("title"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("properties"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("required"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("additionalProperties"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("items"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("anyOf"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("enum"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("const"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("$ref"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("$defs"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("definitions"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("pattern"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("format"), // strings
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("multipleOf"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("minimum"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("maximum"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("exclusiveMinimum"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("exclusiveMaximum"), // numbers
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("minItems"),
-    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("maxItems")
+  val Keywords: Set[Keywords] = Set(
+    KeywordsValue("type"),
+    KeywordsValue("description"),
+    KeywordsValue("title"),
+    KeywordsValue("properties"),
+    KeywordsValue("required"),
+    KeywordsValue("additionalProperties"),
+    KeywordsValue("items"),
+    KeywordsValue("anyOf"),
+    KeywordsValue("enum"),
+    KeywordsValue("const"),
+    KeywordsValue("$ref"),
+    KeywordsValue("$defs"),
+    KeywordsValue("definitions"),
+    KeywordsValue("pattern"),
+    KeywordsValue("format"), // strings
+    KeywordsValue("multipleOf"),
+    KeywordsValue("minimum"),
+    KeywordsValue("maximum"),
+    KeywordsValue("exclusiveMinimum"),
+    KeywordsValue("exclusiveMaximum"), // numbers
+    KeywordsValue("minItems"),
+    KeywordsValue("maxItems")
   ) // arrays
 
   /** The string `format`s strict mode supports. */
-  val StringFormats: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormats] =
-    Set(com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("date-time"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("time"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("date"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("duration"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("email"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("hostname"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("ipv4"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("ipv6"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("uuid"))
+  val StringFormats: Set[StringFormats] =
+    Set(StringFormatsValue("date-time"), StringFormatsValue("time"), StringFormatsValue("date"), StringFormatsValue("duration"), StringFormatsValue("email"), StringFormatsValue("hostname"), StringFormatsValue("ipv4"), StringFormatsValue("ipv6"), StringFormatsValue("uuid"))
 
   /** `schema` (a root object schema) in strict form. */
   def apply(schema: Json): Json =

@@ -1,10 +1,13 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.api.library.{Edge, Source}
 import com.histmersion.util.ocr.Chunk
 
 import java.time.Instant
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's records the in-memory services share: the sources (each with its findings, chunks and identity), the
   * old citekeys, the edges between stored sources and the edges parked until their target arrives.
@@ -19,13 +22,13 @@ final case class LibraryState(
 
 object LibraryState:
   type SourcesKey = SourcesKey.T
-  object SourcesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesKey extends RefinedType[String, Pure]
   type AliasesKey = AliasesKey.T
-  object AliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AliasesKey extends RefinedType[String, Pure]
   type AliasesValue = AliasesValue.T
-  object AliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AliasesValue extends RefinedType[String, Pure]
   type AliasTombstones = AliasTombstones.T
-  object AliasTombstones extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AliasTombstones extends RefinedType[String, Pure]
 
   val empty: LibraryState = LibraryState(Map.empty, Map.empty, Set.empty, Set.empty, Set.empty)
 
@@ -38,12 +41,12 @@ object LibraryState:
       findingUids: Map[Stored.FindingUidsKey, UUID],
       chunks: List[Chunk],
       updatedAt: Instant,
-      sha256: Option[com.histmersion.Sha256] = None,
+      sha256: Option[Sha256] = None,
       licence: Option[Stored.Licence] = None
   )
 
   object Stored:
     type FindingUidsKey = FindingUidsKey.T
-    object FindingUidsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FindingUidsKey extends RefinedType[String, Pure]
     type Licence = Licence.T
-    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Licence extends RefinedType[String, Pure]

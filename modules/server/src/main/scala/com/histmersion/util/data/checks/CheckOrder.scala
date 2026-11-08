@@ -1,4 +1,5 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.histmersion.api.checks.Lint
 

@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,8 +18,8 @@ class StoreKeySuite extends munit.FunSuite:
     val k = Store.Key.applyUnsafe("a/b/c.webp")
     assertEquals(k.name, "c.webp")
     assertEquals(k.parent.value: String, "a/b")
-    assertEquals(k.withSuffix(com.histmersion.util.storage.TempName.Suffixed.Suffix(".tmp")).value: String, "a/b/c.webp.tmp")
-    assertEquals(Store.Key.Root.child(com.histmersion.util.storage.Store.EntryName("x")).value: String, "x")
+    assertEquals(k.withSuffix(TempName.Suffixed.Suffix(".tmp")).value: String, "a/b/c.webp.tmp")
+    assertEquals(Store.Key.Root.child(Store.EntryName("x")).value: String, "x")
     assertEquals((Store.Key.applyUnsafe("a") / "b/c").map(k => k.value: String), Right("a/b/c"))
     assert((Store.Key.applyUnsafe("a") / "../c").isLeft)
     assert(k.within(Store.Key.applyUnsafe("a")) && k.within(Store.Key.Root) && !k.within(Store.Key.applyUnsafe("a/bb")))

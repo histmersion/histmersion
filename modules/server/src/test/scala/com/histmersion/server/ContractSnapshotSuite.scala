@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,6 +20,14 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.domain.library.collections.CollectionsService
+import com.histmersion.domain.library.collections.RefusingCollectionLibrary
+import com.histmersion.server.agents.ClaudeCode
+import com.histmersion.domain.library.acquisition.CoreBudget
 
 /** The surfaces clients and agents depend on, written to `src/test/resources/contract/` and compared byte for byte: the
   * OpenAPI document of every REST endpoint, the MCP `tools/list`, every agent role's tools and answer schemas, the
@@ -31,10 +40,10 @@ import java.util.concurrent.atomic.AtomicReference
   */
 class ContractSnapshotSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val dir = Path.of("modules/server/src/test/resources/contract")
   private val update = sys.env.get("HISTMERSION_UPDATE_CONTRACT").contains("1")
 
@@ -74,12 +83,12 @@ class ContractSnapshotSuite extends munit.FunSuite:
       retractionWatch = ???,
       jobs = AcquisitionTesting.skeleton(deps)
     )
-    val collections = com.histmersion.domain.library.collections.CollectionsControllers(
-      com.histmersion.domain.library.collections.CollectionsService.InMemory(
+    val collections = CollectionsControllers(
+      CollectionsService.InMemory(
         java.util.concurrent.atomic.AtomicReference(Nil),
-        com.histmersion.domain.library.collections.RefusingCollectionLibrary(),
+        RefusingCollectionLibrary(),
         () => scala.collection.immutable.ListMap.empty,
-        com.histmersion.domain.library.collections.CollectionsService.Limit(8)
+        CollectionsService.Limit(8)
       ),
       deps.maintenance
     )
@@ -108,14 +117,14 @@ class ContractSnapshotSuite extends munit.FunSuite:
         "answer" -> PromptBudget.answers
           .get(a.name)
           .fold(Json.Null)(s =>
-            io.circe.parser.parse(agents.ClaudeCode.schemaJson(s).value).fold(e => Json.fromString(e.toString), identity)
+            io.circe.parser.parse(ClaudeCode.schemaJson(s).value).fold(e => Json.fromString(e.toString), identity)
           )
       )
     }*)
     check("toolbox.json", Json.obj("tools" -> tools, "roles" -> roles).spaces2)
 
   test("plugins.json: the plugin report of a stock generation"):
-    val report: PluginsReport = ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).report
+    val report: PluginsReport = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).report
     check("plugins.json", report.asJson.spaces2)
 
   test("settings.json: the settings view of reference.conf"):
@@ -140,10 +149,10 @@ class ContractSnapshotSuite extends munit.FunSuite:
 
 /** A data source with no database behind it: every connection is refused. */
 private object RefusingDataSource extends javax.sql.DataSource:
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private def refuse = throw java.sql.SQLException("no database in the contract snapshots")
   def getConnection(): java.sql.Connection = refuse
   def getConnection(user: String, password: String): java.sql.Connection = refuse

@@ -1,27 +1,31 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
 import com.histmersion.api.library.WorkRef
+import com.histmersion.domain.library.search.Search
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One scholarly index a goal's saved queries are read from (#3761): the works matching a query that are newer than
   * `since` (published, or deposited where the index says so), newest first. A small trait so a test hands fakes.
   */
 trait ScholarlyIndex:
-  def name: com.histmersion.domain.library.acquisition.ScholarlyIndex.Name
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit): Either[com.histmersion.domain.library.acquisition.ScholarlyIndex.Problem, List[WorkRef]]
+  def name: ScholarlyIndex.Name
+  def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit): Either[ScholarlyIndex.Problem, List[WorkRef]]
 
   /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a sweep then
     * leaves its watches unread, keeping their watermarks, and says so.
     */
-  def unavailable: Option[com.histmersion.domain.library.acquisition.ScholarlyIndex.Problem] = None
+  def unavailable: Option[ScholarlyIndex.Problem] = None
 
 object ScholarlyIndex:
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

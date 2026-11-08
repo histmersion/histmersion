@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Period, Year}
@@ -15,31 +16,33 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place as DPlace
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
   * place is the library's; what these answer about findings counts the places' matches (`finding_places`).
   */
 trait PlaceService:
-  def count(): com.histmersion.RowCount
+  def count(): RowCount
 
   /** A batch upserted in one transaction: rows, then names, then the edges whose parent exists by then. */
   def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult
 
   /** The places a name search finds, valid at `asOf`: exact labels first, then prefixes. */
-  def search(q: Option[PlaceService.SearchQ], asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear = DefaultModernFrom): List[Place.Hit]
+  def search(q: Option[PlaceService.SearchQ], asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear = DefaultModernFrom): List[Place.Hit]
 
   /** One place with the hierarchy around it at `asOf`. */
   def get(id: DPlace.Id, asOf: Option[DeepTime.SignedYear] = None, modernFrom: DeepTime.SignedYear = DefaultModernFrom): Option[Place.Entry]
 
-  def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear = DefaultModernFrom): List[Place.Summary]
+  def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear = DefaultModernFrom): List[Place.Summary]
 
   /** The hierarchy at `asOf` as a depth-tagged pre-order walk, from `root` or from every place that heads it. */
   def hierarchy(
       asOf: Option[DeepTime.SignedYear],
       root: Option[DPlace.Id],
       maxDepth: PlaceService.DepthLimit,
-      limit: com.histmersion.PageSize,
+      limit: PageSize,
       depthCap: PlaceService.DepthLimit = PlaceService.DepthLimit(Int.MaxValue),
       modernFrom: DeepTime.SignedYear = DefaultModernFrom
   ): List[Place.TreeRow]
@@ -79,29 +82,29 @@ trait PlaceService:
 
 object PlaceService:
   type DepthLimit = DepthLimit.T
-  object DepthLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DepthLimit extends RefinedType[Int, Pure]
   type SearchQ = SearchQ.T
-  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchQ extends RefinedType[String, Pure]
   type ScopeForValues = ScopeForValues.T
-  object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScopeForValues extends RefinedType[String, Pure]
 
   def apply(db: Transactor): PlaceService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceService:
-    def count(): com.histmersion.RowCount = db.read(PlaceRepo.count())
+    def count(): RowCount = db.read(PlaceRepo.count())
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
       if batch.isEmpty then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
-    def search(q: Option[SearchQ], asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear): List[Place.Hit] =
+    def search(q: Option[SearchQ], asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear): List[Place.Hit] =
       db.read(PlaceRepo.search(q.map(t => PlaceRepo.SearchText(t.value)), asOf, PlaceRepo.Limit(limit.value), modernFrom)).toList
     def get(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], modernFrom: DeepTime.SignedYear): Option[Place.Entry] =
       db.read(PlaceRepo.get(id, asOf, modernFrom))
-    def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear): List[Place.Summary] =
+    def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear): List[Place.Summary] =
       db.read(PlaceRepo.children(id, asOf, PlaceRepo.Limit(limit.value), modernFrom)).toList
     def hierarchy(
         asOf: Option[DeepTime.SignedYear],
         root: Option[DPlace.Id],
         maxDepth: DepthLimit,
-        limit: com.histmersion.PageSize,
+        limit: PageSize,
         depthCap: DepthLimit,
         modernFrom: DeepTime.SignedYear
     ): List[Place.TreeRow] =
@@ -146,7 +149,7 @@ object PlaceService:
     private def notFound(id: String): Api.Error = Api.Error(Api.Error.Message(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
     private def invalid(message: String): Api.Error = Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeInvalid)))
 
-    def count(): com.histmersion.RowCount = com.histmersion.RowCount(places.size)
+    def count(): RowCount = RowCount(places.size)
 
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
       if batch.isEmpty then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil)
@@ -199,7 +202,7 @@ object PlaceService:
           failed = dangling.map(r => Place.ImportResult.Failed(s"${r.childId}: no such parent '${r.parentId}'")).distinct.take(20)
         )
 
-    def search(q: Option[SearchQ], asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear): List[Place.Hit] =
+    def search(q: Option[SearchQ], asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear): List[Place.Hit] =
       val text = q.map(_.value.trim).filter(_.nonEmpty)
       val t = text.map(lower)
       def named(p: HeldPlace) = p.names.filter(n => HeldPlace.covers(n.period, asOf))
@@ -264,14 +267,14 @@ object PlaceService:
         )
       }
 
-    def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear): List[Place.Summary] =
+    def children(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], limit: PageSize, modernFrom: DeepTime.SignedYear): List[Place.Summary] =
       kidsOf(apiId(id), asOf).take(limit.value).toList.map(_.summary)
 
     def hierarchy(
         asOf: Option[DeepTime.SignedYear],
         root: Option[DPlace.Id],
         maxDepth: DepthLimit,
-        limit: com.histmersion.PageSize,
+        limit: PageSize,
         depthCap: DepthLimit,
         modernFrom: DeepTime.SignedYear
     ): List[Place.TreeRow] =

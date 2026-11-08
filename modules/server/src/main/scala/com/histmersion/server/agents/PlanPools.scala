@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import hearth.kindlings.optics.syntax.*
 
@@ -21,6 +22,9 @@ import java.util.concurrent.{ConcurrentHashMap, Semaphore, TimeUnit}
 import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.system.JvmHome
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every
@@ -36,7 +40,7 @@ final class PlanPools(
     cfg: => AgentsConfig,
     codexHome: () => Option[java.nio.file.Path],
     seams: PlanPools.Seams = PlanPools.Seams.Real
-)(using com.histmersion.util.system.JvmHome) extends PoolSink:
+)(using JvmHome) extends PoolSink:
 
   private val slots = ConcurrentHashMap[PoolId, Semaphore]()
   private val lastPoll = AtomicLong(0L)
@@ -432,17 +436,17 @@ final class PlanPools(
 
 object PlanPools:
   type Force = Force.T
-  object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Force extends RefinedType[Boolean, Pure]
   type Problem = RefreshGate.Problem
   val Problem: RefreshGate.Problem.type = RefreshGate.Problem
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   type ScheduleText = ScheduleText.T
-  object ScheduleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScheduleText extends RefinedType[String, Pure]
 
   /** The schedule as `agent quota` names it after a pool's refresh mode. */
-  def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleText = schedule match
-    case ScheduledRefresh.Off             => com.histmersion.server.agents.PlanPools.ScheduleText("")
+  def scheduleText(schedule: ScheduledRefresh): ScheduleText = schedule match
+    case ScheduledRefresh.Off             => ScheduleText("")
     case ScheduledRefresh.Every(interval) =>
       ScheduleText(s", and every ${interval.value} min while the autopilot has queued work for it")
 
@@ -453,22 +457,22 @@ object PlanPools:
       readCodex: (CodexConfig.Command, java.nio.file.Path, AgentsConfig.DoctorTimeoutSeconds) => Either[Problem, Json],
       runProbe: (List[ClaudeCode.Argument], java.util.Map[String, String] => Unit, CliProcess.RunStdin, CliProcess.RunTimeoutSeconds) => Either[Problem, CliProcess.Run],
       runCommand: (List[ProcessLaunch.Command], Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
-      refreshes: Seams.Refreshes = com.histmersion.server.agents.PlanPools.Seams.Refreshes(true)
+      refreshes: Seams.Refreshes = Seams.Refreshes(true)
   )
 
   object Seams:
     type Refreshes = Refreshes.T
-    object Refreshes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refreshes extends RefinedType[Boolean, Pure]
 
-    val Real: Seams = Seams(PlanPools.readCodex, PlanPools.runProbe, AgentDoctor.runCommand)
+    val Real: Seams = Seams(readCodex, runProbe, AgentDoctor.runCommand)
 
     /** Nothing is started: no read, no fresh reading taken, logins not known (so nothing is made unavailable).
       */
     val Offline: Seams = Seams(
-      (_, _, _) => Left(com.histmersion.server.agents.PlanPools.Problem("no app-server read in this context")),
-      (_, _, _, _) => Left(com.histmersion.server.agents.PlanPools.Problem("no probe in this context")),
+      (_, _, _) => Left(Problem("no app-server read in this context")),
+      (_, _, _, _) => Left(Problem("no probe in this context")),
       (_, _, _) => Left(AgentDoctor.Problem("not checked in this context")),
-      refreshes = com.histmersion.server.agents.PlanPools.Seams.Refreshes(false)
+      refreshes = Refreshes(false)
     )
 
   /** The one `claude -p` probe: in an empty scratch directory, its output read whole. */
@@ -479,7 +483,7 @@ object PlanPools:
       timeoutSeconds: CliProcess.RunTimeoutSeconds
   ): Either[Problem, CliProcess.Run] =
     try
-      CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-probe-")) { dir =>
+      CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-probe-")) { dir =>
         Right(
           CliProcess.run(
             argv,
@@ -504,7 +508,7 @@ object PlanPools:
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
-  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
+  def claudeEnv(cc: ClaudeCodeConfig)(using JvmHome): Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
     val dropped: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
       if cc.useApiKey.value then Map.empty
       else
@@ -531,7 +535,7 @@ object PlanPools:
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
-    case None    => Login.Missing(com.histmersion.api.automation.PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
+    case None    => Login.Missing(PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then Login.Present(Login.Present.Detail(s"$h has a login"))
       else Login.Missing(Login.Missing.Why(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))

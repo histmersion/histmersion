@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,12 +18,16 @@ import com.histmersion.util.database.Transactor
 
 import java.nio.file.Files
 import com.histmersion.api.library.Source
+import com.histmersion.db.DbSuite
+import com.histmersion.util.storage.TextFiles
+import com.histmersion.util.storage.DiskTextFiles
+import com.histmersion.domain.library.Citekey
 
 /** The seed over a folder of notes, against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise): a note older
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.
   */
-class SeedImportSuite extends com.histmersion.db.DbSuite:
-  private given com.histmersion.util.storage.TextFiles = new com.histmersion.util.storage.DiskTextFiles
+class SeedImportSuite extends DbSuite:
+  private given TextFiles = new DiskTextFiles
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -37,7 +42,7 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
 
   test("seed skips a file older than the stored row, and force overwrites it"):
     val dir = Files.createTempDirectory("histmersion-seed")
-    val ckS = com.histmersion.domain.library.Citekey("zz_seed_guard")
+    val ckS = Citekey("zz_seed_guard")
     val _ =
       Files.writeString(dir.resolve(s"$ckS.md"), s"---\ncitekey: $ckS\ntitle: From file\ntags: [fromfile]\n---\nbody\n")
 
@@ -70,13 +75,13 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.failed, List("zz_seed_bad.md: no frontmatter"))
 
   test("isStale: only a STRICTLY newer row blocks the file"):
-    assert(SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(99L)))
-    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(100L)))
-    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(101L)))
-    assert(!SeedImport.isStale(Map.empty, com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
+    assert(SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(99L)))
+    assert(!SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(100L)))
+    assert(!SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(101L)))
+    assert(!SeedImport.isStale(Map.empty, Citekey.assume("a"), SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
 
   test("export then re-import (force) leaves identical frontmatter — the §1.9a round trip"):
-    val ck = com.histmersion.domain.library.Citekey("zz_seed_roundtrip")
+    val ck = Citekey("zz_seed_roundtrip")
     val dir0 = Files.createTempDirectory("histmersion-seed-first")
     val _ = Files.writeString(
       dir0.resolve(s"$ck.md"),

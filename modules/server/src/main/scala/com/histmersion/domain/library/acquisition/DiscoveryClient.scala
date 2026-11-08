@@ -1,31 +1,36 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{RefRow, UpdateNotice, WorkRef}
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.Doi
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** OpenAlex + Crossref: search, metadata, deposited reference lists and amendment notices. */
 trait DiscoveryClient:
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: Option[com.histmersion.Year], sort: Option[com.histmersion.domain.library.acquisition.DiscoveryClient.SearchSort], limit: com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit): Either[com.histmersion.domain.library.acquisition.DiscoveryClient.Problem, List[WorkRef]]
-  def meta(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.DiscoveryClient.Problem, WorkRef]
+  def search(query: Search.Query, since: Option[Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit): Either[DiscoveryClient.Problem, List[WorkRef]]
+  def meta(doi: Doi): Either[DiscoveryClient.Problem, WorkRef]
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to
     * titles when the publisher deposited none.
     */
-  def references(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.DiscoveryClient.Problem, (com.histmersion.domain.library.acquisition.DiscoveryClient.Backend, List[RefRow])]
+  def references(doi: Doi): Either[DiscoveryClient.Problem, (DiscoveryClient.Backend, List[RefRow])]
 
   /** Crossref `update-to` notices (retraction / correction / expression of concern). */
-  def updates(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.DiscoveryClient.Problem, List[UpdateNotice]]
+  def updates(doi: Doi): Either[DiscoveryClient.Problem, List[UpdateNotice]]
 
 object DiscoveryClient:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SearchSort = SearchSort.T
-  object SearchSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchSort extends RefinedType[String, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchLimit extends RefinedType[Int, Pure]
   type Backend = Backend.T
-  object Backend extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Backend extends RefinedType[String, Pure]
 
   /** Crossref's notices as the wire shows them. */
   def notices(found: List[com.histmersion.domain.library.acquisition.UpdateNotice]): List[UpdateNotice] =

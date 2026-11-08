@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.goals.GoalReferable
@@ -13,11 +14,14 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import java.util.UUID
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
 
 /** A reference resolves and describes the same way in memory and in the database (a scratch database of its own, gated
   * on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.
   */
-class ReferableSuite extends com.histmersion.db.DbSuite:
+class ReferableSuite extends DbSuite:
 
   private val source = SourceReferable.Kind
   private def key(k: String) = ItemKey(k)
@@ -41,8 +45,8 @@ class ReferableSuite extends com.histmersion.db.DbSuite:
       ck => r.delete(key(ck), Instant.parse("2026-10-31T10:00:00Z"))
     )
 
-  private val testDb = com.histmersion.db.TestDb.url
-  private lazy val scratch = ScratchDatabases("referable", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+  private val testDb = TestDb.url
+  private lazy val scratch = ScratchDatabases("referable", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def onDatabase(name: String): (World, Transactor) =

@@ -1,28 +1,32 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionGapRow
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.AuthorName
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
 enum GapOriginal(val label: GapOriginal.Label):
   /** A host-side copy (`cli.calibre.originals-dir`): the CLI's own classification, never the server's. */
-  case Local extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("local"))
+  case Local extends GapOriginal(GapOriginal.Label("local"))
 
   /** The original the server stores. */
-  case Stored extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("stored"))
+  case Stored extends GapOriginal(GapOriginal.Label("stored"))
 
   /** The server did not say: counted, and the push tries. */
-  case Unknown extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("unknown"))
+  case Unknown extends GapOriginal(GapOriginal.Label("unknown"))
 
   /** No file anywhere — a metadata-only record: nothing to push, so not a gap. */
-  case Missing extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("none"))
+  case Missing extends GapOriginal(GapOriginal.Label("none"))
 
 object GapOriginal:
   /** A gap counts when there is an original to push and the source is not already in Calibre (provenance `calibre`, or
     * a Calibre id). A record with no original anywhere is listed, never counted.
     */
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
 
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match
@@ -34,7 +38,7 @@ object GapOriginal:
     CollectionGapRow(
       g.citekey,
       g.title,
-      g.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+      g.authors.map(a => AuthorName(a.value)),
       g.doi,
       g.year,
       g.venue,

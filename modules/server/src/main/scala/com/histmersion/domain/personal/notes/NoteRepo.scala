@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.notes
+package com.histmersion
+package domain.personal.notes
 
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.util.database.{Param, Sql}
@@ -9,11 +10,13 @@ import com.histmersion.{PageSize, UserId}
 import com.augustnagro.magnum.*
 
 import scala.util.chaining.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
   type RowsChanged = RowsChanged.T
-  object RowsChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RowsChanged extends RefinedType[Int, Pure]
 
 
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
@@ -28,15 +31,15 @@ private[notes] object NoteRepo:
       DbCon
   ): List[Note.Row] =
     (Sql.of(Sql.Text(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(com.histmersion.util.database.Sql.Text(" AND n.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
+      kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND n.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
       item.fold(Sql.empty)(i =>
         Sql.of(
-          com.histmersion.util.database.Sql.Text(" AND (n.target_id = ? OR n.target_uid = ANY(?::uuid[]))"),
+          Sql.Text(" AND (n.target_id = ? OR n.target_uid = ANY(?::uuid[]))"),
           Param.S(Param.S.V(i.key.value)),
           Param.A(i.uids.toList.map(u => Param.A.V(u.value.toString)))
         )
       ) ++
-      Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
+      Sql.raw(Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
       size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag.query[Note.Row].run().toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
@@ -72,12 +75,12 @@ private[notes] object NoteRepo:
       id: com.histmersion.api.personal.Note.Id,
       text: com.histmersion.api.personal.Note.Text,
       at: MarkTime
-  )(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.RowsChanged =
+  )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
 
-  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.RowsChanged =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))

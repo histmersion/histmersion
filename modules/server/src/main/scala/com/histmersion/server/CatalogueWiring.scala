@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -38,6 +39,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.storage.Location
 import com.histmersion.PageSize
+import com.histmersion.api.catalogue.CatalogRecord
 
 /** The catalogue's places, events, their catalogues and their links to the corpus, and the refinement of site types,
   * built over one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings
@@ -86,7 +88,7 @@ final class CatalogueWiring(
     EventImports(
       EventImportService(deps.transactor),
       () =>
-        deps.plugins.registries.eventCatalogues.map((k, c) => com.histmersion.api.catalogue.CatalogRecord.Provider(k.value) -> c),
+        deps.plugins.registries.eventCatalogues.map((k, c) => CatalogRecord.Provider(k.value) -> c),
       () => deps.cfg,
       http,
       presentYear,

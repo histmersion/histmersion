@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import hearth.kindlings.optics.syntax.*
 
@@ -17,6 +18,11 @@ import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
+import com.histmersion.db.DbSuite
+import com.histmersion.util.database.Transactor
+import com.histmersion.util.time.SystemTimer
+import com.histmersion.domain.Caller
+import com.histmersion.api.Api
 
 /** What the network gazetteers store: each fixture imported through the real runner (download from a loopback server,
   * transform, batch upsert, `finding_places` rebuilt) into a scratch database of its own, then its `places`,
@@ -25,7 +31,7 @@ import com.histmersion.plugin.Plugin
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). The transcript is `traffic/gazetteers-stored.txt`, compared byte for
   * byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it).
   */
-class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
+class GazetteerStoreSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -55,13 +61,13 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
   private def importOnce(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
-    val db = com.histmersion.util.database.Transactor(ds)
+    val db = Transactor(ds)
     ImportRunner.fetchAndImport(
       sources(name),
       http,
       PlaceService(db),
-      PlaceGeometry(db)(using new com.histmersion.util.time.SystemTimer),
-      dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false),
+      PlaceGeometry(db)(using new SystemTimer),
+      dryRun = GazetteerControllers.DryRun(false),
       GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
     )
 
@@ -106,7 +112,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
     // the names the server takes, and what it says to one it does not know
     val h = ServerWiring(Deps(cfg, ds))
     sb ++= s"## names\ninit.fetch-sources: ${Bootstrap.sources.mkString(", ")}\n"
-    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(com.histmersion.domain.Caller.Local, com.histmersion.api.Api.ExternalPlaces.Source("nowhere"), dryRun = com.histmersion.api.Api.Apply(true))}\n"
+    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(Caller.Local, Api.ExternalPlaces.Source("nowhere"), dryRun = Api.Apply(true))}\n"
     sb.result()
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/gazetteers-stored.txt")

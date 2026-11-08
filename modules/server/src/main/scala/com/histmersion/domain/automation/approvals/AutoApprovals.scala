@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import io.scalaland.chimney.dsl.*
 
@@ -19,6 +20,10 @@ import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.agents.AgentRepo
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a
@@ -51,7 +56,7 @@ final class AutoApprovals(
       Kinds.contains(k) &&
         manager
           .flatMap(_.config.autoApprove.map(_.value))
-          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
+          .getOrElse(cfg.approvals.checked(k.transformInto[Approval.Kind]))
     )
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
@@ -161,7 +166,7 @@ final class AutoApprovals(
                 ManagerEvent.Text(text.take(2000))
               )
             )
-            val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000))))
+            val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000))))
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 
@@ -178,7 +183,7 @@ final class AutoApprovals(
     )
 
   /** Today's cap of automatic publishes, scaled the same way to the open drafts. */
-  def publishCap: com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCap =
+  def publishCap: ApprovalChecks.PublishCap =
     val c = cfg.approvals.auto
     ApprovalChecks.PublishCap(
       AutopilotPolicy
@@ -206,10 +211,10 @@ final class AutoApprovals(
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
           case (_, Some(wait)) => Verdict.Leave(Verdict.Leave.Why(wait.value))
-          case (None, _)       => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable plan"))
+          case (None, _)       => Verdict.Leave(Verdict.Leave.Why("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
-            (com.histmersion.domain.automation.Goal.Slug.option(raw), com.histmersion.domain.research.Slug.option(raw)) match
+            (com.histmersion.domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
               case (Some(goal), Some(slug)) =>
                 val depth = AutopilotPolicy.depth(
                   slug,
@@ -218,7 +223,7 @@ final class AutoApprovals(
                       .option(s.value)
                       .flatMap(agents.goals.get)
                       .flatMap(_.parentSlug)
-                      .flatMap(parent => com.histmersion.domain.research.Slug.option(parent.value))
+                      .flatMap(parent => Slug.option(parent.value))
                 )
                 AutopilotPolicy.goalPlan(
                   GoalPlanFacts(
@@ -239,16 +244,16 @@ final class AutoApprovals(
                       .fold(v)(d => Verdict.Leave(Verdict.Leave.Why(d.value)))
                   case v => v
               case _ => Verdict.Leave(Verdict.Leave.Why("the approval names no valid goal"))
-      case _ => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("not a kind the autopilot decides"))
+      case _ => Verdict.Leave(Verdict.Leave.Why("not a kind the autopilot decides"))
 
-  def checkpoint(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[String] =
+  def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =
     agents.runs
-      .steps(Job.Id.assume(run.value), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
+      .steps(Job.Id.assume(run.value), AgentRepo.OutputChars(100000))
       .filter(s => s.name.value == step.value && s.status.value == StepStatus.Done.wire.value)
       .lastOption
       .flatMap(_.output.map(_.value))
 
   def config: AgentsConfig = cfg
-  def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.Slug): Boolean = com.histmersion.domain.research.Slug.option(slug.value).exists(agents.host.articleExists)
-  def autoApprovedSince(kind: com.histmersion.domain.automation.Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[com.histmersion.domain.automation.Approval.Kind, ApprovalKind].transform(kind), since)
+  def slugExists(slug: ApprovalChecks.Slug): Boolean = Slug.option(slug.value).exists(agents.host.articleExists)
+  def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApprovalKind].transform(kind), since)
 

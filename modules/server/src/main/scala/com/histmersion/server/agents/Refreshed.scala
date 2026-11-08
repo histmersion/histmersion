@@ -1,21 +1,24 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.api.automation.PlanQuota.*
 import io.circe.{parser, Json}
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
 final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
-  def text: com.histmersion.server.agents.Refreshed.Text = Refreshed.Text(s"$mode: $detail")
+  def text: Refreshed.Text = Refreshed.Text(s"$mode: $detail")
 
 object Refreshed:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   type Mode = Mode.T
-  object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mode extends RefinedType[String, Pure]
   type Ok = Ok.T
-  object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ok extends RefinedType[Boolean, Pure]
   type Detail = Detail.T
-  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Detail extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap

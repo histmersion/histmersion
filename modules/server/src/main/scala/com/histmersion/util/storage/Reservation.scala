@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import com.histmersion.{ByteCount, ByteOffset}
 
@@ -11,20 +12,20 @@ trait Reservation extends AutoCloseable:
   def key: Store.Key
 
   /** Where the file being written is, for messages. */
-  def where: com.histmersion.util.storage.Blob.Location
+  def where: Blob.Location
 
   /** The file's content from the start, replacing what was written. */
   def output(): OutputStream
 
   /** Overwrite `bytes` at `offset` in what was written. */
-  def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.ByteSource.Content): Unit
+  def writeAt(offset: ByteOffset, bytes: ByteSource.Content): Unit
 
   def size: ByteCount
 
   /** Move the file over the key in one step, replacing what is there; with `keepPermissions`, the replaced file's
     * permissions carry over.
     */
-  def commit(keepPermissions: com.histmersion.util.storage.Store.KeepPermissions = com.histmersion.util.storage.Store.KeepPermissions(false)): Either[Store.Error, Stored]
+  def commit(keepPermissions: Store.KeepPermissions = Store.KeepPermissions(false)): Either[Store.Error, Stored]
 
   /** Remove the file; nothing happens to the key. */
   def discard(): Unit

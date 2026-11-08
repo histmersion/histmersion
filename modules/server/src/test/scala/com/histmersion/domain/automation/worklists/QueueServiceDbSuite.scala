@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,11 +7,13 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.*
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
 
 class QueueServiceDbSuite extends QueueServiceContract("db"):
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val scratch = ScratchDatabases("histmersion_s7q", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val scratch = ScratchDatabases("histmersion_s7q", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = java.util.concurrent.atomic.AtomicInteger(0)
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 

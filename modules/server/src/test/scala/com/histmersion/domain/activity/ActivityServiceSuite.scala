@@ -1,4 +1,5 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -10,12 +11,16 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.db.DbSuite
+import com.histmersion.api.automation.Goal
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
 
 /** The activity list merges runs, jobs, worklog lines and a person's decisions into one time-ordered list: the same
   * answers from the in-memory service and from the database's (on a scratch database of its own, gated on
   * HISTMERSION_TEST_DB_URL).
   */
-class ActivityServiceSuite extends com.histmersion.db.DbSuite:
+class ActivityServiceSuite extends DbSuite:
 
   private val now = Instant.parse("2026-10-30T12:00:00Z")
   private def ago(min: Int): Instant = now.minusSeconds(min * 60L)
@@ -38,53 +43,53 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
     )
     List(
       Entry(
-        com.histmersion.api.automation.Activity.Entry.Key("run:r1"),
-        com.histmersion.api.automation.Activity.Entry.Kind("run"),
+        Entry.Key("run:r1"),
+        Entry.Kind("run"),
         at(ago(1)),
-        state = com.histmersion.api.automation.Activity.Entry.State("running"),
-        what = com.histmersion.api.automation.Activity.Entry.What("review-article"),
-        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        state = Entry.State("running"),
+        what = Entry.What("review-article"),
+        goal = Some(Goal.Slug("g1")),
         job = Some(Entry.Job("r1")),
         article = Some(Entry.Article("sea-peoples")),
         target = Some(Entry.Target("sea-peoples")),
         targetKind = Some(Entry.TargetKind("article"))
       ),
       Entry(
-        com.histmersion.api.automation.Activity.Entry.Key("job:j1"),
-        com.histmersion.api.automation.Activity.Entry.Kind("job"),
+        Entry.Key("job:j1"),
+        Entry.Kind("job"),
         at(ago(2)),
-        state = com.histmersion.api.automation.Activity.Entry.State("failed"),
-        what = com.histmersion.api.automation.Activity.Entry.What("media-import"),
+        state = Entry.State("failed"),
+        what = Entry.What("media-import"),
         error = Some(Entry.Error("HTTP 500")),
         job = Some(Entry.Job("j1"))
       ),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j0"), com.histmersion.api.automation.Activity.Entry.Kind("job"), at(ago(60 * 24 * 9)), state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("basemap-fetch"), job = Some(Entry.Job("j0"))),
+      Entry(Entry.Key("job:j0"), Entry.Kind("job"), at(ago(60 * 24 * 9)), state = Entry.State("failed"), what = Entry.What("basemap-fetch"), job = Some(Entry.Job("j0"))),
       Entry(
-        com.histmersion.api.automation.Activity.Entry.Key("log:1"),
-        com.histmersion.api.automation.Activity.Entry.Kind("log"),
+        Entry.Key("log:1"),
+        Entry.Kind("log"),
         at(ago(3)),
         text = Entry.Text("reviewed"),
-        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        goal = Some(Goal.Slug("g1")),
         job = Some(Entry.Job("r1")),
         by = Some(Entry.By("agent"))
       ),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:2"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(ago(3)), text = Entry.Text("fetched"), job = Some(Entry.Job("j1")), by = Some(Entry.By("job"))),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:3"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(ago(3)), text = Entry.Text("a person's note")),
+      Entry(Entry.Key("log:2"), Entry.Kind("log"), at(ago(3)), text = Entry.Text("fetched"), job = Some(Entry.Job("j1")), by = Some(Entry.By("job"))),
+      Entry(Entry.Key("log:3"), Entry.Kind("log"), at(ago(3)), text = Entry.Text("a person's note")),
       Entry(
-        com.histmersion.api.automation.Activity.Entry.Key("decision:1"),
-        com.histmersion.api.automation.Activity.Entry.Kind("decision"),
+        Entry.Key("decision:1"),
+        Entry.Kind("decision"),
         at(ago(4)),
-        state = com.histmersion.api.automation.Activity.Entry.State("approved"),
-        what = com.histmersion.api.automation.Activity.Entry.What("edge"),
-        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        state = Entry.State("approved"),
+        what = Entry.What("edge"),
+        goal = Some(Goal.Slug("g1")),
         job = Some(Entry.Job("r1")),
         approval = Some(Entry.Approval(1L))
       )
     ).foreach(m.add)
     World(m, names)
 
-  private val testDb = com.histmersion.db.TestDb.url
-  private lazy val scratch = ScratchDatabases("activity", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+  private val testDb = TestDb.url
+  private lazy val scratch = ScratchDatabases("activity", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def onDatabase: World =
@@ -163,7 +168,7 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
       assertEquals(keysOf(w, ActivityQuery(show = Show.Problems)), named(w, "j1", "j0"))
 
     test(s"$label: a goal's history and a time bound"):
-      assertEquals(keysOf(w, ActivityQuery(goal = Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1")))), named(w, "r1", "l1", "a5"))
+      assertEquals(keysOf(w, ActivityQuery(goal = Some(ActivityQuery.Goal("g1")))), named(w, "r1", "l1", "a5"))
       assertEquals(keysOf(w, ActivityQuery(since = Some(ago(2)))), named(w, "r1", "j1"))
 
     test(s"$label: each entry names what it touched"):
@@ -186,7 +191,7 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
       assertEquals(es(w.key("j1")).error, Some("HTTP 500"))
 
     test(s"$label: the counts: one running, one problem this week"):
-      assertEquals(w.service.page(ActivityQuery(), now).counts, Activity.Counts(running = com.histmersion.api.automation.Activity.Counts.Running(1), problemsWeek = com.histmersion.api.automation.Activity.Counts.ProblemsWeek(1)))
+      assertEquals(w.service.page(ActivityQuery(), now).counts, Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1)))
 
   spec("in memory", inMemory)
 

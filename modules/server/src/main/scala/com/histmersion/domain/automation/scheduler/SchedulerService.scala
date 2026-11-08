@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.scheduler
+package com.histmersion
+package domain.automation.scheduler
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,6 +24,10 @@ import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.{Goal as DomainGoal, Run as DomainRun}
 import io.scalaland.chimney.dsl.*
+import com.histmersion.util.jobs.Job
+import com.histmersion.util.jobs.RunRow
+import com.histmersion.api.automation.Run
+import com.histmersion.domain.automation.worklists.WorkListControllers
 
 /** The central agent scheduler (docs/research-goal-advancement.md "As built"): the managers PRODUCE pending items; once
   * per managers' tick [[pass]] reads them all — with each goal's priority and age, the plan pools each would draw on,
@@ -242,10 +247,10 @@ final class SchedulerService(
       occupied = Resources.Occupied(
         agents.jobRuns
           .count(
-            com.histmersion.util.jobs.Job.Kind.assume(Agents.JobKind),
+            Job.Kind.assume(Agents.JobKind),
             (
-              com.histmersion.util.jobs.RunRow.Status(Agents.RunState.Queued.wire.value),
-              com.histmersion.util.jobs.RunRow.Status(Agents.RunState.Running.wire.value)
+              RunRow.Status(Agents.RunState.Queued.wire.value),
+              RunRow.Status(Agents.RunState.Running.wire.value)
             )
           )
           .value
@@ -262,7 +267,7 @@ final class SchedulerService(
       gatheringUsed = Resources.GatheringUsed(runs.count(_._2.exists(g => gs.get(DomainGoal.Slug.assume(g.value)).exists(_.gathering)))),
       stop = stop.orElse(budgetBlock()),
       recent = agents.managerStore
-        .recentKinds(com.histmersion.PageSize.assume(math.max(1, cfg.scheduler.shareWindow.value)))
+        .recentKinds(PageSize.assume(math.max(1, cfg.scheduler.shareWindow.value)))
         .map(k => JobType.of(Candidate.Kind(k.value)))
     )
     Inputs(cands, perManager.flatMap((m, is) => is.map(i => Candidate.Id(i.id.value) -> (m, i))).toMap, res)
@@ -336,7 +341,7 @@ final class SchedulerService(
 
   /** The status: the last pass (or a dry one), the first `limit` waiting items (default 50). */
   def status(
-      limit: Option[com.histmersion.PageSize] = None,
+      limit: Option[PageSize] = None,
       now: Instant = Instant.now(agents.clock),
       changes: List[SchedulerStatus.Changes] = Nil
   ): SchedulerStatus =
@@ -347,7 +352,7 @@ final class SchedulerService(
     val res = snap.in.res
     SchedulerStatus(
       SchedulerStatus.Strategy(s.strategy.name.value),
-      if chosen.isDefined then com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person") else com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("config"),
+      if chosen.isDefined then AgentScheduler.SchedulerStatus.StrategyFrom("person") else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(StrategyLine.Name(x.name.value), StrategyLine.Describe(x.describe))),
       Some(SchedulerStatus.At(snap.at.toString)),
       SchedulerStatus.Dry(snap.dry),
@@ -490,10 +495,10 @@ final class SchedulerService(
               case None => say(base, AgentScheduler.Code.Held, "held")
           case Some(ItemStatus.Active) =>
             val run = i.runId.flatMap(r => agents.runs.get(DomainRun.Id.assume(r.value)))
-            run.flatMap(r => RunState.parse(com.histmersion.api.automation.Run.State.Wire(r.status.value))) match
+            run.flatMap(r => RunState.parse(Run.State.Wire(r.status.value))) match
               case Some(RunState.WaitingApproval) =>
                 val open = run.toList
-                  .flatMap(r => agents.approvalStore.approvalsOf(com.histmersion.util.jobs.Job.Id.assume(r.id.value), None))
+                  .flatMap(r => agents.approvalStore.approvalsOf(Job.Id.assume(r.id.value), None))
                   .filter(_.state == ApprovalState.Open.wire)
                 say(
                   base,
@@ -594,7 +599,7 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
+      val _ = agents.workLists.add(WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(SchedulerStatus.Changes(line)))

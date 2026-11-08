@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -67,7 +68,7 @@ class LegacyPluginsSuite extends munit.FunSuite:
     )
 
   test("expand and the environment name"):
-    assertEquals(LegacyPlugins.expand(com.histmersion.util.plugins.Plugin.Id("oa-index")), LegacyPlugins.OaIndex.into)
-    assertEquals(LegacyPlugins.expand(com.histmersion.util.plugins.Plugin.Id("pmc")), List("pmc"))
-    assertEquals(LegacyPlugins.enabledEnv(com.histmersion.util.plugins.Plugin.Id("oa-unpaywall")), "HISTMERSION_PLUGIN_OA_UNPAYWALL_ENABLED")
+    assertEquals(LegacyPlugins.expand(Plugin.Id("oa-index")), LegacyPlugins.OaIndex.into)
+    assertEquals(LegacyPlugins.expand(Plugin.Id("pmc")), List("pmc"))
+    assertEquals(LegacyPlugins.enabledEnv(Plugin.Id("oa-unpaywall")), "HISTMERSION_PLUGIN_OA_UNPAYWALL_ENABLED")
     assertEquals(LegacyPlugins.ids, Set("oa-index"))

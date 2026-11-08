@@ -1,4 +1,8 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's terrarium tiles
   * are stored in (Mapterhorn's 512-pixel tiles, a focus region's, the on-demand cache's). The server reads elevation
@@ -21,12 +25,12 @@ object Vp8l:
 
   object Image:
     type Pixels = Pixels.T
-    object Pixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pixels extends RefinedType[Array[Int], Pure]
 
     type Width = Width.T
-    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Width extends RefinedType[Int, Pure]
     type Height = Height.T
-    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Height extends RefinedType[Int, Pure]
 
     extension (i: Image) def isSquare: Boolean = i.width.value == i.height.value
 

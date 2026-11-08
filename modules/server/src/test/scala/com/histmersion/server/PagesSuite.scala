@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,29 +13,37 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
 import com.histmersion.api.text.WikiLinks
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.domain.Title
+import com.histmersion.api.automation.Activity
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.
   */
 class PagesSuite extends munit.FunSuite:
 
-  private val cline = com.histmersion.api.library.Source.Ref(
-    com.histmersion.api.library.Citekey("cline2014_year"),
-    (Some("10.1515/9781400849987")).map(com.histmersion.api.library.Doi.apply),
+  private val cline = Source.Ref(
+    Citekey("cline2014_year"),
+    (Some("10.1515/9781400849987")).map(Doi.apply),
     (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
-    (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+    (Some(2014)).map(Year.apply),
     com.histmersion.api.library.Title("1177 BC: The Year Civilization Collapsed"),
     Source.Status.Current
   )
-  private val drews = com.histmersion.api.library.Source.Ref(
-    com.histmersion.api.library.Citekey("drews1993_end"),
+  private val drews = Source.Ref(
+    Citekey("drews1993_end"),
     None,
     (List("Robert Drews")).map(com.histmersion.api.library.AuthorName.apply),
-    (Some(1993)).map(com.histmersion.api.catalogue.Year.apply),
+    (Some(1993)).map(Year.apply),
     com.histmersion.api.library.Title("The End of the Bronze Age"),
     Source.Status.Contested
   )
-  private val topic = Article.Ref(com.histmersion.api.research.Article.Slug("bronze_age_collapse"), com.histmersion.api.research.Article.Title("The Bronze Age Collapse"), Some(com.histmersion.api.research.Article.SummaryText("Around 1200 BCE.")))
+  private val topic = Article.Ref(Article.Slug("bronze_age_collapse"), Article.Title("The Bronze Age Collapse"), Some(Article.SummaryText("Around 1200 BCE.")))
   private val links: WikiLinks.Occurrence.Target => Option[LinkTarget] =
     Map[WikiLinks.Occurrence.Target, LinkTarget](
       WikiLinks.Occurrence.Target("cline2014_year") -> cline,
@@ -63,8 +72,8 @@ class PagesSuite extends munit.FunSuite:
     )
 
   test("values from the database are escaped in every attribute and text node"):
-    val evil = cline.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("x\"><script>")).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("\"onmouseover=1")))
-    val html = HtmlRender.sourceRef(evil, com.histmersion.server.HtmlRender.Label("<b>")).value
+    val evil = cline.modify(_.citekey).setTo(Citekey("x\"><script>")).modify(_.doi).setTo(Some(Doi("\"onmouseover=1")))
+    val html = HtmlRender.sourceRef(evil, HtmlRender.Label("<b>")).value
     assert(!html.contains("<script>") && !html.contains("<b>") && !html.contains("\"onmouseover"), html)
 
   test("the readable label is author-year, or the title when there are no authors"):
@@ -72,13 +81,13 @@ class PagesSuite extends munit.FunSuite:
     assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)
 
   test("a chip never shows an underscore, and links the raw value into the web UI"):
-    val c = HtmlRender.chip(ChipField.Tag, com.histmersion.server.HtmlRender.Label("sea_peoples")).value
+    val c = HtmlRender.chip(ChipField.Tag, HtmlRender.Label("sea_peoples")).value
     assert(c.contains(">sea peoples</a>"), c)
     assert(c.contains("""href="/#tag=sea_peoples""""), c)
     assert(c.contains("""data-field="tag""""), c)
     assert(
       !HtmlRender
-        .chips(ChipField.Topic, List(com.histmersion.server.HtmlRender.Label("bronze_age_collapse"), com.histmersion.server.HtmlRender.Label("trade_routes")))
+        .chips(ChipField.Topic, List(HtmlRender.Label("bronze_age_collapse"), HtmlRender.Label("trade_routes")))
         .value
         .replaceAll("<[^>]*>", "")
         .contains("_")
@@ -94,12 +103,12 @@ class PagesSuite extends munit.FunSuite:
 
   test("a finding shows its badge, place and period"):
     val f = Finding.Row(
-      com.histmersion.api.library.Finding.Claim("Ugarit destroyed"),
-      Some(com.histmersion.api.catalogue.Place.Region("Ugarit")),
-      Some(com.histmersion.api.catalogue.Longitude(35.78)),
-      Some(com.histmersion.api.catalogue.Latitude(35.60)),
-      Some(com.histmersion.api.catalogue.Year(-1190)),
-      Some(com.histmersion.api.catalogue.Year(-1185)),
+      Finding.Claim("Ugarit destroyed"),
+      Some(Place.Region("Ugarit")),
+      Some(Longitude(35.78)),
+      Some(Latitude(35.60)),
+      Some(Year(-1190)),
+      Some(Year(-1185)),
       None,
       Nil,
       Some(Confidence.Medium)
@@ -128,15 +137,15 @@ class PagesSuite extends munit.FunSuite:
   private def articlePage(body: Article.Body, cited: List[CitedSource] = Nil) =
     ArticlePage(
       Article.Row(
-        com.histmersion.api.research.Article.Slug("sea_peoples"),
-        com.histmersion.api.research.Article.Title("The Sea Peoples"),
-        com.histmersion.api.research.Article.Kind.Wire("concept"),
+        Article.Slug("sea_peoples"),
+        Article.Title("The Sea Peoples"),
+        Article.Kind.Wire("concept"),
         body,
         None,
-        List(com.histmersion.api.research.Article.Tags("sea_peoples")),
-        List(com.histmersion.api.research.Article.Regions("Levant")),
-        Some(com.histmersion.api.catalogue.Year(-1200)),
-        Some(com.histmersion.api.catalogue.Year(-1150))
+        List(Article.Tags("sea_peoples")),
+        List(Article.Regions("Levant")),
+        Some(Year(-1200)),
+        Some(Year(-1150))
       ),
       Nil,
       cited
@@ -158,14 +167,14 @@ class PagesSuite extends munit.FunSuite:
         body,
         List(
           CitedSource(
-            com.histmersion.api.library.Citekey("cline2014_year"),
+            Citekey("cline2014_year"),
             Some(cline.title),
-            (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+            (Some(2014)).map(Year.apply),
             Some(Source.Status.Current),
             cline.authors,
             cline.doi
           ),
-          CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors)
+          CitedSource(Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(Year.apply), Some(Source.Status.Contested), drews.authors)
         )
       ),
       links
@@ -207,7 +216,7 @@ class PagesSuite extends munit.FunSuite:
     val html = Pages.article(
       articlePage(
         Article.Body("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n"),
-        List(CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors))
+        List(CitedSource(Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(Year.apply), Some(Source.Status.Contested), drews.authors))
       ),
       links
     ).value
@@ -218,12 +227,12 @@ class PagesSuite extends munit.FunSuite:
 
   private val sourcePage = SourcePage(
     cline,
-    Some(com.histmersion.server.SourcePage.Venue("Princeton UP")),
-    Some(com.histmersion.server.SourcePage.PeriodStart(-1250)),
-    Some(com.histmersion.server.SourcePage.PeriodEnd(-1100)),
-    List(com.histmersion.server.SourcePage.Topics("bronze_age_collapse")),
-    List(com.histmersion.server.SourcePage.Regions("Levant")),
-    List(com.histmersion.server.SourcePage.Tags("sea_peoples")),
+    Some(SourcePage.Venue("Princeton UP")),
+    Some(SourcePage.PeriodStart(-1250)),
+    Some(SourcePage.PeriodEnd(-1100)),
+    List(SourcePage.Topics("bronze_age_collapse")),
+    List(SourcePage.Regions("Levant")),
+    List(SourcePage.Tags("sea_peoples")),
     Some(com.histmersion.domain.library.Source.Summary("A synthesis.")),
     None,
     Nil,
@@ -242,16 +251,16 @@ class PagesSuite extends munit.FunSuite:
   // found in the browser: a finding's region printed raw ("south_caucasus (41.00, 45.00)")
   test("a finding's region, tags and significance reach the reader without underscores"):
     val f = Finding.Row(
-      com.histmersion.api.library.Finding.Claim("Proto-Indo-European split early"),
-      Some(com.histmersion.api.catalogue.Place.Region("south_caucasus")),
-      Some(com.histmersion.api.catalogue.Longitude(45.0)),
-      Some(com.histmersion.api.catalogue.Latitude(41.0)),
-      Some(com.histmersion.api.catalogue.Year(-8120)),
-      Some(com.histmersion.api.catalogue.Year(-6000)),
-      Some(com.histmersion.api.library.Finding.PeriodName("early_neolithic")),
-      List(com.histmersion.api.library.Finding.Tags("farming_hypothesis")),
+      Finding.Claim("Proto-Indo-European split early"),
+      Some(Place.Region("south_caucasus")),
+      Some(Longitude(45.0)),
+      Some(Latitude(41.0)),
+      Some(Year(-8120)),
+      Some(Year(-6000)),
+      Some(Finding.PeriodName("early_neolithic")),
+      List(Finding.Tags("farming_hypothesis")),
       Some(Confidence.High),
-      Some(com.histmersion.api.library.Finding.Significance("key_evidence"))
+      Some(Finding.Significance("key_evidence"))
     )
     val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links).value
     assert(html.contains("south caucasus (41.00, 45.00)"), html)
@@ -261,7 +270,7 @@ class PagesSuite extends munit.FunSuite:
 
   test("Cites / Cited by merge typed edges, unresolved edges and the articles citing the source"):
     val p = sourcePage.modify(
-      _.cites).setTo(List(Citation.ToSource(drews, com.histmersion.server.Citation.ToSource.Kind("challenges")), Citation.Unresolved(com.histmersion.server.Citation.Unresolved.Id("ghost2019_x"), com.histmersion.server.Citation.Unresolved.Kind("references")))).modify(_.citedBy).setTo(List(Citation.ToArticle(topic, None))
+      _.cites).setTo(List(Citation.ToSource(drews, Citation.ToSource.Kind("challenges")), Citation.Unresolved(Citation.Unresolved.Id("ghost2019_x"), Citation.Unresolved.Kind("references")))).modify(_.citedBy).setTo(List(Citation.ToArticle(topic, None))
     )
     val html = Pages.source(p, links).value
     assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
@@ -272,7 +281,7 @@ class PagesSuite extends munit.FunSuite:
     assert(html.contains(HtmlRender.articleRef(topic).value), html)
 
   test("a standalone page loads the Scala.js bundle and names its page kind"):
-    val doc = com.histmersion.server.ArticleHtml.page(com.histmersion.domain.Title("T"), com.histmersion.server.HtmlRender.Html("<p>x</p>"), PageKind.Source).value
+    val doc = ArticleHtml.page(Title("T"), HtmlRender.Html("<p>x</p>"), PageKind.Source).value
     assert(doc.contains("""<script src="/web/app.bundle.js"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
     assert(!doc.contains("article.js") && !doc.contains("citations.js"), doc)
@@ -280,52 +289,52 @@ class PagesSuite extends munit.FunSuite:
   // ── review ────────────────────────────────────────────────────────────────────────────────────
 
   private val review = Article.ReviewView(
-    com.histmersion.api.research.Article.Slug("sea_peoples"),
+    Article.Slug("sea_peoples"),
     ReviewBadge(
       ReviewState.MajorsOpen,
-      com.histmersion.api.research.ReviewBadge.Label("1 major open"),
-      com.histmersion.api.research.ReviewBadge.Detail("Reviewed: 1 MAJOR finding is still open."),
-      openMajors = com.histmersion.api.research.ReviewBadge.OpenMajors(1),
-      findings = com.histmersion.api.research.ReviewBadge.Findings(2),
-      runs = com.histmersion.api.research.ReviewBadge.Runs(1)
+      ReviewBadge.Label("1 major open"),
+      ReviewBadge.Detail("Reviewed: 1 MAJOR finding is still open."),
+      openMajors = ReviewBadge.OpenMajors(1),
+      findings = ReviewBadge.Findings(2),
+      runs = ReviewBadge.Runs(1)
     ),
     rounds = List(
       ReviewRound(
-        com.histmersion.api.research.ReviewRound.Run("run-a"),
-        com.histmersion.api.research.ReviewRound.RunNumber(1),
-        com.histmersion.api.research.ReviewRound.Round(1),
-        Some(com.histmersion.api.research.ReviewRound.StartedAt("2026-10-01T10:00:00Z")),
+        ReviewRound.Run("run-a"),
+        ReviewRound.RunNumber(1),
+        ReviewRound.Round(1),
+        Some(ReviewRound.StartedAt("2026-10-01T10:00:00Z")),
         List(
           ReviewFinding(
-            com.histmersion.api.research.ReviewFinding.Id("R1"),
-            com.histmersion.api.research.ReviewFinding.Reviewer("rules"),
-            com.histmersion.api.research.ReviewFinding.Severity("major"),
-            com.histmersion.api.research.ReviewFinding.Kind("decorative-citation"),
-            com.histmersion.api.research.ReviewFinding.Where("Background ¶2"),
-            com.histmersion.api.research.ReviewFinding.Problem("a <cited> claim"),
-            com.histmersion.api.research.ReviewFinding.Fix(""),
-            com.histmersion.api.research.ReviewFinding.Quote(""),
-            com.histmersion.api.research.ReviewFinding.Outcome("rejected"),
-            note = com.histmersion.api.research.ReviewFinding.Note("the record supports it"),
-            closedBy = Some(com.histmersion.api.automation.Activity.Actor("fixer")),
-            closedRound = Some(com.histmersion.api.research.ReviewRound.Round(1)),
-            closedRunNumber = Some(com.histmersion.api.research.ReviewRound.RunNumber(1))
+            ReviewFinding.Id("R1"),
+            ReviewFinding.Reviewer("rules"),
+            ReviewFinding.Severity("major"),
+            ReviewFinding.Kind("decorative-citation"),
+            ReviewFinding.Where("Background ¶2"),
+            ReviewFinding.Problem("a <cited> claim"),
+            ReviewFinding.Fix(""),
+            ReviewFinding.Quote(""),
+            ReviewFinding.Outcome("rejected"),
+            note = ReviewFinding.Note("the record supports it"),
+            closedBy = Some(Activity.Actor("fixer")),
+            closedRound = Some(ReviewRound.Round(1)),
+            closedRunNumber = Some(ReviewRound.RunNumber(1))
           ),
           ReviewFinding(
-            com.histmersion.api.research.ReviewFinding.Id("S1"),
-            com.histmersion.api.research.ReviewFinding.Reviewer("skeptic"),
-            com.histmersion.api.research.ReviewFinding.Severity("major"),
-            com.histmersion.api.research.ReviewFinding.Kind("omitted-critique"),
-            com.histmersion.api.research.ReviewFinding.Where(""),
-            com.histmersion.api.research.ReviewFinding.Problem("the 2019 critique is missing"),
-            com.histmersion.api.research.ReviewFinding.Fix(""),
-            com.histmersion.api.research.ReviewFinding.Quote(""),
-            com.histmersion.api.research.ReviewFinding.Outcome("open")
+            ReviewFinding.Id("S1"),
+            ReviewFinding.Reviewer("skeptic"),
+            ReviewFinding.Severity("major"),
+            ReviewFinding.Kind("omitted-critique"),
+            ReviewFinding.Where(""),
+            ReviewFinding.Problem("the 2019 critique is missing"),
+            ReviewFinding.Fix(""),
+            ReviewFinding.Quote(""),
+            ReviewFinding.Outcome("open")
           )
         )
       )
     ),
-    goals = List(ReviewGoal(com.histmersion.api.research.ReviewGoal.Slug("sea-peoples-goal"), com.histmersion.api.research.ReviewGoal.Title("The Sea Peoples & the collapse"), com.histmersion.api.research.ReviewGoal.Status("compiled")))
+    goals = List(ReviewGoal(ReviewGoal.Slug("sea-peoples-goal"), ReviewGoal.Title("The Sea Peoples & the collapse"), ReviewGoal.Status("compiled")))
   )
 
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):

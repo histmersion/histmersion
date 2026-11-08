@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -29,13 +30,23 @@ import com.histmersion.api.exchange.{
   MergeSession
 }
 import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.BundlesConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.Transactor
+import com.histmersion.util.jobs.JobRepo
+import com.histmersion.util.data.exchange.MergeRepo
+import com.histmersion.util.data.exchange.MergeRow
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
   * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
-  private val testDb = com.histmersion.db.TestDb.url
+class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Key = "k3y"
@@ -45,13 +56,13 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey(Key))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(work.toString))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(work.toString))
     )
 
   private def withServer(body: String => Unit): Unit =
     Migrate.run(testPool(cfg.db))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -105,7 +116,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         .filter(_.name.value == Bundle.ManifestPath)
         .flatMap(_ => BundleFormat.parseManifest(r.readAll()).toOption)
         .getOrElse(fail("no manifest"))
-      assertEquals(m.instance, Bundle.Instance(inst.id, Some(com.histmersion.api.exchange.Bundle.Instance.Label("zz-work"))))
+      assertEquals(m.instance, Bundle.Instance(inst.id, Some(Bundle.Instance.Label("zz-work"))))
       // the same bytes again: the export is deterministic
       assert(java.util.Arrays.equals(get(s"$url/api/bundle").body, exp.body))
 
@@ -212,7 +223,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val yaml = "bundle: 0192f6c4-0000-7000-8000-000000000000\nresolve:\n  S-1234abcd: keep-right\n"
       val parsed = post(s"$url/api/merge/resolutions", yaml.getBytes("UTF-8"))
       assertEquals(parsed.statusCode, 200, parsed.body)
-      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-1234abcd"), com.histmersion.api.exchange.MergeResolution.Decision("keep-right"))))
+      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution(MergeResolution.Issue("S-1234abcd"), MergeResolution.Decision("keep-right"))))
       val bad = post(s"$url/api/merge/resolutions", "resolve: [1, 2]\nwhat: x\n".getBytes("UTF-8"))
       assertEquals(bad.statusCode, 400, bad.body)
       assert(bad.body.contains("unknown key 'what'") && bad.body.contains("resolve:"), bad.body)
@@ -265,7 +276,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(rg.statusCode, 200, rg.body)
       assertEquals(
         decode[LabelRenamed](rg.body),
-        LabelRenamed(com.histmersion.api.exchange.Bundle.Kind.Goal, com.histmersion.api.aliases.LabelRenamed.From("zz-goal-a"), com.histmersion.api.aliases.LabelRenamed.To("zz-goal-b"))
+        LabelRenamed(Bundle.Kind.Goal, LabelRenamed.From("zz-goal-a"), LabelRenamed.To("zz-goal-b"))
       )
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
       val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))
@@ -306,10 +317,10 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       } finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(s"CREATE DATABASE $name")
-    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))))
+    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))))
     def serve(body: String => Unit): Unit =
       supervised {
-        val b = Composition.server(own, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+        val b = Composition.server(own, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
         try body(s"http://127.0.0.1:${b.port}")
         finally b.stop()
       }
@@ -323,9 +334,8 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         job = ap.job
       }
       // the server stopped while an apply ran (its row still says running)
-      val cut = com.histmersion.util.database
-        .Transactor(testPool(own.db))
-        .transact(com.histmersion.util.jobs.JobRepo.startMergeApply(com.histmersion.util.data.exchange.MergeRepo.BundleName("c" * 64), com.histmersion.util.data.exchange.MergeRow.PlanHash("feedbeef")))
+      val cut = Transactor(testPool(own.db))
+        .transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("feedbeef")))
       serve { url =>
         val done = get(s"$url/api/merge/apply/$job")
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))

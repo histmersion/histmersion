@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -11,6 +12,11 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.storage.Blob
 
 /** Uploads over a REUSED connection (plan §1.8) — the SAFETY property, pinned after a real bug.
   *
@@ -25,7 +31,7 @@ import java.nio.file.{Files, Path}
   * (`IngestCmd.upload` refuses an empty file), which is the trigger that makes the race easy to hit.
   */
 class ZeroLengthUploadSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
@@ -76,10 +82,10 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
   private def withServer(f: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool0").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool0").toString))
     )
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), NoConverter).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), NoConverter).start()
       try f(s"http://127.0.0.1:${b.port}/api/ingest")
       finally b.stop()
     }
@@ -125,5 +131,5 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
 
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(ConverterClient.Problem("not used"))
+    def health = Right(ConverterClient.HealthSummary("ok"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(ConverterClient.Problem("not used"))

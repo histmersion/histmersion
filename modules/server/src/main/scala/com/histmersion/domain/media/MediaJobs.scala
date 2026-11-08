@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.maintenance.WriteGate
@@ -8,6 +9,7 @@ import com.histmersion.util.jobs.{BackgroundJob, Job, JobStops, WorkCarrier}
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.api.media.ImportJobKinds
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its
@@ -52,7 +54,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
       BackgroundJob.start(
         ds,
         kind,
-        Some(com.histmersion.api.media.ImportJobKinds.Media(Some(describe))),
+        Some(ImportJobKinds.Media(Some(describe))),
         jobSlot,
         BackgroundJob.Work("a media run"),
         pins = pins,

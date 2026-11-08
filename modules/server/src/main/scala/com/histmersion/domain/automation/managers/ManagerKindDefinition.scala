@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
 import com.histmersion.domain.AutopilotPolicy
@@ -15,6 +16,10 @@ import com.histmersion.domain.ManagerPolicy.StepFacts
 import java.time.Instant
 import scala.collection.mutable.Builder
 import com.histmersion.api.Api
+import com.histmersion.api.automation.Manager
+import com.histmersion.domain.automation.Run
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what
@@ -25,10 +30,10 @@ trait ManagerKindDefinition:
   def kind: Kind
 
   /** The item kinds it drives: an item is evaluated, followed up and started by the kind that lists its kind. */
-  def items: List[com.histmersion.domain.automation.managers.ManagerContext.ItemKind] = Managers.itemKinds(kind).map(k => com.histmersion.domain.automation.managers.ManagerContext.ItemKind(k.value))
+  def items: List[ManagerContext.ItemKind] = Managers.itemKinds(kind).map(k => ManagerContext.ItemKind(k.value))
 
   /** The cron a new manager of this kind gets when a person names none (UTC); `None`: no cron. */
-  def cron: Option[com.histmersion.domain.automation.managers.ManagerLight.Cron] = None
+  def cron: Option[ManagerLight.Cron] = None
 
   /** A manager's settings when it saves none: the server's defaults for its kind. */
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig
@@ -36,21 +41,21 @@ trait ManagerKindDefinition:
   /** A manager's settings in effect: its saved config `c` over the defaults of its kind (by default the run limits,
     * failures and backoff the engine knows; a kind whose items have more to set reads them itself).
     */
-  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Manager.Kind, com.histmersion.domain.automation.Manager.Kind].transform(kind), c, m)
+  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(io.scalaland.chimney.Transformer.derive[Manager.Kind, com.histmersion.domain.automation.Manager.Kind].transform(kind), c, m)
 
   /** The pipeline an item of `itemKind` runs. */
-  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline
+  def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline
 
   /** What a firing of a manager's cron re-opens, one phrase each (the cron event lists them). */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.automation.managers.ManagerKindDefinition.FirePhrase]
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase]
 
   /** A manager's queue filled by its own selection, below the low water or when its cron fired (`force`). */
   def refill(
       c: ManagerContext,
       m: ManagerInfo,
       now: Instant,
-      force: com.histmersion.domain.automation.managers.ManagerKindDefinition.RefillForce,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
+      force: ManagerKindDefinition.RefillForce,
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
     ()
 
@@ -63,21 +68,21 @@ trait ManagerKindDefinition:
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[com.histmersion.domain.automation.managers.ManagerContext.EvaluateStepError],
+      error: Option[ManagerContext.EvaluateStepError],
       now: Instant,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
 
   /** What a DONE run of one of its items left. */
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts
+  def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts
 
   /** What follows one of its items once it is done. */
   def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
       item: ManagerItem,
-      run: Option[com.histmersion.domain.automation.Run.Id],
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
+      run: Option[Run.Id],
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit = ()
 
   /** Start the next run of one of its items (`Some(manager id)` when it started), or settle it without one. */
@@ -87,36 +92,36 @@ trait ManagerKindDefinition:
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
-  ): Option[com.histmersion.domain.automation.managers.ManagerLight.Id]
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Option[ManagerLight.Id]
 
   /** The work its domain does at every tick besides the items, after the holds and before the crons: each with the name
     * a failure is logged under. `draining` = nothing new may start.
     */
-  def housework(now: Instant, draining: => Boolean): List[(com.histmersion.domain.automation.managers.ManagerLight.Id, () => List[com.histmersion.domain.automation.managers.ManagerContext.TickLine])] = Nil
+  def housework(now: Instant, draining: => Boolean): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
 
   // ── what a person adds, and what the kind's domain adds to the engine's figures ──────────────
 
   /** The target an item of `itemKind` names when a person adds one to manager `m` (an article's slug, a source's
     * citekey, the manager's goal), checked; or why it cannot be added.
     */
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: Managers.ManagerItem.Target): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerContext.ItemTarget]
+  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: Managers.ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget]
 
   /** A person added (or brought back) an item: what goes with it (the review kind: an infer-filter item first). */
-  def added(c: ManagerContext, m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget, priority: com.histmersion.domain.automation.managers.ManagerContext.Priority): Unit = ()
+  def added(c: ManagerContext, m: ManagerInfo, itemKind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget, priority: ManagerContext.Priority): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
-  def expand(c: ManagerContext, raw: Managers.ManagerItem.Target): Either[Api.Error, (List[com.histmersion.domain.automation.managers.ManagerContext.ItemTarget], List[com.histmersion.domain.automation.managers.ManagerKindDefinition.ExpandSkipped])] = Right((List(com.histmersion.domain.automation.managers.ManagerContext.ItemTarget(raw.value)), Nil))
+  def expand(c: ManagerContext, raw: Managers.ManagerItem.Target): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] = Right((List(ManagerContext.ItemTarget(raw.value)), Nil))
 
   /** Per manager of this kind: what waits in its backlog and the days it takes to drain (a watcher's ingest backlog).
     */
-  def backlog(): Map[com.histmersion.domain.automation.managers.ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] = Map.empty
+  def backlog(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] = Map.empty
 
   /** The autopilot's status with this kind's domain's part filled in. */
   def status(st: EngineStatus, now: Instant): EngineStatus = st
 
   /** What this kind's domain ingested today outside the managers' own events (the shared ingest cap counts it). */
-  def ingestedToday(now: Instant): com.histmersion.RowCount = com.histmersion.RowCount(0)
+  def ingestedToday(now: Instant): RowCount = RowCount(0)
 
   /** The autopilot's checks of an approval this kind's items wait for (None: not one of its kinds). */
   def judge(
@@ -132,8 +137,8 @@ trait ManagerKindDefinition:
 
 object ManagerKindDefinition:
   type FirePhrase = FirePhrase.T
-  object FirePhrase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FirePhrase extends RefinedType[String, Pure]
   type RefillForce = RefillForce.T
-  object RefillForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefillForce extends RefinedType[Boolean, Pure]
   type ExpandSkipped = ExpandSkipped.T
-  object ExpandSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExpandSkipped extends RefinedType[String, Pure]

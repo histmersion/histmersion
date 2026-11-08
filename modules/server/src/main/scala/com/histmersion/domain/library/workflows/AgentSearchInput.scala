@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Filter
@@ -6,6 +7,8 @@ import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Sort
 
 /** `search` as an agent calls it: the filters steps use, mapped onto the same [[Filter]]. */
 final case class AgentSearchInput(
@@ -14,9 +17,9 @@ final case class AgentSearchInput(
     tags: List[Filter.Tags] = Nil,
     authors: List[Filter.Authors] = Nil,
     status: List[Filter.Status] = Nil,
-    from: Option[com.histmersion.api.catalogue.Year] = None,
-    to: Option[com.histmersion.api.catalogue.Year] = None,
-    sort: Option[com.histmersion.api.library.Sort.Wire] = None,
+    from: Option[Year] = None,
+    to: Option[Year] = None,
+    sort: Option[Sort.Wire] = None,
     limit: Option[Filter.Limit] = None,
     offset: Option[Filter.Offset] = None
 ) derives KindlingsCodecAsObject:

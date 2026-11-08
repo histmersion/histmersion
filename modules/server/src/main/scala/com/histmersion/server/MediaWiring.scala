@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.library.sources.{SourceMedia, SourceService}
 import com.histmersion.domain.media.{MediaJobs, MediaSources}
@@ -9,13 +10,15 @@ import com.histmersion.domain.media.imports.{ImportsControllers, ImportService, 
 import com.histmersion.domain.media.links.{AssetLinksControllers, AssetLinkService}
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 import com.histmersion.util.ocr.ConverterClient
+import com.histmersion.util.storage.Blob
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** Media's services and controllers, built over one server's `deps`: `http` fetches the providers' pictures and Open
   * Library's covers, `converter` makes thumbnails; the sources its figures and covers belong to are the library's.
   */
 final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterClient):
   def this(deps: Deps, converter: ConverterClient) =
-    this(deps, JavaHttpTransport(com.histmersion.pluginhost.HttpTransport.TimeoutSeconds(deps.cfg.media.timeoutSeconds.value)), converter)
+    this(deps, JavaHttpTransport(HttpTransport.TimeoutSeconds(deps.cfg.media.timeoutSeconds.value)), converter)
   def this(deps: Deps, http: HttpTransport) = this(deps, http, MediaWiring.NoThumbnails)
   def this(deps: Deps) = this(deps, MediaWiring.NoThumbnails)
 
@@ -34,7 +37,7 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
 
   val assets: AssetsControllers = AssetsControllers(assetStore, sources, () => deps.cfg, deps.maintenance)
 
-  val iiif: IiifControllers = IiifControllers(assetStore, () => com.histmersion.domain.media.assets.IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
+  val iiif: IiifControllers = IiifControllers(assetStore, () => IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
 
   val links: AssetLinksControllers =
     AssetLinksControllers(
@@ -85,9 +88,9 @@ object MediaWiring:
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:
     def convert(
-        file: com.histmersion.util.storage.Blob,
+        file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[ConverterClient.Problem, com.histmersion.api.ocr.ConvertedDoc] =
+    ): Either[ConverterClient.Problem, ConvertedDoc] =
       Left(ConverterClient.Problem("no converter"))
     def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Left(ConverterClient.Problem("no converter"))

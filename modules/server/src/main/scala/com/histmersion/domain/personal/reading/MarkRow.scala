@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.reading
+package com.histmersion
+package domain.personal.reading
 
 import com.histmersion.domain.personal.PersonalState.StoredMark
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}

@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.reading
+package com.histmersion
+package domain.personal.reading
 
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, Referables}
 import com.histmersion.domain.personal.PersonalState.StoredMark
@@ -10,6 +11,8 @@ import com.histmersion.{Offset, PageSize, UserId}
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
   * opened it, which marks nothing read. Marking unread keeps the row, with no read time. What is not read yet is the
@@ -21,7 +24,7 @@ trait ReadingService:
       user: UserId,
       kind: ItemKind,
       key: ItemKey,
-      read: com.histmersion.domain.personal.reading.ReadingService.Read,
+      read: ReadingService.Read,
       title: Option[TargetLabel],
       at: MarkTime
   ): ReadMark
@@ -32,7 +35,7 @@ trait ReadingService:
 
 object ReadingService:
   type Read = Read.T
-  object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Read extends RefinedType[Boolean, Pure]
 
 
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =
@@ -47,7 +50,7 @@ object ReadingService:
     ItemRef(kind, key, items.resolve(kind, key).toOption.flatMap(_.uid))
 
   private def unreadOf(readables: List[Readable], kind: ItemKind)(read: => Set[ItemRef], size: PageSize, from: Offset) =
-    readables.find(_.kind == kind).fold(UnreadItems(Nil, com.histmersion.domain.personal.marks.UnreadItems.Total(0)))(_.unread(read, size, from))
+    readables.find(_.kind == kind).fold(UnreadItems(Nil, UnreadItems.Total(0)))(_.unread(read, size, from))
 
   final private class Implementation(db: Transactor, items: Referables, readables: List[Readable])
       extends ReadingService:
@@ -65,7 +68,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: com.histmersion.domain.personal.reading.ReadingService.Read,
+        read: Read,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
@@ -125,7 +128,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: com.histmersion.domain.personal.reading.ReadingService.Read,
+        read: Read,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =

@@ -1,11 +1,12 @@
-package com.histmersion.util.process
+package com.histmersion
+package util.process
 
 import java.io.{InputStream, OutputStream}
 import java.util.concurrent.TimeUnit
 
 /** A child process that was started. */
 trait RunningProcess:
-  def pid: com.histmersion.util.process.Processes.Pid
+  def pid: Processes.Pid
   def isAlive: Boolean
 
   /** Its output, when it is piped. */
@@ -15,10 +16,10 @@ trait RunningProcess:
   def input: OutputStream
 
   /** Wait until it ends; its exit code. */
-  def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode
+  def waitFor(): ProcessResult.ExitCode
 
   /** Wait at most `timeout`; whether it ended. */
-  def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean
+  def waitFor(timeout: Processes.WaitTimeout, unit: TimeUnit): Boolean
 
   /** Ask it to end. */
   def destroy(): Unit

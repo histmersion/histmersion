@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -33,6 +34,22 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.{PdfInfo, Query, WorkRef}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.api.automation.Agents
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AgentsConfig
+import com.histmersion.config.AgentRolesConfig
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.ByteCount
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.server.views.WorkListView
+import com.histmersion.domain.automation.managers.ManagersControllers
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.config.AgentSchedulerConfig
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.agents.RunService
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes
@@ -41,8 +58,8 @@ import com.histmersion.api.library.Source
   * watcher's settled sweeps). Models are scripted and the acquisition toolset is a fixture ([[StubUpstream]]): nothing
   * reaches a provider or the network. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
-  private val testDb = com.histmersion.db.TestDb.url
+class ManagerPhase3Suite extends DbSuite with RunTranscripts:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
@@ -64,16 +81,16 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val CronKind = ManagerEvent.Kind(Feed.Cron)
   private val HintKind = ManagerEvent.Kind(Feed.Hint)
   private val StarvedKind = ManagerEvent.Kind(Feed.Starved)
-  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))
+      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(AgentRolesConfig.Writer(m.value))
       )
     )
 
@@ -117,7 +134,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
 
   private def work(doi: String, title: String, oa: WorkRef.IsOa) =
-    WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
+    WorkRef(doi = (Some(doi)).map(Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
   private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, Ingest.Report] =
@@ -125,16 +142,16 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     else
       val ck = Citekey.assume("zzagent" + doi.replaceAll("[^a-z0-9]", ""))
       assert(
-        h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $doi"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply))).isRight
+        h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $doi"), year = (Some(2023)).map(Year.apply), doi = (Some(doi)).map(Doi.apply))).isRight
       )
       Right(
         Ingest.Report(
           com.histmersion.api.library.Citekey(ck.value),
-          Some(com.histmersion.api.library.Doi(doi)),
+          Some(Doi(doi)),
           Some(com.histmersion.api.library.Title(s"Ingested $doi")),
-          created = com.histmersion.api.library.Ingest.Report.Created(true),
-          Some(PdfInfo(PdfInfo.Source("unpaywall"), Some(PdfInfo.Url(s"https://example.invalid/$doi.pdf")), com.histmersion.api.ByteCount(2048), None)),
-          com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
+          created = Ingest.Report.Created(true),
+          Some(PdfInfo(PdfInfo.Source("unpaywall"), Some(PdfInfo.Url(s"https://example.invalid/$doi.pdf")), ByteCount(2048), None)),
+          Ingest.Report.EdgesAdded(0),
           None,
           Nil
         )
@@ -143,10 +160,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind): ManagerItem = connect(ds)(ManagerRepo.itemFor(mid, kind, GoalTarget)).get
 
   private def events(mid: ManagerInfo.Id, kind: ManagerEvent.Kind): List[ManagerEvent] =
-    connect(ds)(ManagerRepo.events(mid, None, com.histmersion.PageSize(200))).filter(_.kind == kind)
+    connect(ds)(ManagerRepo.events(mid, None, PageSize(200))).filter(_.kind == kind)
 
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
-    h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent"))
+    h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent"))
 
   test("watch: created paused with its cron and one item per sweep; nothing starts before it is resumed"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
@@ -160,7 +177,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(m.effective.autoIngest, Some(false), "auto-ingest is opt-in")
     assertEquals(
       Transactor(ds)
-        .read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(10)))
+        .read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(10)))
         ._1
         .map(i => (i.kind, i.target, i.status))
         .sortBy(_._1.value),
@@ -199,7 +216,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         now
       )
       .fold(e => fail(e.message.value), identity)
-    a.managing.action(ApiIds.manager(m.id), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(now)
     val sweep = item(m.id, SweepKind)
     assertEquals(sweep.status, "active", out.mkString("\n"))
@@ -225,7 +242,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       "only open-access picks, until two were ingested"
     )
     assertEquals(
-      h.library.sources.get(com.histmersion.domain.library.Citekey("zzagent105555zzagenta"), body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(_.source.title),
+      h.library.sources.get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody(false)).map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
     assert(
@@ -297,11 +314,11 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug), ManagerConfig(sweeps = Some(List(Sweep.Wire("acquisition"))))))
       .fold(e => fail(e.message.value), identity)
     assertEquals(
-      Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(10)))._1.map(_.kind),
+      Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(10)))._1.map(_.kind),
       List(AcquisitionSweep),
       "only the sweeps it names"
     )
-    a.managing.action(ApiIds.manager(m.id), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     a.managers.tick(Instant.now())
     val run = connect(ds)(AgentRepo.get(item(m.id, SweepKind).runId.get)).get
     assertEquals(run.params.autoIngest, None)
@@ -310,7 +327,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.count(_.startsWith("ingest")), 0)
     assertEquals(acquire(h).count(_.text.value.contains("zzagent.a")), 1)
-    assert(connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(1000))).forall(_.name.value != "ingest"), "no ingest step without auto-ingest")
+    assert(connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(1000))).forall(_.name.value != "ingest"), "no ingest step without auto-ingest")
     assertEquals(events(m.id, IngestedKind), Nil)
 
   test(
@@ -327,7 +344,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val sunday = Instant.parse("2026-10-18T00:00:30Z")
     assertEquals(a.managers.tick(sunday).filter(_.value.contains("cron")), Nil, "paused: its cron does not fire")
-    a.managing.action(ApiIds.manager(m.id), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     assertEquals(a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.value.contains("cron")), Nil, "not due yet")
     val out = a.managers.tick(sunday)
     assert(out.map(_.value).contains(s"${m.id}: cron fired"), out)
@@ -349,7 +366,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
     // agents.scheduler.enabled = false stops every cron
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(com.histmersion.config.AgentSchedulerConfig.Enabled(false))))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(AgentSchedulerConfig.Enabled(false))))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     assertEquals(b.managers.tick(Instant.parse("2026-12-01T00:00:00Z")).filter(_.value.contains("cron")), Nil)
 
@@ -375,7 +392,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(lowWater = Some(ManagerConfig.LowWater(0)), maxRuns = Some(ManagerConfig.MaxRuns(0)))), Some(ManagerUpdate.Cron("@daily"))), t0)
       .fold(e => fail(e.message.value), identity)
     assertEquals((r.cron, r.nextTickAt), (Some("@daily"), Some("2026-10-18T00:00:00Z")))
-    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(Instant.parse("2026-10-18T00:01:00Z"))
     assert(out.map(_.value).contains("review: cron fired"), out)
     assert(events(Review, CronKind).head.text.value.contains("selection refilled"))
@@ -390,8 +407,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** The (paused) enrich manager with two source items. */
   private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
-    assert(h.library.sources.put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
-    assert(h.library.sources.put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
+    assert(h.library.sources.put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(Year.apply))).isRight)
+    assert(h.library.sources.put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(Year.apply))).isRight)
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
       a.managing.addItem(ApiIds.manager(Enrich), EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target(ck.value), Some(EnqueueRequest.Priority(0)))).fold(e => fail(e.message.value), identity)
@@ -427,7 +444,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       ManagersMarkdown.hint(hint)
     )
     // approve: applied through the same path as a person's own hold, and recorded on the hint
-    val decided = a.decide(ApiIds.approval(ap.head.id), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).fold(e => fail(e.message.value), identity)
+    val decided = a.decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest()).fold(e => fail(e.message.value), identity)
     assertEquals(decided.state, "approved")
     assert(decided.result.exists(_.value.contains("hold")), decided.result)
     assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
@@ -439,7 +456,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("drop B"), effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))), propose = Some(HintAdd.Propose(true))))
       .fold(e => fail(e.message.value), identity)
     val ap2 = openHintApprovals(a).head
-    assertEquals(a.decide(ApiIds.approval(ap2.id), com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(a.decide(ApiIds.approval(ap2.id), Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
     assertEquals(enrichItem(CkB).status, "pending")
     assertEquals(Transactor(ds).read(ManagerRepo.hint(skip.id)).get.effect, None)
 
@@ -482,7 +499,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns, None, "not before approval")
     val ap = openHintApprovals(a).head
     assert(AgentsMarkdown.change(ap).contains("settings: maxRuns=1"), AgentsMarkdown.change(ap))
-    assertEquals(a.decide(ApiIds.approval(ap.id), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.decide(ApiIds.approval(ap.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns, Some(1))
 
   test(
@@ -505,7 +522,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val hint = a.managing
       .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true))))
       .fold(e => fail(e.message.value), identity)
-    val run = connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(20))).find(_.pipeline.value == "hint-effect").get
+    val run = connect(ds)(AgentRepo.list(None, PageSize(20))).find(_.pipeline.value == "hint-effect").get
     assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
     a.engine.execute(ApiIds.run(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
@@ -521,10 +538,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(ap.head.runId, Some(run.id))
     assert(
-      connect(ds)(ManagerRepo.events(Enrich, None, com.histmersion.PageSize(20)))
+      connect(ds)(ManagerRepo.events(Enrich, None, PageSize(20)))
         .exists(e => e.kind == HintKind && e.text.value.contains("a model proposed hold"))
     )
-    assertEquals(a.decide(ApiIds.approval(ap.head.id), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(enrichItem(CkA).status, "held")
     // a suggestion and an effect together are refused; with agents off a suggestion is refused before the hint is kept
     assert(
@@ -532,7 +549,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))), suggest = Some(HintAdd.Suggest(true))))
         .isLeft
     )
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false)))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(false)))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     val before = Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size
     assert(
@@ -557,13 +574,13 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         AgentsControllers.Target("zzagent-watch"),
         None,
         BigDecimal(1),
-        com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens(1000),
+        AgentsControllers.BudgetTokens(1000),
         RunParams(),
         None,
         Some(Goal),
         None,
         Origin.Manager,
-        dryRun = com.histmersion.domain.automation.agents.RunService.DryRun(false),
+        dryRun = RunService.DryRun(false),
         Some(ApiIds.manager(m.id)),
         None
       )
@@ -576,7 +593,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val info = a.managing.get(ApiIds.manager(m.id)).toOption.get.manager
     assertEquals((info.spentTodayUsd, info.tokensToday), (0.02, 6500L))
     assert(ManagersMarkdown.line(info).contains("today 0.0200 of 0.0100 USD, 6.5k tokens"), ManagersMarkdown.line(info))
-    a.managing.action(ApiIds.manager(m.id), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyKind).status, "pending")

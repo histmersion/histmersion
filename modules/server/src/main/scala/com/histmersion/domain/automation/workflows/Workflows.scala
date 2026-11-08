@@ -1,8 +1,11 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.AgentRole
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.research.Slug
 
 /** The engine's registry of contributed workflows, tools and manager kinds, in the order they were registered. Built
   * once by [[Workflows.of]], which refuses two workflows with one identifier, two tools with one name, a workflow whose
@@ -22,11 +25,11 @@ final class Workflows private (
   def definition(id: WorkflowId): Option[WorkflowDefinition] = byId.get(id)
 
   /** Every goal's linked items that exist, by goal, as the domains count them. */
-  def linked(): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]] =
+  def linked(): Map[Goal.Slug, List[Slug]] =
     objectives.flatMap(_.linked().toList).groupMap(_._1)(_._2).view.mapValues(_.flatten).toMap
 
   /** The linked items that count as finished. */
-  def finished(): Set[com.histmersion.domain.research.Slug] = objectives.flatMap(_.finished()).toSet
+  def finished(): Set[Slug] = objectives.flatMap(_.finished()).toSet
 
   /** Every contributed tool's name, in the order of registration. */
   def toolNames: List[ToolName] = tools.map(_.name)

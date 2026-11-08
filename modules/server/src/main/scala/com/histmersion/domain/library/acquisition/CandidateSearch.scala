@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
@@ -16,6 +17,12 @@ import com.histmersion.api.automation.{Goal, Queue}
 import com.histmersion.api.library.{Acquire, Candidates, CandidateSweep, CandidateWatch, WorkRef}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.search.Search
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to
@@ -46,8 +53,8 @@ final class CandidateSearch(
     val queries = Some(refs(LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(goal.title.value))
     val q = for query <- queries; i <- indexes
     yield CandidateWatch(watchGoal, Candidates.WatchKind.Query.wire, CandidateWatch.Subject(query), CandidateWatch.Index(i.name.value))
-    val cited = (refs(LinkKind.Source).flatMap(com.histmersion.domain.library.Citekey.option(_)) ++
-      refs(LinkKind.Article).flatMap(com.histmersion.domain.research.Slug.option(_)).flatMap(articles.cited)).distinct
+    val cited = (refs(LinkKind.Source).flatMap(Citekey.option(_)) ++
+      refs(LinkKind.Article).flatMap(Slug.option(_)).flatMap(articles.cited)).distinct
       .take(math.max(0, c.sources.value))
     val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(doi => Ident.doi(Ident.Written(doi.value))).map(ck -> _))
     val citing = withDoi.map((ck, doi) =>
@@ -56,7 +63,7 @@ final class CandidateSearch(
     q ++ citing
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
-  def sweep(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun): Either[Api.Error, CandidateSweep] =
+  def sweep(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: CandidateSearch.SweepDryRun): Either[Api.Error, CandidateSweep] =
     goals.get(goal).toRight(Api.Error(Api.Error.Message(s"no goal '$goal'"), Some(Api.Error.Code(Write.CodeNotFound)))).map { g =>
       val c = cfg
       val now = today()
@@ -70,7 +77,7 @@ final class CandidateSearch(
       val authorWatches = base
         .filter(_.kind == Candidates.WatchKind.Citing.wire)
         .flatMap { w =>
-          com.histmersion.domain.library.Doi.option(w.subject.value).toList.flatMap { doi =>
+          Doi.option(w.subject.value).toList.flatMap { doi =>
             alerts
               .authors(doi)
               .toOption
@@ -89,7 +96,7 @@ final class CandidateSearch(
             leftOut.update(i.name, (why, n + 1))
             Left(s"not asked this sweep — $why")
           case None =>
-            val got = i.search(com.histmersion.domain.library.search.Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
+            val got = i.search(Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
             got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why.value, 0))))
             got.left.map(_.value)
       val read = (base ++ authorWatches).map { w =>
@@ -101,7 +108,7 @@ final class CandidateSearch(
               .toRight(s"index '${w.index}' is not configured")
               .flatMap(query(_, w, since))
           case Some(Candidates.WatchKind.Citing) =>
-            com.histmersion.domain.library.Doi
+            Doi
               .either(w.subject.value)
               .flatMap(doi => alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)).left.map(_.value))
           case Some(Candidates.WatchKind.Author) =>
@@ -184,4 +191,4 @@ final class CandidateSearch(
 
 object CandidateSearch:
   type SweepDryRun = SweepDryRun.T
-  object SweepDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SweepDryRun extends RefinedType[Boolean, Pure]

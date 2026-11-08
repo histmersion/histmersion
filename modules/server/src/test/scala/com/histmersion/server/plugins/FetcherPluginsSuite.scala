@@ -1,4 +1,5 @@
-package com.histmersion.server.plugins
+package com.histmersion
+package server.plugins
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,9 @@ import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.plugin.Doi
+import com.histmersion.config.ConfigReload
 
 /** Histmersion's own acquisition plugins, found on the class path and registered through the plugin host like any
   * plugin, with the host's `histmersion.acquire` settings supplied: on by default in today's order, each one switched
@@ -38,7 +42,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     * host's settings supplied.
     */
   private def generation(user: String = "", env: Map[String, String] = Map.empty, http: Http = Offline): Generation =
-    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http), core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http), core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
 
   private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation = generation(user, env)
 
@@ -114,7 +118,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     // CORE is asked once, not retried, through its budget
     override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       record(url, headers);
-      Right(com.histmersion.pluginhost.HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map.empty, HttpAnswer.Body("{}".getBytes("UTF-8"))))
+      Right(HttpAnswer(HttpAnswer.Code(200), Map.empty, HttpAnswer.Body("{}".getBytes("UTF-8"))))
 
   private def emailOf(url: String): Option[String] =
     java.net.URI(url).getRawQuery.split("&").toList.collectFirst {
@@ -126,7 +130,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
   private val CoreKey = Registries.SourceFetchersKey("core")
 
   private def fetch(g: Generation, fetcher: Registries.SourceFetchersKey): Fetch =
-    g.registries.sourceFetchers(fetcher).fetch(WorkKey(doi = Some(com.histmersion.plugin.Doi("10.1/x"))), Ctx)
+    g.registries.sourceFetchers(fetcher).fetch(WorkKey(doi = Some(Doi("10.1/x"))), Ctx)
 
   test("oa-unpaywall asks with its own contact-email, else Histmersion's acquire.contact-email, else not at all"):
     val own = Recording()
@@ -252,7 +256,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("reload: a change of an oa-index key rebuilds the four successors, and only them"):
     val g = generation()
-    val carried = Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-index.enabled")))
+    val carried = Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.plugins.oa-index.enabled")))
     assertEquals(carried.keySet, Set("archive-org", "pmc", "arxiv"))
 
   test("the shipped default chain names exactly the built-in fetchers, in today's order"):
@@ -276,7 +280,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("a reordered chain is honoured, unlisted fetchers following in registration order"):
     val g = generation()
-    val (c, notes) = FetchChain.of(fetchers(g), List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")), allowUnauthorised = com.histmersion.pluginhost.FetchChain.AllowUnauthorised(false))
+    val (c, notes) = FetchChain.of(fetchers(g), List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")), allowUnauthorised = FetchChain.AllowUnauthorised(false))
     assertEquals(c.plan.map(_._1.value).take(2), List("arxiv", "pmc"))
     assertEquals(c.plan.map(_._1.value).toSet, Today.toSet)
     assertEquals(notes, Nil)
@@ -376,7 +380,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
       http = h
     )
     val got =
-      FetchChain(List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("landing"))), registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value)))
+      FetchChain(List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("landing"))), registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value)))
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
     assertEquals(got, Left(FetchChain.NoCopy))
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
@@ -397,7 +401,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     val g = generation()
     // the landing step asks, fetch by fetch, which index plugins its generation registered
     List("oa-unpaywall", "oa-openalex", "oa-landing").foreach { id =>
-      val carried = Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey(s"histmersion.plugins.$id.enabled")))
+      val carried = Plugins.carried(g, List(ConfigReload.ChangedKey(s"histmersion.plugins.$id.enabled")))
       assertEquals(
         carried.keySet,
         Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv") - id,
@@ -406,11 +410,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
     }
     // … but it asks Unpaywall with oa-unpaywall's own contact, which it is supplied at registration
     assertEquals(
-      Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email"))).keySet,
+      Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email"))).keySet,
       Set("archive-org", "oa-core", "oa-openalex", "pmc", "arxiv")
     )
     // a host key every fetcher reads rebuilds them all; one no fetcher reads, none
-    assertEquals(Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.landing.max-pages"))), Map.empty)
+    assertEquals(Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.acquire.landing.max-pages"))), Map.empty)
     assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
   private object Ctx extends Fetch.Context:

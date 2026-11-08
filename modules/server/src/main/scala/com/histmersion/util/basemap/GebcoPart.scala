@@ -1,11 +1,14 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 /** One GEBCO GeoTIFF the region needs: where it is, its grid, the part of it the region covers and the range requests
   * that read that part.
   */
 import com.histmersion.util.storage.Store
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
-  def bytes: com.histmersion.ByteCount = com.histmersion.ByteCount.applyUnsafe(runs.map(_.length.value).sum)
+  def bytes: ByteCount = ByteCount.applyUnsafe(runs.map(_.length.value).sum)
 
   /** The file `run` is kept in, in the fetch's work store. */
   def key(run: RowRun): Store.Key = Store.Key.applyUnsafe(s"gebco-$name-${run.firstRow}.bin")
@@ -13,6 +16,6 @@ final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTi
 object GebcoPart:
 
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Url = RangeHttp.Url
   val Url: RangeHttp.Url.type = RangeHttp.Url

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.catalogue.EventEntry
 
@@ -30,78 +31,86 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.catalogue.LeadFacts
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
   */
 trait EventService:
   /** The events `selection` selects, by their earliest year then label, one page of them. */
-  def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList
+  def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList
 
   /** The events `selection` selects that the map draws (placed, dated well enough), at most `limit`, with the regional
     * ones' outlines simplified to `tolerance` degrees; the unplaced and the imprecisely dated counted.
     */
-  def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List
+  def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List
 
   /** The events of `ids` the map draws, by id. */
-  def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo]
+  def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo]
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
-  def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry]
+  def get(id: Event.Id): Option[EventEntry]
 
   /** Its tier, its other names and the catalogue it was imported from. */
-  def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])]
+  def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])]
 
   /** The catalogues' rows of one event, with each built-in catalogue's licence and citation. */
-  def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef]
+  def catalogueRefs(id: Event.Id): List[EventCatalogueRef]
 
   /** Why `geojson` is no geometry the store reads; `None` when it is one. */
-  def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem]
+  def geometryError(geojson: EventDetailRow.Geometry): Option[EventService.Problem]
 
   /** Create or replace one event; on one an import created, the fields that differ from its catalogue's are recorded as
     * corrections.
     */
-  def put(id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Unit
+  def put(id: Event.Id, in: EventPut): Unit
 
   /** Change the fields `p` sets; on one an import created, each changed field is recorded as a correction. */
-  def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit]
+  def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit]
 
   /** A new id; the old one stays an alias, what names the event follows. */
-  def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit]
+  def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit]
 
   /** The id an old id was renamed to; `None` for a live id, or nothing. */
-  def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id]
+  def renamedTo(id: Event.Id): Option[Event.Id]
 
-  def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean
+  def delete(id: Event.Id): Boolean
 
 object EventService:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
-  private def missing(id: com.histmersion.domain.catalogue.Event.Id) =
+  private def missing(id: Event.Id) =
     Api.Error(Api.Error.Message(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
-    def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList =
+    def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
       db.read(EventRepo.list(selection.sql(related), limit, offset))
-    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List =
+    def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
-    def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo] = db.read(EventRepo.geoOf(ids.map(i => com.histmersion.domain.catalogue.events.BEventRow.Id(i.value)))).map((k, v) => com.histmersion.domain.catalogue.Event.Id.assume(k.value) -> v)
-    def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry] = db.read(EventRepo.get(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value)))
-    def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
-      db.read(EventRepo.tierAndNames(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value))).map((tier, names, catalogue) =>
+    def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] = db.read(EventRepo.geoOf(ids.map(i => BEventRow.Id(i.value)))).map((k, v) => Event.Id.assume(k.value) -> v)
+    def get(id: Event.Id): Option[EventEntry] = db.read(EventRepo.get(BEventRow.Id(id.value)))
+    def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
+      db.read(EventRepo.tierAndNames(BEventRow.Id(id.value))).map((tier, names, catalogue) =>
         (EventSummary.Tier(tier.value), names.map(n => EventEntry.Names(n.value)), catalogue.map(c => HeldEvent.Catalogue(c.value)))
       )
-    def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
-    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem] =
-      db.read(EventRepo.geometryError(com.histmersion.domain.catalogue.events.BEventRow.Geom(geojson.value))).map(p => EventService.Problem(p.value))
-    def put(id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value), in))
-    def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value), p))
-    def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit] = db.transact(EventRepo.rename(com.histmersion.domain.catalogue.events.BEventRow.Id(from.value), com.histmersion.domain.catalogue.events.BEventRow.Id(to.value)))
-    def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id] = db.read(EventRepo.renamedTo(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value))).map(i => com.histmersion.domain.catalogue.Event.Id.assume(i.value))
-    def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.transact(EventRepo.delete(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value)))
+    def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
+    def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
+      db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value))).map(p => Problem(p.value))
+    def put(id: Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(BEventRow.Id(id.value), in))
+    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(BEventRow.Id(id.value), p))
+    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] = db.transact(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
+    def renamedTo(id: Event.Id): Option[Event.Id] = db.read(EventRepo.renamedTo(BEventRow.Id(id.value))).map(i => Event.Id.assume(i.value))
+    def delete(id: Event.Id): Boolean = db.transact(EventRepo.delete(BEventRow.Id(id.value)))
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone: no place is stored, so an
     * event is anchored by its own geometry (a point; an area has no outline) and has no place's kind or label;
@@ -109,20 +118,20 @@ object EventService:
     */
   final class InMemory(
       state: AtomicReference[CatalogueState],
-      selectedSources: com.histmersion.api.library.Filter => Option[Set[Citekey]] = _ => None
+      selectedSources: Filter => Option[Set[Citekey]] = _ => None
   ) extends EventService:
 
-    private def attested(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id): Boolean =
+    private def attested(s: CatalogueState, id: Event.Id): Boolean =
       s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
 
-    private def overlaps(e: HeldEvent, period: Option[com.histmersion.api.catalogue.Period]): Boolean =
+    private def overlaps(e: HeldEvent, period: Option[Period]): Boolean =
       period.forall(p => e.outer.forall((a, b) => a.value <= p.end.value && b.value >= p.start.value))
 
     private def containsText(field: Option[String], t: String): Boolean =
       field.exists(_.toLowerCase(Locale.ROOT).contains(t.toLowerCase(Locale.ROOT)))
 
     /** The part of the selection the library answers in the database: its sources, its period, its title. */
-    private def related(s: CatalogueState, e: HeldEvent, f: com.histmersion.api.library.Filter): Option[Boolean] =
+    private def related(s: CatalogueState, e: HeldEvent, f: Filter): Option[Boolean] =
       val sources = selectedSources(f.sourceSet.modify(_.period).setTo(None))
       val title = f.title.map(_.value.trim).filter(_.nonEmpty)
       if sources.isEmpty && f.period.isEmpty && title.isEmpty then None
@@ -150,7 +159,7 @@ object EventService:
         e.geometry
           .flatMap(HeldEvent.pointOf)
           .exists((lat, lon) =>
-            b.contains(com.histmersion.api.catalogue.Longitude(lon.value), com.histmersion.api.catalogue.Latitude(lat.value))
+            b.contains(Longitude(lon.value), Latitude(lat.value))
           )
       ) &&
       clean(sel.text.map(_.value)).forall(t => containsText(Some(e.label.value), t) || containsText(e.description.map(_.value), t)) &&
@@ -165,14 +174,14 @@ object EventService:
 
     private def summaryOf(s: CatalogueState, e: HeldEvent): EventSummary = e.summary(attested(s, e.id))
 
-    def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList =
+    def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
       val s = state.get
       val all = ordered(s.events.filter(selects(s, selection)))
       val from = offset.value.max(0)
       EventList.of(
         EventList.Total(all.size),
         all.slice(from, from + limit.value.max(1)).toList.map(summaryOf(s, _)),
-        com.histmersion.api.personal.UnreadPage.Offset(from)
+        UnreadPage.Offset(from)
       )
 
     private def drawn(s: CatalogueState, e: HeldEvent): Option[EventGeo] =
@@ -187,16 +196,16 @@ object EventService:
           EventGeo.Scale(sum.scale.value),
           EventGeo.Historicity(sum.historicity.value),
           sum.timeSpan,
-          com.histmersion.api.catalogue.Latitude(lat.value),
-          com.histmersion.api.catalogue.Longitude(lon.value),
-          com.histmersion.api.catalogue.EventGeo.Anchor("event"),
+          Latitude(lat.value),
+          Longitude(lon.value),
+          EventGeo.Anchor("event"),
           sum.placeId,
           None,
           sum.parentId.map(p => EventGeo.ParentId(p.value)),
           None,
           EventGeo.Tier(sum.tier.value),
           EventLeads
-            .size(vei.map(com.histmersion.api.catalogue.LeadFacts.Vei(_)), magnitude.map(com.histmersion.api.catalogue.LeadFacts.Magnitude(_)))
+            .size(vei.map(LeadFacts.Vei(_)), magnitude.map(LeadFacts.Magnitude(_)))
             .map(EventGeo.Size(_)),
           EventGeo.Precision(sum.precision.value),
           sum.datingNote.map(EventGeo.Dating(_))
@@ -205,7 +214,7 @@ object EventService:
 
     private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_.value <= EventPrecision.ApproximateUpTo.value)
 
-    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List =
+    def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       val s = state.get
       val listed = ordered(s.events.filter(selects(s, selection)))
       val placed = listed.filter(_.geometry.isDefined)
@@ -216,11 +225,11 @@ object EventService:
         EventGeo.List.Imprecise(placed.count(e => e.uncertainty.exists(_.value > EventPrecision.ApproximateUpTo.value)))
       )
 
-    def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo] =
+    def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] =
       val s = state.get
       s.events.filter(e => ids.contains(e.id) && preciseEnough(e)).flatMap(e => drawn(s, e).map(e.id -> _)).toMap
 
-    def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry] =
+    def get(id: Event.Id): Option[EventEntry] =
       val s = state.get
       s.events.find(_.id == id).map { e =>
         val sum = summaryOf(s, e)
@@ -245,11 +254,11 @@ object EventService:
         )
       }
 
-    def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
+    def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
       val s = state.get
       s.events.find(_.id == id).map(e => (summaryOf(s, e).tier, e.names.map(n => EventEntry.Names(n.value)), e.catalogue))
 
-    def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef] =
+    def catalogueRefs(id: Event.Id): List[EventCatalogueRef] =
       state.get.catalogueRecords
         .filter(_._1.value == id.value)
         .map(_._2)
@@ -271,23 +280,23 @@ object EventService:
           )
         }
 
-    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem] =
+    def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       io.circe.parser.parse(geojson.value) match
-        case Left(e)  => Some(EventService.Problem(e.message))
+        case Left(e)  => Some(Problem(e.message))
         case Right(j) =>
           val c = j.hcursor
           c.get[String]("type").toOption match
-            case None => Some(com.histmersion.domain.catalogue.events.EventService.Problem("unknown GeoJSON type"))
+            case None => Some(Problem("unknown GeoJSON type"))
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
-            case Some(_) => Some(EventService.Problem("Unable to find 'coordinates' in GeoJSON string"))
+            case Some(_) => Some(Problem("Unable to find 'coordinates' in GeoJSON string"))
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
-    private def withCorrections(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id, fields: Map[String, io.circe.Json]): CatalogueState =
+    private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, io.circe.Json]): CatalogueState =
       val upstream = for
         e <- s.events.find(_.id == id)
         cat <- e.catalogue
         recs = s.catalogueRecords.filter((ev, r) => ev.value == id.value && r.provider.value == cat.value).map(_._2)
-        key <- com.histmersion.api.catalogue.CatalogRecord.owner(
+        key <- CatalogRecord.owner(
           CatalogRecord.EventId(id.value),
           CatalogRecord.Provider(cat.value),
           recs.map(_.key).toList
@@ -306,7 +315,7 @@ object EventService:
     private def corrected(
         s: CatalogueState,
         provider: HeldEvent.Catalogue,
-        id: com.histmersion.domain.catalogue.Event.Id,
+        id: Event.Id,
         field: String,
         value: io.circe.Json,
         upstream: io.circe.Json
@@ -318,14 +327,14 @@ object EventService:
       if value == upstream then s.modify(_.corrections).setTo(others)
       else
         val n = s.lastCorrectionId.value + 1
-        val c = com.histmersion.api.catalogue.Correction(
+        val c = Correction(
           Correction.Id(n),
           Correction.TargetKind(Correction.Target.Event),
           Correction.TargetId(id.value),
           Correction.Field(field),
           Correction.Value(value.noSpaces),
           Correction.UpstreamValue(upstream.noSpaces),
-          Correction.StatusValue(com.histmersion.api.catalogue.Correction.Status.Active),
+          Correction.StatusValue(Correction.Status.Active),
           Some(Correction.Upstream(provider.value))
         )
         s.modify(_.corrections)
@@ -333,7 +342,7 @@ object EventService:
           .modify(_.lastCorrectionId)
           .setTo(CatalogueState.LastCorrectionId(n))
 
-    def put(id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Unit =
+    def put(id: Event.Id, in: EventPut): Unit =
       val _ = state.updateAndGet { s =>
         val before = s.events.find(_.id == id)
         val sameSpan = before.exists(_.timeSpan == in.timeSpan)
@@ -367,7 +376,7 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
-    def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit] =
+    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
         val _ = state.updateAndGet { s =>
@@ -422,10 +431,10 @@ object EventService:
         }
         Right(())
 
-    def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit] =
+    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] =
       val (oldId, newId) = (from, to)
       val s = state.get
-      def exists(i: com.histmersion.domain.catalogue.Event.Id) = s.events.exists(_.id == i)
+      def exists(i: Event.Id) = s.events.exists(_.id == i)
       val aliasOf = s.eventAliases.get(CatalogueState.EventAliasesKey(newId.value))
       if !exists(oldId) then Left(missing(oldId))
       else if exists(newId) then
@@ -444,7 +453,7 @@ object EventService:
         )
       else
         val _ = state.updateAndGet { s =>
-          def ren(i: com.histmersion.domain.catalogue.Event.Id) = if i == oldId then newId else i
+          def ren(i: Event.Id) = if i == oldId then newId else i
           def renApi(i: com.histmersion.api.catalogue.Event.Id) =
             if i.value == oldId.value then com.histmersion.api.catalogue.Event.Id(newId.value) else i
           s.modify(_.events)
@@ -487,12 +496,12 @@ object EventService:
         }
         Right(())
 
-    def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id] =
+    def renamedTo(id: Event.Id): Option[Event.Id] =
       val s = state.get
       if s.events.exists(_.id == id) then None
       else s.eventAliases.get(CatalogueState.EventAliasesKey(id.value)).map(v => Event.Id.assume(v.value))
 
-    def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean =
+    def delete(id: Event.Id): Boolean =
       val had = state.get.events.exists(_.id == id)
       val _ = state.updateAndGet(
         _.modify(_.events)

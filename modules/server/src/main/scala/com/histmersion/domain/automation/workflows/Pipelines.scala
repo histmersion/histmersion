@@ -1,10 +1,19 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import com.histmersion.domain.automation.agents.RunCtx
 
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.circe.syntax.*
+import com.histmersion.api.automation.Queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Agents
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.TargetKind
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.Api
 
 /** What every agent pipeline does the same way (#1946) — each had its own copy:
   *   - [[log]]: a run ends with one line in the worklog (`queue log`), written through the run's write gate, so a dry
@@ -12,20 +21,20 @@ import io.circe.syntax.*
   */
 private[histmersion] object Pipelines:
 
-  type EntryText = com.histmersion.api.automation.Queue.QueueItem.Text
-  val EntryText: com.histmersion.api.automation.Queue.QueueItem.Text.type = com.histmersion.api.automation.Queue.QueueItem.Text
-  type EntryTopic = com.histmersion.api.automation.Queue.QueueItem.Topic
-  val EntryTopic: com.histmersion.api.automation.Queue.QueueItem.Topic.type = com.histmersion.api.automation.Queue.QueueItem.Topic
+  type EntryText = Queue.QueueItem.Text
+  val EntryText: Queue.QueueItem.Text.type = Queue.QueueItem.Text
+  type EntryTopic = Queue.QueueItem.Topic
+  val EntryTopic: Queue.QueueItem.Topic.type = Queue.QueueItem.Topic
   type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogLine extends RefinedType[String, Pure]
 
   /** The goal a run works for: its own, else the goal it targets (the run record is our own). */
-  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[com.histmersion.domain.automation.Goal.Slug] =
+  def goalOf(run: Agents.RunInfo): Option[Goal.Slug] =
     run.goal
       .map(_.value)
-      .orElse(Option.when(run.targetKind.value == com.histmersion.domain.automation.TargetKind.Goal.wire.value)(run.target.value))
+      .orElse(Option.when(run.targetKind.value == TargetKind.Goal.wire.value)(run.target.value))
       .filter(_.nonEmpty)
-      .map(com.histmersion.domain.automation.Goal.Slug.assume(_))
+      .map(Goal.Slug.assume(_))
 
   /** A bookkeeping item a run writes: it names the run and the goal the run works for. */
   def entry(ctx: RunCtx, text: EntryText, topic: Option[EntryTopic] = None): QueueAdd =
@@ -33,10 +42,10 @@ private[histmersion] object Pipelines:
       text,
       topic = topic,
       goal = goalOf(ctx.run).map(g => com.histmersion.api.automation.Goal.Slug(g.value)),
-      job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id(ctx.run.id.value))
+      job = Some(SpatialHierarchyResult.Job.Id(ctx.run.id.value))
     )
 
   /** Add `line` to the worklog; answers the line. */
-  def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[com.histmersion.api.Api.Error.Message, LogLine] =
+  def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Api.Error.Message, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
-    ctx.write("log line", entry.asJson)(workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line))(Right(line))
+    ctx.write("log line", entry.asJson)(workLists.add(WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line))(Right(line))

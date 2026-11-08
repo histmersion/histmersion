@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import hearth.kindlings.optics.syntax.*
 
@@ -40,6 +41,13 @@ import com.histmersion.api.research.{
   ResolvedArticle
 }
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.research.workflows.ReviewManagerPolicy
+import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -79,8 +87,8 @@ final class ArticlesControllers(
 
   private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck.value)
 
-  private val disagreementKinds: List[com.histmersion.domain.library.Edge.Kind.Wire] =
-    Article.Coverage.DisagreementKinds.map(k => com.histmersion.domain.library.Edge.Kind.Wire(k.value))
+  private val disagreementKinds: List[Edge.Kind.Wire] =
+    Article.Coverage.DisagreementKinds.map(k => Edge.Kind.Wire(k.value))
 
   private def resolve(f: Filter): Filter = filters.page(f)
   private def scopeOf(f: Filter): PlaceScope = filters.scope(f)
@@ -108,16 +116,16 @@ final class ArticlesControllers(
     else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(error(m.value, Write.CodeInvalid)))
 
   /** `GET /api/articles/{slug}/lint`. */
-  def lint(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
+  def lint(slug: Slug): Either[Api.Error, FormatReport] =
     get(slug).map(v => FormatReport(FormatReport.Subject(v.article.slug.value), v.formatting))
 
   /** `POST /api/articles/{slug}/lint/fix`: the safe repairs of the body and summary, written guarded by the article's
     * token, then the lint again.
     */
-  def fix(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("fix_article_format")):
+  def fix(slug: Slug): Either[Api.Error, FormatReport] =
+    maintenance.guard(WriteGate.OperationName("fix_article_format")):
       store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
-        val (body, fb) = MarkdownLint.fix(MarkdownLint.Scan.Text(a.body.value), FormatField.Body, MarkdownLint.Context(article = com.histmersion.server.MarkdownLint.Context.Article(true)))
+        val (body, fb) = MarkdownLint.fix(MarkdownLint.Scan.Text(a.body.value), FormatField.Body, MarkdownLint.Context(article = MarkdownLint.Context.Article(true)))
         val (summary, fs) =
           a.summary.map(t => MarkdownLint.fix(MarkdownLint.Scan.Text(t.value), FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
         val done = fb.map("body: " + _) ++ fs.map("summary: " + _)
@@ -135,13 +143,13 @@ final class ArticlesControllers(
                 Caller.Local
               )
               .map(_ => ())
-        write.flatMap(_ => lint(slugOf(a))).map(_.modify(_.fixed).setTo(done.map(com.histmersion.api.checks.FormatReport.Fixed(_))))
+        write.flatMap(_ => lint(slugOf(a))).map(_.modify(_.fixed).setTo(done.map(FormatReport.Fixed(_))))
       }
 
   /** A whole body written by the mechanical pairing repair, guarded by the token it was computed against: whether it
     * was written.
     */
-  def writeRepairedBody(slug: com.histmersion.domain.research.Slug, body: Article.Body, token: Option[com.histmersion.domain.research.articles.BArticleRow.UpdatedAt]): Boolean =
+  def writeRepairedBody(slug: Slug, body: Article.Body, token: Option[BArticleRow.UpdatedAt]): Boolean =
     store
       .patch(slug, Article.Patch(body = Some(body), ifUpdatedAt = token.map(t => Article.Patch.IfUpdatedAt(t.value))), Caller.Local)
       .isRight
@@ -175,7 +183,7 @@ final class ArticlesControllers(
     * body; a whole `body` is checked as it stands (the article need not exist yet: a compile writer's draft). The same
     * function the review pipeline validates its fixer with.
     */
-  def check(slug: com.histmersion.domain.research.Slug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
+  def check(slug: Slug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
     in.draft.left.map(m => error(m.value, Write.CodeInvalid)).flatMap { draft =>
       val stored = store.load(store.canonical(slug))
       (draft, stored) match
@@ -210,9 +218,9 @@ final class ArticlesControllers(
       f,
       scopeOf(f),
       q.kind.map(k => com.histmersion.domain.research.Article.Kind(k.value)),
-      q.text.map(t => com.histmersion.domain.library.search.Search.Query(t.value)),
+      q.text.map(t => Search.Query(t.value)),
       ArticleRepo.Limit(f.limit.value),
-      com.histmersion.Offset.option(f.offset.value).getOrElse(com.histmersion.Offset(0))
+      Offset.option(f.offset.value).getOrElse(Offset(0))
     )
     val facts = reviewState.facts(list.articles.map(a => Slug.assume(a.slug.value)))
     list
@@ -227,19 +235,19 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/review`: the article's review state, its review history from the ledger (the only read
     * that decodes one), the goals linking it and the approvals about it that wait for a person.
     */
-  def review(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.ReviewView] =
+  def review(slug: Slug): Either[Api.Error, Article.ReviewView] =
     val canon = store.canonical(slug)
     store.load(canon).toRight(notFound(slug)).flatMap(_ => reviewOf(canon))
 
   /** The review view of an article known to exist (its canonical slug); a ledger that no longer decodes is an error
     * rather than an empty history.
     */
-  def reviewOf(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.ReviewView] =
+  def reviewOf(slug: Slug): Either[Api.Error, Article.ReviewView] =
     ledgers(slug).left.map(e => Api.Error(Api.Error.Message(e))).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
       val starts =
-        ledger.fold(Map.empty[com.histmersion.domain.automation.Run.Id, ArticleReviewStatus.RunStart])(l =>
+        ledger.fold(Map.empty[Run.Id, ArticleReviewStatus.RunStart])(l =>
           reviewState.runStarts(ArticleReviewStatus.runOrder(l, Map.empty))
         )
       Article.ReviewView(
@@ -256,7 +264,7 @@ final class ArticlesControllers(
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its coverage, from which
     * every surface renders the generated Not used list and Method note.
     */
-  def get(slug: com.histmersion.domain.research.Slug, brief: com.histmersion.domain.research.articles.ArticlesControllers.GetBrief = com.histmersion.domain.research.articles.ArticlesControllers.GetBrief(false)): Either[Api.Error, Article.View] =
+  def get(slug: Slug, brief: ArticlesControllers.GetBrief = ArticlesControllers.GetBrief(false)): Either[Api.Error, Article.View] =
     val view = store.view(slug).toRight(notFound(slug))
     // `brief`: the row and its links only — the lint and the coverage are most of a read's cost
     // (a hover card waited ~20 ms on the lint alone) and a preview shows neither
@@ -274,7 +282,7 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/coverage`. An article that records no filter has no coverage: 404 saying so and how to
     * set one.
     */
-  def coverage(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Coverage] =
+  def coverage(slug: Slug): Either[Api.Error, Coverage] =
     store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
         error(
@@ -329,13 +337,13 @@ final class ArticlesControllers(
   /** The stored citekeys a body cites: its `[[links]]` outside a hand-written Not used section, resolved as the page
     * resolves them (an alias or a unique short form names its source).
     */
-  def citedSources(body: Article.Body): List[com.histmersion.domain.library.Citekey] = citedOf(body, bodyLinks(body))
+  def citedSources(body: Article.Body): List[Citekey] = citedOf(body, bodyLinks(body))
 
   /** How the links of a body (outside a hand-written Not used section) resolve. */
   private def bodyLinks(body: Article.Body): WikiLinks.Occurrence.Target => Option[LinkTarget] =
     pageLinks(Article.Links.targets(WikiLinks.Body(Article.Coverage.withoutNotUsed(body).value)))
 
-  private def citedOf(body: Article.Body, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): List[com.histmersion.domain.library.Citekey] =
+  private def citedOf(body: Article.Body, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): List[Citekey] =
     Article.Links
       .targets(WikiLinks.Body(Article.Coverage.withoutNotUsed(body).value))
       .flatMap(t => links(t).collect { case r: Source.Ref => Citekey.assume(r.citekey.value) })
@@ -346,7 +354,7 @@ final class ArticlesControllers(
     * records a filter. `body` is the article's own unless a caller reviews a revision held in memory; `extra` reasons
     * count as stored (a dry run's, which were never written).
     */
-  def critiques(slug: com.histmersion.domain.research.Slug, body: Article.Body, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
+  def critiques(slug: Slug, body: Article.Body, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = coverageReads.edgesTouching(cited, disagreementKinds)
@@ -375,25 +383,25 @@ final class ArticlesControllers(
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns, and up to `cap`
     * of its sources (by citekey) — what the managers' code checks measure (infer-filter, propose-articles).
     */
-  def filterReach(af: Article.Filter, citekeys: List[com.histmersion.domain.library.Citekey], cap: com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap): (com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits, Set[com.histmersion.domain.library.Citekey], List[com.histmersion.domain.library.Citekey]) =
+  def filterReach(af: Article.Filter, citekeys: List[Citekey], cap: ArticlesControllers.FilterReachCap): (ReviewManagerPolicy.FilterHits, Set[Citekey], List[Citekey]) =
     val f = af.toFilter
     val scope = scopeOf(f)
     val (total, rows) = coverageReads.sourceSet(f, scope, ArticleRepo.Limit(math.max(0, cap.value)))
     val in = if citekeys.isEmpty then Set.empty[Citekey] else coverageReads.members(f, scope, citekeys)._2
-    (com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits(total.value), in, rows.map(r => Citekey.assume(r.citekey.value)))
+    (ReviewManagerPolicy.FilterHits(total.value), in, rows.map(r => Citekey.assume(r.citekey.value)))
 
   /** The coverage filter an article records, as stored (no alias followed) — the review manager kind's. */
-  def recordedFilter(slug: com.histmersion.domain.research.Slug): Option[Article.Filter] = store.load(slug).flatMap(_.filter)
+  def recordedFilter(slug: Slug): Option[Article.Filter] = store.load(slug).flatMap(_.filter)
 
   /** How many sources the filter of the article `slug` names returns now (none: no article, or no filter). */
-  def filterTotal(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits] =
-    store.load(store.canonical(slug)).flatMap(_.filter).map(af => filterReach(af, Nil, com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap(0))._1)
+  def filterTotal(slug: Slug): Option[ReviewManagerPolicy.FilterHits] =
+    store.load(store.canonical(slug)).flatMap(_.filter).map(af => filterReach(af, Nil, ArticlesControllers.FilterReachCap(0))._1)
 
   /** How many sources an article's filter returns (of the first `limits.coverage-sources`) that its body neither cites
     * nor gives a reason for — what an extension would add (the autopilot's article-extend threshold). None: no such
     * article, or it records no filter.
     */
-  def newFilterSources(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.articles.ArticlesControllers.NewSourceCount] =
+  def newFilterSources(slug: Slug): Option[ArticlesControllers.NewSourceCount] =
     store
       .load(store.canonical(slug))
       .flatMap(a =>
@@ -401,7 +409,7 @@ final class ArticlesControllers(
           val f = af.toFilter
           val (_, hits) = coverageReads.sourceSet(f, scopeOf(f), ArticleRepo.Limit(cfg().limits.coverageSources.value))
           val cited = citedOf(a.body, bodyLinks(a.body)).toSet
-          com.histmersion.domain.research.articles.ArticlesControllers.NewSourceCount(
+          ArticlesControllers.NewSourceCount(
             hits.map(h => Citekey.assume(h.citekey.value)).count(ck => !cited(ck) && !a.reasons.keys.exists(_.value == ck.value))
           )
         }
@@ -410,11 +418,11 @@ final class ArticlesControllers(
   /** How many pairs of the article's critique checklist are open now and bear on a work it cites (None: no such
     * article). An open pair on a work the article does not cite is background: no run owes it anything.
     */
-  def openCritiques(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.OpenPairs] =
+  def openCritiques(slug: Slug): Option[ReviewManagerPolicy.OpenPairs] =
     store
       .load(store.canonical(slug))
       .map(a =>
-        com.histmersion.domain.research.workflows.ReviewManagerPolicy.OpenPairs(
+        ReviewManagerPolicy.OpenPairs(
           Critiques.toRule(critiques(slugOf(a), a.body)).size
         )
       )
@@ -468,24 +476,24 @@ final class ArticlesControllers(
   /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source. 404 when the citekey itself is
     * unknown, so "no articles yet" and "no such source" are different answers.
     */
-  def sourceArticles(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, List[Backlink]] =
+  def sourceArticles(citekey: Citekey): Either[Api.Error, List[Backlink]] =
     sources.get(citekey).map(s => store.backlinksForSource(Citekey.assume(s.source.citekey.value)))
 
   /** "Mentioned in articles", the part a source's default and full views carry. */
-  def mentionedIn(citekey: com.histmersion.domain.library.Citekey): String =
+  def mentionedIn(citekey: Citekey): String =
     BacklinksMarkdown.sourceArticles(store.backlinksForSource(citekey).toVector)
 
   /** The article an identifier names, as `GET /api/resolve/{id}` shows it. */
-  def resolved(id: com.histmersion.domain.research.Slug): Option[ResolvedArticle] =
-    get(id, brief = com.histmersion.domain.research.articles.ArticlesControllers.GetBrief(true)).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
+  def resolved(id: Slug): Option[ResolvedArticle] =
+    get(id, brief = ArticlesControllers.GetBrief(true)).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
 
   /** Create or REPLACE one article. The response carries its formatting problems; `strict` refuses the write when one
     * of them is an error.
     */
-  def put(slug: com.histmersion.domain.research.Slug, in: Article.Put, strict: com.histmersion.domain.research.Article.StrictMode = com.histmersion.domain.research.Article.StrictMode(false)): Either[Api.Error, Article.View] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_article")):
+  def put(slug: Slug, in: Article.Put, strict: com.histmersion.domain.research.Article.StrictMode = com.histmersion.domain.research.Article.StrictMode(false)): Either[Api.Error, Article.View] =
+    maintenance.guard(WriteGate.OperationName("put_article")):
       // an OLD slug follows the alias: the put replaces the renamed article
       Articles
         .applyPut(
@@ -502,8 +510,8 @@ final class ArticlesControllers(
   /** Merge only the parts present in the patch (read + merge + write in one transaction). With `strict`, the merged
     * result is checked first — an append is judged in the article it lands in.
     */
-  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, strict: com.histmersion.domain.research.Article.StrictMode = com.histmersion.domain.research.Article.StrictMode(false)): Either[Api.Error, Article.View] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_article")):
+  def patch(slug: Slug, p: Article.Patch, strict: com.histmersion.domain.research.Article.StrictMode = com.histmersion.domain.research.Article.StrictMode(false)): Either[Api.Error, Article.View] =
+    maintenance.guard(WriteGate.OperationName("patch_article")):
       Right(currentSlug(slug))
         .flatMap { s =>
           val gate =
@@ -520,29 +528,29 @@ final class ArticlesControllers(
         }
         .flatMap(_ => get(slug))
 
-  def delete(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.Deleted] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_article")):
+  def delete(slug: Slug): Either[Api.Error, Article.Deleted] =
+    maintenance.guard(WriteGate.OperationName("delete_article")):
       val now = currentSlug(slug)
       if store.delete(now, Caller.Local) then
-        Right(Article.Deleted(Article.Slug(now.value), com.histmersion.api.research.Article.Deleted.Value(true)))
+        Right(Article.Deleted(Article.Slug(now.value), Article.Deleted.Value(true)))
       else Left(notFound(slug))
 
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving and every `[[old]]` in other articles
     * is rewritten (each a new version).
     */
-  def rename(slug: com.histmersion.domain.research.Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_article")):
+  def rename(slug: Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
+    maintenance.guard(WriteGate.OperationName("rename_article")):
       val from = currentSlug(slug)
       for
         label <- LabelRenames.validate(
-          com.histmersion.api.exchange.Bundle.Kind.Article,
+          Bundle.Kind.Article,
           LabelRenames.Label(from.value),
           LabelRenames.Label(req.to.value)
         )
         to <- Slug.either(label.value).left.map(why => error(why, Write.CodeInvalid))
         rewritten <- store.rename(from, to, Caller.Local)
       yield LabelRenamed(
-        com.histmersion.api.exchange.Bundle.Kind.Article,
+        Bundle.Kind.Article,
         LabelRenamed.From(from.value),
         LabelRenamed.To(to.value),
         rewritten.map(s => LabelRenamed.Rewritten(s.value))
@@ -553,10 +561,10 @@ final class ArticlesControllers(
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage sections after the
     * body (between markers an import drops) and its filter and reasons in the frontmatter.
     */
-  def exportNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] = note(slug)
+  def exportNote(slug: Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] = note(slug)
 
   /** The note of the article an old slug or its own names, as the mirror writes it. */
-  def articleNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
+  def articleNote(slug: Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
     store
       .load(currentSlug(slug))
       .map(a => com.histmersion.domain.research.Article.Note(ArticleNote.render(a, coverageOf(a).map(c => Article.Coverage.exported(c).value))))
@@ -565,31 +573,31 @@ final class ArticlesControllers(
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).
     */
-  def versions(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[Article.Version]] =
+  def versions(slug: Slug): Either[Api.Error, List[Article.Version]] =
     get(slug).map(v => store.versions(Slug.assume(v.article.slug.value)))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
-  def version(slug: com.histmersion.domain.research.Slug, versionId: ArticleRepo.VersionId): Either[Api.Error, Article.VersionFull] =
+  def version(slug: Slug, versionId: ArticleRepo.VersionId): Either[Api.Error, Article.VersionFull] =
     get(slug).flatMap(v =>
       store
         .version(Slug.assume(v.article.slug.value), versionId)
         .toRight(error(s"No version $versionId for article '$slug'", Write.CodeNotFound))
     )
 
-  def slugs: List[com.histmersion.domain.research.Slug] = store.slugs
+  def slugs: List[Slug] = store.slugs
 
   /** Import ONE article note from raw text (the host-side path of `histmersion seed`). Applies the same "stored row is
     * newer than the file" guard as the source seed whenever the client sends the file's mtime, so a reseed cannot wipe
     * an agent's compiled prose.
     */
   def importNote(req: Article.Import): Either[Api.Error, SeedResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("import_article"))(importNow(req))
+    maintenance.guard(WriteGate.OperationName("import_article"))(importNow(req))
 
   private def importNow(req: Article.Import): Either[Api.Error, SeedResult] =
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
     val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match
-      case None         => Left(Api.Error(com.histmersion.api.Api.Error.Message("no YAML frontmatter in the article note")))
+      case None         => Left(Api.Error(Api.Error.Message("no YAML frontmatter in the article note")))
       case Some(parsed) =>
         Slug
           .parse(parsed.slug.value)
@@ -611,7 +619,7 @@ final class ArticlesControllers(
           }
           .flatMap { s =>
             if !req.force.value && req.mtime.exists(m => store.updatedAtMillis.get(s).exists(_.value > m.value)) then
-              Right(SeedResult(com.histmersion.api.library.SeedResult.Imported(0), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), List(com.histmersion.api.library.SeedResult.Skipped(s.value))))
+              Right(SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), List(SeedResult.Skipped(s.value))))
             else
               Articles
                 .kindOf(parsed.kind)
@@ -625,14 +633,14 @@ final class ArticlesControllers(
                 )
                 .map { k =>
                   val _ = store.put(parsed.modify(_.slug).setTo(Article.Slug(s.value)).modify(_.kind).setTo(k), Caller.Local)
-                  SeedResult(com.histmersion.api.library.SeedResult.Imported(1), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), Nil)
+                  SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil)
                 }
           }
 
 object ArticlesControllers:
   type NewSourceCount = NewSourceCount.T
-  object NewSourceCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NewSourceCount extends RefinedType[Int, Pure]
   type GetBrief = GetBrief.T
-  object GetBrief extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetBrief extends RefinedType[Boolean, Pure]
   type FilterReachCap = FilterReachCap.T
-  object FilterReachCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FilterReachCap extends RefinedType[Int, Pure]

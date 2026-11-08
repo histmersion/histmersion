@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
@@ -29,6 +30,15 @@ import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Goal.Plans.GoalLink
 import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.Title
+import com.histmersion.domain.automation.Run
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.PlanGoal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -94,7 +104,7 @@ final class PlanGoalPipeline(
             decided <- ctx.approval(
               AgentRepo.StepRecord.Name("approve"),
               ApprovalKind.GoalPlan,
-              com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(slug.value),
+              ApprovalQuery.Subject(slug.value),
               ApprovalMode.Manual
             )(
               Right(plan.asJson.noSpaces)
@@ -118,7 +128,7 @@ final class PlanGoalPipeline(
       val vocab = (field: String) => host.vocabulary(AutomationHost.VocabularyField(field)).take(VocabularySize)
       Loaded(
         DomainGoal.Slug.assume(g.slug.value),
-        com.histmersion.domain.Title(g.title.value),
+        Title(g.title.value),
         g.notes.map(n => Loaded.Notes(n.value)),
         g.tags.map(t => Loaded.Tags(t.value)),
         g.regions.map(r => Loaded.Regions(r.value)),
@@ -162,8 +172,8 @@ final class PlanGoalPipeline(
   private def log(ctx: RunCtx, line: String): Either[String, String] =
     Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
 
-  private def runId(ctx: RunCtx): com.histmersion.domain.automation.Run.Id =
-    com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
+  private def runId(ctx: RunCtx): Run.Id =
+    Run.Id.assume(ctx.run.id.value)
 
   /** The approved plan, applied: sub-goals (children of the goal), query links, works in the corpus linked, the others
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
@@ -215,7 +225,7 @@ final class PlanGoalPipeline(
           } else
             host.putGoal(
               sub,
-              com.histmersion.api.automation.Goal.Put(
+              Goal.Put(
                 g.title,
                 Goal.StatusValue(Goal.Status.Planned),
                 g.notes,
@@ -233,7 +243,7 @@ final class PlanGoalPipeline(
       goals.link(slug, DomainGoal.LinkKind.SearchQuery, GoalLink.Ref(q.value), Some(GoalLink.Note("from the approved plan")))
     )
     val queued = workLists
-      .kindOf(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"))
+      .kindOf(WorkListControllers.KindOfList("acquire"))
       .toOption
       .toList
       .flatMap(queues.list(_, QueueScope.All))
@@ -255,12 +265,12 @@ final class PlanGoalPipeline(
         .getOrElse(
           workLists
             .add(
-              com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"),
+              WorkListControllers.ListName("acquire"),
               QueueAdd(
-                com.histmersion.api.automation.Queue.QueueItem.Text(PlanGoal.acquireText(w, slug).value),
-                topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic(s"goal ${slug.value}")),
+                Queue.QueueItem.Text(PlanGoal.acquireText(w, slug).value),
+                topic = Some(Queue.QueueItem.Topic(s"goal ${slug.value}")),
                 goal = Some(Goal.Slug(slug.value)),
-                job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id(ctx.run.id.value))
+                job = Some(SpatialHierarchyResult.Job.Id(ctx.run.id.value))
               )
             )
             .map(_.id)
@@ -304,14 +314,14 @@ object PlanGoalPipeline:
   /** The goal as the planner sees it (checkpointed). `tags0` = the corpus's tags (`tags` are the goal's). */
   final case class Loaded(
       slug: com.histmersion.domain.automation.Goal.Slug,
-      title: com.histmersion.domain.Title,
+      title: Title,
       notes: Option[Loaded.Notes],
       tags: List[Loaded.Tags],
       regions: List[Loaded.Regions],
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
       children: List[Loaded.Children],
-      queries: List[com.histmersion.domain.PlanGoal.Query],
+      queries: List[PlanGoal.Query],
       linked: List[Loaded.Linked],
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags0]
@@ -319,24 +329,24 @@ object PlanGoalPipeline:
 
   object Loaded:
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Regions extends RefinedType[String, Pure]
     type Children = Children.T
-    object Children extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Children extends RefinedType[String, Pure]
     type Linked = Linked.T
-    object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Linked extends RefinedType[String, Pure]
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
     type Tags0 = Tags0.T
-    object Tags0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags0 extends RefinedType[String, Pure]
 
   /** What applying the plan did. */
   final case class Applied(
-      line: com.histmersion.domain.PlanGoal.LogLine,
-      created: com.histmersion.domain.PlanGoal.CreatedCount,
-      linked: com.histmersion.domain.PlanGoal.LinkedCount,
-      queued: com.histmersion.domain.PlanGoal.QueuedCount
+      line: PlanGoal.LogLine,
+      created: PlanGoal.CreatedCount,
+      linked: PlanGoal.LinkedCount,
+      queued: PlanGoal.QueuedCount
   ) derives KindlingsCodecAsObject

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.backup
+package com.histmersion
+package util.data.backup
 
 import com.histmersion.util.storage.Location
 

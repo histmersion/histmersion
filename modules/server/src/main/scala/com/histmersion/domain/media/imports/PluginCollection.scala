@@ -1,10 +1,13 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
 import com.histmersion.domain.media.imports.{MediaMatch, MediaRecord}
 import com.histmersion.plugin.*
+import com.histmersion.domain.media.MediaRole
+import com.histmersion.domain.catalogue.places.Wikidata
 
 /** A collection searched by a place's name, run by the host's own collection import ([[CollectionImport]]): the plugin
   * searches and describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges it against `allowed`
@@ -16,17 +19,17 @@ import com.histmersion.plugin.*
   *   the name its checks are recorded and its pictures stored under
   */
 final class PluginCollection(val provider: ImportService.Provider, col: MediaCollection, allowed: MediaCollectionConfig.Licences) extends SearchedCollection:
-  val role: com.histmersion.domain.media.MediaRole.Wire = com.histmersion.domain.media.MediaRole.Wire(col.role.value)
+  val role: MediaRole.Wire = MediaRole.Wire(col.role.value)
   private val latest = col.latestYear.map(y => com.histmersion.Year(y.value))
   val conf: MediaCollectionConfig =
     MediaCollectionConfig(
-      enabled = com.histmersion.config.MediaCollectionConfig.Enabled(true),
-      apiUrl = com.histmersion.config.MediaCollectionConfig.ApiUrl(""),
-      imageUrl = com.histmersion.config.MediaCollectionConfig.ImageUrl(""),
-      candidates = com.histmersion.config.MediaCollectionConfig.Candidates(0),
+      enabled = MediaCollectionConfig.Enabled(true),
+      apiUrl = MediaCollectionConfig.ApiUrl(""),
+      imageUrl = MediaCollectionConfig.ImageUrl(""),
+      candidates = MediaCollectionConfig.Candidates(0),
       perPlace = MediaCollectionConfig.PerPlace(col.perPlace.value),
       requestIntervalMs = MediaCollectionConfig.RequestIntervalMs(col.requestIntervalMs.value),
-      displayPx = com.histmersion.config.MediaCollectionConfig.DisplayPx(0),
+      displayPx = MediaCollectionConfig.DisplayPx(0),
       maxYear = MediaCollectionConfig.MaxYear(PluginCollection.maxYear(col.matchRule).value),
       licences = allowed
     )
@@ -81,8 +84,8 @@ object PluginCollection:
     MediaPlace(
       MediaPlace.Id(p.id.value),
       MediaPlace.Label(p.label.value),
-      p.qid.flatMap(q => com.histmersion.domain.catalogue.places.Wikidata.Id.option(q.value).flatMap(SpiValues.wikidata)),
-      p.lat.flatMap(l => SpiValues.latitude(com.histmersion.plugin.Latitude(l.value))),
-      p.lon.flatMap(l => SpiValues.longitude(com.histmersion.plugin.Longitude(l.value))),
+      p.qid.flatMap(q => Wikidata.Id.option(q.value).flatMap(SpiValues.wikidata)),
+      p.lat.flatMap(l => SpiValues.latitude(Latitude(l.value))),
+      p.lon.flatMap(l => SpiValues.longitude(Longitude(l.value))),
       p.period.flatMap((a, b) => SpiValues.period(a, b))
     )

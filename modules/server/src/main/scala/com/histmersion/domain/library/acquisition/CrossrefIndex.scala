@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.domain.library.acquisition.wire
 
@@ -9,16 +10,17 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
+import com.histmersion.domain.library.search.Search
 
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
-  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("crossref")
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
+  val name = ScholarlyIndex.Name("crossref")
+  def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     http
       .json(
         Url(
           Http.Url(cfg.crossref.url.value),
-          com.histmersion.upstreams.http.Url.UrlPath("/works"),
+          Url.UrlPath("/works"),
           "query" -> query.value,
           "rows" -> math.max(1, math.min(limit.value, 50)).toString,
           "sort" -> "created",

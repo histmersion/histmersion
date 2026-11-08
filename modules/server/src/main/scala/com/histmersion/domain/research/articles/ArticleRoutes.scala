@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.research.{Article, Articles, ReviewGoal}
@@ -8,6 +9,8 @@ import sttp.model.{Header, MediaType}
 import sttp.shared.Identity
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.Title
 
 /** The articles over HTTP: the REST routes of the compiled wiki, the rendered page at `/article/{slug}` and the
   * `/articles` redirect, in the order route matching needs (`…/export`, `…/versions` and `…/import` before `…/{slug}`).
@@ -33,7 +36,7 @@ object ArticleRoutes:
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
       Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),
       Api.importArticle.serverLogic[Identity](req => articles.importNote(req)),
-      Api.exportArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.exportNote).map(n => com.histmersion.api.research.Article.Export(n.value))),
+      Api.exportArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.exportNote).map(n => Article.Export(n.value))),
       Api.articleVersions.serverLogic[Identity](slug => read(slug).flatMap(articles.versions)),
       Api.articleVersion.serverLogic[Identity]((slug, id) =>
         read(slug).flatMap(s => articles.version(s, ArticleRepo.VersionId(id.value)))
@@ -65,7 +68,7 @@ object ArticleRoutes:
         .out(stringBody)
         .out(header(Header.contentType(MediaType.TextHtml)))
         .serverLogicSuccess[Identity] { case (slug, fragment, q) =>
-          Slug.parse(slug).toOption.flatMap(s => pages.article(s, q.map(com.histmersion.domain.library.search.Search.Query(_)))) match
+          Slug.parse(slug).toOption.flatMap(s => pages.article(s, q.map(Search.Query(_)))) match
             case Some((title, inner)) =>
               (
                 sttp.model.StatusCode.Ok,
@@ -76,7 +79,7 @@ object ArticleRoutes:
               (
                 sttp.model.StatusCode.NotFound,
                 if fragment then body
-                else ArticleHtml.page(com.histmersion.domain.Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
+                else ArticleHtml.page(Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
               )
         }
 

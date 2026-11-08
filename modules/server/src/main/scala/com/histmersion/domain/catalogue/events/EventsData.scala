@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
@@ -6,6 +7,7 @@ import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.augustnagro.magnum.DbCon
+import com.histmersion.api.library.Citekey
 
 /** The events' share of the catalogue's data contribution: their count, and the check of the corrections a catalogue's
   * later import contradicts.
@@ -27,7 +29,7 @@ object EventsData:
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(
         rule,
-        CorrectionRepo.conflictsIn().map((id, detail) => LintItem(com.histmersion.api.library.Citekey(id.value), detail)),
+        CorrectionRepo.conflictsIn().map((id, detail) => LintItem(Citekey(id.value), detail)),
         Lint.ItemLimit(maxItems.value)
       )
 

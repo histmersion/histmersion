@@ -1,8 +1,10 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
+import com.histmersion.api.settings.ReloadReport
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:
@@ -57,7 +59,7 @@ object SettingsViews:
 
   def written(
       o: WriteOutcome,
-      reload: Option[com.histmersion.api.settings.ReloadReport],
+      reload: Option[ReloadReport],
       restartable: Boolean
   ): ConfigEdit.Written =
     ConfigEdit.Written(

@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,6 +7,8 @@ import com.histmersion.domain.Title
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Implemented by each domain whose records others point at — a person's bookmarks, notes and read marks, a goal's
   * links, a picture's links. The pointing side stores an [[ItemRef]] and asks here, when it shows the reference, what
@@ -16,7 +19,7 @@ trait Referable:
   def kinds: Set[ItemKind]
 
   /** The record `key` names now — an alias of a renamed key followed — or why there is none. */
-  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referable.Problem, ItemRef]
+  def resolve(kind: ItemKind, key: ItemKey): Either[Referable.Problem, ItemRef]
 
   /** How each record shows wherever it is referenced; a reference to a record this domain never held is left out. One
     * call per kind on a page, batched.
@@ -25,7 +28,7 @@ trait Referable:
 
 object Referable:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** The records of one kind held in memory (tests), resolved and described by the rules the tables keep: a uid that
     * survives a rename, an alias for the old key, a merge's uid redirect, a deletion's tombstone.
@@ -58,7 +61,7 @@ object Referable:
         r.live.get(key).fold(r)(rec => r.copy(live = r.live - key, tombstones = r.tombstones ++ rec.uid.map(_ -> at)))
       }: Unit
 
-    def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referable.Problem, ItemRef] =
+    def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef] =
       val r = records.get
       r.live
         .get(key)

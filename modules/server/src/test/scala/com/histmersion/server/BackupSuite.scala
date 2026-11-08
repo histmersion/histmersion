@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,6 +16,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.Api
+import com.histmersion.config.BackupsConfig
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
   * listing/resolution that keeps a client-supplied name inside `backups.dir`.
@@ -38,33 +40,33 @@ class BackupSuite extends munit.FunSuite:
 
   test("guard runs the operation when no restore is in progress"):
     val m = WriteGate()
-    assertEquals(m.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)), Right(42))
+    assertEquals(m.guard(WriteGate.OperationName("seed"))(Right(42)), Right(42))
     assertEquals(m.active, false)
 
   test("while a restore holds the lock, other writes are refused with the 503 code"):
     val m = WriteGate()
-    val seen = m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore")) {
+    val seen = m.exclusively(WriteGate.OperationName("restore")) {
       assertEquals(m.active, true)
-      Right(m.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)))
+      Right(m.guard(WriteGate.OperationName("seed"))(Right(42)))
     }
     assertEquals(seen, Right(Left(Backup.maintenance("seed"))))
     assertEquals(seen.toOption.flatMap(_.left.toOption).flatMap(_.code), Some(Backup.CodeMaintenance))
 
   test("one server's restore does not freeze another server's writes (locks are per instance)"):
     val a, b = WriteGate()
-    assertEquals(a.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right(b.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)))), Right(Right(42)))
+    assertEquals(a.exclusively(WriteGate.OperationName("restore"))(Right(b.guard(WriteGate.OperationName("seed"))(Right(42)))), Right(Right(42)))
 
   test("a second concurrent restore is refused, and the lock is released afterwards"):
     val m = WriteGate()
     // the inner attempt cannot take the flag the outer one holds, so its Left is what comes back
-    val nested: Either[Api.Error, String] = m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right("inner")))
+    val nested: Either[Api.Error, String] = m.exclusively(WriteGate.OperationName("restore"))(m.exclusively(WriteGate.OperationName("restore"))(Right("inner")))
     assertEquals(nested, Left(Backup.maintenance("restore")))
     assertEquals(m.active, false)
-    assertEquals(m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right("again")), Right("again"))
+    assertEquals(m.exclusively(WriteGate.OperationName("restore"))(Right("again")), Right("again"))
 
   test("the lock is released even when the operation throws"):
     val m = WriteGate()
-    intercept[RuntimeException](m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(throw new RuntimeException("boom")))
+    intercept[RuntimeException](m.exclusively(WriteGate.OperationName("restore"))(throw new RuntimeException("boom")))
     assertEquals(m.active, false)
 
   // ── listing and name resolution ──────────────────────────────────────────────────────────────
@@ -133,7 +135,7 @@ class BackupSuite extends munit.FunSuite:
 
     val base = cfgWith(d)
     val svc =
-      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.timeoutSeconds).setTo(com.histmersion.config.BackupsConfig.TimeoutSeconds(1))))
+      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.timeoutSeconds).setTo(BackupsConfig.TimeoutSeconds(1))))
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -199,7 +201,7 @@ class BackupSuite extends munit.FunSuite:
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
     Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.keep).setTo(com.histmersion.config.BackupsConfig.Keep(3))))
+    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.keep).setTo(BackupsConfig.Keep(3))))
     val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message.value), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"

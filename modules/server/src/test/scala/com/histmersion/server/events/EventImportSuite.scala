@@ -1,4 +1,5 @@
-package com.histmersion.server.events
+package com.histmersion
+package server.events
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -35,6 +36,20 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.db.DbSuite
+import com.histmersion.server.ServerPlugins
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.EventPassage
+import com.histmersion.domain.DeepTime
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.domain.catalogue.places.PlaceScope
+import com.histmersion.domain.catalogue.events.EventSelection
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run
@@ -44,7 +59,7 @@ import com.histmersion.api.catalogue.SiteTypes
   * refreshes the event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by hand
   * kept.
   */
-class EventImportSuite extends com.histmersion.db.DbSuite:
+class EventImportSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -95,7 +110,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
   private lazy val loaded: LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
   private lazy val cfg = loaded.config
-  private lazy val plugins = com.histmersion.server.ServerPlugins.load(loaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+  private lazy val plugins = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -128,7 +143,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val f = http
     val r = run(CatalogueWiring(deps(cfg), f), Gvp, dry = Dry)
     assertEquals((r.records, r.kept, r.created), (3, 3, 3))
-    assertEquals(r.byKind, List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(3))))
+    assertEquals(r.byKind, List(EventCount(EventCount.Key("eruption"), EventCount.N(3))))
     assertEquals(EventFixtures.stored(ds).count(_.catalogue.value), 0)
     assert(f.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no e-mail in the User-Agent")
 
@@ -138,7 +153,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(g.created, 3)
     val n = run(h, Noaa, dry = Wet)
     assert(n.matchedEvents.exists(_.value.contains("gvp_13879")), n.matchedEvents.toString)
-    assertEquals(EventFixtures.catalogueRefs(ds, com.histmersion.domain.catalogue.Event.Id("gvp_13879")).map(_.provider).toSet, Set("gvp", "noaa"))
+    assertEquals(EventFixtures.catalogueRefs(ds, Event.Id("gvp_13879")).map(_.provider).toSet, Set("gvp", "noaa"))
     val f = http
     val r = run(CatalogueWiring(deps(cfg), f), Gvp, dry = Wet)
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
@@ -153,24 +168,24 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val h = CatalogueWiring(deps(cfg), http)
     val r = run(h, Wikidata, dry = Wet)
     assert(r.created.value >= 2, r.toString)
-    val (tier, names, provider) = EventFixtures.tierAndNames(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("wikidata_q131386")).get
+    val (tier, names, provider) = EventFixtures.tierAndNames(ds, BEventRow.Id("wikidata_q131386")).get
     assertEquals((tier, provider), (EventTier.Catalogue, Some("wikidata")))
     assert(names.contains("Siège d'Alésia") && names.contains("Siege of Alesia"), names.toString)
 
   test("links: a source naming the event is proposed; confirmed from its passage; one without a passage refused"):
     val chunk = AppConfig.load().limits.chunkChars
-    def src(ck: com.histmersion.api.library.Citekey, body: Source.OcrMarkdown, lon: com.histmersion.api.catalogue.Longitude) = Source(
+    def src(ck: Citekey, body: Source.OcrMarkdown, lon: Longitude) = Source(
       ck,
       com.histmersion.api.library.Title(s"Zqei $ck"),
       (List("A")).map(com.histmersion.api.library.AuthorName.apply),
       None,
-      (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+      (Some(2020)).map(Year.apply),
       None,
-      com.histmersion.api.library.Source.Status.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       Nil,
-      Some(Period(com.histmersion.api.catalogue.Year(-60), com.histmersion.api.catalogue.Year(-40))),
+      Some(Period(Year(-60), Year(-40))),
       None,
       None,
       None,
@@ -178,24 +193,24 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       None,
       ocrMarkdown = Some(body),
       findings = List(
-        Finding(Finding.Id(s"$ck#0"), ck, com.histmersion.api.library.Finding.Claim("a claim"), None, Some(GeoPoint(lon, com.histmersion.api.catalogue.Latitude(47.53))), Some(Period(com.histmersion.api.catalogue.Year(-55), com.histmersion.api.catalogue.Year(-50))), None, Nil, None)
+        Finding(Finding.Id(s"$ck#0"), ck, Finding.Claim("a claim"), None, Some(GeoPoint(lon, Latitude(47.53))), Some(Period(Year(-55), Year(-50))), None, Nil, None)
       )
     )
     SourceFixtures.upsert(
       ds,
-      src(com.histmersion.api.library.Citekey("zqei_named2020"), Source.OcrMarkdown("# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war."), com.histmersion.api.catalogue.Longitude(4.5)),
+      src(Citekey("zqei_named2020"), Source.OcrMarkdown("# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war."), Longitude(4.5)),
       chunk
     )
-    SourceFixtures.upsert(ds, src(com.histmersion.api.library.Citekey("zqei_near2020"), Source.OcrMarkdown("# Gaul\n\nA hillfort was excavated nearby."), com.histmersion.api.catalogue.Longitude(4.6)), chunk)
+    SourceFixtures.upsert(ds, src(Citekey("zqei_near2020"), Source.OcrMarkdown("# Gaul\n\nA hillfort was excavated nearby."), Longitude(4.6)), chunk)
     val h = CatalogueWiring(deps(cfg), http)
-    val links = h.eventLinks.links(com.histmersion.domain.catalogue.Event.Id("wikidata_q131386")).toOption.get
+    val links = h.eventLinks.links(Event.Id("wikidata_q131386")).toOption.get
     assertEquals(links.candidates.map(_.citekey).take(2), List("zqei_named2020", "zqei_near2020"))
-    assert(links.candidates.head.passages.exists(_.quote == com.histmersion.api.catalogue.EventPassage.Quote("Siege of Alesia")))
+    assert(links.candidates.head.passages.exists(_.quote == EventPassage.Quote("Siege of Alesia")))
     val r = h.eventLinks
       .applyLinks(
         Caller.Local,
-        com.histmersion.domain.catalogue.Event.Id("wikidata_q131386"),
-        EventLinksRequest(confirm = List(com.histmersion.api.catalogue.EventLinksRequest.Confirm("zqei_named2020"), com.histmersion.api.catalogue.EventLinksRequest.Confirm("zqei_near2020")))
+        Event.Id("wikidata_q131386"),
+        EventLinksRequest(confirm = List(EventLinksRequest.Confirm("zqei_named2020"), EventLinksRequest.Confirm("zqei_near2020")))
       )
       .toOption
       .get
@@ -204,7 +219,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val body = SourceFixtures.bodyText(ds, com.histmersion.domain.library.Citekey("zqei_named2020"))
     assertEquals(body.value.substring(a.charStart.get.value, a.charEnd.get.value), "Siege of Alesia", "the offsets point at the quote")
     assert(r.refused.exists(_.value.startsWith("zqei_near2020: no passage")), r.refused.toString)
-    assertEquals(EventFixtures.get(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("wikidata_q131386")).map(_.event.tier), Some(EventTier.Attested))
+    assertEquals(EventFixtures.get(ds, BEventRow.Id("wikidata_q131386")).map(_.event.tier), Some(EventTier.Attested))
     val _ = connect(ds)(sql"DELETE FROM attestations WHERE citekey LIKE 'zqei%'".update.run())
 
   test("site types: the Wikidata sites on the map are typed from their P31, an unknown class walked up P279"):
@@ -217,13 +232,13 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        com.histmersion.api.library.Citekey("zqei_sites2020"),
+        Citekey("zqei_sites2020"),
         com.histmersion.api.library.Title("Zqei sites"),
         (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         None,
-        (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+        (Some(2020)).map(Year.apply),
         None,
-        com.histmersion.api.library.Source.Status.Current,
+        Source.Status.Current,
         Nil,
         Nil,
         Nil,
@@ -244,7 +259,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                       ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update
         .run()
     val h = CatalogueWiring(deps(cfg), http)
-    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = com.histmersion.api.catalogue.SiteTypes.Request.DryRun(true)), _ => ()).pending, 2)
+    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun(true)), _ => ()).pending, 2)
     val r = h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
     val types = connect(ds)(
@@ -275,11 +290,11 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   test("GVP ± 2500: held inside the present, the year, ± and method kept; --refresh reads again and refreshes"):
     val f = heklaHttp
-    val h = CatalogueWiring(deps(cfg), f, () => com.histmersion.domain.DeepTime.SignedYear(2026L))
-    val r = h.eventImporter.runImport(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), refresh = com.histmersion.api.catalogue.EventImportRequest.Refresh(true)), None, _ => ())
+    val h = CatalogueWiring(deps(cfg), f, () => DeepTime.SignedYear(2026L))
+    val r = h.eventImporter.runImport(CatalogRecord.Provider("gvp"), EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)), None, _ => ())
     assert(f.requests.nonEmpty && r.created.value == 1, r.toString)
     val e = event(Hekla)
-    assertEquals(e.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(-2251)), None, None, Some(com.histmersion.api.catalogue.Year(2026))))
+    assertEquals(e.timeSpan, TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026))))
     assertEquals(
       (e.central, e.plusMinus, e.datingMethod, e.precision),
       (Some(250L), Some(2500L), Some("Tephrochronology"), EventPrecision.Imprecise)
@@ -288,7 +303,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     // a refresh refreshes the event (from its own record), not only the catalogue row
     connect(ds)(sql"UPDATE events SET not_after = 9999 WHERE id = 'gvp_12724'".update.run())
     val again =
-      h.eventImporter.runImport(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), refresh = com.histmersion.api.catalogue.EventImportRequest.Refresh(true)), None, _ => ())
+      h.eventImporter.runImport(CatalogRecord.Provider("gvp"), EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)), None, _ => ())
     assertEquals((again.created, again.updated), (0, 1))
     assertEquals(event(Hekla).timeSpan.notAfter, Some(2026L))
 
@@ -302,18 +317,18 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                     WHERE provider = 'gvp' AND provider_id = '12724'""".update.run()
       val _ = sql"""UPDATE events SET not_after = 2750, central = NULL, plus_minus = NULL, dating_method = NULL
                     WHERE id = 'gvp_12724'""".update.run()
-    assert(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("gvp_12724"), EventPatch(label = Some(com.histmersion.api.catalogue.EventSummary.Label("Hekla, a prehistoric tephra (zqei)")))).isRight)
+    assert(EventFixtures.patch(ds, BEventRow.Id("gvp_12724"), EventPatch(label = Some(EventSummary.Label("Hekla, a prehistoric tephra (zqei)")))).isRight)
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
-    val h = CatalogueWiring(deps(cfg), offline, () => com.histmersion.domain.DeepTime.SignedYear(2026L))
-    val dry = h.eventImporter.runRederive(Some(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp")), dryRun = true, _ => ())
+    val h = CatalogueWiring(deps(cfg), offline, () => DeepTime.SignedYear(2026L))
+    val dry = h.eventImporter.runRederive(Some(CatalogRecord.Provider("gvp")), dryRun = true, _ => ())
     assert(dry.changed.value >= 1 && dry.updated.value == 0, dry.toString)
     assertEquals(event(Hekla).timeSpan.notAfter, Some(2750L), "a dry run stores nothing")
-    val r = h.eventImporter.runRederive(Some(com.histmersion.api.catalogue.CatalogRecord.Provider("gvp")), dryRun = false, _ => ())
+    val r = h.eventImporter.runRederive(Some(CatalogRecord.Provider("gvp")), dryRun = false, _ => ())
     assertEquals(offline.requests.size, 0, "not one request")
     assert(r.updated.value >= 1 && r.offMap.value >= 1 && r.corrections.kept == Correction.Counts.Kept(1), r.toString)
     assert(EventRederiveReport.summary(r).contains("re-derived"), EventRederiveReport.summary(r))
     val e = event(Hekla)
-    assertEquals(e.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(-2251)), None, None, Some(com.histmersion.api.catalogue.Year(2026))))
+    assertEquals(e.timeSpan, TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026))))
     assertEquals((e.central, e.plusMinus, e.datingMethod),(Some(250L), Some(2500L), Some("Tephrochronology")))
     assertEquals(e.description, Some("Confirmed Eruption at Hekla; VEI 5"))
     assertEquals(e.label, "Hekla, a prehistoric tephra (zqei)", "the person's label survives")
@@ -322,13 +337,13 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     // the card's text, the list's and the map's feed agree: imprecise, off the map
     val geo = EventFixtures.geo(
       ds,
-      Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(500)))),
-      com.histmersion.domain.catalogue.places.PlaceScope.empty,
-      Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Hekla")),
+      Filter(period = Some(Period(Year(-500), Year(500)))),
+      PlaceScope.empty,
+      Some(EventSelection.Text("Hekla")),
       None,
       None,
       None,
-      com.histmersion.PageSize(100),
+      PageSize(100),
       GeoTolerance(0.01)
     )
     assert(!geo.events.exists(_.id == com.histmersion.api.catalogue.Event.Id("gvp_12724")) && geo.imprecise.value >= 1, geo.toString)

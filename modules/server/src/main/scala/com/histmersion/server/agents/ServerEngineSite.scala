@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{AgentRoster, AgentsControllers, EngineSite}
@@ -13,15 +14,22 @@ import com.histmersion.util.jobs.{JobStops, Pinning}
 
 import javax.sql.DataSource
 import scala.collection.immutable.ListMap
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.util.time.Timer
+import com.histmersion.util.time.Pause
+import com.histmersion.config.UserPaths
+import com.histmersion.util.plugins.Plugin
 
 /** The engine's [[EngineSite]] over the composition: the `Deps` of the server, the domains' contributions
   * ([[EngineContributions]]), the approval effects they contribute (the library's source proposals, research's article
   * filter) and the host over the wiring ([[ServerAutomationHost]]).
   */
 final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.time.Clock] = None) extends EngineSite:
-  def stores: com.histmersion.util.storage.Stores = deps.stores
-  def resources: com.histmersion.util.storage.Resources = deps.resources
-  def jvmHome: com.histmersion.util.system.JvmHome = deps.jvmHome
+  def stores: Stores = deps.stores
+  def resources: Resources = deps.resources
+  def jvmHome: JvmHome = deps.jvmHome
   def config: AppConfig = deps.cfg
   def ds: DataSource = deps.ds
   def queues: QueueService = deps.queues
@@ -29,12 +37,12 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pins: Pinning = deps.pins
   def jobStops: JobStops = deps.jobStops
   def clock: java.time.Clock = deps.clock
-  def timer: com.histmersion.util.time.Timer = deps.timer
-  def pause: com.histmersion.util.time.Pause = deps.pause
-  override def userPaths: com.histmersion.config.UserPaths = deps.userPaths
+  def timer: Timer = deps.timer
+  def pause: Pause = deps.pause
+  override def userPaths: UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
-  def aiProviders: () => ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider] = () =>
-    deps.plugins.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+  def aiProviders: () => ListMap[Plugin.Id, AiProvider] = () =>
+    deps.plugins.registries.aiProviders.map((k, p) => Plugin.Id.assume(k.value) -> p)
   def roster: AgentRoster = EngineContributions.roster
   def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(

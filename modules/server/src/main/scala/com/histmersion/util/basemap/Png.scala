@@ -1,12 +1,15 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:
   type CompressionLevel = CompressionLevel.T
-  object CompressionLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CompressionLevel extends RefinedType[Int, Pure]
   type Height = Vp8l.Image.Height
   val Height: Vp8l.Image.Height.type = Vp8l.Image.Height
   type Pixels = Vp8l.Image.Pixels

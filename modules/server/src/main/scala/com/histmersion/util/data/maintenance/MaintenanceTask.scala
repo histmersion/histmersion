@@ -1,4 +1,5 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.data.DataOwner
@@ -9,7 +10,7 @@ import io.github.iltotore.iron.*
   */
 trait MaintenanceTask:
   def owner: DataOwner
-  def name: com.histmersion.util.data.maintenance.MaintenanceTask.Name
+  def name: MaintenanceTask.Name
 
   /** Run one slice of it. */
   def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult

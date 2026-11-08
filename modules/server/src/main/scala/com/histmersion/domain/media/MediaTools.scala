@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.media.MediaMarkdown
@@ -15,6 +16,15 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.media.AssetLink
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.media.assets.AssetService
+import com.histmersion.api.media.MediaItem
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.media.AssetRelation
+import com.histmersion.api.media.MediaTarget
+import com.histmersion.domain.media.links.AssetLinkService
 
 /** Media's agent tools, in their place among `/mcp`'s: a source's figures, a figure's description, its links. The
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).
@@ -24,29 +34,29 @@ object MediaTools:
 
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class AssetsInput(citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class AssetsInput(citekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
   final case class PatchAssetInput(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       name: PatchAssetInput.Name,
       kind: Option[PatchAssetInput.Kind] = None,
       caption: Option[PatchAssetInput.Caption] = None,
       license: Option[PatchAssetInput.License] = None,
-      lat: Option[com.histmersion.Latitude] = None,
-      lon: Option[com.histmersion.Longitude] = None,
-      periodStart: Option[com.histmersion.Year] = None,
-      periodEnd: Option[com.histmersion.Year] = None
+      lat: Option[Latitude] = None,
+      lon: Option[Longitude] = None,
+      periodStart: Option[Year] = None,
+      periodEnd: Option[Year] = None
   )
   object PatchAssetInput:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Caption = Caption.T
-    object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Caption extends RefinedType[String, Pure]
     type License = License.T
-    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object License extends RefinedType[String, Pure]
 
     given Schema[PatchAssetInput] = KindlingsSchema
       .derived[PatchAssetInput]
@@ -57,7 +67,7 @@ object MediaTools:
     given Codec.AsObject[PatchAssetInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchAssetInput]) // #813
 
   final case class AssetLinksInput(
-      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       asset: Option[AssetLinksInput.Asset] = None,
       targetType: Option[AssetLinksInput.TargetType] = None,
       targetId: Option[AssetLinksInput.TargetId] = None,
@@ -67,17 +77,17 @@ object MediaTools:
   ) derives KindlingsCodecAsObject
   object AssetLinksInput:
     type Asset = Asset.T
-    object Asset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Asset extends RefinedType[String, Pure]
     type TargetType = TargetType.T
-    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetType extends RefinedType[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetId extends RefinedType[String, Pure]
     type Relation = Relation.T
-    object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Relation extends RefinedType[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Xywh extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
 
     given Schema[AssetLinksInput] = KindlingsSchema
       .derived[AssetLinksInput]
@@ -91,14 +101,14 @@ object MediaTools:
   final case class DeleteAssetLinkInput(id: DeleteAssetLinkInput.Id) derives KindlingsCodecAsObject
   object DeleteAssetLinkInput:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[Long, Pure]
 
     given Schema[DeleteAssetLinkInput] = KindlingsSchema
       .derived[DeleteAssetLinkInput]
       .schema
       .modify(_.id)(_.description("Asset link id to delete"))
 
-  def apply(assets: AssetsControllers, links: AssetLinksControllers, sourceExists: com.histmersion.domain.library.Citekey => Boolean) =
+  def apply(assets: AssetsControllers, links: AssetLinksControllers, sourceExists: Citekey => Boolean) =
     List(
       tool("assets")
         .description(
@@ -122,11 +132,11 @@ object MediaTools:
         .handle { in =>
           assets.patch(
             in.citekey,
-            com.histmersion.domain.media.assets.AssetService.AssetName(in.name.value),
+            AssetService.AssetName(in.name.value),
             AssetPatch(
-              kind = in.kind.map(k => com.histmersion.api.media.MediaItem.Kind(k.value)),
-              caption = in.caption.map(c => com.histmersion.api.media.MediaItem.Caption(c.value)),
-              license = in.license.map(l => com.histmersion.api.media.MediaItem.License(l.value)),
+              kind = in.kind.map(k => MediaItem.Kind(k.value)),
+              caption = in.caption.map(c => MediaItem.Caption(c.value)),
+              license = in.license.map(l => MediaItem.License(l.value)),
               lat = in.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
               lon = in.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
               periodStart = in.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
@@ -148,10 +158,10 @@ object MediaTools:
             case Some(rel) =>
               val put = AssetLink.Put(
                 citekey = com.histmersion.api.library.Citekey(in.citekey.fold("")(_.value)),
-                assetName = com.histmersion.api.exchange.Bundle.Asset.FileName(in.asset.fold("")(_.value)),
-                relation = com.histmersion.api.media.AssetRelation.Wire(rel.value),
-                targetType = com.histmersion.api.media.MediaTarget.TargetType(in.targetType.fold("")(_.value)),
-                targetId = com.histmersion.api.media.MediaTarget.TargetId(in.targetId.fold("")(_.value)),
+                assetName = Bundle.Asset.FileName(in.asset.fold("")(_.value)),
+                relation = AssetRelation.Wire(rel.value),
+                targetType = MediaTarget.TargetType(in.targetType.fold("")(_.value)),
+                targetId = MediaTarget.TargetId(in.targetId.fold("")(_.value)),
                 xywh = in.xywh.map(x => AssetLink.Xywh(x.value)),
                 notes = in.notes.map(n => AssetLink.Notes(n.value))
               )
@@ -159,13 +169,13 @@ object MediaTools:
                 case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
                 case Left(e)  => McpOut.error(e)
             case None =>
-              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset.map(a => com.histmersion.domain.media.assets.AssetService.AssetUid(a.value)), in.targetType.map(t => com.histmersion.domain.media.assets.AssetService.TargetType(t.value)), in.targetId.map(t => com.histmersion.domain.media.assets.AssetService.TargetId(t.value)))))
+              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset.map(a => AssetService.AssetUid(a.value)), in.targetType.map(t => AssetService.TargetType(t.value)), in.targetId.map(t => AssetService.TargetId(t.value)))))
         },
       tool("delete_asset_link")
         .description("Delete an asset link by id.")
         .input[DeleteAssetLinkInput]
         .handle { in =>
-          links.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(in.id.value)) match
+          links.delete(AssetLinkService.LinkId(in.id.value)) match
             case Right(d) => ToolResult.text(s"Deleted asset link #${d.id}.")
             case Left(e)  => McpOut.error(e)
         }

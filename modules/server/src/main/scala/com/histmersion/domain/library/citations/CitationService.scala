@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.citations
+package com.histmersion
+package domain.library.citations
 
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.util.database.Transactor
@@ -14,23 +15,27 @@ import com.histmersion.api.library.{
   NeighborTarget
 }
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Edge
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.
   */
 trait CitationService:
-  def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire]): List[NeighborRow]
+  def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow]
 
   /** Breadth-first to `depth` (0–4) both ways; a link is kept only when both ends are nodes. */
-  def graph(citekey: com.histmersion.domain.library.Citekey, depth: CitationService.Depth): com.histmersion.api.library.Source.Graph
+  def graph(citekey: Citekey, depth: CitationService.Depth): Source.Graph
 
-  def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Since]): ContradictionsResult
+  def contradictions(citekey: Option[Citekey], since: Option[CitationService.Since]): ContradictionsResult
 
 object CitationService:
   type Depth = Source.Graph.Depth
   val Depth: Source.Graph.DepthCount.type = Source.Graph.DepthCount
   type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Since extends RefinedType[Long, Pure]
 
   /** The edge kinds that disagree. */
   val Disagreeing: Set[com.histmersion.api.library.Edge.Kind] =
@@ -48,11 +53,11 @@ object CitationService:
   def apply(db: Transactor): CitationService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CitationService:
-    def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire]): List[NeighborRow] =
+    def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow] =
       db.read(CitationRepo.neighbors(citekey, kinds)).toList
-    def graph(citekey: com.histmersion.domain.library.Citekey, depth: CitationService.Depth): com.histmersion.api.library.Source.Graph =
+    def graph(citekey: Citekey, depth: Depth): Source.Graph =
       db.read(CitationRepo.graph(citekey, depth))
-    def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Since]): ContradictionsResult =
+    def contradictions(citekey: Option[Citekey], since: Option[Since]): ContradictionsResult =
       db.read(CitationRepo.contradictions(citekey, since.map(y => CitationRepo.Since(y.value))))
 
   /** The graph over the sources the library holds in memory, as a database holding only the library's rows answers: no
@@ -62,7 +67,7 @@ object CitationService:
     private def wire(kind: com.histmersion.api.library.Edge.Kind) = com.histmersion.api.library.Edge.Kind.wireOf(kind).value
     private def stored(st: LibraryState, ck: com.histmersion.api.library.Citekey) = st.sources.get(LibraryState.SourcesKey(ck.value)).map(_.source)
 
-    def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire]): List[NeighborRow] =
+    def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow] =
       val st = state.get
       val self = com.histmersion.api.library.Citekey(citekey.value)
       def wanted(kind: com.histmersion.api.library.Edge.Kind) = kinds.isEmpty || kinds.exists(_.value == wire(kind))
@@ -78,7 +83,7 @@ object CitationService:
       }
       (out ++ parked ++ in).sortBy(r => (r.direction.value, wire(r.kind), r.citekey.value))
 
-    def graph(citekey: com.histmersion.domain.library.Citekey, depth: CitationService.Depth): com.histmersion.api.library.Source.Graph =
+    def graph(citekey: Citekey, depth: Depth): Source.Graph =
       val st = state.get
       val maxDepth = depth.value.max(0).min(4)
       @tailrec def walk(
@@ -104,14 +109,14 @@ object CitationService:
       val root = com.histmersion.api.library.Citekey(citekey.value)
       val (nodes, links) = walk(0, List(root), Vector.empty, Set.empty)
       val ids = nodes.iterator.map(_.id).toSet
-      com.histmersion.api.library.Source.Graph(
+      Source.Graph(
         root,
         Source.Graph.DepthCount(maxDepth),
         nodes.toList,
         links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source.value, l.target.value, wire(l.kind)))
       )
 
-    def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Since]): ContradictionsResult =
+    def contradictions(citekey: Option[Citekey], since: Option[Since]): ContradictionsResult =
       val st = state.get
       def row(ck: com.histmersion.api.library.Citekey, direction: ContradictionRow.Direction.Wire, kind: com.histmersion.api.library.Edge.Kind, other: com.histmersion.api.library.Citekey): Option[ContradictionRow] =
         for s <- stored(st, ck)

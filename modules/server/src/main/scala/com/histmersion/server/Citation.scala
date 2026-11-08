@@ -1,9 +1,13 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.domain.library.Edge
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
 enum Citation:
@@ -18,13 +22,13 @@ enum Citation:
 
 object Citation:
   object ToSource:
-    type Kind = com.histmersion.domain.library.Edge.Kind.Wire
-    val Kind: _root_.com.histmersion.domain.library.Edge.Kind.Wire.type = _root_.com.histmersion.domain.library.Edge.Kind.Wire
+    type Kind = Edge.Kind.Wire
+    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
   object ToArticle:
-    type Kind = com.histmersion.domain.library.Edge.Kind.Wire
-    val Kind: _root_.com.histmersion.domain.library.Edge.Kind.Wire.type = _root_.com.histmersion.domain.library.Edge.Kind.Wire
+    type Kind = Edge.Kind.Wire
+    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
   object Unresolved:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = com.histmersion.domain.library.Edge.Kind.Wire
-    val Kind: _root_.com.histmersion.domain.library.Edge.Kind.Wire.type = _root_.com.histmersion.domain.library.Edge.Kind.Wire
+    object Id extends RefinedType[String, Pure]
+    type Kind = Edge.Kind.Wire
+    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire

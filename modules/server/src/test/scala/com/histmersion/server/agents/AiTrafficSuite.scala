@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.library.workflows.*
 
@@ -17,6 +18,14 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.agents.LlmCall
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.util.plugins.Plugin
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.api.instance.Version
 
 /** The recorded wire of the HTTP AI providers (`anthropic`, `openai`, `local`): the engine's agent loop driven through
   * the server's own factory ([[LlmClient.factory]] over the generation's AI-provider registry) against a loopback
@@ -29,10 +38,10 @@ import scala.jdk.CollectionConverters.*
 class AiTrafficSuite extends munit.FunSuite:
 
   /** One scripted answer: a status, its headers, its body. */
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   final private case class Answer(status: Int, body: String, headers: List[(String, String)] = Nil, delayMs: Long = 0)
 
   private def json(body: String, status: Int = 200, headers: List[(String, String)] = Nil): Answer =
@@ -105,7 +114,7 @@ class AiTrafficSuite extends munit.FunSuite:
       interceptors: List[AgentInterceptor[Identity]] = Nil
   ): LlmCall[A] =
     LlmCall[A](
-      com.histmersion.domain.automation.agents.LlmCall.System("You are a careful research assistant. Answer with JSON only."),
+      LlmCall.System("You are a careful research assistant. Answer with JSON only."),
       LlmCall.User("Classify the source.\n<source>Tin was essential for bronze.</source>"),
       offered,
       schema,
@@ -182,10 +191,10 @@ class AiTrafficSuite extends munit.FunSuite:
   ): String =
     up.script(answers)
     val l = loaded(text)
-    val g = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val g = ServerPlugins.load(l, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val f = LlmClient.factory(
       CliRuntime(l.config, EngineContributions.roster),
-      () => g.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+      () => g.registries.aiProviders.map((k, p) => Plugin.Id.assume(k.value) -> p)
     )
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match
@@ -215,9 +224,9 @@ class AiTrafficSuite extends munit.FunSuite:
             sb ++= s"trace: ${Trace.messages(res.history, Vector.empty, 4000).map(m => s"${m.role}${m.toolName.fold("")(t => s"($t)")}").mkString(" ")}\n"
     sb.result().replace(s"127.0.0.1:${up.port}", "127.0.0.1:<port>")
 
-  private val sonnet = ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-sonnet-4-5"))
-  private val gpt = ModelRef(ProviderKind.OpenAI, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5"))
-  private val qwen = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen3-coder"))
+  private val sonnet = ModelRef(ProviderKind.Anthropic, ModelRef.Model("claude-sonnet-4-5"))
+  private val gpt = ModelRef(ProviderKind.OpenAI, ModelRef.Model("gpt-5"))
+  private val qwen = ModelRef(ProviderKind.Local, ModelRef.Model("qwen3-coder"))
 
   private def transcript: String =
     val up = Upstream()
@@ -293,7 +302,7 @@ class AiTrafficSuite extends munit.FunSuite:
         scenario(
           up,
           "anthropic: a model without structured output",
-          ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-3-haiku-20240307")),
+          ModelRef(ProviderKind.Anthropic, ModelRef.Model("claude-3-haiku-20240307")),
           call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base
@@ -698,8 +707,8 @@ class AiTrafficSuite extends munit.FunSuite:
 
   /** The User-Agent the host's AI client sends (its policy: the project, never an e-mail). */
   private val hostAgent =
-    com.histmersion.domain.HttpPolicy.userAgent(
-      com.histmersion.domain.HttpPolicy.UserAgent(s"Histmersion/${com.histmersion.api.instance.Version.version} (agents)")
+    HttpPolicy.userAgent(
+      HttpPolicy.UserAgent(s"Histmersion/${Version.version} (agents)")
     )
 
   /** The transcript as the host's AI client sends it: the two headers that belonged to the transport the providers had

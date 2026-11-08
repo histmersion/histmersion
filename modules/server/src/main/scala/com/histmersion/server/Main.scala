@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.settings.{info, ConfigSource}
 
@@ -64,7 +65,7 @@ import com.histmersion.util.console.Console
     AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path).left.map(p => ConfigSource.Problem(p.value))
   // the native bundle: run the bundled Postgres + converter as children and point the config at them;
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)
-  val explicit = environment.nonBlank(com.histmersion.config.Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)
+  val explicit = environment.nonBlank(Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)
   val bundled = loaded.runtime.enabled.value || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
   val (cfg, source) =
     if !bundled then (loaded, ConfigSource(reread))
@@ -77,8 +78,8 @@ import com.histmersion.util.console.Console
   // a LaunchAgent (launchd names its job in XPC_SERVICE_NAME) or a systemd unit (INVOCATION_ID) starts the
   // server again when it exits with an error: there, Settings can restart it by ending it with that code
   val underService =
-    environment.get(com.histmersion.config.Environment.VariablesKey("XPC_SERVICE_NAME")).exists(_.value.contains("histmersion")) || environment
-      .get(com.histmersion.config.Environment.VariablesKey("INVOCATION_ID"))
+    environment.get(Environment.VariablesKey("XPC_SERVICE_NAME")).exists(_.value.contains("histmersion")) || environment
+      .get(Environment.VariablesKey("INVOCATION_ID"))
       .isDefined
   val restart = Option.when(underService) { () =>
     val code = cfg.server.restartExitCode

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -7,6 +8,8 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The read-only query's MCP tools: `query` (its description generated from the live schema) and `schema`. */
 object QueryTools:
@@ -15,7 +18,7 @@ object QueryTools:
   final case class QueryInput(sql: QueryInput.Sql) derives KindlingsCodecAsObject
   object QueryInput:
     type Sql = Sql.T
-    object Sql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sql extends RefinedType[String, Pure]
 
     given Schema[QueryInput] = KindlingsSchema
       .derived[QueryInput]

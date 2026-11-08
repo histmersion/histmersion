@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.managers.Zero
@@ -17,6 +18,8 @@ import sttp.shared.Identity
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left above its reserve
   * (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to finish, and the engine hands the step
@@ -40,6 +43,6 @@ final private[automation] class AllowanceGuard(
 
 private[automation] object AllowanceGuard:
   type HeadroomTokens = HeadroomTokens.T
-  object HeadroomTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeadroomTokens extends RefinedType[Long, Pure]
 
   val Reason = "allowance"

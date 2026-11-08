@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,6 +24,23 @@ import com.histmersion.db.*
 import com.histmersion.api.catalogue.{EventImportRequest, Geocode, Period}
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.config.DbConfig
+import com.histmersion.config.BackupsConfig
+import com.histmersion.config.BundlesConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.AcquireConfig
+import com.histmersion.config.InitConfig
+import com.histmersion.config.RuntimeConfig
+import com.histmersion.config.BasemapConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.Caller
+import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.config.PlaceSourcesConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.Transactor
+import com.histmersion.domain.catalogue.places.GeocodeSettings
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's
@@ -45,7 +63,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-catalogue-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -61,14 +79,14 @@ class CatalogueOracleSuite extends DbSuite:
 
   private def cfgFor(name: String): AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false)).modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(dataDir.toString))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false)).modify(_.dataDir).setTo(InitConfig.DataDir(dataDir.toString))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
     )
 
   private def withServer[A](name: String)(body: String => A): A = withServerOn(cfgFor(name))(body)
 
   private def withServerOn[A](cfg: AppConfig)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -434,15 +452,15 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = step("event rename", post(s"$url/api/events/zz_ash/rename", """{"to":"zz_ashfall"}"""))
     val _ = step("event delete", send("DELETE", s"$url/api/events/zz_gone", ""))
     // the catalogue import, then a person's edit of an imported event: a correction
-    val catalog = com.histmersion.server.CatalogueWiring(
-      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
+    val catalog = CatalogueWiring(
+      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
       FakeMediaHttp(gvp),
-      () => com.histmersion.domain.DeepTime.SignedYear(2026L)
+      () => DeepTime.SignedYear(2026L)
     )
     val job = catalog.eventImports
       .importJob(
-        com.histmersion.domain.Caller.Local,
-        EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), from = Some(com.histmersion.api.catalogue.EventImportRequest.From(-2000)), to = Some(com.histmersion.api.catalogue.EventImportRequest.To(-1000)))
+        Caller.Local,
+        EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), from = Some(EventImportRequest.From(-2000)), to = Some(EventImportRequest.To(-1000)))
       )
       .fold(e => fail(e.message.value), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
@@ -642,7 +660,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private def tileLine(url: String, path: String): String =
     val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/tiles/$path")))
-    val sha = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(r.body)
+    val sha = BundleFormat.sha256Hex(r.body)
     val etag = r.headers().firstValue("etag").orElse("-")
     s"$path ${r.statusCode} ${r.body.length} $sha $etag"
 
@@ -969,17 +987,17 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = Files.writeString(d.resolve("places/sites/sites.json"), seedSites, UTF_8)
     val pins = List(
       Gazetteer.Extract(
-        com.histmersion.api.catalogue.Gazetteer.Extract.Name("geonames"),
-        com.histmersion.api.catalogue.Gazetteer.Extract.File("geonames-fixture.ndjson.gz"),
+        Gazetteer.Extract.Name("geonames"),
+        Gazetteer.Extract.File("geonames-fixture.ndjson.gz"),
         FixtureSha,
-        com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(438),
-        com.histmersion.api.catalogue.Gazetteer.Extract.Features(2),
-        com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-1"),
-        com.histmersion.api.catalogue.Gazetteer.Extract.Title("GeoNames fixture"),
-        com.histmersion.api.catalogue.Gazetteer.Extract.Licence("CC BY 4.0"),
-        Some(com.histmersion.api.catalogue.Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
+        Gazetteer.Extract.Bytes(438),
+        Gazetteer.Extract.Features(2),
+        Gazetteer.Extract.Version("fixture-1"),
+        Gazetteer.Extract.Title("GeoNames fixture"),
+        Gazetteer.Extract.Licence("CC BY 4.0"),
+        Some(Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
       ),
-      Gazetteer.Extract(com.histmersion.api.catalogue.Gazetteer.Extract.Name("tgn"), com.histmersion.api.catalogue.Gazetteer.Extract.File("tgn-absent.ndjson.gz"), Gazetteer.Extract.Sha256("0" * 64), com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(1), com.histmersion.api.catalogue.Gazetteer.Extract.Features(1), com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-2"), com.histmersion.api.catalogue.Gazetteer.Extract.Title("TGN fixture"), com.histmersion.api.catalogue.Gazetteer.Extract.Licence("ODC-By 1.0"))
+      Gazetteer.Extract(Gazetteer.Extract.Name("tgn"), Gazetteer.Extract.File("tgn-absent.ndjson.gz"), Gazetteer.Extract.Sha256("0" * 64), Gazetteer.Extract.Bytes(1), Gazetteer.Extract.Features(1), Gazetteer.Extract.Version("fixture-2"), Gazetteer.Extract.Title("TGN fixture"), Gazetteer.Extract.Licence("ODC-By 1.0"))
     )
     val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
@@ -992,7 +1010,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     val c = cfgFor("gaz")
     c.modify(
-      _.init).setTo(c.init.modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(d.toString))).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(com.histmersion.config.PlaceSourcesConfig.Dir(extracts.toString)).modify(_.lpfDir).setTo(com.histmersion.config.PlaceSourcesConfig.LpfDir(lpf.toString)))
+      _.init).setTo(c.init.modify(_.dataDir).setTo(InitConfig.DataDir(d.toString))).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir(extracts.toString)).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(lpf.toString)))
     )
 
   private def gazetteer(url: String, ds: DataSource): String =
@@ -1044,17 +1062,17 @@ class CatalogueOracleSuite extends DbSuite:
     tools.foreach((n, a) => step(s"tool $n ${a.noSpaces}", tool(url, n, a)))
     // the geocoder, as the enrichment and the checks ask it
     val asks = List(
-      (Geocode.Attempt.Name("Zztell"), Geocode.KindHint.Site, Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1400)))),
+      (Geocode.Attempt.Name("Zztell"), Geocode.KindHint.Site, Some(Period(Year(-1500), Year(-1400)))),
       (Geocode.Attempt.Name("Zzhöyük"), Geocode.KindHint.Unknown, None),
       (Geocode.Attempt.Name("Zzcrossing"), Geocode.KindHint.Site, None),
-      (Geocode.Attempt.Name("Zzvale"), Geocode.KindHint.Region, Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))),
+      (Geocode.Attempt.Name("Zzvale"), Geocode.KindHint.Region, Some(Period(Year(-1300), Year(-1200)))),
       (Geocode.Attempt.Name("Eastern Zzshore"), Geocode.KindHint.Region, None),
       (Geocode.Attempt.Name("Zztell, Zzshore"), Geocode.KindHint.Site, None),
       (Geocode.Attempt.Name("Zzgaz Hattusas"), Geocode.KindHint.Unknown, None),
       (Geocode.Attempt.Name("Zznowhere"), Geocode.KindHint.Unknown, None)
     )
     asks.foreach { (name, hint, at) =>
-      val r = Geocoding(com.histmersion.util.database.Transactor(ds)).resolve(name, hint, at, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(4))
+      val r = Geocoding(Transactor(ds)).resolve(name, hint, at, GeocodeSettings.PlaceholderMin(4))
       val _ = step(
         s"geocode $name ${hint.wire} ${at.map(p => s"${p.start}..${p.end}").getOrElse("-")}",
         r.fold("none")(r =>

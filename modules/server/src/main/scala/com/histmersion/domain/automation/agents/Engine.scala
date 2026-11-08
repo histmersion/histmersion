@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,6 +24,20 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, PlanQuota}
 import com.histmersion.api.Api
+import com.histmersion.domain.automation.Run
+import com.histmersion.util.jobs.Carried
+import com.histmersion.util.jobs.Job
+import com.histmersion.util.jobs.RunRow
+import com.histmersion.domain.automation.AgentRole
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.jobs.JobRepo
+import com.histmersion.util.jobs.JobRow
+import com.histmersion.util.jobs.JobRuns
+import com.histmersion.domain.automation.Approval
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.SpatialHierarchyResult
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -41,12 +56,12 @@ final class Engine(
   /** A queued run and the generation it was queued on: it runs there — on the database it was queued in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: com.histmersion.domain.automation.Run.Id, work: com.histmersion.util.jobs.Carried[Unit])
+  final private case class Queued(id: Run.Id, work: Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
 
-  private def jobKind: com.histmersion.util.jobs.Job.Kind = com.histmersion.util.jobs.Job.Kind.assume(JobKind)
+  private def jobKind: Job.Kind = Job.Kind.assume(JobKind)
 
-  private def rowStatus(s: RunState): com.histmersion.util.jobs.RunRow.Status = com.histmersion.util.jobs.RunRow.Status(s.wire.value)
+  private def rowStatus(s: RunState): RunRow.Status = RunRow.Status(s.wire.value)
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight.value))
 
   /** The tools a step of `run` offers its agent: the agent's own, as far as its workflow lets the agent's role use them
@@ -56,7 +71,7 @@ final class Engine(
     workflows
       .parse(run.pipeline.value)
       .fold(Nil)(w =>
-        agent.tools.filter(w.allowedTools(agent.role.transformInto[com.histmersion.domain.automation.AgentRole]))
+        agent.tools.filter(w.allowedTools(agent.role.transformInto[AgentRole]))
       )
 
   /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
@@ -65,19 +80,19 @@ final class Engine(
   /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every `prune-every-minutes` (or
     * now with `force`). Returns how many went. Never fails a run: a failed prune is logged and tried again next time.
     */
-  def pruneTrace(force: com.histmersion.domain.automation.agents.Engine.PruneTraceForce = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(false), now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(agents.clock.millis())): com.histmersion.RowCount =
+  def pruneTrace(force: Engine.PruneTraceForce = Engine.PruneTraceForce(false), now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())): RowCount =
     val every = math.max(1, cfg.trace.pruneEveryMinutes.value).toLong * 60000L
     val last = lastPrune.get()
-    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(last, now.value) then com.histmersion.RowCount(0)
+    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(last, now.value) then RowCount(0)
     else
       try
-        val n = com.histmersion.RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
+        val n = RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
         if n.value > 0 then scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
         n
       catch
         case e: Exception =>
           scribe.warn(s"agent trace pruning failed: ${e.getMessage}")
-          com.histmersion.RowCount(0)
+          RowCount(0)
 
   /** What a person asked of a RUNNING run, read by the run between steps — and what the stall watchdog watches: the
     * last sign of life, the step it was in, and the CLI processes it has alive.
@@ -85,10 +100,10 @@ final class Engine(
   final private class Control(val thread: Thread):
     @volatile var pause: Boolean = false
     @volatile var cancel: Boolean = false
-    @volatile var lastBeat: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(agents.clock.millis())
+    @volatile var lastBeat: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
 
     /** When `lastBeat` was last written to `jobs.heartbeat_at` (at most every heartbeat-seconds). */
-    @volatile var persisted: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(0L)
+    @volatile var persisted: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(0L)
     @volatile var seq: Int = 0
 
     /** Set by the watchdog before it interrupts the run: how the run settles. */
@@ -97,21 +112,21 @@ final class Engine(
 
   object Control:
     type Pause = Pause.T
-    object Pause extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pause extends RefinedType[Boolean, Pure]
     type Cancel = Cancel.T
-    object Cancel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cancel extends RefinedType[Boolean, Pure]
     type LastBeat = LastBeat.T
-    object LastBeat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastBeat extends RefinedType[Long, Pure]
     type Persisted = Persisted.T
-    object Persisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Persisted extends RefinedType[Long, Pure]
     type Seq = Seq.T
-    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  private val running = ConcurrentHashMap[com.histmersion.domain.automation.Run.Id, Control]()
+    object Seq extends RefinedType[Int, Pure]
+  private val running = ConcurrentHashMap[Run.Id, Control]()
 
   /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. */
-  private[histmersion] def beat(id: com.histmersion.domain.automation.Run.Id, seq: Option[com.histmersion.domain.automation.agents.Engine.BeatSeq] = None): Unit =
+  private[histmersion] def beat(id: Run.Id, seq: Option[Engine.BeatSeq] = None): Unit =
     Option(running.get(id)).foreach { c =>
-      val now = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(agents.clock.millis())
+      val now = PlanQuotaRepo.EpochMillis(agents.clock.millis())
       c.lastBeat = now
       seq.foreach(s => c.seq = s.value)
       if now.value - c.persisted.value >= math.max(1, cfg.watchdog.heartbeatSeconds.value).toLong * 1000L then
@@ -121,7 +136,7 @@ final class Engine(
     }
 
   /** Take a plan pool's slot, beating while waiting for it (other runs' calls hold it). */
-  private[histmersion] def acquireBeating(id: com.histmersion.domain.automation.Run.Id, slot: Semaphore): Unit =
+  private[histmersion] def acquireBeating(id: Run.Id, slot: Semaphore): Unit =
     while !slot.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat(id)
 
   /** Called with every run that settles (done, failed, cancelled, paused, waiting) — the managers' nudge. A `var`
@@ -135,7 +150,7 @@ final class Engine(
     * `agents.watchdog.stall-minutes` has its processes killed and is interrupted; it settles paused `stalled` (resuming
     * after resume-minutes), or failed on its max-stalls-th stall of one step. Returns the ids.
     */
-  def checkStalls(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(agents.clock.millis())): List[com.histmersion.domain.automation.Run.Id] =
+  def checkStalls(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())): List[Run.Id] =
     val limit = cfg.watchdog.stallMinutesFor(cfg.providers).value.toLong * 60000L
     running.asScala.toList.filter((_, c) => c.stalled.isEmpty && !c.cancel && now.value - c.lastBeat.value > limit).map { (id, c) =>
       val mins = (now.value - c.lastBeat.value) / 60000L
@@ -145,7 +160,7 @@ final class Engine(
       agents.jobRuns.warn(
         jobKind,
         id,
-        com.histmersion.util.jobs.JobRepo.WarningText(s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
+        JobRepo.WarningText(s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
       )
       c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
         Halt.Fail(Halt.Fail.Message(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)"))
@@ -174,7 +189,7 @@ final class Engine(
     */
   def start(): Int =
     val (paused, queued) = reconcile()
-    val _ = pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true))
+    val _ = pruneTrace(force = Engine.PruneTraceForce(true))
     queued.foreach(submit)
     if scope.isEmpty then
       stopping = false
@@ -189,7 +204,7 @@ final class Engine(
   /** [[start]]'s first half: a run left `running` is paused as interrupted (and, when nobody watches it, set to resume
     * by itself shortly). Returns how many were paused, and the queued runs.
     */
-  private[histmersion] def reconcile(): (com.histmersion.RowCount, Vector[com.histmersion.domain.automation.Run.Id]) =
+  private[histmersion] def reconcile(): (RowCount, Vector[Run.Id]) =
     // a run this engine is running is not interrupted, and one it holds queued is not queued twice: a
     // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
     import scala.jdk.CollectionConverters.*
@@ -198,7 +213,7 @@ final class Engine(
       jobKind,
       rowStatus(RunState.Running),
       rowStatus(RunState.Paused),
-      com.histmersion.util.jobs.JobRow.Error(PauseReason.Interrupted.wire.value),
+      JobRow.Error(PauseReason.Interrupted.wire.value),
       rowStatus(RunState.Queued),
       running.keySet.asScala.toList
     )
@@ -209,7 +224,7 @@ final class Engine(
       if origin.flatMap(o => Origin.parse(Origin.Wire(o.value))).exists(_.unattended) then
         val _ = agents.jobRuns.resumeAt(jobKind, id, rowStatus(RunState.Paused), at)
     }
-    (com.histmersion.RowCount(paused.size), queued)
+    (RowCount(paused.size), queued)
 
   /** The thread that resumes runs paused for an allowance; a `var` for the same reason as [[scope]]. */
   private var waker: Option[Thread] = None
@@ -223,7 +238,7 @@ final class Engine(
         try
           agents.pins.pinned {
             val now = java.time.Instant.now(agents.clock)
-            val _ = checkStalls(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(now.toEpochMilli))
+            val _ = checkStalls(PlanQuotaRepo.EpochMillis(now.toEpochMilli))
             val _ = resumeDue(now)
             val _ = resumeFreed(now)
           }
@@ -236,7 +251,7 @@ final class Engine(
     * window has not freed enough after all (another run spent it meanwhile), the run simply pauses again with the next
     * time.
     */
-  def resumeDue(now: java.time.Instant): List[com.histmersion.domain.automation.Run.Id] =
+  def resumeDue(now: java.time.Instant): List[Run.Id] =
     agents.jobRuns.due(jobKind, rowStatus(RunState.Paused), now).toList.filter { id =>
       transition(id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
     }
@@ -246,8 +261,8 @@ final class Engine(
     * once per `stale-minutes` per pool), and sees a hold released. A run whose pool is still below its floor stays
     * paused; nothing is read for a server with no such run. Returns the ids.
     */
-  def resumeFreed(now: java.time.Instant): List[com.histmersion.domain.automation.Run.Id] =
-    agents.jobRuns.pausedWith(jobKind, rowStatus(RunState.Paused), com.histmersion.util.jobs.JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now).toList.flatMap {
+  def resumeFreed(now: java.time.Instant): List[Run.Id] =
+    agents.jobRuns.pausedWith(jobKind, rowStatus(RunState.Paused), JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now).toList.flatMap {
       (id, pipeline, model, error) =>
         val roles = ModelPicker
           .pausedRole(ModelPicker.Problem(error.value))
@@ -272,7 +287,7 @@ final class Engine(
         free.flatMap { r =>
           transition(id, RunState.Paused, RunState.Queued).map { _ =>
             (notes.result() :+ s"resumed before its reset: the ${r.wire} chain has a usable model again")
-              .foreach(w => agents.jobRuns.warn(jobKind, id, com.histmersion.util.jobs.JobRepo.WarningText(w.take(500))))
+              .foreach(w => agents.jobRuns.warn(jobKind, id, JobRepo.WarningText(w.take(500))))
             scribe.info(s"agent run $id resumed: the ${r.wire} chain has a usable model again")
             submit(id)
             id
@@ -301,20 +316,20 @@ final class Engine(
     * transition sets it (None clears it).
     */
   def transition(
-      id: com.histmersion.domain.automation.Run.Id,
+      id: Run.Id,
       from: RunState,
       to: RunState,
-      error: Option[com.histmersion.domain.automation.agents.Engine.Problem] = None,
+      error: Option[Engine.Problem] = None,
       progress: Option[String] = None,
       resumeAt: Option[java.time.Instant] = None
   ): Option[RunState] =
     RunState
       .next(from, to)
       .flatMap(target =>
-        Option.when(agents.jobRuns.move(jobKind, id, rowStatus(from), rowStatus(target), error.map(e => com.histmersion.util.jobs.JobRow.Error(e.value)), progress.map(com.histmersion.util.jobs.JobRow.Progress(_)), resumeAt))(target)
+        Option.when(agents.jobRuns.move(jobKind, id, rowStatus(from), rowStatus(target), error.map(e => JobRow.Error(e.value)), progress.map(JobRow.Progress(_)), resumeAt))(target)
       )
 
-  def submit(id: com.histmersion.domain.automation.Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
+  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
 
   private def pool(): Unit =
     try
@@ -341,7 +356,7 @@ final class Engine(
       catch case _: InterruptedException => alive = false
 
   /** Run one queued run to its next resting state. */
-  private[histmersion] def execute(id: com.histmersion.domain.automation.Run.Id): Unit =
+  private[histmersion] def execute(id: Run.Id): Unit =
     agents.runs.get(id) match
       case None      => ()
       case Some(run) =>
@@ -371,7 +386,7 @@ final class Engine(
                 val at = Option.when(run.origin.flatMap(Origin.parse).exists(_.unattended))(
                   java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
                 )
-                Left(Halt.Pause(PauseReason.Interrupted, com.histmersion.domain.automation.agents.Halt.Pause.Detail("interrupted"), at))
+                Left(Halt.Pause(PauseReason.Interrupted, Halt.Pause.Detail("interrupted"), at))
               case e: Exception =>
                 scribe.error(s"agent run $id failed unexpectedly: ${e.getMessage}", e)
                 Left(Halt.Fail(Halt.Fail.Message(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
@@ -384,7 +399,7 @@ final class Engine(
             case Right(summary) =>
               transition(id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel) =>
-              transition(id, RunState.Running, RunState.Cancelled, error = Some(com.histmersion.domain.automation.agents.Engine.Problem("cancelled")))
+              transition(id, RunState.Running, RunState.Cancelled, error = Some(Engine.Problem("cancelled")))
             case Left(Halt.Fail(m)) =>
               transition(id, RunState.Running, RunState.Failed, error = Some(Engine.Problem(m.value.take(2000))))
             case Left(Halt.Pause(reason, why, at)) =>
@@ -399,7 +414,7 @@ final class Engine(
               val waiting =
                 transition(id, RunState.Running, RunState.WaitingApproval, progress = Some(why.value.take(500)))
               // decided in the instant between opening it and this transition: go straight back to the queue
-              if waiting.isDefined && agents.approvalStore.approval(com.histmersion.domain.automation.Approval.Id(approval.value)).exists(_.state != ApprovalState.Open.wire)
+              if waiting.isDefined && agents.approvalStore.approval(Approval.Id(approval.value)).exists(_.state != ApprovalState.Open.wire)
               then
                 val _ = wake(id)
               waiting
@@ -434,31 +449,31 @@ final class Engine(
             s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.value.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.value.take(8)}) $w"
         val _ = agents.queues.add(
-          com.histmersion.api.automation.Queue.Kind.Tasks,
-          com.histmersion.api.automation.Queue.QueueAdd(
-            com.histmersion.api.automation.Queue.QueueItem.Text(text),
-            topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),
-            goal = Pipelines.goalOf(run).map(g => com.histmersion.api.automation.Goal.Slug(g.value)),
-            job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id(run.id.value))
+          Queue.Kind.Tasks,
+          Queue.QueueAdd(
+            Queue.QueueItem.Text(text),
+            topic = Some(Queue.QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),
+            goal = Pipelines.goalOf(run).map(g => Goal.Slug(g.value)),
+            job = Some(SpatialHierarchyResult.Job.Id(run.id.value))
           )
         )
       }
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */
-  def wake(id: com.histmersion.domain.automation.Run.Id): Boolean =
+  def wake(id: Run.Id): Boolean =
     transition(id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
 
   /** Between steps: a requested pause or cancel takes effect here. */
-  private[histmersion] def checkControl(id: com.histmersion.domain.automation.Run.Id): Either[Halt, Unit] =
+  private[histmersion] def checkControl(id: Run.Id): Either[Halt, Unit] =
     Option(running.get(id)) match
       case Some(c) if c.cancel => Left(Halt.Cancel)
-      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, com.histmersion.domain.automation.agents.Halt.Pause.Detail("paused on request")))
+      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, Halt.Pause.Detail("paused on request")))
       case _                   => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
-  private[histmersion] def checkBudget(id: com.histmersion.domain.automation.Run.Id): Either[Halt, Unit] =
+  private[histmersion] def checkBudget(id: Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
-      case None    => Left(Halt.Fail(com.histmersion.domain.automation.agents.Halt.Fail.Message("the run disappeared")))
+      case None    => Left(Halt.Fail(Halt.Fail.Message("the run disappeared")))
       case Some(r) =>
         val (day, month) = agents.runs.spendDayMonth()
         val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
@@ -495,10 +510,10 @@ final class Engine(
           )
         else Right(())
 
-  private[histmersion] def budgetInterceptor(id: com.histmersion.domain.automation.Run.Id, billing: Billing): RunBudget =
+  private[histmersion] def budgetInterceptor(id: Run.Id, billing: Billing): RunBudget =
     val r = agents.runs.get(id)
     val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
-    val (use, cost) = agents.runs.runSpend(com.histmersion.util.jobs.Job.Id.assume(id.value))
+    val (use, cost) = agents.runs.runSpend(Job.Id.assume(id.value))
     RunBudget(
       cost,
       RunBudget.SpentTokens(use.budgeted(weight).value),
@@ -510,9 +525,9 @@ final class Engine(
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
-  private def conflict(m: com.histmersion.domain.automation.agents.Engine.Problem) = Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+  private def conflict(m: Engine.Problem) = Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
-  def pause(id: com.histmersion.domain.automation.Run.Id): Either[Api.Error, RunInfo] =
+  def pause(id: Run.Id): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>
@@ -530,60 +545,60 @@ final class Engine(
         case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a queued or running run can be paused")))
     }
 
-  def resume(id: com.histmersion.domain.automation.Run.Id, budgetUsd: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetUsd], budgetTokens: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens]): Either[Api.Error, RunInfo] =
+  def resume(id: Run.Id, budgetUsd: Option[AgentsControllers.BudgetUsd], budgetTokens: Option[AgentsControllers.BudgetTokens]): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
         Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a paused run can be resumed")))
       else
-        agents.jobRuns.budget(jobKind, id, budgetUsd.map(b => BigDecimal(b.value)), budgetTokens.map(t => com.histmersion.util.jobs.JobRepo.TokenBudget(t.value)))
+        agents.jobRuns.budget(jobKind, id, budgetUsd.map(b => BigDecimal(b.value)), budgetTokens.map(t => JobRepo.TokenBudget(t.value)))
         transition(id, RunState.Paused, RunState.Queued)
           .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
           .flatMap { _ => submit(id); get(id) }
     }
 
-  def cancel(id: com.histmersion.domain.automation.Run.Id): Either[Api.Error, RunInfo] =
+  def cancel(id: Run.Id): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
-          transition(id, s, RunState.Cancelled, error = Some(com.histmersion.domain.automation.agents.Engine.Problem("cancelled")))
+          transition(id, s, RunState.Cancelled, error = Some(Engine.Problem("cancelled")))
             .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
             .flatMap { _ =>
-              val _ = agents.approvalStore.closeForRun(com.histmersion.util.jobs.Job.Id.assume(id.value), AgentRepo.CloseReason("rejected: the run was cancelled"))
+              val _ = agents.approvalStore.closeForRun(Job.Id.assume(id.value), AgentRepo.CloseReason("rejected: the run was cancelled"))
               get(id)
             }
         case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; it has already finished")))
     }
 
-  private def get(id: com.histmersion.domain.automation.Run.Id): Either[Api.Error, RunInfo] =
+  private def get(id: Run.Id): Either[Api.Error, RunInfo] =
     agents.runs.get(id).toRight(Api.Error(Api.Error.Message(s"No agent run '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
-  private def withRun[A](id: com.histmersion.domain.automation.Run.Id)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)
+  private def withRun[A](id: Run.Id)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)
 
 /** The trace of one LLM step, from the conversation sttp-ai's loop built: prompts, assistant turns, tool calls with
   * their results — every body truncated to `max` characters.
   */
 object Engine:
   type CapKey = CapKey.T
-  object CapKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CapKey extends RefinedType[String, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type OutputCapLimit = OutputCapLimit.T
-  object OutputCapLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OutputCapLimit extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Stall = Stall.T
-  object Stall extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stall extends RefinedType[String, Pure]
   /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
 
   type PruneTraceForce = PruneTraceForce.T
-  object PruneTraceForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PruneTraceForce extends RefinedType[Boolean, Pure]
   type BeatSeq = BeatSeq.T
-  object BeatSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BeatSeq extends RefinedType[Int, Pure]
   type CapKeyOverridden = CapKeyOverridden.T
-  object CapKeyOverridden extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CapKeyOverridden extends RefinedType[Boolean, Pure]
 
   val BeatWhileWaitingSeconds = 30L
 
@@ -593,12 +608,12 @@ object Engine:
   /** The tool-loop turns of one step: its agent's `max-turns`, never the global `agents.step.max-iterations` (which
     * once capped a reviewer meant for 20 lookups at 6).
     */
-  def stepTurns(agent: AgentDef): com.histmersion.domain.automation.agents.AgentDef.MaxTurns = AgentDef.MaxTurns(math.max(1, agent.maxTurns.value))
+  def stepTurns(agent: AgentDef): AgentDef.MaxTurns = AgentDef.MaxTurns(math.max(1, agent.maxTurns.value))
 
   /** [[stepTurns]], unless the pipeline sized this one call itself (`review-article`'s fixer gets more turns the more
     * findings it has to settle).
     */
-  def stepTurns(agent: AgentDef, overridden: Option[com.histmersion.domain.automation.agents.AgentDef.MaxTurns]): com.histmersion.domain.automation.agents.AgentDef.MaxTurns = overridden.fold(stepTurns(agent))(t => AgentDef.MaxTurns(math.max(1, t.value)))
+  def stepTurns(agent: AgentDef, overridden: Option[AgentDef.MaxTurns]): AgentDef.MaxTurns = overridden.fold(stepTurns(agent))(t => AgentDef.MaxTurns(math.max(1, t.value)))
 
   /** The note of a blocking approval a dry run did not open (it goes on as if approved). */
   val DryRunApproval = "dry run: not recorded; treated as approved"
@@ -606,9 +621,9 @@ object Engine:
   /** The config key that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its
     * own cap (the fixer's and the writer's).
     */
-  def capKey(overridden: com.histmersion.domain.automation.agents.Engine.CapKeyOverridden): com.histmersion.domain.automation.agents.Engine.CapKey =
-    if overridden.value then com.histmersion.domain.automation.agents.Engine.CapKey("the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)")
-    else com.histmersion.domain.automation.agents.Engine.CapKey("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)")
+  def capKey(overridden: CapKeyOverridden): CapKey =
+    if overridden.value then CapKey("the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)")
+    else CapKey("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)")
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
 
@@ -617,15 +632,15 @@ object Engine:
     * then (a failed cold-reader attempt recorded 16384 output tokens: four 4096-token tries), and the same cap fails
     * the same way again, so this is a CONFIGURATION error: the step stops at once rather than spending its retries.
     */
-  def outputCapHit[Out](res: AgentResult[Either[AgentFailure, Out]]): Option[com.histmersion.domain.automation.agents.Engine.OutputCapLimit] =
+  def outputCapHit[Out](res: AgentResult[Either[AgentFailure, Out]]): Option[OutputCapLimit] =
     val texts = (res.finishReason match
       case FinishReason.Error(m) => List(m)
       case _                     => Nil
     ) ++ res.finalAnswer.left.toOption.map(_.rawAnswer).toList
-    texts.iterator.flatMap(t => OutputCap.findFirstMatchIn(t)).flatMap(_.group(1).toIntOption).map(com.histmersion.domain.automation.agents.Engine.OutputCapLimit(_)).nextOption()
+    texts.iterator.flatMap(t => OutputCap.findFirstMatchIn(t)).flatMap(_.group(1).toIntOption).map(OutputCapLimit(_)).nextOption()
 
   /** What the run says when [[outputCapHit]]: the cap, the model, the key to raise. */
-  def outputCapMessage(name: String, cap: com.histmersion.domain.automation.agents.Engine.OutputCapLimit, sent: com.histmersion.domain.automation.agents.Engine.Count, model: com.histmersion.domain.automation.agents.AgentsControllers.ModelName, key: String): String =
+  def outputCapMessage(name: String, cap: OutputCapLimit, sent: Count, model: AgentsControllers.ModelName, key: String): String =
     s"$name: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise $key " +
       "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
 
@@ -646,11 +661,11 @@ object Engine:
     * error — WHERE in the answer (the JSON path) and WHAT (missing field, wrong type) — then the start of the answer;
     * or, for no answer at all, how the call ended.
     */
-  def answerProblem(f: AgentFailure, finish: FinishReason): com.histmersion.domain.automation.agents.Engine.Problem =
+  def answerProblem(f: AgentFailure, finish: FinishReason): Problem =
     def excerpt(raw: String) =
       val r = raw.trim
       if r.isEmpty then "" else s" — the answer began: ${r.take(AnswerExcerpt)}"
-    def why(cause: Throwable): com.histmersion.domain.automation.agents.Engine.Problem = cause match
+    def why(cause: Throwable): Problem = cause match
       case d: io.circe.DecodingFailure =>
         val path = io.circe.CursorOp.opsToPath(d.history)
         Problem(s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}")

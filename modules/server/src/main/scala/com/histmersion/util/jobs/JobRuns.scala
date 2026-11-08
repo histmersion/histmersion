@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
@@ -8,6 +9,8 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.
@@ -24,7 +27,7 @@ trait JobRuns:
   def heartbeat(kind: Job.Kind, id: Run.Id): Unit
 
   /** How many runs of `kind` are in either of two states. */
-  def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): com.histmersion.RowCount
+  def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount
 
   /** Compare-and-set `from` → `to`; true when the row moved. */
   def move(
@@ -71,7 +74,7 @@ trait JobRuns:
 
 object JobRuns:
   type Prefix = Prefix.T
-  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prefix extends RefinedType[String, Pure]
 
   def apply(db: Transactor): JobRuns = Implementation(db)
 
@@ -80,7 +83,7 @@ object JobRuns:
     def createIn(run: RunRow)(using DbCon): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
     def heartbeat(kind: Job.Kind, id: Run.Id): Unit = db.transact(JobRepo.runHeartbeat(kind, id))
-    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): com.histmersion.RowCount = db.read(JobRepo.runsIn(kind, statuses))
+    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount = db.read(JobRepo.runsIn(kind, statuses))
     def move(
         kind: Job.Kind,
         id: Run.Id,
@@ -95,7 +98,7 @@ object JobRuns:
     def pausedWith(
         kind: Job.Kind,
         paused: RunRow.Status,
-        prefix: JobRuns.Prefix,
+        prefix: Prefix,
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
       db.read(JobRepo.runsPausedLike(kind, paused, s"$prefix%", JobRepo.DueAt(now.toString)))
@@ -156,8 +159,8 @@ object JobRuns:
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = get(id).map(_.row.pipelineVersion)
     def heartbeat(kind: Job.Kind, id: Run.Id): Unit =
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
-    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): com.histmersion.RowCount =
-      com.histmersion.RowCount(
+    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
+      RowCount(
         state.get.values.count(r => r.row.kind.value == kind.value && (r.row.status == statuses._1 || r.row.status == statuses._2))
       )
     def move(
@@ -194,7 +197,7 @@ object JobRuns:
     def pausedWith(
         kind: Job.Kind,
         paused: RunRow.Status,
-        prefix: JobRuns.Prefix,
+        prefix: Prefix,
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
       mine(kind)

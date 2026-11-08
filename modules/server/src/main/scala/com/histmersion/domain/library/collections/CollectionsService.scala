@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import hearth.kindlings.optics.syntax.*
 
@@ -61,6 +62,14 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.media.{MediaCoversRequest, MediaItem, MediaProvider, SourceCoverParams}
 import com.histmersion.api.{Api, Write}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Isbn
+import com.histmersion.domain.media.covers.OpenLibrary
+import com.histmersion.api.library.RepairAcquire
+import com.histmersion.plugin.CollectionUpdateEntry
+import com.histmersion.plugin.CollectionChange
 
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
@@ -70,36 +79,36 @@ import com.histmersion.api.{Api, Write}
   */
 trait CollectionsService:
   def collections(): List[CollectionInfo]
-  def collection(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
+  def collection(name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
   def search(
-      name: com.histmersion.domain.library.collections.CollectionsService.CollectionName,
+      name: CollectionsService.CollectionName,
       q: Option[com.histmersion.domain.library.search.Search.Query],
-      limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit],
-      unlinked: com.histmersion.domain.library.collections.CollectionsService.SearchUnlinked
+      limit: Option[CollectionsService.Limit],
+      unlinked: CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch]
-  def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
-  def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
-  def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
-  def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne]
-  def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, apply: com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply): Either[Api.Error, CollectionUpdateAll]
-  def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
-  def audit(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName): Either[Api.Error, CollectionAudit]
-  def gaps(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, CollectionGaps]
-  def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
-  def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult]
+  def importItem(caller: Caller, name: CollectionsService.CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
+  def link(caller: Caller, name: CollectionsService.CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
+  def push(caller: Caller, name: CollectionsService.CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
+  def updateOne(caller: Caller, name: CollectionsService.CollectionName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne]
+  def updateAll(caller: Caller, name: CollectionsService.CollectionName, apply: CollectionsService.UpdateAllApply): Either[Api.Error, CollectionUpdateAll]
+  def set(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
+  def audit(name: CollectionsService.CollectionName): Either[Api.Error, CollectionAudit]
+  def gaps(name: CollectionsService.CollectionName, limit: Option[CollectionsService.Limit]): Either[Api.Error, CollectionGaps]
+  def sync(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
+  def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult]
   def archiveInfo(id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem]
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   /** A source collection, by the name the registry knows it under. */
   type CollectionName = CollectionName.T
-  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CollectionName extends RefinedType[String, Pure]
   type SearchUnlinked = SearchUnlinked.T
-  object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchUnlinked extends RefinedType[Boolean, Pure]
   type UpdateAllApply = UpdateAllApply.T
-  object UpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdateAllApply extends RefinedType[Boolean, Pure]
 
   /** The collection the library links its sources to (`sources.calibre_id`). */
   val Calibre: CollectionName = CollectionName("calibre")
@@ -320,7 +329,7 @@ object CollectionsService:
               venue = item.publisher.map(p => Source.Venue(p.value)),
               status = Some(
                 com.histmersion.domain.library.Source.Status.Unassessed
-                  .transformInto[com.histmersion.api.library.Source.Status]
+                  .transformInto[Source.Status]
               ),
               tags = item.tags.map(t => Source.Tags(t.value)),
               summary = summary,
@@ -346,13 +355,13 @@ object CollectionsService:
           CoverChoice.choose(
             None,
             _ => false,
-            item.identifiers.get(CollectionItem.IdentifiersKey("isbn")).toList.map(v => com.histmersion.domain.library.Isbn(v.value)),
-            item.identifiers.get(CollectionItem.IdentifiersKey("oclc")).map(v => com.histmersion.domain.media.covers.OpenLibrary.Oclc(v.value))
+            item.identifiers.get(CollectionItem.IdentifiersKey("isbn")).toList.map(v => Isbn(v.value)),
+            item.identifiers.get(CollectionItem.IdentifiersKey("oclc")).map(v => OpenLibrary.Oclc(v.value))
           ) match
             case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
               library.openLibraryCover(
                 MediaCoversRequest(
-                  dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
+                  dryRun = RepairAcquire.RepairRequest.DryRun(false),
                   citekey = Some(apiKey(ck)),
                   illustrations = MediaCoversRequest.Illustrations(false),
                   isbn = Some(MediaCoversRequest.Isbn(isbn.value))
@@ -476,8 +485,8 @@ object CollectionsService:
         entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.value)).left.map(failed)
       yield CollectionUpdateAll(entries.map(updateRow), CollectionUpdateAll.Applied(apply.value))
 
-    private def updateRow(e: com.histmersion.plugin.CollectionUpdateEntry): CollectionUpdateRow =
-      def changes(cs: List[com.histmersion.plugin.CollectionChange]) =
+    private def updateRow(e: CollectionUpdateEntry): CollectionUpdateRow =
+      def changes(cs: List[CollectionChange]) =
         cs.map(ch =>
           CollectionFieldChange(
             CollectionFieldChange.Field(ch.field.value),

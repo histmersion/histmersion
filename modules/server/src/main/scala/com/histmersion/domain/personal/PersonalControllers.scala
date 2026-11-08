@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.api.{Paging, Write}
 import com.histmersion.api.automation.Activity
@@ -25,6 +26,12 @@ import com.histmersion.{Offset, PageSize, UserId}
 import java.time.{Clock, Instant}
 import scala.util.Try
 import com.histmersion.api.Api
+import com.histmersion.api.library.Title
+import com.histmersion.api.personal.Bookmark
+import com.histmersion.domain.personal.notes.Note
+import com.histmersion.api.personal.ReadMark
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
@@ -60,7 +67,7 @@ final class PersonalControllers(
 
   private def search(q: Option[PersonalApi.Search]): SearchWords = SearchWords.of(q.map(w => SearchWords.Query(w.value)))
 
-  private def label(title: Option[com.histmersion.api.library.Title]): Option[TargetLabel] =
+  private def label(title: Option[Title]): Option[TargetLabel] =
     TargetLabel.tidy(title.map(t => TargetLabel.Label(t.value)))
 
   private def target(t: Target, allowed: Set[MarkKind], what: String): Either[Api.Error, MarkTarget] =
@@ -86,29 +93,29 @@ final class PersonalControllers(
       k <- kindOf(kind, MarkKind.Bookmarkable)
     yield bookmarks.list(user, k, search(q), size(max)).map(_.wire)
 
-  def addBookmark(caller: Caller, in: com.histmersion.api.personal.Bookmark.New): Either[Api.Error, WireBookmark] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("add_bookmark")):
+  def addBookmark(caller: Caller, in: Bookmark.New): Either[Api.Error, WireBookmark] =
+    maintenance.guard(WriteGate.OperationName("add_bookmark")):
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
-        label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
+        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
       yield bookmarks.add(user, t, label, this.label(in.title), now()).wire
 
   def editBookmark(
       caller: Caller,
       id: WireBookmark.Id,
-      in: com.histmersion.api.personal.Bookmark.Edit
+      in: Bookmark.Edit
   ): Either[Api.Error, WireBookmark] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edit_bookmark")):
+    maintenance.guard(WriteGate.OperationName("edit_bookmark")):
       for
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.value))
-        label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
+        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
   def removeBookmark(caller: Caller, id: WireBookmark.Id): Either[Api.Error, WireBookmark] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("remove_bookmark")):
+    maintenance.guard(WriteGate.OperationName("remove_bookmark")):
       for
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.value))
@@ -134,12 +141,12 @@ final class PersonalControllers(
   def note(caller: Caller, id: WireNote.Id): Either[Api.Error, WireNote] =
     for
       user <- person(caller)
-      nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(p => bad(p.value))
+      nid <- Note.idOf(id).left.map(p => bad(p.value))
       n <- notes.get(user, nid).toRight(missing(s"note $id"))
     yield n.wire
 
   def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New): Either[Api.Error, WireNote] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("add_note")):
+    maintenance.guard(WriteGate.OperationName("add_note")):
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Notable, "note")
@@ -147,14 +154,14 @@ final class PersonalControllers(
       yield notes.add(user, t, text, label(in.title), now()).wire
 
   def editNote(caller: Caller, id: WireNote.Id, in: com.histmersion.api.personal.Note.Edit): Either[Api.Error, WireNote] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edit_note")):
+    maintenance.guard(WriteGate.OperationName("edit_note")):
       for
         user <- person(caller)
-        nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(p => bad(p.value))
+        nid <- Note.idOf(id).left.map(p => bad(p.value))
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.value))
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.value.trim).filter(_.nonEmpty).map(MarkTime.Iso(_))).left.map {
-          case com.histmersion.domain.personal.notes.Note.EditRefused.Missing      => missing(s"note $id")
-          case com.histmersion.domain.personal.notes.Note.EditRefused.Changed(was) =>
+          case Note.EditRefused.Missing      => missing(s"note $id")
+          case Note.EditRefused.Changed(was) =>
             Api.Error(
               Api.Error.Message(s"the note changed since it was opened (now ${was.iso}); open it again"),
               Some(Api.Error.Code(Write.CodePrecondition))
@@ -173,15 +180,15 @@ final class PersonalControllers(
       case Some(None) =>
         notes
           .get(user, id)
-          .toRight(com.histmersion.domain.personal.notes.Note.EditRefused.Missing)
-          .flatMap(n => Left(com.histmersion.domain.personal.notes.Note.EditRefused.Changed(n.updatedAt)))
+          .toRight(Note.EditRefused.Missing)
+          .flatMap(n => Left(Note.EditRefused.Changed(n.updatedAt)))
       case asked => notes.edit(user, id, text, asked.flatten, now())
 
   def removeNote(caller: Caller, id: WireNote.Id): Either[Api.Error, WireNote] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("remove_note")):
+    maintenance.guard(WriteGate.OperationName("remove_note")):
       for
         user <- person(caller)
-        nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(p => bad(p.value))
+        nid <- Note.idOf(id).left.map(p => bad(p.value))
         n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
       yield n.wire
 
@@ -204,15 +211,15 @@ final class PersonalControllers(
       Left(bad(s"only sources and articles are marked read, not a ${kind.label.value.toLowerCase}"))
     else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad("which one? (its id)"))
 
-  def setRead(caller: Caller, in: com.histmersion.api.personal.ReadMark.Set): Either[Api.Error, WireReadMark] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("set_read")):
+  def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
+    maintenance.guard(WriteGate.OperationName("set_read")):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
       yield reading.setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.value), label(in.title), now()).wire
 
   def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("opened")):
+    maintenance.guard(WriteGate.OperationName("opened")):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
@@ -236,12 +243,12 @@ final class PersonalControllers(
           UnreadRow(
             shown,
             WireKey(i.key.value),
-            com.histmersion.api.library.Title(i.title.value),
-            i.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
-            i.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+            Title(i.title.value),
+            i.authors.map(a => AuthorName(a.value)),
+            i.year.map(y => Year(y.value.toLong)),
             i.status.map(st => UnreadRow.Status(st.value)),
-            i.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
-            i.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
+            i.periodStart.map(y => Year(y.value.toLong)),
+            i.periodEnd.map(y => Year(y.value.toLong))
           )
         ),
         UnreadPage.Total(page.total.value),

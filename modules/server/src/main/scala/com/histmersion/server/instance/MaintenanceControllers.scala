@@ -1,4 +1,5 @@
-package com.histmersion.server.instance
+package com.histmersion
+package server.instance
 
 import com.histmersion.api.Write
 import com.histmersion.util.database.{Db, Migrate}
@@ -15,6 +16,9 @@ import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.api.Api
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.util.data.maintenance.MaintenanceTask
+import com.histmersion.util.data.maintenance.WriteGate
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
@@ -38,7 +42,7 @@ final class MaintenanceControllers(
     * finished backup, or `running` when it outlasts the request.
     */
   def backup(): Either[Api.Error, Backup.Status] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("backup"))(backupJobs.start(Instant.now(deps.clock)))
+    maintenance.guard(WriteGate.OperationName("backup"))(backupJobs.start(Instant.now(deps.clock)))
 
   /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]).
@@ -46,11 +50,11 @@ final class MaintenanceControllers(
   def vacuum(in: Vacuum.Request): Either[Api.Error, JobInfo] = vacuumJobs.start(in)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
-  def reindex(after: Option[com.histmersion.server.instance.MaintenanceControllers.Cursor], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ReindexResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("reindex")):
+  def reindex(after: Option[MaintenanceControllers.Cursor], limit: Option[PageSize]): Either[Api.Error, ReindexResult] =
+    maintenance.guard(WriteGate.OperationName("reindex")):
       Deps.data
         .task(MaintenanceTask.Name("reindex"))
-        .toRight(Api.Error(com.histmersion.api.Api.Error.Message("no reindex is registered")))
+        .toRight(Api.Error(Api.Error.Message("no reindex is registered")))
         .map(
           _.run(
             MaintenanceSlice(
@@ -65,10 +69,10 @@ final class MaintenanceControllers(
     * maintenance lock, or a backup or a vacuum is still running. pg_dump reads one consistent snapshot, so ingests, OCR
     * and agent runs going on beside it are fine.
     */
-  def housekeepingBlock: Option[com.histmersion.server.instance.MaintenanceControllers.Reason] =
-    if maintenance.active then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a restore holds the maintenance lock"))
-    else if backupJobs.running then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a backup is still running"))
-    else if vacuumJobs.isRunning then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a vacuum is still running"))
+  def housekeepingBlock: Option[MaintenanceControllers.Reason] =
+    if maintenance.active then Some(MaintenanceControllers.Reason("a restore holds the maintenance lock"))
+    else if backupJobs.running then Some(MaintenanceControllers.Reason("a backup is still running"))
+    else if vacuumJobs.isRunning then Some(MaintenanceControllers.Reason("a vacuum is still running"))
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
@@ -80,7 +84,7 @@ final class MaintenanceControllers(
   def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: com.histmersion.server.instance.MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(PreparedBackup.File(file.value))
+  def backupFile(file: MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(PreparedBackup.File(file.value))
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
@@ -89,17 +93,17 @@ final class MaintenanceControllers(
   def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     if backupJobs.running then
       Left(
-        Api.Error(com.histmersion.api.Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Api.Error.Code(Backup.CodeMaintenance)))
+        Api.Error(Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Api.Error.Code(Backup.CodeMaintenance)))
       )
     else if vacuumJobs.isRunning then
       Left(
         Api.Error(
-          com.histmersion.api.Api.Error.Message("a vacuum is still running — wait for its job (`histmersion jobs`) to finish"),
+          Api.Error.Message("a vacuum is still running — wait for its job (`histmersion jobs`) to finish"),
           Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
     else
-      maintenance.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore")):
+      maintenance.exclusively(WriteGate.OperationName("restore")):
         // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
         // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
         pauseIngest()
@@ -151,8 +155,8 @@ final class MaintenanceControllers(
 
 object MaintenanceControllers:
   type BackupFileName = BackupFileName.T
-  object BackupFileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BackupFileName extends RefinedType[String, Pure]
   type Cursor = Cursor.T
-  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cursor extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]

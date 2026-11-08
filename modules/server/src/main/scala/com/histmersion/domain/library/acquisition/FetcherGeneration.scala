@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.api.plugins.PluginStatus
 import com.histmersion.domain.AcquireRecheck

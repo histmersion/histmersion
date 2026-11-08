@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
@@ -8,11 +9,13 @@ import com.histmersion.domain.automation.Run
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
 
 class JobRunsDbSuite extends JobRunsContract("db"):
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val scratch = ScratchDatabases("histmersion_s7j", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val scratch = ScratchDatabases("histmersion_s7j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = java.util.concurrent.atomic.AtomicInteger(0)
   private val sources = collection.concurrent.TrieMap.empty[JobRuns, DataSource]
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()

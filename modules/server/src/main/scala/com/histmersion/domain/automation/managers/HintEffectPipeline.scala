@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
@@ -22,6 +23,10 @@ import io.circe.syntax.*
 
 import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.automation.Goal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as
@@ -34,7 +39,7 @@ import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
   */
 final class HintEffectPipeline(
     workLists: WorkListControllers,
-    store: com.histmersion.domain.automation.agents.ApprovalService,
+    store: ApprovalService,
     ds: DataSource,
     cfg: => AgentsConfig
 ) extends PipelineDef:
@@ -90,7 +95,7 @@ final class HintEffectPipeline(
         .filter(_.managerId == m.id)
         .toRight(s"manager ${mid.value} has no hint #${id.value}")
     yield
-      val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), ItemsShown))
+      val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), ItemsShown))
       val lines =
         items.map(i =>
           Loaded.Items(s"${i.target.value} (${i.kind.value}, ${i.status.value}, priority ${i.priority.value})")
@@ -137,7 +142,7 @@ final class HintEffectPipeline(
         val what = ManagersMarkdown.effect(e)
         ctx.write(s"${ApprovalKind.HintEffect.wire.value} approval for ${l.managerId.value} hint #${l.hint.value}", hp.asJson) {
           val a = store.openSubject(
-            Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value)),
+            Some(Job.Id.assume(ctx.run.id.value)),
             ApprovalKind.HintEffect,
             ApprovalQuery.Subject(l.managerId.value),
             ApprovalService.Payload(hp.asJson.noSpaces)
@@ -156,7 +161,7 @@ final class HintEffectPipeline(
 
 object HintEffectPipeline:
   /** Items the model is shown (the most urgent first). */
-  val ItemsShown: com.histmersion.PageSize = com.histmersion.PageSize(60)
+  val ItemsShown: PageSize = PageSize(60)
 
   /** The keys a `config` action may name (what [[ManagerConfig.parse]] reads). */
   val SettingKeys =
@@ -168,7 +173,7 @@ object HintEffectPipeline:
   final case class Loaded(
       managerId: ManagerInfo.Id,
       kind: ManagerInfo.Kind,
-      goal: Option[com.histmersion.api.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       hint: ManagerHint.Id,
       text: ManagerHint.Text,
       itemTarget: Option[ManagerItem.Target],
@@ -179,6 +184,6 @@ object HintEffectPipeline:
 
   object Loaded:
     type Items = Items.T
-    object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Items extends RefinedType[String, Pure]
     type Settings = Settings.T
-    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Settings extends RefinedType[String, Pure]

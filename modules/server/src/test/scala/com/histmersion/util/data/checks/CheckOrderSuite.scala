@@ -1,4 +1,5 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,7 +20,7 @@ class CheckOrderSuite extends munit.FunSuite:
     assertEquals(runner.rules.map(_.rule), Lint.all)
 
   test("the owners"):
-    def of(owner: com.histmersion.util.data.DataOwner) = runner.rules.filter(_.owner == owner).map(_.rule.name)
+    def of(owner: DataOwner) = runner.rules.filter(_.owner == owner).map(_.rule.name)
     assertEquals(
       of(DataOwner("research")),
       List(

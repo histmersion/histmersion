@@ -1,9 +1,11 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.library.Query.*
 import com.histmersion.config.AppConfig
 import com.histmersion.api.library.Query
 import com.histmersion.api.Api
+import com.histmersion.util.database.Transactor
 
 /** `POST /api/query` and `GET /api/schema/tables` (MCP `query`, `schema`). */
 final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
@@ -13,7 +15,7 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
     queries
       .run(
         QueryRepo.Statement(req.sql.value),
-        com.histmersion.util.database.Transactor.TimeoutMs(q.timeoutMs.value),
+        Transactor.TimeoutMs(q.timeoutMs.value),
         QueryRepo.MaxRows(q.maxRows.value),
         QueryRepo.MaxCellChars(q.maxCellChars.value)
       )

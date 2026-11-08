@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
@@ -9,6 +10,17 @@ import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import java.time.Instant
 import scala.collection.mutable.Builder
 import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.goals.GoalRow
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.EnrichSource
+import com.histmersion.util.jobs.JobRow
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.automation.goals.BGoalLinkRow
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
@@ -20,78 +32,78 @@ trait ManagerContext:
 
   // ── the managers' items, events and hints ─────────────────────────────────────────────────────
 
-  def event(id: com.histmersion.domain.automation.managers.ManagerLight.Id, item: Option[com.histmersion.domain.automation.managers.ManagerContext.ItemId], run: Option[com.histmersion.domain.automation.Run.Id], feed: com.histmersion.domain.automation.managers.ManagerContext.EventFeed, text: com.histmersion.domain.automation.managers.ManagerContext.EventText): Unit
-  def lastEventOf(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerContext.EventFeed): Option[ManagerEvent]
-  def countEvents(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerContext.EventFeed, since: Instant): com.histmersion.RowCount
+  def event(id: ManagerLight.Id, item: Option[ManagerContext.ItemId], run: Option[Run.Id], feed: ManagerContext.EventFeed, text: ManagerContext.EventText): Unit
+  def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent]
+  def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): RowCount
   def upsert(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
-      kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind,
-      target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget,
+      id: ManagerLight.Id,
+      kind: ManagerContext.ItemKind,
+      target: ManagerContext.ItemTarget,
       origin: ItemOrigin,
-      priority: com.histmersion.domain.automation.managers.ManagerContext.Priority,
-      reopen: com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen,
+      priority: ManagerContext.Priority,
+      reopen: ManagerContext.UpsertReopen,
       state: ItemState = ItemState()
-  ): (com.histmersion.domain.automation.managers.ManagerContext.ItemId, Boolean)
-  def item(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId): Option[ManagerItem]
-  def itemFor(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Option[ManagerItem]
-  def hasItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Boolean
-  def restale(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId, priority: com.histmersion.domain.automation.managers.ManagerContext.Priority, why: com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason): Boolean
-  def pending(id: com.histmersion.domain.automation.managers.ManagerLight.Id): com.histmersion.RowCount
-  def openKeys(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[(com.histmersion.domain.automation.managers.ManagerContext.ItemKind, com.histmersion.domain.automation.managers.ManagerContext.ItemTarget)]
+  ): (ManagerContext.ItemId, Boolean)
+  def item(itemId: ManagerContext.ItemId): Option[ManagerItem]
+  def itemFor(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Option[ManagerItem]
+  def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean
+  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean
+  def pending(id: ManagerLight.Id): RowCount
+  def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)]
   def evaluated(
-      itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId,
-      run: Option[com.histmersion.domain.automation.Run.Id],
+      itemId: ManagerContext.ItemId,
+      run: Option[Run.Id],
       status: ItemStatus,
       notBefore: Option[Instant],
-      failures: Option[com.histmersion.domain.automation.managers.ManagerContext.FailureCount],
+      failures: Option[ManagerContext.FailureCount],
       state: ItemState,
-      outcome: Option[com.histmersion.domain.automation.managers.ManagerContext.EvaluatedOutcome]
+      outcome: Option[ManagerContext.EvaluatedOutcome]
   ): Boolean
-  def hints(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[ManagerHint]
+  def hints(id: ManagerLight.Id): List[ManagerHint]
 
   /** A manager's state (`active`, `paused`, …), if it exists. */
-  def state(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Option[com.histmersion.domain.automation.managers.ManagerLight.State]
+  def state(id: ManagerLight.Id): Option[ManagerLight.State]
 
   /** Tick soon (an item was added). */
   def nudge(): Unit
 
   /** The review selection's article queries (the review kind's, until research owns them). */
-  def openMajorArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[(com.histmersion.domain.research.Slug, com.histmersion.RowCount)]
-  def unreviewedArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[com.histmersion.domain.research.Slug]
+  def openMajorArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[(Slug, RowCount)]
+  def unreviewedArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[Slug]
   def staleCandidates(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
-      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
-      limit: com.histmersion.domain.automation.managers.ManagerContext.Limit
-  ): List[(com.histmersion.domain.research.Slug, com.histmersion.domain.automation.managers.ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[com.histmersion.domain.automation.managers.ManagerContext.ItemId])]
-  def extendCandidates(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[(com.histmersion.domain.research.Slug, Option[com.histmersion.domain.automation.managers.ManagerRepo.ProgressText])]
-  def articleFacets(slug: com.histmersion.domain.research.Slug): (List[com.histmersion.domain.EnrichSource.Tag], List[com.histmersion.domain.automation.Goal.Slug])
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[Goal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])]
+  def extendCandidates(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[(Slug, Option[ManagerRepo.ProgressText])]
+  def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[Goal.Slug])
 
   // ── runs, steps and approvals ─────────────────────────────────────────────────────────────────
 
   /** The progress line a run left ("" when none). */
-  def progress(run: com.histmersion.domain.automation.Run.Id): com.histmersion.util.jobs.JobRow.Progress
+  def progress(run: Run.Id): JobRow.Progress
 
   /** The output of the last finished `step` of `run`, as recorded. */
-  def stepOutput(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output]
-  def approvalsOf(run: com.histmersion.domain.automation.Run.Id, kind: Approval.Kind): List[ApprovalInfo]
+  def stepOutput(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[AgentRepo.StepRecord.Output]
+  def approvalsOf(run: Run.Id, kind: Approval.Kind): List[ApprovalInfo]
 
   /** [[StepFacts]] from the approval of `kind` a run opened: none, open (the item waits for it), or decided. */
-  def approvalFacts(run: com.histmersion.domain.automation.Run.Id, kind: Approval.Kind, none: com.histmersion.domain.ManagerPolicy.ItemOutcome): StepFacts
-  def unsettledOn(target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo]
-  def runsFor(p: Pipeline, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo]
-  def slugExists(slug: com.histmersion.domain.research.Slug): Boolean
+  def approvalFacts(run: Run.Id, kind: Approval.Kind, none: ManagerPolicy.ItemOutcome): StepFacts
+  def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo]
+  def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo]
+  def slugExists(slug: Slug): Boolean
 
   // ── goals ─────────────────────────────────────────────────────────────────────────────────────
 
-  def parentOf(slug: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.Goal.Slug]
-  def linkGoal(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]): Unit
+  def parentOf(slug: Goal.Slug): Option[Goal.Slug]
+  def linkGoal(goal: Goal.Slug, kind: LinkKind, ref: BGoalLinkRow.Ref, note: Option[BGoalLinkRow.Note]): Unit
 
   /** The references a goal links of `kind`. */
-  def goalLinks(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref]
+  def goalLinks(goal: Goal.Slug, kind: LinkKind): List[BGoalLinkRow.Ref]
 
   /** What is left today of the legal open-access ingests all watchers share (None: the autopilot is off). */
-  def sharedIngestLeft(now: Instant): Option[com.histmersion.RowCount]
+  def sharedIngestLeft(now: Instant): Option[RowCount]
 
   /** The autopilot gives a goal's new sub-goals their managers at its next tick. */
   def autopilotSoon(): Unit
@@ -99,26 +111,26 @@ trait ManagerContext:
   // ── the engine's mechanics ────────────────────────────────────────────────────────────────────
 
   /** Manager `id` of kind `k` exists (created paused, or active while the autopilot is on). */
-  def ensure(k: Kind, id: com.histmersion.domain.automation.managers.ManagerLight.Id, goal: Option[com.histmersion.domain.automation.Goal.Slug]): Boolean
+  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[Goal.Slug]): Boolean
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened. */
-  def chainReview(id: com.histmersion.domain.automation.managers.ManagerLight.Id, slug: com.histmersion.domain.research.Slug, why: com.histmersion.domain.automation.managers.ManagerContext.ChainReviewWhy, out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]): Unit
+  def chainReview(id: ManagerLight.Id, slug: Slug, why: ManagerContext.ChainReviewWhy, out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]): Unit
 
   /** An approved `article-plan`'s compile items. */
-  def applyPlan(a: ApprovalInfo, out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]): com.histmersion.RowCount
+  def applyPlan(a: ApprovalInfo, out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]): RowCount
 
   /** Settle a pending item without a run. */
-  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy): Option[com.histmersion.domain.automation.managers.ManagerLight.Id]
+  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: ManagerContext.SettleNowWhy): Option[ManagerLight.Id]
 
   /** A failed run's item back in the queue after `notBefore`. */
   def retry(
       m: ManagerInfo,
       item: ManagerItem,
-      run: com.histmersion.domain.automation.Run.Id,
+      run: Run.Id,
       notBefore: Instant,
-      failures: com.histmersion.domain.automation.managers.ManagerContext.FailureCount,
-      note: com.histmersion.domain.automation.managers.ManagerContext.RetryNote,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
+      failures: ManagerContext.FailureCount,
+      note: ManagerContext.RetryNote,
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit
 
   /** Create, mark and submit one run of `item` (one transaction); `tweak` sets the options the request does not carry.
@@ -129,9 +141,9 @@ trait ManagerContext:
       req: RunRequest,
       tweak: RunParams => RunParams,
       state: ItemState,
-      what: com.histmersion.domain.automation.managers.ManagerContext.StartWhat,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]]
-  ): Option[com.histmersion.domain.automation.managers.ManagerLight.Id]
+      what: ManagerContext.StartWhat,
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Option[ManagerLight.Id]
 
   /** The one-run rule (infer-filter, extend, enrich, propose, compile, plan, sweeps) after a run settled. */
   def evaluateStep(
@@ -139,42 +151,42 @@ trait ManagerContext:
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[com.histmersion.domain.automation.managers.ManagerContext.EvaluateStepError],
+      error: Option[ManagerContext.EvaluateStepError],
       now: Instant,
-      out: Builder[com.histmersion.domain.automation.managers.ManagerContext.TickLine, List[com.histmersion.domain.automation.managers.ManagerContext.TickLine]],
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]],
       kind: ManagerKindDefinition
   ): Unit
 
 object ManagerContext:
-  type FailureCount = com.histmersion.domain.ManagerPolicy.Next.Retry.Failures
-  val FailureCount: com.histmersion.domain.ManagerPolicy.Next.Retry.Failures.type = com.histmersion.domain.ManagerPolicy.Next.Retry.Failures
-  type ItemId = com.histmersion.domain.ManagerPolicy.ItemId
-  val ItemId: com.histmersion.domain.ManagerPolicy.ItemId.type = com.histmersion.domain.ManagerPolicy.ItemId
-  type ItemKind = com.histmersion.domain.ManagerPolicy.ItemKind
-  val ItemKind: com.histmersion.domain.ManagerPolicy.ItemKind.type = com.histmersion.domain.ManagerPolicy.ItemKind
-  type ItemTarget = com.histmersion.domain.ManagerPolicy.Candidate.Target
-  val ItemTarget: com.histmersion.domain.ManagerPolicy.Candidate.Target.type = com.histmersion.domain.ManagerPolicy.Candidate.Target
+  type FailureCount = ManagerPolicy.Next.Retry.Failures
+  val FailureCount: ManagerPolicy.Next.Retry.Failures.type = ManagerPolicy.Next.Retry.Failures
+  type ItemId = ManagerPolicy.ItemId
+  val ItemId: ManagerPolicy.ItemId.type = ManagerPolicy.ItemId
+  type ItemKind = ManagerPolicy.ItemKind
+  val ItemKind: ManagerPolicy.ItemKind.type = ManagerPolicy.ItemKind
+  type ItemTarget = ManagerPolicy.Candidate.Target
+  val ItemTarget: ManagerPolicy.Candidate.Target.type = ManagerPolicy.Candidate.Target
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Priority = com.histmersion.domain.ManagerPolicy.Candidate.Priority
-  val Priority: com.histmersion.domain.ManagerPolicy.Candidate.Priority.type = com.histmersion.domain.ManagerPolicy.Candidate.Priority
+  object Limit extends RefinedType[Int, Pure]
+  type Priority = ManagerPolicy.Candidate.Priority
+  val Priority: ManagerPolicy.Candidate.Priority.type = ManagerPolicy.Candidate.Priority
   type EventFeed = EventFeed.T
-  object EventFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventFeed extends RefinedType[String, Pure]
   type EventText = EventText.T
-  object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventText extends RefinedType[String, Pure]
   type UpsertReopen = UpsertReopen.T
-  object UpsertReopen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedOutcome = com.histmersion.domain.ManagerPolicy.ItemOutcome
-  val EvaluatedOutcome: com.histmersion.domain.ManagerPolicy.ItemOutcome.type = com.histmersion.domain.ManagerPolicy.ItemOutcome
+  object UpsertReopen extends RefinedType[Boolean, Pure]
+  type EvaluatedOutcome = ManagerPolicy.ItemOutcome
+  val EvaluatedOutcome: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
   type ChainReviewWhy = ChainReviewWhy.T
-  object ChainReviewWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleNowWhy = com.histmersion.domain.ManagerPolicy.ItemOutcome
-  val SettleNowWhy: com.histmersion.domain.ManagerPolicy.ItemOutcome.type = com.histmersion.domain.ManagerPolicy.ItemOutcome
-  type RetryNote = com.histmersion.domain.ManagerPolicy.ItemNote
-  val RetryNote: com.histmersion.domain.ManagerPolicy.ItemNote.type = com.histmersion.domain.ManagerPolicy.ItemNote
+  object ChainReviewWhy extends RefinedType[String, Pure]
+  type SettleNowWhy = ManagerPolicy.ItemOutcome
+  val SettleNowWhy: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
+  type RetryNote = ManagerPolicy.ItemNote
+  val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
   type StartWhat = StartWhat.T
-  object StartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateStepError = com.histmersion.domain.ManagerPolicy.Problem
-  val EvaluateStepError: com.histmersion.domain.ManagerPolicy.Problem.type = com.histmersion.domain.ManagerPolicy.Problem
+  object StartWhat extends RefinedType[String, Pure]
+  type EvaluateStepError = ManagerPolicy.Problem
+  val EvaluateStepError: ManagerPolicy.Problem.type = ManagerPolicy.Problem
   type TickLine = TickLine.T
-  object TickLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TickLine extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.mirror
+package com.histmersion
+package util.data.mirror
 
 /** The Markdown mirror over the registered kinds: the note of one record of a registered kind, rendered by its owner.
   */
@@ -9,7 +10,7 @@ import io.github.iltotore.iron.*
 final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
   def kinds: List[Mirror.Records] = exports.map(_.records)
 
-  def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): Either[Api.Error, com.histmersion.util.data.mirror.Frontmatter.NoteBody] =
+  def note(records: Mirror.Records, id: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
     exports
       .find(_.records == records)
       .flatMap(_ => notes.find(_.records == records))
@@ -32,7 +33,7 @@ object Mirror:
     */
   trait Note:
     def records: Records
-    def note(id: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): Either[Api.Error, com.histmersion.util.data.mirror.Frontmatter.NoteBody]
+    def note(id: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody]
 
 
   /** The kind of record a mirror contribution writes notes of (`sources`, `articles`, …). */

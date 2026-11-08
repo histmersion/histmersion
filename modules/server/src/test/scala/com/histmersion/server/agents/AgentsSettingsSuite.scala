@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,16 +16,23 @@ import com.histmersion.domain.ReadSchedule
 
 import java.time.Duration
 import com.histmersion.api.automation.Agents
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.AgentRole
+import com.histmersion.domain.automation.Approval
+import com.histmersion.config.AgentApprovalsConfig
+import com.histmersion.config.Minutes
 
 /** The agents' settings as the server reads them from config: approval modes, roles, providers and their defaults, the
   * enrichment guards, a plan pool's read schedule.
   */
 class AgentsSettingsSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   test("agents are OFF by default and every key loads; env switches them on"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
     assert(!cfg.agents.enabled.value)
@@ -43,7 +51,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assert(on.agents.enabled.value)
-    assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor), "local:m")
+    assertEquals(on.agents.role(AgentRole.Extractor), "local:m")
     assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
     assert(cfg.agents.autoEnrich.value, "auto-enrich is on by default (it acts only with agents on)")
     assert(
@@ -56,8 +64,8 @@ class AgentsSettingsSuite extends munit.FunSuite:
 
   test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.statusMode, com.histmersion.domain.automation.Approval.Mode.Manual)
-    assertEquals(cfg.agents.approvals.edgeMode, com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(cfg.agents.approvals.statusMode, Approval.Mode.Manual)
+    assertEquals(cfg.agents.approvals.edgeMode, Approval.Mode.Manual)
     assertEquals(cfg.researchAgents.review.maxRounds, 3)
     assertEquals(cfg.agents.trace.keepMessagesDays, 30)
     assertEquals(cfg.agents.promptsDir, "")
@@ -76,14 +84,14 @@ class AgentsSettingsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(on.agents.approvals.edgeMode, com.histmersion.domain.automation.Approval.Mode.Auto)
+    assertEquals(on.agents.approvals.edgeMode, Approval.Mode.Auto)
     assertEquals(on.researchAgents.review.maxRounds, 2)
     assertEquals(on.agents.promptsDir, "/tmp/p")
     assertEquals(on.agents.trace.keepMessagesDays, 0)
 
   test("P3 keys: publishing waits for a person, the scheduler is on but needs agents; env overrides"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(cfg.agents.approvals.publishMode, Approval.Mode.Manual)
     assertEquals(cfg.agents.roles.planner, "")
     assertEquals(cfg.agents.roles.writer, "")
     assert(cfg.agents.scheduler.enabled.value && cfg.researchAgents.compile.review.value)
@@ -102,8 +110,8 @@ class AgentsSettingsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(on.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
-    assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Writer), "local:w")
+    assertEquals(on.agents.approvals.publishMode, Approval.Mode.Auto)
+    assertEquals(on.agents.role(AgentRole.Writer), "local:w")
     assert(!on.agents.scheduler.enabled.value)
     assertEquals(on.researchAgents.compile.maxSources, 5)
 
@@ -144,7 +152,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      parseChain(Chain.Spec(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor))).map(_.map(_.wire)),
+      parseChain(Chain.Spec(on.agents.role(AgentRole.Extractor))).map(_.map(_.wire)),
       Right(List("claude-code:sonnet", "local:qwen"))
     )
     assertEquals(parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
@@ -152,15 +160,15 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assert(on.agents.providers.claudeCode.allowNonLoopback.value)
 
   test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
-    val c = AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("auto"), articlePlan = com.histmersion.config.AgentApprovalsConfig.Gate("Auto"), goalPlan = com.histmersion.config.AgentApprovalsConfig.Gate("checked"))
-    assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan) && c.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan))
-    assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
-    assert(!AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual")).checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan))
-    assert(!c.checked(com.histmersion.domain.automation.Approval.Kind.Edge))
-    assertEquals(c.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
+    val c = AgentApprovalsConfig(AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("auto"), articlePlan = AgentApprovalsConfig.Gate("Auto"), goalPlan = AgentApprovalsConfig.Gate("checked"))
+    assert(c.checked(Approval.Kind.ArticlePlan) && c.checked(Approval.Kind.GoalPlan))
+    assert(c.checked(Approval.Kind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
+    assert(!AgentApprovalsConfig(AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual")).checked(Approval.Kind.ArticlePlan))
+    assert(!c.checked(Approval.Kind.Edge))
+    assertEquals(c.publishMode, Approval.Mode.Auto)
     assertEquals(
-      c.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("checked")).publishMode,
-      com.histmersion.domain.automation.Approval.Mode.Manual,
+      c.modify(_.articlePublish).setTo(AgentApprovalsConfig.Gate("checked")).publishMode,
+      Approval.Mode.Manual,
       "checked: the run waits, the supervisor decides"
     )
 
@@ -203,6 +211,6 @@ class AgentsSettingsSuite extends munit.FunSuite:
   test("a plan pool's read schedule: 0 is off, minutes become the interval"):
     assertEquals(ScheduledRefresh.Off.readSchedule, ReadSchedule.Off)
     assertEquals(
-      ScheduledRefresh.fromMinutes(com.histmersion.config.Minutes(180)).map(_.readSchedule),
+      ScheduledRefresh.fromMinutes(Minutes(180)).map(_.readSchedule),
       Right(ReadSchedule.Every(Duration.ofMinutes(180)))
     )

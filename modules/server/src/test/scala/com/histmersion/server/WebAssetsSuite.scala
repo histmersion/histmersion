@@ -1,4 +1,8 @@
-package com.histmersion.server
+package com.histmersion
+package server
+
+import com.histmersion.api.WebPaths
+import com.histmersion.domain.Title
 
 /** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
   * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties
@@ -18,7 +22,7 @@ class WebAssetsSuite extends munit.FunSuite:
 
   test("the web UI's pages, its items' pages and the old list addresses serve the app; anything else does not"):
     def app(p: String) =
-      com.histmersion.api.WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty).map(com.histmersion.api.WebPaths.Segment(_)))
+      WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty).map(WebPaths.Segment(_)))
     List(
       "/",
       "/explore",
@@ -45,7 +49,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val key = "localStorage.getItem(\"histmersion.theme\")"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(com.histmersion.domain.Title("t"), com.histmersion.server.HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
+        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
       )
     do
       val at = html.indexOf(key)

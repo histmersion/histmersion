@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
@@ -9,22 +10,26 @@ import sttp.tapir.json.circe.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.Title
 
 /** Pure helpers for the article pages. */
 object ArticleHtml:
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   /** HTML-escape a value destined for an attribute or text node. */
   type MatchNavMatches = MatchNavMatches.T
-  object MatchNavMatches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MatchNavMatches extends RefinedType[Int, Pure]
 
   def esc(s: HtmlRender.Text): HtmlRender.Html = HtmlRender.esc(s)
 
-  private def link(ck: com.histmersion.domain.library.Citekey, full: Boolean, q: Option[HtmlRender.Query]): HtmlRender.Html =
+  private def link(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query]): HtmlRender.Html =
     esc(HtmlRender.Text(sourceUrl(ck, full, fragment = false, q).value))
 
   /** `/source/{ck}` with the page's own query parameters (unescaped — for a header or `esc`). */
-  def sourceUrl(ck: com.histmersion.domain.library.Citekey, full: Boolean, fragment: Boolean, q: Option[HtmlRender.Query]): Url =
+  def sourceUrl(ck: Citekey, full: Boolean, fragment: Boolean, q: Option[HtmlRender.Query]): Url =
     val params = List(
       if full then Some("full=true") else None,
       if fragment then Some("fragment=true") else None,
@@ -35,7 +40,7 @@ object ArticleHtml:
                                                                       else params.mkString("?", "&", ""))
     )
 
-  def toggle(ck: com.histmersion.domain.library.Citekey, full: Boolean, q: Option[HtmlRender.Query] = None): HtmlRender.Html =
+  def toggle(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query] = None): HtmlRender.Html =
     if full then HtmlRender.Html(s"""<p class="toggle"><a href="${link(ck, false, q).value}">▲ hide full text</a></p>""")
     else HtmlRender.Html(s"""<p class="toggle"><a href="${link(ck, true, q).value}">▼ show full text (whole paper)</a></p>""")
 
@@ -43,7 +48,7 @@ object ArticleHtml:
     * point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and the control NAMES that shortcut,
     * because a keyboard shortcut nobody is told about is a shortcut nobody uses (item 14).
     */
-  def matchNav(matches: ArticleHtml.MatchNavMatches): HtmlRender.Html =
+  def matchNav(matches: MatchNavMatches): HtmlRender.Html =
     if matches.value <= 0 then HtmlRender.Html("")
     else
       HtmlRender.Html(
@@ -54,7 +59,7 @@ object ArticleHtml:
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather
     * than at every call site. `bodyHtml` is already-rendered HTML and is not.
     */
-  def page(title: com.histmersion.domain.Title, bodyHtml: com.histmersion.server.HtmlRender.Html, kind: PageKind): com.histmersion.server.HtmlRender.Html =
+  def page(title: Title, bodyHtml: HtmlRender.Html, kind: PageKind): HtmlRender.Html =
     HtmlRender.Html(s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
        |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(
         HtmlRender.Text(title.value)

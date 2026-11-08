@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -8,6 +9,13 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ItemKind
+import com.histmersion.api.personal.PersonalApi
+import com.histmersion.api.Paging
+import com.histmersion.api.personal.Note
+import com.histmersion.api.personal.ItemKey
 
 /** The person's bookmarks and notes for agents to READ: there is no tool that makes, changes or removes one — those are
   * the person's own, written in the web UI and with `histmersion bookmarks|notes`. An agent reads them for the local
@@ -22,11 +30,11 @@ object PersonalTools:
 
   object BookmarksInput:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
 
 
   final case class NotesInput(
@@ -40,15 +48,15 @@ object PersonalTools:
 
   object NotesInput:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends RefinedType[String, Pure]
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
 
 
   def apply(personal: PersonalControllers) =
@@ -66,9 +74,9 @@ object PersonalTools:
           personal
             .listBookmarks(
               Caller.Local,
-              in.kind.map(k => com.histmersion.api.ItemKind.Wire(k.value)),
-              in.query.map(q => com.histmersion.api.personal.PersonalApi.Search(q.value)),
-              in.limit.map(l => com.histmersion.api.Paging.Limit(l.value))
+              in.kind.map(k => ItemKind.Wire(k.value)),
+              in.query.map(q => PersonalApi.Search(q.value)),
+              in.limit.map(l => Paging.Limit(l.value))
             )
             .fold(McpOut.error, bs => ToolResult.text(PersonalMarkdown.bookmarks(bs)))
         )
@@ -85,15 +93,15 @@ object PersonalTools:
         .handle { in =>
           in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(id) =>
-              personal.note(Caller.Local, com.histmersion.api.personal.Note.Id(id)).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
+              personal.note(Caller.Local, Note.Id(id)).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
             case None =>
               personal
                 .listNotes(
                   Caller.Local,
-                  in.kind.map(k => com.histmersion.api.ItemKind.Wire(k.value)),
-                  in.item.map(i => com.histmersion.api.personal.ItemKey(i.value)),
-                  in.query.map(q => com.histmersion.api.personal.PersonalApi.Search(q.value)),
-                  in.limit.map(l => com.histmersion.api.Paging.Limit(l.value))
+                  in.kind.map(k => ItemKind.Wire(k.value)),
+                  in.item.map(i => ItemKey(i.value)),
+                  in.query.map(q => PersonalApi.Search(q.value)),
+                  in.limit.map(l => Paging.Limit(l.value))
                 )
                 .fold(McpOut.error, ns => ToolResult.text(PersonalMarkdown.notes(ns)))
         }

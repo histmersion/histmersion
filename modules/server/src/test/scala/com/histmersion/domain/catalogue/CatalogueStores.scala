@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}
 import com.histmersion.domain.catalogue.evidence.{AttestationService, EventLinkService, LeadService}

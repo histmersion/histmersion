@@ -1,12 +1,14 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.{Latitude, Longitude, Year}
+import com.histmersion.api.ItemKind
 
 /** A target as the tables' columns hold it. */
 final private[personal] case class TargetColumns(
-    kind: com.histmersion.api.ItemKind.Wire,
+    kind: ItemKind.Wire,
     key: Option[ItemKey],
     uid: Option[ItemUid],
     lat: Option[Latitude],

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.backup
+package com.histmersion
+package util.data.backup
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.config.AppConfig
@@ -13,6 +14,10 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ByteCount
+import com.histmersion.api.Sha256
 
 /** The database's dumps: `pg_dump` / `pg_restore` against the database this server is configured for (the CLI holds no
   * credentials, so the dump is taken here), the archives in the backups store (`backups.dir`), their listing and
@@ -33,25 +38,25 @@ trait BackupService:
   /** The ONLY way a client-supplied name names an archive: syntactically safe AND present in the listing. A name that
     * is neither cannot escape the store.
     */
-  def resolve(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, Store.Key]
+  def resolve(file: PreparedBackup.File): Either[Api.Error, Store.Key]
 
   /** The archive `file` itself, for the download (`GET /api/backups/{file}`). */
-  def archive(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, HandedFile]
+  def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile]
 
   /** `pg_restore --clean --if-exists` of `archive`: how long it took, and what `pg_restore` complained of. */
   def restore(archive: Store.Key): Either[Api.Error, (BackupService.RestoreDuration, List[BackupService.RestoreNote])]
 
   /** The rows the guarded tables hold: a restore over any of them needs `force`. */
-  def guardedRows: com.histmersion.RowCount
+  def guardedRows: RowCount
 
   /** The refusal of a restore over `rows` guarded rows. */
-  def refusal(rows: com.histmersion.RowCount): Api.Error
+  def refusal(rows: RowCount): Api.Error
 
 object BackupService:
   type RestoreDuration = RestoreDuration.T
-  object RestoreDuration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestoreDuration extends RefinedType[Long, Pure]
   type RestoreNote = RestoreNote.T
-  object RestoreNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestoreNote extends RefinedType[String, Pure]
 
   /** Over the backups store of `storage`, the client tools found in `backups.pg-bin-dir` (its store) or else on
     * `searchPath`, launched through `processes`; the guarded tables of `registry` counted through `transactor`.
@@ -97,7 +102,7 @@ object BackupService:
               .map((n, s) =>
                 Backup.Info(
                   n,
-                  com.histmersion.api.ByteCount(s.size.value),
+                  ByteCount(s.size.value),
                   Backup.Info.CreatedAt(CreatedAt.format(Backup.takenAt(n, s.modified)))
                 )
               )
@@ -107,7 +112,7 @@ object BackupService:
         .left
         .map(e => problem(s"cannot list ${store.where().value}: ${e.getMessage}"))
 
-  private def resolving(store: Store, file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, Store.Key] =
+  private def resolving(store: Store, file: PreparedBackup.File): Either[Api.Error, Store.Key] =
     for
       name <- Backup.safeName(Backup.Name(file.value)).left.map(m => problem(m.value))
       known <- listing(store)
@@ -116,7 +121,7 @@ object BackupService:
     yield key
 
   /** The name of a new archive taken at `now`, not taken by an archive nor by a dump being written. */
-  private def freshName(store: Store, now: Instant): com.histmersion.util.data.backup.PreparedBackup.File =
+  private def freshName(store: Store, now: Instant): PreparedBackup.File =
     PreparedBackup.File(
       Backup
         .uniqueName(
@@ -278,8 +283,8 @@ object BackupService:
               finally reservation.close()
           yield Backup.Result(
             Backup.Result.File(name.value),
-            com.histmersion.api.ByteCount(stored.size.value),
-            com.histmersion.api.Sha256(dir.get(key).fold("")(_.sha256().value)),
+            ByteCount(stored.size.value),
+            Sha256(dir.get(key).fold("")(_.sha256().value)),
             Backup.Result.DurationMs((System.nanoTime() - started) / 1000000L),
             pruned(dir, Backup.Retention(backups.keep.value), keeping = name)
           )
@@ -287,9 +292,9 @@ object BackupService:
 
     def list: Either[Api.Error, List[Backup.Info]] = listing(store)
 
-    def resolve(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
+    def resolve(file: PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
 
-    def archive(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, HandedFile] =
+    def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile] =
       val dir = store
       resolving(dir, file).flatMap(k => dir.onDiskFile(k).left.map(e => problem(e.message.value)))
 
@@ -347,8 +352,8 @@ object BackupService:
               .map(s =>
                 Backup.Result(
                   Backup.Result.File(name.value),
-                  com.histmersion.api.ByteCount(s.size.value),
-                  com.histmersion.api.Sha256(dir.get(key).fold("")(_.sha256().value)),
+                  ByteCount(s.size.value),
+                  Sha256(dir.get(key).fold("")(_.sha256().value)),
                   Backup.Result.DurationMs(0L),
                   pruned(dir, Backup.Retention(keep.value), name)
                 )
@@ -366,4 +371,4 @@ object BackupService:
 
   object InMemory:
     type Keep = Keep.T
-    object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Keep extends RefinedType[Int, Pure]

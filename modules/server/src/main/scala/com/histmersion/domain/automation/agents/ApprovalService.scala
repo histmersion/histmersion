@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
@@ -12,6 +13,12 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.automation.Approval
+import com.histmersion.util.jobs.Job
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
+import com.histmersion.domain.automation.Run
 
 
 
@@ -21,149 +28,149 @@ import java.util.concurrent.atomic.AtomicReference
   */
 trait ApprovalService:
 
-  def approvalIn(id: com.histmersion.domain.automation.Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
+  def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
 
-  def payload(id: com.histmersion.domain.automation.Approval.Id): Option[com.histmersion.domain.automation.agents.ApprovalService.Payload]
+  def payload(id: Approval.Id): Option[ApprovalService.Payload]
 
 
 
-  def approval(id: com.histmersion.domain.automation.Approval.Id): Option[ApprovalInfo]
+  def approval(id: Approval.Id): Option[ApprovalInfo]
 
   /** Newest first, of one state or every one. */
-  def approvals(state: Option[ApprovalState], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo]
+  def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo]
 
   /** One newest-first page of one state or every one; `before`/`upTo` are approval ids (Left: one that is none). */
   def approvalPage(
       state: Option[ApprovalState],
-      limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor] = None,
-      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo] = None
-  ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
+      limit: ApprovalQuery.Limit,
+      before: Option[ApprovalQuery.Cursor] = None,
+      upTo: Option[ApprovalQuery.UpTo] = None
+  ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
 
   /** One newest-first page of the approvals `q` matches. */
   def approvalPage(
       q: ApprovalQuery,
-      limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
-  ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
+      limit: ApprovalQuery.Limit,
+      before: Option[ApprovalQuery.Cursor],
+      upTo: Option[ApprovalQuery.UpTo]
+  ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
 
   /** Per state (every filter but the state's), and the kind and decided-by facets (each without its own filter). */
-  def approvalFacets(q: ApprovalQuery): (List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)], List[(String, List[(String, com.histmersion.RowCount)])])
+  def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])])
 
   /** Every approval counted per state. */
-  def approvalCounts(): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)]
+  def approvalCounts(): List[(Approval.State.Wire, RowCount)]
 
   /** The approval step `seq` of run `jobId` waits on, opened unless it is there already. */
   def openForStep(
-      jobId: com.histmersion.util.jobs.Job.Id,
-      seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq,
+      jobId: Job.Id,
+      seq: ApprovalService.StepSeq,
       kind: ApprovalKind,
-      subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-      payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+      subject: ApprovalQuery.Subject,
+      payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
-      result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenForStepResult] = None
+      result: Option[ApprovalService.OpenForStepResult] = None
   ): ApprovalInfo
 
   /** A proposal about a goal or an article that no run waits for. */
   def openSubject(
-      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      jobId: Option[Job.Id],
       kind: ApprovalKind,
-      subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-      payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+      subject: ApprovalQuery.Subject,
+      payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
-      result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenSubjectResult] = None
+      result: Option[ApprovalService.OpenSubjectResult] = None
   ): ApprovalInfo
 
   /** What run `jobId` opened (of `kind`), oldest first. */
-  def approvalsOf(jobId: com.histmersion.util.jobs.Job.Id, kind: Option[ApprovalKind] = None): List[ApprovalInfo]
+  def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind] = None): List[ApprovalInfo]
 
   /** Of `kind`, approved by the autopilot since `since`. */
   def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo]
 
   /** The open ones of these kinds, oldest first. */
-  def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo]
+  def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo]
 
   /** Every open one, light, oldest first. */
   def openLight(): List[ApprovalDigest.Open]
-  def openCount(kind: ApprovalKind): com.histmersion.RowCount
+  def openCount(kind: ApprovalKind): RowCount
 
   /** Open ones per subject. */
-  def openBySubject(): Map[com.histmersion.domain.automation.approvals.ApprovalQuery.Subject, com.histmersion.RowCount]
+  def openBySubject(): Map[ApprovalQuery.Subject, RowCount]
 
   /** The approval step `seq` of run `jobId` opened. */
-  def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq): Option[ApprovalInfo]
+  def forStep(jobId: Job.Id, seq: ApprovalService.StepSeq): Option[ApprovalInfo]
 
   /** A cancelled run's open step approvals rejected with `why`; how many. */
-  def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseReason): com.histmersion.RowCount
+  def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount
 
   /** Compare-and-set an open one to its decision; false when it was decided already. */
-  def decide(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, note: Option[com.histmersion.domain.automation.Approval.Note], result: Option[String]): Boolean
+  def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean
 
   /** After [[decide]]: the final state and what applying it did. */
-  def settle(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, result: com.histmersion.domain.automation.Approval.Outcome): Unit
+  def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit
 
 object ApprovalService:
   type Payload = Payload.T
-  object Payload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Payload extends RefinedType[String, Pure]
   type StepSeq = StepSeq.T
-  object StepSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StepSeq extends RefinedType[Int, Pure]
   type OpenForStepResult = OpenForStepResult.T
-  object OpenForStepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenForStepResult extends RefinedType[String, Pure]
   type OpenSubjectResult = OpenSubjectResult.T
-  object OpenSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenSubjectResult extends RefinedType[String, Pure]
 
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 
   final private class Implementation(db: Transactor, clock: Clock) extends ApprovalService:
-    def approvalIn(id: com.histmersion.domain.automation.Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = AgentRepo.approval(ApprovalInfo.Id(id.value))
+    def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = AgentRepo.approval(ApprovalInfo.Id(id.value))
     private def now: Instant = Instant.now(clock)
 
-    def payload(id: com.histmersion.domain.automation.Approval.Id): Option[com.histmersion.domain.automation.agents.ApprovalService.Payload] =
+    def payload(id: Approval.Id): Option[Payload] =
       db.read(AgentRepo.payload(ApprovalInfo.Id(id.value))).map(p => Payload(p.value))
 
-    def approval(id: com.histmersion.domain.automation.Approval.Id): Option[ApprovalInfo] = db.read(AgentRepo.approval(ApprovalInfo.Id(id.value)))
-    def approvals(state: Option[ApprovalState], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo] =
-      db.read(AgentRepo.approvals(state, com.histmersion.PageSize.assume(limit.value)))
+    def approval(id: Approval.Id): Option[ApprovalInfo] = db.read(AgentRepo.approval(ApprovalInfo.Id(id.value)))
+    def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
+      db.read(AgentRepo.approvals(state, PageSize.assume(limit.value)))
     def approvalPage(
         state: Option[ApprovalState],
-        limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-        before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-        upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+        limit: ApprovalQuery.Limit,
+        before: Option[ApprovalQuery.Cursor],
+        upTo: Option[ApprovalQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
       db.read(
         AgentRepo.approvalPage(
           state,
-          com.histmersion.PageSize.assume(limit.value),
+          PageSize.assume(limit.value),
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
       )
     def approvalPage(
         q: ApprovalQuery,
-        limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-        before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-        upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+        limit: ApprovalQuery.Limit,
+        before: Option[ApprovalQuery.Cursor],
+        upTo: Option[ApprovalQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
       db.read(
         AgentRepo.approvalPage(
           q,
-          com.histmersion.PageSize.assume(limit.value),
+          PageSize.assume(limit.value),
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
       )
-    def approvalFacets(q: ApprovalQuery): (List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)], List[(String, List[(String, com.histmersion.RowCount)])]) =
+    def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
       db.read(AgentRepo.approvalFacets(q))
-    def approvalCounts(): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)] = db.read(AgentRepo.approvalCounts())
+    def approvalCounts(): List[(Approval.State.Wire, RowCount)] = db.read(AgentRepo.approvalCounts())
     def openForStep(
-        jobId: com.histmersion.util.jobs.Job.Id,
-        seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq,
+        jobId: Job.Id,
+        seq: StepSeq,
         kind: ApprovalKind,
-        subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-        payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+        subject: ApprovalQuery.Subject,
+        payload: Payload,
         state: ApprovalState,
-        result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenForStepResult]
+        result: Option[OpenForStepResult]
     ): ApprovalInfo =
       db.transact(
         AgentRepo.openForStep(
@@ -178,12 +185,12 @@ object ApprovalService:
         )
       )
     def openSubject(
-        jobId: Option[com.histmersion.util.jobs.Job.Id],
+        jobId: Option[Job.Id],
         kind: ApprovalKind,
-        subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-        payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+        subject: ApprovalQuery.Subject,
+        payload: Payload,
         state: ApprovalState,
-        result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenSubjectResult]
+        result: Option[OpenSubjectResult]
     ): ApprovalInfo =
       db.transact(
         AgentRepo.openSubject(
@@ -196,22 +203,22 @@ object ApprovalService:
           now
         )
       )
-    def approvalsOf(jobId: com.histmersion.util.jobs.Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
+    def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
       db.read(AgentRepo.approvalsOf(jobId, kind))
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       db.read(AgentRepo.autoApprovedSince(kind, since))
-    def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo] =
-      db.read(AgentRepo.openOfKinds(kinds, com.histmersion.PageSize.assume(limit.value)))
+    def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
+      db.read(AgentRepo.openOfKinds(kinds, PageSize.assume(limit.value)))
     def openLight(): List[ApprovalDigest.Open] = db.read(AgentRepo.openLight())
-    def openCount(kind: ApprovalKind): com.histmersion.RowCount = db.read(AgentRepo.openCount(kind))
-    def openBySubject(): Map[com.histmersion.domain.automation.approvals.ApprovalQuery.Subject, com.histmersion.RowCount] =
+    def openCount(kind: ApprovalKind): RowCount = db.read(AgentRepo.openCount(kind))
+    def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
       db.read(AgentRepo.openBySubject()).map((k, v) => ApprovalQuery.Subject(k.value) -> v)
-    def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq): Option[ApprovalInfo] =
+    def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
-    def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseReason): com.histmersion.RowCount = db.transact(AgentRepo.closeForRun(jobId, why))
-    def decide(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, note: Option[com.histmersion.domain.automation.Approval.Note], result: Option[String]): Boolean =
+    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount = db.transact(AgentRepo.closeForRun(jobId, why))
+    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       db.transact(AgentRepo.decide(ApprovalInfo.Id(id.value), to, note.map(n => ApprovalInfo.Note(n.value)), result.map(ApprovalInfo.Result(_))))
-    def settle(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, result: com.histmersion.domain.automation.Approval.Outcome): Unit =
+    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
       db.transact(AgentRepo.settle(ApprovalInfo.Id(id.value), to, ApprovalInfo.Result(result.value)))
 
   /** The approvals in memory, with the runs they name (their goal and manager match a list's filters); `clock` stands
@@ -219,7 +226,7 @@ object ApprovalService:
     */
   final class InMemory(state: AtomicReference[AutomationState], runs: JobRuns.InMemory, clock: Clock)
       extends ApprovalService:
-    def approvalIn(id: com.histmersion.domain.automation.Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = approval(id)
+    def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = approval(id)
     private def now: Instant = Instant.now(clock)
     private def rows: Vector[ApprovalRecord] = state.get.approvals
     private val Open = ApprovalState.Open.wire.value
@@ -229,7 +236,7 @@ object ApprovalService:
           ApprovalInfo.Id(r.id.value),
           r.jobId.map(j => AgentRepo.ApprovalJobId(j.value)),
           ApprovalInfo.Kind(r.kind.value),
-          r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+          r.citekey.map(c => Citekey(c.value)),
           r.status.map(s => ApprovalInfo.Status(s.value)),
           r.current.map(c => ApprovalInfo.Current(c.value)),
           r.edgeKind.map(e => ApprovalInfo.EdgeKind(e.value)),
@@ -252,17 +259,17 @@ object ApprovalService:
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
 
 
-    def payload(id: com.histmersion.domain.automation.Approval.Id): Option[com.histmersion.domain.automation.agents.ApprovalService.Payload] = rows.find(_.id.value == id.value).map(r => Payload(r.proposal.value))
+    def payload(id: Approval.Id): Option[Payload] = rows.find(_.id.value == id.value).map(r => Payload(r.proposal.value))
 
-    def approval(id: com.histmersion.domain.automation.Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
-    def approvals(state: Option[ApprovalState], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo] =
+    def approval(id: Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
+    def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       newest(rows.filter(r => state.forall(_.wire.value == r.state.value))).take(math.max(1, limit.value)).toList.map(info)
     def approvalPage(
         state: Option[ApprovalState],
-        limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-        before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-        upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] = approvalPage(ApprovalQuery(state), limit, before, upTo)
+        limit: ApprovalQuery.Limit,
+        before: Option[ApprovalQuery.Cursor],
+        upTo: Option[ApprovalQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] = approvalPage(ApprovalQuery(state), limit, before, upTo)
 
     private def decidedBy(r: ApprovalRecord): Option[String] =
       if r.state.value == Open then None
@@ -275,7 +282,7 @@ object ApprovalService:
 
     /** Whether `r` passes every filter of `q` but `except`'s. */
     private def matches(q: ApprovalQuery, except: String)(r: ApprovalRecord): Boolean =
-      lazy val run = r.jobId.flatMap(j => runs.get(com.histmersion.domain.automation.Run.Id.assume(j.value)))
+      lazy val run = r.jobId.flatMap(j => runs.get(Run.Id.assume(j.value)))
       (except == "state" || q.state.forall(_.wire.value == r.state.value)) &&
       (except == "kind" || q.kinds.isEmpty || q.kinds.exists(_.wire.value == r.kind.value)) &&
       q.subject.forall(t =>
@@ -287,11 +294,11 @@ object ApprovalService:
 
     def approvalPage(
         q: ApprovalQuery,
-        limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-        before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-        upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
-      def cursor(c: String): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, ApprovalRecord] =
+        limit: ApprovalQuery.Limit,
+        before: Option[ApprovalQuery.Cursor],
+        upTo: Option[ApprovalQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+      def cursor(c: String): Either[AgentRepo.CursorProblem, ApprovalRecord] =
         c.trim.toLongOption.flatMap(id => rows.find(_.id.value == id)).toRight(AgentRepo.CursorProblem(s"No approval '$c' to page from"))
       for
         b <- before.fold(Right(None))(c => cursor(c.value).map(Some(_)))
@@ -308,26 +315,26 @@ object ApprovalService:
           else shown.lastOption.exists(last => all.exists(r => ordering.lt(key(r), key(last))))
         (shown.toList.map(info), older)
 
-    private def facet(values: Vector[String]): List[(String, com.histmersion.RowCount)] =
-      values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax).map((v, n) => (v, com.histmersion.RowCount(n)))
-    def approvalFacets(q: ApprovalQuery): (List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)], List[(String, List[(String, com.histmersion.RowCount)])]) =
+    private def facet(values: Vector[String]): List[(String, RowCount)] =
+      values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax).map((v, n) => (v, RowCount(n)))
+    def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
       (
-        facet(rows.filter(matches(q, "state")).map(_.state.value)).map((s, n) => (com.histmersion.domain.automation.Approval.State.Wire(s), n)),
+        facet(rows.filter(matches(q, "state")).map(_.state.value)).map((s, n) => (Approval.State.Wire(s), n)),
         List(
           "kind" -> facet(rows.filter(matches(q, "kind")).map(_.kind.value)),
           "decidedBy" -> facet(rows.filter(matches(q, "decidedBy")).flatMap(decidedBy))
         )
       )
-    def approvalCounts(): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)] =
-      facet(rows.map(_.state.value)).map((s, n) => (com.histmersion.domain.automation.Approval.State.Wire(s), n))
+    def approvalCounts(): List[(Approval.State.Wire, RowCount)] =
+      facet(rows.map(_.state.value)).map((s, n) => (Approval.State.Wire(s), n))
     def openForStep(
-        jobId: com.histmersion.util.jobs.Job.Id,
-        seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq,
+        jobId: Job.Id,
+        seq: StepSeq,
         kind: ApprovalKind,
-        subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-        payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+        subject: ApprovalQuery.Subject,
+        payload: Payload,
         state: ApprovalState,
-        result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenForStepResult]
+        result: Option[OpenForStepResult]
     ): ApprovalInfo =
       val at = now
       val _ = AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value))(id =>
@@ -352,12 +359,12 @@ object ApprovalService:
       )
       forStep(jobId, seq).get
     def openSubject(
-        jobId: Option[com.histmersion.util.jobs.Job.Id],
+        jobId: Option[Job.Id],
         kind: ApprovalKind,
-        subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject,
-        payload: com.histmersion.domain.automation.agents.ApprovalService.Payload,
+        subject: ApprovalQuery.Subject,
+        payload: Payload,
         state: ApprovalState,
-        result: Option[com.histmersion.domain.automation.agents.ApprovalService.OpenSubjectResult]
+        result: Option[OpenSubjectResult]
     ): ApprovalInfo =
       val at = now
       AutomationState.insertApproval(this.state)(_ => false)(id =>
@@ -380,7 +387,7 @@ object ApprovalService:
           decidedAt(state)
         )
       ).flatMap(approval).get
-    def approvalsOf(jobId: com.histmersion.util.jobs.Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
+    def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
       rows.filter(r => r.jobId.contains(jobId) && kind.forall(_.wire.value == r.kind.value)).sortBy[Long](_.id.value).toList.map(info)
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       rows
@@ -392,7 +399,7 @@ object ApprovalService:
         .sortBy[Long](_.id.value)
         .toList
         .map(info)
-    def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): List[ApprovalInfo] =
+    def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       rows
         .filter(r => r.state.value == Open && kinds.exists(_.wire.value == r.kind.value))
         .sortBy[Long](_.id.value)
@@ -412,16 +419,16 @@ object ApprovalService:
             ApprovalDigest.Open.CreatedAt(AutomationState.text(r.createdAt).value)
           )
         )
-    def openCount(kind: ApprovalKind): com.histmersion.RowCount = com.histmersion.RowCount(rows.count(r => r.state.value == Open && r.kind.value == kind.wire.value))
-    def openBySubject(): Map[com.histmersion.domain.automation.approvals.ApprovalQuery.Subject, com.histmersion.RowCount] =
-      rows.filter(_.state.value == Open).flatMap(_.subject).groupBy(_.value).map((s, rs) => ApprovalQuery.Subject(s) -> com.histmersion.RowCount(rs.size))
-    def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.ApprovalService.StepSeq): Option[ApprovalInfo] =
+    def openCount(kind: ApprovalKind): RowCount = RowCount(rows.count(r => r.state.value == Open && r.kind.value == kind.wire.value))
+    def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
+      rows.filter(_.state.value == Open).flatMap(_.subject).groupBy(_.value).map((s, rs) => ApprovalQuery.Subject(s) -> RowCount(rs.size))
+    def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       rows.find(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value)).map(info)
 
     /** Change the rows `which` selects by `f`; how many. */
-    private def change(which: ApprovalRecord => Boolean)(f: ApprovalRecord => ApprovalRecord): com.histmersion.RowCount =
-      com.histmersion.RowCount(state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which))
-    def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseReason): com.histmersion.RowCount =
+    private def change(which: ApprovalRecord => Boolean)(f: ApprovalRecord => ApprovalRecord): RowCount =
+      RowCount(state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which))
+    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount =
       val at = now
       change(r => r.jobId.contains(jobId) && r.seq.isDefined && r.state.value == Open)(
         _.modify(_.state)
@@ -431,7 +438,7 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       )
-    def decide(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, note: Option[com.histmersion.domain.automation.Approval.Note], result: Option[String]): Boolean =
+    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       val at = now
       change(r => r.id.value == id.value && r.state.value == Open)(
         _.modify(_.state)
@@ -443,5 +450,5 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       ).value > 0
-    def settle(id: com.histmersion.domain.automation.Approval.Id, to: ApprovalState, result: com.histmersion.domain.automation.Approval.Outcome): Unit =
+    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
       val _ = change(_.id.value == id.value)(_.modify(_.state).setTo(ApprovalRecord.State(to.wire.value)).modify(_.result).setTo(Some(ApprovalRecord.Result(result.value))))

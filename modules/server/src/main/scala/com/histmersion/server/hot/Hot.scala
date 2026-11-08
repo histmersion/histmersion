@@ -1,4 +1,5 @@
-package com.histmersion.server.hot
+package com.histmersion
+package server.hot
 
 import hearth.kindlings.optics.syntax.*
 import ox.{supervised, Ox}
@@ -14,13 +15,15 @@ import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}
 import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.util.control.NonFatal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A stable handle on a component a config reload may rebuild (docs/research-plugins.md §3.6). Its holder never
   * reloads: [[use]] gives the value of the generation the calling thread is pinned to — or pins the current generation
   * for the duration of the call — so a value is never closed under the code using it.
   */
 trait Hot[+A]:
-  def name: com.histmersion.server.hot.Hot.Graph.Def.Name
+  def name: Hot.Graph.Def.Name
 
   /** The value for this call, pinned while `f` runs. */
   def use[B](f: A => B): B
@@ -114,7 +117,7 @@ object Hot:
       if s == null then current.get() else s
 
     /** The node names, in the order they were added. */
-    def nodes: List[com.histmersion.server.hot.Hot.Graph.Def.Name] = defs.get().map(_.name).toList
+    def nodes: List[Def.Name] = defs.get().map(_.name).toList
 
     /** Pin the generation the calling thread sees (its own pin's, nested, or the current one). Release it when the work
       * it covers is done; [[carry]] does both for work handed to another thread.
@@ -179,12 +182,12 @@ object Hot:
       * published a new value of this node.
       */
     def node[A](
-        name: com.histmersion.server.hot.Hot.Graph.Def.Name,
+        name: Def.Name,
         deps: List[Hot[?]] = Nil,
-        keys: List[com.histmersion.server.hot.Hot.Graph.Def.Keys] = Nil,
+        keys: List[Def.Keys] = Nil,
         idle: A => Boolean = (_: A) => true,
         onPublish: A => Unit = (_: A) => ()
-    )(build: BuildCtx[C, A] => Ox ?=> Either[com.histmersion.server.hot.Hot.Graph.Problem, A]): Either[com.histmersion.server.hot.Hot.Graph.Problem, Hot[A]] =
+    )(build: BuildCtx[C, A] => Ox ?=> Either[Problem, A]): Either[Problem, Hot[A]] =
       locked {
         val d = Def[C](
           name,
@@ -231,12 +234,12 @@ object Hot:
       */
     def reload(
         next: C,
-        changed: List[com.histmersion.server.hot.Hot.Graph.Def.Name],
-        forced: Set[com.histmersion.server.hot.Hot.Graph.Def.Name] = Set.empty,
+        changed: List[Def.Name],
+        forced: Set[Def.Name] = Set.empty,
         drain: FiniteDuration = 10.seconds
-    ): Either[com.histmersion.server.hot.Hot.Graph.Problem, Outcome] =
+    ): Either[Problem, Outcome] =
       locked {
-        if closed.get() then Left(com.histmersion.server.hot.Hot.Graph.Problem("hot graph: closed"))
+        if closed.get() then Left(Problem("hot graph: closed"))
         else
           val s = current.get()
           val specs = defs.get()
@@ -295,7 +298,7 @@ object Hot:
       * still in use then — it keeps draining in the background. A pin the calling thread holds itself (a reload asked
       * for over HTTP) does not count: it is released when the request returns.
       */
-    private def retire(old: List[Instance], bound: FiniteDuration): List[com.histmersion.server.hot.Hot.Graph.Instance.Description] =
+    private def retire(old: List[Instance], bound: FiniteDuration): List[Instance.Description] =
       if old.isEmpty then Nil
       else
         old.foreach(i => draining.put(i, ()))
@@ -312,9 +315,9 @@ object Hot:
           finally done.countDown()
         }
         val deadline = System.nanoTime() + bound.toNanos
-        def settled = old.forall(i => i.isClosed || i.freeBut(if own(i) then com.histmersion.server.hot.Hot.Graph.Instance.PinCount(1) else com.histmersion.server.hot.Hot.Graph.Instance.PinCount(0)))
+        def settled = old.forall(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         while !settled && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-        val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then com.histmersion.server.hot.Hot.Graph.Instance.PinCount(1) else com.histmersion.server.hot.Hot.Graph.Instance.PinCount(0)))
+        val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
             Log.Message(
@@ -326,7 +329,7 @@ object Hot:
         busy.map(_.describe)
 
     /** What is still draining from earlier generations. */
-    def stillDraining: List[com.histmersion.server.hot.Hot.Graph.Instance.Description] =
+    def stillDraining: List[Instance.Description] =
       import scala.jdk.CollectionConverters.*
       draining.keySet.asScala.toList.map(_.describe).sortBy(_.value)
 
@@ -357,7 +360,7 @@ object Hot:
     /** Build one node's value in a scope of its own, on a thread of its own that holds the scope open until the value
       * is retired.
       */
-    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: Generation): Either[com.histmersion.server.hot.Hot.Graph.Problem, Instance] =
+    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: Generation): Either[Problem, Instance] =
       val built = CompletableFuture[Either[Problem, Any]]()
       val release = CountDownLatch(1)
       val ended = CountDownLatch(1)
@@ -385,24 +388,24 @@ object Hot:
 
   object Graph:
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends RefinedType[String, Pure]
     type Generation = Generation.T
-    object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Generation extends RefinedType[Long, Pure]
 
     /** How often a drain looks at its components' users. */
 
     private[hot] val DrainPollMs = 20L
 
     trait Log:
-      def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message): Unit
-      def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message): Unit
+      def info(m: Log.Message): Unit
+      def warn(m: Log.Message): Unit
     object Log:
       type Message = Message.T
-      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Message extends RefinedType[String, Pure]
 
       val scribe: Log = new Log:
-        def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.info(m.value)
-        def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.warn(m.value)
+        def info(m: Message) = _root_.scribe.info(m.value)
+        def warn(m: Message) = _root_.scribe.warn(m.value)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
@@ -411,7 +414,7 @@ object Hot:
 
     object Outcome:
       type Warnings = Warnings.T
-      object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Warnings extends RefinedType[String, Pure]
 
     final private[hot] case class Def[C](
         name: Def.Name,
@@ -447,8 +450,8 @@ object Hot:
       def free: Boolean = users.get() == 0 && idleNow
 
       /** Free but for `own` pins the asking thread holds itself. */
-      def freeBut(own: com.histmersion.server.hot.Hot.Graph.Instance.PinCount): Boolean = users.get() <= own.value && idleNow
-      def describe: com.histmersion.server.hot.Hot.Graph.Instance.Description = Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
+      def freeBut(own: Instance.PinCount): Boolean = users.get() <= own.value && idleNow
+      def describe: Instance.Description = Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
       def close(log: Log): Unit =
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
@@ -457,9 +460,9 @@ object Hot:
 
     object Instance:
       type Description = Description.T
-      object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Description extends RefinedType[String, Pure]
       type PinCount = PinCount.T
-      object PinCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object PinCount extends RefinedType[Int, Pure]
 
     private val CloseWaitSeconds = 60L
 

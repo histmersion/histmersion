@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
@@ -17,29 +18,29 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
       Period.Detail(p, p.parentId.flatMap(parent => periods.get(HistoricalPeriod.Id(parent.value))), periods.children(id))
     }
 
-  def search(q: Option[com.histmersion.domain.catalogue.periods.PeriodSearch.Text], region: Option[PeriodSearch.Region], from: Option[PeriodSearch.From], to: Option[PeriodSearch.To]): List[HistoricalPeriod] =
+  def search(q: Option[PeriodSearch.Text], region: Option[PeriodSearch.Region], from: Option[PeriodSearch.From], to: Option[PeriodSearch.To]): List[HistoricalPeriod] =
     periods.search(PeriodSearch(q, region, from, to))
 
   /** `POST /api/periods/seed?replace=` — the presets bundled with this server. */
-  def seed(caller: Caller, replace: com.histmersion.domain.catalogue.periods.PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/seed"))(imports.applySeed(replace).left.map(e => Api.Error(Api.Error.Message(e.value))))
+  def seed(caller: Caller, replace: PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
+    maintenance.guard(WriteGate.OperationName("periods/seed"))(imports.applySeed(replace).left.map(e => Api.Error(Api.Error.Message(e.value))))
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
   def importDataset(
       caller: Caller,
-      collections: List[com.histmersion.domain.catalogue.periods.PeriodSources.Collections],
-      dataset: Option[com.histmersion.domain.catalogue.periods.PeriodImports.Dataset],
-      body: com.histmersion.domain.catalogue.periods.PeriodImports.DatasetBody
+      collections: List[PeriodSources.Collections],
+      dataset: Option[PeriodImports.Dataset],
+      body: PeriodImports.DatasetBody
   ): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/import")):
+    maintenance.guard(WriteGate.OperationName("periods/import")):
       for
         set <- Dataset.ofParam(dataset.map(d => Dataset.Wire(d.value)))
         d <- PeriodO.parse(body.value).left.map(e => Api.Error(Api.Error.Message(e.value)))
       yield imports.write(d.only(collections.map(c => HistoricalPeriod.Id(c.value.trim)).toSet), set)
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
-  def fetch(caller: Caller, source: com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl, collections: List[com.histmersion.domain.catalogue.periods.PeriodSources.Collections]): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/fetch")):
+  def fetch(caller: Caller, source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]): Either[Api.Error, Period.ImportResult] =
+    maintenance.guard(WriteGate.OperationName("periods/fetch")):
       if source.value.trim.toLowerCase != PeriodImports.PeriodOSource then
         Left(Api.Error(Api.Error.Message(s"unknown period source '$source' (available: ${PeriodImports.PeriodOSource})")))
       else imports.fetch(collections).left.map(e => Api.Error(Api.Error.Message(e.value)))

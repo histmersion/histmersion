@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
@@ -18,6 +19,15 @@ import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.Edge
+import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Queue
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -31,7 +41,7 @@ import com.histmersion.api.library.Edge
   */
 final class CurrencyCheckPipeline(
     protected val site: LibrarySite,
-    protected val goals: com.histmersion.domain.automation.goals.GoalService,
+    protected val goals: GoalService,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
     approvals: SourceProposals
@@ -43,10 +53,10 @@ final class CurrencyCheckPipeline(
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
-      targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
-      assessed <- ctx.code[Assessed](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, targets)))
-      followed <- ctx.code[Followed](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("followups"))(Right(followups(ctx, goal, targets)))
-      line <- ctx.code[String](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("close"))(
+      targets <- ctx.code[List[Target]](AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
+      assessed <- ctx.code[Assessed](AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, targets)))
+      followed <- ctx.code[Followed](AgentRepo.StepRecord.Name("followups"))(Right(followups(ctx, goal, targets)))
+      line <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
         log(
           ctx,
           s"currency-check goal $goal: ${targets.size} source(s), ${targets.count(_.doi.isDefined)} with a DOI; " +
@@ -58,14 +68,14 @@ final class CurrencyCheckPipeline(
       )
     yield PipelineDef.Summary(line)
 
-  private def load(goal: com.histmersion.domain.automation.Goal.Slug): List[Target] =
+  private def load(goal: Goal.Slug): List[Target] =
     goalSources(goal, GoalSweep.Limit(cfg.scheduler.currencySources.value))
       .map(site.sources.canonical)
       .flatMap(ck =>
         site.sources
-          .get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
+          .get(ck, body = SourcesControllers.GetBody(false))
           .toOption
-          .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => com.histmersion.domain.library.Doi.option(d.value.trim))))
+          .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => Doi.option(d.value.trim))))
       )
 
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
@@ -79,7 +89,7 @@ final class CurrencyCheckPipeline(
     }
     Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 
-  private def followups(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, ts: List[Target]): Followed =
+  private def followups(ctx: RunCtx, goal: Goal.Slug, ts: List[Target]): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
       upstream().followups(AgentUpstream.FollowupsId(t.citekey.value), None, Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))) match
@@ -100,7 +110,7 @@ final class CurrencyCheckPipeline(
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(d => Ident.doi(Ident.Written(d.value))).exists { doi =>
-              queueOnce(ctx, goal, doi, com.histmersion.api.automation.Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value), queued) match
+              queueOnce(ctx, goal, doi, Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added
             }
@@ -110,20 +120,20 @@ final class CurrencyCheckPipeline(
     Followed(Followed.Citing(counts.map(_._1).sum), Followed.Proposed(counts.map(_._2).sum), Followed.Queued(counts.map(_._3).sum))
 
 object CurrencyCheckPipeline:
-  final case class Target(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]) derives KindlingsCodecAsObject
+  final case class Target(citekey: Citekey, doi: Option[Doi]) derives KindlingsCodecAsObject
   final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
 
   object Assessed:
     type Checked = Checked.T
-    object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Retracted = com.histmersion.domain.library.Citekey
-    val Retracted: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    object Checked extends RefinedType[Int, Pure]
+    type Retracted = Citekey
+    val Retracted: Citekey.type = Citekey
   final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued) derives KindlingsCodecAsObject
 
   object Followed:
     type Citing = Citing.T
-    object Citing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Citing extends RefinedType[Int, Pure]
     type Proposed = Proposed.T
-    object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Proposed extends RefinedType[Int, Pure]
     type Queued = Queued.T
-    object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queued extends RefinedType[Int, Pure]

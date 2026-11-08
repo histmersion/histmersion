@@ -1,8 +1,11 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -19,20 +22,20 @@ import com.histmersion.util.storage.{ByteSource, Store}
   */
 object PgRelocation:
   type BytePattern = BytePattern.T
-  object BytePattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BytePattern extends RefinedType[Array[Byte], Pure]
   type FileBytes = FileBytes.T
-  object FileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileBytes extends RefinedType[Array[Byte], Pure]
   type MacOsMode = MacOsMode.T
-  object MacOsMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MacOsMode extends RefinedType[Boolean, Pure]
   type PatchCount = PatchCount.T
-  object PatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PatchCount extends RefinedType[Int, Pure]
   type Replacement = Replacement.T
-  object Replacement extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Replacement extends RefinedType[Array[Byte], Pure]
 
-  type PatchFrom = _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern
-  val PatchFrom: _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern
-  type PatchTo = _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement
-  val PatchTo: _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement
+  type PatchFrom = BytePattern
+  val PatchFrom: BytePattern.type = BytePattern
+  type PatchTo = Replacement
+  val PatchTo: Replacement.type = Replacement
 
 
   val Marker = ".prefix"
@@ -41,16 +44,16 @@ object PgRelocation:
 
   object Result:
     type Files = Files.T
-    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Files extends RefinedType[Int, Pure]
     type Signed = Signed.T
-    object Signed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Signed extends RefinedType[Int, Pure]
     type TooLong = TooLong.T
-    object TooLong extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TooLong extends RefinedType[Int, Pure]
 
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.
     */
-  def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.util.data.maintenance.PgRelocation.PatchTo): (com.histmersion.util.data.maintenance.PgRelocation.FileBytes, com.histmersion.util.data.maintenance.PgRelocation.PatchCount) =
+  def patch(bytes: FileBytes, from: PatchFrom, to: PatchTo): (FileBytes, PatchCount) =
     val b = bytes.value
     val f = from.value
     val t = to.value
@@ -76,7 +79,7 @@ object PgRelocation:
   /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
-  def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.MacOsMode, processes: Processes): Option[Result] =
+  def relocate(pg: Store, macOS: MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
     val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.value), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().value.trim).filter(_.nonEmpty) else None

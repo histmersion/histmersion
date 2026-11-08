@@ -1,4 +1,8 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
+
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.research.Slug
 
 /** How a domain measures progress towards the goals (the engine's objectives) in its own terms: the items it links to
   * each goal that exist, and which of them count as finished — research's articles, finished once they passed their
@@ -6,7 +10,7 @@ package com.histmersion.domain.automation.goals
   */
 trait ObjectiveProgress:
   /** Every goal's linked items that exist, by goal slug, each list in order. */
-  def linked(): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]]
+  def linked(): Map[Goal.Slug, List[Slug]]
 
   /** The linked items that count as finished. */
-  def finished(): Set[com.histmersion.domain.research.Slug]
+  def finished(): Set[Slug]

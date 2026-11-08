@@ -1,10 +1,12 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.api.BBox
 import com.histmersion.{ByteCount, ByteOffset}
 import io.github.iltotore.iron.*
 
 import java.nio.{ByteBuffer, ByteOrder}
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A single-band elevation grid in a GeoTIFF, as far as reading it by range needs: where it lies (its north-west corner
   * and the size of a pixel, in degrees), its size in pixels, where each row's signed 16-bit samples begin in the file,
@@ -61,13 +63,13 @@ final case class GeoTiffGrid(
 
 object GeoTiffGrid:
   type PixelX = PixelX.T
-  object PixelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PixelX extends RefinedType[Double, Pure]
   type PixelY = PixelY.T
-  object PixelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PixelY extends RefinedType[Double, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type NoData = NoData.T
-  object NoData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoData extends RefinedType[Short, Pure]
 
   // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
   private val ImageWidth = 256; private val ImageLength = 257; private val BitsPerSample = 258

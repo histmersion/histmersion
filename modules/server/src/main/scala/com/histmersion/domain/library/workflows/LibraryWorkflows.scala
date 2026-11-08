@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import io.scalaland.chimney.dsl.*
 
@@ -11,6 +12,8 @@ import com.histmersion.domain.automation.workflows.WorkflowDefinition
 import com.histmersion.util.database.Transactor
 
 import javax.sql.DataSource
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.sources.SourcesControllers
 
 /** What the library contributes to the workflow engine: its three pipelines as workflows (enrich-source,
   * currency-check, acquisition-sweep), the enrich and watch manager kinds, its agent tools, and the acquisition work
@@ -33,9 +36,9 @@ final class LibraryWorkflows(
     SourceApprovalService(transactor, a.approvalStore, a.clock),
     cfg().agents,
     ck =>
-      com.histmersion.domain.library.Citekey
+      Citekey
         .option(ck.value)
-        .flatMap(c => site.sources.get(c, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
+        .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
     p =>
       site.sources
         .patch(p.citekey, p.patch)

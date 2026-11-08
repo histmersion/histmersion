@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,13 +10,18 @@ import com.augustnagro.magnum.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.*
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.ServerConfig
 
 /** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the answer, and the old
   * citekey still answering every read — the JSON routes, the resolver, the export, the article page's links, the MCP
   * tool, and `/source/{old}` redirecting to the new URL. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class RenameHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class RenameHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Key = "k3y"
@@ -42,7 +48,7 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey(Key)))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)
@@ -56,7 +62,7 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
 
   private def withServer(body: String => Unit): Unit =
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

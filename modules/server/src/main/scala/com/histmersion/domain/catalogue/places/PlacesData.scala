@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
@@ -16,7 +17,7 @@ import com.augustnagro.magnum.DbCon
   * a point.
   */
 object PlacesData:
-  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("places"), com.histmersion.util.data.diagnostics.DataCount.Count(PlaceRepo.count().value.toLong)))
+  def figures(using DbCon): List[DataCount] = List(DataCount(DataCount.Noun("places"), DataCount.Count(PlaceRepo.count().value.toLong)))
 
   def checks(owner: DataOwner): List[CheckRule] = List(Kind(owner), GridPoint(owner), PointArea(owner))
 
@@ -54,10 +55,10 @@ object PlacesData:
             List(
               LintFixResult.Applied(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement")
             ),
-            com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
-            com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
-            com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
-            com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
+            LintFixResult.EdgesResolved(0),
+            LintFixResult.SourcesReindexed(0),
+            LintFixResult.ChunksWritten(0),
+            LintFixResult.Remaining(0),
             placesReclassified = LintFixResult.PlacesReclassified(reclassified.value),
             placesMerged = LintFixResult.PlacesMerged(merged.value)
           )
@@ -86,10 +87,10 @@ object PlacesData:
                 s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"
               )
             ),
-            com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
-            com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
-            com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
-            com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
+            LintFixResult.EdgesResolved(0),
+            LintFixResult.SourcesReindexed(0),
+            LintFixResult.ChunksWritten(0),
+            LintFixResult.Remaining(0),
             placesRelocated = LintFixResult.PlacesRelocated(relocated.value)
           )
       )
@@ -111,7 +112,7 @@ object PlacesData:
         FixRank(70),
         c =>
           val r = geometry(c).removePointAreas(pointAreaOf(c.config))
-          LintFixResult(List(LintFixResult.Applied(r.line.value)), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0), pointAreasRemoved = LintFixResult.PointAreasRemoved(r.removed.value), pointAreasRemaining = LintFixResult.PointAreasRemaining(r.remaining.value))
+          LintFixResult(List(LintFixResult.Applied(r.line.value)), LintFixResult.EdgesResolved(0), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(0), pointAreasRemoved = LintFixResult.PointAreasRemoved(r.removed.value), pointAreasRemaining = LintFixResult.PointAreasRemaining(r.remaining.value))
       )
     )
 

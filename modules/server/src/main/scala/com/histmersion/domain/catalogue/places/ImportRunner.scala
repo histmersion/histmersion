@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import hearth.kindlings.optics.syntax.*
 
@@ -34,7 +35,7 @@ object ImportRunner:
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
-        if dryRun.value then Right(Place.ImportResult(Place.ImportResult.Places(all.size), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), (Place.ImportResult.Failed("dry run") :: refused).take(20)))
+        if dryRun.value then Right(Place.ImportResult(Place.ImportResult.Places(all.size), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), (Place.ImportResult.Failed("dry run") :: refused).take(20)))
         else
           batchUpsert(all, places, geometry, toleranceKm)
             .map(r => r.modify(_.failed).setTo((refused ++ r.failed).take(20)))
@@ -48,7 +49,7 @@ object ImportRunner:
   ): Either[GazetteerImports.Problem, Place.ImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
-      val total = batches.zipWithIndex.foldLeft(Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil)) { case (acc, (batch, i)) =>
+      val total = batches.zipWithIndex.foldLeft(Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil)) { case (acc, (batch, i)) =>
         scribe.info(s"[import] upserting batch ${i + 1}/${batches.size} (${batch.size} places)…")
         val r = places.importPlaces(batch, Dataset.Seed)
         Place.ImportResult(

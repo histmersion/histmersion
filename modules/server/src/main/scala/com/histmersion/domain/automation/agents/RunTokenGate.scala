@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
@@ -6,6 +7,8 @@ import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
 
 import java.nio.charset.StandardCharsets
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The netty gate in front of the agent MCP endpoint, on every request whatever the method: no live run token → 401; a
   * token for another agent's path → 403; the bare `/mcp/agent` is routed to the token's own agent
@@ -16,7 +19,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
 
-  private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: com.histmersion.domain.automation.agents.RunTokenGate.Problem): Unit =
+  private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: RunTokenGate.Problem): Unit =
     discarding = !req.isInstanceOf[LastHttpContent]
     val keepAlive = HttpUtil.isKeepAlive(req)
     val _ = ReferenceCountUtil.release(req)
@@ -38,10 +41,10 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
           tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)) match
             case None =>
               scribe.warn(s"agent MCP: refused a request to $path without a live run token")
-              refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, com.histmersion.domain.automation.agents.RunTokenGate.Problem("a live run token is required"))
+              refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, RunTokenGate.Problem("a live run token is required"))
             case Some(g) if path != RunTokens.Path && path != s"${RunTokens.Path}/${g.agent}" =>
               scribe.warn(s"agent MCP: a token of ${g.agent} (run ${g.run.getOrElse("-")}) asked for $path — refused")
-              refuse(ctx, req, HttpResponseStatus.FORBIDDEN, com.histmersion.domain.automation.agents.RunTokenGate.Problem("this run token is not for that agent"))
+              refuse(ctx, req, HttpResponseStatus.FORBIDDEN, RunTokenGate.Problem("this run token is not for that agent"))
             case Some(g) =>
               if path == RunTokens.Path then
                 req.setUri(s"${RunTokens.Path}/${g.agent}" + (if q < 0 then "" else uri.substring(q)))
@@ -53,4 +56,4 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
 
 object RunTokenGate:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

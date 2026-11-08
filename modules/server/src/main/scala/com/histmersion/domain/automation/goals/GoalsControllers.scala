@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.api.exchange.Bundle
 
@@ -19,38 +20,38 @@ final class GoalsControllers(
     goals: GoalService,
     queues: QueueService,
     current: com.histmersion.domain.automation.Goal.Slug => com.histmersion.domain.automation.Goal.Slug,
-    pageSize: Option[com.histmersion.PageSize] => com.histmersion.PageSize,
+    pageSize: Option[PageSize] => PageSize,
     maintenance: WriteGate
 ):
   private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) = Api.Error(Api.Error.Message(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def list(q: Api.GoalQuery): Goal.List = goals.page(
       q.status.map(s => com.histmersion.domain.automation.Goal.Status.Wire(s.value)),
-      pageSize(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value))),
-      q.offset.flatMap(o => com.histmersion.Offset.option(o.value)).getOrElse(com.histmersion.Offset(0))
+      pageSize(q.limit.flatMap(l => PageSize.option(l.value))),
+      q.offset.flatMap(o => Offset.option(o.value)).getOrElse(Offset(0))
     )
 
   def get(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = goals.get(current(slug)).toRight(notFound(slug))
 
   /** A put replaces the goal. */
   def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_goal")):
+    maintenance.guard(WriteGate.OperationName("put_goal")):
       val now = current(slug)
       goals.put(now, in).flatMap(_ => get(now))
 
   def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Goal] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_goal")):
+    maintenance.guard(WriteGate.OperationName("patch_goal")):
       val now = current(slug)
       goals.patch(now, p).flatMap(_ => get(now))
 
   def delete(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal.Deleted] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_goal")):
+    maintenance.guard(WriteGate.OperationName("delete_goal")):
       val now = current(slug)
-      if goals.delete(now) then Right(Goal.Deleted(Goal.Slug(now.value), com.histmersion.api.automation.Goal.Deleted.Value(true))) else Left(notFound(slug))
+      if goals.delete(now) then Right(Goal.Deleted(Goal.Slug(now.value), Goal.Deleted.Value(true))) else Left(notFound(slug))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
   def rename(slug: com.histmersion.domain.automation.Goal.Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_goal")):
+    maintenance.guard(WriteGate.OperationName("rename_goal")):
       val from = current(slug)
       for
         valid <- LabelRenames.validate(Bundle.Kind.Goal, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))

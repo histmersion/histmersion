@@ -1,26 +1,30 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.api.media.MediaGeoHit
 import com.histmersion.api.catalogue.{TileProps as P, TilesApi}
 import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TileFeatures as F, TilePoint, TileValue}
 import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
+import com.histmersion.domain.catalogue.periods.BPeriodRow
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.maptiles.MapTiles
 
 /** The pictures as a layer of the map: those placed in a tile's box, of the kind, provider and licence asked for, dated
   * in the span when one is asked for.
   */
 final class MediaMapLayer(assets: AssetService) extends MapLayer:
-  def candidates(q: TilesApi.TileQuery, window: Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)], envelope: Sql): Sql =
+  def candidates(q: TilesApi.TileQuery, window: Option[(BPeriodRow.PLo, BPeriodRow.PHi)], envelope: Sql): Sql =
     MediaRepo.tileCandidates(
       q.kind.map(k => MediaItemRow.Kind(k.value)),
       q.provider.map(p => MediaItemRow.Provider(p.value)),
       q.license.map(l => MediaItemRow.License(l.value)),
-      window.map((lo, hi) => (com.histmersion.domain.DeepTime.SignedYear(lo.value), com.histmersion.domain.DeepTime.SignedYear(hi.value))),
+      window.map((lo, hi) => (DeepTime.SignedYear(lo.value), DeepTime.SignedYear(hi.value))),
       envelope
     )
 
-  def features(keys: List[com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey]): Map[com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey, TileCell => TilePoint] =
-    assets.geoOf(keys.map(k => AssetService.AssetUid(k.value))).map((uid, h) => com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey(uid.value) -> feature(h))
+  def features(keys: List[MapTiles.TileKey]): Map[MapTiles.TileKey, TileCell => TilePoint] =
+    assets.geoOf(keys.map(k => AssetService.AssetUid(k.value))).map((uid, h) => MapTiles.TileKey(uid.value) -> feature(h))
 
   private[assets] def feature(h: MediaGeoHit)(c: TileCell): TilePoint =
     TilePoint(

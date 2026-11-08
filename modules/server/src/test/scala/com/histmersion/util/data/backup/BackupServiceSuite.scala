@@ -1,4 +1,5 @@
-package com.histmersion.util.data.backup
+package com.histmersion
+package util.data.backup
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -51,4 +52,4 @@ class BackupServiceSuite extends munit.FunSuite:
       svc.refusal(RowCount(3)).message,
       "the database still holds 3 source(s); restoring would drop them — re-run with force"
     )
-    assertEquals(Backup.safeName(com.histmersion.api.backup.Backup.Name("histmersion-20261031T100000Z.dump")), Right("histmersion-20261031T100000Z.dump"))
+    assertEquals(Backup.safeName(Backup.Name("histmersion-20261031T100000Z.dump")), Right("histmersion-20261031T100000Z.dump"))

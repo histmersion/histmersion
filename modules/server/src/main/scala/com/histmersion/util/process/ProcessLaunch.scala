@@ -1,6 +1,9 @@
-package com.histmersion.util.process
+package com.histmersion
+package util.process
 
 import com.histmersion.util.storage.Store
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A child process to start: its command line, the store it runs in (its working directory), the variables added to the
   * environment it inherits, where its output goes and whether its errors go with it.
@@ -15,10 +18,10 @@ final case class ProcessLaunch(
 
 object ProcessLaunch:
   type Command = Command.T
-  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Command extends RefinedType[String, Pure]
   type EnvironmentKey = EnvironmentKey.T
-  object EnvironmentKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvironmentKey extends RefinedType[String, Pure]
   type EnvironmentValue = EnvironmentValue.T
-  object EnvironmentValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvironmentValue extends RefinedType[String, Pure]
   type MergeErrors = MergeErrors.T
-  object MergeErrors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MergeErrors extends RefinedType[Boolean, Pure]

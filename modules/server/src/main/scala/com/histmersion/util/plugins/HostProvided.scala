@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.PluginHost

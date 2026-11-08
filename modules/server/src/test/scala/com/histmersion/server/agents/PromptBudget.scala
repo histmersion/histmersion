@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,6 +24,9 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import java.nio.file.{Files, Path}
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
 
 /** What every turn of an agent step re-sends before the model reads the user message: the role's system prompt, its MCP
   * tool definitions (as `/mcp/agent/<role>` lists them) and the typed answer's schema (Claude Code's `StructuredOutput`
@@ -44,10 +48,10 @@ import java.nio.file.{Files, Path}
 
 object PromptBudget:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   final case class Row(agent: AgentDef.Name, system: Int, tools: Map[ToolName, Int], answer: Int):
     def toolChars: Int = tools.values.sum
     def total: Int = system + toolChars + answer
@@ -105,11 +109,11 @@ object PromptBudget:
   /** The files `export` writes, relative to its directory. */
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =
     val settings = GenSettings(
-      com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
+      GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
       None,
-      com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
-      claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
-      interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
+      GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
+      claudeMod = GenSettings.ClaudeMod(false),
+      interactiveMod = GenSettings.InteractiveMod(false),
       GenSettings.Version(AgentGenerator.PluginVersion)
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
@@ -123,14 +127,14 @@ object PromptBudget:
       case "codex" :: dir :: Nil => // the generated Codex home (lean base prompt, 6000-token outputs), for `codex debug prompt-input`
         val root = Path.of(dir).toAbsolutePath
         val s = GenSettings(
-          com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
+          GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
           None,
-          com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
-          claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
-          interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
+          GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
+          claudeMod = GenSettings.ClaudeMod(false),
+          interactiveMod = GenSettings.InteractiveMod(false),
           GenSettings.Version(AgentGenerator.PluginVersion),
-          codexToolOutputTokens = com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(6000),
-          codexLeanBase = com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(true)
+          codexToolOutputTokens = GenSettings.CodexToolOutputTokens(6000),
+          codexLeanBase = GenSettings.CodexLeanBase(true)
         )
         AgentGenerator.codex(d, s).foreach { (rel, text) =>
           val p = root.resolve(rel)

@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
@@ -11,18 +12,20 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Opencode:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SchemaNote = SchemaNote.T
-  object SchemaNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaNote extends RefinedType[String, Pure]
 
 
 
-  def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[com.histmersion.server.agents.ClaudeCode.Argument] =
+  def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[ClaudeCode.Argument] =
     List(cfg.command.value, "run", "--agent", agent.value, "--format", "json", "-m", model.value, "--dir", dir.toString)
-      .map(com.histmersion.server.agents.ClaudeCode.Argument(_))
+      .map(ClaudeCode.Argument(_))
 
   /** Isolation (docs/research-agent-runtimes.md §1.3): a global config of its own, the generated config dir, no
     * `.claude` skills, no autoupdate; the run token for the MCP header.
@@ -34,7 +37,7 @@ object Opencode:
     val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
     val _ = env.put(AgentGenerator.TokenEnv, token.fold("none")(_.value))
 
-  def schemaNote(schema: Codex.SchemaJson): com.histmersion.server.agents.Opencode.SchemaNote =
+  def schemaNote(schema: Codex.SchemaJson): SchemaNote =
     SchemaNote(s"\n\nReply with ONE JSON object that matches this JSON Schema, and nothing else:\n$schema")
 
   /** `--format json` events: `text` parts (the last is the answer), `tool_use` (a tool part with its state: input,
@@ -94,7 +97,7 @@ object Opencode:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
-  def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Opencode.Problem, LlmClient] =
+  def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Opencode then Left(Problem(s"${ref.wire} is not an opencode model"))
     else if !ref.model.value.contains('/') then
       Left(Problem(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5"))

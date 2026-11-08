@@ -1,4 +1,8 @@
-package com.histmersion.util.process
+package com.histmersion
+package util.process
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a child process that was waited for ended: its exit code and its output, line by line. */
 final case class ProcessResult(exitCode: ProcessResult.ExitCode, lines: List[ProcessResult.Lines]):
@@ -7,6 +11,6 @@ final case class ProcessResult(exitCode: ProcessResult.ExitCode, lines: List[Pro
 object ProcessResult:
 
   type ExitCode = ExitCode.T
-  object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExitCode extends RefinedType[Int, Pure]
   type Lines = Lines.T
-  object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lines extends RefinedType[String, Pure]

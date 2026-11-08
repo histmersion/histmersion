@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
 import com.histmersion.util.data.backup.BackupService
@@ -12,9 +13,9 @@ object BackupFixtures:
       () => cfg,
       StorageLocations.storage(
         () => cfg,
-        () => LoadedConfig(cfg, UserConfigFile(None, loaded = com.histmersion.config.UserConfigFile.Loaded(false))),
+        () => LoadedConfig(cfg, UserConfigFile(None, loaded = UserConfigFile.Loaded(false))),
         Environment.empty,
-        UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName(""))
+        UserPaths(Environment.empty, UserPaths.OsName(""))
       ),
       Processes(),
       () => StorageLocations.searchPath(Option(System.getenv("PATH")).map(Environment.VariablesValue(_))),

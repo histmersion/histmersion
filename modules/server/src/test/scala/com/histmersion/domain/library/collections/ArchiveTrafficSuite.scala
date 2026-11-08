@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,6 +24,14 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, ArchiveSearchResult}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Ingest
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.api.library.Citekey
+import com.histmersion.domain.library.Doi
+import com.histmersion.server.AcquisitionTesting
+import com.histmersion.domain.library.acquisition.RetractionWatchClient
+import com.histmersion.domain.Caller
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
@@ -30,8 +39,8 @@ import com.histmersion.api.library.Ingest
   * network. The transcript is `traffic/archive.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites
   * it): moving archive.org behind the library's collections changes no request.
   */
-class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ArchiveTrafficSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Transcript = Path.of("modules/server/src/test/resources/traffic/archive.txt")
@@ -102,7 +111,7 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(spool.toString))
     )
     val wire = Wire(routes(app.acquire))
-    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val surface = ArchiveTrafficSuite.surface(app, ds, g, wire)
     val sb = StringBuilder()
     def step(name: String)(answer: => String): Unit =
@@ -119,12 +128,12 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       show(surface.info(ArchiveId("https://archive.org/details/zqbook/page/2")))
     )
     step("archive info zqgone")(show(surface.info(ArchiveId("zqgone"))))
-    step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqlent")))))
-    step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqnofile")))))
+    step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqlent")))))
+    step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqnofile")))))
     step("archive import zqbook --format pdf --citekey zqarch_book")(
-      show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqbook"), Some(com.histmersion.api.library.Citekey("zqarch_book")), Some(com.histmersion.api.library.ArchiveImportRequest.Format("pdf")))))
+      show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqbook"), Some(Citekey("zqarch_book")), Some(ArchiveImportRequest.Format("pdf")))))
     )
-    step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqbook")))))
+    step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqbook")))))
     sb ++= "## stored\n"
     com.augustnagro.magnum.connect(ds):
       import com.augustnagro.magnum.*
@@ -157,19 +166,19 @@ object ArchiveTrafficSuite:
         plugins = g.registered.flatMap(i => Plugin.Id.option(i.value))
       )
     val none = new DiscoveryClient:
-      def search(query: Search.Query, since: Option[com.histmersion.Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit) = Left(DiscoveryClient.Problem("not used"))
-      def meta(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
-      def references(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
-      def updates(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
+      def search(query: Search.Query, since: Option[Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit) = Left(DiscoveryClient.Problem("not used"))
+      def meta(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
+      def references(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
+      def updates(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
     val deps = Deps(app, ds)
-    val h = com.histmersion.server.AcquisitionTesting.controllers(
+    val h = AcquisitionTesting.controllers(
       deps,
       none,
-      new CitationsClient { def citing(w: WorkRef, s: Option[com.histmersion.Year], l: CitationsClient.CitingLimit) = Left(CitationsClient.Problem("not used")) },
+      new CitationsClient { def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) = Left(CitationsClient.Problem("not used")) },
       chain,
       new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used")) },
-      new RetractionWatchClient { def csv() = Left(com.histmersion.domain.library.acquisition.RetractionWatchClient.Problem("not used")) },
-      com.histmersion.server.AcquisitionTesting.skeleton(deps)
+      new RetractionWatchClient { def csv() = Left(RetractionWatchClient.Problem("not used")) },
+      AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:
       override def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
@@ -183,5 +192,5 @@ object ArchiveTrafficSuite:
     Surface(
       service.archiveSearch,
       service.archiveInfo,
-      req => service.archiveImport(com.histmersion.domain.Caller.Local, req)
+      req => service.archiveImport(Caller.Local, req)
     )

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.PageSize
 import com.histmersion.api.Write
@@ -20,6 +21,9 @@ import com.histmersion.util.storage.{ByteSource, HandedFile}
 
 import java.time.OffsetDateTime
 import com.histmersion.api.Api
+import com.histmersion.util.jobs.Job
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
   * the raw inputs parsed, the maintenance guard of every write, the [[BundleService]] call. An upload is the file the
@@ -34,7 +38,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     maintenance.guard(WriteGate.OperationName("instance"))(Right(bundles.setLabel(label)))
 
   /** `GET /api/bundle?since=` — the bundle file and its download name. */
-  def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]): Either[Api.Error, (HandedFile, BundleControllers.Disposition)] =
+  def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, BundleControllers.Disposition)] =
     BundleControllers.since(since).flatMap(bundles.exportBundle).map((f, m) => f -> BundleControllers.disposition(m))
 
   /** `POST /api/bundle/verify`. */
@@ -43,7 +47,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. Planned with no resolutions:
     * any open issue refuses it (decide them, then `POST /api/merge/import`).
     */
-  def importBundle(dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
+  def importBundle(dryRun: ImportOptions.DryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("bundle/import"))(readable(upload).flatMap(bundles.importBundle(_, dryRun)))
 
   /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported by name. The
@@ -71,7 +75,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       BundleControllers.sha256(req.bundle.value).flatMap(bundles.applyKept(_, MergeRow.PlanHash(req.planHash.value), req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
-  def applyStatus(job: com.histmersion.util.jobs.Job.Id): Either[Api.Error, MergeApplyJob] =
+  def applyStatus(job: Job.Id): Either[Api.Error, MergeApplyJob] =
     bundles
       .applyStatus(job)
       .toRight(
@@ -93,15 +97,15 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       BundleControllers.sha256(bundle.value).map(bundles.putSession(_, r))
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
-  def parseResolutions(text: com.histmersion.util.data.exchange.MergeResolutionsFile.Text): Either[Api.Error, MergeResolutions] =
+  def parseResolutions(text: MergeResolutionsFile.Text): Either[Api.Error, MergeResolutions] =
     MergeResolutionsFile.parse(text).left.map(es => Api.Error(Api.Error.Message(es.mkString("; ")), Some(Api.Error.Code(Write.CodeInvalid))))
 
   def merges(limit: Option[Api.Merge.Limit]): List[MergeInfo] =
     bundles.merges(limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.ListLimit))
 
-  def mergeDetail(id: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
+  def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
 
-  def mergeLedger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.UidText], merge: Option[com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix], limit: Option[Api.Merge.Limit]): Either[Api.Error, MergeLedger] =
+  def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: Option[Api.Merge.Limit]): Either[Api.Error, MergeLedger] =
     bundles.mergeLedger(uid, merge, limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.LedgerLimit))
 
   private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
@@ -111,15 +115,15 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
 object BundleControllers:
   type Disposition = Disposition.T
-  object Disposition extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Disposition extends RefinedType[String, Pure]
   /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
 
   val ListLimit: PageSize = PageSize(50)
   val LedgerLimit: PageSize = PageSize(200)
 
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
-  def sha256(raw: String): Either[Api.Error, com.histmersion.Sha256] =
-    com.histmersion.Sha256
+  def sha256(raw: String): Either[Api.Error, Sha256] =
+    Sha256
       .either(raw.trim.toLowerCase(java.util.Locale.ROOT))
       .left
       .map(_ =>
@@ -127,7 +131,7 @@ object BundleControllers:
       )
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
-  def since(raw: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]): Either[Api.Error, Option[com.histmersion.util.data.exchange.BundleScope.Since.At]] =
+  def since(raw: Option[BundleScope.Since.At]): Either[Api.Error, Option[BundleScope.Since.At]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -145,7 +149,7 @@ object BundleControllers:
           )
 
   /** `attachment; filename="histmersion-<label or id>-<asOf>.hmx"`. Pure. */
-  def disposition(m: Bundle.Manifest): com.histmersion.util.data.exchange.BundleControllers.Disposition =
+  def disposition(m: Bundle.Manifest): Disposition =
     val who = m.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(m.instance.id.toString.take(8))
     val stamp = m.asOf.map(_.value.filter(_.isDigit).take(14)).filter(_.nonEmpty).getOrElse("empty")
     val name = s"histmersion-$who-$stamp${Bundle.Extension}".map(c =>

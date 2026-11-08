@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 /** Why a change to a work-list item was refused. */
 enum QueueError:

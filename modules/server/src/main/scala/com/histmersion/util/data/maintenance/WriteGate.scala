@@ -1,9 +1,12 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.histmersion.api.backup.Backup
 
 import java.util.concurrent.atomic.AtomicBoolean
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The maintenance lock. A restore drops and recreates every table, so no other write may run while it does:
   * [[exclusively]] takes the flag, every write goes through [[guard]] and is answered 503 while it is held.
@@ -18,11 +21,11 @@ final class WriteGate:
   def active: Boolean = busy.get()
 
   /** Run `f` unless a restore is in progress, in which case answer 503. */
-  def guard[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+  def guard[A](op: WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if active then Left(Backup.maintenance(op.value)) else f
 
   /** Run `f` holding the lock; a second concurrent attempt is refused rather than queued. */
-  def exclusively[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+  def exclusively[A](op: WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op.value))
     else
       try f
@@ -30,4 +33,4 @@ final class WriteGate:
 
 object WriteGate:
   type OperationName = OperationName.T
-  object OperationName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OperationName extends RefinedType[String, Pure]

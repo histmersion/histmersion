@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -34,8 +35,8 @@ object BasemapExtractTool:
   /** The keep list the extract used before the drop list (earth, water, natural land cover). */
   val OldKeep: Map[Mvt.LayerName, Mvt.Rule] = Map(
     Mvt.LayerName("earth") -> Mvt.Rule(),
-    Mvt.LayerName("water") -> Mvt.Rule(drop = Set(com.histmersion.util.basemap.Mvt.Rule.Drop("canal"), com.histmersion.util.basemap.Mvt.Rule.Drop("ditch"), com.histmersion.util.basemap.Mvt.Rule.Drop("drain"), com.histmersion.util.basemap.Mvt.Rule.Drop("dock"), com.histmersion.util.basemap.Mvt.Rule.Drop("swimming_pool"), com.histmersion.util.basemap.Mvt.Rule.Drop("fountain"), com.histmersion.util.basemap.Mvt.Rule.Drop("basin"))),
-    Mvt.LayerName("landcover") -> Mvt.Rule(keep = Set(com.histmersion.util.basemap.Mvt.Rule.Keep("forest"), com.histmersion.util.basemap.Mvt.Rule.Keep("grassland"), com.histmersion.util.basemap.Mvt.Rule.Keep("scrub"), com.histmersion.util.basemap.Mvt.Rule.Keep("barren"), com.histmersion.util.basemap.Mvt.Rule.Keep("glacier")))
+    Mvt.LayerName("water") -> Mvt.Rule(drop = Set(Mvt.Rule.Drop("canal"), Mvt.Rule.Drop("ditch"), Mvt.Rule.Drop("drain"), Mvt.Rule.Drop("dock"), Mvt.Rule.Drop("swimming_pool"), Mvt.Rule.Drop("fountain"), Mvt.Rule.Drop("basin"))),
+    Mvt.LayerName("landcover") -> Mvt.Rule(keep = Set(Mvt.Rule.Keep("forest"), Mvt.Rule.Keep("grassland"), Mvt.Rule.Keep("scrub"), Mvt.Rule.Keep("barren"), Mvt.Rule.Keep("glacier")))
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
@@ -126,7 +127,7 @@ object BasemapExtractTool:
     out.foreach { o =>
       val (base, workKey) = workOf(o)
       val work = base.sub(workKey)
-      BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, com.histmersion.util.basemap.BasemapFetch.Note("relief")))
+      BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, BasemapFetch.Note("relief")))
       orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
       val meta = BasemapFetch.localMetadata(
         plan,

@@ -1,6 +1,11 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.agents.Prompts
 
 /** This module's native-image metadata is the single JDK-25 `reachability-metadata.json`. A legacy split file at the
   * ROOT of META-INF/native-image can only come from this module (dependency jars nest theirs under <group>/<artifact>/)
@@ -9,10 +14,10 @@ import scala.jdk.CollectionConverters.*
   */
 class NativeMetadataSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val legacy = List(
     "jni-config.json",
     "predefined-classes-config.json",
@@ -66,6 +71,6 @@ class NativeMetadataSuite extends munit.FunSuite:
     val ours = own("reachability-metadata.json")
     val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
     val globs = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
-    val bundled = com.histmersion.domain.automation.agents.Prompts.bundled
+    val bundled = Prompts.bundled
     assert(bundled.nonEmpty, "agents/index.txt lists nothing")
     assertEquals(("index.txt" :: bundled).map(p => s"agents/$p").filterNot(globs), Nil)

@@ -1,4 +1,5 @@
-package com.histmersion.server.plugins
+package com.histmersion
+package server.plugins
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
@@ -21,6 +22,11 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
 import com.histmersion.util.console.Console
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Sha256
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.pluginhost.SystemProcesses
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
   * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
@@ -49,13 +55,13 @@ import com.histmersion.util.console.Console
 
 object RelinkPlugins:
   type Argument = Argument.T
-  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Argument extends RefinedType[String, Pure]
   type ClassName = ClassName.T
-  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClassName extends RefinedType[String, Pure]
   type ExitCode = ExitCode.T
-  object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExitCode extends RefinedType[Int, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
 
   extension (id: PluginDescription.Id) private def nonEmpty: Boolean = id.value.nonEmpty
 
@@ -67,28 +73,28 @@ object RelinkPlugins:
       |       pluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
-  def exitCode(args: List[com.histmersion.server.plugins.RelinkPlugins.Argument])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCode = try run(args)(using console)
+  def exitCode(args: List[Argument])(using console: Console): ExitCode = try run(args)(using console)
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        com.histmersion.server.plugins.RelinkPlugins.ExitCode(3)
+        ExitCode(3)
 
-  private def run(args: List[com.histmersion.server.plugins.RelinkPlugins.Argument])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCode = args match
+  private def run(args: List[Argument])(using console: Console): ExitCode = args match
     case cmd :: flag :: lib :: rest if flag.value == "--lib" => run(cmd, rest, dependencyJars(Path.of(lib.value)))(using console)
     case cmd :: rest                   => run(cmd, rest, Nil)(using console)
-    case Nil                           => console.errorLine(Usage); com.histmersion.server.plugins.RelinkPlugins.ExitCode(1)
+    case Nil                           => console.errorLine(Usage); ExitCode(1)
 
-  private def run(cmd: com.histmersion.server.plugins.RelinkPlugins.Argument, args: List[com.histmersion.server.plugins.RelinkPlugins.Argument], deps: List[Path])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCode =
+  private def run(cmd: Argument, args: List[Argument], deps: List[Path])(using console: Console): ExitCode =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd.value, args.map(_.value)) match
       case ("describe", jars) if jars.nonEmpty =>
         console.writeLine(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
-        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
+        ExitCode(0)
       case ("check", kit :: jars) =>
         val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
         lines.foreach(l => console.writeLine(l))
         problems.foreach(p => console.writeLine(s"refused: $p"))
-        if problems.isEmpty then com.histmersion.server.plugins.RelinkPlugins.ExitCode(0) else com.histmersion.server.plugins.RelinkPlugins.ExitCode(2)
+        if problems.isEmpty then ExitCode(0) else ExitCode(2)
       case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
         val described = jars.map(j => describe(Path.of(j), loader))
         val label = kitLabel(Path.of(kit))
@@ -103,7 +109,7 @@ object RelinkPlugins:
         writePluginSet(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
         console.writeLine(set.digest)
-        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
+        ExitCode(0)
       case ("kit-manifest", kit :: version :: commit :: graalvm :: Nil) =>
         val m = kitManifest(
           Path.of(kit),
@@ -114,10 +120,10 @@ object RelinkPlugins:
         val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
         val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
         console.writeLine(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
-        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
+        ExitCode(0)
       case _ =>
         console.errorLine(Usage)
-        com.histmersion.server.plugins.RelinkPlugins.ExitCode(1)
+        ExitCode(1)
 
   // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────
 
@@ -125,7 +131,7 @@ object RelinkPlugins:
     * each jar (`x-1.0.jar` → `x-1.0.pom`, when there is one) and each dependency jar as `lib/<name>`, with their
     * SHA-256.
     */
-  def linkedFiles(jars: List[Path], deps: List[Path]): List[(PluginFile.File, com.histmersion.api.Sha256)] =
+  def linkedFiles(jars: List[Path], deps: List[Path]): List[(PluginFile.File, Sha256)] =
     val poms = jars
       .map(j => j.resolveSibling(j.getFileName.toString.stripSuffix(".jar") + ".pom"))
       .filter(Files.isRegularFile(_))
@@ -144,7 +150,7 @@ object RelinkPlugins:
 
   // ── describe ──────────────────────────────────────────────────────────────────────────────────
 
-  def sha256(p: Path): com.histmersion.api.Sha256 = com.histmersion.api.Sha256(digestHex(p))
+  def sha256(p: Path): Sha256 = Sha256(digestHex(p))
 
   private def kitSha256(p: Path): com.histmersion.Sha256 = com.histmersion.Sha256.applyUnsafe(digestHex(p))
 
@@ -212,7 +218,7 @@ object RelinkPlugins:
       List(p),
       user,
       ConfigFactory.empty("plugin-tool"),
-      HostServices(() => NoHttp, ConfigFactory.empty("plugin-tool"), (_, _, _) => (), files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
+      HostServices(() => NoHttp, ConfigFactory.empty("plugin-tool"), (_, _, _) => (), files = new DiskLocalFiles, processes = new SystemProcesses)
     )
     val st = g.report.plugins.find(_.id.value == info.id.value)
     val access =
@@ -337,7 +343,7 @@ object RelinkPlugins:
     if Files.isRegularFile(f) then PluginKit.parseKit(Files.readString(f)).toOption.map(m => PluginSet.Kit(m.label)) else None
 
   /** The manifest over every file under `kit` (the manifests themselves excluded). */
-  def kitManifest(kit: Path, version: com.histmersion.util.plugins.PluginKit.KitManifest.Version, commit: Option[com.histmersion.util.plugins.PluginKit.KitManifest.Commit], graalvm: com.histmersion.util.plugins.PluginKit.KitManifest.Graalvm): PluginKit.KitManifest =
+  def kitManifest(kit: Path, version: PluginKit.KitManifest.Version, commit: Option[PluginKit.KitManifest.Commit], graalvm: PluginKit.KitManifest.Graalvm): PluginKit.KitManifest =
     val files = Files
       .walk(kit)
       .iterator()

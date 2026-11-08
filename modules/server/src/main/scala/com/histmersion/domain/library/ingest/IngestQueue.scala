@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 import com.histmersion.api.jobs.JobInfo
 
 import io.scalaland.chimney.dsl.*
@@ -34,6 +35,12 @@ import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.library.Source
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.Title
+import com.histmersion.domain.AuthorName
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent
@@ -60,7 +67,7 @@ final class IngestQueue(
     clock: Clock,
     ds: () => DataSource,
     pins: Pinning,
-    afterStore: com.histmersion.domain.library.Citekey => Option[IngestQueue.Note]
+    afterStore: Citekey => Option[IngestQueue.Note]
 ):
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes it and a worker
@@ -71,7 +78,7 @@ final class IngestQueue(
   private val pool = JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), runJob, pins)
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
-  def start(): com.histmersion.RowCount =
+  def start(): RowCount =
     val n = pool.start()
     if n.value > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
     n
@@ -84,7 +91,7 @@ final class IngestQueue(
   def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: Job.Kind, citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.Sha256, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
+  def enqueue(kind: Job.Kind, citekey: Citekey, sha: Sha256, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem.map(i => JobRow.AcquireItem(i.value)))
     val jobId = Job.Id.assume(job.id.value)
     val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, kind))
@@ -136,7 +143,7 @@ final class IngestQueue(
 
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
   private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
-    com.histmersion.ByteCount.either(cfg().limits.assetBytes.value).left.map(why => Api.Error(Api.Error.Message(why))).flatMap { max =>
+    ByteCount.either(cfg().limits.assetBytes.value).left.map(why => Api.Error(Api.Error.Message(why))).flatMap { max =>
       in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
         acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(Api.Error.Message(p.value))).map(xs :+ _))
       }
@@ -196,7 +203,7 @@ final class IngestQueue(
                 )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
-  private def afterStoreSafely(citekey: com.histmersion.domain.library.Citekey): List[String] =
+  private def afterStoreSafely(citekey: Citekey): List[String] =
     try afterStore(citekey).toList.map(_.value)
     catch
       case e: InterruptedException => throw e
@@ -221,12 +228,12 @@ final class IngestQueue(
       val written =
         if sources.load(citekey).isDefined then
           sources
-            .patch(citekey, com.histmersion.api.library.Source.Patch(body = Some(body)), Caller.Local)
+            .patch(citekey, Source.Patch(body = Some(body)), Caller.Local)
             .map(_ => ())
             .left
             .map(_.message.value)
         else
-          com.histmersion.api.library.Source.Write
+          Source.Write
             .applyPut(job.params.citekey, skeleton(job.params, body))
             .left
             .map(_.value)
@@ -245,7 +252,7 @@ final class IngestQueue(
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It never fails the
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
-  private def tickOff(id: Ingest.Params.AcquireItem, citekey: com.histmersion.domain.library.Citekey, jobId: Job.Id): String =
+  private def tickOff(id: Ingest.Params.AcquireItem, citekey: Citekey, jobId: Job.Id): String =
     def warning(message: String): String =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
@@ -268,16 +275,16 @@ final class IngestQueue(
     * that only resemble it ([[AcquireMatch.decide]]). One line per item, for the job's progress. Like [[tickOff]] it
     * never fails the job: the source is stored either way.
     */
-  private def matchAcquisitions(citekey: com.histmersion.domain.library.Citekey, jobId: Job.Id): List[String] =
+  private def matchAcquisitions(citekey: Citekey, jobId: Job.Id): List[String] =
     try
       sources.load(citekey).toList.flatMap { s =>
         val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
         AcquireMatch
           .decide(
             items,
-            s.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value)),
-            com.histmersion.domain.Title(s.title.value),
-            s.authors.map(a => com.histmersion.domain.AuthorName(a.value)),
+            s.doi.flatMap(d => Doi.option(d.value)),
+            Title(s.title.value),
+            s.authors.map(a => AuthorName(a.value)),
             AcquireMatch.ProposeThreshold(cfg().acquire.defaults.titleMatchAt.value)
           )
           .map { d =>
@@ -312,8 +319,8 @@ final class IngestQueue(
   /** The minimal source an ingest creates when nothing is there yet: enough to find it, no invented enrichment.
     * Everything else is the agent's job, through `patch_source`.
     */
-  private def skeleton(p: Ingest.Params, body: Source.OcrMarkdown): com.histmersion.api.library.Source.Put =
-    com.histmersion.api.library.Source.Put(
+  private def skeleton(p: Ingest.Params, body: Source.OcrMarkdown): Source.Put =
+    Source.Put(
       title = com.histmersion.api.library.Title(p.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(p.citekey.value)),
       authors = p.authors.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.AuthorName(_)),
       doi = p.doi.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Doi(_)),
@@ -326,4 +333,4 @@ final class IngestQueue(
 object IngestQueue:
   /** A line of a job's progress report: what happened to the source after its text was stored. */
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]

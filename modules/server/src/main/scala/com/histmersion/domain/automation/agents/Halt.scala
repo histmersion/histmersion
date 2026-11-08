@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -9,6 +10,8 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's for-comprehension: a step
   * either produces its output or halts the run.
@@ -26,17 +29,17 @@ enum Halt:
 
 object Halt:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type WaitId = WaitId.T
-  object WaitId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WaitId extends RefinedType[Long, Pure]
   object Pause:
-    type Detail = com.histmersion.domain.automation.agents.Halt.Problem
-    val Detail: _root_.com.histmersion.domain.automation.agents.Halt.Problem.type = _root_.com.histmersion.domain.automation.agents.Halt.Problem
+    type Detail = Problem
+    val Detail: Problem.type = Problem
   object Fail:
-    type Message = com.histmersion.domain.automation.agents.Halt.Problem
-    val Message: _root_.com.histmersion.domain.automation.agents.Halt.Problem.type = _root_.com.histmersion.domain.automation.agents.Halt.Problem
+    type Message = Problem
+    val Message: Problem.type = Problem
   object Wait:
-    type Id = com.histmersion.domain.automation.agents.Halt.WaitId
-    val Id: _root_.com.histmersion.domain.automation.agents.Halt.WaitId.type = _root_.com.histmersion.domain.automation.agents.Halt.WaitId
+    type Id = WaitId
+    val Id: WaitId.type = WaitId
     type What = What.T
-    object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object What extends RefinedType[String, Pure]

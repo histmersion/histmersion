@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.notes
+package com.histmersion
+package domain.personal.notes
 
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
@@ -11,6 +12,9 @@ import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{Latitude, Longitude, UserId, Year}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ItemKind
 
 /** A note as the person sees it: what it is left on as that shows now, and what that is called. */
 final case class Note(
@@ -29,7 +33,7 @@ final case class Note(
 
 object Note:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
 
   def idOf(raw: WireNote.Id): Either[Problem, WireNote.Id] =
@@ -55,7 +59,7 @@ object Note:
   /** A live note as the table answers it. */
   final private[notes] case class Row(
       id: com.histmersion.api.personal.Note.Id,
-      kind: com.histmersion.api.ItemKind.Wire,
+      kind: ItemKind.Wire,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],

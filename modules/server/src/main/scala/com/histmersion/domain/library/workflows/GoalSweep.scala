@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
@@ -13,6 +14,14 @@ import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal.Plans.GoalLink
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.
@@ -22,19 +31,19 @@ private[workflows] trait GoalSweep:
   protected def goals: GoalService
 
   /** The goal a run is about (the run record is our own). */
-  protected def goalOf(ctx: RunCtx): com.histmersion.domain.automation.Goal.Slug =
-    com.histmersion.domain.automation.Goal.Slug.assume(ctx.run.target.value)
+  protected def goalOf(ctx: RunCtx): Goal.Slug =
+    Goal.Slug.assume(ctx.run.target.value)
 
   /** The sources a goal is about: linked directly, and cited by the articles linked to it. */
-  protected def goalSources(goal: com.histmersion.domain.automation.Goal.Slug, max: com.histmersion.domain.library.workflows.GoalSweep.Limit): List[com.histmersion.domain.library.Citekey] =
-    val direct = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Source).map(r => com.histmersion.domain.library.Citekey.assume(r.value))
+  protected def goalSources(goal: Goal.Slug, max: GoalSweep.Limit): List[Citekey] =
+    val direct = goals.refs(goal, Goal.LinkKind.Source).map(r => Citekey.assume(r.value))
     val viaArts = goals
-      .refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article)
-      .flatMap(r => site.citedSources(com.histmersion.domain.research.Slug.assume(r.value)))
+      .refs(goal, Goal.LinkKind.Article)
+      .flatMap(r => site.citedSources(Slug.assume(r.value)))
     (direct ++ viaArts).distinct.take(math.max(0, max.value))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */
-  protected def queuedDois(): Map[com.histmersion.domain.library.Doi, Queue.QueueItem.Id] =
+  protected def queuedDois(): Map[Doi, Queue.QueueItem.Id] =
     site.queues
       .list(Queue.Kind.Acquire, QueueScope.All)
       .flatMap(i => Scheduling.dois(i.text.value).map(_ -> i.id))
@@ -46,28 +55,28 @@ private[workflows] trait GoalSweep:
     */
   protected def queueOnce(
       ctx: RunCtx,
-      goal: com.histmersion.domain.automation.Goal.Slug,
-      doi: com.histmersion.domain.library.Doi,
+      goal: Goal.Slug,
+      doi: Doi,
       text: Queue.QueueItem.Text,
-      queued: Map[com.histmersion.domain.library.Doi, Queue.QueueItem.Id]
+      queued: Map[Doi, Queue.QueueItem.Id]
   ): Either[String, Boolean] =
     queued.get(doi).orElse(site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",
           io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value))) }(())
+        ) { val _ = goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value))) }(())
         Right(false)
       case None =>
         val item = QueueAdd(
           text,
           topic = Some(Queue.QueueItem.Topic(s"goal $goal")),
           goal = Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
-          job = Some(com.histmersion.api.jobs.JobInfo.Id(ctx.run.id.value))
+          job = Some(JobInfo.Id(ctx.run.id.value))
         )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
-          site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
-            val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, GoalLink.Ref(added.id.value.toString), Some(GoalLink.Note(doi.value)))
+          site.workLists.add(WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
+            val _ = goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(added.id.value.toString), Some(GoalLink.Note(doi.value)))
             true
           }
         )(Right(true))
@@ -77,4 +86,4 @@ private[workflows] trait GoalSweep:
 
 object GoalSweep:
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]

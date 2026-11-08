@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -16,14 +17,21 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.util.storage.Blob
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.util.database.Migrate
+import com.histmersion.config.ServerConfig
 
 /** #970 over real HTTP, the converter stubbed: an import that names no acquisition item closes the open items that name
   * its DOI (whatever case, prefix or punctuation they write it with), and only LISTS the items that resemble it — a
   * preprint's published version among them — in the job's progress. A re-OCR imports nothing and matches nothing; an
   * explicit `acquireItem` is the whole story. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class AcquireAutoMatchSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
@@ -53,19 +61,19 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
   private def enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 
   private object Stub extends ConverterClient:
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
-      Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), filename = Some(ConvertedDoc.Filename(filename.value))))
+    def health = Right(ConverterClient.HealthSummary("ok"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = ConvertedDoc.Pages(1), filename = Some(ConvertedDoc.Filename(filename.value))))
 
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-automatch").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-automatch").toString))
     )
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)
-    com.histmersion.util.database.Migrate.run(ds)
+    Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM queue_items WHERE text LIKE 'zzauto%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzauto%'".update.run()
@@ -107,7 +115,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("the DOI closes; a similar title — even the published version of a preprint — is only proposed"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), Stub).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val exact = addItem(
@@ -156,7 +164,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("an explicit acquireItem is the one ticked off; DOI matching is not run on top of it"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), Stub).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val named = addItem(url, "zzauto the item the import names")

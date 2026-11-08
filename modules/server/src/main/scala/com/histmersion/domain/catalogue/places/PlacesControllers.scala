@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.exchange.Bundle
 
@@ -15,6 +16,8 @@ import com.histmersion.domain.{Caller, DeepTime}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of
@@ -28,12 +31,12 @@ final class PlacesControllers(
     geocoder: Geocoding,
     current: (AliasKind, PlacesControllers.Alias) => Place.Id,
     cfg: () => AppConfig,
-    limit: (Option[com.histmersion.PageSize], com.histmersion.PageSize) => com.histmersion.PageSize,
+    limit: (Option[PageSize], PageSize) => PageSize,
     maintenance: WriteGate
 ):
   private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
   private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
-  private def page(raw: Int): com.histmersion.PageSize = com.histmersion.PageSize.applyUnsafe(math.max(1, raw))
+  private def page(raw: Int): PageSize = PageSize.applyUnsafe(math.max(1, raw))
   private def notFound(id: String): Api.Error = Api.Error(Api.Error.Message(s"No place '$id'"))
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
@@ -48,7 +51,7 @@ final class PlacesControllers(
     geocoder.resolve(name, hint, at, GeocodeSettings.PlaceholderMin(cfg().places.geocodePlaceholderMin.value))
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
-  def search(q: Option[PlaceService.SearchQ], asOf: Option[DeepTime.SignedYear], n: Option[com.histmersion.PageSize]): List[com.histmersion.api.catalogue.Place.Hit] =
+  def search(q: Option[PlaceService.SearchQ], asOf: Option[DeepTime.SignedYear], n: Option[PageSize]): List[com.histmersion.api.catalogue.Place.Hit] =
     places.search(q, asOf, limit(n, page(cfg().places.searchLimit.value)), modernFrom)
 
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
@@ -113,7 +116,7 @@ final class PlacesControllers(
       dataset: Option[Dataset.Wire],
       body: PlacesControllers.DatasetBody
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/import")):
+    maintenance.guard(WriteGate.OperationName("places/import")):
       val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(Place.Kind.Wire(k)) then
         Left(Api.Error(Api.Error.Message(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
@@ -129,7 +132,7 @@ final class PlacesControllers(
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.NameAdd
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/names/add")):
+    maintenance.guard(WriteGate.OperationName("places/names/add")):
       for
         n <- com.histmersion.api.catalogue.Place.Edits.name(ApiPlace.Name.Value(in.name.value))
         l <- com.histmersion.api.catalogue.Place.Edits.lang(in.lang)
@@ -142,7 +145,7 @@ final class PlacesControllers(
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.NameRemove
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/names/remove")):
+    maintenance.guard(WriteGate.OperationName("places/names/remove")):
       for
         n <- com.histmersion.api.catalogue.Place.Edits.name(ApiPlace.Name.Value(in.name.value))
         l <- com.histmersion.api.catalogue.Place.Edits.lang(in.lang)
@@ -160,7 +163,7 @@ final class PlacesControllers(
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.OverrideSet
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.OverrideChanged] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/override")):
+    maintenance.guard(WriteGate.OperationName("places/override")):
       com.histmersion.api.catalogue.Place.Overrides
         .edit(in)
         .flatMap(e => places.setOverride(placeId(id), e, tolKm))
@@ -171,7 +174,7 @@ final class PlacesControllers(
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.MergeIn
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/merge")):
+    maintenance.guard(WriteGate.OperationName("places/merge")):
       for
         _ <- ApiPlace.Overrides.reason(in.reason.map(r => ApiPlace.Override.Reason(r.value)))
         into <- Place.Id.either(in.into.value.trim).left.map(_ => notFound(in.into.value))
@@ -184,7 +187,7 @@ final class PlacesControllers(
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.RemoveIn
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/remove")):
+    maintenance.guard(WriteGate.OperationName("places/remove")):
       ApiPlace.Overrides.reason(in.reason.map(r => ApiPlace.Override.Reason(r.value))).flatMap(r => places.remove(placeId(id), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
@@ -197,7 +200,7 @@ final class PlacesControllers(
       caller: Caller,
       in: com.histmersion.api.catalogue.Place.Add
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Summary] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/add")):
+    maintenance.guard(WriteGate.OperationName("places/add")):
       com.histmersion.api.catalogue.Place.Edits.toInput(in).flatMap(places.add)
 
   /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055). `validate` is the label
@@ -208,7 +211,7 @@ final class PlacesControllers(
       id: Place.Id,
       validate: Place.Id => Either[Api.Error, Place.Id]
   ): Either[Api.Error, (Place.Id, Place.Id)] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_place")):
+    maintenance.guard(WriteGate.OperationName("rename_place")):
       val from = placeId(id)
       for
         to <- validate(from)
@@ -239,11 +242,11 @@ final class PlacesControllers(
     * every other write.
     */
   def rebuild(caller: Caller): Either[Api.Error, com.histmersion.api.catalogue.Place.RebuildResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/rebuild")):
+    maintenance.guard(WriteGate.OperationName("places/rebuild")):
       Right(geometry.rebuildFindingPlaces(tolKm))
 
 object PlacesControllers:
   type Alias = Alias.T
-  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Alias extends RefinedType[String, Pure]
   type DatasetBody = DatasetBody.T
-  object DatasetBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatasetBody extends RefinedType[String, Pure]

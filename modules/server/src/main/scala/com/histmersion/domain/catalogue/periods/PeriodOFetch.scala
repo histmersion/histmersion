@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 /** The PeriodO dump (https://perio.do, CC0) as a network source for `histmersion periods fetch periodo` and
   * `histmersion init --fetch`. The parsing is [[com.histmersion.api.catalogue.PeriodO]] (pure); the download is the

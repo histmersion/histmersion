@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode}
 
@@ -6,17 +7,19 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where an agent definition is run, which decides how it is rendered (docs/research-agent-runtimes.md §2): the three
   * CLI runtimes, the direct API (sttp-ai, the engine's own loop), and the person's own interactive Claude Code session
   * (the plugin the research workspace installs).
   */
 enum AgentRuntime(val wire: AgentRuntime.Wire):
-  case ClaudeCode extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("claude-code"))
-  case Codex extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("codex"))
-  case Opencode extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("opencode"))
-  case Api extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("api"))
-  case Interactive extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("interactive"))
+  case ClaudeCode extends AgentRuntime(AgentRuntime.Wire("claude-code"))
+  case Codex extends AgentRuntime(AgentRuntime.Wire("codex"))
+  case Opencode extends AgentRuntime(AgentRuntime.Wire("opencode"))
+  case Api extends AgentRuntime(AgentRuntime.Wire("api"))
+  case Interactive extends AgentRuntime(AgentRuntime.Wire("interactive"))
 
   /** How a `{{tool:x}}` placeholder reads in this runtime. */
   def style: ToolStyle = this match
@@ -26,7 +29,7 @@ enum AgentRuntime(val wire: AgentRuntime.Wire):
 
 object AgentRuntime:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   def parse(s: Wire): Option[AgentRuntime] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 

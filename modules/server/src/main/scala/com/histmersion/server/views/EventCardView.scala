@@ -1,4 +1,5 @@
-package com.histmersion.server.views
+package com.histmersion
+package server.views
 
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.{EventArticleRef, EventPatch, EventPut}
@@ -9,31 +10,33 @@ import com.histmersion.domain.catalogue.events.EventsControllers
 import hearth.kindlings.optics.syntax.*
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Api
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.library.Citekey
 
 /** An event's page as the catalogue, the pictures and the articles show it together: the catalogue's event with its
   * evidence and context (the events' controllers, whose card [[EventCardView.cited]] gives the articles citing the
   * sources that attest it), and its pictures. What `GET`, `PUT` and `PATCH /api/events/{id}` and the `events` and
   * `patch_event` tools answer.
   */
-final class EventCardView(events: EventsControllers, pictures: com.histmersion.domain.catalogue.Event.Id => List[MediaThumb]):
+final class EventCardView(events: EventsControllers, pictures: Event.Id => List[MediaThumb]):
 
   /** The catalogue's event with its pictures. */
   def page(e: EventEntry): EventDetail =
-    e.into[EventDetail].withFieldConst(_.media, pictures(com.histmersion.domain.catalogue.Event.Id.assume(e.event.id.value))).transform
+    e.into[EventDetail].withFieldConst(_.media, pictures(Event.Id.assume(e.event.id.value))).transform
 
-  def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDetail] = events.get(id).map(page)
+  def get(id: Event.Id): Either[Api.Error, EventDetail] = events.get(id).map(page)
 
-  def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventDetail] =
+  def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventDetail] =
     events.put(caller, id, in).map(page)
 
-  def patch(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, EventDetail] =
+  def patch(caller: Caller, id: Event.Id, p: EventPatch): Either[Api.Error, EventDetail] =
     events.patch(caller, id, p).map(page)
 
 object EventCardView:
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
 
-  def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.domain.library.Citekey], com.histmersion.PageSize) => List[EventArticleRef])(
+  def cited(context: EventEntry => EventEntry, citing: (List[Citekey], PageSize) => List[EventArticleRef])(
       e: EventEntry
   ): EventEntry =
     val withContext = context(e)
-    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => com.histmersion.domain.library.Citekey.assume(s.citekey.value)), com.histmersion.PageSize(10)))
+    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => Citekey.assume(s.citekey.value)), PageSize(10)))

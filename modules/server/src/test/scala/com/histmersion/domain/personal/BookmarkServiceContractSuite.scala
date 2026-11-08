@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -37,7 +38,7 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
       w.bookmarks.list(me, None, SearchWords.Everything, all).map(b => (keyOf(b.target), b.title.value: String))
     assertEquals(shown, List(("zz_m_d", "stored zz_m_d"), ("zz_m_c", "Zz zz_m_c"), ("zz_m_a2", "Zz zz_m_a")))
     assertEquals(
-      w.bookmarks.list(me, None, SearchWords.of(Some(com.histmersion.domain.personal.SearchWords.Query("A2"))), all).map(b => keyOf(b.target)),
+      w.bookmarks.list(me, None, SearchWords.of(Some(SearchWords.Query("A2"))), all).map(b => keyOf(b.target)),
       List("zz_m_a2"),
       "the search matches the key the source has now"
     )
@@ -62,7 +63,7 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
     assertEquals(listed.map(_.wire.name), List("Place on the map", "Argolid again", "Argolid", "Zz Tiryns"))
     assertEquals(listed(1).target, v)
     assertEquals(w.bookmarks.list(me, Some(MarkKind.View), SearchWords.Everything, all).size, 2)
-    assertEquals(w.bookmarks.list(me, None, SearchWords.of(Some(com.histmersion.domain.personal.SearchWords.Query("tiryns"))), all).map(_.wire.name), List("Zz Tiryns"))
+    assertEquals(w.bookmarks.list(me, None, SearchWords.of(Some(SearchWords.Query("tiryns"))), all).map(_.wire.name), List("Zz Tiryns"))
     assertEquals(w.bookmarks.list(me, None, SearchWords.Everything, PageSize(2)).size, 2)
   }
 

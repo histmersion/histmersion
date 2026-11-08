@@ -1,6 +1,9 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.util.concurrent.atomic.AtomicLong
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The caps of one measurement of stores: at most `maxEntries` visited entries over all its walks, and no walk past
   * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
@@ -14,21 +17,21 @@ final class MeasureBudget(
 
   /** Count one entry; false once either cap is reached. */
   def take(): Boolean = used.incrementAndGet() <= maxEntries.value && clock() < deadlineNanos.value
-  def spent: com.histmersion.util.storage.MeasureBudget.EntriesUsed = MeasureBudget.EntriesUsed(used.get)
+  def spent: MeasureBudget.EntriesUsed = MeasureBudget.EntriesUsed(used.get)
   def exhausted: Boolean = used.get >= maxEntries.value || clock() >= deadlineNanos.value
 
 object MeasureBudget:
   type EntriesUsed = EntriesUsed.T
-  object EntriesUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EntriesUsed extends RefinedType[Long, Pure]
   type MaxMillis = MaxMillis.T
-  object MaxMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxMillis extends RefinedType[Long, Pure]
   type MaxEntries = MaxEntries.T
-  object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxEntries extends RefinedType[Long, Pure]
   type DeadlineNanos = DeadlineNanos.T
-  object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DeadlineNanos extends RefinedType[Long, Pure]
 
 
-  def of(maxEntries: com.histmersion.util.storage.MeasureBudget.MaxEntries, maxMillis: com.histmersion.util.storage.MeasureBudget.MaxMillis): MeasureBudget =
+  def of(maxEntries: MaxEntries, maxMillis: MaxMillis): MeasureBudget =
     MeasureBudget(maxEntries, DeadlineNanos(System.nanoTime() + maxMillis.value * 1_000_000L))
 
   def unlimited: MeasureBudget = MeasureBudget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))

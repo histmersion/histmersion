@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import hearth.kindlings.optics.syntax.*
 
@@ -34,6 +35,18 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerContext.TickLine
 import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, Pipeline as DomainPipeline, Run as DomainRun}
 import scala.collection.mutable.Builder
+import com.histmersion.domain.automation.Manager
+import com.histmersion.api.automation.Run
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.automation.Approval
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.automation.goals.FocusRepo
+import com.histmersion.domain.automation.goals.GoalRow
+import com.histmersion.util.jobs.JobRow
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.goals.BGoalLinkRow
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -227,7 +240,7 @@ final class ManagerSupervisor(
       .find(_.kind == k)
       .fold(
         ReviewSettings
-          .forKind(k.transformInto[com.histmersion.domain.automation.Manager.Kind], m.config, managerDefaults)
+          .forKind(k.transformInto[Manager.Kind], m.config, managerDefaults)
       )(_.settings(m.config, managerDefaults))
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
@@ -246,7 +259,7 @@ final class ManagerSupervisor(
             s"${item.target}: its run disappeared; pending again"
           )
       case (item, Some((status, error))) =>
-        val st = RunState.parse(com.histmersion.api.automation.Run.State.Wire(status.value)).getOrElse(RunState.Failed)
+        val st = RunState.parse(Run.State.Wire(status.value)).getOrElse(RunState.Failed)
         val problem = error.map(e => ManagerPolicy.Problem(e.value))
         byItem.get(itemKindOf(item)) match
           case Some(k) => k.evaluate(this, m, s, item, st, problem, now, out)
@@ -341,7 +354,7 @@ final class ManagerSupervisor(
                 Queue.QueueItem.Text(t.value),
                 topic = Some(Queue.QueueItem.Topic("agent manager")),
                 goal = m.goal,
-                job = Some(run.transformInto[com.histmersion.api.SpatialHierarchyResult.Job.Id])
+                job = Some(run.transformInto[SpatialHierarchyResult.Job.Id])
               )
             )
             .toOption
@@ -385,7 +398,7 @@ final class ManagerSupervisor(
     */
   def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: ManagerPolicy.ItemOutcome): StepFacts =
     agents.approvalStore
-      .approvalsOf(run.transformInto[com.histmersion.util.jobs.Job.Id], Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
+      .approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
       .lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
@@ -397,7 +410,7 @@ final class ManagerSupervisor(
     */
   def chainReview(
       id: ManagerLight.Id,
-      slug: com.histmersion.domain.research.Slug,
+      slug: Slug,
       why: ManagerContext.ChainReviewWhy,
       out: Builder[TickLine, List[TickLine]]
   ): Unit =
@@ -424,7 +437,7 @@ final class ManagerSupervisor(
     * not exist), in the plan's order. Idempotent: an article planned before keeps its item. Returns how many were
     * added.
     */
-  def applyPlan(a: ApprovalInfo, out: Builder[TickLine, List[TickLine]] = List.newBuilder[TickLine]): com.histmersion.RowCount =
+  def applyPlan(a: ApprovalInfo, out: Builder[TickLine, List[TickLine]] = List.newBuilder[TickLine]): RowCount =
     (a.subject, a.articles) match
       case (Some(goal), Some(plan)) if a.state == ApprovalState.Approved.wire =>
         val id = seedId(Goal.Ref(goal.value))
@@ -446,8 +459,8 @@ final class ManagerSupervisor(
           )
           out += TickLine(s"$id: $added to compile")
           nudge()
-        com.histmersion.RowCount(added)
-      case _ => com.histmersion.RowCount(0)
+        RowCount(added)
+      case _ => RowCount(0)
 
   // ── 2. holds ───────────────────────────────────────────────────────────────────────────────────
 
@@ -633,9 +646,9 @@ final class ManagerSupervisor(
       )
       val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending.value)
       val base = ManagerPolicy.statusNote(
-        com.histmersion.domain.automation.Manager.State.Active,
+        Manager.State.Active,
         starved.map(ManagerPolicy.StatusNote(_)),
-        if full then com.histmersion.domain.ManagerPolicy.Capacity(0) else com.histmersion.domain.ManagerPolicy.Capacity(1),
+        if full then ManagerPolicy.Capacity(0) else ManagerPolicy.Capacity(1),
         ManagerPolicy.PendingCount(pending),
         ManagerPolicy.DueCount(waits.size),
         ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value),
@@ -662,11 +675,11 @@ final class ManagerSupervisor(
                 m.id,
                 ManagerPolicy
                   .statusNote(
-                    st.transformInto[com.histmersion.domain.automation.Manager.State],
+                    st.transformInto[Manager.State],
                     None,
-                    com.histmersion.domain.ManagerPolicy.Capacity(0),
+                    ManagerPolicy.Capacity(0),
                     ManagerPolicy.PendingCount(m.counts.pending.value),
-                    com.histmersion.domain.ManagerPolicy.DueCount(0),
+                    ManagerPolicy.DueCount(0),
                     ManagerPolicy.InFlightCount(m.inFlight.value),
                     None
                   )
@@ -761,7 +774,7 @@ final class ManagerSupervisor(
                   Origin.Manager,
                   pr.dryRun,
                   Some(m.id.transformInto[ManagerLight.Id]),
-                  Some(item.id.transformInto[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id])
+                  Some(item.id.transformInto[FocusRepo.WorkRow.Id])
                 )
               )
               if !ManagerRepo.dispatchIn(item.id, id, state) then throw Lost()
@@ -835,7 +848,7 @@ final class ManagerSupervisor(
     recordEvent(id.transformInto[ManagerInfo.Id], item.map(i => ManagerItem.Id(i.value)), run, feed.value, text.value)
   def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent] =
     agents.managerStore.lastEventOf(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value))
-  def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): com.histmersion.RowCount =
+  def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): RowCount =
     Transactor(ds).read(ManagerRepo.countEvents(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value), since))
   def upsert(
       id: ManagerLight.Id,
@@ -863,8 +876,8 @@ final class ManagerSupervisor(
     Transactor(ds).read(ManagerRepo.hasItem(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(kind.value), target.transformInto[ManagerItem.Target]))
   def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean =
     Transactor(ds).transact(ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why))
-  def pending(id: ManagerLight.Id): com.histmersion.RowCount =
-    com.histmersion.RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
+  def pending(id: ManagerLight.Id): RowCount =
+    RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
   def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)] =
     agents.managerStore.openKeys(id.transformInto[ManagerInfo.Id]).map((k, t) => (ManagerContext.ItemKind(k.value), t.transformInto[ManagerContext.ItemTarget]))
   def evaluated(
@@ -890,57 +903,57 @@ final class ManagerSupervisor(
   def hints(id: ManagerLight.Id): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id.transformInto[ManagerInfo.Id], live = true))
   def state(id: ManagerLight.Id): Option[ManagerLight.State] =
     agents.managerStore.get(id.transformInto[ManagerInfo.Id]).map(m => ManagerLight.State(m.state.value))
-  def openMajorArticles(id: ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[(com.histmersion.domain.research.Slug, com.histmersion.RowCount)] =
+  def openMajorArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[(Slug, RowCount)] =
     Transactor(ds).read(
-      ManagerRepo.openMajorArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+      ManagerRepo.openMajorArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
     )
-  def unreviewedArticles(id: ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[com.histmersion.domain.research.Slug] =
+  def unreviewedArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[Slug] =
     Transactor(ds).read(
-      ManagerRepo.unreviewedArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+      ManagerRepo.unreviewedArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
     )
   def staleCandidates(
       id: ManagerLight.Id,
-      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
+      tags: List[GoalRow.Tags],
       goal: Option[DomainGoal.Slug],
       limit: ManagerContext.Limit
-  ): List[(com.histmersion.domain.research.Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])] =
+  ): List[(Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])] =
     Transactor(ds)
       .read(
-        ManagerRepo.staleCandidates(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+        ManagerRepo.staleCandidates(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
       )
       .map((slug, progress, hits, itemId) => (slug, progress, hits, itemId.map(i => ManagerContext.ItemId(i.value))))
   def extendCandidates(
       id: ManagerLight.Id,
-      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
+      tags: List[GoalRow.Tags],
       goal: Option[DomainGoal.Slug],
       limit: ManagerContext.Limit
-  ): List[(com.histmersion.domain.research.Slug, Option[ManagerRepo.ProgressText])] =
+  ): List[(Slug, Option[ManagerRepo.ProgressText])] =
     Transactor(ds).read(
-      ManagerRepo.extendCandidates(id.transformInto[ManagerInfo.Id], tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+      ManagerRepo.extendCandidates(id.transformInto[ManagerInfo.Id], tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
     )
-  def articleFacets(slug: com.histmersion.domain.research.Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =
+  def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =
     Transactor(ds).read(ManagerRepo.articleFacets(slug))
 
-  def progress(run: DomainRun.Id): com.histmersion.util.jobs.JobRow.Progress =
-    com.histmersion.util.jobs.JobRow.Progress(agents.runs.get(run).flatMap(_.progress).map(_.value).filter(_.nonEmpty).getOrElse(""))
-  def stepOutput(run: DomainRun.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output] =
+  def progress(run: DomainRun.Id): JobRow.Progress =
+    JobRow.Progress(agents.runs.get(run).flatMap(_.progress).map(_.value).filter(_.nonEmpty).getOrElse(""))
+  def stepOutput(run: DomainRun.Id, step: AgentRepo.StepRecord.Name): Option[AgentRepo.StepRecord.Output] =
     agents.runs
-      .steps(run.transformInto[com.histmersion.util.jobs.Job.Id], com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
+      .steps(run.transformInto[Job.Id], AgentRepo.OutputChars(100000))
       .filter(s => s.name.value == step.value && s.status.value == StepStatus.Done.wire.value)
       .lastOption
       .flatMap(_.output)
-      .map(o => com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output(o.value))
+      .map(o => AgentRepo.StepRecord.Output(o.value))
   def approvalsOf(run: DomainRun.Id, kind: DomainApproval.Kind): List[ApprovalInfo] =
-    agents.approvalStore.approvalsOf(run.transformInto[com.histmersion.util.jobs.Job.Id], Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
+    agents.approvalStore.approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
   def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.unsettledOn(target.transformInto[AgentsControllers.Target])
   def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.forTarget(p, target.transformInto[AgentsControllers.Target])
-  def slugExists(slug: com.histmersion.domain.research.Slug): Boolean = agents.host.articleExists(slug)
+  def slugExists(slug: Slug): Boolean = agents.host.articleExists(slug)
   def parentOf(slug: DomainGoal.Slug): Option[DomainGoal.Slug] = agents.goals.get(slug).flatMap(_.parentSlug.map(g => DomainGoal.Slug.assume(g.value)))
-  def linkGoal(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]): Unit =
+  def linkGoal(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind, ref: BGoalLinkRow.Ref, note: Option[BGoalLinkRow.Note]): Unit =
     val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.transformInto[Goal.Plans.GoalLink.Ref], note.map(_.transformInto[Goal.Plans.GoalLink.Note]))
-  def goalLinks(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref] =
-    agents.goals.links(goal).filter(_.kind == kind).map(_.ref.transformInto[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref])
-  def sharedIngestLeft(now: Instant): Option[com.histmersion.RowCount] = agents.autopilot.sharedIngestLeft(now).map(l => com.histmersion.RowCount(l.value))
+  def goalLinks(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind): List[BGoalLinkRow.Ref] =
+    agents.goals.links(goal).filter(_.kind == kind).map(_.ref.transformInto[BGoalLinkRow.Ref])
+  def sharedIngestLeft(now: Instant): Option[RowCount] = agents.autopilot.sharedIngestLeft(now).map(l => RowCount(l.value))
   def autopilotSoon(): Unit = agents.autopilot.soon()
 
   // ── a run settled ──────────────────────────────────────────────────────────────────────────────

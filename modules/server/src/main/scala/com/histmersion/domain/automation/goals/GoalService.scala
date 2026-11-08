@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import io.scalaland.chimney.dsl.*
 
@@ -17,6 +18,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
+import com.histmersion.api.personal.UnreadPage
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -34,7 +36,7 @@ trait GoalService:
   def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit]
 
   /** One page of the goals (of one status, when given), by slug, with the total. */
-  def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List
+  def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: PageSize, offset: Offset): Goal.List
 
   /** A goal's fields changed as given (a cap of 0 or less clears it; a bound given alone replaces that bound); no such
     * goal is a not-found error.
@@ -68,7 +70,7 @@ trait GoalService:
   def refs(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind): List[GoalLink.Ref]
 
   /** Every goal's links counted by kind; an article link counts only while the article exists. */
-  def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), com.histmersion.RowCount]
+  def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), RowCount]
 
   /** The goals that record an approved plan. */
   def planned(): Set[com.histmersion.domain.automation.Goal.Slug]
@@ -105,7 +107,7 @@ object GoalService:
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: com.histmersion.domain.automation.Goal.Slug): List[Goal] = db.read(GoalRepo.children(slug))
     def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
-    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List =
+    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: PageSize, offset: Offset): Goal.List =
       db.read(GoalRepo.listIn(status.map(s => GoalRow.Status(s.value)), limit, offset))
     def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug, p))
     def delete(slug: com.histmersion.domain.automation.Goal.Slug): Boolean = db.transact(GoalRepo.deleteIn(slug))
@@ -119,15 +121,15 @@ object GoalService:
         note: Option[GoalLink.Note]
     ): Boolean =
       db.transact(
-        GoalLinkRepo.link(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref, note)
+        GoalLinkRepo.link(goal, kind.transformInto[Goal.Plans.LinkKind], ref, note)
       )
     def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: GoalLink.Ref): Boolean =
       db.transact(
-        GoalLinkRepo.unlink(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref)
+        GoalLinkRepo.unlink(goal, kind.transformInto[Goal.Plans.LinkKind], ref)
       )
     def refs(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind): List[GoalLink.Ref] =
-      db.read(GoalLinkRepo.refsIn(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind]))
-    def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), com.histmersion.RowCount] = db.read(GoalLinkRepo.linkCounts())
+      db.read(GoalLinkRepo.refsIn(goal, kind.transformInto[Goal.Plans.LinkKind]))
+    def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), RowCount] = db.read(GoalLinkRepo.linkCounts())
     def planned(): Set[com.histmersion.domain.automation.Goal.Slug] = db.read(GoalLinkRepo.planned())
     def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
       db.read(GoalLinkRepo.planAndBudget(goal))
@@ -144,7 +146,7 @@ object GoalService:
     ): Unit = db.transact(
       GoalLinkRepo.setSchedule(
         goal,
-        kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind],
+        kind.transformInto[Goal.Plans.ScheduleKind],
         cron,
         enabled,
         budgetUsd,
@@ -153,7 +155,7 @@ object GoalService:
     )
     def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind): Boolean =
       db.transact(
-        GoalLinkRepo.removeSchedule(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind])
+        GoalLinkRepo.removeSchedule(goal, kind.transformInto[Goal.Plans.ScheduleKind])
       )
     def scheduleGoals(): List[com.histmersion.domain.automation.Goal.Slug] = db.read(GoalLinkRepo.scheduleGoals())
     def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSchedulesIn(goal)
@@ -211,14 +213,14 @@ object GoalService:
             )
           )
           Right(())
-    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List =
+    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: PageSize, offset: Offset): Goal.List =
       val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
       val listed = all().filter(g => st.forall(_ == g.status.value))
       val from = offset.value.max(0)
       Goal.List.of(
         com.histmersion.api.RowCount(listed.size),
         listed.slice(from, from + limit.value.max(1)),
-        com.histmersion.api.personal.UnreadPage.Offset(from)
+        UnreadPage.Offset(from)
       )
 
     private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) =
@@ -341,7 +343,7 @@ object GoalService:
         .toList
         .map(l =>
           GoalLink(
-            l.kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind],
+            l.kind.transformInto[Goal.Plans.LinkKind],
             GoalLink.Ref(l.ref.value),
             l.note.map(n => GoalLink.Note(n.value)),
             targets.title(l.kind, BGoalLinkRow.Ref(l.ref.value)).map(t => GoalLink.Title(t.value)),
@@ -386,7 +388,7 @@ object GoalService:
           _.modify(_.links).using(_.filterNot(l => l.goal.value == goal.value && l.kind == kind && l.ref.value == ref.value))
         )
       before.links.exists(l => l.goal.value == goal.value && l.kind == kind && l.ref.value == ref.value)
-    def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), com.histmersion.RowCount] =
+    def linkCounts(): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), RowCount] =
       state.get.links
         .filter(l =>
           l.kind != com.histmersion.domain.automation.Goal.LinkKind.Article || targets
@@ -395,7 +397,7 @@ object GoalService:
         )
         .groupBy(l => (l.goal.value, l.kind.wire))
         .view
-        .map((k, ls) => (DomainGoal.Slug.assume(k._1), k._2) -> com.histmersion.RowCount(ls.size))
+        .map((k, ls) => (DomainGoal.Slug.assume(k._1), k._2) -> RowCount(ls.size))
         .toMap
     def planned(): Set[com.histmersion.domain.automation.Goal.Slug] =
       goals.values.filter(_.plan.isDefined).map(r => DomainGoal.Slug.assume(r.goal.slug.value)).toSet
@@ -419,7 +421,7 @@ object GoalService:
     private def view(r: GoalScheduleRecord): GoalSchedule =
       GoalSchedule(
         Goal.Slug(r.goal.value),
-        r.kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind],
+        r.kind.transformInto[Goal.Plans.ScheduleKind],
         GoalSchedule.Cron(r.cron.value),
         GoalSchedule.Enabled(r.enabled.value),
         r.budgetUsd.map(b => GoalSchedule.BudgetUsd(b.toDouble)),

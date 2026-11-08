@@ -1,9 +1,12 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
 import scala.concurrent.duration.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One LLM step's request, provider-neutral: a system prompt, ONE user message (untrusted data goes here, delimited,
   * never into the system prompt), the tools the step is allowed (its allowlist — sttp-ai's loop answers "Tool not
@@ -28,10 +31,10 @@ final case class LlmCall[Out](
 
 object LlmCall:
   type System = System.T
-  object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object System extends RefinedType[String, Pure]
   type User = User.T
-  object User extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object User extends RefinedType[String, Pure]
   type MaxIterations = MaxIterations.T
-  object MaxIterations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxIterations extends RefinedType[Int, Pure]
   type MaxTokens = MaxTokens.T
-  object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxTokens extends RefinedType[Int, Pure]

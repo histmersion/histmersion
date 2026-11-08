@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,17 +17,23 @@ import java.net.{URI, URLEncoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.db.*
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.library.Citekey
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.ServerConfig
 
 /** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset round trip through
   * `get_source`'s body slice, headings, limit, errors, and an old (renamed) citekey resolving. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class PassagesHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class PassagesHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Key = "k3y"
-  private val Ck = com.histmersion.domain.library.Citekey("zzpass2020_theseus")
+  private val Ck = Citekey("zzpass2020_theseus")
   private val New = "zzpass2021_theseus"
 
   private val Body =
@@ -65,7 +72,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey(Key)))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)
@@ -78,7 +85,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
 
   private def withServer(body: String => Unit): Unit =
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -93,7 +100,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(put.statusCode, 200, put.body)
 
-  private def passages(url: String, ck: com.histmersion.domain.library.Citekey, q: String, extra: String = ""): PassageResult =
+  private def passages(url: String, ck: Citekey, q: String, extra: String = ""): PassageResult =
     val r = get(s"$url/api/sources/$ck/passages?q=${enc(q)}$extra")
     assertEquals(r.statusCode, 200, r.body)
     io.circe.parser.decode[PassageResult](r.body).fold(e => fail(s"$e: ${r.body}"), identity)

@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.util.database.Transactor
 
@@ -9,6 +10,7 @@ import com.histmersion.util.jobs.JobRepo
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.api.jobs.JobActions
 
 /** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary, keeping
   * what it did; resumed, it skips that), an agent run by its own control.
@@ -22,7 +24,7 @@ trait JobControlService:
 object JobControlService:
   private def notFound(id: Job.Id) = Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
   private def conflict(why: String) =
-    Api.Error(Api.Error.Message(why), Some(Api.Error.Code(com.histmersion.api.jobs.JobActions.CodeConflict)))
+    Api.Error(Api.Error.Message(why), Some(Api.Error.Code(JobActions.CodeConflict)))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
   def apply(ds: DataSource, stops: JobStops, runs: (Job.Id, JobAction) => Either[Api.Error, Unit]): JobControlService =

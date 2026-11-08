@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import io.scalaland.chimney.dsl.*
 
@@ -16,6 +17,8 @@ import com.histmersion.domain.automation.Approval as DomainApproval
 
 
 import com.histmersion.api.Api
+import com.histmersion.server.ListQueries
+import com.histmersion.domain.automation.Approval
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -34,7 +37,7 @@ final class Approvals(
 
 
 
-  def list(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State], limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit], page: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit): Either[Api.Error, List[ApprovalInfo]] =
+  def list(state: Option[ApprovalQuery.State], limit: Option[ApprovalQuery.Limit], page: ApprovalQuery.Limit): Either[Api.Error, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))
 
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
@@ -42,12 +45,12 @@ final class Approvals(
     */
   def page(
       f: ListFilters.ApprovalFilter,
-      limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
-      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
+      limit: ApprovalQuery.Limit,
+      before: Option[ApprovalQuery.Cursor],
+      upTo: Option[ApprovalQuery.UpTo]
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     for
-      q <- com.histmersion.server.ListQueries.approvals(f)
+      q <- ListQueries.approvals(f)
       page <- store
         .approvalPage(q, limit, before, upTo)
         .left
@@ -68,7 +71,7 @@ final class Approvals(
       )
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
-  private def filter(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State]): Either[Api.Error, Option[ApprovalState]] =
+  private def filter(state: Option[ApprovalQuery.State]): Either[Api.Error, Option[ApprovalState]] =
     state.map(_.value.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
       case Some("all") => Right(None)
@@ -88,7 +91,7 @@ final class Approvals(
     * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
     * waiting on it applies it when it resumes (the caller wakes it).
     */
-  def decide(id: com.histmersion.domain.automation.Approval.Id, decision: com.histmersion.domain.automation.Approval.Outcome, note: Option[com.histmersion.domain.automation.Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  def decide(id: Approval.Id, decision: Approval.Outcome, note: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.value.trim).filter(_.nonEmpty).map(n => DomainApproval.Note(n.take(2000)))
     for
       d <- Decision
@@ -119,7 +122,7 @@ final class Approvals(
       a: ApprovalInfo,
       k: ApprovalKind,
       d: Decision,
-      note: Option[com.histmersion.domain.automation.Approval.Note]
+      note: Option[Approval.Note]
   ): Either[Api.Error, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     val id = DomainApproval.Id(a.id.value)
@@ -139,7 +142,7 @@ final class Approvals(
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w".take(1000)))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
         case (Decision.Approve, k)
-            if effects.subjectKinds(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) =>
+            if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
           effects.applySubject(a) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
@@ -160,7 +163,7 @@ final class Approvals(
         .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
-  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[com.histmersion.domain.automation.Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
     val (to, result) = d match
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
@@ -179,7 +182,7 @@ final class Approvals(
         .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
-  private def decideSource(id: com.histmersion.domain.automation.Approval.Id, d: Decision, clean: Option[com.histmersion.domain.automation.Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  private def decideSource(id: Approval.Id, d: Decision, clean: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)

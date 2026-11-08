@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 
@@ -13,6 +14,8 @@ import com.histmersion.domain.library.acquisition.CandidateService
 
 import java.time.Instant
 import com.histmersion.api.library.Candidates
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.worklists.WorkListControllers
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to
@@ -38,16 +41,16 @@ final class SeedService(
     */
   def due(
       goals: List[FocusService.Goal],
-      sources: Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount],
+      sources: Map[Goal.Slug, RowCount],
       watchers: Set[ManagerInfo.Id],
-      lastSweep: com.histmersion.domain.automation.Goal.Slug => Option[Instant],
+      lastSweep: Goal.Slug => Option[Instant],
       now: Instant
-  ): List[com.histmersion.domain.automation.Goal.Slug] =
+  ): List[Goal.Slug] =
     val every = math.max(1, cfg.scheduler.seedEveryHours.value).toLong * 3600L
     goals
-      .map(g => g -> com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value))
+      .map(g => g -> Goal.Slug.assume(g.slug.value))
       .filter((g, slug) =>
-        !GoalFocus.finished(com.histmersion.domain.automation.Goal.Status.Wire(g.status.value)) &&
+        !GoalFocus.finished(Goal.Status.Wire(g.status.value)) &&
           sources.get(slug).fold(0)(_.value) == 0 && watchers(watcherOf(slug))
       )
       .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))
@@ -57,7 +60,7 @@ final class SeedService(
       .map(_._2)
 
   /** The id of a goal's watcher manager. */
-  private def watcherOf(goal: com.histmersion.domain.automation.Goal.Slug): ManagerInfo.Id =
+  private def watcherOf(goal: Goal.Slug): ManagerInfo.Id =
     watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
 
   /** When each goal was last seeded here (in memory: the candidate watches' own `last_run` covers restarts). */
@@ -76,7 +79,7 @@ final class SeedService(
           .toSet
       val goals = due(
         agents.focusStore.goals(),
-        agents.focusStore.sourceCounts().map((g, c) => com.histmersion.domain.automation.Goal.Slug.assume(g.value) -> com.histmersion.RowCount(c.value)),
+        agents.focusStore.sourceCounts().map((g, c) => Goal.Slug.assume(g.value) -> RowCount(c.value)),
         watchers,
         g =>
           (candidates
@@ -92,17 +95,17 @@ final class SeedService(
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))))
+        val _ = site.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))))
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
-  def seed(goal: com.histmersion.domain.automation.Goal.Slug): Option[String] =
-    acquisition().sweepCandidates(goal, dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)) match
+  def seed(goal: Goal.Slug): Option[String] =
+    acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: $why")
         None
       case Right(sw) =>
-        val fresh = acquisition().candidates(goal, Candidates.State.New.wire, com.histmersion.domain.library.workflows.AgentUpstream.Limit(200)).getOrElse(Nil)
+        val fresh = acquisition().candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(200)).getOrElse(Nil)
         val oa = fresh.filter(_.isOa.value).take(math.max(0, cfg.scheduler.seedIngestPerGoal.value))
         val placed = oa.map { c =>
           c -> backlog.add(
@@ -122,6 +125,6 @@ final class SeedService(
         val queued = placed.count(_._2 == IngestBacklog.Placement.New)
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
-          s"${Plural.count(Plural.CountN(queued.toLong), com.histmersion.api.Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
+          s"${Plural.count(Plural.CountN(queued.toLong), Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
         agents.managerStore.event(watcherOf(goal), None, None, ManagerEvent.Kind(Feed.Swept), ManagerEvent.Text(s"seed before the plan — $line".take(2000)))
         Some(line)

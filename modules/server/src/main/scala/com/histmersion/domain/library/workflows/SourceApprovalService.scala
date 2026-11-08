@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, ApprovalInfo}
 import com.histmersion.domain.library.{Source, Edge}
@@ -7,27 +8,31 @@ import com.histmersion.domain.automation.agents.{ApprovalService, ApprovalRecord
 import com.histmersion.util.database.Transactor
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.database.Jsonb
+import com.histmersion.domain.automation.Approval
 
 trait SourceApprovalService:
   def record(
-      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      jobId: Option[Job.Id],
       kind: ApprovalKind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       status: Option[Source.Status],
       current: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.Citekey],
-      payload: com.histmersion.util.database.Jsonb.JsonText,
+      target: Option[Citekey],
+      payload: Jsonb.JsonText,
       state: ApprovalState,
       result: Option[ApprovalRecord.Result]
   ): Option[ApprovalInfo]
 
   def proposedBefore(
       kind: ApprovalKind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       status: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.Citekey]
+      target: Option[Citekey]
   ): Boolean
 
 object SourceApprovalService:
@@ -36,27 +41,27 @@ object SourceApprovalService:
   private final class Implementation(db: Transactor, approvals: ApprovalService, clock: Clock) extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
     def record(
-        jobId: Option[com.histmersion.util.jobs.Job.Id],
+        jobId: Option[Job.Id],
         kind: ApprovalKind,
-        citekey: com.histmersion.domain.library.Citekey,
+        citekey: Citekey,
         status: Option[Source.Status],
         current: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.Citekey],
-        payload: com.histmersion.util.database.Jsonb.JsonText,
+        target: Option[Citekey],
+        payload: Jsonb.JsonText,
         state: ApprovalState,
         result: Option[ApprovalRecord.Result]
     ): Option[ApprovalInfo] =
       db.transact(
-        SourceApprovalRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload.value, state, result.map(_.value), now).flatMap(id => approvals.approvalIn(com.histmersion.domain.automation.Approval.Id(id.value)))
+        SourceApprovalRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload.value, state, result.map(_.value), now).flatMap(id => approvals.approvalIn(Approval.Id(id.value)))
       )
 
     def proposedBefore(
         kind: ApprovalKind,
-        citekey: com.histmersion.domain.library.Citekey,
+        citekey: Citekey,
         status: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.Citekey]
+        target: Option[Citekey]
     ): Boolean = db.read(SourceApprovalRepo.proposedBefore(kind, citekey, status, edgeKind, target))
 
   final class InMemory(state: AtomicReference[AutomationState], approvals: ApprovalService, clock: Clock) extends SourceApprovalService:
@@ -65,14 +70,14 @@ object SourceApprovalService:
     private val Open = ApprovalRecord.State(ApprovalState.Open.wire.value)
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
     def record(
-        jobId: Option[com.histmersion.util.jobs.Job.Id],
+        jobId: Option[Job.Id],
         kind: ApprovalKind,
-        citekey: com.histmersion.domain.library.Citekey,
+        citekey: Citekey,
         status: Option[Source.Status],
         current: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.Citekey],
-        payload: com.histmersion.util.database.Jsonb.JsonText,
+        target: Option[Citekey],
+        payload: Jsonb.JsonText,
         state: ApprovalState,
         result: Option[ApprovalRecord.Result]
     ): Option[ApprovalInfo] =
@@ -108,10 +113,10 @@ object SourceApprovalService:
 
     def proposedBefore(
         kind: ApprovalKind,
-        citekey: com.histmersion.domain.library.Citekey,
+        citekey: Citekey,
         status: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.Citekey]
+        target: Option[Citekey]
     ): Boolean =
       rows.exists(r =>
         r.kind.value == kind.wire.value && r.citekey.contains(citekey) &&

@@ -1,4 +1,8 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the temporary file of a [[Reservation]] beside its key is named. */
 enum TempName:
@@ -14,4 +18,4 @@ enum TempName:
 object TempName:
   object Suffixed:
     type Suffix = Suffix.T
-    object Suffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Suffix extends RefinedType[String, Pure]

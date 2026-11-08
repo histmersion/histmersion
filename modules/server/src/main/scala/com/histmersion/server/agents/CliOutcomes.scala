@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.StrictJsonSchema
 
@@ -6,6 +7,10 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.agents.LlmCall
+import com.histmersion.api.automation.Agents
 
 object CliOutcomes:
 
@@ -13,13 +18,13 @@ object CliOutcomes:
     * absent one.
     */
   type TextProblemText = TextProblemText.T
-  object TextProblemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TextProblemText extends RefinedType[String, Pure]
 
   def result[Out](
       o: CliOutcome,
-      user: com.histmersion.domain.automation.agents.LlmCall.User,
+      user: LlmCall.User,
       schema: ResponseSchema[Out],
-      modelId: Option[com.histmersion.api.automation.Agents.ModelRef.Model]
+      modelId: Option[Agents.ModelRef.Model]
   ): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.map(_.value).getOrElse("")
     val parsed = parser.parse(stripFence(raw))
@@ -48,7 +53,7 @@ object CliOutcomes:
     * (nothing was answered) or a text that is a JSON object. What the step records and the retry is told, instead of
     * "not the JSON the schema asks for".
     */
-  def textProblem(text: com.histmersion.server.agents.CliOutcomes.TextProblemText): Option[io.circe.ParsingFailure] =
+  def textProblem(text: TextProblemText): Option[io.circe.ParsingFailure] =
     val t = text.value.trim
     if t.isEmpty then None
     else if parser.parse(stripFence(t)).exists(j => !j.isObject) then
@@ -74,7 +79,7 @@ object CliOutcomes:
     else t
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
-  def isLimit(message: com.histmersion.server.agents.ClaudeCode.Limit.Message): Boolean =
+  def isLimit(message: ClaudeCode.Limit.Message): Boolean =
     val low = message.value.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||
     low.contains("hit your limit") || low.contains("quota exceeded")

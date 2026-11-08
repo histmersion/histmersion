@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Attestation
@@ -8,6 +9,9 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
 
 /** What attests a data point: an attestation names a source, a target (a finding, an event, an event's dating, a place,
   * an edge) and where in the source it is said (quote, offsets, page, IIIF region, CTS URN).
@@ -15,11 +19,11 @@ import com.histmersion.api.Api
 trait AttestationService:
   /** Those of a source, a target kind and a target id (each optional), by id, one page of them. */
   def list(
-      citekey: Option[com.histmersion.domain.library.Citekey],
+      citekey: Option[Citekey],
       targetType: Option[Attestation.TargetType],
       targetId: Option[Attestation.TargetId],
-      limit: com.histmersion.PageSize,
-      offset: com.histmersion.Offset
+      limit: PageSize,
+      offset: Offset
   ): Attestation.List
 
   def get(id: Attestation.Id): Option[Attestation]
@@ -41,11 +45,11 @@ object AttestationService:
 
   final private class Implementation(db: Transactor) extends AttestationService:
     def list(
-        citekey: Option[com.histmersion.domain.library.Citekey],
+        citekey: Option[Citekey],
         targetType: Option[Attestation.TargetType],
         targetId: Option[Attestation.TargetId],
-        limit: com.histmersion.PageSize,
-        offset: com.histmersion.Offset
+        limit: PageSize,
+        offset: Offset
     ): Attestation.List = db.read(
       AttestationRepo.list(
         citekey,
@@ -69,11 +73,11 @@ object AttestationService:
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:
     def list(
-        citekey: Option[com.histmersion.domain.library.Citekey],
+        citekey: Option[Citekey],
         targetType: Option[Attestation.TargetType],
         targetId: Option[Attestation.TargetId],
-        limit: com.histmersion.PageSize,
-        offset: com.histmersion.Offset
+        limit: PageSize,
+        offset: Offset
     ): Attestation.List =
       def named(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
       val (ck, tt, ti) = (named(citekey.map(_.value)), named(targetType.map(_.value)), named(targetId.map(_.value)))
@@ -82,9 +86,9 @@ object AttestationService:
       )
       val from = offset.value.max(0)
       Attestation.List.of(
-        com.histmersion.api.RowCount(all.size),
+        RowCount(all.size),
         all.sortBy(a => a.id.value: Long).slice(from, from + limit.value.max(1)).toList,
-        com.histmersion.api.personal.UnreadPage.Offset(from)
+        UnreadPage.Offset(from)
       )
 
     def get(id: Attestation.Id): Option[Attestation] = state.get.attestations.find(_.id == id)

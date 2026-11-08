@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,10 @@ import com.histmersion.domain.{AcquireRecheck, Caller}
 import com.histmersion.domain.automation.worklists.QueueItemId
 
 import java.time.Instant
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Doi
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.Year
 
 /** The acquisition list's checks, the same on the database and in memory: a check replaced with its count kept, the
   * checks of the open items only, counted since a time, and what the corpus holds of the items' DOIs.
@@ -17,15 +22,15 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
 
   private val T0 = Instant.parse("2026-10-20T10:00:00Z")
 
-  private def source(ck: com.histmersion.api.library.Citekey, doi: Option[com.histmersion.api.library.Doi], body: Option[Source.OcrMarkdown]) =
+  private def source(ck: Citekey, doi: Option[Doi], body: Option[Source.OcrMarkdown]) =
     Source(
       ck,
-      com.histmersion.api.library.Title(ck.value),
+      Title(ck.value),
       Nil,
       doi,
-      Some(com.histmersion.api.catalogue.Year(2000)),
+      Some(Year(2000)),
       None,
-      com.histmersion.api.library.Source.Status.Current,
+      Source.Status.Current,
       Nil,
       Nil,
       Nil,
@@ -41,9 +46,9 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>
     val open = AcquireCheckRow.Item(s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.a"))).id.value)
     val done = AcquireCheckRow.Item(s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.b"))).id.value)
-    s.checks.record(open, T0, com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g1"), AcquireRecheck.Outcome.NoCopy, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("no copy"))
-    s.checks.record(open, T0.plusSeconds(60), com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Fetched, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("fetched"))
-    s.checks.record(done, T0.plusSeconds(120), com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Closed, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("held"))
+    s.checks.record(open, T0, AcquireRecheck.LastCheck.Generation("g1"), AcquireRecheck.Outcome.NoCopy, AcquireCheckRow.Reason("no copy"))
+    s.checks.record(open, T0.plusSeconds(60), AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Fetched, AcquireCheckRow.Reason("fetched"))
+    s.checks.record(done, T0.plusSeconds(120), AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Closed, AcquireCheckRow.Reason("held"))
     val _ = s.queues.patch(
       QueueItemId(done.value),
       Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
@@ -62,15 +67,15 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   }
 
   stest("the sources holding the items' DOIs, the first citekey, and whether it has its original") { s =>
-    val _ = s.sources.put(source(com.histmersion.api.library.Citekey("zqa_one"), Some(com.histmersion.api.library.Doi("10.5555/ZQ.A")), Some(Source.OcrMarkdown("# body"))), Caller.Local)
-    val _ = s.sources.put(source(com.histmersion.api.library.Citekey("zqa_two"), Some(com.histmersion.api.library.Doi("10.5555/zq.b")), None), Caller.Local)
-    val _ = s.sources.put(source(com.histmersion.api.library.Citekey("zqa_zwei"), Some(com.histmersion.api.library.Doi("10.5555/zq.b")), None), Caller.Local)
+    val _ = s.sources.put(source(Citekey("zqa_one"), Some(Doi("10.5555/ZQ.A")), Some(Source.OcrMarkdown("# body"))), Caller.Local)
+    val _ = s.sources.put(source(Citekey("zqa_two"), Some(Doi("10.5555/zq.b")), None), Caller.Local)
+    val _ = s.sources.put(source(Citekey("zqa_zwei"), Some(Doi("10.5555/zq.b")), None), Caller.Local)
     s.sources.setOriginal(com.histmersion.domain.library.Citekey("zqa_zwei"), Sha256.applyUnsafe("f" * 64), Caller.Local)
     assertEquals(
       s.checks.heldByDoi(List(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.a"), com.histmersion.domain.library.Doi("10.5555/zq.b"), com.histmersion.domain.library.Doi("10.5555/zq.none"), com.histmersion.domain.library.Doi.assume(""))),
       Map(
-        "10.5555/zq.a" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_one"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(true)),
-        "10.5555/zq.b" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_two"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(false))
+        "10.5555/zq.a" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal(true)),
+        "10.5555/zq.b" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_two"), AcquireRecheck.Held.HasOriginal(false))
       )
     )
     assertEquals(s.checks.heldByDoi(Nil), Map.empty)

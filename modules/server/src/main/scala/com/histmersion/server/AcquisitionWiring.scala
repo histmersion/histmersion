@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.library.acquisition.{

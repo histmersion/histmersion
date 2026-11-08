@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import com.histmersion.api.Write
 
@@ -34,7 +35,7 @@ import com.histmersion.api.Api
   */
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
-  private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] =
+  private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     Citekey.parse(raw.value).left.map(p => Write.invalid(Write.InvalidMessage(p.value)))
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
@@ -49,27 +50,27 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   ): Either[Api.Error, CollectionSearch] = service.search(name, q, limit, unlinked)
 
   def importItem(caller: Caller, name: CollectionsService.CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/import"))(service.importItem(caller, name, req))
+    maintenance.guard(WriteGate.OperationName("collections/import"))(service.importItem(caller, name, req))
 
   def link(caller: Caller, name: CollectionsService.CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/link"))(service.link(caller, name, req))
+    maintenance.guard(WriteGate.OperationName("collections/link"))(service.link(caller, name, req))
 
   def push(caller: Caller, name: CollectionsService.CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/push"))(citekey(req.citekey).flatMap(_ => service.push(caller, name, req)))
+    maintenance.guard(WriteGate.OperationName("collections/push"))(citekey(req.citekey).flatMap(_ => service.push(caller, name, req)))
 
   def updateOne(caller: Caller, name: CollectionsService.CollectionName, req: CollectionUpdateOne): Either[Api.Error, CollectionUpdatedOne] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(citekey(req.citekey).flatMap(service.updateOne(caller, name, _)))
+    maintenance.guard(WriteGate.OperationName("collections/update"))(citekey(req.citekey).flatMap(service.updateOne(caller, name, _)))
 
   def updateAll(
       caller: Caller,
       name: CollectionsService.CollectionName,
       req: CollectionUpdateAll.Request
   ): Either[Api.Error, CollectionUpdateAll] =
-    if req.apply.value then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(true)))
+    if req.apply.value then maintenance.guard(WriteGate.OperationName("collections/update"))(service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(true)))
     else service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(false))
 
   def set(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/set"))(service.set(caller, name, req))
+    maintenance.guard(WriteGate.OperationName("collections/set"))(service.set(caller, name, req))
 
   def audit(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionAudit] = service.audit(name)
 
@@ -77,7 +78,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
     service.gaps(name, limit)
 
   def sync(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
-    if req.apply.value then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
+    if req.apply.value then maintenance.guard(WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
     else service.sync(caller, name, req)
 
   def archiveSearch(caller: Caller, q: com.histmersion.domain.library.search.Search.Query, rows: Option[CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult] =

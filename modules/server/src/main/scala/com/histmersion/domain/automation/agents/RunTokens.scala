@@ -1,8 +1,11 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import io.netty.handler.codec.http.*
 
 import java.util.concurrent.ConcurrentHashMap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Per-step run tokens (docs/research-agent-runtimes.md §2.4): each CLI step attempt gets a fresh random token bound to
   * its agent definition, and the agent MCP endpoint serves ONLY that agent's tools to it — the layer no runtime can
@@ -16,7 +19,7 @@ final class RunTokens(using wallClock: java.time.Clock):
   def issue(
       agent: AgentDef,
       scope: Option[RunScope],
-      ttlMillis: com.histmersion.domain.automation.agents.RunTokens.TtlMillis,
+      ttlMillis: RunTokens.TtlMillis,
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
   ): RunGrant =
     val bytes = new Array[Byte](32)
@@ -35,10 +38,10 @@ final class RunTokens(using wallClock: java.time.Clock):
     prune(now)
     g
 
-  def revoke(token: com.histmersion.domain.automation.agents.RunTokens.Token): Unit = { val _ = grants.remove(token) }
+  def revoke(token: RunTokens.Token): Unit = { val _ = grants.remove(token) }
 
   /** The grant of a live token; an expired one is dropped. */
-  def check(token: com.histmersion.domain.automation.agents.RunTokens.Token, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
+  def check(token: RunTokens.Token, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
     Option(grants.get(token)).flatMap { g =>
       if g.expiresAt.value > now.value then Some(g)
       else
@@ -50,13 +53,13 @@ final class RunTokens(using wallClock: java.time.Clock):
   def bearer(header: String, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
     Option(header).map(_.trim).filter(_.startsWith("Bearer ")).map(_.stripPrefix("Bearer ").trim).flatMap(t => check(RunGrant.Token(t), now))
 
-  private def prune(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
+  private def prune(now: PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
 
 object RunTokens:
   type Token = RunGrant.Token
   val Token: RunGrant.Token.type = RunGrant.Token
   type TtlMillis = TtlMillis.T
-  object TtlMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TtlMillis extends RefinedType[Long, Pure]
   /** The agent MCP endpoint: `/mcp/agent` (the run token picks the agent) and `/mcp/agent/<agent>`. */
 
   val Path = "/mcp/agent"

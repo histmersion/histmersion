@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
@@ -10,7 +11,7 @@ import io.circe.syntax.*
 private[agents] object AgentTreeWriter:
   private val Manifest = Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.value), identity)
 
-  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: com.histmersion.Sha256)(using clock: Clock): Either[String, GenerateResult] =
+  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using clock: Clock): Either[String, GenerateResult] =
     try
       def key(name: String): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error.value), identity)
       store.makeDirectory().fold(error => throw java.io.IOException(error.message.value), identity)

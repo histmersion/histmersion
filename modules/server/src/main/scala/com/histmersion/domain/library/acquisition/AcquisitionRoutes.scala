@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -6,14 +7,22 @@ import com.histmersion.domain.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 import com.histmersion.api.library.AcquireApi
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.domain.library.collections.CalibreGapControllers
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.collections.CollectionsService
+import com.histmersion.domain.library.ArchiveId
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.Write
+import com.histmersion.api.Api
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the [[AcquisitionControllers]] the MCP tools also call;
   * `archive search|info|import` to the library's collections, which run archive.org, and the Calibre gaps to theirs.
   */
 final class AcquisitionRoutes(
     h: AcquisitionControllers,
-    collections: com.histmersion.domain.library.collections.CollectionsControllers,
-    gaps: com.histmersion.domain.library.collections.CalibreGapControllers
+    collections: CollectionsControllers,
+    gaps: CalibreGapControllers
 ):
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
@@ -31,18 +40,18 @@ final class AcquisitionRoutes(
     AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => 
       collections.archiveSearch(
         Caller.Local,
-        com.histmersion.domain.library.search.Search.Query(q.value),
-        rows.map(r => com.histmersion.domain.library.collections.CollectionsService.Limit(r.value))
+        Search.Query(q.value),
+        rows.map(r => CollectionsService.Limit(r.value))
       )
     ),
-    AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, com.histmersion.domain.library.ArchiveId(id.value))),
+    AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, ArchiveId(id.value))),
     AcquireApi.archiveImport.serverLogic[Identity](req => collections.archiveImport(Caller.Local, req)),
-    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => gaps.gaps(limit.map(l => com.histmersion.domain.library.collections.CalibreGapControllers.Limit(l.value)))),
+    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => gaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))),
     AcquireApi.calibreMeta.serverLogic[Identity](ck =>
-      com.histmersion.domain.library.Citekey
+      Citekey
         .parse(ck.value)
         .left
-        .map(p => com.histmersion.api.Write.invalid(com.histmersion.api.Api.Error.Message(p.value)))
+        .map(p => Write.invalid(Api.Error.Message(p.value)))
         .flatMap(gaps.pushMeta)
     ),
     AcquireApi.calibrePushed.serverLogic[Identity](req => gaps.pushed(req)),

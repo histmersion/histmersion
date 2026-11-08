@@ -1,19 +1,22 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 trait Resources:
-  def text(name: com.histmersion.util.storage.Resources.ResourceName): Either[com.histmersion.util.storage.Resources.Problem, com.histmersion.util.storage.Blob.Text]
+  def text(name: Resources.ResourceName): Either[Resources.Problem, Blob.Text]
 
 object Resources:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type ResourceName = ResourceName.T
-  object ResourceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResourceName extends RefinedType[String, Pure]
 
 
   def classpath(loader: ClassLoader): Resources = new Resources:
-    def text(name: com.histmersion.util.storage.Resources.ResourceName): Either[com.histmersion.util.storage.Resources.Problem, com.histmersion.util.storage.Blob.Text] =
+    def text(name: ResourceName): Either[Problem, Blob.Text] =
       Option(loader.getResourceAsStream(name.value))
         .toRight(Problem(s"missing prompt resource $name"))
         .map(in =>
@@ -22,4 +25,4 @@ object Resources:
         )
 
   final class InMemory(contents: Map[ResourceName, Blob.Text]) extends Resources:
-    def text(name: com.histmersion.util.storage.Resources.ResourceName): Either[com.histmersion.util.storage.Resources.Problem, com.histmersion.util.storage.Blob.Text] = contents.get(name).toRight(Problem(s"missing prompt resource $name"))
+    def text(name: ResourceName): Either[Problem, Blob.Text] = contents.get(name).toRight(Problem(s"missing prompt resource $name"))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.api.Write
 
@@ -7,6 +8,10 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import javax.imageio.ImageIO
 import com.histmersion.api.media.{AssetLinks, Iiif, ImageSize}
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.ArchiveFile
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *
@@ -19,7 +24,7 @@ import com.histmersion.api.Api
 final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrl):
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
-  def info(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Either[Api.Error, io.circe.Json] =
+  def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, io.circe.Json] =
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     assets.figure(citekey, safeName) match
       case None             => Left(Api.Error(Api.Error.Message(s"No asset '$safeName' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
@@ -34,13 +39,13 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     * returns `(bytes, contentType)`.
     */
   def image(
-      citekey: com.histmersion.domain.library.Citekey,
-      name: com.histmersion.domain.media.assets.AssetService.AssetName,
+      citekey: Citekey,
+      name: AssetService.AssetName,
       regionStr: Iiif.Region.Wire,
       sizeStr: Iiif.Size.Wire,
       rotationStr: Iiif.Rotation,
-      filename: com.histmersion.domain.media.assets.IiifControllers.Filename
-  ): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
+      filename: IiifControllers.Filename
+  ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     // parse the filename as `default.{format}`
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     for
@@ -54,9 +59,9 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
-  private def parseFilename(filename: com.histmersion.domain.media.assets.IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
+  private def parseFilename(filename: IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
     filename.value match
-      case s"default.$ext" => Iiif.parseFormat(com.histmersion.api.library.ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Api.Error.Message(p.value)))
+      case s"default.$ext" => Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Api.Error.Message(p.value)))
       case _ => Left(Api.Error(Api.Error.Message(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')")))
 
   /** Level 1 supports rotation `0` only. */
@@ -67,12 +72,12 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
   private def render(
-      citekey: com.histmersion.domain.library.Citekey,
-      name: com.histmersion.domain.media.assets.AssetService.AssetName,
+      citekey: Citekey,
+      name: AssetService.AssetName,
       region: Iiif.Region,
       size: Iiif.Size,
       format: Iiif.Format
-  ): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
+  ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     assets.figure(citekey, name) match
       case None =>
         Left(Api.Error(Api.Error.Message(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
@@ -84,7 +89,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
 
   /** Decode raw bytes into a BufferedImage. Returns None when ImageIO cannot read them. */
-  private def decodeImage(bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Option[BufferedImage] =
+  private def decodeImage(bytes: AssetService.Bytes): Option[BufferedImage] =
     Option(ImageIO.read(new ByteArrayInputStream(bytes.value)))
 
   /** Crop the image to the requested region. */
@@ -157,7 +162,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
-  private def encode(img: BufferedImage, format: Iiif.Format): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
+  private def encode(img: BufferedImage, format: Iiif.Format): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =
@@ -170,13 +175,13 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       else img
     val written = ImageIO.write(toEncode, if format.value == "jpg" then "JPEG" else "PNG", out)
     if !written then Left(Api.Error(Api.Error.Message(s"cannot encode image as $format")))
-    else Right((com.histmersion.domain.media.assets.AssetService.Bytes(out.toByteArray), com.histmersion.domain.media.assets.AssetService.Mime(Iiif.contentType(format).value)))
+    else Right((AssetService.Bytes(out.toByteArray), AssetService.Mime(Iiif.contentType(format).value)))
 
   private def enc(s: String): String =
     java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
 object IiifControllers:
   type BaseUrl = BaseUrl.T
-  object BaseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BaseUrl extends RefinedType[String, Pure]
   type Filename = Filename.T
-  object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Filename extends RefinedType[String, Pure]

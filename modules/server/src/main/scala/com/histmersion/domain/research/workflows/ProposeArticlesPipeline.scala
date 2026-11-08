@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
@@ -36,6 +37,12 @@ import io.circe.syntax.*
 import com.histmersion.api.automation.{AgentsMarkdown, Managers}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Article
+import com.histmersion.domain.Title
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -122,7 +129,7 @@ final class ProposeArticlesPipeline(
         Slug.parse(ref.value).toOption.flatMap(site.articles.get(_).toOption).map { v =>
           val articleSlug = Slug.assume(v.article.slug.value)
           val f = site.articleStore.load(articleSlug).flatMap(_.filter)
-          Existing(articleSlug, com.histmersion.domain.Title(v.article.title.value), f, site.articles.citedSources(v.article.body))
+          Existing(articleSlug, Title(v.article.title.value), f, site.articles.citedSources(v.article.body))
         }
       }
       // what its seeding manager (or a parent's or sub-area's) will compile already counts as the area's
@@ -130,7 +137,7 @@ final class ProposeArticlesPipeline(
         .flatMap(a =>
           managers.items(
             Managers.seedId(com.histmersion.api.automation.Goal.Ref(a.value)),
-            com.histmersion.PageSize(1000)
+            PageSize(1000)
           )
         )
         .filter(i =>
@@ -140,7 +147,7 @@ final class ProposeArticlesPipeline(
         )
         .flatMap(i =>
           i.state.spec.map(sp =>
-            Existing(Slug.assume(i.target.value), com.histmersion.domain.Title(sp.title.value), Some(sp.filter), Nil)
+            Existing(Slug.assume(i.target.value), Title(sp.title.value), Some(sp.filter), Nil)
           )
         )
         .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
@@ -155,7 +162,7 @@ final class ProposeArticlesPipeline(
           .map(_.value.value)
       Loaded(
         goal,
-        com.histmersion.domain.Title(g.title.value),
+        Title(g.title.value),
         g.notes.map(n => Loaded.Notes(n.value)),
         g.tags.map(t => Loaded.Tags(t.value)),
         g.regions.map(r => Loaded.Regions(r.value)),
@@ -189,9 +196,9 @@ final class ProposeArticlesPipeline(
       f"${lim.maxOverlap.value * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
-  private def sourcesOf(e: Existing): Set[com.histmersion.domain.library.Citekey] =
-    e.filter.fold(Set.empty[com.histmersion.domain.library.Citekey])(f =>
-      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => com.histmersion.domain.library.Citekey.assume(r.value)).toSet
+  private def sourcesOf(e: Existing): Set[Citekey] =
+    e.filter.fold(Set.empty[Citekey])(f =>
+      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => Citekey.assume(r.value)).toSet
     ) ++ e.cited
 
   private def check(
@@ -220,8 +227,8 @@ final class ProposeArticlesPipeline(
           f => {
             val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap)
             (
-              com.histmersion.api.research.Article.Plans.ProposedArticle.Hits(n.value),
-              rows.map(r => com.histmersion.domain.library.Citekey.assume(r.value)).toSet
+              Article.Plans.ProposedArticle.Hits(n.value),
+              rows.map(r => Citekey.assume(r.value)).toSet
             )
           },
           existing,
@@ -247,7 +254,7 @@ final class ProposeArticlesPipeline(
       )(
         Right(
           ctx.approvalStore.openSubject(
-            Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value)),
+            Some(Job.Id.assume(ctx.run.id.value)),
             ApprovalKind.ArticlePlan,
             ApprovalQuery.Subject(goal.value),
             ApprovalService.Payload(plan.asJson.noSpaces)
@@ -265,20 +272,20 @@ object ProposeArticlesPipeline:
   /** An article of the area (linked to the goal, or planned by its seeding manager). */
   final case class Existing(
       slug: Slug,
-      title: com.histmersion.domain.Title,
+      title: Title,
       filter: Option[Article.Filter],
-      cited: List[com.histmersion.domain.library.Citekey]
+      cited: List[Citekey]
   ) derives KindlingsCodecAsObject
 
   /** The area as the planner sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
       slug: Goal.Slug,
-      title: com.histmersion.domain.Title,
+      title: Title,
       notes: Option[Loaded.Notes],
       tags: List[Loaded.Tags],
       regions: List[Loaded.Regions],
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
       articles: List[Existing],
       queries: List[Loaded.Queries],
       topics: List[Loaded.Topics],
@@ -287,18 +294,18 @@ object ProposeArticlesPipeline:
 
   object Loaded:
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Regions extends RefinedType[String, Pure]
     type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queries extends RefinedType[String, Pure]
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
 
   final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line) derives KindlingsCodecAsObject
 
   object Recorded:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]

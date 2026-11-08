@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
@@ -10,6 +11,8 @@ import com.histmersion.domain.research.articles.ArticleTools.{ArticleCoverageInp
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.research.Articles
 
 /** The agent tools research offers the engine: an article, a dry run of edits to it, its coverage — each a thin, typed
   * wrapper over the same controller method REST and MCP call, returning the same Markdown. Only READ tools:
@@ -32,10 +35,10 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         "One compiled article by slug: body, summary, the generated coverage sections, the sources it cites " +
           "(title, year, status), backlinks. `parts` = comma-separated body,summary,coverage,cited,backlinks."
       ) { in =>
-        com.histmersion.domain.research.Slug
+        Slug
           .parse(in.slug.value)
           .left
-          .map(_ => com.histmersion.api.research.Articles.notFound(in.slug))
+          .map(_ => Articles.notFound(in.slug))
           .flatMap(articles.get(_))
           .fold(
             e => s"No article '${in.slug}': ${e.message}",

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.UpstreamQuota
@@ -13,6 +14,8 @@ import com.histmersion.util.jobs.JobListing
 
 import java.time.Instant
 import com.histmersion.api.Api
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Citekey
 
 /** The library's workflows' site over the composition: its own wiring, the work lists, the write gate, the jobs, the
   * catalogue's geocoder and research's articles as the composition wires them.
@@ -29,16 +32,16 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
   def query: QueryControllers = h.library.query
   def jobs: JobListing = h.jobs
 
-  def geocode(name: com.histmersion.domain.library.workflows.LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+  def geocode(name: LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     h.geocode(Geocode.Attempt.Name(name.value), hint, at)
 
-  def articleSources(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[com.histmersion.domain.library.Citekey]] =
+  def articleSources(slug: Slug): Either[Api.Error, List[Citekey]] =
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
-  def citedSources(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.library.Citekey] =
-    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).flatMap(c => com.histmersion.domain.library.Citekey.option(c.citekey.value)))
+  def citedSources(slug: Slug): List[Citekey] =
+    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).flatMap(c => Citekey.option(c.citekey.value)))
 
-  def articleExists(slug: com.histmersion.domain.research.Slug): Boolean = h.research.articleStore.exists(slug)
+  def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
 
   def upstreamQuotas(now: Instant): List[UpstreamQuota] = h.upstreamQuotas(now)
 

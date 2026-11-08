@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 class NaturalEarthLandSuite extends munit.FunSuite:
 

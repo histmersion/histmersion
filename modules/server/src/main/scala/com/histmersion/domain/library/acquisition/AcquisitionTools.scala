@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.config.*
@@ -25,6 +26,17 @@ import com.histmersion.api.library.{
 import com.histmersion.api.Api
 import com.histmersion.api.library.CandidateSweep
 import com.histmersion.api.library.Ingest
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.domain.library.ArchiveId
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.collections.CollectionsService
+import com.histmersion.api.library.Source
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.CandidateList
+import com.histmersion.api.library.Citekey
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.
@@ -33,7 +45,7 @@ import com.histmersion.api.library.Ingest
   */
 final class AcquisitionTools(
     h: AcquisitionControllers,
-    collections: com.histmersion.domain.library.collections.CollectionsControllers
+    collections: CollectionsControllers
 ):
   import AcquisitionTools.*
 
@@ -152,9 +164,9 @@ final class AcquisitionTools(
             render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
               AcquireMarkdown.ingest
             )
-          case (_, Some(id)) => render(collections.archiveInfo(Caller.Local, com.histmersion.domain.library.ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
+          case (_, Some(id)) => render(collections.archiveInfo(Caller.Local, ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
           case (Some(q), _)  =>
-            render(collections.archiveSearch(Caller.Local, com.histmersion.domain.library.search.Search.Query(q.value), in.rows.map(r => com.histmersion.domain.library.collections.CollectionsService.Limit(r.value))))(AcquireMarkdown.archiveSearch)
+            render(collections.archiveSearch(Caller.Local, Search.Query(q.value), in.rows.map(r => CollectionsService.Limit(r.value))))(AcquireMarkdown.archiveSearch)
           case _ => ToolResult.text("_give a `query` to search, or an `id`_")
       }
 
@@ -176,7 +188,7 @@ final class AcquisitionTools(
             case Some(g) => render(h.sweepCandidates(CandidateSweep.Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))))(CandidatesMarkdown.sweep)
             case None    => ToolResult.text("_give `goal` to sweep_")
         else if in.mark.nonEmpty then
-          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(com.histmersion.api.library.Source.Candidate.State(Candidates.State.Seen.wire.value)))))(
+          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))))(
             CandidatesMarkdown.marked
           )
         else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
@@ -193,38 +205,38 @@ object AcquisitionTools:
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
   final case class DiscoverInput(
-      query: Option[com.histmersion.api.library.AcquireApi.Query] = None,
-      doi: Option[com.histmersion.api.library.AcquireApi.Identifier] = None,
-      wikipediaUrl: Option[com.histmersion.api.library.Title] = None,
-      since: Option[com.histmersion.api.catalogue.Year] = None,
-      sort: Option[com.histmersion.api.library.AcquireApi.Filter] = None,
-      limit: Option[com.histmersion.api.library.AcquireApi.Limit] = None,
-      notInDb: DiscoverInput.NotInDb = com.histmersion.domain.library.acquisition.AcquisitionTools.DiscoverInput.NotInDb(false)
+      query: Option[AcquireApi.Query] = None,
+      doi: Option[AcquireApi.Identifier] = None,
+      wikipediaUrl: Option[Title] = None,
+      since: Option[Year] = None,
+      sort: Option[AcquireApi.Filter] = None,
+      limit: Option[AcquireApi.Limit] = None,
+      notInDb: DiscoverInput.NotInDb = DiscoverInput.NotInDb(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object DiscoverInput:
     type NotInDb = NotInDb.T
-    object NotInDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotInDb extends RefinedType[Boolean, Pure]
 
 
   final case class CandidatesInput(
-      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      goal: Option[Goal.Slug] = None,
       state: Option[Candidates.State.Wire] = None,
-      limit: Option[com.histmersion.api.library.AcquireApi.Limit] = None,
-      offset: Option[com.histmersion.api.library.CandidateList.Offset] = None,
-      mark: List[com.histmersion.api.library.Source.Candidate.Id] = Nil,
-      as: Option[com.histmersion.api.library.Source.Candidate.State] = None,
-      sweep: CandidatesInput.Sweep = com.histmersion.domain.library.acquisition.AcquisitionTools.CandidatesInput.Sweep(false),
-      dryRun: CandidatesInput.DryRun = com.histmersion.domain.library.acquisition.AcquisitionTools.CandidatesInput.DryRun(false)
+      limit: Option[AcquireApi.Limit] = None,
+      offset: Option[CandidateList.Offset] = None,
+      mark: List[Source.Candidate.Id] = Nil,
+      as: Option[Source.Candidate.State] = None,
+      sweep: CandidatesInput.Sweep = CandidatesInput.Sweep(false),
+      dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object CandidatesInput:
     type Sweep = Sweep.T
-    object Sweep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sweep extends RefinedType[Boolean, Pure]
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
 
 
   final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -235,16 +247,16 @@ object AcquisitionTools:
       id: Option[AssessRequest.Id] = None,
       apply: AssessRequest.Apply = AssessRequest.Apply(false),
       forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
-      updateRetractions: AssessInput.UpdateRetractions = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.UpdateRetractions(false),
-      retractionsStatus: AssessInput.RetractionsStatus = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.RetractionsStatus(false)
+      updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
+      retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object AssessInput:
     type UpdateRetractions = UpdateRetractions.T
-    object UpdateRetractions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdateRetractions extends RefinedType[Boolean, Pure]
     type RetractionsStatus = RetractionsStatus.T
-    object RetractionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RetractionsStatus extends RefinedType[Boolean, Pure]
 
 
   final case class FollowupsInput(
@@ -259,14 +271,14 @@ object AcquisitionTools:
 
   final case class IngestInput(
       id: Ingest.Request.Id,
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       arxiv: Option[Ingest.Request.Arxiv] = None,
       refetch: Ingest.Request.Refetch = Ingest.Request.Refetch(false),
-      legalOnly: IngestInput.LegalOnly = com.histmersion.domain.library.acquisition.AcquisitionTools.IngestInput.LegalOnly(false)
+      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(false)
   ) derives KindlingsCodecAsObject
   object IngestInput:
     type LegalOnly = LegalOnly.T
-    object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LegalOnly extends RefinedType[Boolean, Pure]
 
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
@@ -276,15 +288,15 @@ object AcquisitionTools:
       )
 
   final case class ArchiveInput(
-      query: Option[com.histmersion.api.library.AcquireApi.Query] = None,
+      query: Option[AcquireApi.Query] = None,
       id: Option[ArchiveImportRequest.Id] = None,
-      `import`: ArchiveInput.Import = com.histmersion.domain.library.acquisition.AcquisitionTools.ArchiveInput.Import(false),
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      `import`: ArchiveInput.Import = ArchiveInput.Import(false),
+      citekey: Option[Citekey] = None,
       format: Option[ArchiveImportRequest.Format] = None,
-      rows: Option[com.histmersion.api.library.AcquireApi.Limit] = None
+      rows: Option[AcquireApi.Limit] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ArchiveInput:
     type Import = Import.T
-    object Import extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Import extends RefinedType[Boolean, Pure]

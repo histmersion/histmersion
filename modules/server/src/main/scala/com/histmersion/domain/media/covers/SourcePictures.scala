@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.covers
+package com.histmersion
+package domain.media.covers
 
 import com.histmersion.pluginhost.{figureRules, HttpTransport, Polite}
 import com.histmersion.upstreams.media.MediaText
@@ -26,6 +27,12 @@ import com.histmersion.api.media.{
 import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.media.MediaSources
+import com.histmersion.util.ocr.Pixels
+import com.histmersion.domain.library.Isbn
+import com.histmersion.plugin.WorkKey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -39,7 +46,7 @@ final class SourcePictures(
     assets: AssetService,
     covers: CoverService,
     imports: ImportService,
-    sources: com.histmersion.domain.media.MediaSources,
+    sources: MediaSources,
     config: () => MediaConfig,
     http: HttpTransport,
     converter: ConverterClient
@@ -50,8 +57,8 @@ final class SourcePictures(
   private def rules = cfg.illustrations.figureRules
 
   /** The thumbnail of `bytes`, or `None` (logged) when the sidecar makes none. */
-  private def thumbnail(bytes: com.histmersion.domain.media.assets.AssetService.Bytes, name: String): Option[ConverterClient.Thumb] =
-    converter.thumbnail(ConverterClient.DocumentBytes(bytes.value), ConverterClient.Filename(name), com.histmersion.util.ocr.Pixels(cfg.thumbPx.value)) match
+  private def thumbnail(bytes: AssetService.Bytes, name: String): Option[ConverterClient.Thumb] =
+    converter.thumbnail(ConverterClient.DocumentBytes(bytes.value), ConverterClient.Filename(name), Pixels(cfg.thumbPx.value)) match
       case Right(t) if t.bytes.value.nonEmpty => Some(t)
       case Right(_)                           => None
       case Left(why)                          =>
@@ -63,13 +70,13 @@ final class SourcePictures(
   /** Choose (and unless `dryRun`, link) a source's illustration. `Right(line)` when it has one now, `Left(reason)` when
     * none of its figures fits. A source that already has this very figure keeps it.
     */
-  def illustrate(citekey: com.histmersion.domain.library.Citekey, dryRun: com.histmersion.domain.media.covers.SourcePictures.DryRun): Either[com.histmersion.domain.media.covers.SourcePictures.IllustrateText, MediaSourceLine] =
+  def illustrate(citekey: Citekey, dryRun: SourcePictures.DryRun): Either[SourcePictures.IllustrateText, MediaSourceLine] =
     val figs = assets.sourceFigures(citekey)
-    if figs.isEmpty then Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figures"))
+    if figs.isEmpty then Left(SourcePictures.IllustrateText("no figures"))
     else
       val weighed = FigurePick.withRefs(figs.map(SourcePictures.toFigure), FigurePick.ConvertedText(sources.markdown(citekey).value))
       FigurePick.choose(weighed, rules) match
-        case None       => Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figure fit to illustrate it"))
+        case None       => Left(SourcePictures.IllustrateText("no figure fit to illustrate it"))
         case Some(pick) =>
           val row = figs.find(_.name.value == pick.name.value).get
           val uid = AssetService.AssetUid(row.uid.value)
@@ -99,16 +106,16 @@ final class SourcePictures(
   // ── covers ────────────────────────────────────────────────────────────────────────────────────
 
   /** A cover from the Open Library Covers API, by the source's ISBN (else OCLC number). */
-  def openLibrary(keys: CoverKeys, dryRun: com.histmersion.domain.media.covers.SourcePictures.DryRun, fetch: Polite): Either[com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText, MediaSourceLine] =
+  def openLibrary(keys: CoverKeys, dryRun: SourcePictures.DryRun, fetch: Polite): Either[SourcePictures.OpenLibraryText, MediaSourceLine] =
     fetch.synchronized(openLibraryNow(keys, dryRun, fetch))
 
   private def openLibraryNow(
       keys: CoverKeys,
-      dryRun: com.histmersion.domain.media.covers.SourcePictures.DryRun,
+      dryRun: SourcePictures.DryRun,
       fetch: Polite
-  ): Either[com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText, MediaSourceLine] =
-    def refused(why: String) = Left(com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText(why))
-    OpenLibrary.key(keys.isbn.map(i => com.histmersion.domain.library.Isbn(i.value)), keys.oclc.map(o => OpenLibrary.Oclc(o.value))) match
+  ): Either[SourcePictures.OpenLibraryText, MediaSourceLine] =
+    def refused(why: String) = Left(SourcePictures.OpenLibraryText(why))
+    OpenLibrary.key(keys.isbn.map(i => Isbn(i.value)), keys.oclc.map(o => OpenLibrary.Oclc(o.value))) match
       case None             => refused("no usable ISBN or OCLC number")
       case Some((kind, id)) =>
         val line = MediaSourceLine(
@@ -121,7 +128,7 @@ final class SourcePictures(
         else
           val c = cfg.covers
           val url = OpenLibrary.coverUrl(OpenLibrary.BaseUrl(c.openLibraryUrl.value), kind, id, OpenLibrary.CoverSize(c.size.value))
-          val got = fetch.file(HttpTransport.Url(url.value), com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
+          val got = fetch.file(HttpTransport.Url(url.value), Polite.Mime("image/jpeg")) match
             case Left(why) if why.value.contains("HTTP 404")             => refused("Open Library has no cover")
             case Left(why)                                               => refused(s"Open Library: ${why.value}")
             case Right((bytes, _)) if bytes.value.length > cfg.maxBytes.value =>
@@ -147,10 +154,10 @@ final class SourcePictures(
                 thumb.map((_, m) => ProviderAsset.ThumbMime(m.value)),
                 tsize.map(s => ProviderAsset.ThumbWidth(s._1.value)),
                 tsize.map(s => ProviderAsset.ThumbHeight(s._2.value)),
-                license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
+                license = ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
-                credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: Open Library"),
+                credit = ProviderAsset.Credit("Cover: Open Library"),
                 sourceUrl = ProviderAsset.SourceUrl(OpenLibrary.pageUrl(OpenLibrary.BaseUrl(c.openLibraryPage.value), kind, id).value),
                 originalUrl = Some(ProviderAsset.OriginalUrl(url.value.stripSuffix("?default=false"))),
                 kind = Some(ProviderAsset.Kind(AssetKind.Photo))
@@ -162,7 +169,7 @@ final class SourcePictures(
             ImportService.Provider(MediaProvider.OpenLibrary),
             ImportService.TargetType(PictureTarget.Source.wire.value),
             ImportService.TargetId(keys.citekey.value),
-            if got.isRight then com.histmersion.domain.media.imports.ImportService.FoundCount(1) else com.histmersion.domain.media.imports.ImportService.FoundCount(0),
+            if got.isRight then ImportService.FoundCount(1) else ImportService.FoundCount(0),
             None
           )
           got
@@ -173,16 +180,16 @@ final class SourcePictures(
   lazy val openLibraryClient: Polite = Polite(http, cfg.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(cfg.covers.requestIntervalMs.value)))
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
-  private[covers] def sniff(b: com.histmersion.domain.media.assets.AssetService.Bytes): Option[com.histmersion.domain.media.assets.AssetService.Mime] =
+  private[covers] def sniff(b: AssetService.Bytes): Option[AssetService.Mime] =
     def at(i: Int) = if b.value.length > i then b.value(i) & 0xff else -1
-    if at(0) == 0xff && at(1) == 0xd8 then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/jpeg"))
-    else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/png"))
-    else if at(0) == 'G' && at(1) == 'I' && at(2) == 'F' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/gif"))
-    else if b.value.length >= 12 && new String(b.value.slice(8, 12), "US-ASCII") == "WEBP" then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/webp"))
+    if at(0) == 0xff && at(1) == 0xd8 then Some(AssetService.Mime("image/jpeg"))
+    else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some(AssetService.Mime("image/png"))
+    else if at(0) == 'G' && at(1) == 'I' && at(2) == 'F' then Some(AssetService.Mime("image/gif"))
+    else if b.value.length >= 12 && new String(b.value.slice(8, 12), "US-ASCII") == "WEBP" then Some(AssetService.Mime("image/webp"))
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
-  def storeCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Either[Api.Error, MediaItem] =
+  def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes): Either[Api.Error, MediaItem] =
     val bad = (m: String) => Left(Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid))))
     if p.provider.value != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
@@ -203,7 +210,7 @@ final class SourcePictures(
               val a = ProviderAsset(
                 ProviderAsset.Provider(MediaProvider.Calibre),
                 ProviderAsset.Key(key),
-                ProviderAsset.Name(MediaText.safeName(com.histmersion.plugin.WorkKey.Title(s"cover-calibre-$key.${mime.value.drop(6)}")).value),
+                ProviderAsset.Name(MediaText.safeName(WorkKey.Title(s"cover-calibre-$key.${mime.value.drop(6)}")).value),
                 ProviderAsset.Mime(mime.value),
                 ProviderAsset.Bytes(bytes.value),
                 size.map(s => ProviderAsset.Width(s._1.value)),
@@ -212,10 +219,10 @@ final class SourcePictures(
                 thumb.map(t => ProviderAsset.ThumbMime(t.mime.value)),
                 thumb.map(_.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)),
                 thumb.map(_.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_)),
-                license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
+                license = ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
-                credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: the local Calibre library"),
+                credit = ProviderAsset.Credit("Cover: the local Calibre library"),
                 sourceUrl = ProviderAsset.SourceUrl(s"calibre:book/$key"),
                 originalUrl = None,
                 kind = Some(ProviderAsset.Kind(AssetKind.Photo))
@@ -291,11 +298,11 @@ final class SourcePictures(
   /** After a conversion stored a source's figures: its illustration, and — when its record holds an ISBN or OCLC number
     * and it has no cover yet — Open Library's cover. Best-effort: a note for the job's progress line, never a failure.
     */
-  def afterIngest(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.covers.SourcePictures.AfterIngestText] =
+  def afterIngest(citekey: Citekey): Option[SourcePictures.AfterIngestText] =
     try
-      val ill = illustrate(citekey, dryRun = com.histmersion.domain.media.covers.SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")
+      val ill = illustrate(citekey, dryRun = SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")
       val cover = covers
-        .coverCandidates(Some(citekey), com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(false), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(1))
+        .coverCandidates(Some(citekey), CoverService.CandidatesRefresh(false), CoverService.CandidatesLimit(1))
         .headOption
         .flatMap(k => openLibrary(k, SourcePictures.DryRun(false), openLibraryClient).toOption)
         .map(l => s"cover ${l.detail}")
@@ -308,13 +315,13 @@ final class SourcePictures(
 
 object SourcePictures:
   type AfterIngestText = AfterIngestText.T
-  object AfterIngestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AfterIngestText extends RefinedType[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type IllustrateText = IllustrateText.T
-  object IllustrateText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IllustrateText extends RefinedType[String, Pure]
   type OpenLibraryText = OpenLibraryText.T
-  object OpenLibraryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenLibraryText extends RefinedType[String, Pure]
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
 
 

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -20,6 +21,12 @@ import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.domain.library.Citekey
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.BackupsConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.config.ServerConfig
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -30,9 +37,9 @@ import com.histmersion.domain.library.Citekey
   * from homebrew's keg-only libpq: `brew install libpq` puts them in `/opt/homebrew/opt/libpq/bin` (checked below), and
   * the server finds them via `HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`.
   */
-class BackupRestoreSuite extends com.histmersion.db.DbSuite:
+class BackupRestoreSuite extends DbSuite:
 
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
 
   /** "" = the binaries are on PATH (they are, inside the server image); otherwise the directory holding them, from the
     * same env var the server reads, then homebrew's libpq.
@@ -74,7 +81,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     (prefix + "postgres", name, prefix + name)
 
   private def admin(sql: String): Unit =
-    val c = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(adminUrl))).getConnection
+    val c = testPool(base.db.modify(_.url).setTo(DbConfig.Url(adminUrl))).getConnection
     try {
       val s = c.createStatement();
       try { val _ = s.execute(sql) }
@@ -83,7 +90,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg: AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(scratchUrl))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(backupDir.toString)).modify(_.pgBinDir).setTo(com.histmersion.config.BackupsConfig.PgBinDir(pgBinDir.get))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(scratchUrl))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(backupDir.toString)).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(pgBinDir.get))
     )
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")
@@ -140,25 +147,25 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   private def fixture(ck: Citekey, title: Title) =
-    com.histmersion.api.library.Source.Put(
+    Source.Put(
       title = title,
       authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
-      year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+      year = (Some(2026)).map(Year.apply),
       status = Some(Source.Status.Current),
-      topics = List(com.histmersion.api.library.Source.Topics("backup")),
-      regions = List(com.histmersion.api.library.Source.Regions("Anatolia")),
-      tags = List(com.histmersion.api.library.Source.Tags("zz-backup-test")),
-      periodStart = Some(com.histmersion.api.catalogue.Year(-1300)),
-      periodEnd = Some(com.histmersion.api.catalogue.Year(-1100)),
+      topics = List(Source.Topics("backup")),
+      regions = List(Source.Regions("Anatolia")),
+      tags = List(Source.Tags("zz-backup-test")),
+      periodStart = Some(Year(-1300)),
+      periodEnd = Some(Year(-1100)),
       summary = Some(Source.Summary(s"fixture $ck")),
       findings = List(
         Finding.Input(
           claim = Finding.Claim(s"$ck says something"),
-          region = Some(com.histmersion.api.library.Finding.Region("Anatolia")),
+          region = Some(Finding.Region("Anatolia")),
           lon = Some(Longitude(32.0)),
           lat = Some(Latitude(39.0)),
-          periodStart = Some(com.histmersion.api.catalogue.Year(-1250)),
-          periodEnd = Some(com.histmersion.api.catalogue.Year(-1150))
+          periodStart = Some(Year(-1250)),
+          periodEnd = Some(Year(-1150))
         )
       )
     )
@@ -177,11 +184,11 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val h = ServerWiring(Deps(cfg, ds))
     assert(h.library.sources.put(Citekey("zz_backup_a"), fixture(Citekey("zz_backup_a"), Title("The Kept One"))).isRight)
     assert(h.library.sources.put(Citekey("zz_backup_b"), fixture(Citekey("zz_backup_b"), Title("The Other One"))).isRight)
-    val before = h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10))).total
+    val before = h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10))).total
     assertEquals((before.value: Int), 2)
 
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // 1. POST /api/backup writes an archive and reports its size + checksum
@@ -230,8 +237,8 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
-        assert(h.library.sources.get(com.histmersion.domain.library.Citekey("zz_backup_a")).isLeft)
-        assertEquals((h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10))).total.value: Int), 1)
+        assert(h.library.sources.get(Citekey("zz_backup_a")).isLeft)
+        assertEquals((h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10))).total.value: Int), 1)
 
         // 7. restore it
         val (fs, fb) = post(s"$url/api/restore", s"""{"file":"$file","force":true}""")
@@ -241,13 +248,13 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         assertEquals(field(fb, "schemaVersion"), Migrate.current(ds).getOrElse("?"))
         // the server evicted ITS pools; this suite's own pool (a second client of the same database, as
         // `h` is) holds sessions that cached the types the restore dropped — throw them away too
-        com.histmersion.util.database.Db.evict(ds)
+        Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
-        val after = h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10)))
+        val after = h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
         assertEquals((after.total.value: Int), 2)
         assertEquals(after.hits.map(_.source.citekey).sortBy(_.value), List("zz_backup_a", "zz_backup_b"))
-        val got = h.library.sources.get(com.histmersion.domain.library.Citekey("zz_backup_a")).toOption.get
+        val got = h.library.sources.get(Citekey("zz_backup_a")).toOption.get
         assertEquals(got.source.title, "The Kept One")
         assertEquals(got.findings.map(_.claim), List("zz_backup_a says something"))
         assertEquals(got.source.periodStart, Some(-1300L))
@@ -288,7 +295,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     sql("DROP OWNED BY zz_gone_owner"); sql("DROP OWNED BY zz_gone_reader")
     admin("DROP ROLE zz_gone_owner"); admin("DROP ROLE zz_gone_reader")
 
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = com.histmersion.api.backup.RestoreRequest.Force(true)))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force(true)))
     assert(r.isRight, r.toString)
     assert(!r.toOption.get.warnings.exists(_.value.contains("does not exist")), r.toString)
     assertEquals(
@@ -303,7 +310,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val h = ServerWiring(Deps(cfg, ds))
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
-    assertEquals((h.library.search.sources(Filter(limit = com.histmersion.api.library.Filter.Limit(10))).total.value: Int), 0)
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = com.histmersion.api.backup.RestoreRequest.Force(false)))
+    assertEquals((h.library.search.sources(Filter(limit = Filter.Limit(10))).total.value: Int), 0)
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force(false)))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter.value > 0, r.toString)

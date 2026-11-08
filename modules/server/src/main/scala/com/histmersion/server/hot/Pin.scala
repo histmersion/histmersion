@@ -1,4 +1,5 @@
-package com.histmersion.server.hot
+package com.histmersion
+package server.hot
 
 import com.histmersion.util.jobs.{Carried, Pinning}
 

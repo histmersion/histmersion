@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
 import com.histmersion.domain.automation.agents.AgentTrees
@@ -7,6 +8,8 @@ import com.histmersion.util.settings.StoredSettingsFile
 import com.histmersion.util.storage.{Location, Storage, Store}
 
 import java.nio.file.Path
+import com.histmersion.config.RuntimeConfig
+import com.histmersion.config.AcquireConfig
 
 /** Where each storage location lives, worked out from today's settings at each call — so the directories are where they
   * always were, and a reload that moves one is followed.
@@ -26,7 +29,7 @@ object StorageLocations:
     location match
       case Location.IngestOriginals   => Some(Path.of(cfg.converter.spoolDir.value))
       case Location.Spool             => Some(spool(cfg.acquire.spoolDir))
-      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), com.histmersion.config.RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
+      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
       case Location.Backups           => Some(Path.of(cfg.backups.dir.value).toAbsolutePath.normalize)
       case Location.Bundles           => Some(Path.of(cfg.bundles.dir.value))
       case Location.GazetteerExtracts => Some(GazetteerPaths.of(cfg, env, userPaths.osName).extracts)
@@ -92,7 +95,7 @@ object StorageLocations:
       case Location.GazetteerExtracts => Some(gazetteer.extracts)
       case Location.GazetteerFolder   => gazetteer.legacy
       case Location.GazetteerDrop     => Some(gazetteer.lpf)
-      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), com.histmersion.config.RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
+      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
       case Location.Install           => home
       case Location.Converter         => home.map(_.resolve("converter"))
       case Location.RelinkKit         => home.map(_.resolve("kit"))
@@ -121,7 +124,7 @@ object StorageLocations:
     )
 
   /** `acquire.spool-dir`, or `<java.io.tmpdir>/histmersion-acquire` when it is empty — absolute and normalised. */
-  def spool(dir: com.histmersion.config.AcquireConfig.SpoolDir): Path =
+  def spool(dir: AcquireConfig.SpoolDir): Path =
     nonBlank(dir.value)
       .map(Path.of(_))
       .getOrElse(temp.resolve("histmersion-acquire"))

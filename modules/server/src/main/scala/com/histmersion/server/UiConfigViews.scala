@@ -1,9 +1,12 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.config.UiSettings
 import io.scalaland.chimney.dsl.*
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.instance.MapStartMode
 
 /** What the wire says of the `ui` block: the page's settings as `/api/config` serves them. */
 object UiConfigViews:
@@ -21,11 +24,11 @@ object UiConfigViews:
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)
-      .withFieldComputed(_.time.min, u => com.histmersion.api.catalogue.Year(u.time.min.value))
-      .withFieldComputed(_.time.max, u => com.histmersion.api.catalogue.Year(u.time.max.value))
-      .withFieldComputed(_.time.defaultFrom, u => com.histmersion.api.catalogue.Year(u.time.defaultFrom.value))
-      .withFieldComputed(_.time.defaultTo, u => com.histmersion.api.catalogue.Year(u.time.defaultTo.value))
-      .withFieldComputed(_.mapStart.mode, u => com.histmersion.api.instance.MapStartMode.Wire(u.mapStart.mode.value))
+      .withFieldComputed(_.time.min, u => Year(u.time.min.value))
+      .withFieldComputed(_.time.max, u => Year(u.time.max.value))
+      .withFieldComputed(_.time.defaultFrom, u => Year(u.time.defaultFrom.value))
+      .withFieldComputed(_.time.defaultTo, u => Year(u.time.defaultTo.value))
+      .withFieldComputed(_.mapStart.mode, u => MapStartMode.Wire(u.mapStart.mode.value))
       .withFieldConst(_.writeKeyRequired, writeKeyRequired)
       .withFieldConst(_.agentsEnabled, agentsEnabled)
       .withFieldConst(_.plugins, plugins)

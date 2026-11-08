@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.util.database.Transactor
 
@@ -28,6 +29,9 @@ import java.time.Clock
 import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.util.jobs.Job
+import com.histmersion.util.storage.Reservation
+import com.histmersion.api.ByteCount
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review
@@ -40,19 +44,19 @@ import com.histmersion.api.Api
 trait BundleService:
   def instance: InstanceInfo
   def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo
-  def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
+  def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
   def verify(upload: ByteSource): Bundle.VerifyResult
-  def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
+  def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
   def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload]
-  def plan(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
-  def importKept(bundle: com.histmersion.Sha256, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
-  def applyKept(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
-  def applyStatus(job: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob]
-  def session(bundle: com.histmersion.Sha256): MergeSession
-  def putSession(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): MergeSession
+  def plan(bundle: Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
+  def importKept(bundle: Sha256, resolutions: MergeResolutions, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
+  def applyKept(bundle: Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
+  def applyStatus(job: Job.Id): Option[MergeApplyJob]
+  def session(bundle: Sha256): MergeSession
+  def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession
   def merges(limit: PageSize): List[MergeInfo]
-  def mergeDetail(id: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail]
-  def mergeLedger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.UidText], merge: Option[com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger]
+  def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail]
+  def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger]
 
 object BundleService:
   final case class Wiring(
@@ -76,7 +80,7 @@ object BundleService:
     /** The server's stored originals: the converter's spool, `<sha256>.<ext>`. */
     private def originals: Store.Contents = Store.Contents(w.storage.store(Location.IngestOriginals))
 
-    private def options(dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun): ImportOptions =
+    private def options(dryRun: ImportOptions.DryRun): ImportOptions =
       ImportOptions(
         dryRun,
         ImportOptions.ChunkChars(cfg.limits.chunkChars.value),
@@ -87,7 +91,7 @@ object BundleService:
 
     def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(label))
 
-    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
+    def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
       for
         _ <- usable(store)
@@ -105,7 +109,7 @@ object BundleService:
         .left
         .map(e => Api.Error(Api.Error.Message(s"bundles directory ${store.where()} is not usable: ${e.message}")))
 
-    private def write(part: com.histmersion.util.storage.Reservation, since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]) =
+    private def write(part: Reservation, since: Option[BundleScope.Since.At]) =
       val written =
         try
           val out = java.io.BufferedOutputStream(part.output(), 1 << 16)
@@ -136,21 +140,21 @@ object BundleService:
     def verify(upload: ByteSource): Bundle.VerifyResult =
       upload.read(in => BundleReader.verify(in, Migrate.current(w.ds).map(v => Bundle.Manifest.SchemaVersion(v.value))))
 
-    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult] =
+    def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult] =
       shaOf(upload).flatMap(importFrom(upload, _, MergeResolutions(), dryRun))
 
     /** The sha256 of an uploaded file, as the server computes it. */
-    private def shaOf(upload: ByteSource): Either[Api.Error, com.histmersion.Sha256] =
-      com.histmersion.Sha256
+    private def shaOf(upload: ByteSource): Either[Api.Error, Sha256] =
+      Sha256
         .either(upload.read(BundleReader.sha256Of).value)
         .left
         .map(e => Api.Error(Api.Error.Message(s"the upload's sha256 is unusable: $e")))
 
     private def importFrom(
         bundle: ByteSource,
-        sha: com.histmersion.Sha256,
+        sha: Sha256,
         resolutions: MergeResolutions,
-        dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun
+        dryRun: ImportOptions.DryRun
     ): Either[Api.Error, Bundle.ImportResult] =
       BundleImporter
         .run(
@@ -168,10 +172,10 @@ object BundleService:
         .map(e => Api.Error(Api.Error.Message(s"bundle import failed: $e")))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
-    private def keyOf(sha: com.histmersion.Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
+    private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
 
     /** A kept bundle, touched: a planned bundle stays as long as it is being worked on. */
-    private def kept(sha: com.histmersion.Sha256): Either[Api.Error, ByteSource] =
+    private def kept(sha: Sha256): Either[Api.Error, ByteSource] =
       val store = bundles
       store.get(keyOf(sha)) match
         case None =>
@@ -201,7 +205,7 @@ object BundleService:
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(
           com.histmersion.api.Sha256(sha.value),
-          com.histmersion.api.ByteCount(blob.size.value),
+          ByteCount(blob.size.value),
           loaded.manifest,
           loaded.problems.map(Bundle.Upload.Problems(_))
         )
@@ -222,7 +226,7 @@ object BundleService:
         finally part.close()
       }
 
-    def plan(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
+    def plan(bundle: Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
       kept(bundle).flatMap { source =>
         MergePlans
           .planFile(
@@ -240,13 +244,13 @@ object BundleService:
       }
 
     def importKept(
-        bundle: com.histmersion.Sha256,
+        bundle: Sha256,
         resolutions: MergeResolutions,
-        dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun
+        dryRun: ImportOptions.DryRun
     ): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun))
 
-    def applyKept(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
+    def applyKept(bundle: Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter
@@ -254,7 +258,7 @@ object BundleService:
               w.ds,
               source,
               bundle,
-              options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false)),
+              options(dryRun = ImportOptions.DryRun(false)),
               originals,
               resolutions,
               MergeSettingsViews.settings(cfg.merge),
@@ -273,17 +277,17 @@ object BundleService:
         }
       }
 
-    def applyStatus(job: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob] = w.applyJobs.status(job)
+    def applyStatus(job: Job.Id): Option[MergeApplyJob] = w.applyJobs.status(job)
 
-    def session(bundle: com.histmersion.Sha256): MergeSession = Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
+    def session(bundle: Sha256): MergeSession = Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
 
-    def putSession(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): MergeSession =
+    def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession =
       Transactor(w.ds).transact(MergeRepo.putSession(MergeRepo.BundleName(bundle.value), resolutions))
 
     def merges(limit: PageSize): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
 
-    def mergeDetail(id: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
+    def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
 
-    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.UidText], merge: Option[com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger] =
+    def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger] =
       Transactor(w.ds).read(MergeRepo.ledger(uid, merge, limit, w.rules))
 

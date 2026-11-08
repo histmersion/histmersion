@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.api.catalogue.{
@@ -17,6 +18,9 @@ import com.histmersion.{Offset, PageSize}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.util.jobs.BackgroundJob
+import com.histmersion.api.catalogue.EventsJobKinds
 
 /** The event catalogues' operations as REST, MCP and the CLI reach them: the catalogues, an import (a job, dry run or
   * not), a re-derivation of the stored records' dating (a job), and the corrections by hand. `page` is the page size a
@@ -41,14 +45,14 @@ final class EventImportsControllers(
         case None    => Right(None)
       job <- jobs.start(
         EventImportsControllers.ImportJobKind,
-        com.histmersion.api.jobs.JobKinds.Subject(
+        JobKinds.Subject(
           s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${if req.dryRun.value then " (dry run)" else ""}"
         ),
         write = !req.dryRun.value
       ) { (job, progress) =>
         val r = imports.runImport(provider, req, area, progress)
         jobs.amend(Job.Id.assume(job.id.value))(_.set(EventImportReport.Detail, Some(r)))
-        Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(EventImportReport.summary(r)))
+        Right(BackgroundJob.Outcome.Summary(EventImportReport.summary(r)))
       }
     yield job
 
@@ -60,7 +64,7 @@ final class EventImportsControllers(
         case None    => Right(None)
       job <- jobs.start(
         EventImportsControllers.RederiveJobKind,
-        com.histmersion.api.jobs.JobKinds.Subject(
+        JobKinds.Subject(
           s"re-derive the dating of ${provider.fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
             s"events${if req.dryRun.value then " (dry run)" else ""}"
         ),
@@ -68,7 +72,7 @@ final class EventImportsControllers(
       ) { (job, progress) =>
         val r = imports.runRederive(provider, req.dryRun.value, progress)
         jobs.amend(Job.Id.assume(job.id.value))(_.set(EventRederiveReport.Detail, Some(r)))
-        Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(EventRederiveReport.summary(r)))
+        Right(BackgroundJob.Outcome.Summary(EventRederiveReport.summary(r)))
       }
     yield job
 
@@ -94,6 +98,6 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
-  val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind.value)
+  val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(EventsJobKinds.EventsImport.kind.value)
   val RederiveJobKind: Job.Kind =
-    Job.Kind.applyUnsafe(com.histmersion.api.catalogue.EventsJobKinds.EventsRederive.kind.value)
+    Job.Kind.applyUnsafe(EventsJobKinds.EventsRederive.kind.value)

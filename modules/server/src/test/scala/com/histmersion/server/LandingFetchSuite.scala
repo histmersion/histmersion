@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -39,9 +40,9 @@ class LandingFetchSuite extends munit.FunSuite:
   private def openalexOf(c: AcquireConfig, doi: Doi) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
   private def fetch(c: AcquireConfig, http: Http, doi: Doi, settings: String = "") =
-    OaFetch(loaded(settings), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), None)
+    OaFetch(loaded(settings), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), None)
 
-  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+  private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
   private def fail2(http: FakeUpstream)(e: OaFetcher.Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
@@ -228,7 +229,7 @@ class LandingFetchSuite extends munit.FunSuite:
     assertEquals(fetch(c, http, Doi("10.17863/CAM.11325")), Left("no legal open-access PDF found"))
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
     assert(
-      Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, Challenge.Body(fixture("challenge_synthetic.html").getBytes("UTF-8"))),
+      Challenge.isChallenge(HttpPolicy.StatusCode(403), Map.empty, Challenge.Body(fixture("challenge_synthetic.html").getBytes("UTF-8"))),
       "the fixture is what the layer refuses"
     )
 

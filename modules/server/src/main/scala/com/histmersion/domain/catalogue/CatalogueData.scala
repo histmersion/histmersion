@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.domain.catalogue.events.EventsData
 import com.histmersion.domain.catalogue.periods.PeriodsData
@@ -65,16 +66,16 @@ object CatalogueData extends DataContribution:
     CacheHolding.InStore(Location.Basemap, Store.Key.applyUnsafe(directory))
 
   override val caches: List[CacheSpec] = List(
-    CacheSpec(owner, CacheName("map-tiles"), com.histmersion.util.data.maintenance.CacheSpec.Label("map tiles"), CacheHolding.InMemory, List(CacheEvent.Restored)),
+    CacheSpec(owner, CacheName("map-tiles"), CacheSpec.Label("map tiles"), CacheHolding.InMemory, List(CacheEvent.Restored)),
     CacheSpec(
       owner,
       CacheName("undated-cells"),
-      com.histmersion.util.data.maintenance.CacheSpec.Label("undated sites by cell"),
+      CacheSpec.Label("undated sites by cell"),
       CacheHolding.InTables(List(TableName("site_undated_cells"), TableName("site_undated_build")))
     ),
-    CacheSpec(owner, CacheName("relief-cache"), com.histmersion.util.data.maintenance.CacheSpec.Label("relief cache"), onDemand("terrain-cache")),
-    CacheSpec(owner, CacheName("map-cache"), com.histmersion.util.data.maintenance.CacheSpec.Label("map cache"), onDemand("vector-cache")),
-    CacheSpec(owner, CacheName("sea-floor-cache"), com.histmersion.util.data.maintenance.CacheSpec.Label("sea-floor cache"), onDemand("sea-cache"))
+    CacheSpec(owner, CacheName("relief-cache"), CacheSpec.Label("relief cache"), onDemand("terrain-cache")),
+    CacheSpec(owner, CacheName("map-cache"), CacheSpec.Label("map cache"), onDemand("vector-cache")),
+    CacheSpec(owner, CacheName("sea-floor-cache"), CacheSpec.Label("sea-floor cache"), onDemand("sea-cache"))
   )
 
   override val checks: List[CheckRule] = PlacesData.checks(owner) ++ EventsData.checks(owner)

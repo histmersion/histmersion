@@ -1,6 +1,9 @@
-package com.histmersion.util.data.diagnostics
+package com.histmersion
+package util.data.diagnostics
 
 import com.histmersion.util.storage.Location
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How About › Storage shows a store: its entry's key, label and group. About lists them in this order. */
 enum ShownStore(val location: Location, val key: ShownStore.Key, val label: ShownStore.Label, val group: ShownStore.Group):
@@ -133,8 +136,8 @@ enum ShownStore(val location: Location, val key: ShownStore.Key, val label: Show
 
 object ShownStore:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Group = Group.T
-  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Group extends RefinedType[String, Pure]

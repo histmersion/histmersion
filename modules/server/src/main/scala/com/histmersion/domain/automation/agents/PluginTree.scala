@@ -1,17 +1,20 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object PluginTree:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Owned = OwnedValue
   type OwnedValue = OwnedValue.T
-  object OwnedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OwnedValue extends RefinedType[String, Pure]
 
-  def tree(roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.Problem, Map[SafePath.Candidate, String]] =
-    val defs = AgentDefinitions(Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")), roster)
+  def tree(roster: AgentRoster)(using Stores, Resources): Either[Problem, Map[SafePath.Candidate, String]] =
+    val defs = AgentDefinitions(Prompts(Prompts.OverrideDir("")), roster)
     val files =
       for
         as <- defs.agents
@@ -20,12 +23,12 @@ object PluginTree:
       yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
     files.left.map(Problem(_)).map(_.map((path, text) => SafePath.Candidate(path) -> text))
 
-  val Owned: List[com.histmersion.domain.automation.agents.PluginTree.Owned] = List(com.histmersion.domain.automation.agents.PluginTree.OwnedValue("plugin/agents"), com.histmersion.domain.automation.agents.PluginTree.OwnedValue("plugin/skills"))
+  val Owned: List[Owned] = List(OwnedValue("plugin/agents"), OwnedValue("plugin/skills"))
 
-  def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.Problem, Unit] =
+  def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[Problem, Unit] =
     tree(roster).flatMap(t => writeTree(store, t))
 
-  private[agents] def writeTree(store: Store, tree: Map[com.histmersion.util.storage.SafePath.Candidate, String]): Either[com.histmersion.domain.automation.agents.PluginTree.Problem, Unit] =
+  private[agents] def writeTree(store: Store, tree: Map[SafePath.Candidate, String]): Either[Problem, Unit] =
     try
       val entries = tree.toList.map { (name, text) =>
         Store.Key.of(name.value).fold(error => throw IllegalArgumentException(error.value), identity) -> text

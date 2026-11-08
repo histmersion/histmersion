@@ -1,4 +1,5 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
@@ -7,6 +8,10 @@ import hearth.kindlings.optics.syntax.*
 
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.api.text.WikiLinks
+import com.histmersion.util.time.Timer
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The registered checks as REST, MCP and the CLI reach them: the lint report (an unknown rule name is a 400: a typo
   * must never read as a clean corpus), the safe fixes (a write, under the maintenance guard) and the report after them.
@@ -17,17 +22,17 @@ final class CheckControllers(
     checks: CheckRunner,
     config: () => AppConfig,
     ds: DataSource,
-    format: (com.histmersion.api.text.WikiLinks.Occurrence.Target => Boolean) => FormatChecker,
+    format: (WikiLinks.Occurrence.Target => Boolean) => FormatChecker,
     write: GuardedWrite,
     maintenance: WriteGate
-)(using timer: com.histmersion.util.time.Timer):
+)(using timer: Timer):
   /** The rule names, in report order. */
-  def lintRules: List[com.histmersion.util.data.checks.CheckRule.Name] = checks.names
+  def lintRules: List[CheckRule.Name] = checks.names
 
   private def context: CheckContext = CheckContext(config(), ds, format, write, timer)
 
   /** `GET /api/lint` — read-only. */
-  def lint(rules: List[com.histmersion.util.data.checks.CheckRule.Name]): Either[Api.Error, LintReport] =
+  def lint(rules: List[CheckRule.Name]): Either[Api.Error, LintReport] =
     checks
       .select(rules)
       .left
@@ -38,22 +43,22 @@ final class CheckControllers(
     * that run on every call, and those of the rules `rules` names. Each is bounded per call; `remaining > 0` (or
     * `pointAreasRemaining > 0`) means "call me again".
     */
-  def lintFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name] = Nil): LintFixResult = checks.fix(rules, context)
+  def lintFix(rules: List[CheckRule.Name] = Nil): LintFixResult = checks.fix(rules, context)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path that ran straight
     * through a restore.
     */
-  def guardedLintFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name] = Nil): Either[Api.Error, LintFixResult] =
+  def guardedLintFix(rules: List[CheckRule.Name] = Nil): Either[Api.Error, LintFixResult] =
     maintenance.guard(WriteGate.OperationName("lint/fix"))(Right(lintFix(rules)))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.
     */
-  def lintWithFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name], fix: com.histmersion.util.data.checks.CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
+  def lintWithFix(rules: List[CheckRule.Name], fix: CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
     if !fix.value then lint(rules)
-    else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => com.histmersion.api.checks.Lint.LintReport.Fixed(a.value)))))
+    else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value)))))
 
 object CheckControllers:
   type ApplyFix = ApplyFix.T
-  object ApplyFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApplyFix extends RefinedType[Boolean, Pure]
 

@@ -1,10 +1,13 @@
-package com.histmersion.util.data.diagnostics
+package com.histmersion
+package util.data.diagnostics
 
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.maintenance.Storage
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
   * measurement at a time, however many Abouts ask. A request that finds nothing measured yet waits up to `wait` for the
@@ -70,9 +73,9 @@ final class StorageCache(
 
 object StorageCache:
   type TimeToLive = TimeToLive.T
-  object TimeToLive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeToLive extends RefinedType[Long, Pure]
   type WaitMillis = WaitMillis.T
-  object WaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WaitMillis extends RefinedType[Long, Pure]
   type Instant = Instant.T
-  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Instant extends RefinedType[Long, Pure]
 

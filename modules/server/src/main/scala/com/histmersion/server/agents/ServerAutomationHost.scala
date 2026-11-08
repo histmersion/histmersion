@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.research.Slug
 
@@ -21,13 +22,16 @@ import com.histmersion.server.ServerWiring
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.Title
 
 /** The engine's [[AutomationHost]] over the composition: the goals through the automation's own controllers, a run's
   * target, options and links checked against the library's sources and research's articles, the plan's works looked up
   * through the library's upstream, the vocabulary of its labels, and the housekeeping of this server.
   */
 final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
-  def articleExists(slug: com.histmersion.domain.research.Slug): Boolean = h.research.articleStore.exists(slug)
+  def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
   def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
   def putGoal(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] = h.goals.put(slug, in)
   def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] = h.goals.patch(slug, patch)
@@ -40,7 +44,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .left
             .map(p => refused(p.value))
             .flatMap(ck =>
-              h.library.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
+              h.library.sources.get(ck, body = SourcesControllers.GetBody(false))
             )
             .map(w => AutomationHost.RunTargetResultPart2(w.source.citekey.value))
         )
@@ -68,7 +72,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   private def refused(why: String): Api.Error = Api.Error(Api.Error.Message(why))
 
-  def runOptions(p: Pipeline, req: RunRequest, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget, roundsCap: AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit] =
+  def runOptions(p: Pipeline, req: RunRequest, target: ManagerContext.ItemTarget, roundsCap: AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>
       Left(Api.Error(Api.Error.Message(s"$what is an option of ${owner.wire}, not of ${p.wire}")))
     val compileOpts =
@@ -128,21 +132,21 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         .left
         .map(p => refused(p.value))
         .flatMap(ck =>
-          h.library.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
+          h.library.sources.get(ck, body = SourcesControllers.GetBody(false))
         )
         .map(w => AutomationHost.LinkRefResultPart2(w.source.citekey.value))
 
-  def probeSubject(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, ProbeAnswer] =
-    h.library.sources.get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
+  def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer] =
+    h.library.sources.get(citekey, body = SourcesControllers.GetBody(false)).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
 
-  def sameTitle(answered: com.histmersion.domain.Title, record: com.histmersion.domain.Title): Boolean = AgentVerify.sameTitle(answered, record)
+  def sameTitle(answered: Title, record: Title): Boolean = AgentVerify.sameTitle(answered, record)
 
   def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).left.map(p => PlanGoal.Problem(p.value)).map(w =>
       PlanGoal.Work(
         w.title.map(t => PlanGoal.Work.Title(t.value)),
-        w.year.map(y => com.histmersion.Year(y.value.toInt)),
+        w.year.map(y => Year(y.value.toInt)),
         w.authors.map(a => PlanGoal.Work.Authors(a.value)),
-        w.citekey.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)),
+        w.citekey.flatMap(c => Citekey.option(c.value)),
         PlanGoal.Work.InDb(w.inDb.value),
         PlanGoal.Work.IsOa(w.isOa.value),
         PlanGoal.Work.IsRetracted(w.isRetracted.value)

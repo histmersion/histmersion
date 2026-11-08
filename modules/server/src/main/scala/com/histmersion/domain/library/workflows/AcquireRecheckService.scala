@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 
@@ -23,6 +24,12 @@ import com.histmersion.api.automation.{AgentsApi, Queue}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Acquire
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Doi
+import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -83,10 +90,10 @@ final class AcquireRecheckService(
   /** Is a re-check job running? The scheduled passes wait, and the drain is not drained until it stops. */
   def jobRunning: Boolean = jobSlot.isRunning
 
-  private def apiCk(c: com.histmersion.domain.library.Citekey): com.histmersion.api.library.Citekey =
+  private def apiCk(c: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(c.value)
 
-  private def apiDoi(d: com.histmersion.domain.library.Doi): com.histmersion.api.library.Doi =
+  private def apiDoi(d: Doi): com.histmersion.api.library.Doi =
     com.histmersion.api.library.Doi(d.value)
 
   private def jobIdOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
@@ -96,7 +103,7 @@ final class AcquireRecheckService(
   private def resumable(j: JobInfo): Boolean =
     AcquireRecheck.resumable(j.status, j.error.map(e => AcquireRecheck.Problem(e.value)))
 
-  private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, com.histmersion.RowCount], o: Outcome): Int =
+  private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
 
   private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
@@ -116,7 +123,7 @@ final class AcquireRecheckService(
       Facts(i, AcquireRecheck.action(dois.getOrElse(i.id.value, Nil), held.get), last.get(AcquireCheckRow.Item(i.id.value)))
     )
 
-  private def orderedDois(text: Queue.QueueItem.Text): List[com.histmersion.domain.library.Doi] =
+  private def orderedDois(text: Queue.QueueItem.Text): List[Doi] =
     val lower = text.value.toLowerCase
     Scheduling.dois(text.value).toList.sortBy(d => (lower.indexOf(d.value) match { case -1 => Int.MaxValue; case i => i }, d.value))
 
@@ -157,12 +164,12 @@ final class AcquireRecheckService(
     fetchable(fs).filter(f => isDue(candidate(f), generation, now))
 
   /** The DOI an item is about (the first its text names). */
-  private def doiOf(f: Facts): Option[com.histmersion.domain.library.Doi] = orderedDois(f.item.text).headOption
+  private def doiOf(f: Facts): Option[Doi] = orderedDois(f.item.text).headOption
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** From the managers' tick: a pass when on, not draining, and `pass-minutes` passed since the last. */
-  def tick(now: Instant): List[com.histmersion.domain.library.workflows.AcquireRecheckService.Line] =
+  def tick(now: Instant): List[Line] =
     val s = settings
     if jobSlot.isRunning || agents.drain.draining then Nil
     else
@@ -170,7 +177,7 @@ final class AcquireRecheckService(
         case Some(line) => List(line)
         case None       => scheduledPass(s, now)
 
-  private def scheduledPass(s: Settings, now: Instant): List[com.histmersion.domain.library.workflows.AcquireRecheckService.Line] =
+  private def scheduledPass(s: Settings, now: Instant): List[Line] =
     if !s.enabled.value || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
         s.passMinutes,
@@ -214,7 +221,7 @@ final class AcquireRecheckService(
             )
           )
         else if in.dryRun.value || in.id.isDefined then pass(in, now).toRight(passBusy)
-        else site.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
+        else site.maintenance.guard(WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
 
   private def busy: Api.Error =
     BackgroundJob.busy(BackgroundJob.Work("an acquisition list re-check job"), jobSlot.current, Some(Api.Error.Code(AgentsApi.CodeConflict)))
@@ -277,7 +284,7 @@ final class AcquireRecheckService(
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
     */
-  private def resumeStopped(): Option[com.histmersion.domain.library.workflows.AcquireRecheckService.Line] =
+  private def resumeStopped(): Option[Line] =
     latestJob().filter(resumable).flatMap { j =>
       j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, By(d.by.value), Some(jobIdOf(j))) match
@@ -291,7 +298,7 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
-  private def startJob(plan: JobPlan, by: com.histmersion.domain.library.workflows.AcquireRecheckService.By, resumes: Option[Job.Id]): Either[Api.Error, JobInfo] =
+  private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id]): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(
       RecheckJob.All(plan.all.value),
       RecheckJob.UpTo(plan.upTo.value.toLong),
@@ -315,7 +322,7 @@ final class AcquireRecheckService(
     * come (a rate limit) is a `failed` check and the job goes on. It stops between two items when the autopilot drains
     * (resumable) or a restore starts.
     */
-  private def runJob(jobId: Job.Id, plan: JobPlan, by: com.histmersion.domain.library.workflows.AcquireRecheckService.By, progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
+  private def runJob(jobId: Job.Id, plan: JobPlan, by: By, progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
     passing.lock()
     try
       val up = upstream()
@@ -373,7 +380,7 @@ final class AcquireRecheckService(
         )
         if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 || stop.isDefined then
           val _ = site.workLists.add(
-            com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
+            WorkListControllers.ListName("log"),
             QueueAdd(
               Queue.QueueItem.Text(
                 (s"${summary(r)} (by $by, job $jobId" +
@@ -466,7 +473,7 @@ final class AcquireRecheckService(
       if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 then
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
         val _ = site.workLists.add(
-          com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
+          WorkListControllers.ListName("log"),
           QueueAdd(Queue.QueueItem.Text(s"${summary(r)} (by $by)".take(1000)))
         )
       r
@@ -474,7 +481,7 @@ final class AcquireRecheckService(
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
   private def close(
       f: Facts,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       generation: AcquireRecheck.LastCheck.Generation,
       now: Instant,
       job: Option[Job.Id] = None
@@ -611,12 +618,12 @@ final class AcquireRecheckService(
     }
 
   /** What the re-check fetched today: what the shared legal ingest allowance counts besides the watchers'. */
-  def fetchedToday(now: Instant): com.histmersion.RowCount = com.histmersion.RowCount(triedToday(now)._2)
+  def fetchedToday(now: Instant): RowCount = RowCount(triedToday(now)._2)
 
 object AcquireRecheckService:
   type By = By.T
-  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object By extends RefinedType[String, Pure]
 
   /** One worklog line a pass wrote. */
   type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Line extends RefinedType[String, Pure]

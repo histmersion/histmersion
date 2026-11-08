@@ -1,7 +1,15 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Title
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Source
 
 /** Where an import writes, once the citekey is known. */
 enum ImportTarget:
@@ -15,30 +23,30 @@ enum ImportTarget:
 
 object ImportTarget:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type RomanNumeral = RomanNumeral.T
-  object RomanNumeral extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RomanNumeral extends RefinedType[String, Pure]
   type Volume = Volume.T
-  object Volume extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Volume extends RefinedType[Int, Pure]
   type Previous = Previous.T
-  object Previous extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Previous extends RefinedType[String, Pure]
 
   /** Why an import may not go ahead. */
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type OfExplicit = OfExplicit.T
-  object OfExplicit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OfExplicit extends RefinedType[Boolean, Pure]
 
   private val VolumeText = """(?i)\b(?:volume\s*|vol\.\s*|vol\s+)([0-9]+|[ivxlc]+)\b""".r
 
   /** The volume a title names — `Volume I`, `Vol. 2`, `volume 3` — so two volumes of one work get two citekeys. */
-  def volumeOf(title: com.histmersion.domain.Title): Option[com.histmersion.domain.library.collections.ImportTarget.Volume] =
+  def volumeOf(title: Title): Option[Volume] =
     VolumeText
       .findFirstMatchIn(title.value)
       .flatMap(m => m.group(1).toIntOption.map(n => Volume(n)).orElse(roman(RomanNumeral(m.group(1)))))
       .filter(_.value > 0)
 
-  private def roman(s: com.histmersion.domain.library.collections.ImportTarget.RomanNumeral): Option[com.histmersion.domain.library.collections.ImportTarget.Volume] =
+  private def roman(s: RomanNumeral): Option[Volume] =
     val v = Map('i' -> 1, 'v' -> 5, 'x' -> 10, 'l' -> 50, 'c' -> 100)
     val ds = s.value.toLowerCase.toList.map(v)
     Option.when(ds.nonEmpty)(Volume(ds.zipAll(ds.drop(1), 0, 0).map((a, b) => if a < b then -a else a).sum))
@@ -46,16 +54,16 @@ object ImportTarget:
   /** The citekey an import generates: the library's convention plus `_v<n>` for a numbered volume. A key the library
     * would refuse is a problem, not a record.
     */
-  def citekeyFor(item: CollectionItem): Either[ImportTarget.Problem, com.histmersion.domain.library.Citekey] =
+  def citekeyFor(item: CollectionItem): Either[Problem, Citekey] =
     val title = item.title.fold("")(_.value)
     val generated = Acquire
       .citekey(
-        item.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
-        item.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        item.authors.map(a => AuthorName(a.value)),
+        item.year.map(y => Year(y.value.toLong)),
         Some(com.histmersion.api.library.Title(title))
       )
-      .value + volumeOf(com.histmersion.domain.Title(title)).fold("")(n => s"_v$n")
-    com.histmersion.domain.library.Citekey
+      .value + volumeOf(Title(title)).fold("")(n => s"_v$n")
+    Citekey
       .either(generated)
       .left
       .map(_ => Problem(s"the generated citekey '$generated' is not a valid citekey — pass --citekey <key>"))
@@ -68,7 +76,7 @@ object ImportTarget:
     * @param existing
     *   `None` when no record has `ck`; otherwise that record's Calibre id
     */
-  def of(ck: com.histmersion.domain.library.Citekey, id: com.histmersion.domain.library.collections.ImportTarget.Id, explicit: com.histmersion.domain.library.collections.ImportTarget.OfExplicit, existing: Option[Option[ImportTarget.Previous]]): Either[ImportTarget.Problem, ImportTarget] =
+  def of(ck: Citekey, id: Id, explicit: OfExplicit, existing: Option[Option[Previous]]): Either[Problem, ImportTarget] =
     existing match
       case None                                             => Right(Create)
       case Some(Some(linked)) if linked.value == id.value => Right(Update(None))
@@ -86,5 +94,5 @@ object ImportTarget:
   /** The summary an import writes: Calibre's description only fills an empty one, so a re-import never replaces a
     * summary an agent compiled. `None` leaves the record's summary alone.
     */
-  def summary(fromCollection: Option[com.histmersion.api.library.Source.Summary], current: Option[com.histmersion.api.library.Source.Summary]): Option[com.histmersion.api.library.Source.Summary] =
+  def summary(fromCollection: Option[Source.Summary], current: Option[Source.Summary]): Option[Source.Summary] =
     if current.exists(_.value.trim.nonEmpty) then None else fromCollection

@@ -1,4 +1,5 @@
-package com.histmersion.server.views
+package com.histmersion
+package server.views
 
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.{JobInfo, JobState}
@@ -18,11 +19,11 @@ final class JobListView(jobs: JobListing):
   def page(
       f: JobFilter,
       now: Instant,
-      limit: Option[com.histmersion.PageSize],
+      limit: Option[PageSize],
       before: Option[Paging.Cursor],
       upTo: Option[Paging.Cursor]
   ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
-    JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo, com.histmersion.PageSize.assume(ListFilters.FacetMax)))
+    JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo, PageSize.assume(ListFilters.FacetMax)))
 
 object JobListView:
   /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */

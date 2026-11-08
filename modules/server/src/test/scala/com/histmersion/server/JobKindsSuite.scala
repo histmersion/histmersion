@@ -1,10 +1,19 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.Wording
 import com.histmersion.api.jobs.JobKinds
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.basemap.BasemapService
+import com.histmersion.api.catalogue.PlacesJobKinds
+import com.histmersion.domain.catalogue.events.EventImportsControllers
+import com.histmersion.domain.catalogue.evidence.EventLinksControllers
+import com.histmersion.domain.catalogue.places.SiteTypesControllers
+import com.histmersion.domain.media.imports.ImportsControllers
+import com.histmersion.domain.media.covers.CoversControllers
+import com.histmersion.api.RegisteredJobKinds
 
 /** Every kind of background job the server starts is a registered one (`com.histmersion.api.RegisteredJobKinds.all`),
   * so the web UI has a name for it ([[Wording.jobKind]]) and never shows `basemap-fetch` to a reader.
@@ -13,18 +22,18 @@ class JobKindsSuite extends munit.FunSuite:
 
   test("the server's job kinds are the dictionary's"):
     val kinds = List(
-      JobKinds.Wire(com.histmersion.util.basemap.BasemapService.JobKind.value),
-      com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind,
-      com.histmersion.api.catalogue.PlacesJobKinds.PlacesHierarchy.kind,
-      JobKinds.Wire(com.histmersion.domain.catalogue.events.EventImportsControllers.ImportJobKind.value),
-      JobKinds.Wire(com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind.value),
-      JobKinds.Wire(com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind.value),
-      JobKinds.Wire(com.histmersion.domain.catalogue.events.EventImportsControllers.RederiveJobKind.value),
-      JobKinds.Wire(com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind.value),
-      JobKinds.Wire(com.histmersion.domain.media.covers.CoversControllers.CoversJobKind.value),
+      JobKinds.Wire(BasemapService.JobKind.value),
+      PlacesJobKinds.PlacesFetch.kind,
+      PlacesJobKinds.PlacesHierarchy.kind,
+      JobKinds.Wire(EventImportsControllers.ImportJobKind.value),
+      JobKinds.Wire(EventLinksControllers.CandidatesJobKind.value),
+      JobKinds.Wire(SiteTypesControllers.SiteTypesJobKind.value),
+      JobKinds.Wire(EventImportsControllers.RederiveJobKind.value),
+      JobKinds.Wire(ImportsControllers.ImportJobKind.value),
+      JobKinds.Wire(CoversControllers.CoversJobKind.value),
       JobKinds.Wire(Bootstrap.JobKind.value)
     )
-    assertEquals(kinds.filterNot(k => com.histmersion.api.RegisteredJobKinds.all.parse(k).isDefined), Nil)
+    assertEquals(kinds.filterNot(k => RegisteredJobKinds.all.parse(k).isDefined), Nil)
     kinds.foreach(k => assert(Wording.jobKindOf(k) != k.value, k))
 
   test("no job kind is spelled as a literal outside the dictionary (a new one starts as a registered JobKind)"):

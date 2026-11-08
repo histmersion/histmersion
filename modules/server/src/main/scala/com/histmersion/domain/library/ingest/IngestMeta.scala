@@ -1,16 +1,20 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 
 import com.histmersion.api.library.Edge
+import com.histmersion.domain.library.Doi
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The metadata an ingest carries, whatever the acquisition channel was. */
 final case class IngestMeta(
     title: IngestMeta.Title,
     authors: List[IngestMeta.Authors] = Nil,
-    doi: Option[com.histmersion.domain.library.Doi] = None,
-    year: Option[com.histmersion.Year] = None,
+    doi: Option[Doi] = None,
+    year: Option[Year] = None,
     venue: Option[IngestMeta.Venue] = None,
     summary: Option[IngestMeta.Summary] = None,
-    provenance: IngestMeta.Provenance = com.histmersion.domain.library.ingest.IngestMeta.Provenance("oa"),
+    provenance: IngestMeta.Provenance = IngestMeta.Provenance("oa"),
     /** `references` (and other typed) edges discovered while acquiring. */
     edges: List[Edge] = Nil,
     citedByCount: Option[IngestMeta.CitedByCount] = None,
@@ -19,16 +23,16 @@ final case class IngestMeta(
 
 object IngestMeta:
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Authors extends RefinedType[String, Pure]
   type Venue = Venue.T
-  object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends RefinedType[String, Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provenance extends RefinedType[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedByCount extends RefinedType[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfluentialCitations extends RefinedType[Int, Pure]

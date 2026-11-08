@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import hearth.kindlings.optics.syntax.*
 
@@ -16,6 +17,7 @@ import com.histmersion.util.database.Transactor
 
 import sttp.model.StatusCode
 import com.histmersion.api.Api
+import com.histmersion.domain.catalogue.periods.BPeriodRow
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the
@@ -34,7 +36,7 @@ final class MapTileService(
 ):
   import MapTiles.*
 
-  val cache: TileCache = TileCache(() => com.histmersion.ByteCount.assume(settings().cacheMb.value.toLong.max(1) * 1024 * 1024))
+  val cache: TileCache = TileCache(() => ByteCount.assume(settings().cacheMb.value.toLong.max(1) * 1024 * 1024))
 
   def tile(q: TilesApi.TileQuery): Either[Api.Error, TilesApi.TileAnswer] =
     val s = settings()
@@ -146,7 +148,7 @@ final class MapTileService(
         val cells = db.read(TileRepo.cells(media.candidates(
               q,
               window(q.filter).map((lo, hi) =>
-                (com.histmersion.domain.catalogue.periods.BPeriodRow.PLo(lo.value), com.histmersion.domain.catalogue.periods.BPeriodRow.PHi(hi.value))
+                (BPeriodRow.PLo(lo.value), BPeriodRow.PHi(hi.value))
               ),
               TileRepo.envelope(c)
             ), c, grid))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.managers.ManagerContext
@@ -24,6 +25,10 @@ import hearth.kindlings.optics.syntax.*
 import java.time.Instant
 import scala.collection.mutable.Builder
 import com.histmersion.api.Api
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.automation.Goal
+import com.histmersion.api.library.UpstreamQuota
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
@@ -77,18 +82,18 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       ManagerLight.Id("acquire-recheck") -> lines(work.acquireRecheck.tick(now).map(_.value))
     )
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
+  def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
-        StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000)))
-      case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
+        StepFacts.Finished(ManagerPolicy.ItemOutcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000)))
+      case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
   override def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
       item: ManagerItem,
-      run: Option[com.histmersion.domain.automation.Run.Id],
+      run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
     if item.kind.value == AcquisitionSweep || item.kind.value == CurrencyCheck then
@@ -113,18 +118,18 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       }
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
-  private def closeLine(c: ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[String] =
+  private def closeLine(c: ManagerContext, run: Run.Id): Option[String] =
     c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => io.circe.parser.decode[String](o.value).toOption)
 
   def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case OaIngest =>
-        com.histmersion.domain.library.Doi.normalize(raw.value)
+        Doi.normalize(raw.value)
           .map(d => ManagerContext.ItemTarget(d.value))
           .toRight(Api.Error(Api.Error.Message(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)")))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
-        com.histmersion.domain.automation.Goal.Slug
+        Goal.Slug
           .option(g)
           .toRight(Api.Error(Api.Error.Message(s"No goal '$g'")))
           .flatMap(work.agents.host.goal(_))
@@ -152,10 +157,10 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       .setTo(backlog.totalDays.map(d => Autopilot.EngineStatus.BacklogDays(d.value)))
 
   /** The metered upstreams' budgets the autopilot's page shows. */
-  def upstreams(now: Instant): List[com.histmersion.api.library.UpstreamQuota] = site.upstreamQuotas(now)
+  def upstreams(now: Instant): List[UpstreamQuota] = site.upstreamQuotas(now)
 
   /** The acquisition list's re-check's finds count against the shared ingest cap too. */
-  override def ingestedToday(now: Instant): com.histmersion.RowCount =
+  override def ingestedToday(now: Instant): RowCount =
     work.acquireRecheck.fetchedToday(now)
 
   override def busy: Boolean = work.acquireRecheck.jobRunning
@@ -170,14 +175,14 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   ): Option[ManagerLight.Id] =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
-        com.histmersion.domain.automation.Goal.Slug.option(item.target.value).flatMap(work.agents.host.goal(_).toOption) match
+        Goal.Slug.option(item.target.value).flatMap(work.agents.host.goal(_).toOption) match
           case None =>
             c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Some(g) =>
             // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule
             // stops spending model quota on sweeps that change nothing
             val swept =
-              Option.when(item.kind.value == AcquisitionSweep)(work.acquisition.sweepCandidates(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)))
+              Option.when(item.kind.value == AcquisitionSweep)(work.acquisition.sweepCandidates(Goal.Slug.assume(g.slug.value), dryRun = AgentUpstream.SweepCandidatesDryRun(false)))
             swept.filter(WatchManagerKind.nothingNew).flatMap(_.toOption) match
               case Some(s) =>
                 c.settleNow(
@@ -185,7 +190,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                   item,
                   ItemStatus.Done,
                   ManagerContext.SettleNowWhy(
-                    s"no new candidates from the goal's watches (${Plural.count(Plural.CountN(s.watches.size.toLong), com.histmersion.api.Plural.CountSingular("watch"), com.histmersion.api.Plural.CountPlural("watches"))} " +
+                    s"no new candidates from the goal's watches (${Plural.count(Plural.CountN(s.watches.size.toLong), Plural.CountSingular("watch"), Plural.CountPlural("watches"))} " +
                       s"read, ${s.found} found, all known) — no agent run"
                   )
                 )
@@ -214,10 +219,10 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                 val allowed = if autoOn then IngestBacklog.sweepAllowance(own, shared, mine, all).value else 0
                 val auto = if !sweep then ""
                 else if autoOn then
-                  s"; auto-ingest of legal open access: ${Plural.count(Plural.CountN(allowed.toLong), com.histmersion.api.Plural.CountSingular("work"))} left today" +
+                  s"; auto-ingest of legal open access: ${Plural.count(Plural.CountN(allowed.toLong), Plural.CountSingular("work"))} left today" +
                     shared.fold("")(n => s" (all watchers: $n left)") +
                     (if all.value > 0 then
-                       s"; ${Plural.count(Plural.CountN(all.value.toLong), com.histmersion.api.Plural.CountSingular("work"))} wait in the ingest backlog first" +
+                       s"; ${Plural.count(Plural.CountN(all.value.toLong), Plural.CountSingular("work"))} wait in the ingest backlog first" +
                          (if mine.value > 0 then s" (${mine.value} of them its own)" else "")
                      else "") +
                     "; the open-access picks past it wait in the backlog"

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.domain.ItemKind
 import com.histmersion.util.database.Transactor
@@ -10,4 +11,4 @@ final class PictureReferable(db: Transactor) extends TableReferable(db, List(Pic
 object PictureReferable:
   val Kind: ItemKind = ItemKind("picture")
 
-  val Table: RecordTable = RecordTable(Kind, com.histmersion.util.identity.RecordTable.Table("assets"), com.histmersion.util.identity.RecordTable.Key("t.uid::text"), com.histmersion.util.identity.RecordTable.Title("t.caption"), Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")), None)
+  val Table: RecordTable = RecordTable(Kind, RecordTable.Table("assets"), RecordTable.Key("t.uid::text"), RecordTable.Title("t.caption"), Some(RecordTable.Uid("t.uid")), None)

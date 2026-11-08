@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.notes
+package com.histmersion
+package domain.personal.notes
 
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{ItemKey, Referables}

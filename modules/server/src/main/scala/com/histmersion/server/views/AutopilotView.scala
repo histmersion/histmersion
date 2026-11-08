@@ -1,4 +1,5 @@
-package com.histmersion.server.views
+package com.histmersion
+package server.views
 
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.api.automation.{AgentMode, Autopilot}

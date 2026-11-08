@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import hearth.kindlings.optics.syntax.*
 
@@ -24,22 +25,30 @@ import com.histmersion.db.*
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.AgentToolsConfig
+import com.histmersion.config.DbConfig
+import com.histmersion.util.storage.Blob
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.workflows.LibraryAgentTools
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still
   * finds a quotation past the slice, and `query` shows few rows. Exactly what the agent MCP endpoint answers (it calls
   * the same tools). Skipped without HISTMERSION_TEST_DB_URL; writes only `zztool*` rows of a `*_test` database.
   */
-class AgentToolCapSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class AgentToolCapSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Ck = "zztool2020_dragon"
-  private val Caps = AgentToolsConfig(resultMaxChars = com.histmersion.config.AgentToolsConfig.ResultMaxChars(3000), bodyChars = com.histmersion.config.AgentToolsConfig.BodyChars(1200), queryMaxRows = com.histmersion.config.AgentToolsConfig.QueryMaxRows(5))
+  private val Caps = AgentToolsConfig(resultMaxChars = AgentToolsConfig.ResultMaxChars(3000), bodyChars = AgentToolsConfig.BodyChars(1200), queryMaxRows = AgentToolsConfig.QueryMaxRows(5))
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.modify(_.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private lazy val deps =
     val ds = testPool(cfg.db)
     Migrate.run(ds)
@@ -49,7 +58,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   private object NoConverter extends ConverterClient:
     def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
     def convert(
-        file: com.histmersion.util.storage.Blob,
+        file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(ConverterClient.Problem("not used"))
@@ -65,21 +74,21 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
     clean()
-    val put = com.histmersion.api.library.Source.Put(
+    val put = Source.Put(
       com.histmersion.api.library.Title("How to Kill a Dragon"),
       authors = (List("Calvert Watkins")).map(com.histmersion.api.library.AuthorName.apply),
-      year = (Some(1995)).map(com.histmersion.api.catalogue.Year.apply),
+      year = (Some(1995)).map(Year.apply),
       status = Some(Source.Status.Foundational),
-      topics = List(com.histmersion.api.library.Source.Topics("dragon_slaying_myth"), com.histmersion.api.library.Source.Topics("pie_religion")),
-      summary = Some(com.histmersion.api.library.Source.Summary("The book reconstructs the dragon-slaying formula.")),
+      topics = List(Source.Topics("dragon_slaying_myth"), Source.Topics("pie_religion")),
+      summary = Some(Source.Summary("The book reconstructs the dragon-slaying formula.")),
       body = Some(Source.OcrMarkdown(Body)),
-      notes = Some(com.histmersion.api.library.Source.Notes(Notes)),
+      notes = Some(Source.Notes(Notes)),
       findings = List(
-        Finding.Input(com.histmersion.api.library.Finding.Claim("The formula *gʷhen- dhgʷhim recurs across the traditions.")),
-        Finding.Input(com.histmersion.api.library.Finding.Claim("The formula is Proto-Indo-European."))
+        Finding.Input(Finding.Claim("The formula *gʷhen- dhgʷhim recurs across the traditions.")),
+        Finding.Input(Finding.Claim("The formula is Proto-Indo-European."))
       )
     )
-    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zztool2020_dragon"), put).isRight)
+    assert(h.library.sources.put(Citekey("zztool2020_dragon"), put).isRight)
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def call(box: Toolbox, t: ToolName, args: Json): String =
@@ -92,13 +101,13 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   test("the record: summary and findings whole, chip links gone, the notes cut and saying how to read on"):
     val full = call(
       uncapped,
-      com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
+      LibraryAgentTools.GetSource,
       Json.obj("citekey" -> Ck.asJson)
     )
     assert(full.length > Caps.resultMaxChars.value, s"the handler's own answer is long: ${full.length}")
     val r = call(
       capped,
-      com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
+      LibraryAgentTools.GetSource,
       Json.obj("citekey" -> Ck.asJson, "section" -> "all".asJson)
     )
     assert(r.length <= Caps.resultMaxChars.value, r.length)
@@ -114,7 +123,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   test("a body read without chars is a short slice that says where to read on; passages reaches past it"):
     val r = call(
       capped,
-      com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
+      LibraryAgentTools.GetSource,
       Json.obj("citekey" -> Ck.asJson, "section" -> "body".asJson)
     )
     assert(
@@ -125,14 +134,14 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
     val asked =
       call(
         capped,
-        com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
+        LibraryAgentTools.GetSource,
         Json.obj("citekey" -> Ck.asJson, "offset" -> 0.asJson, "chars" -> 50000.asJson)
       )
     assert(asked.length <= Caps.resultMaxChars.value, s"an asked-for slice is held to the cap too: ${asked.length}")
     val p =
       call(
         capped,
-        com.histmersion.domain.library.workflows.LibraryAgentTools.Passages,
+        LibraryAgentTools.Passages,
         Json.obj("citekey" -> Ck.asJson, "query" -> "slew the serpent".asJson)
       )
     assert(p.contains("**slew the serpent**") || p.toLowerCase.contains("slew the serpent"), p)
@@ -140,7 +149,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
     val at =
       call(
         capped,
-        com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
+        LibraryAgentTools.GetSource,
         Json.obj("citekey" -> Ck.asJson, "offset" -> off.asJson, "chars" -> 1500.asJson)
       )
     assert(at.contains("slew the serpent"), at)
@@ -148,7 +157,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   test("query: a few rows, marked, with how to ask for less"):
     val r = call(
       capped,
-      com.histmersion.domain.library.workflows.LibraryAgentTools.Query,
+      LibraryAgentTools.Query,
       Json.obj("sql" -> "SELECT g AS n FROM generate_series(1, 40) g".asJson)
     )
     assert(r.startsWith("### 5 row(s) (truncated by the row cap)"), r.take(80))
@@ -156,7 +165,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
     val all =
       call(
         uncapped,
-        com.histmersion.domain.library.workflows.LibraryAgentTools.Query,
+        LibraryAgentTools.Query,
         Json.obj("sql" -> "SELECT g AS n FROM generate_series(1, 40) g".asJson)
       )
     assert(all.startsWith("### 40 row(s)"), all.take(40))
@@ -164,7 +173,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   test("search answers with a topic alone, compact and without chip links"):
     val r = call(
       capped,
-      com.histmersion.domain.library.workflows.LibraryAgentTools.Search,
+      LibraryAgentTools.Search,
       Json.obj("topics" -> List("dragon_slaying_myth").asJson)
     )
     assert(r.contains(Ck) && !r.contains("(/#"), r)

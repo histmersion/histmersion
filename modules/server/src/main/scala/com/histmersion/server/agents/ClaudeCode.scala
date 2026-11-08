@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
@@ -9,24 +10,30 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.system.JvmHome
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.config.ServerConfig
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.
   */
 object ClaudeCode:
   type Argument = Argument.T
-  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Argument extends RefinedType[String, Pure]
   type ModelId = ModelRef.Model
   val ModelId: ModelRef.Model.type = ModelRef.Model
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type McpConfigToken = McpConfigToken.T
-  object McpConfigToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object McpConfigToken extends RefinedType[String, Pure]
 
   /** The typed answer's JSON Schema, as text for `--json-schema`. */
   type SchemaJson = SchemaJson.T
-  object SchemaJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaJson extends RefinedType[String, Pure]
 
   val McpServer = AgentDefinitions.McpServer
   def toolId(name: ToolUse.Tool): String = ToolStyle.Claude.tool(name)
@@ -55,14 +62,14 @@ object ClaudeCode:
   object Launch:
     object Agent:
       type PluginDir = PluginDir.T
-      object PluginDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object PluginDir extends RefinedType[String, Pure]
       type Name = Name.T
-      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Name extends RefinedType[String, Pure]
       type Settings = Settings.T
-      object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Settings extends RefinedType[String, Pure]
     object SystemPrompt:
       type File = File.T
-      object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object File extends RefinedType[String, Pure]
 
   /** `claude -p …`, in a fixed order. `offered` are the step's tools (MCP names, unprefixed); `all` every agent tool,
     * so the ones not offered are removed from the model's context outright; `web` the built-in web tools a web role
@@ -126,7 +133,7 @@ object ClaudeCode:
       token: Option[RunGrant.Token],
       quotaUrl: GenSettings.QuotaUrl,
       env: java.util.Map[String, String]
-  )(using com.histmersion.util.system.JvmHome): Unit =
+  )(using JvmHome): Unit =
     cfg.envChanges.foreach {
       case (k, Some(v)) => val _ = env.put(k.value, v.value)
       case (k, None)    => val _ = env.remove(k.value)
@@ -180,7 +187,7 @@ object ClaudeCode:
   /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai connectors, the config
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
-  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: ClaudePlanConfig.ProbeMaxTokens, env: java.util.Map[String, String])(using com.histmersion.util.system.JvmHome): Unit =
+  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: ClaudePlanConfig.ProbeMaxTokens, env: java.util.Map[String, String])(using JvmHome): Unit =
     environment(cfg, LlmCall.MaxTokens(maxTokens.value), None, GenSettings.QuotaUrl(""), env)
     val _ = env.remove(AgentGenerator.QuotaUrlEnv)
     val _ = env.remove(AgentGenerator.TokenEnv)
@@ -197,10 +204,10 @@ object ClaudeCode:
           val rs = j.hcursor
             .downField("rate_limit_info")
             .focus
-            .map(PlanPools.claudeReadings(_, com.histmersion.api.automation.PlanQuota.Source.Run, com.histmersion.api.automation.PlanQuota.Now(now)))
+            .map(PlanPools.claudeReadings(_, PlanQuota.Source.Run, PlanQuota.Now(now)))
             .getOrElse(Nil)
-          pools.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, rs)
-          pools.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(b._1.value))
+          pools.record(PlanQuota.PoolId.ClaudePlan, rs)
+          pools.blocked(PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(b._1.value))
       }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
@@ -226,21 +233,21 @@ object ClaudeCode:
 
   object Result:
     type Subtype = Subtype.T
-    object Subtype extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Subtype extends RefinedType[String, Pure]
     type IsError = IsError.T
-    object IsError extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsError extends RefinedType[Boolean, Pure]
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
     type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Turns extends RefinedType[Int, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CostUsd extends RefinedType[Double, Pure]
     type Denials = Denials.T
-    object Denials extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Denials extends RefinedType[String, Pure]
     type Errors = Errors.T
-    object Errors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Errors extends RefinedType[String, Pure]
     type TerminalReason = TerminalReason.T
-    object TerminalReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TerminalReason extends RefinedType[String, Pure]
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their results, in order), the
     * result line, the usage and the model that served it — the result's `modelUsage` entry with the most output tokens
@@ -254,14 +261,14 @@ object ClaudeCode:
       usage: TokenUsage,
       modelId: Option[ModelRef.Model],
       mcpProblem: Option[Outcome.McpProblem],
-      readings: List[com.histmersion.api.automation.PlanQuota.Reading] = Nil,
+      readings: List[PlanQuota.Reading] = Nil,
       served: List[(ModelRef.Model, TokenUsage)] = Nil,
-      firstCall: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens] = None
+      firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
   )
 
   object Outcome:
     type McpProblem = McpProblem.T
-    object McpProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object McpProblem extends RefinedType[String, Pure]
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -280,7 +287,7 @@ object ClaudeCode:
     * definitions and the conversation so far. None when the event carries no usage, or only zeros (a `<synthetic>`
     * message the CLI made up, not a call).
     */
-  def firstCallTokens(message: Json): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens] =
+  def firstCallTokens(message: Json): Option[AgentRepo.StepRecord.FirstCallTokens] =
     val c = message.hcursor
     if c.downField("model").as[String].contains("<synthetic>") then None
     else
@@ -290,7 +297,7 @@ object ClaudeCode:
           tokens(u, "input_tokens") + tokens(u, "cache_read_input_tokens") + tokens(u, "cache_creation_input_tokens")
         )
         .filter(_ > 0L)
-        .map(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens(_))
+        .map(AgentRepo.StepRecord.FirstCallTokens(_))
 
   private def text(content: Json): String =
     content.asString.getOrElse(
@@ -310,8 +317,8 @@ object ClaudeCode:
     var model: Option[ModelRef.Model] = None
     var served: List[(ModelRef.Model, TokenUsage)] = Nil
     var mcpProblem: Option[Outcome.McpProblem] = None
-    var firstCall: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens] = None
-    val readings = List.newBuilder[com.histmersion.api.automation.PlanQuota.Reading]
+    var firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
+    val readings = List.newBuilder[PlanQuota.Reading]
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
@@ -359,7 +366,7 @@ object ClaudeCode:
           c.downField("rate_limit_info")
             .focus
             .foreach(i =>
-              readings ++= PlanPools.claudeReadings(i, com.histmersion.api.automation.PlanQuota.Source.Run, com.histmersion.api.automation.PlanQuota.Now(now))
+              readings ++= PlanPools.claudeReadings(i, PlanQuota.Source.Run, PlanQuota.Now(now))
             )
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
@@ -406,7 +413,7 @@ object ClaudeCode:
 
   object Limit:
     type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Message extends RefinedType[String, Pure]
 
   def usageLimit(r: Result): Option[Limit] =
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")
@@ -435,7 +442,7 @@ object ClaudeCode:
       user: LlmCall.User,
       schema: ResponseSchema[Out]
   ): Either[Limit, AgentResult[Either[AgentFailure, Out]]] =
-    val r = o.result.getOrElse(Result(com.histmersion.server.agents.ClaudeCode.Result.Subtype("missing"), isError = com.histmersion.server.agents.ClaudeCode.Result.IsError(true), com.histmersion.server.agents.ClaudeCode.Result.Text(""), None, com.histmersion.server.agents.ClaudeCode.Result.Turns(0), None, Nil, Nil))
+    val r = o.result.getOrElse(Result(Result.Subtype("missing"), isError = Result.IsError(true), Result.Text(""), None, Result.Turns(0), None, Nil, Nil))
     usageLimit(r) match
       case Some(l) => Left(l)
       case None    =>
@@ -493,6 +500,6 @@ object ClaudeCode:
   object Env:
     /** `127.x`, `::1`, `localhost` — a bind nobody else can reach. `0.0.0.0` (every interface) is not. */
 
-    def isLoopback(host: com.histmersion.config.ServerConfig.Host): Boolean =
+    def isLoopback(host: ServerConfig.Host): Boolean =
       val h = host.value.trim.toLowerCase(java.util.Locale.ROOT).stripPrefix("[").stripSuffix("]")
       h == "localhost" || h == "::1" || h.startsWith("127.")

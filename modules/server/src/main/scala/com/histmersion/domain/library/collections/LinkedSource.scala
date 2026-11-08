@@ -1,12 +1,18 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
+
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.AuthorName
 
 /** A source linked to an item of the Calibre library (`sources.calibre_id`), with what an audit compares. */
-final case class LinkedSource(citekey: com.histmersion.domain.library.Citekey, id: LinkedSource.Id, title: LinkedSource.Title, authors: List[LinkedSource.Authors], year: Option[com.histmersion.Year])
+final case class LinkedSource(citekey: Citekey, id: LinkedSource.Id, title: LinkedSource.Title, authors: List[LinkedSource.Authors], year: Option[Year])
 
 object LinkedSource:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-  type Authors = com.histmersion.domain.AuthorName
-  val Authors: _root_.com.histmersion.domain.AuthorName.type = _root_.com.histmersion.domain.AuthorName
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+  type Authors = AuthorName
+  val Authors: AuthorName.type = AuthorName

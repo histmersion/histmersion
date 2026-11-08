@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,6 +7,9 @@ import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.{Lpf, Place}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
   * HISTMERSION_TEST_DB_URL like every other server suite.
@@ -17,7 +21,7 @@ import com.histmersion.api.catalogue.{Lpf, Place}
   * path is covered by `TreeRepoSuite`.
   */
 class TreeHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val client = java.net.http.HttpClient.newHttpClient()
@@ -51,13 +55,13 @@ class TreeHttpSuite extends munit.FunSuite:
   private val places = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_world"), com.histmersion.api.catalogue.Place.Label("Zzg World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg World")))
+        Place(Place.Id("zzg_world"), Place.Label("Zzg World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        List(Place.Name(Place.Name.Value("Zzg World")))
       ),
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_land"), com.histmersion.api.catalogue.Place.Label("Zzg Land"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg Land"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzg_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzg_world")))
+        Place(Place.Id("zzg_land"), Place.Label("Zzg Land"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        List(Place.Name(Place.Name.Value("Zzg Land"))),
+        List(Place.Relation(Place.Relation.ChildId("zzg_land"), Place.Relation.ParentId("zzg_world")))
       )
     )
   )
@@ -71,9 +75,9 @@ class TreeHttpSuite extends munit.FunSuite:
 
   test("by=time,region returns the nested tree; by=time keeps the flat strip"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       val filter = "tag=zzg-tree&from=-1600&to=-1200"
 

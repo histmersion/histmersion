@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.reading
+package com.histmersion
+package domain.personal.reading
 
 import com.histmersion.api.personal.{ItemKey as WireKey, ReadMark as WireReadMark}
 import com.histmersion.domain.personal.PersonalState.StoredMark

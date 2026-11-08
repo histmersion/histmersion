@@ -1,10 +1,13 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Dataset, PeriodODataset}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.api.catalogue.Period
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
@@ -79,16 +82,16 @@ final class PeriodImports(
 
 object PeriodImports:
   type Dataset = Dataset.T
-  object Dataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dataset extends RefinedType[String, Pure]
   type DatasetBody = DatasetBody.T
-  object DatasetBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatasetBody extends RefinedType[String, Pure]
   /** The text of a PeriodO dataset: the bundled seed or a dump. */
   type Document = Document.T
-  object Document extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Document extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Replace = Replace.T
-  object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Replace extends RefinedType[Boolean, Pure]
   /** The `seed_versions` name of the bundled period seed. */
 
 

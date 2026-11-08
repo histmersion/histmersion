@@ -1,4 +1,5 @@
-package com.histmersion.util.mcp
+package com.histmersion
+package util.mcp
 
 import hearth.kindlings.circederivation.Configuration
 
