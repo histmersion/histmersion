@@ -88,3 +88,5 @@ The clients see only `api` (`com.histmersion.api...`), its unconstrained newtype
 ## Style of what you write (applies to every line you touch)
 
 Refer to names as their scope allows: inside `JobType` write `JobType.Wire("goal-plan")`, not the fully qualified path; no new `_root_.` or `com.histmersion.` prefixes where an import or the enclosing package resolves the name. Replace a `type X = a.B.C` + `val X: a.B.C.type = a.B.C` pair you touch with `export a.B.C`. When you need an operation the type lacks (`values.find(_.wire.value.equalsIgnoreCase(s.value))`), add it to the type's companion as an extension and call it.
+
+Literal constructors (`Citekey("x")`, `PageSize(20)`) are allowed anywhere (user, 2026-11-08): Iron checks them at compile time.
