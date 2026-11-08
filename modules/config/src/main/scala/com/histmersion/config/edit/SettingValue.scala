@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One value to write into the config file. */
-enum SettingValue:
+enum SettingValue derives CanEqual:
   case Text(text: SettingValue.Text.Value)
   case Number(number: BigDecimal)
   case Flag(flag: SettingValue.Flag.Value)

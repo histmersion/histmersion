@@ -2,7 +2,7 @@ package com.histmersion
 package config.edit
 
 /** One change to the config file: a setting written, or taken out (back to its default). */
-enum SettingEdit(val key: SettingKey):
+enum SettingEdit(val key: SettingKey) derives CanEqual:
   case Set(setting: SettingKey, value: SettingValue) extends SettingEdit(setting)
   case Unset(setting: SettingKey) extends SettingEdit(setting)
 

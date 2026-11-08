@@ -14,6 +14,8 @@ import scala.util.Try
   * includes, unresolved, and `here` tells its own origins.
   */
 object ConfigTextEdit:
+  private given CanEqual[ConfigObject, ConfigObject] = CanEqual.derived
+
 
 
   def apply(

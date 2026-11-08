@@ -2,7 +2,7 @@ package com.histmersion
 package config.edit
 
 /** How a setting that holds a credential may be written into the config file. */
-enum SecretRule:
+enum SecretRule derives CanEqual:
   /** Not a credential. */
   case NotSecret
 
