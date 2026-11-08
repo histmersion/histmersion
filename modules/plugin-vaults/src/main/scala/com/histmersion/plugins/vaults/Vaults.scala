@@ -1,10 +1,15 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.plugin.Secret
+import com.histmersion.plugin.Plugin
 
 /** The first-party secret vaults (docs/research-plugins.md §3.7): each a plugin, built into the server and DISABLED
   * until `histmersion.plugins.<id>.enabled = true`. Each one runs the vault's own CLI as a subprocess ([[Subprocess]])
@@ -14,11 +19,11 @@ import scala.concurrent.duration.*
   */
 object Vaults:
   type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Field extends RefinedType[String, Pure]
   type Operation = Operation.T
-  object Operation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Operation extends RefinedType[String, Pure]
   type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Path extends RefinedType[String, Pure]
 
   /** The version these plugins report (they ship with the server, and change with it). */
   val Version = "0.1.0"
@@ -27,7 +32,7 @@ object Vaults:
   private[vaults] def timeout(seconds: Int): FiniteDuration = seconds.max(1).seconds
 
   /** Pure: `<entry>#<field>`, the field defaulting to `dflt` (split at the LAST `#`). */
-  def entryAndField(ref: com.histmersion.plugin.Secret.Vault.ResolveRef, dflt: com.histmersion.plugins.vaults.Vaults.Field): (com.histmersion.plugins.vaults.KeePassXcSession.Entry, com.histmersion.plugins.vaults.Vaults.Field) =
+  def entryAndField(ref: Secret.Vault.ResolveRef, dflt: Field): (KeePassXcSession.Entry, Field) =
     ref.value.lastIndexOf('#') match
       case -1 => (KeePassXcSession.Entry(ref.value.trim), dflt)
       case i  => (KeePassXcSession.Entry(ref.value.take(i).trim), Option(ref.value.drop(i + 1).trim).filter(_.nonEmpty).fold(dflt)(f => Field(f)))
@@ -35,20 +40,20 @@ object Vaults:
   /** A Secret given in a vault's own settings (its unlock password, its session), resolved through the host; `None`
     * when the setting is `null`.
     */
-  private[vaults] def optional(s: Option[Secret], ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.Context.SecretResultPart1, Option[com.histmersion.plugin.Plugin.Context.SecretResultPart2]] =
-    s.fold[Either[com.histmersion.plugin.Plugin.Context.SecretResultPart1, Option[com.histmersion.plugin.Plugin.Context.SecretResultPart2]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
+  private[vaults] def optional(s: Option[Secret], ctx: Plugin.Context): Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]] =
+    s.fold[Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
 
   /** Pure: `~/x` against HOME. */
-  private[vaults] def expand(p: com.histmersion.plugins.vaults.Vaults.Path, home: Option[com.histmersion.plugin.Plugin.Context.EnvResult]): com.histmersion.plugins.vaults.Vaults.Path =
+  private[vaults] def expand(p: Path, home: Option[Plugin.Context.EnvResult]): Path =
     home.filter(_ => p == Path("~") || p.value.startsWith("~/")).fold(p)(h => Path(h.value + p.value.drop(1)))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
   private[vaults] def answer[E](
-      vault: com.histmersion.plugin.Secret.Vault.NameResult,
-      ref: com.histmersion.plugin.Secret.Vault.ResolveRef,
+      vault: Secret.Vault.NameResult,
+      ref: Secret.Vault.ResolveRef,
       r: Either[E, Subprocess.Result],
       classify: String => Option[String]
-  ): Either[com.histmersion.plugin.Secret.Vault.ResolveResultPart1, com.histmersion.plugin.Secret.Vault.ResolveResultPart2] =
+  ): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
     r.left.map(e => Secret.Vault.ResolveResultPart1(e.toString)).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(Subprocess.ValueOut(res.out.value)).value

@@ -1,4 +1,5 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -6,6 +7,8 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.concurrent.duration.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 // ── Bitwarden ───────────────────────────────────────────────────────────────────────────────────
 
@@ -18,8 +21,8 @@ final case class BitwardenConfig(cli: BitwardenConfig.Cli, session: Option[Secre
 
 object BitwardenConfig:
   type Cli = Cli.T
-  object Cli extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cli extends RefinedType[String, Pure]
   type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Field extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]

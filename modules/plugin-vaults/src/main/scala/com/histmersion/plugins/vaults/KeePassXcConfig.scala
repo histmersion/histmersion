@@ -1,4 +1,5 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -6,6 +7,8 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.concurrent.duration.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 // ── KeePassXC ───────────────────────────────────────────────────────────────────────────────────
 
@@ -29,16 +32,16 @@ final case class KeePassXcConfig(
 
 object KeePassXcConfig:
   type Cli = Cli.T
-  object Cli extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cli extends RefinedType[String, Pure]
   type Database = Database.T
-  object Database extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Database extends RefinedType[String, Pure]
   type KeyFile = KeyFile.T
-  object KeyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeyFile extends RefinedType[String, Pure]
   type Attribute = Attribute.T
-  object Attribute extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attribute extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type YubikeyTimeoutSeconds = YubikeyTimeoutSeconds.T
-  object YubikeyTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YubikeyTimeoutSeconds extends RefinedType[Int, Pure]
   type Ykman = Ykman.T
-  object Ykman extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ykman extends RefinedType[String, Pure]

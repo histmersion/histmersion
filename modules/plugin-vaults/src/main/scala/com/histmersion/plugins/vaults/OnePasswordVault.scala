@@ -1,10 +1,13 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
+import com.histmersion.plugin.Processes
+import com.histmersion.plugin.Secret
 
 final class OnePasswordVault(
     val name: Secret.Vault.NameResult,
@@ -12,8 +15,8 @@ final class OnePasswordVault(
     account: Option[OnePasswordConfig.Account],
     token: Option[Plugin.Context.SecretResultPart2],
     timeout: FiniteDuration
-)(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
-  def resolve(ref: com.histmersion.plugin.Secret.Vault.ResolveRef): Either[com.histmersion.plugin.Secret.Vault.ResolveResultPart1, com.histmersion.plugin.Secret.Vault.ResolveResultPart2] =
+)(using processes: Processes) extends Secret.Vault:
+  def resolve(ref: Secret.Vault.ResolveRef): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
     val r = ref.value.trim
     for
       _ <- Subprocess.plain(Vaults.Operation("the reference"), Subprocess.Text(r)).left.map(e => Secret.Vault.ResolveResultPart1(e.value))
