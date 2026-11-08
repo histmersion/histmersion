@@ -1,7 +1,11 @@
-package com.histmersion.util.console
+package com.histmersion
+package util.console
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 trait Console:
-  def readTerminalLine(prompt: com.histmersion.util.console.Console.Prompt): Option[com.histmersion.util.console.Console.ReadTerminalLineResult] = None
+  def readTerminalLine(prompt: Console.Prompt): Option[Console.ReadTerminalLineResult] = None
   final lazy val out: Console.Output = new Console.Output:
     def print(value: => Any): Unit = write(value)
     def println(value: => Any): Unit = writeLine(value)
@@ -20,17 +24,17 @@ trait Console:
   def errorLine(value: => String): Unit
   def errorLine(): Unit
   def errorFlush(): Unit
-  def readLine(): com.histmersion.util.console.Console.Line
+  def readLine(): Console.Line
 
 object Console:
   type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Line extends RefinedType[String, Pure]
   type Prompt = Prompt.T
-  object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadTerminalLineResult = _root_.com.histmersion.util.console.Console.Line
-  val ReadTerminalLineResult: _root_.com.histmersion.util.console.Console.Line.type = _root_.com.histmersion.util.console.Console.Line
-  type StreamsInputResult = _root_.com.histmersion.util.console.Console.Line
-  val StreamsInputResult: _root_.com.histmersion.util.console.Console.Line.type = _root_.com.histmersion.util.console.Console.Line
+  object Prompt extends RefinedType[String, Pure]
+  type ReadTerminalLineResult = Line
+  val ReadTerminalLineResult: Line.type = Line
+  type StreamsInputResult = Line
+  val StreamsInputResult: Line.type = Line
 
   trait Output:
     def print(value: => Any): Unit
@@ -41,11 +45,11 @@ object Console:
   def system: Console = Streams(
     () => System.out,
     () => System.err,
-    () => _root_.com.histmersion.util.console.Console.Line(scala.io.StdIn.readLine()),
-    prompt => Option(System.console()).flatMap(c => Option(_root_.com.histmersion.util.console.Console.Line(c.readLine((prompt).value))))
+    () => Line(scala.io.StdIn.readLine()),
+    prompt => Option(System.console()).flatMap(c => Option(Line(c.readLine((prompt).value))))
   )
-  def standard: Console = Streams(() => scala.Console.out, () => scala.Console.err, () => _root_.com.histmersion.util.console.Console.Line(scala.io.StdIn.readLine()))
-  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => com.histmersion.util.console.Console.StreamsInputResult): Console =
+  def standard: Console = Streams(() => scala.Console.out, () => scala.Console.err, () => Line(scala.io.StdIn.readLine()))
+  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => StreamsInputResult): Console =
     Streams(() => out, () => err, input, prompt => { err.print(prompt); err.flush(); Option(input()) })
 
   final private class Streams(
@@ -54,7 +58,7 @@ object Console:
       input: () => Streams.InputResult,
       terminal: Streams.TerminalArg1 => Option[Streams.TerminalResult] = _ => None
   ) extends Console:
-    override def readTerminalLine(prompt: _root_.com.histmersion.util.console.Console.Prompt): _root_.scala.Option[_root_.com.histmersion.util.console.Console.Line] =
+    override def readTerminalLine(prompt: Prompt): Option[Line] =
       terminal(prompt)
     override def outputFlush(): Unit = stdout().flush()
     def write(value: Any): Unit = stdout().print(String.valueOf(value))
@@ -68,15 +72,15 @@ object Console:
       stream.println(value)
     def errorLine(): Unit = stderr().println()
     def errorFlush(): Unit = stderr().flush()
-    def readLine(): _root_.com.histmersion.util.console.Console.Line = input()
+    def readLine(): Line = input()
 
   object Streams:
-    type InputResult = _root_.com.histmersion.util.console.Console.Line
-    val InputResult: _root_.com.histmersion.util.console.Console.Line.type = _root_.com.histmersion.util.console.Console.Line
-    type TerminalArg1 = _root_.com.histmersion.util.console.Console.Prompt
-    val TerminalArg1: _root_.com.histmersion.util.console.Console.Prompt.type = _root_.com.histmersion.util.console.Console.Prompt
-    type TerminalResult = _root_.com.histmersion.util.console.Console.Line
-    val TerminalResult: _root_.com.histmersion.util.console.Console.Line.type = _root_.com.histmersion.util.console.Console.Line
+    type InputResult = Line
+    val InputResult: Line.type = Line
+    type TerminalArg1 = Prompt
+    val TerminalArg1: Prompt.type = Prompt
+    type TerminalResult = Line
+    val TerminalResult: Line.type = Line
 
-    type ReadLineResult = _root_.com.histmersion.util.console.Console.Line
-    val ReadLineResult: _root_.com.histmersion.util.console.Console.Line.type = _root_.com.histmersion.util.console.Console.Line
+    type ReadLineResult = Line
+    val ReadLineResult: Line.type = Line
