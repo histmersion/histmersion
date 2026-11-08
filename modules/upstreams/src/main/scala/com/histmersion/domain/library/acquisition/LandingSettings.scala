@@ -1,7 +1,10 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.upstreams.landing.RepositoryLanding
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and
   * the host and platform lists of [[RepositoryLanding.Rules]] (each comma-separated).
@@ -31,25 +34,25 @@ final case class LandingSettings(
 
 object LandingSettings:
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type MaxPages = MaxPages.T
-  object MaxPages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxPages extends RefinedType[Int, Pure]
   type AllowHosts = AllowHosts.T
-  object AllowHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AllowHosts extends RefinedType[String, Pure]
   type DenyHosts = DenyHosts.T
-  object DenyHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DenyHosts extends RefinedType[String, Pure]
   type DenyHostsExtra = DenyHostsExtra.T
-  object DenyHostsExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DenyHostsExtra extends RefinedType[String, Pure]
   type AcademicHostWords = AcademicHostWords.T
-  object AcademicHostWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcademicHostWords extends RefinedType[String, Pure]
   type Generators = Generators.T
-  object Generators extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Generators extends RefinedType[String, Pure]
   type DenyGenerators = DenyGenerators.T
-  object DenyGenerators extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DenyGenerators extends RefinedType[String, Pure]
   type DenyHostWords = DenyHostWords.T
-  object DenyHostWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DenyHostWords extends RefinedType[String, Pure]
   type OaPublisherHosts = OaPublisherHosts.T
-  object OaPublisherHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OaPublisherHosts extends RefinedType[String, Pure]
 
   /** A comma-separated list's entries, trimmed and lower-case. */
   private def entries(list: String): List[String] =

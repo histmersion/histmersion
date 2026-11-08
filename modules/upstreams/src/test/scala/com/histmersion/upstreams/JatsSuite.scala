@@ -1,4 +1,5 @@
-package com.histmersion.upstreams
+package com.histmersion
+package upstreams
 
 /** JATS → Markdown (#1523): the PMC full text an ingest falls back to when no PDF is published. */
 
@@ -12,13 +13,13 @@ class JatsSuite extends munit.FunSuite:
   test("a JATS article is recognised through its prolog, comments and DOCTYPE"):
     assert(Jats.isJats(Jats.Xml(article)))
     assert(Jats.isJats(Jats.Xml("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>")))
-    assert(Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<article/>")))
+    assert(Jats.isJats(Jats.Xml("<article/>")))
 
   test("anything else is not JATS"):
-    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("%PDF-1.4 binary")))
-    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<?xml version=\"1.0\"?><ListBucketResult/>")))
-    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<html><body>Just a moment...</body></html>")))
-    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<articles/>")))
+    assert(!Jats.isJats(Jats.Xml("%PDF-1.4 binary")))
+    assert(!Jats.isJats(Jats.Xml("<?xml version=\"1.0\"?><ListBucketResult/>")))
+    assert(!Jats.isJats(Jats.Xml("<html><body>Just a moment...</body></html>")))
+    assert(!Jats.isJats(Jats.Xml("<articles/>")))
 
   test("title, authors (not editors) and the abstract head the text; a teaser abstract is left out"):
     val lines = md.linesIterator.toList
@@ -64,11 +65,11 @@ class JatsSuite extends munit.FunSuite:
     assertEquals(Jats.entities("a &amp; b &lt;c&gt; &#8212; &#x2014; &local;"), "a & b <c> — — &local;")
 
   test("a truncated or malformed document still yields its text, never an exception"):
-    val out = Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><sec><title>Only</title><p>half a para")).value
+    val out = Jats.toMarkdown(Jats.Xml("<article><body><sec><title>Only</title><p>half a para")).value
     assert(out.contains("## Only"), out)
     assert(out.contains("half a para"), out)
-    assertEquals(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("")).value.trim, "")
-    assert(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><p>a</q></p></body></article>")).value.contains("a"))
+    assertEquals(Jats.toMarkdown(Jats.Xml("")).value.trim, "")
+    assert(Jats.toMarkdown(Jats.Xml("<article><body><p>a</q></p></body></article>")).value.contains("a"))
 
   test("an attribute value may hold a '>'"):
     val out = Jats.toMarkdown(Jats.Xml("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>"""))

@@ -1,4 +1,8 @@
-package com.histmersion.upstreams.wikidata
+package com.histmersion
+package upstreams.wikidata
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class WikidataStatement(property: WikidataStatement.Property, file: WikidataStatement.File, preferred: WikidataStatement.Preferred, order: WikidataStatement.Order)
 
 object WikidataStatement:
@@ -6,18 +10,18 @@ object WikidataStatement:
     * rule for "the" value), else the normal ones — at most `per`.
     */
   type BestPer = BestPer.T
-  object BestPer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BestPer extends RefinedType[Int, Pure]
 
   type Property = Property.T
-  object Property extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Property extends RefinedType[String, Pure]
   type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object File extends RefinedType[String, Pure]
   type Preferred = Preferred.T
-  object Preferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Preferred extends RefinedType[Boolean, Pure]
   type Order = Order.T
-  object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
+  object Order extends RefinedType[Int, Pure]:
+    given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
 
-  def best(statements: List[WikidataStatement], per: com.histmersion.upstreams.wikidata.WikidataStatement.BestPer): List[WikidataStatement] =
+  def best(statements: List[WikidataStatement], per: BestPer): List[WikidataStatement] =
     val preferred = statements.filter((refactorCallback => (refactorCallback.preferred).value))
     (if preferred.nonEmpty then preferred else statements).sortBy(_.order).take((per).value.max(0))

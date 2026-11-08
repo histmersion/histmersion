@@ -1,4 +1,9 @@
-package com.histmersion.upstreams.pmc
+package com.histmersion
+package upstreams.pmc
+
+import com.histmersion.plugin.WorkKey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class PmcRecord(
     pmcid: PmcRecord.Pmcid,
     openAccess: PmcRecord.OpenAccess,
@@ -9,11 +14,11 @@ final case class PmcRecord(
 )
 
 object PmcRecord:
-  type Pmcid = com.histmersion.plugin.WorkKey.Pmcid
-  val Pmcid: _root_.com.histmersion.plugin.WorkKey.Pmcid.type = _root_.com.histmersion.plugin.WorkKey.Pmcid
+  type Pmcid = WorkKey.Pmcid
+  val Pmcid: WorkKey.Pmcid.type = WorkKey.Pmcid
   type OpenAccess = OpenAccess.T
-  object OpenAccess extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenAccess extends RefinedType[Boolean, Pure]
   type Manuscript = Manuscript.T
-  object Manuscript extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Manuscript extends RefinedType[Boolean, Pure]
   type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object License extends RefinedType[String, Pure]

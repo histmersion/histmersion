@@ -1,30 +1,34 @@
-package com.histmersion.upstreams.dating
+package com.histmersion
+package upstreams.dating
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 object CatalogDating:
   type AstronomicalYear = AstronomicalYear.T
-  object AstronomicalYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object AstronomicalYear extends RefinedType[Long, Pure]:
     extension (a: T)
       def +(d: YearShift): T = apply(a.value + d.value)
       def midpoint(o: T): T = apply(Math.floorDiv(a.value + o.value, 2L))
       def halfWidth(o: T): YearMargin = YearMargin((o.value - a.value) / 2)
   type HistoricalYear = HistoricalYear.T
-  object HistoricalYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object HistoricalYear extends RefinedType[Long, Pure]:
     extension (y: T)
       def <=(o: T): Boolean = y.value <= o.value
       def min(o: T): T = apply(y.value.min(o.value))
       def max(o: T): T = apply(y.value.max(o.value))
   type XsdYearText = XsdYearText.T
-  object XsdYearText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object XsdYearText extends RefinedType[String, Pure]
   type YearMargin = YearMargin.T
-  object YearMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object YearMargin extends RefinedType[Long, Pure]:
     extension (m: T) def forward: YearShift = YearShift(m.value)
   type YearShift = YearShift.T
-  object YearShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object YearShift extends RefinedType[Long, Pure]:
     extension (d: T) def unary_- : T = apply(-d.value)
 
   /** The years a start or an end may be, `lo ≤ hi`. */
 
   type WikidataPrecision = WikidataPrecision.T
-  object WikidataPrecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WikidataPrecision extends RefinedType[Int, Pure]
 
   final case class Bound(lo: HistoricalYear, hi: HistoricalYear)
 
@@ -37,7 +41,7 @@ object CatalogDating:
   )
 
   /** Pure: a year with a ± uncertainty in years (negative or absent = none). */
-  def year(y: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear, plusMinus: Option[com.histmersion.upstreams.dating.CatalogDating.YearMargin] = None): Bound =
+  def year(y: HistoricalYear, plusMinus: Option[YearMargin] = None): Bound =
     val u = plusMinus.filter((_).value > 0).fold(YearShift(0L))(_.forward)
     Bound(shift(y, -u), shift(y, u))
 
@@ -61,7 +65,7 @@ object CatalogDating:
 
   /** Pure: each of the four points held inside `l` — monotone, so the order of the points is kept. */
   def clamp(ts: Span, l: Limits): Span =
-    def c(y: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear): com.histmersion.upstreams.dating.CatalogDating.HistoricalYear = l.floor.fold(y)(y.max(_)).min(l.present)
+    def c(y: HistoricalYear): HistoricalYear = l.floor.fold(y)(y.max(_)).min(l.present)
     Span(ts.notBefore.map(c), ts.beginBy.map(c), ts.endFrom.map(c), ts.notAfter.map(c))
 
   /** Pure: a record stored before the central year and the ± were kept (V088), read back from its span: a start window
@@ -69,7 +73,7 @@ object CatalogDating:
     * importer built it); a cored one is centred on its start window. `None` when the record is undated. Astronomical
     * arithmetic: no year 0.
     */
-  def centralOf(ts: Span): Option[(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear, com.histmersion.upstreams.dating.CatalogDating.YearMargin)] =
+  def centralOf(ts: Span): Option[(HistoricalYear, YearMargin)] =
     val start = (ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter) match
       case (Some(a), None, None, Some(b)) => Some((a, b))
       case (Some(a), Some(b), _, _)       => Some((a, b))
@@ -86,25 +90,25 @@ object CatalogDating:
     * year inside it), widened by one unit each way, because editors do not agree on which year inside the unit they
     * store.
     */
-  def wikidata(isoYear: com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear, precision: com.histmersion.upstreams.dating.CatalogDating.WikidataPrecision): Bound =
+  def wikidata(isoYear: AstronomicalYear, precision: WikidataPrecision): Bound =
     if (precision).value >= 9 then { val h = fromAstronomical(isoYear); Bound(h, h) }
     else
       val unit = math.pow(10, (9 - (precision).value.max(0)).toDouble).toLong
       val lo = Math.floorDiv((isoYear).value, unit) * unit
-      Bound(fromAstronomical(_root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(lo - unit)), fromAstronomical(_root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(lo + 2 * unit - 1)))
+      Bound(fromAstronomical(AstronomicalYear(lo - unit)), fromAstronomical(AstronomicalYear(lo + 2 * unit - 1)))
 
   /** Pure: the astronomical year of an XSD dateTime (`-0051-07-01T00:00:00Z` → -51). */
-  def isoYear(xsd: com.histmersion.upstreams.dating.CatalogDating.XsdYearText): Option[com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear] =
+  def isoYear(xsd: XsdYearText): Option[AstronomicalYear] =
     val s = (xsd).value.trim
     val neg = s.startsWith("-")
     val digits = (if neg || s.startsWith("+") then s.drop(1) else s).takeWhile(_.isDigit)
-    digits.toLongOption.map(v => if neg then _root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(-v) else _root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(v))
+    digits.toLongOption.map(v => if neg then AstronomicalYear(-v) else AstronomicalYear(v))
 
   /** Pure: a historical year as an astronomical one (−1, 1 BCE, is 0). */
-  def toAstronomical(h: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear): com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear = if (h).value < 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear((h).value + 1) else if (h).value == 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear((0).toLong) else _root_.com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear((h).value)
+  def toAstronomical(h: HistoricalYear): AstronomicalYear = if (h).value < 0 then AstronomicalYear((h).value + 1) else if (h).value == 0 then AstronomicalYear((0).toLong) else AstronomicalYear((h).value)
 
   /** Pure: an astronomical year as a historical one (0 is −1, 1 BCE). */
-  def fromAstronomical(a: com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear): com.histmersion.upstreams.dating.CatalogDating.HistoricalYear = if (a).value <= 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.HistoricalYear((a).value - 1) else _root_.com.histmersion.upstreams.dating.CatalogDating.HistoricalYear((a).value)
+  def fromAstronomical(a: AstronomicalYear): HistoricalYear = if (a).value <= 0 then HistoricalYear((a).value - 1) else HistoricalYear((a).value)
 
   /** Pure: a historical year `d` years later (earlier when negative), across the missing year 0. */
-  def shift(h: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear, d: com.histmersion.upstreams.dating.CatalogDating.YearShift): com.histmersion.upstreams.dating.CatalogDating.HistoricalYear = fromAstronomical(toAstronomical(h) + d)
+  def shift(h: HistoricalYear, d: YearShift): HistoricalYear = fromAstronomical(toAstronomical(h) + d)
