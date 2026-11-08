@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit.internal
+package com.histmersion
+package plugin.testkit.internal
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.LogLine

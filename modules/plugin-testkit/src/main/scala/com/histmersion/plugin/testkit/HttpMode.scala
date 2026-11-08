@@ -1,9 +1,12 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.plugin.testkit.internal.ProjectPaths
 import com.histmersion.pluginhost.HttpTransport
 
 import java.nio.file.Path
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the server's own HTTP
   * policy first — its User-Agent, its timeouts and TLS trust, `Retry-After`, bot challenges ending the request — so a
@@ -44,7 +47,7 @@ enum HttpMode:
 
 object HttpMode:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 
@@ -71,10 +74,10 @@ object HttpMode:
     *   - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the network was not
     *     asked for.
     */
-  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
+  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[Problem, HttpMode] =
     choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty).map(ProjectPaths.ProjectDir(_))), env)
 
-  private def choose(dir: Path, env: Map[String, String]): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
+  private def choose(dir: Path, env: Map[String, String]): Either[Problem, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")                  => Right(Live)
       case Some("record")                => Right(Record(dir))

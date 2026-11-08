@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, FileSystems, Path}

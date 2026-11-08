@@ -1,7 +1,11 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{AiHttp, WorkKey}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Doi
 
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
   * `Left("no scripted answer")`) and keeps every request, to assert on what the provider sent.
@@ -49,7 +53,7 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
 
 object ScriptedAiHttp:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   private def masked(headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
     headers.map { (k, v) =>
@@ -62,4 +66,4 @@ extension (work: WorkKey.type)
   /** The work a DOI names, with its title, authors and year from OpenAlex (else Crossref), as the server looks it up
     * before asking the acquisition chain ([[PluginHarness.workFromDoi]]).
     */
-  def fromDoi(doi: com.histmersion.domain.library.Doi, harness: PluginHarness): Either[PluginHarness.Problem, WorkKey] = harness.workFromDoi(doi)
+  def fromDoi(doi: Doi, harness: PluginHarness): Either[PluginHarness.Problem, WorkKey] = harness.workFromDoi(doi)
