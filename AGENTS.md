@@ -783,6 +783,10 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   `just plugin` (`PluginTreeSuite` fails when stale); `.opencode/skill` points at `plugin/skills`;
   `.claude/skills` holds one link per plugin skill plus the repo-only skills (`scalafix`, for agents working on this
   repository, never shipped to users) — `PluginTreeSuite` checks the links. Edit the canonical copies only.
+- `.claude/settings.json` enables two Claude Code plugins for agents working on this repository (not for Histmersion's
+  users or its own agents): `cellar@virtuslab-cellar` (look up a dependency's API — `cellar get-external` — instead of
+  unpacking JARs or guessing signatures) and `direct-style-scala@virtuslab-scala-skill` (Scala style and tooling).
+  Where they disagree with this file, this file wins.
 - When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching reference
   page (`docs/user-guide/reference/`) in the same commit. Docs that lie are worse than missing docs.
 - A part of an agent body, a fragment or the writing guide that only one audience acts on is marked
