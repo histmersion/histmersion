@@ -418,6 +418,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def fillFigureLicences(apply: Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
+  private given CanEqual[sttp.model.Method, sttp.model.Method] = CanEqual.derived
+
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
   type Problem = Problem.T

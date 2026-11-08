@@ -59,7 +59,7 @@ object MediaCovers:
   /** One source's cover from its Calibre entry: uploaded (unless `dryRun`), or the ISBN Open Library should be asked
     * by, or why there is none.
     */
-  enum Outcome:
+  enum Outcome derives CanEqual:
     case Uploaded(line: MediaSourceLine)
     case AskOpenLibrary(citekey: Citekey, isbn: MediaCoversRequest.Isbn)
     case Skipped(reason: Outcome.Skipped.Reason)
