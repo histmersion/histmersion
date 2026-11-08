@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Write
@@ -44,7 +45,7 @@ private[sources] object SourceDeleteRepo:
       if d0.refused then
         Left(
           Api.Error(
-            Problem(Source.Delete.refusal(d0.citekey, d0.blockers).value),
+            api.Problem(Source.Delete.refusal(d0.citekey, d0.blockers).value),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
@@ -82,7 +83,7 @@ private[sources] object SourceDeleteRepo:
         Left(sql"SELECT citekey FROM source_aliases WHERE alias = $requested".query[String].run().headOption match
           case Some(now) =>
             Api.Error(
-              Problem(s"'$requested' is an old citekey of '$now' — delete '$now' instead"),
+              api.Problem(s"'$requested' is an old citekey of '$now' — delete '$now' instead"),
               Some(Api.Error.Code(Write.CodeInvalid))
             )
           case None => Write.notFound(com.histmersion.api.library.Citekey(requested.value)))

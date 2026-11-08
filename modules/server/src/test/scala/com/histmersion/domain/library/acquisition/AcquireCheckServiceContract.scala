@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.Sha256
@@ -55,21 +56,21 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       T0,
       AcquireRecheck.LastCheck.Generation("g1"),
       AcquireRecheck.Outcome.NoCopy,
-      AcquireCheckRow.Reason("no copy")
+      Problem("no copy")
     )
     s.checks.record(
       open,
       T0.plusSeconds(60),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Fetched,
-      AcquireCheckRow.Reason("fetched")
+      Problem("fetched")
     )
     s.checks.record(
       done,
       T0.plusSeconds(120),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Closed,
-      AcquireCheckRow.Reason("held")
+      Problem("held")
     )
     val _ = s.queues.patch(
       QueueItemId(done.value),

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.collections
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
 import io.github.iltotore.iron.constraint.any.Pure
@@ -30,9 +31,6 @@ object ImportTarget:
   type Previous = Previous.T
   object Previous extends Newtype[String, Pure]
 
-  /** Why an import may not go ahead. */
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type OfExplicit = OfExplicit.T
   object OfExplicit extends Newtype[Boolean, Pure]
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.AcquireConfig
 
 import com.histmersion.domain.{CoreQuota, HttpPolicy}

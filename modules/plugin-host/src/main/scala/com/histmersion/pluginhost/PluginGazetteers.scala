@@ -18,10 +18,6 @@ import com.histmersion.domain.Attribution
 object PluginGazetteers:
   type FieldName = FieldName.T
   object FieldName extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type Warning = Warning.T
   object Warning extends Newtype[String, Pure]
 
@@ -67,12 +63,12 @@ object PluginGazetteers:
       if p == null then Left(Problem("a place that is null"))
       else
         val id = Option(p.id).map(_.value).getOrElse("")
-        def named(why: Reason): Problem = Problem(s"place '$id': ${why.value}")
+        def named(why: Problem): Problem = Problem(s"place '$id': ${why.value}")
         if id.trim.isEmpty then Left(Problem("a place with no id"))
-        else if Option(p.kind).forall(_.value.trim.isEmpty) then Left(named(Reason("no kind")))
+        else if Option(p.kind).forall(_.value.trim.isEmpty) then Left(named(Problem("no kind")))
         else
           for
-            label <- Option(p.label).toRight(named(Reason("no label")))
+            label <- Option(p.label).toRight(named(Problem("no label")))
             geometry <- json(Option(p.geometry).flatten.map(_.value), FieldName("geometry")).left.map(named)
             properties <- json(Option(p.properties).flatten.map(_.value), FieldName("properties")).left.map(named)
             period <- span(Option(p.period).flatten, Option(p.open).flatten).left.map(named)
@@ -104,8 +100,8 @@ object PluginGazetteers:
           )
         )
 
-  private def name(n: GazetteerName): Either[Reason, Place.Name] =
-    if n == null || Option(n.name).isEmpty then Left(Reason("a name that is null"))
+  private def name(n: GazetteerName): Either[Problem, Place.Name] =
+    if n == null || Option(n.name).isEmpty then Left(Problem("a name that is null"))
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
         Place.Name(
@@ -116,12 +112,12 @@ object PluginGazetteers:
         )
       )
 
-  private def relation(r: GazetteerRelation): Either[Reason, Place.Relation] =
-    if r == null then Left(Reason("a relation that is null"))
+  private def relation(r: GazetteerRelation): Either[Problem, Place.Relation] =
+    if r == null then Left(Problem("a relation that is null"))
     else if Option(r.childId).forall(_.value.trim.isEmpty) || Option(r.parentId).forall(_.value.trim.isEmpty) then
-      Left(Reason("a relation without both its places"))
+      Left(Problem("a relation without both its places"))
     else if Option(r.kind).forall(_.value.trim.isEmpty) then
-      Left(Reason(s"the relation to '${r.parentId.value}' has no kind"))
+      Left(Problem(s"the relation to '${r.parentId.value}' has no kind"))
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>
         Place.Relation(
@@ -139,11 +135,11 @@ object PluginGazetteers:
   private def span(
       period: Option[Period],
       open: Option[GazetteerOpenSide]
-  ): Either[Reason, (Option[ApiPeriod], Option[OpenSide])] =
+  ): Either[Problem, (Option[ApiPeriod], Option[OpenSide])] =
     for
-      p <- SpiValues.optional(period)(SpiValues.periodOf).left.map(e => Reason(e.value))
+      p <- SpiValues.optional(period)(SpiValues.periodOf).left.map(e => Problem(e.value))
       side <- (p, open) match
-        case (None, Some(_)) => Left(Reason("an open side without a period"))
+        case (None, Some(_)) => Left(Problem("an open side without a period"))
         case _               => Right(open.map(openSide))
     yield (
       p.map(v =>
@@ -160,18 +156,18 @@ object PluginGazetteers:
     case GazetteerOpenSide.End   => OpenSide.End
 
   /** A JSON text the store keeps as JSON (a shape, the properties): it must be a JSON object. */
-  private def json(text: Option[String], what: FieldName): Either[Reason, Option[String]] =
+  private def json(text: Option[String], what: FieldName): Either[Problem, Option[String]] =
     text match
       case None    => Right(None)
       case Some(t) =>
         io.circe.parser.parse(t) match
           case Right(j) if j.isObject => Right(Some(t))
-          case _                      => Left(Reason(s"its ${what.value} is not a JSON object"))
+          case _                      => Left(Problem(s"its ${what.value} is not a JSON object"))
 
   /** Every element converted, or the first refusal. */
-  private def all[A, B](as: List[A])(f: A => Either[Reason, B]): Either[Reason, List[B]] =
+  private def all[A, B](as: List[A])(f: A => Either[Problem, B]): Either[Problem, List[B]] =
     @annotation.tailrec
-    def loop(rest: List[A], acc: List[B]): Either[Reason, List[B]] = rest match
+    def loop(rest: List[A], acc: List[B]): Either[Problem, List[B]] = rest match
       case Nil    => Right(acc.reverse)
       case h :: t =>
         f(h) match

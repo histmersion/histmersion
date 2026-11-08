@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -26,8 +27,6 @@ object ClaudeCode:
   object Argument extends Newtype[String, Pure]
   type ModelId = ModelRef.Model
   val ModelId: ModelRef.Model.type = ModelRef.Model
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type McpConfigToken = McpConfigToken.T
   object McpConfigToken extends Newtype[String, Pure]
@@ -242,7 +241,7 @@ object ClaudeCode:
       costUsd: Option[Result.CostUsd],
       denials: List[Result.Denials],
       errors: List[Result.Errors],
-      terminalReason: Option[Result.TerminalReason] = None
+      terminalReason: Option[Problem] = None
   )
 
   object Result:
@@ -260,8 +259,6 @@ object ClaudeCode:
     object Denials extends Newtype[String, Pure]
     type Errors = Errors.T
     object Errors extends Newtype[String, Pure]
-    type TerminalReason = TerminalReason.T
-    object TerminalReason extends Newtype[String, Pure]
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their results, in order), the
     * result line, the usage and the model that served it — the result's `modelUsage` entry with the most output tokens
@@ -274,15 +271,12 @@ object ClaudeCode:
       result: Option[Result],
       usage: TokenUsage,
       modelId: Option[ModelRef.Model],
-      mcpProblem: Option[Outcome.McpProblem],
+      mcpProblem: Option[Problem],
       readings: List[PlanQuota.Reading] = Nil,
       served: List[(ModelRef.Model, TokenUsage)] = Nil,
       firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
   )
 
-  object Outcome:
-    type McpProblem = McpProblem.T
-    object McpProblem extends Newtype[String, Pure]
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -330,7 +324,7 @@ object ClaudeCode:
     var usage: Option[TokenUsage] = None
     var model: Option[ModelRef.Model] = None
     var served: List[(ModelRef.Model, TokenUsage)] = Nil
-    var mcpProblem: Option[Outcome.McpProblem] = None
+    var mcpProblem: Option[Problem] = None
     var firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
     val readings = List.newBuilder[PlanQuota.Reading]
     val now = System.currentTimeMillis()
@@ -345,7 +339,7 @@ object ClaudeCode:
             .find(s => s.hcursor.downField("name").as[String].contains(McpServer))
             .flatMap(_.hcursor.downField("status").as[String].toOption)
             .filterNot(s => s == "connected" || s == "pending")
-            .map(s => Outcome.McpProblem(s"the agent MCP server is $s"))
+            .map(s => Problem(s"the agent MCP server is $s"))
         case "assistant" if c.downField("parent_tool_use_id").focus.forall(_.isNull) =>
           turn += 1
           if firstCall.isEmpty then firstCall = c.downField("message").focus.flatMap(firstCallTokens)
@@ -406,7 +400,7 @@ object ClaudeCode:
                 .as[List[Json]]
                 .getOrElse(Nil)
                 .map(j => Result.Errors(j.asString.getOrElse(j.noSpaces))),
-              terminalReason = c.downField("terminal_reason").as[String].toOption.map(Result.TerminalReason(_))
+              terminalReason = c.downField("terminal_reason").as[String].toOption.map(Problem(_))
             )
           )
         case _ => ()

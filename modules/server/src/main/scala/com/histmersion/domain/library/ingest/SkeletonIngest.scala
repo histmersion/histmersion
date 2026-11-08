@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Caller
@@ -33,7 +34,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       copy: Option[FetchedCopy],
       citekey: Citekey,
       meta: IngestMeta
-  ): Either[IngestJobs.Problem, IngestOutcome] =
+  ): Either[Problem, IngestOutcome] =
     val exists = sources.exists(citekey)
     val result =
       if exists then patchExisting(citekey, meta)
@@ -52,7 +53,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
     }
 
-  private def create(citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, Unit] =
+  private def create(citekey: Citekey, meta: IngestMeta): Either[Problem, Unit] =
     Source.Write
       .applyPut(
         apiKey(citekey),
@@ -70,12 +71,12 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         )
       )
       .left
-      .map(p => IngestJobs.Problem(p.value))
+      .map(p => Problem(p.value))
       .map { s =>
         val _ = sources.put(s, Caller.Local)
       }
 
-  private def patchExisting(citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, Unit] =
+  private def patchExisting(citekey: Citekey, meta: IngestMeta): Either[Problem, Unit] =
     sources
       .patch(
         citekey,
@@ -95,4 +96,4 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
       .map(_ => ())
       .left
-      .map(e => IngestJobs.Problem(e.message.value))
+      .map(e => Problem(e.message.value))

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.sources.CitekeyResolver
 
 import com.histmersion.api.Write
@@ -21,8 +22,6 @@ import com.histmersion.api.library.Citekey
 private[articles] object CritiqueRepo:
   type By = By.T
   object By extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
 
   /** The article's reasons, by pair. */
 
@@ -35,7 +34,7 @@ private[articles] object CritiqueRepo:
         CritiqueReason(
           Citekey(s),
           Citekey(d),
-          Problem(r),
+          api.Problem(r),
           Some(CritiqueReason.By(b))
         )
       )
@@ -45,7 +44,7 @@ private[articles] object CritiqueRepo:
     case Set(
         src: com.histmersion.domain.library.Citekey,
         dst: com.histmersion.domain.library.Citekey,
-        reason: Reason,
+        reason: Problem,
         by: By
     )
     case Remove(a: com.histmersion.domain.library.Citekey, b: com.histmersion.domain.library.Citekey)
@@ -59,7 +58,7 @@ private[articles] object CritiqueRepo:
   private def check(reasons: List[CritiqueReason], by: By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
-      case Some(m) => Left(Api.Error(Problem(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
+      case Some(m) => Left(Api.Error(api.Problem(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
         def stored(c: Citekey): Option[com.histmersion.domain.library.Citekey] =
@@ -72,14 +71,14 @@ private[articles] object CritiqueRepo:
               case (None, _) =>
                 Left(
                   Api.Error(
-                    Problem(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
+                    api.Problem(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
               case (_, None) =>
                 Left(
                   Api.Error(
-                    Problem(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
+                    api.Problem(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
@@ -95,7 +94,7 @@ private[articles] object CritiqueRepo:
                   case None =>
                     Left(
                       Api.Error(
-                        Problem(
+                        api.Problem(
                           s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
                             "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)"
                         ),
@@ -107,7 +106,7 @@ private[articles] object CritiqueRepo:
                       done :+ Change.Set(
                         s,
                         d,
-                        Reason(r.reason.value),
+                        Problem(r.reason.value),
                         By(r.by.map(_.value.trim).filter(_.nonEmpty).getOrElse(by.value).take(200))
                       )
                     )

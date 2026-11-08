@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.config.{MediaConfig, MediaPluginCollectionsConfig}
 import com.histmersion.domain.catalogue.{Event, Place}

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.ocr
 
+import com.histmersion.api.Problem
 import com.histmersion.util.storage.Blob
 
 import java.net.URI
@@ -19,11 +20,11 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
   private val ConversionTimeoutHint =
     "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"
 
-  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] =
+  def health: Either[Problem, ConverterClient.HealthSummary] =
     send(
       HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build(),
       timeoutHint = None
-    ).map(_ => ConverterClient.HealthSummary("ok")).left.map(ConverterClient.Problem(_))
+    ).map(_ => ConverterClient.HealthSummary("ok")).left.map(Problem(_))
 
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it cannot tell (an
     * older sidecar, an unreadable file): the conversion then gets the plain timeout and reports the real error itself.
@@ -51,7 +52,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       file: Blob,
       filename: ConverterClient.Filename,
       quality: ConverterClient.HighQuality
-  ): Either[ConverterClient.Problem, ConvertedDoc] =
+  ): Either[Problem, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     val allowed = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
     (for
@@ -67,13 +68,13 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
         .decode[ConvertedDoc](text)
         .left
         .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
-    yield doc).left.map(ConverterClient.Problem(_))
+    yield doc).left.map(Problem(_))
 
   override def thumbnail(
       bytes: ConverterClient.DocumentBytes,
       filename: ConverterClient.Filename,
       maxPx: Pixels
-  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+  ): Either[Problem, ConverterClient.Thumb] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     def ascii(s: String) = s.getBytes("UTF-8")
     val body = java.io.ByteArrayOutputStream()
@@ -103,7 +104,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       ConverterClient.Thumb.Mime(c.get[String]("mime").getOrElse("image/jpeg")),
       ConverterClient.Thumb.Width(c.get[Int]("width").getOrElse(0)),
       ConverterClient.Thumb.Height(c.get[Int]("height").getOrElse(0))
-    )).left.map(ConverterClient.Problem(_))
+    )).left.map(Problem(_))
 
   /** `timeoutHint` is what to do about a timeout. Only a CONVERSION timing out is about the per-page budget; the health
     * probe timing out is not (#692), so it carries none.

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
@@ -24,7 +25,7 @@ trait SearchedCollection:
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]]
+  ): Either[Problem, List[Either[Problem, MediaRecord]]]
 
   /** Why a record is tied to the place, or why not. */
   def matches(
@@ -50,15 +51,13 @@ trait SearchedCollection:
   /** A record about to be stored, completed by the request a search does not answer (Open Context's media item: the
     * files, and the licence read again); a `Left` refuses it. Only stored records pay for it.
     */
-  def complete(fetch: Polite, rec: MediaRecord): Either[SearchedCollection.Problem, MediaRecord] = Right(rec)
+  def complete(fetch: Polite, rec: MediaRecord): Either[Problem, MediaRecord] = Right(rec)
 
 object SearchedCollection:
   type DistanceKm = DistanceKm.T
   object DistanceKm extends Newtype[Double, Pure]
   type LicenceKey = LicenceKey.T
   object LicenceKey extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   private def infoId(p: PlaceFacts): MediaMatch.PlaceInfo.Id = MediaMatch.PlaceInfo.Id(p.id.value)
 

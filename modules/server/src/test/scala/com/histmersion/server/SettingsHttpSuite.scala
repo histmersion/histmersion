@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.config.*
@@ -64,7 +65,7 @@ class SettingsHttpSuite extends DbSuite:
             (
               l,
               ConfigSource(() =>
-                AppConfig.loadWithUserFile(env, Some(file)).left.map(e => ConfigSource.Problem(e.value))
+                AppConfig.loadWithUserFile(env, Some(file)).left.map(e => Problem(e.value))
               )
             )
           )

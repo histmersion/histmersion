@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.data.diagnostics.DiagnosticsService

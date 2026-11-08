@@ -20,10 +20,3 @@ enum FetchOutcome derives CanEqual:
   /** A fetcher knows of a copy it may not take (a lending-only item, a bot challenge, no open licence). */
   case Refused(why: Problem)
 
-object FetchOutcome:
-  object Miss:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
-  object Refused:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]

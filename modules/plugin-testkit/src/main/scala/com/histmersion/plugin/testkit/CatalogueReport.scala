@@ -19,11 +19,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final case class CatalogueReport(
     parts: List[PluginEvents.PartName],
-    pages: List[(PluginEvents.PartName, Either[PluginEvents.Problem, CatalogueReport.Events])],
+    pages: List[(PluginEvents.PartName, Either[Problem, CatalogueReport.Events])],
     accepted: List[AcceptedEvent],
     refused: List[CatalogueReport.Refused],
     leftOut: List[CatalogueReport.LeftOut],
-    failure: Option[CatalogueReport.Failure],
+    failure: Option[Problem],
     log: List[LogLine],
     requests: List[PluginHarness.Request]
 )
@@ -35,5 +35,3 @@ object CatalogueReport:
   object Refused extends Newtype[String, Pure]
   type LeftOut = LeftOut.T
   object LeftOut extends Newtype[String, Pure]
-  type Failure = Failure.T
-  object Failure extends Newtype[String, Pure]

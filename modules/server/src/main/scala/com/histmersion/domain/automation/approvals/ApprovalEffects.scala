@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
@@ -13,19 +14,17 @@ trait ApprovalEffects:
   /** A source's proposal as its stored payload reads (None: none this server can read), ready to apply: what applying
     * it did, or why it failed.
     */
-  def proposal(payload: ApprovalEffects.Payload): Option[() => Either[ApprovalEffects.Problem, String]]
+  def proposal(payload: ApprovalEffects.Payload): Option[() => Either[Problem, String]]
 
   /** The kinds of proposal about a subject (an article, not a source) this applies. */
   def subjectKinds: Set[Approval.Kind]
 
   /** Apply an approved proposal of one of [[subjectKinds]]: what it did, or why it failed. */
-  def applySubject(a: ApprovalInfo): Either[ApprovalEffects.Problem, String]
+  def applySubject(a: ApprovalInfo): Either[Problem, String]
 
 object ApprovalEffects:
   type Payload = Payload.T
   object Payload extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
@@ -16,8 +17,5 @@ trait SourceFormatting:
   def fix(text: Source.Text, field: FormatField): (Source.Text, List[Source.Text])
 
   /** Why a strict write is refused, when `issues` holds an error. */
-  def refusal(issues: List[FormatIssue]): Option[SourceFormatting.Problem]
+  def refusal(issues: List[FormatIssue]): Option[Problem]
 
-object SourceFormatting:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

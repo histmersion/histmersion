@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.covers
 
+import com.histmersion.api.Problem
 import com.histmersion.pluginhost.{figureRules, HttpTransport, Polite}
 import com.histmersion.upstreams.media.MediaText
 

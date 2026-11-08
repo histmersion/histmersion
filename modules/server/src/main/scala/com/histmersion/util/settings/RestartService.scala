@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.api.Problem
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -12,11 +13,9 @@ trait RestartService:
   def available: Boolean
 
   /** Ask for the restart: it happens a moment after the answer is sent. `Left` says why it cannot. */
-  def restart(): Either[RestartService.Problem, RestartService.Summary]
+  def restart(): Either[Problem, RestartService.Summary]
 
 object RestartService:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type RestartCount = RestartCount.T
   object RestartCount extends Newtype[Int, Pure]
   type Summary = Summary.T

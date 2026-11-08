@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -182,13 +183,13 @@ class PlanRefreshSuite extends munit.FunSuite:
     val calls = AtomicInteger(0)
     val inside = CountDownLatch(1)
     val release = CountDownLatch(1)
-    def body(last: Option[RefreshGate.Instant]): Either[RefreshGate.Problem, Int] =
+    def body(last: Option[RefreshGate.Instant]): Either[Problem, Int] =
       if throttled(
           last.map(l => RefreshInfo.LastAttempt(l.value)),
           PlanQuota.Rules.MinGap(600000L),
           PlanQuota.Now(1000L)
         )
-      then Left(RefreshGate.Problem("throttled"))
+      then Left(Problem("throttled"))
       else
         val n = calls.incrementAndGet()
         inside.countDown()
@@ -211,7 +212,7 @@ class PlanRefreshSuite extends munit.FunSuite:
   test("the gate stamps an attempt only when one was made"):
     val gate = RefreshGate()
     assertEquals(
-      gate.exclusive(PoolId.ClaudePlan, 5L)(_ => Left[RefreshGate.Problem, Int](RefreshGate.Problem("not now"))),
+      gate.exclusive(PoolId.ClaudePlan, 5L)(_ => Left[Problem, Int](Problem("not now"))),
       Left("not now")
     )
     assertEquals(gate.lastAttempt(PoolId.ClaudePlan), None)

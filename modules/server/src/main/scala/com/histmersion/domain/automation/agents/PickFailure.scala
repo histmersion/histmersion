@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
@@ -22,8 +23,6 @@ enum PickFailure derives CanEqual:
   )
 
 object PickFailure:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   object Unavailable:
     type Message = Problem
     val Message: Problem.type = Problem

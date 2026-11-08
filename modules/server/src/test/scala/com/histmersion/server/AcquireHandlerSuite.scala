@@ -121,7 +121,7 @@ class AcquireHandlerSuite extends DbSuite:
 
   private object NoPdf extends OaFetcher:
     def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[ArxivId]) = Left(
-      OaFetcher.Problem("no legal open-access PDF found")
+      Problem("no legal open-access PDF found")
     )
 
   private class SomePdf(
@@ -140,7 +140,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
 
   private object NoWiki extends WikiClient:
-    def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used here"))
+    def refs(url: WikiClient.ArticleUrl) = Left(Problem("not used here"))
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
   private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
@@ -182,7 +182,7 @@ class AcquireHandlerSuite extends DbSuite:
     )
 
   private class FakeRw(text: RetractionWatchClient.Csv) extends RetractionWatchClient:
-    def csv(): Either[RetractionWatchClient.Problem, RetractionWatchClient.Csv] = Right(text)
+    def csv(): Either[Problem, RetractionWatchClient.Csv] = Right(text)
 
   private def handlers(
       discovery: DiscoveryClient = FakeDiscovery(),
@@ -1074,7 +1074,7 @@ class AcquireHandlerSuite extends DbSuite:
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Right(Nil)
-      def meta(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem(s"$doi: HTTP 404"))
+      def meta(doi: com.histmersion.domain.library.Doi) = Left(Problem(s"$doi: HTTP 404"))
       def references(doi: com.histmersion.domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
       def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
     val h = handlers(blind)

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -18,8 +19,6 @@ object MediaSources:
   object Current extends Newtype[String, Pure]
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Key = Key.T
   object Key extends Newtype[String, io.github.iltotore.iron.Pure]

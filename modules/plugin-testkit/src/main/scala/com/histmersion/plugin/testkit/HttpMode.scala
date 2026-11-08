@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.testkit.internal.ProjectPaths
 import com.histmersion.pluginhost.HttpTransport
 
@@ -45,8 +46,6 @@ enum HttpMode derives CanEqual:
     case _                => false
 
 object HttpMode:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 

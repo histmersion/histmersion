@@ -11,7 +11,7 @@ import com.histmersion.pluginhost.PluginAi
   *   `None` when the check said no
   */
 final case class AiReport(
-    check: Either[PluginAi.Problem, Unit],
+    check: Either[Problem, Unit],
     turn: Option[Either[AiFailure, AiTurn]],
     log: List[LogLine]
 )

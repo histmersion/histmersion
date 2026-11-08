@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.checks
 
+import com.histmersion.api.Problem
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.Transactor
 import io.github.iltotore.iron.constraint.any.Pure
@@ -20,14 +21,14 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** The rules a request names, in the order it names them — all of them when it names none. An unknown name is
     * refused, so a typo never reads as a clean corpus.
     */
-  def select(requested: List[CheckRule.Name]): Either[CheckRunner.Problem, List[CheckRule]] =
+  def select(requested: List[CheckRule.Name]): Either[Problem, List[CheckRule]] =
     val wanted = requested.map(_.value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(rules)
     else
       val unknown = wanted.filter(w => named(w).isEmpty)
       if unknown.nonEmpty then
         Left(
-          CheckRunner.Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
+          Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
         )
       else Right(wanted.flatMap(named).distinct)
 
@@ -60,6 +61,3 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
       pointAreasRemaining = LintFixResult.PointAreasRemaining(results.map(_.pointAreasRemaining.value: Int).sum)
     )
 
-object CheckRunner:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

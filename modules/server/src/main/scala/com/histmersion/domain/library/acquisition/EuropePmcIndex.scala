@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.upstreams.http.Url
 
 import com.histmersion.config.*
@@ -27,5 +28,5 @@ final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyInde
         )
       )
       .left
-      .map(p => ScholarlyIndex.Problem(p.value))
+      .map(p => Problem(p.value))
       .map(Candidates.europepmcWorks)

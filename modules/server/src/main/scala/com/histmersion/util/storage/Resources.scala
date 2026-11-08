@@ -1,15 +1,14 @@
 package com.histmersion
 package util.storage
 
+import com.histmersion.api.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Resources:
-  def text(name: Resources.ResourceName): Either[Resources.Problem, Blob.Text]
+  def text(name: Resources.ResourceName): Either[Problem, Blob.Text]
 
 object Resources:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ResourceName = ResourceName.T
   object ResourceName extends Newtype[String, Pure]
 

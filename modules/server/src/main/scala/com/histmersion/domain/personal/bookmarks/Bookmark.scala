@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal.bookmarks
 
+import com.histmersion.api.Problem
 import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
@@ -38,8 +39,6 @@ final case class Bookmark(
   )
 
 object Bookmark:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.periods
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Dataset, PeriodODataset}
@@ -15,18 +16,18 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class PeriodImports(
     periods: PeriodService,
     sources: () => PeriodSources,
-    seed: () => Either[PeriodImports.Problem, PeriodImports.Document],
-    download: PeriodSources.PeriodoUrl => Either[PeriodImports.Problem, PeriodImports.Document]
+    seed: () => Either[Problem, PeriodImports.Document],
+    download: PeriodSources.PeriodoUrl => Either[Problem, PeriodImports.Document]
 ):
 
   /** The bundled seed, parsed. */
-  private def bundled: Either[PeriodImports.Problem, PeriodODataset] = seed().flatMap(parsed)
+  private def bundled: Either[Problem, PeriodODataset] = seed().flatMap(parsed)
 
-  private def parsed(document: PeriodImports.Document): Either[PeriodImports.Problem, PeriodODataset] =
-    PeriodO.parse(document.value).left.map(why => PeriodImports.Problem(why.value))
+  private def parsed(document: PeriodImports.Document): Either[Problem, PeriodODataset] =
+    PeriodO.parse(document.value).left.map(why => Problem(why.value))
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
-  def applySeed(replace: PeriodImports.Replace): Either[PeriodImports.Problem, Period.ImportResult] =
+  def applySeed(replace: PeriodImports.Replace): Either[Problem, Period.ImportResult] =
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
@@ -48,7 +49,7 @@ final class PeriodImports(
       .exists(v => periods.seedVersion(PeriodService.SeedName(PeriodImports.SeedName)).forall(_.value < v.value))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
-  def fetch(collections: List[PeriodSources.Collections]): Either[PeriodImports.Problem, Period.ImportResult] =
+  def fetch(collections: List[PeriodSources.Collections]): Either[Problem, Period.ImportResult] =
     val s = sources()
     val wanted = collections.map(_.value.trim).filter(_.nonEmpty) match
       case Nil => s.collections.map(_.value)
@@ -59,7 +60,7 @@ final class PeriodImports(
       d = all.only(wanted.map(HistoricalPeriod.Id(_)).toSet)
       _ <-
         if d.authorities.isEmpty then
-          Left(PeriodImports.Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
+          Left(Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
         else Right(())
     yield write(d, Dataset.Seed)
 
@@ -88,8 +89,6 @@ object PeriodImports:
   /** The text of a PeriodO dataset: the bundled seed or a dump. */
   type Document = Document.T
   object Document extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Replace = Replace.T
   object Replace extends Newtype[Boolean, Pure]
 

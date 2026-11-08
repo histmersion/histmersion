@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -72,9 +73,9 @@ final class StubUpstream extends AgentUpstream:
   @volatile var found: Map[String, List[WorkRef]] = Map.empty
   val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
   def meta(doi: Doi) = {
-    calls.add(s"meta $doi"); metas.get(doi.value).toRight(AgentUpstream.Problem(s"$doi: not found upstream"))
+    calls.add(s"meta $doi"); metas.get(doi.value).toRight(Problem(s"$doi: not found upstream"))
   }
-  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(AgentUpstream.Problem("not stubbed"))
+  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
   def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) =
     calls.add(s"assess $citekey")
     Right(
@@ -114,7 +115,7 @@ final class StubUpstream extends AgentUpstream:
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
   @volatile var onIngest: String => Either[String, Ingest.Report] = _ => Left("not stubbed")
   override def ingestLegal(doi: Doi) = {
-    calls.add(s"ingest $doi"); onIngest(doi.value).left.map(AgentUpstream.Problem(_))
+    calls.add(s"ingest $doi"); onIngest(doi.value).left.map(Problem(_))
   }
 
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
@@ -124,7 +125,7 @@ final class StubUpstream extends AgentUpstream:
     calls.add(s"sweep $goal")
     sweepFinds
       .get(goal.value)
-      .toRight(AgentUpstream.Problem("the candidate search is not connected"))
+      .toRight(Problem("the candidate search is not connected"))
       .map(cs =>
         CandidateSweep(
           CandidateSweep.Goal(goal.value),

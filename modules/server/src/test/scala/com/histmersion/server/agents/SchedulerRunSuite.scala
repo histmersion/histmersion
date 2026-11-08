@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -300,14 +301,14 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     // `var`: the stored candidates, changed by the marks
     @volatile var stored: List[Source.Candidate] = Nil
     val sweeps = java.util.concurrent.atomic.AtomicInteger(0)
-    def meta(doi: Doi) = Left(AgentUpstream.Problem("not stubbed"))
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(AgentUpstream.Problem("not stubbed"))
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(AgentUpstream.Problem("not stubbed"))
+    def meta(doi: Doi) = Left(Problem("not stubbed"))
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(Problem("not stubbed"))
     def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
-      AgentUpstream.Problem("not stubbed")
+      Problem("not stubbed")
     )
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
-      AgentUpstream.Problem("the live search must not run when the candidate search is connected")
+      Problem("the live search must not run when the candidate search is connected")
     )
     override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun) =
       sweeps.incrementAndGet()

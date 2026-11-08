@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Place as ApiPlace}
 import com.histmersion.domain.DeepTime

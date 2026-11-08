@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
 
@@ -9,10 +10,10 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
-  def refs(articleUrl: WikiClient.ArticleUrl): Either[WikiClient.Problem, WikirefsResult] =
+  def refs(articleUrl: WikiClient.ArticleUrl): Either[Problem, WikirefsResult] =
     AcquireParse
       .wikiPageTitle(Http.Url(articleUrl.value))
-      .toRight(WikiClient.Problem(s"'$articleUrl' is not a Wikipedia article URL"))
+      .toRight(Problem(s"'$articleUrl' is not a Wikipedia article URL"))
       .flatMap { page =>
         http
           .json(
@@ -27,9 +28,9 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
             )
           )
           .left
-          .map(e => WikiClient.Problem(e.value))
+          .map(e => Problem(e.value))
           .flatMap { j =>
-            AcquireParse.wikiText(j).toRight(WikiClient.Problem(s"Wikipedia returned no wikitext for '$page'")).map {
+            AcquireParse.wikiText(j).toRight(Problem(s"Wikipedia returned no wikitext for '$page'")).map {
               text =>
                 val (dois, arxiv) = AcquireParse.wikiRefs(text)
                 WikirefsResult(

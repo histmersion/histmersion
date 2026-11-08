@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -69,7 +70,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     @volatile var fail = false
     def text(url: RangeHttp.Url) = local.text(url)
     def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) =
-      if fail then Left(RangeHttp.Problem(s"${url.value} unreachable")) else local.bytes(url, o, l)
+      if fail then Left(Problem(s"${url.value} unreachable")) else local.bytes(url, o, l)
     def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = local.download(url, o, l, to)
 
   private def setup(c: BasemapOnDemandConfig = cfg()) =
@@ -231,9 +232,9 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("ondemand-get")
     val gets = AtomicInteger(0)
     val http = new RangeHttp:
-      def text(url: RangeHttp.Url) = Left(RangeHttp.Problem("no"))
-      def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = Left(RangeHttp.Problem("no range requests here"))
-      def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = Left(RangeHttp.Problem("no"))
+      def text(url: RangeHttp.Url) = Left(Problem("no"))
+      def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = Left(Problem("no range requests here"))
+      def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = Left(Problem("no"))
       override def file(url: RangeHttp.Url) =
         gets.incrementAndGet()
         Right(Option.when(!url.value.endsWith("/0/0.png"))(RangeHttp.ResponseBytes(url.value.getBytes)))

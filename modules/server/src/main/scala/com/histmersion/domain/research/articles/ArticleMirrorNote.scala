@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.api.Api
 import com.histmersion.util.data.mirror.Mirror

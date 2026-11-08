@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.collections
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
@@ -213,21 +214,21 @@ object ArchiveTrafficSuite:
           since: Option[Year],
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
-      ) = Left(DiscoveryClient.Problem("not used"))
-      def meta(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
-      def references(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
-      def updates(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
+      ) = Left(Problem("not used"))
+      def meta(doi: Doi) = Left(Problem("not used"))
+      def references(doi: Doi) = Left(Problem("not used"))
+      def updates(doi: Doi) = Left(Problem("not used"))
     val deps = Deps(app, ds)
     val h = AcquisitionTesting.controllers(
       deps,
       none,
       new CitationsClient {
         def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) =
-          Left(CitationsClient.Problem("not used"))
+          Left(Problem("not used"))
       },
       chain,
-      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used")) },
-      new RetractionWatchClient { def csv() = Left(RetractionWatchClient.Problem("not used")) },
+      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(Problem("not used")) },
+      new RetractionWatchClient { def csv() = Left(Problem("not used")) },
       AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:

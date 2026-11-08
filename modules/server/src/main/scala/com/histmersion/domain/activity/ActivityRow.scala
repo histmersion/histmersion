@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 import com.histmersion.util.database.{Param, Sql}

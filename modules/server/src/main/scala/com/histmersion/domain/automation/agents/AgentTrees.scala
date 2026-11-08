@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.server.agents.ClaudeCode
 
 import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
@@ -63,15 +64,15 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
-  def load(known: Set[ToolName]): Either[AgentTrees.Problem, AgentGenerator.Defs] =
+  def load(known: Set[ToolName]): Either[Problem, AgentGenerator.Defs] =
     for
-      as <- defs.agents.left.map(AgentTrees.Problem(_))
-      fs <- defs.fragments.left.map(AgentTrees.Problem(_))
-      ss <- defs.skills.left.map(AgentTrees.Problem(_))
+      as <- defs.agents.left.map(Problem(_))
+      fs <- defs.fragments.left.map(Problem(_))
+      ss <- defs.skills.left.map(Problem(_))
       d = AgentGenerator.Defs(as, fs, ss)
       _ <- AgentGenerator.check(d, known.map(t => t.value: String)) match
         case Nil  => Right(())
-        case errs => Left(AgentTrees.Problem(errs.mkString("; ")))
+        case errs => Left(Problem(errs.mkString("; ")))
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
@@ -79,11 +80,11 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
       known: Set[ToolName],
       runtimes: List[AgentRuntime] = AgentRuntime.Generated,
       out: Option[Path] = None
-  ): Either[AgentTrees.Problem, GenerateResult] =
+  ): Either[Problem, GenerateResult] =
     for
       dir <- out
         .orElse(root)
-        .toRight(AgentTrees.Problem("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)"))
+        .toRight(Problem("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)"))
       d <- load(known)
       sha = AgentTrees.sha(d)
       tree = AgentGenerator.tree(
@@ -95,8 +96,6 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     yield res
 
 object AgentTrees:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** No environment: the trees only where the settings put them (a test's). */
   type SettingsVersion = GenSettings.Version

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
 import com.histmersion.domain.automation.agents.Halt
@@ -432,9 +433,6 @@ object AcquisitionSweepPipeline:
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
   final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives KindlingsCodecAsObject
 
-  object Failed:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   /** What the ingest step of a run with a backlog did. */
   final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject

@@ -389,7 +389,7 @@ class AcquisitionOracleSuite extends DbSuite:
   final private class FixtureConverter extends ConverterClient:
     private val Png =
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =

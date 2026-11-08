@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.augustnagro.magnum.*
 import com.histmersion.domain.media.assets.MediaItemRow
 import javax.sql.DataSource
@@ -21,7 +22,7 @@ object ImportFixtures:
       limit: ImportRepo.Limit,
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None
-  ): Either[ImportRepo.Problem, List[Target]] =
+  ): Either[Problem, List[Target]] =
     connect(ds)(ImportRepo.targets(provider, place, event, limit, refresh, since))
   def pending(ds: DataSource, provider: MediaItemRow.Provider, since: Option[ImportRepo.Since] = None): RowCount =
     connect(ds)(ImportRepo.pending(provider, since))
@@ -35,7 +36,7 @@ object ImportFixtures:
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None,
       pleiadesOnly: ImportRepo.PleiadesOnly = ImportRepo.PleiadesOnly(false)
-  ): Either[ImportRepo.Problem, List[Target]] =
+  ): Either[Problem, List[Target]] =
     connect(ds)(ImportRepo.collectionTargets(check, places, place, event, limit, refresh, since, pleiadesOnly))
   def collectionPending(
       ds: DataSource,

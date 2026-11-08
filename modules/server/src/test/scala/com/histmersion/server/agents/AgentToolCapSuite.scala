@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -60,14 +61,14 @@ class AgentToolCapSuite extends DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(ConverterClient.Problem("not used"))
+    ): Either[Problem, ConvertedDoc] = Left(Problem("not used"))
 
   private val Body = (1 to 400).map(i => s"Paragraph $i of the book about serpents and heroes.").mkString("\n\n") +
     "\n\nThe hero slew the serpent at the end."

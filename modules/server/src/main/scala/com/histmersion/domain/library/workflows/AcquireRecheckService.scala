@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
@@ -377,7 +378,7 @@ final class AcquireRecheckService(
       val up = upstream()
       if !up.connected then
         BackgroundJob.Outcome.failed(
-          BackgroundJob.Outcome.Error("the acquisition toolset is not connected: nothing tried")
+          Problem("the acquisition toolset is not connected: nothing tried")
         )
       else
         val gen = up.fetcherGeneration
@@ -442,7 +443,7 @@ final class AcquireRecheckService(
             )
           )
         stop.fold(BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary(line.value)))(why =>
-          BackgroundJob.Outcome(Some(BackgroundJob.Outcome.Summary(line.value)), Some(BackgroundJob.Outcome.Error(why)))
+          BackgroundJob.Outcome(Some(BackgroundJob.Outcome.Summary(line.value)), Some(Problem(why)))
         )
     finally passing.unlock()
 
@@ -576,7 +577,7 @@ final class AcquireRecheckService(
           now,
           generation,
           Outcome.Closed,
-          AcquireCheckRow.Reason(AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value)).value)
+          Problem(AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value)).value)
         )
         Some(
           RecheckRow(
@@ -607,7 +608,7 @@ final class AcquireRecheckService(
           case e: InterruptedException => throw e
           case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
     val why = AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail))
-    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, AcquireCheckRow.Reason(why.value))
+    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, Problem(why.value))
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),

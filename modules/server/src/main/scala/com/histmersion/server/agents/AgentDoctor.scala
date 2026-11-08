@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -37,17 +38,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
-    resolve: ModelRef => Either[AgentDoctor.Problem, (LlmClient, Billing)],
+    resolve: ModelRef => Either[Problem, (LlmClient, Billing)],
     listModels: (
         HttpDownload.Url,
         List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)],
         AgentsConfig.DoctorTimeoutSeconds
-    ) => Either[AgentDoctor.Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
+    ) => Either[Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
     runCommand: (
         List[ProcessLaunch.Command],
         Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
         AgentsConfig.DoctorTimeoutSeconds
-    ) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)] = AgentDoctor.runCommand,
+    ) => Either[Problem, (ProcessResult.ExitCode, AgentDoctor.Output)] = AgentDoctor.runCommand,
     /** The AI-provider registry of the pinned plugin generation (docs/research-plugins.md §22): a host provider whose
       * plugin is off says so, and each plugin provider gets its own section. None: every host provider is taken as on,
       * and there is no plugin provider (a test's doctor).
@@ -284,7 +285,7 @@ final class AgentDoctor(
     val version =
       runCommand(List(cmd(cc.command.value), cmd("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
         case (code, out) if code.value == 0 => Right(out.value)
-        case (code, out)                    => Left(AgentDoctor.Problem(s"exit ${code.value}: ${out.value.take(300)}"))
+        case (code, out)                    => Left(Problem(s"exit ${code.value}: ${out.value.take(300)}"))
       }
     val versionCheck = version.fold(
       why =>
@@ -410,8 +411,6 @@ object AgentDoctor:
   object HeaderName extends Newtype[String, Pure]
   type HeaderText = HeaderText.T
   object HeaderText extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** What a local command printed. */
   type Output = Output.T

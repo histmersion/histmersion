@@ -1,6 +1,7 @@
 package com.histmersion
 package util.plugins
 
+import com.histmersion.api.Problem
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.PluginSet
 

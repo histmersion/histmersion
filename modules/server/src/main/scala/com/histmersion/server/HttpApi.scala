@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.files.*

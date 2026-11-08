@@ -126,7 +126,7 @@ final class PluginHarness private (
     * recorded and replayed with the rest. The contact e-mail of the user's config is never sent from a test (nor
     * recorded): the lookups are anonymous.
     */
-  def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[PluginHarness.Problem, WorkKey] =
+  def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[Problem, WorkKey] =
     val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))
@@ -143,7 +143,7 @@ final class PluginHarness private (
         .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(Doi(clean))
         .map(w => WorkLookup.key(Some(Doi(clean)), None, Some(w)))
         .left
-        .map(e => PluginHarness.Problem(e.value))
+        .map(e => Problem(e.value))
     )._1
 
   /** One fetch of `work` through the plugin's source fetchers, as the server's acquisition chain runs it. With
@@ -203,7 +203,7 @@ final class PluginHarness private (
       case None =>
         MediaReport(
           Nil,
-          Some(MediaReport.Failure(s"the plugin registered no media collection '$collection'")),
+          Some(Problem(s"the plugin registered no media collection '$collection'")),
           Nil,
           Nil
         )
@@ -219,7 +219,7 @@ final class PluginHarness private (
           val http = PluginMedia.http(polite)
           val allow = host.media.collections.allowed(MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
           PluginMedia.guard(col.search(place, http)) match
-            case Left(why)    => (Nil, Some(MediaReport.Failure(why.value)))
+            case Left(why)    => (Nil, Some(Problem(why.value)))
             case Right(items) => (items.map(judge(PluginMedia.Provider(collection.value), col, http, allow)), None)
         }
         MediaReport(verdicts, failure, logged, asked)
@@ -228,7 +228,7 @@ final class PluginHarness private (
       answered: Either[?, MediaItem]
   ): MediaVerdict =
     answered match
-      case Left(why)   => MediaVerdict(MediaRecord.Key(s"$why"), None, None, Some(PluginMedia.Refusal(s"$why")))
+      case Left(why)   => MediaVerdict(MediaRecord.Key(s"$why"), None, None, Some(Problem(s"$why")))
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match
@@ -240,7 +240,7 @@ final class PluginHarness private (
                   rec.key,
                   Some(item),
                   rec.rights.toOption.map(_.licence.id),
-                  Some(PluginMedia.Refusal(why.value))
+                  Some(Problem(why.value))
                 )
               case Right(full) =>
                 val completed = PluginMedia.record(full)
@@ -248,7 +248,7 @@ final class PluginHarness private (
                   .refusal(completed, allow, name)
                   .map(why =>
                     if why.value.startsWith("licence") then
-                      PluginMedia.Refusal("licence not allowed on the full record")
+                      Problem("licence not allowed on the full record")
                     else why
                   )
                 MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
@@ -266,12 +266,12 @@ final class PluginHarness private (
           Nil,
           Nil,
           Nil,
-          Some(CatalogueReport.Failure(s"the plugin registered no event catalogue '$catalogue'")),
+          Some(Problem(s"the plugin registered no event catalogue '$catalogue'")),
           Nil,
           Nil
         )
       case Some(cat) =>
-        val pages = List.newBuilder[(PluginEvents.PartName, Either[PluginEvents.Problem, CatalogueReport.Events])]
+        val pages = List.newBuilder[(PluginEvents.PartName, Either[Problem, CatalogueReport.Events])]
         val accepted = List.newBuilder[AcceptedEvent]
         val refused = List.newBuilder[CatalogueReport.Refused]
         val leftOut = List.newBuilder[CatalogueReport.LeftOut]
@@ -292,7 +292,7 @@ final class PluginHarness private (
           // the parts read in this run: a page naming one again is not followed
           val read = scala.collection.mutable.Set.empty[PluginEvents.PartName]
           PluginEvents.guard(Right(cat.parts(query).map(p => PluginEvents.PartName(p.value)))) match
-            case Left(why)    => (Nil, Some(CatalogueReport.Failure(why.value)))
+            case Left(why)    => (Nil, Some(Problem(why.value)))
             case Right(parts) =>
               parts.distinct.foreach { first =>
                 PluginEvents.readPart(cat, first, query, http, read.contains, false) { (part, got) =>
@@ -343,7 +343,7 @@ final class PluginHarness private (
         GazetteerReport(
           Nil,
           Nil,
-          Some(GazetteerReport.Failure(s"the plugin registered no gazetteer source '$name'")),
+          Some(Problem(s"the plugin registered no gazetteer source '$name'")),
           Nil,
           Nil
         )
@@ -358,7 +358,7 @@ final class PluginHarness private (
           }
         }
         got match
-          case Left(why)   => GazetteerReport(Nil, Nil, Some(GazetteerReport.Failure(why.value)), logged, asked)
+          case Left(why)   => GazetteerReport(Nil, Nil, Some(Problem(why.value)), logged, asked)
           case Right(read) =>
             GazetteerReport(
               read.collect { case Right(a) => a },
@@ -375,7 +375,7 @@ final class PluginHarness private (
     */
   def aiTurn(provider: Registries.AiProvidersKey, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
-      case None    => AiReport(Left(PluginAi.Problem(s"the plugin registered no AI provider '$provider'")), None, Nil)
+      case None    => AiReport(Left(Problem(s"the plugin registered no AI provider '$provider'")), None, Nil)
       case Some(p) =>
         val ((check, turn), logged, _) = run {
           val check = PluginAi.check(p, PluginAi.ModelName(request.model.value))
@@ -389,7 +389,7 @@ final class PluginHarness private (
   def resolveSecret(
       vault: Secret.Ref.Vault.Value,
       ref: Secret.Ref.Vault.Ref
-  ): Either[PluginHost.Problem, PluginHost.SecretValue] =
+  ): Either[Problem, PluginHost.SecretValue] =
     PluginHost.resolve(
       Secret.Ref.Vault(vault, ref),
       env,
@@ -397,9 +397,6 @@ final class PluginHarness private (
     )
 
 object PluginHarness:
-  /** Why a harness could not be built or a lookup could not be made. */
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** One request made through the harness: `GET <url>`, with secrets shown as `{secret}`. */
   type Request = Request.T

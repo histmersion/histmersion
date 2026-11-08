@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.config.{AppConfig, UserPaths}
 
 import java.nio.file.{Files, Path}
@@ -14,9 +15,9 @@ import com.histmersion.domain.automation.agents.AgentTrees
 final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None):
 
   /** The manifest's text, or why there is none. */
-  def manifestText(): Either[GazetteerPaths.Problem, GazetteerPaths.ManifestText] =
+  def manifestText(): Either[Problem, GazetteerPaths.ManifestText] =
     if !Files.isRegularFile(manifest) then
-      Left(GazetteerPaths.Problem(s"no gazetteer manifest at $manifest (set places.sources.manifest)"))
+      Left(Problem(s"no gazetteer manifest at $manifest (set places.sources.manifest)"))
     else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:
@@ -32,8 +33,6 @@ object GazetteerPaths:
   object OsName extends Newtype[String, Pure]
   type ManifestText = ManifestText.T
   object ManifestText extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 

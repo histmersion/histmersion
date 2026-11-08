@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Place
 
@@ -273,7 +274,7 @@ final class EventLinksControllers(
                     BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
                   )
                   .left
-                  .map(e => BackgroundJob.Outcome.Error(e.message.value))
+                  .map(e => Problem(e.message.value))
             }
           )
       case None =>

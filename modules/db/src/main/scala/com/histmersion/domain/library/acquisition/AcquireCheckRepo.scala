@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.AcquireRecheck
 
 import com.histmersion.util.database.given
@@ -30,7 +31,7 @@ private[acquisition] object AcquireCheckRepo:
           CheckedAtMs,
           AcquireRecheck.LastCheck.Generation,
           AcquireRecheck.Outcome.Wire,
-          AcquireCheckRow.Reason,
+          Problem,
           AcquireCheckRow.Checks
       )
   ): AcquireCheckRow =
@@ -48,7 +49,7 @@ private[acquisition] object AcquireCheckRepo:
               CheckedAtMs,
               AcquireRecheck.LastCheck.Generation,
               AcquireRecheck.Outcome.Wire,
-              AcquireCheckRow.Reason,
+              Problem,
               AcquireCheckRow.Checks
           )
         ]
@@ -66,7 +67,7 @@ private[acquisition] object AcquireCheckRepo:
             CheckedAtMs,
             AcquireRecheck.LastCheck.Generation,
             AcquireRecheck.Outcome.Wire,
-            AcquireCheckRow.Reason,
+            Problem,
             AcquireCheckRow.Checks
         )
       ]
@@ -81,7 +82,7 @@ private[acquisition] object AcquireCheckRepo:
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
-      reason: AcquireCheckRow.Reason
+      reason: Problem
   )(using
       DbCon
   ): Unit =

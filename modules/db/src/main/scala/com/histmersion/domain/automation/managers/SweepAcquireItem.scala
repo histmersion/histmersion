@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
@@ -24,7 +25,7 @@ final case class SweepAcquireItem(
     year: Option[Year],
     authors: List[SweepAcquireItem.Authors],
     venue: Option[SweepAcquireItem.Venue],
-    why: Option[SweepAcquireItem.Why]
+    why: Option[Problem]
 ) derives DbCodec
 
 object SweepAcquireItem:
@@ -48,5 +49,3 @@ object SweepAcquireItem:
   object Authors extends Newtype[String, Pure]
   type Venue = Venue.T
   object Venue extends Newtype[String, Pure]
-  type Why = Why.T
-  object Why extends Newtype[String, Pure]

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.library.Tree
 
@@ -27,7 +28,6 @@ object PlaceFixtures:
   export PlaceSql.*
   export PlaceRepo.{geoJsonQuery, geoJsonTimeQuery, rangeShadowedSql, rangeShadowTestSql}
   export PlaceRepo.{Depth, Lang, Limit, Name, PairsByIndex, SearchText}
-  export PlaceOverrideRepo.RemovalReason
   export FindingPlaceRepo.{placeholderSql, DefaultPlaceholderAreaShare, DefaultPlaceholderMin}
   export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}
 
@@ -195,7 +195,7 @@ object PlaceFixtures:
   def remove(
       ds: DataSource,
       id: com.histmersion.domain.catalogue.Place.Id,
-      reason: Option[PlaceOverrideRepo.RemovalReason]
+      reason: Option[Problem]
   ): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason))
 

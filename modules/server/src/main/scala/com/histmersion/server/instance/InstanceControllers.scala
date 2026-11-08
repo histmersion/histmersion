@@ -1,6 +1,7 @@
 package com.histmersion
 package server.instance
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}

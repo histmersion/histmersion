@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.{Write, YearFmt}

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{FollowupRow, WorkRef}
@@ -13,11 +14,9 @@ trait CitationsClient:
       work: WorkRef,
       since: Option[Year],
       limit: CitationsClient.CitingLimit
-  ): Either[CitationsClient.Problem, (CitationsClient.Backend, List[FollowupRow])]
+  ): Either[Problem, (CitationsClient.Backend, List[FollowupRow])]
 
 object CitationsClient:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Backend = Backend.T
   object Backend extends Newtype[String, Pure]
   type CitingLimit = CitingLimit.T

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
 import com.histmersion.api.exchange.{Bundle, MergePlan}
@@ -23,7 +24,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
-      run: () => Either[MergeApplyRuns.Failure, MergeApplyResult]
+      run: () => Either[Problem, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
@@ -45,7 +46,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
             .Try(run())
             .toEither
             .left
-            .map(e => MergeApplyRuns.Failure(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            .map(e => Problem(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
             .flatten
           try runs.finish(id, outcome)
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)

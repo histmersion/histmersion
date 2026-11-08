@@ -1,5 +1,6 @@
 package com.histmersion
 package util.database
+import com.histmersion.api.Problem
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
@@ -16,8 +17,6 @@ object Jsonb:
   object DropNulls extends Newtype[Boolean, Pure]
   type JsonText = JsonText.T
   object JsonText extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
     DbCodec[Option[String]]

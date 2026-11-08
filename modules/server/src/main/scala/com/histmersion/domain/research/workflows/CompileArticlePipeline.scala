@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -348,13 +349,13 @@ final class CompileArticlePipeline(
         site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ())
       )(Right(()))
     if !decided.approved.value then
-      Right(Written(written = Written.Value(false), Written.Why("the draft was rejected"), None))
+      Right(Written(written = Written.Value(false), Problem("the draft was rejected"), None))
     else
       d.mode match
         case DraftMode.Create =>
           if site.articleStore.exists(s.slug) then
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
-            Right(Written(written = Written.Value(false), Written.Why("the slug was taken meanwhile"), None))
+            Right(Written(written = Written.Value(false), Problem("the slug was taken meanwhile"), None))
           else
             val put = Article.Put(
               d.title,
@@ -370,8 +371,8 @@ final class CompileArticlePipeline(
                 .put(s.slug, put)
                 .left
                 .map(_.message.value)
-                .map(_ => Written(written = Written.Value(true), Written.Why("created"), None))
-            )(Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None)))
+                .map(_ => Written(written = Written.Value(true), Problem("created"), None))
+            )(Right(Written(written = Written.Value(false), Problem(AgentsMarkdown.DryRunNote), None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale =
@@ -387,12 +388,12 @@ final class CompileArticlePipeline(
             site.articles.patch(s.slug, patch).map(_ => true)
           )(Right(false)) match
             case Right(false) =>
-              Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None))
+              Right(Written(written = Written.Value(false), Problem(AgentsMarkdown.DryRunNote), None))
             case Right(_) =>
               Right(
                 Written(
                   written = Written.Value(true),
-                  Written.Why("appended"),
+                  Problem("appended"),
                   site.articleStore.latestVersion(s.slug).map(v => Written.PreviousVersion(v.value))
                 )
               )
@@ -400,7 +401,7 @@ final class CompileArticlePipeline(
               task(
                 "the article changed while the draft waited for approval; the section was NOT appended — compile again"
               )
-              Right(Written(written = Written.Value(false), Written.Why("the article changed meanwhile"), None))
+              Right(Written(written = Written.Value(false), Problem("the article changed meanwhile"), None))
             case Left(e) => Left(e.message.value)
 
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
@@ -492,13 +493,11 @@ object CompileArticlePipeline:
   ) derives KindlingsCodecAsObject
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
-  final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion])
+  final case class Written(written: Written.Value, why: Problem, previousVersion: Option[Written.PreviousVersion])
       derives KindlingsCodecAsObject
 
   object Written:
     type Value = Value.T
     object Value extends Newtype[Boolean, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type PreviousVersion = PreviousVersion.T
     object PreviousVersion extends Newtype[Long, Pure]

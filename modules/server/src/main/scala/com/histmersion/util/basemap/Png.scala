@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -15,8 +16,6 @@ object Png:
   val Pixels: Vp8l.Image.Pixels.type = Vp8l.Image.Pixels
   type PngBytes = PmTiles.TileBytes
   val PngBytes: PmTiles.TileBytes.type = PmTiles.TileBytes
-  type Problem = Problem
-  val Problem: Problem.type = Problem
   type Width = Vp8l.Image.Width
   val Width: Vp8l.Image.Width.type = Vp8l.Image.Width
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
@@ -287,4 +288,4 @@ object WatchManagerKind:
   /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with no unseen
     * candidate does; a search that is not connected (or failed) lets the run start as before.
     */
-  def nothingNew(sweep: Either[AgentUpstream.Problem, CandidateSweep]): Boolean = sweep.exists(_.unseen.value == 0)
+  def nothingNew(sweep: Either[Problem, CandidateSweep]): Boolean = sweep.exists(_.unseen.value == 0)

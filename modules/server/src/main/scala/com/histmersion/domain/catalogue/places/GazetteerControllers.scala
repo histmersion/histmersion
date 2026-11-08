@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
 import com.histmersion.domain.Caller
@@ -40,7 +41,7 @@ final class GazetteerControllers(
       scribe.info(s"[import] $about…")
       val r = run
       r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
-      BackgroundJob.Outcome.of(r.left.map(BackgroundJob.Outcome.Error(_)).map(BackgroundJob.Outcome.Summary(_)))
+      BackgroundJob.Outcome.of(r.left.map(Problem(_)).map(BackgroundJob.Outcome.Summary(_)))
     )
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external gazetteer. Idempotent:
@@ -59,7 +60,7 @@ final class GazetteerControllers(
         imports
           .source(
             BuiltinGazetteers.Entry.Name(name),
-            GazetteerImports.Problem(
+            Problem(
               s"unknown source '$source' (available: ${(imports.available.map(_.value) :+ NaturalEarthLand.name).mkString(", ")})"
             )
           )
@@ -94,7 +95,7 @@ final class GazetteerControllers(
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
-  private def refused(problem: GazetteerImports.Problem): Api.Error = Api.Error(Problem(problem.value))
+  private def refused(problem: Problem): Api.Error = Api.Error(Problem(problem.value))
 
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(

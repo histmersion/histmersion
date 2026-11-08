@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
@@ -24,16 +25,16 @@ trait FocusService:
   ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]]
 
   /** Per goal: the outcome of its last settled model-using item when it stopped or failed. */
-  def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy]
+  def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, Problem]
 
   /** Per goal: how many sources it links. */
   def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, RowCount]
 
   /** The goal became active at `now`, `why`. */
-  def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit
+  def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit
 
   /** The goal left the active set at `now`, `why`. */
-  def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit
+  def left(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit
 
   /** A person's pin; false = no such goal. */
   def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean
@@ -53,12 +54,12 @@ object FocusService:
         refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
     ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
       db.read(FocusRepo.goalsOf(kind, refs))
-    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] =
+    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, Problem] =
       db.read(FocusRepo.lastStops())
     def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] = db.read(FocusRepo.sourceCounts())
-    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit =
+    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit =
       db.transact(FocusRepo.joined(slug, why, now))
-    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
+    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit =
       db.transact(FocusRepo.left(slug, why, now))
     def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean =
       db.transact(FocusRepo.pin(slug, pinned))
@@ -82,9 +83,9 @@ object FocusService:
           FocusRepo.GoalRow.Pinned(f.pinned.value),
           FocusRepo.GoalRow.Priority(f.priority.value),
           t(f.since).map(FocusRepo.GoalRow.Since(_)),
-          f.why.map(w => FocusRepo.GoalRow.Why(w.value)),
+          f.why.map(w => Problem(w.value)),
           t(f.leftAt).map(FocusRepo.GoalRow.LeftAt(_)),
-          f.leftWhy.map(w => FocusRepo.GoalRow.LeftWhy(w.value))
+          f.leftWhy.map(w => Problem(w.value))
         )
       }
     def goalsOf(
@@ -103,7 +104,7 @@ object FocusService:
               ls.map(_.goal.value).sorted.toList.map(com.histmersion.domain.automation.Goal.Slug.assume(_))
           )
           .toMap
-    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] =
+    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, Problem] =
       val s = state.get
       val goalOf = s.managers.flatMap(m => m.goal.map(g => m.id.value -> g.value)).toMap
       s.items
@@ -117,7 +118,7 @@ object FocusService:
         .collect {
           case (g, i) if i.status.value == "stopped" || i.status.value == "failed" =>
             com.histmersion.domain.automation.Goal.Slug.assume(g) ->
-              FocusRepo.GoalRow.LeftWhy(i.outcome.fold(i.status.value)(_.value))
+              Problem(i.outcome.fold(i.status.value)(_.value))
         }
         .toMap
     def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] =
@@ -139,16 +140,16 @@ object FocusService:
         )
         .goals
         .contains(goalKey) || !mustExist
-    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit =
+    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit =
       val _ = changeFocus(slug, mustExist = false)(
         _.modify(_.active)
           .setTo(FocusRecord.Active(true))
           .modify(_.since)
           .setTo(Some(now))
           .modify(_.why)
-          .setTo(Some(FocusRecord.Why(why.value)))
+          .setTo(Some(Problem(why.value)))
       )
-    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
+    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit =
       val focusKey = AutomationState.FocusKey(slug.value)
       val _ = state.updateAndGet(
         _.modify(_.focus).using(fs =>
@@ -161,7 +162,7 @@ object FocusService:
                   .modify(_.leftAt)
                   .setTo(Some(now))
                   .modify(_.leftWhy)
-                  .setTo(Some(FocusRecord.LeftWhy(why.value)))
+                  .setTo(Some(Problem(why.value)))
               )
             )
         )

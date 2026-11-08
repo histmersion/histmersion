@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -198,12 +199,12 @@ object BasemapFixtures:
     val requests = AtomicInteger(0)
     val downloads = AtomicInteger(0)
     private def size = RemoteFile.Size(Files.size(file))
-    def text(url: RangeHttp.Url): Either[RangeHttp.Problem, RangeHttp.ResponseText] = Right(builds)
+    def text(url: RangeHttp.Url): Either[Problem, RangeHttp.ResponseText] = Right(builds)
     def bytes(
         url: RangeHttp.Url,
         offset: ByteOffset,
         length: ByteCount
-    ): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
+    ): Either[Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
       requests.incrementAndGet()
       val all = Files.readAllBytes(file)
       val end = math.min(all.length.toLong, offset.value + length.value)
@@ -213,7 +214,7 @@ object BasemapFixtures:
         offset: ByteOffset,
         length: ByteCount,
         to: Reservation
-    ): Either[RangeHttp.Problem, RemoteFile] =
+    ): Either[Problem, RemoteFile] =
       requests.incrementAndGet()
       downloads.incrementAndGet()
       val all = Files.readAllBytes(file)

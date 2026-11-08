@@ -1,13 +1,12 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 
 object PluginTree:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Owned = OwnedValue
   type OwnedValue = OwnedValue.T
   object OwnedValue extends Newtype[String, Pure]

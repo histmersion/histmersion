@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
+import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.Api

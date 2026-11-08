@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.pluginhost.{Challenge, HttpAnswer, OaFetcher}
@@ -48,7 +49,7 @@ class LandingFetchSuite extends munit.FunSuite:
   private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
-  private def fail2(http: FakeUpstream)(e: OaFetcher.Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
+  private def fail2(http: FakeUpstream)(e: Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
 
   test("Zenodo: the record page OpenAlex gives as the PDF is resolved by the API to the record's open PDF"):
     val c = cfg

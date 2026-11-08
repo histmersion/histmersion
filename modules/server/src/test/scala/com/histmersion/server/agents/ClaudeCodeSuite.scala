@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -585,7 +586,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit"):
     val fake = FakeCli("claude", List(Init, Turn1, RateLimit), sleepAfter = 60)
     val sink = FakeCli.Sink(block =
-      Some((PoolSink.BlockedReason("five_hour: 8% left, floor 25%"), Some(PlanQuotaRepo.EpochMillis(1791236400000L))))
+      Some((Problem("five_hour: 8% left, floor 25%"), Some(PlanQuotaRepo.EpochMillis(1791236400000L))))
     )
     val (rt, skeptic) = runtime(sink)
     val t0 = System.nanoTime()

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 
 import com.histmersion.config.*
@@ -36,8 +37,6 @@ object JobRepo:
   object DueAt extends Newtype[String, Pure]
   type PageCursor = PageCursor.T
   object PageCursor extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ResumeAt = ResumeAt.T
   object ResumeAt extends Newtype[String, Pure]
   type TokenBudget = TokenBudget.T
@@ -62,7 +61,7 @@ object JobRepo:
       JobInfo.Status(r.status.value),
       r.citekey.map(c => Citekey(c.value)),
       r.progress.map(p => JobInfo.Progress(p.value)),
-      r.error.map(e => Problem(e.value)),
+      r.error.map(e => api.Problem(e.value)),
       r.sha256.map(h => Sha256(h.value)),
       JobInfo.CreatedAt(r.createdAt.value),
       JobInfo.UpdatedAt(r.updatedAt.value),
@@ -219,7 +218,7 @@ object JobRepo:
       from: JobState,
       to: JobState,
       progress: Option[JobRow.Progress] = None,
-      error: Option[JobRow.Error] = None
+      error: Option[Problem] = None
   )(using DbCon): Option[JobState] =
     JobState.next(from, to).flatMap { target =>
       val updated =
@@ -283,7 +282,7 @@ object JobRepo:
       id: Run.Id,
       from: RunRow.Status,
       to: RunRow.Status,
-      error: Option[JobRow.Error],
+      error: Option[Problem],
       progress: Option[JobRow.Progress],
       resumeAt: Option[ResumeAt]
   )(using DbCon): Boolean =
@@ -330,7 +329,7 @@ object JobRepo:
       kind: Job.Kind,
       running: RunRow.Status,
       paused: RunRow.Status,
-      error: JobRow.Error,
+      error: Problem,
       queued: RunRow.Status,
       except: List[Run.Id]
   )(using DbCon): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =

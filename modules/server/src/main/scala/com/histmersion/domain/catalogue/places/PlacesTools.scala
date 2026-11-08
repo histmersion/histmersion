@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, PlacesMarkdown, Year}
@@ -60,7 +61,7 @@ object PlacesTools:
       kind: Option[PlaceOverrideInput.Kind] = None,
       periodStart: Option[com.histmersion.Year] = None,
       periodEnd: Option[com.histmersion.Year] = None,
-      reason: Option[PlaceOverrideInput.Reason] = None,
+      reason: Option[Problem] = None,
       reset: Option[PlaceOverrideInput.Reset] = None,
       mergeInto: Option[PlaceOverrideInput.MergeInto] = None,
       remove: Option[PlaceOverrideInput.Remove] = None,
@@ -72,8 +73,6 @@ object PlacesTools:
     object PlaceId extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type Reset = Reset.T
     object Reset extends Newtype[Boolean, Pure]
     type MergeInto = MergeInto.T

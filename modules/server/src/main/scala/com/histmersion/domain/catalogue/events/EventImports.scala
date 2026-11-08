@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
@@ -64,18 +65,18 @@ final class EventImports(
   def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered())
 
   /** The catalogue an import names among the registered ones, or why none. */
-  def resolve(asked: CatalogRecord.Provider): Either[EventImports.Problem, CatalogRecord.Provider] =
-    BuiltinCatalogues.resolve(asked, registered()).left.map(why => EventImports.Problem(why))
+  def resolve(asked: CatalogRecord.Provider): Either[Problem, CatalogRecord.Provider] =
+    BuiltinCatalogues.resolve(asked, registered()).left.map(why => Problem(why))
 
   /** The catalogue a re-derivation names: a built-in one even while it is switched off (its records are still there),
     * else a registered one.
     */
-  def resolveStored(asked: CatalogRecord.Provider): Either[EventImports.Problem, CatalogRecord.Provider] =
+  def resolveStored(asked: CatalogRecord.Provider): Either[Problem, CatalogRecord.Provider] =
     val n = BuiltinCatalogues.canonical(asked)
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
   /** One catalogue part read: its key and the records (or why not). */
-  private type Fetched = Either[PluginEvents.Problem, List[CatalogRecord]]
+  private type Fetched = Either[Problem, List[CatalogRecord]]
 
   /** The import itself — blocking; the job runs it. Part by part: read, keep what passes the thresholds and the years,
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry
@@ -394,6 +395,3 @@ final class EventImports(
           )
       )
 
-object EventImports:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

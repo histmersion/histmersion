@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -113,13 +114,13 @@ private[sources] object SourceRepo:
       case None           => Left(Write.notFound(apiCitekey(citekey)))
       case Some(existing) =>
         Source.Write.precondition(existing, p) match
-          case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
+          case Left(msg) => Left(Api.Error(api.Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
             Source.Write.applyPatch(
               existing,
               Source.Write.srcAliased(p, apiCitekey(requested), apiCitekey(citekey))
             ) match
-              case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+              case Left(msg) => Left(Api.Error(api.Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(Source.UpdatedAt(token(citekey).getOrElse("")))
 
@@ -469,7 +470,7 @@ private[sources] object SourceRepo:
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
-      .map(problem => Write.invalid(Problem(problem.value)))
+      .map(problem => Write.invalid(api.Problem(problem.value)))
       .flatMap(validated => renameIn(oldCk, validated, referrers))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
@@ -489,14 +490,14 @@ private[sources] object SourceRepo:
       Left(aliasTarget(oldCk) match
         case Some(now) =>
           Api.Error(
-            Problem(s"'${oldCk.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead"),
+            api.Problem(s"'${oldCk.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         case None => Write.notFound(apiCitekey(oldCk)))
     else if taken(newCk) then
       Left(
         Api.Error(
-          Problem(s"'${newCk.value}' is already the citekey of another source"),
+          api.Problem(s"'${newCk.value}' is already the citekey of another source"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -505,7 +506,7 @@ private[sources] object SourceRepo:
         case Some(other) if other != oldCk =>
           Left(
             Api.Error(
-              Problem(
+              api.Problem(
                 s"'${newCk.value}' is an old citekey of '${other.value}' and still resolves to it — pick another"
               ),
               Some(Api.Error.Code(Write.CodeInvalid))
@@ -516,7 +517,7 @@ private[sources] object SourceRepo:
             case Some(id) =>
               Left(
                 Api.Error(
-                  Problem(s"finding id '$id' already exists — '${newCk.value}' would collide with it"),
+                  api.Problem(s"finding id '$id' already exists — '${newCk.value}' would collide with it"),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

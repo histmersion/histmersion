@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.workflows.Pipelines
 
 import chimp.server.*

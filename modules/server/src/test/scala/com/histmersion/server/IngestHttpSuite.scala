@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -104,7 +105,7 @@ class IngestHttpSuite extends munit.FunSuite:
   /** Returns a body that links one figure the canonical way, plus that figure twice — the second copy has identical
     * bytes, so storage must deduplicate it.
     */
-  final private class FakeConverter(fail: Option[ConverterClient.Problem] = None, beforeConvert: () => Unit = () => ())
+  final private class FakeConverter(fail: Option[Problem] = None, beforeConvert: () => Unit = () => ())
       extends ConverterClient:
     @volatile var calls: List[(ConverterClient.Filename, ConverterClient.HighQuality)] = Nil
     def health = Right(ConverterClient.HealthSummary("ok"))
@@ -285,7 +286,7 @@ class IngestHttpSuite extends munit.FunSuite:
             cfg,
             ServerConfig.Host("127.0.0.1"),
             ServerConfig.Port(0),
-            FakeConverter(Some(ConverterClient.Problem("converter at http://x is unreachable")))
+            FakeConverter(Some(Problem("converter at http://x is unreachable")))
           )
           .start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -395,7 +396,7 @@ class IngestHttpSuite extends munit.FunSuite:
           cfg,
           ServerConfig.Host("127.0.0.1"),
           ServerConfig.Port(0),
-          FakeConverter(Some(ConverterClient.Problem("converter exploded")))
+          FakeConverter(Some(Problem("converter exploded")))
         )
         .start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -472,7 +473,7 @@ class IngestHttpSuite extends munit.FunSuite:
     val entered = CountDownLatch(1)
     val release = CountDownLatch(1)
     val conv = new ConverterClient:
-      def health = Left(ConverterClient.Problem("converter at http://sidecar did not finish within 5 s"))
+      def health = Left(Problem("converter at http://sidecar did not finish within 5 s"))
       def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)

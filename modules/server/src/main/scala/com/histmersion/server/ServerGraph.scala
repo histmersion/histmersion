@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.search.QueryAccess
@@ -90,7 +91,7 @@ final class ServerGraph private (
       case None      => Deps.NoReload().modify(_.generation).setTo(generation)
       case Some(src) =>
         val report = (try src.read()
-        catch case NonFatal(e) => Left(ConfigSource.Problem(s"reading the config failed: ${e.getMessage}"))) match
+        catch case NonFatal(e) => Left(Problem(s"reading the config failed: ${e.getMessage}"))) match
           case Left(e) =>
             ReloadReport(
               published = ReloadReport.Published(false),
@@ -151,7 +152,7 @@ final class ServerGraph private (
     * so turning `watch` on or off is itself a reload, and the watcher stops with its scope. Off without a file to
     * watch.
     */
-  private[server] def addWatch(): Either[ServerGraph.Problem, Hot[Boolean]] =
+  private[server] def addWatch(): Either[Problem, Hot[Boolean]] =
     graph
       .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) {
         ctx =>
@@ -177,14 +178,12 @@ final class ServerGraph private (
             case _ => Right(false)
       }
       .left
-      .map(p => ServerGraph.Problem(p.value))
+      .map(p => Problem(p.value))
 
   /** Close every component — the server's end. */
   def close(): Unit = graph.close()
 
 object ServerGraph:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   val Pool = "pool"
   val Migrations = "migrations"
@@ -216,9 +215,9 @@ object ServerGraph:
           ) { ctx =>
             val db = ctx.config.app.db
             for
-              _ <- prepare(ctx.config.app).left.map(e => Hot.Graph.Problem(e.value))
+              _ <- prepare(ctx.config.app).left.map(e => Problem(e.value))
               p = useInScope(Db.pool(db))(_.close())
-              _ <- Db.canConnect(p).left.map(e => Hot.Graph.Problem(s"cannot connect to ${redact(db.url.value)}: $e"))
+              _ <- Db.canConnect(p).left.map(e => Problem(s"cannot connect to ${redact(db.url.value)}: $e"))
             yield p
           }
         mig <- graph.node[Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
@@ -232,7 +231,7 @@ object ServerGraph:
             Right(v)
           catch
             case NonFatal(e) =>
-              Left(Hot.Graph.Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
+              Left(Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
         }
         q <- graph.node[ReadOnlyPool](
           Hot.Graph.Def.Name(QueryPool),

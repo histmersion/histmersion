@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api

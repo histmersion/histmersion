@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.checks
 
+import com.histmersion.api.Problem
 import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.maintenance.WriteGate

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.ingest
+import com.histmersion.api.Problem
 import com.histmersion.api.jobs.JobInfo
 
 import io.scalaland.chimney.dsl.*
@@ -160,7 +161,7 @@ final class IngestQueue(
           id,
           JobState.Queued,
           JobState.Failed,
-          error = Some(JobRow.Error(s"${JobState.Interrupted}: the upload is no longer held by this process"))
+          error = Some(Problem(s"${JobState.Interrupted}: the upload is no longer held by this process"))
         )
       case Some(job) =>
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match
@@ -190,7 +191,7 @@ final class IngestQueue(
             outcome match
               case Left(msg) =>
                 scribe.warn(s"job $id failed: $msg")
-                val _ = jobs.transition(id, JobState.Running, JobState.Failed, error = Some(JobRow.Error(msg)))
+                val _ = jobs.transition(id, JobState.Running, JobState.Failed, error = Some(Problem(msg)))
               case Right((doc, n)) =>
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit.internal
 
+import com.histmersion.plugin.Problem
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, UnrecordedRequest}
 

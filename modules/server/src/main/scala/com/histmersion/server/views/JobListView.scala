@@ -1,6 +1,7 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters

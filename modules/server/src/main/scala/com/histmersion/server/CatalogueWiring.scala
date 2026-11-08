@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -160,7 +161,7 @@ object CatalogueWiring:
       deps: Deps,
       places: PlaceService,
       download: GazetteerLoad.Download,
-      text: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text]
+      text: HttpDownload.Url => Either[Problem, HttpDownload.Text]
   ): GazetteerImports =
     GazetteerImports(
       deps.transactor,

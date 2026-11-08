@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.{ResearchState, Slug}

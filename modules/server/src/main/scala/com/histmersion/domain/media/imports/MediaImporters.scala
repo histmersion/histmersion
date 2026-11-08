@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Registries}
 
 import com.histmersion.config.MediaConfig
@@ -20,8 +21,6 @@ import com.histmersion.config.MediaPluginCollectionsConfig
 object MediaImporters:
   type ImporterKey = ImporterKey.T
   object ImporterKey extends Newtype[String, Pure]
-  type Refusal = Refusal.T
-  object Refusal extends Newtype[String, Pure]
 
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.
@@ -29,13 +28,13 @@ object MediaImporters:
   def lookup(
       asked: ImporterKey,
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]
-  ): Either[Refusal, (MediaImporter.ImporterName, MediaCollection)] =
+  ): Either[Problem, (MediaImporter.ImporterName, MediaCollection)] =
     val name = BuiltinMedia.canonical(BuiltinMedia.CanonicalAsked(asked.value)).value
     collections
       .get(Registries.MediaCollectionsKey(name))
       .map(MediaImporter.ImporterName(name) -> _)
       .toRight(
-        Refusal(
+        Problem(
           BuiltinMedia.entry(BuiltinMedia.EntryName(name)) match
             case Some(e) if BuiltinMedia.keyed.contains(BuiltinMedia.EntryKey(name)) =>
               s"${e.title} ($name) is switched off — it is off by default and needs ${BuiltinMedia.keyed(BuiltinMedia.EntryKey(name))}: set " +
@@ -59,12 +58,12 @@ object MediaImporters:
       cfg: () => MediaConfig,
       http: HttpTransport,
       converter: ConverterClient
-  ): Either[Refusal, MediaImporter] =
+  ): Either[Problem, MediaImporter] =
     lookup(asked, collections).flatMap { (name, c) =>
       PluginMedia
         .guard(c.check)
         .left
-        .map(why => Refusal(why.value))
+        .map(why => Problem(why.value))
         .map(_ =>
           MediaImporter.of(
             name,

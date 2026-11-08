@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.automation.Managers.*
 
@@ -27,14 +28,10 @@ import com.histmersion.domain.CodexRetention
   * cannot do a step twice.
   */
 object ManagerRepo:
-  type CancelReason = CancelReason.T
-  object CancelReason extends Newtype[String, Pure]
   type EventCursor = EventCursor.T
   object EventCursor extends Newtype[Long, Pure]
   type ProgressText = ProgressText.T
   object ProgressText extends Newtype[String, Pure]
-  type RestaleReason = RestaleReason.T
-  object RestaleReason extends Newtype[String, Pure]
   export ManagerInfo.TokensToday as SpendCount
 
   export ManagerEvent.{
@@ -612,7 +609,7 @@ object ManagerRepo:
   /** A converged item selected again because it went stale: pending at `priority` (exactly: the lowest), its runs
     * counted from zero, its run history dropped (a new cycle), why in its outcome.
     */
-  def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: RestaleReason)(using DbCon): Boolean =
+  def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: Problem)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
                                    priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
                                    state = state - 'history', updated_at = now()
@@ -633,7 +630,7 @@ object ManagerRepo:
       .nonEmpty
 
   /** Every open item of a manager cancelled (a stop); returns how many. */
-  def cancelOpen(managerId: ManagerRow.Id, why: CancelReason)(using DbCon): RowCount =
+  def cancelOpen(managerId: ManagerRow.Id, why: Problem)(using DbCon): RowCount =
     RowCount(
       sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
           WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()

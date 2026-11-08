@@ -1,6 +1,7 @@
 package com.histmersion
 package server.instance
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.{SeedRequest, SeedResult}
 import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.util.storage.SafePath

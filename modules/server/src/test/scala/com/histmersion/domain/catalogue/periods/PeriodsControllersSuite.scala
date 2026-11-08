@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.periods
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.Caller
@@ -18,10 +19,10 @@ class PeriodsControllersSuite extends munit.FunSuite:
   private val dump = scala.io.Source.fromResource("periods/periodo_dump.json")(using scala.io.Codec.UTF8).mkString
 
   private def controllers(
-      download: PeriodSources.PeriodoUrl => Either[PeriodImports.Problem, PeriodImports.Document] = _ =>
+      download: PeriodSources.PeriodoUrl => Either[Problem, PeriodImports.Document] = _ =>
         Right(PeriodImports.Document(dump)),
-      seed: () => Either[PeriodImports.Problem, PeriodImports.Document] = () =>
-        Left(PeriodImports.Problem("no period seed here")),
+      seed: () => Either[Problem, PeriodImports.Document] = () =>
+        Left(Problem("no period seed here")),
       gate: WriteGate = WriteGate()
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
@@ -72,7 +73,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
         .left
         .exists(_.message.value.contains("seed or local"))
     )
-    val dead = controllers(download = _ => Left(PeriodImports.Problem("HTTP 503 from https://periodo.test/dump")))
+    val dead = controllers(download = _ => Left(Problem("HTTP 503 from https://periodo.test/dump")))
     assert(
       dead.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.value.contains("503"))
     )

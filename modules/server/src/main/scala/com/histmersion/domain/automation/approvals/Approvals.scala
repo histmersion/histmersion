@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -30,8 +31,8 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[ApprovalEffects.Problem, String] = _ =>
-      Left(ApprovalEffects.Problem("no managers to apply it"))
+    applyHint: Managers.HintProposal => Either[Problem, String] = _ =>
+      Left(Problem("no managers to apply it"))
 ):
 
   def list(
@@ -142,7 +143,7 @@ final class Approvals(
         case (Decision.Reject, _) => store.settle(id, ApprovalState.Rejected, DomainApproval.Outcome("rejected"))
         case (Decision.Approve, ApprovalKind.HintEffect) =>
           a.hintEffect
-            .toRight(ApprovalEffects.Problem("the approval carries no readable action"))
+            .toRight(Problem("the approval carries no readable action"))
             .flatMap(applyHint) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w".take(1000)))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))

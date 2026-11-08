@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.Registries
 import com.histmersion.util.plugins.Plugin
@@ -68,13 +69,13 @@ object BuiltinGazetteers:
   def resolve(
       name: Entry.Name,
       registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
-      unknown: => GazetteerImports.Problem
-  ): Either[GazetteerImports.Problem, GazetteerSource] =
+      unknown: => Problem
+  ): Either[Problem, GazetteerSource] =
     registered.get(Registries.GazetteerSourcesKey(name.value)).toRight {
       entries
         .find(_.name == name)
         .fold(unknown)(e =>
-          GazetteerImports.Problem(
+          Problem(
             s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
           )
         )

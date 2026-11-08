@@ -1,6 +1,7 @@
 package com.histmersion
 package server.hot
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 import ox.{supervised, Ox}
 
@@ -272,7 +273,7 @@ object Hot:
                 case Some(e) =>
                   // nobody has seen these: close them now, dependents first
                   built.values.toList.reverse.foreach(_.close(log))
-                  log.warn(Log.Message(s"config reload: nothing changed — $e"))
+                  log.warn(Problem(s"config reload: nothing changed — $e"))
                   Left(e)
                 case None =>
                   val published = Snap(gen, next, s.nodes ++ built)
@@ -288,7 +289,7 @@ object Hot:
                         catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
                       })
                     finally onNew.release()
-                  notes.foreach(w => log.warn(Log.Message(w.value)))
+                  notes.foreach(w => log.warn(Problem(w.value)))
                   Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
             }
       }
@@ -321,7 +322,7 @@ object Hot:
           old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
-            Log.Message(
+            Problem(
               s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
                 "it closes when its last user lets go"
             )
@@ -348,7 +349,7 @@ object Hot:
             draining.keySet.asScala.toList
           }).distinct.foreach { i =>
             while !i.free && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-            if !i.free then log.warn(Log.Message(s"shutdown: closing ${i.describe} while still in use"))
+            if !i.free then log.warn(Problem(s"shutdown: closing ${i.describe} while still in use"))
             i.close(log)
           }
       }
@@ -378,7 +379,7 @@ object Hot:
         catch
           case NonFatal(e) =>
             if !built.complete(Left(Problem(s"its scope failed: ${e.getMessage}"))) then
-              log.warn(Log.Message(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
+              log.warn(Problem(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
         finally ended.countDown()
       }
       built.get() match
@@ -388,8 +389,6 @@ object Hot:
         case Right(v) => Right(Instance(d.name, gen, v, () => d.idle(v), release, ended))
 
   object Graph:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Generation = Generation.T
     object Generation extends Newtype[Long, Pure]
 
@@ -398,15 +397,13 @@ object Hot:
     private[hot] val DrainPollMs = 20L
 
     trait Log:
-      def info(m: Log.Message): Unit
-      def warn(m: Log.Message): Unit
+      def info(m: Problem): Unit
+      def warn(m: Problem): Unit
     object Log:
-      type Message = Message.T
-      object Message extends Newtype[String, Pure]
 
       val scribe: Log = new Log:
-        def info(m: Message) = _root_.scribe.info(m.value)
-        def warn(m: Message) = _root_.scribe.warn(m.value)
+        def info(m: Problem) = _root_.scribe.info(m.value)
+        def warn(m: Problem) = _root_.scribe.warn(m.value)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
@@ -463,7 +460,7 @@ object Hot:
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
           if !ended.await(CloseWaitSeconds, TimeUnit.SECONDS) then
-            log.warn(Log.Message(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s"))
+            log.warn(Problem(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s"))
 
     object Instance:
       type Description = Description.T

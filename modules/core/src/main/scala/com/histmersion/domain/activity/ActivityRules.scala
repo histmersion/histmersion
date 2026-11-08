@@ -86,7 +86,7 @@ object ActivityRules:
       before: Option[ActivityCursor.Wire],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: String) = Api.Error(Problem(m))
+    def bad(m: String) = Api.Error(api.Problem(m))
     for
       s <- show
         .map(_.value.trim)

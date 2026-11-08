@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -458,7 +459,7 @@ final class ManagerSupervisor(
   def chainReview(
       id: ManagerLight.Id,
       slug: Slug,
-      why: ManagerContext.ChainReviewWhy,
+      why: Problem,
       out: Builder[TickLine, List[TickLine]]
   ): Unit =
     val infoId = id.transformInto[ManagerInfo.Id]
@@ -994,7 +995,7 @@ final class ManagerSupervisor(
   def restale(
       itemId: ManagerContext.ItemId,
       priority: ManagerContext.Priority,
-      why: ManagerRepo.RestaleReason
+      why: Problem
   ): Boolean =
     Transactor(ds).transact(
       ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why)

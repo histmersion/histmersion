@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.{BBox, Plural}
 import com.histmersion.api.backup.Backup

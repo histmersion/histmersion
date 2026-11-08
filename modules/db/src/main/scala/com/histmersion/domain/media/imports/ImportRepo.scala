@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.Sql
@@ -23,8 +24,6 @@ private[imports] object ImportRepo:
   object Limit extends Newtype[Int, Pure]
   type NameKey = NameKey.T
   object NameKey extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Places = Places.T
   object Places extends Newtype[Boolean, Pure]
   type PleiadesOnly = PleiadesOnly.T

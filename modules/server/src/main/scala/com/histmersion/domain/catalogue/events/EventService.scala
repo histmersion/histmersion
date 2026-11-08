@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.api.Write
@@ -64,7 +65,7 @@ trait EventService:
   def catalogueRefs(id: Event.Id): List[EventCatalogueRef]
 
   /** Why `geojson` is no geometry the store reads; `None` when it is one. */
-  def geometryError(geojson: EventDetailRow.Geometry): Option[EventService.Problem]
+  def geometryError(geojson: EventDetailRow.Geometry): Option[Problem]
 
   /** Create or replace one event; on one an import created, the fields that differ from its catalogue's are recorded as
     * corrections.
@@ -85,8 +86,6 @@ trait EventService:
 object EventService:
   private given CanEqual[io.circe.Json, io.circe.Json] = CanEqual.derived
 
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 

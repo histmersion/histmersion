@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
@@ -15,14 +16,12 @@ final case class CliOutcome(
     toolCalls: Vector[ToolCallRecord],
     finalText: Option[CliOutcome.FinalText],
     usage: TokenUsage,
-    error: Option[CliOutcome.Error],
+    error: Option[Problem],
     turns: CliOutcome.Turns
 )
 
 object CliOutcome:
   type FinalText = FinalText.T
   object FinalText extends Newtype[String, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
   type Turns = Turns.T
   object Turns extends Newtype[Int, Pure]

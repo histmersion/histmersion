@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -231,7 +232,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run),
           RunState.Running,
           status,
-          error = Option.when(status == RunState.Failed)(JobRow.Error("boom"))
+          error = Option.when(status == RunState.Failed)(Problem("boom"))
         )
         .isDefined
     )
@@ -658,7 +659,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run2),
           RunState.Running,
           RunState.Paused,
-          error = Some(JobRow.Error("stalled: no sign of life")),
+          error = Some(Problem("stalled: no sign of life")),
           resumeAt = Some(Instant.now().plusSeconds(600))
         )
         .isDefined
@@ -715,7 +716,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run3),
           RunState.Queued,
           RunState.Paused,
-          error = Some(JobRow.Error("requested: paused on request"))
+          error = Some(Problem("requested: paused on request"))
         )
         .isDefined
     )

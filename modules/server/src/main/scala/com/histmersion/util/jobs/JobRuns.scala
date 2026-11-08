@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
 import com.histmersion.domain.automation.{Pipeline, Run}
@@ -34,7 +35,7 @@ trait JobRuns:
       id: Run.Id,
       from: RunRow.Status,
       to: RunRow.Status,
-      error: Option[JobRow.Error],
+      error: Option[Problem],
       progress: Option[JobRow.Progress],
       resumeAt: Option[Instant]
   ): Boolean
@@ -50,7 +51,7 @@ trait JobRuns:
       paused: RunRow.Status,
       prefix: JobRuns.Prefix,
       now: Instant
-  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)]
+  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)]
 
   def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit
   def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit
@@ -63,7 +64,7 @@ trait JobRuns:
       kind: Job.Kind,
       running: RunRow.Status,
       paused: RunRow.Status,
-      error: JobRow.Error,
+      error: Problem,
       queued: RunRow.Status,
       except: List[Run.Id]
   ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id])
@@ -89,7 +90,7 @@ object JobRuns:
         id: Run.Id,
         from: RunRow.Status,
         to: RunRow.Status,
-        error: Option[JobRow.Error],
+        error: Option[Problem],
         progress: Option[JobRow.Progress],
         resumeAt: Option[Instant]
     ): Boolean =
@@ -101,7 +102,7 @@ object JobRuns:
         paused: RunRow.Status,
         prefix: Prefix,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
       db.read(JobRepo.runsPausedLike(kind, paused, s"$prefix%", JobRepo.DueAt(now.toString)))
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       db.transact(JobRepo.runProgress(kind, id, text))
@@ -113,7 +114,7 @@ object JobRuns:
         kind: Job.Kind,
         running: RunRow.Status,
         paused: RunRow.Status,
-        error: JobRow.Error,
+        error: Problem,
         queued: RunRow.Status,
         except: List[Run.Id]
     ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
@@ -183,7 +184,7 @@ object JobRuns:
         id: Run.Id,
         from: RunRow.Status,
         to: RunRow.Status,
-        error: Option[JobRow.Error],
+        error: Option[Problem],
         progress: Option[JobRow.Progress],
         resumeAt: Option[Instant]
     ): Boolean =
@@ -194,7 +195,7 @@ object JobRuns:
             r.modify(_.row.status)
               .setTo(to)
               .modify(_.error)
-              .setTo(error.map(e => JobRunState.Error(e.value)))
+              .setTo(error.map(e => Problem(e.value)))
               .modify(_.progress)
               .setTo(progress.map(p => JobRunState.Progress(p.value)))
               .modify(_.resumeAt)
@@ -214,7 +215,7 @@ object JobRuns:
         paused: RunRow.Status,
         prefix: Prefix,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
       mine(kind)
         .filter((_, r) =>
           r.row.status == paused && r.error.exists(_.value.startsWith(prefix.value)) && r.resumeAt.forall(
@@ -223,7 +224,7 @@ object JobRuns:
         )
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
         .map((id, r) =>
-          (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, JobRepo.Problem(r.error.fold("")(_.value)))
+          (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, Problem(r.error.fold("")(_.value)))
         )
         .toVector
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
@@ -243,7 +244,7 @@ object JobRuns:
         kind: Job.Kind,
         running: RunRow.Status,
         paused: RunRow.Status,
-        error: JobRow.Error,
+        error: Problem,
         queued: RunRow.Status,
         except: List[Run.Id]
     ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
@@ -252,7 +253,7 @@ object JobRuns:
         .sortBy[Long]((_, r) => r.created.value)
       moving.foreach((id, _) =>
         change(kind, id)(x =>
-          touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(JobRunState.Error(error.value))))
+          touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(Problem(error.value))))
         ): Unit
       )
       val waiting = mine(kind)

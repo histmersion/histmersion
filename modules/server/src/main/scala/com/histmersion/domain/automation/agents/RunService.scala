@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{Goal as ApiGoal, Managers, Queue}
 import com.histmersion.domain.automation.Run
@@ -40,7 +41,7 @@ trait RunService:
       goal: Option[Goal.Slug] = None,
       before: Option[AgentRepo.PageCursor] = None,
       upTo: Option[RunQuery.UpTo] = None
-  ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
+  ): Either[Problem, (Vector[RunInfo], Boolean)]
 
   /** One newest-first page of the runs `q` matches. */
   def page(
@@ -48,7 +49,7 @@ trait RunService:
       limit: RunQuery.Limit,
       before: Option[AgentRepo.PageCursor],
       upTo: Option[RunQuery.UpTo]
-  ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
+  ): Either[Problem, (Vector[RunInfo], Boolean)]
 
   /** Per state, and the pipeline, origin, manager, model and provider facets, each without its own filter. */
   def runFacets(
@@ -162,14 +163,14 @@ object RunService:
         goal: Option[Goal.Slug],
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+    ): Either[Problem, (Vector[RunInfo], Boolean)] =
       db.read(AgentRepo.page(stateOf(status), size(limit), goal, before, upTo.map(u => AgentRepo.PageCursor(u.value))))
     def page(
         q: RunQuery,
         limit: RunQuery.Limit,
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+    ): Either[Problem, (Vector[RunInfo], Boolean)] =
       db.read(AgentRepo.page(q, size(limit), before, upTo.map(u => AgentRepo.PageCursor(u.value))))
     def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       val (states, facets) = db.read(AgentRepo.runFacets(q))
@@ -268,7 +269,7 @@ object RunService:
         goal: Option[Goal.Slug],
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+    ): Either[Problem, (Vector[RunInfo], Boolean)] =
       page(
         RunQuery(
           status = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(s => RunQuery.Status(s)).toList,
@@ -307,10 +308,10 @@ object RunService:
         limit: RunQuery.Limit,
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+    ): Either[Problem, (Vector[RunInfo], Boolean)] =
       val cursors = before.toList ++ upTo.toList.map(u => AgentRepo.PageCursor(u.value))
       cursors.find(c => runOf(c).isEmpty) match
-        case Some(c) => Left(AgentRepo.CursorProblem(s"No agent run '${c.value}' to page from"))
+        case Some(c) => Left(Problem(s"No agent run '${c.value}' to page from"))
         case None    =>
           val ordering = summon[Ordering[(Instant, Long)]]
           val all = newest(runs.filter(matches(q, "")))

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Licence

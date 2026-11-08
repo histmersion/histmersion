@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -56,7 +57,7 @@ class BootstrapSuite extends DbSuite:
 
   private def bootstrap(
       dir: Path,
-      net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))
+      net: HttpDownload.Url => Either[Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))
   ) =
     val cfg = base
       .modify(_.db)
@@ -180,7 +181,7 @@ class BootstrapSuite extends DbSuite:
         .left
         .exists(_.message.value.contains("zzqnope"))
     )
-    val dead = bootstrap(dataDir(), _ => Left(HttpDownload.Problem("HTTP 503")))
+    val dead = bootstrap(dataDir(), _ => Left(Problem("HTTP 503")))
     assert(
       dead
         .fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))

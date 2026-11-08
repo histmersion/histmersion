@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeDecision
@@ -68,7 +69,7 @@ object BundleImporter:
   private def failed(
       m: Bundle.Manifest,
       opts: ImportOptions,
-      problems: List[ImportAbort.Problem]
+      problems: List[Problem]
   ): Bundle.ImportResult =
     Bundle.ImportResult(
       m.bundleId,
@@ -227,13 +228,13 @@ object BundleImporter:
       w: BundleImport.Writer,
       files: ContentStore,
       kinds: CarriedKinds
-  ): List[ImportAbort.Problem] =
+  ): List[Problem] =
     val tar = BundleTar.Reader(in)
-    val failures = List.newBuilder[ImportAbort.Problem]
+    val failures = List.newBuilder[Problem]
     @annotation.tailrec
     def loop(): Unit =
       tar.next() match
-        case Left(e)        => failures += ImportAbort.Problem(e.value)
+        case Left(e)        => failures += Problem(e.value)
         case Right(None)    => ()
         case Right(Some(e)) =>
           Bundle
@@ -250,7 +251,7 @@ object BundleImporter:
                 val bytes = tar.readAll()
                 val actual = BundleFormat.sha256Hex(bytes)
                 if actual.value != sha.value then
-                  failures += ImportAbort.Problem(s"blob ${sha.value}: its content hashes to ${actual.value}")
+                  failures += Problem(s"blob ${sha.value}: its content hashes to ${actual.value}")
                 else
                   held.foreach(_(bytes))
                   streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(f => failures += f))
@@ -411,7 +412,7 @@ object BundleImporter:
                 )
               )
             )
-            .getOrElse(throw ImportAbort(List(ImportAbort.Problem("the merge wrote nothing"))))
+            .getOrElse(throw ImportAbort(List(Problem("the merge wrote nothing"))))
           MergeRepo.redirect(ap.folds, mergeId)
           MergeRepo.remember(ap.remember.map((id, d) => MergeRepo.DecisionKey(id.value) -> d), mergeId)
           val (reviews, logEntry) = followUps.recordIn(

@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.settings.ConfigSource
@@ -40,8 +41,6 @@ import com.histmersion.config.Environment
   * reverse order when the server does.
   */
 object Supervisor:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   private def command(text: String): ProcessLaunch.Command = ProcessLaunch.Command(text)
 
@@ -337,7 +336,7 @@ object Supervisor:
     */
   def reloadSource(
       started: AppConfig,
-      read: () => Either[ConfigSource.Problem, LoadedConfig],
+      read: () => Either[Problem, LoadedConfig],
       paths: UserPaths
   ): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
@@ -351,7 +350,7 @@ object Supervisor:
           .Try(ensureDatabase(c))
           .toEither
           .left
-          .map(e => ConfigSource.Problem(s"cannot create the database: ${e.getMessage}"))
+          .map(e => Problem(s"cannot create the database: ${e.getMessage}"))
     )
 
   private def initCluster(l: Layout, user: DbConfig.User, password: DbConfig.Password): Unit =

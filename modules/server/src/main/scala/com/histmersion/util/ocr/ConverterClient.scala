@@ -1,6 +1,7 @@
 package com.histmersion
 package util.ocr
 
+import com.histmersion.api.Problem
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 
@@ -21,10 +22,10 @@ trait ConverterClient:
       file: Blob,
       filename: ConverterClient.Filename,
       quality: ConverterClient.HighQuality
-  ): Either[ConverterClient.Problem, ConvertedDoc]
+  ): Either[Problem, ConvertedDoc]
 
   /** Sidecar liveness for `/api/health`. */
-  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary]
+  def health: Either[Problem, ConverterClient.HealthSummary]
 
   /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server has no working
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
@@ -33,8 +34,8 @@ trait ConverterClient:
       bytes: ConverterClient.DocumentBytes,
       filename: ConverterClient.Filename,
       maxPx: Pixels
-  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
-    Left(ConverterClient.Problem("this converter makes no thumbnails"))
+  ): Either[Problem, ConverterClient.Thumb] =
+    Left(Problem("this converter makes no thumbnails"))
 
 object ConverterClient:
   type DocumentBytes = DocumentBytes.T
@@ -45,8 +46,6 @@ object ConverterClient:
   object HealthSummary extends Newtype[String, Pure]
   type HighQuality = HighQuality.T
   object HighQuality extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** A thumbnail the sidecar made. */
 

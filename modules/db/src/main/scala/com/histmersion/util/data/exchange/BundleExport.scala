@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
 

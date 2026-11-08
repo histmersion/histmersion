@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceScope

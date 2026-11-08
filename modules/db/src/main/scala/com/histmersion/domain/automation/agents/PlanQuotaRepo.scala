@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
@@ -65,7 +66,7 @@ object PlanQuotaRepo:
   final case class Pool(
       held: Pool.Held,
       floors: Option[Pool.Floors],
-      refusal: Option[Pool.Refusal],
+      refusal: Option[Problem],
       refusalUntil: Option[Pool.RefusalUntil],
       planType: Option[Pool.PlanType]
   )
@@ -75,8 +76,6 @@ object PlanQuotaRepo:
     object Held extends Newtype[Boolean, Pure]
     type Floors = Floors.T
     object Floors extends Newtype[String, Pure]
-    type Refusal = Refusal.T
-    object Refusal extends Newtype[String, Pure]
     type RefusalUntil = RefusalUntil.T
     object RefusalUntil extends Newtype[Long, Pure]
     type PlanType = PlanType.T
@@ -94,7 +93,7 @@ object PlanQuotaRepo:
         Pool(
           Pool.Held(h),
           f.map(Pool.Floors(_)),
-          r.map(Pool.Refusal(_)),
+          r.map(Problem(_)),
           u.map(Pool.RefusalUntil(_)),
           t.map(Pool.PlanType(_))
         )
@@ -115,7 +114,7 @@ object PlanQuotaRepo:
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
   def setRefusal(
       p: PoolId,
-      refusal: Option[Pool.Refusal],
+      refusal: Option[Problem],
       until: Option[Pool.RefusalUntil],
       planType: Option[Pool.PlanType]
   )(using DbCon): Unit =

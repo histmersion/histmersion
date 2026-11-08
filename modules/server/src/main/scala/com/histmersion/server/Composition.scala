@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.data.maintenance.WriteGate
@@ -229,7 +230,7 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
-  private def leases(sg: ServerGraph, h: ServerWiring): Either[Hot.Graph.Problem, Hot[Boolean]] =
+  private def leases(sg: ServerGraph, h: ServerWiring): Either[Problem, Hot[Boolean]] =
     val lease = h.agents.lease
     sg.graph.node[Boolean](
       Hot.Graph.Def.Name(ServerGraph.Leases),

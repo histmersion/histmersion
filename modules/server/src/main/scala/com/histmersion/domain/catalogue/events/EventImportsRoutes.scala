@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.catalogue.{Correction, EventsApi}
 import com.histmersion.domain.Caller

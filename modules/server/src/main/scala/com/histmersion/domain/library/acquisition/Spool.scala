@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}
 import com.histmersion.util.storage.Blob
@@ -18,16 +19,16 @@ final class Spool(store: Store):
   /** `bytes` as the fetched file of `citekey`. The key is built from a caller-supplied string, so it gets BOTH guards:
     * the citekey is a [[Citekey]], and the store's key refuses anything that would leave it.
     */
-  def write(citekey: Citekey, extension: Spool.Extension, bytes: Spool.Bytes): Either[Spool.Problem, Store.Key] =
+  def write(citekey: Citekey, extension: Spool.Extension, bytes: Spool.Bytes): Either[Problem, Store.Key] =
     Store.Key
       .of(citekey.value, s"paper.${SafeName.of(extension.value)}")
       .left
-      .map(_ => Spool.Problem(s"could not spool the file: '$citekey' would escape the spool directory"))
+      .map(_ => Problem(s"could not spool the file: '$citekey' would escape the spool directory"))
       .flatMap(key =>
         store
           .write(key, ByteSource.Content(bytes.value))
           .left
-          .map(e => Spool.Problem(s"could not spool the file: ${e.message}"))
+          .map(e => Problem(s"could not spool the file: ${e.message}"))
           .map(_ => key)
       )
 
@@ -39,5 +40,3 @@ object Spool:
   object Bytes extends Newtype[Array[Byte], Pure]
   type Extension = Extension.T
   object Extension extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

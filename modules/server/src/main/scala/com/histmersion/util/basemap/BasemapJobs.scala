@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
@@ -18,7 +19,7 @@ trait BasemapJobs:
   def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A]
 
   /** The refusal of work asked for while a job runs: `what` is the kind of work, `busyCode` its error code. */
-  def busy(what: BasemapJobs.Target, busyCode: Option[BasemapJobs.Reason]): Api.Error
+  def busy(what: BasemapJobs.Target, busyCode: Option[Problem]): Api.Error
 
   /** `body` started as a job of `kind` described by `about`, given a progress reporter and answering its summary or why
     * it failed; `Left` — [[busy]] — while another runs.
@@ -27,9 +28,9 @@ trait BasemapJobs:
       kind: Job.Kind,
       about: BasemapJobs.Description,
       what: BasemapJobs.Target,
-      busyCode: Option[BasemapJobs.Reason]
+      busyCode: Option[Problem]
   )(
-      body: (BasemapJobs.Target => Unit) => Either[BasemapJobs.Problem, BasemapJobs.Description]
+      body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
   ): Either[Api.Error, JobInfo]
 
 object BasemapJobs:
@@ -37,9 +38,5 @@ object BasemapJobs:
   object Description extends Newtype[String, Pure]
   type Operation = Operation.T
   object Operation extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type Target = Target.T
   object Target extends Newtype[String, Pure]

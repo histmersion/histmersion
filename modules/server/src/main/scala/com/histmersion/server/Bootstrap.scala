@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.{Plural, Write}
@@ -40,7 +41,7 @@ import com.histmersion.domain.catalogue.places.GazetteerControllers
   */
 final class Bootstrap(
     deps: Deps,
-    download: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = HttpDownload().text,
+    download: HttpDownload.Url => Either[Problem, HttpDownload.Text] = HttpDownload().text,
     gazetteerDownload: GazetteerLoad.Download = HttpDownload().file
 ):
 
@@ -71,14 +72,14 @@ final class Bootstrap(
       () => bundledSeed,
       url =>
         download(HttpDownload.Url(url.value)).left
-          .map(p => PeriodImports.Problem(p.value))
+          .map(p => Problem(p.value))
           .map(t => PeriodImports.Document(t.value))
     )
 
   /** The bundled seed's text. */
-  private def bundledSeed: Either[PeriodImports.Problem, PeriodImports.Document] =
+  private def bundledSeed: Either[Problem, PeriodImports.Document] =
     if !Files.isRegularFile(periodsSeed) then
-      Left(PeriodImports.Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
+      Left(Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
     else Right(PeriodImports.Document(Files.readString(periodsSeed)))
 
   // ── the gazetteer ───────────────────────────────────────────────────────────────────────────────
@@ -198,7 +199,7 @@ final class Bootstrap(
     val summary = if done.isEmpty then "nothing to do" else done.mkString("; ")
     BackgroundJob.Outcome(
       Some(BackgroundJob.Outcome.Summary(summary)),
-      Option.when(failed.nonEmpty)(BackgroundJob.Outcome.Error(failed.mkString("; ")))
+      Option.when(failed.nonEmpty)(Problem(failed.mkString("; ")))
     )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
@@ -248,7 +249,7 @@ final class Bootstrap(
         gazetteerImports
           .source(
             BuiltinGazetteers.Entry.Name(other),
-            GazetteerImports.Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
+            Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
           )
           .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun(false)))
           .left

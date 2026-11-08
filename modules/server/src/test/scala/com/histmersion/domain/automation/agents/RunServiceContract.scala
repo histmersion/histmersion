@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Agents.*
@@ -37,7 +38,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
       Some(model),
       Usage(Usage.Input(10L * attempt.value), Usage.Output(2), Usage.CacheRead(1), Usage.CacheWrite(0)),
       cost,
-      Option.when(status == StepStatus.Failed)(AgentRepo.StepRecord.Error("boom")),
+      Option.when(status == StepStatus.Failed)(Problem("boom")),
       started,
       Some(AgentRepo.StepRecord.ActualModel(model.value)),
       List(WouldWrite(WouldWrite.What("w"), WouldWrite.Payload("p"))),

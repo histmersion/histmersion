@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -12,8 +13,6 @@ final case class Prompt(system: Prompt.System, user: Prompt.User):
   def hash: Sha256 = Prompt.sha256(system.value)
 
 object Prompt:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type UserText = UserText.T
   object UserText extends Newtype[String, Pure]
 

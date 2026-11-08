@@ -1,6 +1,7 @@
 package com.histmersion
 package util.storage
 
+import com.histmersion.api.Problem
 import com.histmersion.{ByteCount, ByteOffset, Sha256}
 
 import java.io.{InputStream, IOException, OutputStream}
@@ -47,7 +48,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     try Right(body)
     catch
       case e: NoSuchFileException => Left(Store.Error.NotFound(Blob.Location(e.getMessage)))
-      case e: IOException         => Left(Store.Error.Failed(Store.Error.Reason(e.getMessage)))
+      case e: IOException         => Left(Store.Error.Failed(Problem(e.getMessage)))
 
   def where(key: Store.Key): Blob.Location = Blob.Location(path(key).toString)
 
@@ -361,7 +362,7 @@ private[storage] object DiskStore:
             Files.getLastModifiedTime(target).toInstant
           )
         )
-      catch case e: IOException => Left(Store.Error.Failed(Store.Error.Reason(e.getMessage)))
+      catch case e: IOException => Left(Store.Error.Failed(Problem(e.getMessage)))
 
     def discard(): Unit =
       val _ = Files.deleteIfExists(file)

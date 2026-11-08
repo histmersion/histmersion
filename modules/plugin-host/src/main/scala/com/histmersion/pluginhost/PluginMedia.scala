@@ -20,12 +20,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * at all. Pure but for [[http]].
   */
 object PluginMedia:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
-  type Refusal = Refusal.T
-  object Refusal extends Newtype[String, Pure]
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
   def polite(
@@ -45,13 +41,13 @@ object PluginMedia:
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.
     */
-  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Refusal] =
+  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Problem] =
     rec.rights match
-      case _ if rec.withheld.isDefined          => rec.withheld.map(w => Refusal(w.value))
-      case Left(why)                            => Some(Refusal(why.value))
+      case _ if rec.withheld.isDefined          => rec.withheld.map(w => Problem(w.value))
+      case Left(why)                            => Some(Problem(why.value))
       case Right(r) if !allow.allows(r.licence) =>
-        Some(Refusal(s"licence ${r.licence.family.wire} not allowed for $provider"))
-      case Right(_) if rec.imageUrl.isEmpty => Some(Refusal("no image"))
+        Some(Problem(s"licence ${r.licence.family.wire} not allowed for $provider"))
+      case Right(_) if rec.imageUrl.isEmpty => Some(Problem("no image"))
       case Right(_)                         => None
 
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end

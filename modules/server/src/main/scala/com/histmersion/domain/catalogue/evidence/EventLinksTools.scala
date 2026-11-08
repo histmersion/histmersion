@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.Api

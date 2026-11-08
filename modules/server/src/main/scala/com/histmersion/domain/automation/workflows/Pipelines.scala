@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.RunCtx
 
 import com.histmersion.api.automation.Queue.QueueAdd

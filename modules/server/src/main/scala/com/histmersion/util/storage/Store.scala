@@ -1,6 +1,7 @@
 package com.histmersion
 package util.storage
 
+import com.histmersion.api.Problem
 import com.histmersion.ByteCount
 
 import java.time.Instant
@@ -128,8 +129,6 @@ object Store:
   object EntryName extends Newtype[String, Pure]
   type KeepPermissions = KeepPermissions.T
   object KeepPermissions extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ThroughLink = ThroughLink.T
   object ThroughLink extends Newtype[Boolean, Pure]
 
@@ -147,30 +146,30 @@ object Store:
     /** Written beside its name, hashed, and moved into place only when the content IS `sha256`: the store is
       * content-addressed, and whoever reads it trusts the name.
       */
-    def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[ContentStore.Problem, Unit] =
+    def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[Problem, Unit] =
       if find(sha256).isDefined then
         val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
         Right(())
       else
         scala.util
           .Try {
-            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").left.map(p => ContentStore.Problem(p.value)).flatMap { key =>
-              store.reserve(key, TempName.Unique).left.map(e => ContentStore.Problem(e.message.value)).flatMap { r =>
+            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").left.map(p => Problem(p.value)).flatMap { key =>
+              store.reserve(key, TempName.Unique).left.map(e => Problem(e.message.value)).flatMap { r =>
                 try
                   val md = MessageDigest.getInstance("SHA-256")
                   val out = DigestOutputStream(r.output(), md)
                   try { val _ = in.transferTo(out) }
                   finally out.close()
                   val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
-                  if actual != sha256 then Left(ContentStore.Problem(s"its content hashes to $actual"))
-                  else r.commit().left.map(e => ContentStore.Problem(e.message.value)).map(_ => ())
+                  if actual != sha256 then Left(Problem(s"its content hashes to $actual"))
+                  else r.commit().left.map(e => Problem(e.message.value)).map(_ => ())
                 finally r.close()
               }
             }
           }
           .toEither
           .left
-          .map(e => ContentStore.Problem(s"cannot store it in ${store.where()}: ${e.getMessage}"))
+          .map(e => Problem(s"cannot store it in ${store.where()}: ${e.getMessage}"))
           .flatten
 
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
@@ -185,8 +184,6 @@ object Store:
     case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(Problem(s"$where is not on disk"))
 
   object Error:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     object NotFound:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location

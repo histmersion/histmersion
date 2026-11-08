@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -381,7 +382,7 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
-            Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, ManagerRepo.CancelReason("the manager was stopped")))
+            Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, Problem("the manager was stopped")))
           record(
             m.id,
             None,
@@ -942,7 +943,7 @@ final class ManagersControllers(
             m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
           val _ = agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next)
-          if !in.enabled.value then cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was turned off"))
+          if !in.enabled.value then cancelSweep(m, sw, Problem("its schedule was turned off"))
           record(
             id,
             None,
@@ -988,7 +989,7 @@ final class ManagersControllers(
           m.cron,
           m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
         )
-        cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was removed"))
+        cancelSweep(m, sw, Problem("its schedule was removed"))
         record(
           m.id,
           None,
@@ -1002,7 +1003,7 @@ final class ManagersControllers(
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
-  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerRepo.CancelReason): Unit =
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: Problem): Unit =
     m.goal
       .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
       .foreach { i =>

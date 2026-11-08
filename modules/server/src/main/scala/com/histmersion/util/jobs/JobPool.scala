@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.jobs.JobState
@@ -101,7 +102,7 @@ final class JobPool(
             id,
             JobState.Running,
             JobState.Failed,
-            error = Some(JobRow.Error(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+            error = Some(Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
           )
         )
 

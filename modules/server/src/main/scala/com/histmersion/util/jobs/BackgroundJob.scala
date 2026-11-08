@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.config.*
@@ -33,21 +34,19 @@ object BackgroundJob:
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
 
-  final case class Outcome(summary: Option[Outcome.Summary], error: Option[Outcome.Error] = None):
+  final case class Outcome(summary: Option[Outcome.Summary], error: Option[Problem] = None):
     def failed: Boolean = error.isDefined
 
   object Outcome:
 
     type Summary = Summary.T
     object Summary extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
 
     def done(summary: Summary): Outcome = Outcome(Some(summary))
-    def failed(why: Error): Outcome = Outcome(None, Some(why))
+    def failed(why: Problem): Outcome = Outcome(None, Some(why))
 
     /** The `Right(summary)` / `Left(why)` the catalogue and gazetteer runs answer. */
-    def of(r: Either[Error, Summary]): Outcome = r.fold(failed, done)
+    def of(r: Either[Problem, Summary]): Outcome = r.fold(failed, done)
 
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
@@ -67,9 +66,9 @@ object BackgroundJob:
     )
 
   /** What a thrown exception tells a job's error line. Pure. */
-  def describe(e: Throwable): Outcome.Error = e match
-    case _: InterruptedException => Outcome.Error("interrupted")
-    case _                       => Outcome.Error(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+  def describe(e: Throwable): Problem = e match
+    case _: InterruptedException => Problem("interrupted")
+    case _                       => Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}")
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
     * body ended by itself after a stop was asked ends as it ended). Pure.
@@ -159,7 +158,7 @@ object BackgroundJob:
         val (out, thrown) =
           try (body(job, report), None)
           catch
-            case s: JobStopped => (Outcome.failed(Outcome.Error("stopped")), Some(s.stop))
+            case s: JobStopped => (Outcome.failed(Problem("stopped")), Some(s.stop))
             case e: Throwable  =>
               if !e.isInstanceOf[InterruptedException] then
                 scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
@@ -180,7 +179,7 @@ object BackgroundJob:
                     JobState.Running,
                     JobState.Failed,
                     o.summary.map(m => JobRow.Progress(m.value)),
-                    Some(JobRow.Error(e.value))
+                    Some(Problem(e.value))
                   )
                 )
           case Left(JobStop.Pause) =>
@@ -200,7 +199,7 @@ object BackgroundJob:
                 JobState.Running,
                 JobState.Cancelled,
                 Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Cancel, last.get).value)),
-                Some(JobRow.Error(JobControlRules.CancelledByPerson))
+                Some(Problem(JobControlRules.CancelledByPerson))
               )
             )
       finally slot.free()
@@ -219,11 +218,11 @@ object BackgroundJob:
       pins: WorkCarrier,
       stops: Option[JobStops],
       body: (JobInfo, JobInfo.Progress => Unit) => Outcome
-  ): Either[JobStops.Problem, Unit] =
+  ): Either[Problem, Unit] =
     if !slot.claim(Work("resuming")) then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
       stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(JobStops.Problem(busy(what, slot.current, busyCode).message.value))
+      Left(Problem(busy(what, slot.current, busyCode).message.value))
     else
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
       Right(())

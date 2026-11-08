@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Agents.ApprovalState
@@ -103,8 +104,6 @@ object SourceProposals:
   object ApprovalRecordId extends Newtype[Long, Pure]
   type OutcomeWhat = OutcomeWhat.T
   object OutcomeWhat extends Newtype[String, Pure]
-  type OutcomeWhy = OutcomeWhy.T
-  object OutcomeWhy extends Newtype[String, Pure]
 
   /** What became of one proposal, for the run's log and warnings. */
   enum Outcome derives CanEqual:
@@ -141,12 +140,12 @@ object SourceProposals:
       val What: OutcomeWhat.type = OutcomeWhat
 
     object Skipped:
-      type Why = OutcomeWhy
-      val Why: OutcomeWhy.type = OutcomeWhy
+      type Why = Problem
+      val Why: Problem.type = Problem
 
     object Failed:
-      type Why = OutcomeWhy
-      val Why: OutcomeWhy.type = OutcomeWhy
+      type Why = Problem
+      val Why: Problem.type = Problem
 
     object NotProposed:
       type What = OutcomeWhat

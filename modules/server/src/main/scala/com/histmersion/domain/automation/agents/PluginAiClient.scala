@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.plugin.*
@@ -30,8 +31,6 @@ final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHt
 object PluginAiClient:
   type Loopback = Loopback.T
   object Loopback extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
   private[automation] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub

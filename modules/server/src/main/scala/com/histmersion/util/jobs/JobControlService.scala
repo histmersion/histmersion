@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.Write
@@ -54,7 +55,7 @@ object JobControlService:
                     job.state,
                     JobState.Cancelled,
                     job.progress.map(p => JobRow.Progress(p.value)),
-                    Some(JobRow.Error(JobControlRules.CancelledByPerson))
+                    Some(Problem(JobControlRules.CancelledByPerson))
                   )
               )
               .toRight(conflict(s"job $id moved on; look again"))
@@ -77,7 +78,7 @@ object JobControlService:
     def get(id: Job.Id): Option[JobInfo] = jobs.get.get(JobInfo.Id(id.value))
 
     /** A running job's body stopped as asked, after `progress`: paused (resumed by `resume`) or cancelled. */
-    def stopped(id: Job.Id, progress: Option[JobInfo.Progress], resume: () => Either[JobStops.Problem, Unit]): Unit =
+    def stopped(id: Job.Id, progress: Option[JobInfo.Progress], resume: () => Either[Problem, Unit]): Unit =
       stops.requestedFor(id).foreach { stop =>
         stops.answered(id)
         val to = if stop == JobStop.Pause then JobState.Paused else JobState.Cancelled

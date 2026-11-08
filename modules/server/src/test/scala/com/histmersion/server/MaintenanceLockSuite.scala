@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -59,15 +60,15 @@ class MaintenanceLockSuite extends DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
-      ConverterClient.Problem("not used")
+    ): Either[Problem, ConvertedDoc] = Left(
+      Problem("not used")
     )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */

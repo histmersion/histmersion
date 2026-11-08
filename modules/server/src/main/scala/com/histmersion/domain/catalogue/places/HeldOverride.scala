@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
@@ -12,7 +13,7 @@ final case class HeldOverride(
     placeId: Place.Id,
     kind: Option[HeldOverride.Kind],
     period: Option[(Option[HeldOverride.Bound.Start], Option[HeldOverride.Bound.End])],
-    reason: Option[HeldOverride.Reason],
+    reason: Option[Problem],
     sourceKind: HeldOverride.SourceKind,
     sourcePeriod: Option[Period],
     updatedAt: HeldOverride.UpdatedAt
@@ -26,8 +27,6 @@ object HeldOverride:
     object Start extends Newtype[Long, Pure]
     type End = End.T
     object End extends Newtype[Long, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type SourceKind = SourceKind.T
   object SourceKind extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T

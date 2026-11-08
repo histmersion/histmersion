@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
@@ -40,7 +41,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       copy: Option[FetchedCopy],
       citekey: Citekey,
       meta: IngestMeta
-  ): Either[IngestJobs.Problem, IngestOutcome] =
+  ): Either[Problem, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -63,7 +64,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       citekey: Citekey,
       meta: IngestMeta,
       base: IngestOutcome
-  ): Either[IngestJobs.Problem, IngestOutcome] =
+  ): Either[Problem, IngestOutcome] =
     // a copy gone from the spool reads as an empty upload, which the ingest refuses
     val upload =
       spooled(file).getOrElse(Upload.inline(Upload.Name(file.key.name.value), Upload.Bytes(Array.emptyByteArray)))
@@ -81,7 +82,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
         upload
       )
       .left
-      .map(e => IngestJobs.Problem(e.message.value))
+      .map(e => Problem(e.message.value))
       .map(a =>
         base
           .modify(_.jobId)

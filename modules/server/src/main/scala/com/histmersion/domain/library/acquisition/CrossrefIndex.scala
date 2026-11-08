@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse
@@ -31,5 +32,5 @@ final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(p => ScholarlyIndex.Problem(p.value))
+      .map(p => Problem(p.value))
       .map(AcquireParse.crossrefWorks(_).map(_.wire))

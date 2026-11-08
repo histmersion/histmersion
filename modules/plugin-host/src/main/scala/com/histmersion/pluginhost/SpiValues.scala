@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin as spi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Year
@@ -24,8 +25,6 @@ import com.histmersion.plugin.Licence
   * out with a warning ([[kept]]), a dating that is no dating refuses the record. Pure.
   */
 object SpiValues:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   // ── towards a plugin ────────────────────────────────────────────────────────────────────────
 

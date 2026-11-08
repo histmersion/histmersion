@@ -40,8 +40,6 @@ object PluginHost:
   object ClassName extends Newtype[String, Pure]
   type ConfigPath = ConfigPath.T
   object ConfigPath extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type SecretValue = SecretValue.T
@@ -605,7 +603,7 @@ object PluginHost:
       provides,
       block.map(settings).getOrElse(Nil),
       warns.map(w => PluginStatus.Warnings(w.value)),
-      error.map(e => PluginStatus.Error(e.value))
+      error.map(e => api.Problem(e.value))
     )
 
   private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state.value == state.wire.value

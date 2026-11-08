@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -789,7 +790,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     val c = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("0")))
-    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left(JobRepo.Problem("merge apply crashed: boom"))))
+    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left(Problem("merge apply crashed: boom"))))
     assertEquals(
       applyJob(ds, c).map(j => (j.state, j.error)),
       Some((MergeJobState.Failed, Some("merge apply crashed: boom")))

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
@@ -56,7 +57,7 @@ trait ManagerContext:
       target: ManagerContext.ItemTarget
   ): Option[ManagerItem]
   def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean
-  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean
+  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: Problem): Boolean
   def pending(id: ManagerLight.Id): RowCount
   def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)]
   def evaluated(
@@ -141,7 +142,7 @@ trait ManagerContext:
   def chainReview(
       id: ManagerLight.Id,
       slug: Slug,
-      why: ManagerContext.ChainReviewWhy,
+      why: Problem,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit
 
@@ -212,8 +213,6 @@ object ManagerContext:
   object UpsertReopen extends Newtype[Boolean, Pure]
   type EvaluatedOutcome = ManagerPolicy.ItemOutcome
   val EvaluatedOutcome: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
-  type ChainReviewWhy = ChainReviewWhy.T
-  object ChainReviewWhy extends Newtype[String, Pure]
   type SettleNowWhy = ManagerPolicy.ItemOutcome
   val SettleNowWhy: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
   type RetryNote = ManagerPolicy.ItemNote

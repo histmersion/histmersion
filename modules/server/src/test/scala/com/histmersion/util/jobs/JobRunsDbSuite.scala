@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.*
@@ -32,7 +33,7 @@ class JobRunsDbSuite extends JobRunsContract("db"):
   protected def row(
       runs: JobRuns,
       id: Run.Id
-  ): (RunRow.Status, Option[JobRunState.Error], Option[JobRunState.Progress], Option[RunRow.Origin]) =
+  ): (RunRow.Status, Option[Problem], Option[JobRunState.Progress], Option[RunRow.Origin]) =
     val (status, error, progress, origin) = connect(sources(runs))(
       sql"SELECT status, error, progress, origin FROM jobs WHERE id = ${id.value}"
         .query[(String, Option[String], Option[String], Option[String])]
@@ -41,7 +42,7 @@ class JobRunsDbSuite extends JobRunsContract("db"):
     )
     (
       RunRow.Status(status),
-      error.map(JobRunState.Error(_)),
+      error.map(Problem(_)),
       progress.map(JobRunState.Progress(_)),
       origin.map(RunRow.Origin(_))
     )

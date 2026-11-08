@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -292,7 +293,7 @@ class AssetsJobsSuite extends DbSuite:
     val id = Job.Id.assume(j.id.value)
     Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running))
     Transactor(ds).transact(
-      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(JobRow.Error("converter unreachable")))
+      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(Problem("converter unreachable")))
     )
     val f = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
     assertEquals(f.status, JobState.Failed.wire)

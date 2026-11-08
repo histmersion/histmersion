@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ProposalEffect
@@ -11,7 +12,7 @@ import com.histmersion.domain.automation.approvals.ApprovalEffects
   * sources' own controllers, exactly as a person would send it.
   */
 final class SourceProposalEffect(sources: => SourcesControllers) extends ProposalEffect:
-  def proposal(payload: ApprovalEffects.Payload): Option[() => Either[ApprovalEffects.Problem, String]] =
+  def proposal(payload: ApprovalEffects.Payload): Option[() => Either[Problem, String]] =
     Jsonb
       .read[Proposal](Jsonb.JsonText(payload.value))
       .map(p =>
@@ -19,6 +20,6 @@ final class SourceProposalEffect(sources: => SourcesControllers) extends Proposa
           sources
             .patch(p.citekey, p.patch)
             .left
-            .map(e => ApprovalEffects.Problem(e.message.value))
+            .map(e => Problem(e.message.value))
             .map(_ => p.describe.value)
       )
