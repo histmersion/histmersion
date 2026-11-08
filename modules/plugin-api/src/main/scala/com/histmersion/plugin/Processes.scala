@@ -82,28 +82,7 @@ object Processes:
     object ExitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Unavailable extends Processes:
-    type RunResultPart1 = _root_.com.histmersion.plugin.Processes.RunResultPart1
-    val RunResultPart1: _root_.com.histmersion.plugin.Processes.RunResultPart1.type = _root_.com.histmersion.plugin.Processes.RunResultPart1
-    type RunArgv = _root_.com.histmersion.plugin.Processes.RunArgv
-    val RunArgv: _root_.com.histmersion.plugin.Processes.RunArgv.type = _root_.com.histmersion.plugin.Processes.RunArgv
-    type RunEnvPart1 = _root_.com.histmersion.plugin.Processes.RunEnvPart1
-    val RunEnvPart1: _root_.com.histmersion.plugin.Processes.RunEnvPart1.type = _root_.com.histmersion.plugin.Processes.RunEnvPart1
-    type RunEnvPart2 = _root_.com.histmersion.plugin.Processes.RunEnvPart2
-    val RunEnvPart2: _root_.com.histmersion.plugin.Processes.RunEnvPart2.type = _root_.com.histmersion.plugin.Processes.RunEnvPart2
-    type RunStdin = _root_.com.histmersion.plugin.Processes.RunStdin
-    val RunStdin: _root_.com.histmersion.plugin.Processes.RunStdin.type = _root_.com.histmersion.plugin.Processes.RunStdin
-    type StartResultPart1 = _root_.com.histmersion.plugin.Processes.StartResultPart1
-    val StartResultPart1: _root_.com.histmersion.plugin.Processes.StartResultPart1.type = _root_.com.histmersion.plugin.Processes.StartResultPart1
-    type StartArgv = _root_.com.histmersion.plugin.Processes.StartArgv
-    val StartArgv: _root_.com.histmersion.plugin.Processes.StartArgv.type = _root_.com.histmersion.plugin.Processes.StartArgv
-    type StartEnvPart1 = _root_.com.histmersion.plugin.Processes.StartEnvPart1
-    val StartEnvPart1: _root_.com.histmersion.plugin.Processes.StartEnvPart1.type = _root_.com.histmersion.plugin.Processes.StartEnvPart1
-    type StartEnvPart2 = _root_.com.histmersion.plugin.Processes.StartEnvPart2
-    val StartEnvPart2: _root_.com.histmersion.plugin.Processes.StartEnvPart2.type = _root_.com.histmersion.plugin.Processes.StartEnvPart2
-    type CaptureResultPart1 = _root_.com.histmersion.plugin.Processes.CaptureResultPart1
-    val CaptureResultPart1: _root_.com.histmersion.plugin.Processes.CaptureResultPart1.type = _root_.com.histmersion.plugin.Processes.CaptureResultPart1
-    type CaptureArgv = _root_.com.histmersion.plugin.Processes.CaptureArgv
-    val CaptureArgv: _root_.com.histmersion.plugin.Processes.CaptureArgv.type = _root_.com.histmersion.plugin.Processes.CaptureArgv
+    export com.histmersion.plugin.Processes.{RunResultPart1, RunArgv, RunEnvPart1, RunEnvPart2, RunStdin, StartResultPart1, StartArgv, StartEnvPart1, StartEnvPart2, CaptureResultPart1, CaptureArgv}
 
     def run(argv: List[com.histmersion.plugin.Processes.Unavailable.RunArgv], env: Map[com.histmersion.plugin.Processes.Unavailable.RunEnvPart1, com.histmersion.plugin.Processes.Unavailable.RunEnvPart2], stdin: Option[com.histmersion.plugin.Processes.Unavailable.RunStdin], timeout: FiniteDuration): Either[com.histmersion.plugin.Processes.Unavailable.RunResultPart1, Result] =
       Left(_root_.com.histmersion.plugin.Processes.Unavailable.RunResultPart1("this host supplies no processes"))
