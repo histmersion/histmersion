@@ -217,7 +217,7 @@ class MediaOracleSuite extends DbSuite:
     val families = Licence.Family.allowable ++ List(Licence.Family.AllRightsReserved, Licence.Family.Unknown)
     AllowLists.foreach { csv =>
       val allow = Licence.allowList(csv)
-      out ++= s"${(csv.value: String).asJson.noSpaces} → ${allow.toList.map(_.wire).sortBy(_.value).mkString(",")} · " +
+      out ++= s"${(csv.value: String).asJson.noSpaces} → ${allow.toList.map(_.wire).sorted.mkString(",")} · " +
         families.map(f => s"${f.wire}=${Licence.allowed(Licence(Licence.Id("x"), f), allow)}").mkString(" ") + "\n"
     }
     out ++= "# the allowlist each collection is judged by: defaults, then a config with both key families\n"

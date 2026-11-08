@@ -190,7 +190,7 @@ object GoalService:
       all().filter(_.parentSlug.exists(_.value == slug.value))
     def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] =
       (in.periodStart, in.periodEnd) match
-        case (Some(a), Some(b)) if a.value > b.value =>
+        case (Some(a), Some(b)) if a > b =>
           Left(
             refused(
               s"goal '${slug.value}': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
@@ -232,7 +232,7 @@ object GoalService:
         val start = p.periodStart.orElse(g.periodStart)
         val end = p.periodEnd.orElse(g.periodEnd)
         (start, end) match
-          case (Some(a), Some(b)) if a.value > b.value =>
+          case (Some(a), Some(b)) if a > b =>
             Left(
               refused(
                 s"goal '${slug.value}': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",

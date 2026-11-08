@@ -156,7 +156,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
           .map(_.slug)
           .flatMap(s =>
             Either.cond(
-              m.goal.forall(_.value == s.value),
+              m.goal.forall(_ == s),
               ManagerContext.ItemTarget(s.value),
               Api.Error(Api.Error.Message(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s"))
             )

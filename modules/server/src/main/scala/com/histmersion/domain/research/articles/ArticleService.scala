@@ -167,14 +167,14 @@ object ArticleService:
       }
 
     def exists(slug: Slug): Boolean = state.get.articles.contains(articleKey(slug))
-    def slugs: List[Slug] = state.get.articles.keys.toList.sortBy(_.value).map(slugOf)
+    def slugs: List[Slug] = state.get.articles.keys.toList.sorted.map(slugOf)
     def updatedAtMillis: Map[Slug, CitekeyMillis.Millis] =
       state.get.articles.map((k, v) => slugOf(k) -> CitekeyMillis.Millis(v.updatedAt.toEpochMilli))
 
     def refs(slugs: List[Slug]): List[Article.Ref] =
       val st = state.get
       slugs.distinct
-        .sortBy(_.value)
+        .sorted
         .flatMap(s =>
           st.articles.get(articleKey(s)).map(o => Article.Ref(Article.Slug(s.value), o.article.title, o.article.summary))
         )
@@ -373,7 +373,7 @@ object ArticleService:
       val to: WikiLinks.Occurrence.Target => Option[WikiLinks.Occurrence.Target] =
         t => Option.when(t.value == oldSlug.value)(WikiLinks.Occurrence.Target(newSlug.value))
       val needle = oldSlug.value.toLowerCase
-      val rewritten = moved.articles.keys.toList.sortBy(_.value).filter { s =>
+      val rewritten = moved.articles.keys.toList.sorted.filter { s =>
         val a = moved.articles(s).article
         (a.body.value + " " + a.summary.fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
           .contains(needle)

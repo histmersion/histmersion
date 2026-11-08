@@ -14,8 +14,7 @@ object Resolver:
   type ExitCode = ExitCode.T
   object ExitCode extends Newtype[Int, Pure]
   type FileName = FileName.T
-  object FileName extends Newtype[String, Pure]:
-    given Ordering[T] = Ordering.String.on(_.value)
+  object FileName extends Newtype[String, Pure]
   type Sha256 = Sha256.T
   object Sha256 extends Newtype[String, Pure]
   type ManifestLine = ManifestLine.T

@@ -326,7 +326,7 @@ final class BasemapService(
   private def deeperRelief(z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow, extractMax: BasemapFetch.Plan.MaxZoom): Either[BasemapService.Problem, Option[PmTiles.TileBytes]] =
     val focused = focusFiles.iterator
       .flatMap(f => readerAt(f._2).toOption.flatten)
-      .filter(f => z.value >= f.header.minZoom.value && z.value <= f.header.maxZoom.value)
+      .filter(f => z >= f.header.minZoom && z <= f.header.maxZoom)
       .map(_.tile(z, x, y))
       .collectFirst { case Right(Some(b)) => b }
     focused match
@@ -457,7 +457,7 @@ final class BasemapService(
       // the relief deeper than the extract: a focus region's, or read now from the provider (no tile, and
       // not cached by the browser, when it cannot be read now — offline)
       deeper = Option
-        .when(stored.isEmpty && l == Basemap.Layer.Terrain && pz.value > f.header.maxZoom.value)(
+        .when(stored.isEmpty && l == Basemap.Layer.Terrain && pz > f.header.maxZoom)(
           deeperRelief(pz, px, py, BasemapFetch.Plan.MaxZoom(f.header.maxZoom.value))
         )
         // the map and the sea floor outside the extract, or deeper: read now from the provider (#3760)
@@ -465,7 +465,7 @@ final class BasemapService(
           Option
             .when(
               stored.isEmpty && (l == Basemap.Layer.Vector || l == Basemap.Layer.Bathymetry) &&
-                (pz.value > f.header.maxZoom.value || !BasemapService.inside(f.header, pz, px, py))
+                (pz > f.header.maxZoom || !BasemapService.inside(f.header, pz, px, py))
             )(onDemandOf(l))
             .flatten
             .filter(_.servesAt(pz))

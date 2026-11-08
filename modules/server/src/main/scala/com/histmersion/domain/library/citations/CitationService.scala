@@ -93,7 +93,7 @@ object CitationService:
       ): (Vector[GraphNode], Set[GraphLink]) =
         if frontier.isEmpty then (nodes, links)
         else
-          val found = frontier.distinct.sortBy(_.value).flatMap(ck =>
+          val found = frontier.distinct.sorted.flatMap(ck =>
             stored(st, ck).map(x => GraphNode(ck, Some(x.title), x.year, Some(x.status), Source.Graph.DepthCount(d)))
           )
           val grown = nodes ++ found

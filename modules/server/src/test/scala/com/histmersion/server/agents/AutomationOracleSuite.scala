@@ -70,7 +70,7 @@ class AutomationOracleSuite extends munit.FunSuite:
     val head = List(
       s"definitions\t${res.definitions}",
       s"answer\truntimes=${res.runtimes.mkString(",")} files=${res.files} written=${res.written} removed=${res.removed}",
-      s"known tools\t${known.toList.sortBy(_.value).mkString(",")}"
+      s"known tools\t${known.toList.sorted.mkString(",")}"
     )
     check("agent-trees.txt", (head ++ lines).mkString("", "\n", "\n"))
 

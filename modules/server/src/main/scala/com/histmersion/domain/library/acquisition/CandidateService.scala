@@ -103,7 +103,7 @@ object CandidateService:
       val at = now
       var created = false
       val _ = state.updateAndGet { st =>
-        st.candidates.indexWhere(c => c.goal.value == candidate.goal.value && c.doi.value == candidate.doi.value) match
+        st.candidates.indexWhere(c => c.goal == candidate.goal && c.doi == candidate.doi) match
           case -1 =>
             created = true
             val id = st.candidates.map(_.id.value).maxOption.getOrElse(0L) + 1
@@ -129,7 +129,7 @@ object CandidateService:
                   c.modify(_.lastSeen)
                     .setTo(Source.Candidate.LastSeen(at))
                     .modify(_.foundBy)
-                    .setTo((c.foundBy ++ candidate.foundBy).distinct.sortBy(_.value))
+                    .setTo((c.foundBy ++ candidate.foundBy).distinct.sorted)
                     .modify(_.abstractText)
                     .setTo(c.abstractText.orElse(candidate.abstractText))
                     .modify(_.isOa)

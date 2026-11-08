@@ -1155,7 +1155,7 @@ object ManagersView:
               val moved = changed.value || !detail.now().contains(d)
               failure.set(None)
               detail.set(Some(d))
-              if extended then events.update(ListPaging.keepOlder(_, d.events, _.id.value < _.id.value))
+              if extended then events.update(ListPaging.keepOlder(_, d.events, _.id < _.id))
               else
                 events.set(d.events)
                 older.set(Option.when(d.events.nonEmpty)(EventPage.Before(d.events.last.id.value)))

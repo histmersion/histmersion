@@ -309,7 +309,7 @@ object BasemapFetch:
           val (start, len) = range
           get(ByteOffset.applyUnsafe(h.leafOffset.value + start.value), len).flatMap { (bytes, _) =>
             byOffset
-              .filter(e => e.offset.value >= start.value && e.offset.value + e.length.value <= start.value + len.value)
+              .filter(e => e.offset >= start && e.offset.value + e.length.value <= start.value + len.value)
               .foldLeft[Either[Problem, Vector[Wanted]]](Right(sofar)) { (acc2, e) =>
                 acc2.flatMap { got =>
                   val from = (e.offset.value - start.value).toInt

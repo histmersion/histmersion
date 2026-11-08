@@ -341,7 +341,7 @@ object BasemapLabels:
     * Its own `min_zoom` filters it further in the page. Pure.
     */
   def inTile(l: Label, z: PmTiles.Zoom, maxZoom: PmTiles.Zoom): Boolean =
-    (z.value == maxZoom.value || l.minZoom.value <= z.value + 1) && l.maxZoom.forall(_.value >= z.value + 1)
+    (z == maxZoom || l.minZoom.value <= z.value + 1) && l.maxZoom.forall(_.value >= z.value + 1)
 
   private def props(l: Label): List[(Mvt.PropKey, String | Long)] =
     (Mvt.PropKey("kind"), l.kind.value: String | Long) ::

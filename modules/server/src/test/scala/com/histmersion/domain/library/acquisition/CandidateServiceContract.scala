@@ -62,7 +62,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
     assertEquals(s.candidates.dois(Goal.Slug("zq-goal")), Set("10.5555/zq.a", "10.5555/zq.b"))
     val page = s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0))
     assertEquals(page.map(_.doi), List("10.5555/zq.a", "10.5555/zq.b"))
-    assertEquals(page.head.foundBy.sortBy(_.value), List("crossref query", "openalex query"))
+    assertEquals(page.head.foundBy.sorted, List("crossref query", "openalex query"))
     assertEquals(s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(1), Offset(1)).map(_.doi), List("10.5555/zq.b"))
     assertEquals(s.candidates.list(None, Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0)).size, 3)
     assertEquals(s.candidates.mark(List(page.head.id), Source.Candidate.State("seen")), 1)

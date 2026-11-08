@@ -42,8 +42,8 @@ object EventPlayback:
   def alpha(span: (Year, Year), playhead: Year, fadeYears: FadeYears): Alpha =
     val (start, end) = span
     Alpha(
-      if playhead.value < start.value then 0.0
-      else if playhead.value <= end.value then 1.0
+      if playhead < start then 0.0
+      else if playhead <= end then 1.0
       else if fadeYears.value <= 0 then 0.0
       else (1.0 - (playhead.value - end.value).toDouble / fadeYears.value).max(0.0)
     )

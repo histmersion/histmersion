@@ -257,7 +257,7 @@ object RelinkPlugins:
         case Nil                     => acc
         case (name, classes) :: tail =>
           val owners = seen.toMap
-          val dups = classes.toList.sortBy(_.value).filter(owners.contains)
+          val dups = classes.toList.sorted.filter(owners.contains)
           val msg = if dups.isEmpty then Nil
           else
             val by = dups.groupBy(owners).toList.sortBy(_._1).map { (o, cs) =>

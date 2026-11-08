@@ -101,7 +101,7 @@ object ApprovalsView:
         s"manager ${a.subject.getOrElse("?")}: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
-  def isOpen(a: ApprovalInfo): Boolean = a.state.value == ApprovalState.Open.wire.value
+  def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
   /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its rationale, which
     * [[planBlock]] prints at its top (#882: it used to appear twice).
@@ -150,7 +150,7 @@ object ApprovalsView:
   def visible(as: List[ApprovalInfo], f: ListFilters.ApprovalFilter): List[ApprovalInfo] =
     val n = f.normalized
     val state = shownState(n.state)
-    as.filter(a => (state.value == "all" || a.state.value == state.value) && (n.kind.isEmpty || n.kind.exists(_.value == a.kind.value)))
+    as.filter(a => (state.value == "all" || a.state == state) && (n.kind.isEmpty || n.kind.exists(_ == a.kind)))
 
   /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
   def qualifier(f: ListFilters.ApprovalFilter): Option[ListFilters.Qualifier] = f.qualifier

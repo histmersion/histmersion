@@ -852,7 +852,7 @@ object Calibre:
     def audit(records: List[AuditRecord], books: Map[Book.Id, Book]): List[AuditFinding] =
       records.groupBy(_.calibreId.value).toList.sortBy(kv => kv._1: Int).flatMap { (idValue, rs) =>
         val id = AuditFinding.CalibreId(idValue)
-        val keys = rs.map(r => AuditFinding.Citekeys(r.citekey.value)).sortBy(_.value)
+        val keys = rs.map(r => AuditFinding.Citekeys(r.citekey.value)).sorted
         books.get(Book.Id(idValue)) match
           case None    => List(AuditFinding(id, keys, List(AuditIssue.Missing), None, rs.minBy(_.citekey.value)))
           case Some(b) =>

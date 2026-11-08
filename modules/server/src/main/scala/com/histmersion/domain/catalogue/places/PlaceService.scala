@@ -306,7 +306,7 @@ object PlaceService:
       val target = wanted.map(v => v -> s.placeAliases.get(CatalogueState.PlaceAliasesKey(v)).fold(v)(_.value)).toMap
       val known = wanted.filter(v => find(Place.Id(target(v))).isDefined)
       def overlaps(r: Place.Relation) =
-        period.forall(w => r.period.forall(p => p.start.value <= w.end.value && w.start.value <= p.end.value))
+        period.forall(w => r.period.forall(p => p.start <= w.end && w.start <= p.end))
       @tailrec def down(frontier: List[Place.Id], seen: Vector[Place.Id]): Vector[Place.Id] = frontier match
         case Nil       => seen
         case id :: are =>
@@ -428,7 +428,7 @@ object PlaceService:
 
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       state.get.placeOverrides
-        .filter(o => id.forall(_.value == o.placeId.value))
+        .filter(o => id.forall(_ == o.placeId))
         .sortBy(_.placeId.value)
         .toList
         .flatMap(o =>
@@ -457,7 +457,7 @@ object PlaceService:
     ): Either[Api.Error, Place.OverrideChanged] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { before =>
         val s = state.get
-        val had = s.placeOverrides.find(_.placeId.value == id.value)
+        val had = s.placeOverrides.find(_.placeId == id)
         val now = InMemory.timestamp(Instant.now(clock))
         val done: Either[Api.Error, Option[HeldOverride]] = edit match
           case Place.OverrideEdit.Reset =>
@@ -500,7 +500,7 @@ object PlaceService:
           val restored = had.filter(_ => o.isEmpty)
           val _ = state.updateAndGet(st =>
             st.modify(_.placeOverrides)
-              .using(os => os.filterNot(_.placeId.value == id.value) ++ o.toVector)
+              .using(os => os.filterNot(_.placeId == id) ++ o.toVector)
               .modify(_.places)
               .using(_.map { p =>
                 if p.id.value != id.value then p
@@ -537,7 +537,7 @@ object PlaceService:
       (find(apiId(from)), find(apiId(into))) match
         case (None, _)          => Left(notFound(from.value))
         case (_, None)          => Left(notFound(into.value))
-        case _ if from.value == into.value  => Left(invalid("a place cannot be merged into itself"))
+        case _ if from == into  => Left(invalid("a place cannot be merged into itself"))
         case (Some(f), Some(i)) =>
           val _ = state.updateAndGet(s =>
             s.modify(_.places)
@@ -550,7 +550,7 @@ object PlaceService:
               .modify(_.placeAliases)
               .using(as => as.map((a, t) => a -> (if t.value == from.value then CatalogueState.PlaceAliasesValue(into.value) else t)) + (CatalogueState.PlaceAliasesKey(from.value) -> CatalogueState.PlaceAliasesValue(into.value)))
               .modify(_.placeOverrides)
-              .using(_.filterNot(_.placeId.value == from.value))
+              .using(_.filterNot(_.placeId == from))
           )
           Right(Place.Gone(f.id, f.place.label, Some(Place.Gone.Into(into.value)), Some(Place.Gone.IntoLabel(i.place.label.value)), Place.Gone.FindingsBefore(0), Place.Gone.FindingsAfter(0), Place.Gone.Unlocated(0)))
 
