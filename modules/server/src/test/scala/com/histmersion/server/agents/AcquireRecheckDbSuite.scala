@@ -240,7 +240,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(asked(up).size, 2, "a dry run asks no fetcher")
     assertEquals(dry.rows.map(_.action).distinct, List(WouldTry))
     val byId = a.acquireRecheck.run(RecheckRequest(id = Some(RecheckRequest.Id(one.value)))).fold(e => fail(e.message.value), identity)
-    assertEquals(byId.rows.map(_.item), List(one))
+    assertEquals(byId.rows.map(_.item.value), List(one.value))
     assertEquals(asked(up).size, 3)
     assertEquals(AcquisitionTesting.checks(ds).of(List(checkItem(one))).get(checkItem(one)).map(_.checks), Some(2))
     assert(a.acquireRecheck.run(RecheckRequest(id = Some(Acquire.Checks.RecheckRequest.Id(999999)))).isLeft, "no such open item")
@@ -452,7 +452,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true), by = Some(Acquire.Checks.RecheckRequest.By("test"))))
     val job = jobOf(r)
     assertEquals((r.toOption.get.withDoi, r.toOption.get.allowance), (7, 6))
-    assertEquals(job.kind, RecheckJob.JobKind)
+    assertEquals(job.kind.value: String, RecheckJob.JobKind: String)
     assertEquals(job.detail.flatMap(RecheckJob.Detail.of).map(d => (d.all, d.by)), Some((true, "test")))
     val done = ended(a, job.id)
     assertEquals(done.status, JobState.Done.wire, done.toString)
@@ -497,7 +497,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .map(_.item.value)
         .toSet
         .intersect(ids.map(_.value).toSet),
-      Set(ids(3))
+      Set(ids(3).value)
     )
 
   test("a person's capped pass of more than one item is a job too; one item answers at once"):
@@ -579,7 +579,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       .get
       ._1
       .head
-    assertEquals(next.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes), Some(job.id))
+    assertEquals(next.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes).map(_.value), Some(job.id.value))
     assertEquals(
       next.detail.flatMap(RecheckJob.Detail.of).map(_.since),
       job.detail.flatMap(RecheckJob.Detail.of).map(_.since),

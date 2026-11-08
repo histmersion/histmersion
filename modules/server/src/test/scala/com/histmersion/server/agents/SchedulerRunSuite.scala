@@ -151,7 +151,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.toList, List(s"assess $Ck", s"followups $Ck"))
     val open = a.approvalsList(None, None).toOption.get.filter(_.citekey == ApiCk2)
-    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck))))
+    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))), List(("edge", Some("refutes"), Some(Ck))))
     assert(open.head.evidence.value.contains("we refute the old dating"), open.head.evidence)
     assertEquals(h.library.citations.neighbors(Ck2, List(Edge.Kind.Wire("refutes"))), Nil, "nothing applied before approval")
     def queued = h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent.out"))

@@ -235,8 +235,8 @@ class PluginToolSuite extends munit.FunSuite:
     val m = RelinkPlugins.kitManifest(kit, PluginKit.KitManifest.Version("0.1.0"), Some(PluginKit.KitManifest.Commit("abc")), PluginKit.KitManifest.Graalvm("25.0.4.1.1"))
     assertEquals(m.files.map(_.file), List("classpath", "lib/a.jar", "main-class"))
     assertEquals(
-      m.files.find(_.file.value == "lib/a.jar").map(_.sha256),
-      Some(RelinkPlugins.sha256(kit.resolve("lib/a.jar")))
+      m.files.find(_.file.value == "lib/a.jar").map(_.sha256.value: String),
+      Some(RelinkPlugins.sha256(kit.resolve("lib/a.jar")).value: String)
     )
     assertEquals(
       (m.mainClass, m.graalvm, m.spiVersion),

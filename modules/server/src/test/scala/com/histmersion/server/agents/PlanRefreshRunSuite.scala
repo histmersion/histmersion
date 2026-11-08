@@ -273,7 +273,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 1, "throttled to once per stale-minutes")
     // after stale-minutes: the check takes a fresh reading, sees headroom, and queues the run
     val later = java.time.Instant.now().plusSeconds(11 * 60)
-    assertEquals(a.engine.resumeFreed(later), List(run.id))
+    assertEquals(a.engine.resumeFreed(later).map(_.value: String), List(run.id))
     assertEquals(reads.probes.get(), 2)
     val queued = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(queued.status, "queued")
@@ -409,7 +409,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assert(!head.usable.value && head.cooling.value && head.problem.exists(_.value.contains(ModelPicker.CoolingWhy)), head)
     val listed = AgentsMarkdown.roleChain(a.models.chains.find(_.role.value == "extractor").get)
     assert(listed.contains("cooling down: its plan reported its usage limit"), listed)
-    assertEquals(a.quota.cooldowns.map(c => (c.model, c.until)), List((Plan.wire, until.toString)))
+    assertEquals(a.quota.cooldowns.map(c => (c.model.value: String, c.until)), List((Plan.wire.value: String, until.toString)))
     assert(AgentsMarkdown.quota(a.quota).contains("## Cooling down"), AgentsMarkdown.quota(a.quota))
     assert(a.picker.pick(Role.Extractor, None).isLeft, "still parked: and no fall to the paid key")
     // a reading taken since, still below its floor, keeps it parked
@@ -422,7 +422,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     // the person reset the plan: `agent quota refresh claude-plan` reads 0% used — the model is back
     Thread.sleep(5)
     val refreshed = a.refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan")))).fold(e => fail(e.message.value), identity)
-    assertEquals(refreshed.lifted, List(Plan.wire))
+    assertEquals(refreshed.lifted.map(_.value: String), List(Plan.wire.value: String))
     assert(AgentsMarkdown.refreshed(refreshed).contains("Back in use"), AgentsMarkdown.refreshed(refreshed))
     assertEquals(a.quota.cooldowns, Nil)
     assertEquals(a.picker.pick(Role.Extractor, None).map(_.client.model), Right(Plan))

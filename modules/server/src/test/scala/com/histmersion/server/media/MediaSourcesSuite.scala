@@ -184,7 +184,7 @@ class MediaSourcesSuite extends DbSuite:
       .covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false)))
       .fold(e => fail(e.message.value), identity)
     assertEquals(done.illustrations, 1)
-    assertEquals(conv.calls.toList, List("fig-0002-01.png" -> cfg.media.thumbPx))
+    assertEquals(conv.calls.toList.map((file, px) => file -> px.value), List("fig-0002-01.png" -> cfg.media.thumbPx.value))
     val t = AssetFixtures.sourceThumb(ds, Paper).get
     assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
     assertEquals(AssetFixtures.thumb(ds, MediaItemRow.Uid(t.uid.value)).map(_._1), Some("image/jpeg"))
@@ -247,7 +247,7 @@ class MediaSourcesSuite extends DbSuite:
         assertEquals(ok, 200, ob)
         val m = decode[MediaItem](ob).fold(e => fail(e.getMessage), identity)
         assertEquals((m.provider, m.providerKey, m.license), (Some("calibre"), Some("zqms77"), None))
-        assertEquals(m.targets.map(t => (t.targetType, t.targetId, t.role)), List(("source", Paper, "cover")))
+        assertEquals(m.targets.map(t => (t.targetType, t.targetId.value: String, t.role)), List(("source", Paper, "cover")))
         val (ss, sb) = get(s"$url/api/sources/$Paper?body=false")
         assertEquals(ss, 200, sb)
         val sw = decode[Source.WithFindings](sb).fold(e => fail(e.getMessage), identity)
@@ -294,7 +294,7 @@ class MediaSourcesSuite extends DbSuite:
       try
         val (ps, pb) = get(s"$url/api/places/zqms_site?counts=true")
         assertEquals(ps, 200, pb)
-        assertEquals(decode[PlaceDetail](pb).map(_.media.map(_.uid)), Right(List(uid)))
+        assertEquals(decode[PlaceDetail](pb).map(_.media.map(_.uid.value: String)), Right(List(uid.value: String)))
       finally b.stop()
     }
     connect(ds)(sql"DELETE FROM assets WHERE provider_key = 'File:Zqms lions.jpg'".update.run())
@@ -309,7 +309,7 @@ class MediaSourcesSuite extends DbSuite:
     assert(h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(true))).isLeft, "a dry run is not a job")
     val j =
       h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), limit = Some(MediaImportRequest.Limit(3)))).fold(e => fail(e.message.value), identity)
-    assertEquals(j.kind, ImportsControllers.ImportJobKind)
+    assertEquals(j.kind.value: String, ImportsControllers.ImportJobKind.value: String)
     assert(
       j.detail.flatMap(ImportJobKinds.Media.of).exists(_.value.contains("up to 3")),
       j.toString

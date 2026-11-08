@@ -386,7 +386,7 @@ class ToolsSuite extends munit.FunSuite:
   test("every queue kind has its window, and back; other windows show no queue") {
     Queue.Kind.values.foreach { k =>
       assertEquals(WindowKey.queueOf(WindowKey.ofQueue(k)), Some(k))
-      assertEquals(WindowKey.ofQueue(k).wire, k.label)
+      assertEquals(WindowKey.ofQueue(k).wire.value, k.label.value)
     }
     assertEquals(WindowKey.queueOf(WindowKey.Jobs), None)
     assertEquals(WindowKey.queueOf(WindowKey.Source(WindowKey.Source.Citekey("a2020_b"))), None)
@@ -401,7 +401,7 @@ class ToolsSuite extends munit.FunSuite:
     )
     assertEquals(
       QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
-      List(Some("Histmersion") -> List(7, 40), Some("Corpus hygiene") -> List(12), None -> List(30))
+      List[(Option[String], List[Int])](Some("Histmersion") -> List(7, 40), Some("Corpus hygiene") -> List(12), None -> List(30))
     )
   }
 

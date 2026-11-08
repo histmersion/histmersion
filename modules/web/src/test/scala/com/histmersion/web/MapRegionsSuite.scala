@@ -24,7 +24,7 @@ class MapRegionsSuite extends munit.FunSuite:
   test("the regions: the configured one, the named ones, the world, a box of one's own"):
     assertEquals(
       choices(status).map(c => (c.id, c.bbox)),
-      List(
+      List[(String, Option[String])](
         ("configured", Some("-12,20,90,62")),
         ("argolid", Some("22.5,37.4,23.2,37.9")),
         ("world", Some("world")),
@@ -36,7 +36,7 @@ class MapRegionsSuite extends munit.FunSuite:
     val cs = choices(status.modify(_.bbox).setTo(Basemap.Status.Bbox("world")))
     assertEquals(
       cs.map(c => (c.id, c.bbox)),
-      List(("configured", Some("world")), ("argolid", Some("22.5,37.4,23.2,37.9")), (OwnBox, None))
+      List[(String, Option[String])](("configured", Some("world")), ("argolid", Some("22.5,37.4,23.2,37.9")), (OwnBox, None))
     )
     assertEquals(cs.head.label, "the configured region (the whole world)")
 

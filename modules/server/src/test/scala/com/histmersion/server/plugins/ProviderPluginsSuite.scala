@@ -101,9 +101,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.report.ok, g.report.toString)
     val vaults = Set("1password", "bitwarden", "keepassxc").map(PluginStatus.Id(_))
     assertEquals(
-      g.report.plugins.map(_.id).toSet -- vaults,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
-        BuiltinGazetteers.pluginIds
+      g.report.plugins.map(_.id.value: String).toSet -- vaults.map(_.value: String),
+      (BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds).map(_.value: String)
     )
     val keyed = BuiltinMedia.keyed.keySet.flatMap(BuiltinMedia.entry).map(_.plugin)
     assertEquals(keyed, Set("media-smithsonian", "media-europeana"))
@@ -371,20 +371,20 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val vaults = Set(PluginName.Id("1password"), PluginName.Id("bitwarden"), PluginName.Id("keepassxc"))
     val carried = Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain")))
     assertEquals(
-      carried.keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
-        BuiltinGazetteers.pluginIds
+      carried.keySet.map(_.value: String),
+      (BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds).map(_.value: String)
     )
     // their own block rebuilds them alone
     assertEquals(
-      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.media-met.enabled"))).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
-        BuiltinGazetteers.pluginIds ++ vaults + PluginName.Id("zq-plugin") - PluginName.Id("media-met")
+      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.media-met.enabled"))).keySet.map(_.value: String),
+      (BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds ++ vaults + PluginName.Id("zq-plugin") - PluginName.Id("media-met")).map(_.value: String)
     )
     // a media setting rebuilds the media collections, which are supplied it, and nothing else
     assertEquals(
-      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.media.met.licences"))).keySet,
-      BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ BuiltinGazetteers.pluginIds ++ vaults + PluginName.Id("zq-plugin")
+      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.media.met.licences"))).keySet.map(_.value: String),
+      (BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ BuiltinGazetteers.pluginIds ++ vaults + PluginName.Id("zq-plugin")).map(_.value: String)
     )
     assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.order"))), Map.empty)
     assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins"))), Map.empty)

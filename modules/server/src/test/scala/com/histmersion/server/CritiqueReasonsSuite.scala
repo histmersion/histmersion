@@ -119,7 +119,7 @@ class CritiqueReasonsSuite extends DbSuite:
     assert(patch(CritiqueReason(FrazerRef, BrownRef, CritiqueReason.Reason(" Cited for the\nrites only. "))).isRight)
     assert(patch(CritiqueReason(SmithRef, FrazerRef, CritiqueReason.Reason("x"), Some(Activity.Actor("skeptic (agent run abcd1234)")))).isRight)
     assertEquals(
-      stored,
+      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason, by)),
       List(
         (Smith, Frazer, "x", Some("skeptic (agent run abcd1234)")),
         (Brown, Frazer, "Cited for the rites only.", Some("person"))
@@ -153,7 +153,7 @@ class CritiqueReasonsSuite extends DbSuite:
         )
         .isRight
     )
-    assertEquals(stored.map(_._1), List(Brown))
+    assertEquals(stored.map(_._1.value: String), List(Brown))
     assertEquals(h.research.articles.versions(Slug).toOption.get.size, 1)
 
   test("the reasons follow the article (rename, delete) and both sources (citekey rename, delete)"):

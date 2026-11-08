@@ -360,7 +360,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
 
     // the edge was verified against the target's record and waits for a person
     val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), ApprovalQuery.Limit(50)).filter(_.citekey == ApiCk)
-    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
+    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))), List(("edge", Some("refutes"), Some(Ck2))))
     assertEquals(h.library.citations.neighbors(Ck, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))), Nil, "nothing is applied before approval")
     val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value))
     assertEquals(
@@ -454,7 +454,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       ledger.entries.map(e => (e.id, e.status, e.finding.escalated)),
       List(("R1", ReviewLedger.Status.Fixed, false), ("S1", ReviewLedger.Status.Open, true))
     )
-    assertEquals(ledger.task, Some(tasks.head.id))
+    assertEquals(ledger.task.map(_.value), Some(tasks.head.id.value))
     assert(ledger.lessons.exists(_.text.value.startsWith(s"[[$Ck]]: the record dates it")), ledger.lessons)
     // the fixer saw the findings; the second round saw the revised text
     assert(
@@ -721,7 +721,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(!after.article.body.value.contains("## Not used"), after.article.body)
     assertEquals(after.coverage.map(_.drift), Some(Nil))
     assertEquals(
-      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey, e.reason)),
+      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey.value: String, e.reason)),
       List((Ck2, Some("Its isotopes speak to the cargo's origin, not its route.")))
     )
     val fixStep = steps
@@ -729,7 +729,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .flatMap(_.output)
       .flatMap(o => io.circe.parser.decode[ReviewArticle.Fix](o.value).toOption)
       .get
-    assertEquals(fixStep.reasons.map(_.citekey), List(Ck2))
+    assertEquals(fixStep.reasons.map(_.citekey.value: String), List(Ck2))
     assertEquals(
       io.circe.parser
         .decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-2").get.output.get.value)
@@ -1049,7 +1049,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(item.status, "open")
     val old = items.find(_.id == legacy.id).get
     assertEquals((old.status, old.reason), ("done", Some(s"superseded by #${item.id} (one item per article)")))
-    assertEquals(ledgerOf(h).flatMap(_.task), Some(item.id))
+    assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(item.id.value))
 
     // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
     assert(h.research.articles.patch(Slug, Article.Patch(body = Some(Revised))).isRight)
@@ -1152,7 +1152,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       items.find(_.id == twice.id).map(i => (i.status, i.reason)),
       Some(("done", Some(s"superseded by #${mine.id} (one item per article)")))
     )
-    assertEquals(ledgerOf(h).flatMap(_.task), Some(mine.id))
+    assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(mine.id.value))
 
   test(
     "the term count: a MAJOR count finding an earlier run stored is superseded by the minor one; the article is MINOR"
@@ -1365,8 +1365,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     def used = c.modelsUsed.asScala.view.mapValues(_.asScala.toList).toMap
     assertEquals(used, Map("rules" -> List(Model.wire), "cold" -> List(Model.wire), "skeptic" -> List(Haiku.wire)))
     assertEquals(
-      connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100))).filter(_.kind.value == "llm").map(s => s.name -> s.model),
-      List("rules-1" -> Some(Model.wire), "cold-reader-1" -> Some(Model.wire), "skeptic-1" -> Some(Haiku.wire))
+      connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100))).filter(_.kind.value == "llm").map(s => s.name -> s.model.map(_.value: String)),
+      List("rules-1" -> Some(Model.wire.value: String), "cold-reader-1" -> Some(Model.wire.value: String), "skeptic-1" -> Some(Haiku.wire.value: String))
     )
     assert(AgentsMarkdown.runLine(run).contains(s"skeptic=${Haiku.wire}"), AgentsMarkdown.runLine(run))
     // --model moves every role; --model-for still wins for its own
@@ -1417,8 +1417,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals((r1.status, r2.status), ("done", "done"))
     val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.value), identity)
     assertEquals(
-      cmp.steps.find(_.name.value == "rules-1").get.runs.map(_.map(_.models)),
-      List(Some(List(Model.wire)), Some(List(Haiku.wire)))
+      cmp.steps.find(_.name.value == "rules-1").get.runs.map(_.map(_.models.map(_.value: String))),
+      List(Some(List(Model.wire.value: String)), Some(List(Haiku.wire.value: String)))
     )
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("MAJOR"), 1), (Some("MAJOR"), 1)))
     def panel(i: Int) =
@@ -1622,7 +1622,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "addressed"))
     val stored = ArticleFixtures.critiques(ds, Slug)
     assertEquals(
-      stored.map(r => (r.src, r.dst, r.by.exists(_.value.startsWith("skeptic (agent run")))),
+      stored.map(r => (r.src.value: String, r.dst.value: String, r.by.exists(_.value.startsWith("skeptic (agent run")))),
       List((Ck3, Ck, true))
     )
     val ledger = ledgerOf(h).get
@@ -1697,7 +1697,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(ReviewLedger.closedLine(s1).contains("set aside as not material"), ReviewLedger.closedLine(s1))
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "reasoned"))
     assertEquals(
-      ArticleFixtures.critiques(ds, Slug).map(r => (r.src, r.by.exists(_.value.startsWith("fixer")))),
+      ArticleFixtures.critiques(ds, Slug).map(r => (r.src.value: String, r.by.exists(_.value.startsWith("fixer")))),
       List((Ck3, false), (Ck2, true))
     )
     // a set-aside alone writes no version and leaves the article's token as it was
@@ -1742,7 +1742,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .approvals(ds)
         .approvals(Some(ApprovalState.Open), ApprovalQuery.Limit(50))
         .filter(_.citekey.value.startsWith("zzagent"))
-        .map(_.citekey),
+        .map(_.citekey.value: String),
       List(Ck2)
     )
 
@@ -1793,8 +1793,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(userPrompt(c.requests.get("skeptic").asScala.toList(2).head).contains("This is the run's FINAL pass"))
     val led = ledgerOf(h).get
     assertEquals(
-      led.entries.map(e => (e.id, e.status, e.deferred)),
-      List(("S1", ReviewLedger.Status.Fixed, None), ("S2", ReviewLedger.Status.Open, Some(run.id)))
+      led.entries.map(e => (e.id.value: String, e.status, e.deferred.map(_.value: String))),
+      List(("S1", ReviewLedger.Status.Fixed, None), ("S2", ReviewLedger.Status.Open, Some(run.id.value: String)))
     )
     val merge3 = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000))).find(_.name.value == "merge-3").get
     assert(merge3.output.exists(_.value.replace(" ", "").contains("\"deferred\":[\"S2\"]")), merge3.output)

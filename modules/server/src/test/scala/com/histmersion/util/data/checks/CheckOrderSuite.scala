@@ -16,7 +16,7 @@ class CheckOrderSuite extends munit.FunSuite:
 
   test("every rule registered once, reported in Lint.all's order"):
     assertEquals(rules.map(_.rule.name).sorted, Lint.names.sorted)
-    assertEquals(runner.names, Lint.names)
+    assertEquals(runner.names.map(_.value: String), Lint.names.map(_.value: String))
     assertEquals(runner.rules.map(_.rule), Lint.all)
 
   test("the owners"):

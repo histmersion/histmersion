@@ -46,9 +46,9 @@ class UnreadProjectionSuite extends munit.FunSuite:
   test("author spelling, order, duplicates and whitespace survive the projection"):
     val authors = List("  Doe, Ann  ", "Li", "Li", "").map(FullSourceRow.Authors(_))
     val shown = render(SourceReadable.row(Citekey("reader2026_a"), Title("Title"), authors, None, None, None, None))
-    assertEquals(shown.authors, authors)
+    assertEquals(shown.authors.map(_.value: String), authors)
 
   test("identity, title, year and period survive the same conversion and rendering"):
     val shown = render(SourceReadable.row(Citekey("reader2026_a"), Title("  A title  "), Nil, Some(Year(2026)), None, Some(SourceReadable.RowStart(-1200L)), Some(SourceReadable.RowEnd(-1100L))))
     assertEquals((shown.id.value: String, shown.title, shown.year, shown.periodStart, shown.periodEnd),
-      ("reader2026_a", "  A title  ", Some(2026), Some(-1200L), Some(-1100L)))
+      ("reader2026_a", "  A title  ", Some(2026L), Some(-1200L), Some(-1100L)))

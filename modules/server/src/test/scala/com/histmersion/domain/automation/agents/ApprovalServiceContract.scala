@@ -78,11 +78,11 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       assertEquals(a(s).approvalsOf(run).map(_.id), List(plan.id, filter.id, again.id))
       assertEquals(a(s).approvalsOf(run, Some(ApprovalKind.GoalPlan)).map(_.id), List(plan.id))
       assertEquals(
-        a(s).openLight().map(o => (o.id, o.kind, o.subject)),
+        a(s).openLight().map(o => (o.id.value: Long, o.kind, o.subject)),
         List(
-          (plan.id, "goal-plan", Some("zz-goal")),
-          (filter.id, "article-filter", Some("zz-art")),
-          (again.id, "article-filter", Some("zz-art"))
+          (plan.id.value: Long, "goal-plan", Some("zz-goal")),
+          (filter.id.value: Long, "article-filter", Some("zz-art")),
+          (again.id.value: Long, "article-filter", Some("zz-art"))
         )
       )
       assertEquals(a(s).openCount(ApprovalKind.ArticleFilter), 2)

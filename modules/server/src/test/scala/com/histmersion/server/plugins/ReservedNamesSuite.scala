@@ -18,10 +18,10 @@ import com.histmersion.domain.media.imports.BuiltinMedia
   */
 class ReservedNamesSuite extends munit.FunSuite:
   test("the plugin host reserves exactly the names of the server's built-in providers"):
-    assertEquals(ReservedNames.mediaCollections, BuiltinMedia.reserved)
-    assertEquals(ReservedNames.eventCatalogues, BuiltinCatalogues.reserved)
-    assertEquals(ReservedNames.aiProviders, BuiltinAi.reserved)
-    assertEquals(ReservedNames.gazetteerSources, BuiltinGazetteers.reserved)
+    assertEquals(ReservedNames.mediaCollections.map(_.value: String), BuiltinMedia.reserved.map(_.value: String))
+    assertEquals(ReservedNames.eventCatalogues.map(_.value: String), BuiltinCatalogues.reserved.map(_.value: String))
+    assertEquals(ReservedNames.aiProviders.map(_.value: String), BuiltinAi.reserved.map(_.value: String))
+    assertEquals(ReservedNames.gazetteerSources.map(_.value: String), BuiltinGazetteers.reserved.map(_.value: String))
 
   test("the first-party plugins are the ones every image holds: found on its class path or supplied by the host"):
     val ids = PluginHost.discover(getClass.getClassLoader)._1.map(_.info.id) ++ ServerPlugins.providers.map(_.info.id)
@@ -29,7 +29,7 @@ class ReservedNamesSuite extends munit.FunSuite:
     assertEquals(ids.size, ids.distinct.size)
 
   test("the relink tool keeps the ids of the plugins the host supplies itself without loading them"):
-    assertEquals(HostProvided.Ids, ServerPlugins.providers.map(_.info.id))
+    assertEquals(HostProvided.Ids.map(_.value: String), ServerPlugins.providers.map(_.info.id.value: String))
 
   test("the settings table names every first-party plugin but the vaults, which are rebuilt as any plugin is"):
     assertEquals(

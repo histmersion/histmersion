@@ -30,7 +30,7 @@ class BackupServiceSuite extends munit.FunSuite:
       (first.file, second.file),
       ("histmersion-20261031T100000Z.dump", "histmersion-20261031T100000Z-2.dump")
     )
-    assertEquals(third.pruned, List(first.file))
+    assertEquals(third.pruned.map(_.value: String), List(first.file.value: String))
     assertEquals(svc.list.map(_.map(_.file)), Right(List(third.file, second.file)))
     assert(third.sha256.value.length == 64, third)
     store.put(Store.Key.applyUnsafe("notes.txt"), ByteSource.Content(Array[Byte](1))): Unit

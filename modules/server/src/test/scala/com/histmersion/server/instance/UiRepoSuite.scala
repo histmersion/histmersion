@@ -118,7 +118,7 @@ class UiRepoSuite extends DbSuite:
     val latest = proposed.latest.get
     markSeen(Board.Approvals, UiNotices.Counter.Seen(latest.value))
     val read = board(Board.Approvals)
-    assertEquals(read.seen, Some(latest))
+    assertEquals(read.seen.map(_.value), Some(latest.value))
     // another suite may propose one at the same moment; ours is read either way
     assert(read.latest != Some(latest) || !read.fresh.value, read.toString)
     connect(ds)(sql"UPDATE approvals SET state = 'rejected', decided_at = now() WHERE id = $id".update.run())

@@ -301,8 +301,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       .replace("  # editions: merge", "  editions: separate")
     val read = MergeResolutionsFile.parse(MergeResolutionsFile.Text(filled)).fold(e => fail(e.mkString), identity)
     assertEquals(
-      read.resolve.map(r => r.issue -> r.decision).toMap,
-      Map(doi -> "keep-right", coll -> "rename-right:smith2019_ritualkingship")
+      read.resolve.map(r => r.issue.value -> r.decision).toMap,
+      Map(doi.value -> "keep-right", coll.value -> "rename-right:smith2019_ritualkingship")
     )
     assertEquals(read.policy.editions, Some(EditionsPolicy.Separate))
     // and a partial re-plan shows what remains

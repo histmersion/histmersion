@@ -191,18 +191,18 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals(ca.steps.size, 0, "the spent model was never called")
-    assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
+    assertEquals(llmModels(run.id).map(_._4.map(_.value: String)).distinct, List(Some(B.wire)))
     val passed = run.warnings.filter(_.value.contains("passed over local:zzA"))
     assertEquals(passed.size, 1, run.warnings)
     assert(passed.head.value.contains("1k tokens/1h"), passed)
     // the picture: zzA paused until its spend leaves the window, zzB the active model
     val m = a.models
     val ex = m.chains.find(_.role.value == "extractor").get
-    assertEquals(ex.active, Some(B.wire))
+    assertEquals(ex.active.map(_.value: String), Some(B.wire))
     assert(!ex.models.head.usable.value && ex.models.head.freesAt.isDefined, ex)
     val al = m.allowances.find(_.target.value == A.wire.value).get
     assert(!al.usable.value && al.limits.head.used.value >= 1500, al)
-    assertEquals(m.roles.find(_.role.value == "extractor").flatMap(_.model), Some(B.wire))
+    assertEquals(m.roles.find(_.role.value == "extractor").flatMap(_.model).map(_.value: String), Some(B.wire))
 
   test(
     "every model below its allowance: the run PAUSES with the reset time, and resumes by itself once a window frees"
@@ -228,7 +228,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assertEquals(a.engine.resumeDue(Instant.now()), Nil)
     // the window frees (the spend ages out) and the waker re-queues the run, which then finishes
     connect(ds)(sql"UPDATE agent_steps SET finished_at = now() - interval '2 hours' WHERE job_id = $spent".update.run())
-    assertEquals(a.engine.resumeDue(at.plusSeconds(1)), List(run.id))
+    assertEquals(a.engine.resumeDue(at.plusSeconds(1)).map(_.value: String), List(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.resumeAt, None, "re-queued: the reset time is cleared")
     enrichScripts(ca) // the chain's first model has room again
     a.engine.execute(runId(run.id))
@@ -246,7 +246,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
     val classify = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(_.name.value == "classify")
     assertEquals(
-      classify.map(s => (s.attempt, s.status, s.model)),
+      classify.map(s => (s.attempt, s.status, s.model.map(_.value: String))),
       List((1, "failed", Some(A.wire)), (2, "done", Some(B.wire)))
     )
     assert(classify.head.error.exists(_.value.contains("reached its allowance during the step")), classify.head.error)
@@ -279,7 +279,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   test("chains and allowances saved over config survive a restart; reset goes back to config; bad input is refused"):
     val (a, _) = handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances(AgentsConfig.Allowances("local:zzA = 5 usd/day")))
     val saved = a.setChain(Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A)))).fold(e => fail(e.message.value), identity)
-    assertEquals((saved.source, saved.active, saved.models.map(_.model)), ("saved", Some(B.wire), List(B.wire, A.wire)))
+    assertEquals((saved.source, saved.active.map(_.value: String), saved.models.map(_.model.value: String)), ("saved", Some(B.wire), List(B.wire, A.wire)))
     val st = a
       .setAllowance(AllowanceSet(allowanceTarget(A), List(LimitSpec(ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, ModelChains.LimitSpec.Window("5h"))), ModelChains.AllowanceSet.ReservePct(20)))
       .fold(e => fail(e.message.value), identity)
@@ -289,7 +289,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances(AgentsConfig.Allowances("local:zzA = 5 usd/day")))
     val m = again.models
     assertEquals(
-      m.chains.find(_.role.value == "extractor").map(c => (c.source, c.models.map(_.model))),
+      m.chains.find(_.role.value == "extractor").map(c => (c.source, c.models.map(_.model.value: String))),
       Some(("saved", List(B.wire, A.wire)))
     )
     assertEquals(
@@ -300,7 +300,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assertEquals(Transactor(ds).read(ModelSettingsRepo.chains).get(ModelSettingsRepo.ChainRole("extractor")), Some(List(B.wire, A.wire)))
     // reset
     assertEquals(
-      again.resetChain(Agents.Role.Wire("extractor")).map(c => (c.source, c.models.map(_.model))),
+      again.resetChain(Agents.Role.Wire("extractor")).map(c => (c.source, c.models.map(_.model.value: String))),
       Right(("config", List(A.wire, B.wire)))
     )
     assertEquals(again.removeAllowance(allowanceTarget(A)).map(_.removed), Right(true))
@@ -326,11 +326,11 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val cb = ScriptedClient(B); enrichScripts(cb)
     val (a, h) = handlers(Map(B -> cb)); seed(h)
     val c = a.setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))).fold(e => fail(e.message.value), identity)
-    assertEquals(c.models.map(e => (e.model, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
+    assertEquals(c.models.map(e => (e.model.value: String, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
     assert(c.models.head.problem.exists(_.value.contains("has no price")), c)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
-    assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
+    assertEquals(llmModels(run.id).map(_._4.map(_.value: String)).distinct, List(Some(B.wire)))
     // a run's own --model still wins over the chain
     assert(a.runnable(Role.Extractor, Some(AgentsControllers.ModelName("local:zzUnpriced"))).left.exists(_.value.contains("has no price")))
 

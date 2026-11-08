@@ -205,7 +205,7 @@ class MediaHttpSuite extends DbSuite:
         assertEquals(l.items.map(_.uid), List(t.uid))
         val (ss, sb) = get(s"$url/api/media/${t.uid}")
         assertEquals(ss, 200, sb)
-        assertEquals(decode[MediaItem](sb).map(_.targets.map(_.targetId)), Right(List(PlaceId)))
+        assertEquals(decode[MediaItem](sb).map(_.targets.map(_.targetId.value: String)), Right(List(PlaceId.value: String)))
         val (fs, fb) = get(s"$url/api/media/facets")
         assertEquals(fs, 200, fb)
         assert(decode[MediaFacets](fb).exists(_.licences.exists(_.key.value == "CC-BY-SA-2.5")), fb)

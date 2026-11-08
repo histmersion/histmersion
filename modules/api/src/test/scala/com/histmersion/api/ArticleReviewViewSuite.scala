@@ -81,4 +81,4 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
     assertEquals(ReviewState.parse(ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))
-    assertEquals(Goal.Stages.all.map(_._1), Goal.Status.all)
+    assertEquals(Goal.Stages.all.map(_._1.value), Goal.Status.all.map(_.value))

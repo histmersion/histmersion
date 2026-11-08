@@ -757,7 +757,7 @@ class MergeSuite extends DbSuite with Bounded:
       SourceFixtures.load(home, com.histmersion.domain.library.Citekey("bryce2005_kingdom_hittites")).map(_.status),
       Some(Source.Status.Contested)
     )
-    assertEquals(SourceFixtures.load(home, com.histmersion.domain.library.Citekey("page1959_history")).flatMap(_.year), Some(1959))
+    assertEquals(SourceFixtures.load(home, com.histmersion.domain.library.Citekey("page1959_history")).flatMap(_.year), Some(1959L))
     assertEquals(
       SourceFixtures.load(home, com.histmersion.domain.library.Citekey("smith2019_ritualkingship")).map(_.title),
       Some("Ritual and Kingship in Early Mesopotamia")

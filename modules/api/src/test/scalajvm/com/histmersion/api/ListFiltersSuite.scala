@@ -129,7 +129,7 @@ class ListFiltersSuite extends munit.FunSuite:
     assertEquals(JobFilter().qualifier, None)
     assertEquals(
       ApprovalFilter(kind = List(Approval.Kind.Wire("edge,goal-plan")), decidedBy = List(Approval.DecidedBy.Wire("person"))).options,
-      List(
+      List[(String, Option[String])](
         "state" -> None,
         "kind" -> Some("edge"),
         "kind" -> Some("goal-plan"),
@@ -140,5 +140,5 @@ class ListFiltersSuite extends munit.FunSuite:
     )
     assertEquals(
       JobFilter(kind = List(JobKinds.Wire("ingest")), since = Some(JobFilter.Since("7d"))).options,
-      List("kind" -> Some("ingest"), "since" -> Some("7d"), "until" -> None, "subject" -> None)
+      List[(String, Option[String])]("kind" -> Some("ingest"), "since" -> Some("7d"), "until" -> None, "subject" -> None)
     )

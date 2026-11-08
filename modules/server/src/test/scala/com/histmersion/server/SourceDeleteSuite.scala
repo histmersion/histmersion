@@ -222,7 +222,7 @@ class SourceDeleteSuite extends DbSuite:
     assertEquals(d.title, s"Title $Old")
     import com.histmersion.api.library.DeletePart.*
     assertEquals(
-      d.counts.map(c => c.part -> c.rows).toMap,
+      d.counts.map(c => c.part -> (c.rows.value: Int)).toMap,
       Map(
         // the findings also land in whatever gazetteer places other suites seeded, so count them here
         Findings -> 2,
@@ -272,7 +272,7 @@ class SourceDeleteSuite extends DbSuite:
       val slug = Article.Slug(s"${Slug}_cites$i")
       val _ = ArticleFixtures.put(ds, Article(slug, Article.Title(s"Cites $i"), Article.KindValue("concept"), Article.Body(s"# C\n\n$body"), None, Nil, Nil, None))
       val dry = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
-      assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlocker.Kind.Article, slug)), body)
+      assertEquals(dry.blockers.map(b => (b.kind, b.id.value: String)), List((DeleteBlocker.Kind.Article, slug.value: String)), body)
       val e = h.library.sources
         .delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
         .swap

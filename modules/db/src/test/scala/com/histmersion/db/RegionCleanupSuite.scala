@@ -94,4 +94,4 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     )
 
   test("the assignment's placeholder minimum is the configured one"):
-    assertEquals(PlaceFixtures.DefaultPlaceholderMin, cfg.places.geocodePlaceholderMin)
+    assertEquals(PlaceFixtures.DefaultPlaceholderMin.value, cfg.places.geocodePlaceholderMin.value)

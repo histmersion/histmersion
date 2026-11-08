@@ -167,12 +167,12 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     val (rows, removed) = importFile(q, Kind.Acquire, acquireFile)
     assertEquals(removed, 0)
     assert(rows > 0)
-    assertEquals(exported(q, Kind.Acquire), acquireFile)
+    assertEquals(exported(q, Kind.Acquire).value, acquireFile.value)
   }
 
   qtest("a multi-line bullet and a date range survive the round trip") { q =>
     val _ = importFile(q, Kind.Log, logFile)
-    assertEquals(exported(q, Kind.Log), logFile)
+    assertEquals(exported(q, Kind.Log).value, logFile.value)
     val stored = every(q, Kind.Log)
     assert(stored.exists(_.text.value.contains("\n  **TASKS.md** (agent backlog)")), "continuation lines kept")
     assert(stored.exists(_.createdAt.exists(_.value.startsWith("2026-06-22"))), "the range's first day is stored")
@@ -184,7 +184,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     val (_, removed) = importFile(q, Kind.Acquire, acquireFile)
     assertEquals(removed, before)
     assertEquals(every(q, Kind.Acquire).size, before)
-    assertEquals(exported(q, Kind.Acquire), acquireFile)
+    assertEquals(exported(q, Kind.Acquire).value, acquireFile.value)
   }
 
   qtest("an append import adds instead") { q =>

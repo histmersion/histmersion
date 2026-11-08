@@ -240,7 +240,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       "not new"
     )
     val thumbs = AssetFixtures.thumbs(ds, Target.TargetType("place"), Target.Id("zqmd_busy"))
-    assertEquals(thumbs.map(_.uid), List(img, map))
+    assertEquals(thumbs.map(_.uid.value), List(img.value, map.value))
     val t = thumbs.head
     assertEquals(
       t,
@@ -291,8 +291,8 @@ class MediaRepoSuite extends DbSuite with Bounded:
     val d = EventFixtures.get(ds, BEventRow.Id("zqmd_battle")).get
     assertEquals(d.wikidata, Some("Q90000003"))
     assertEquals(
-      AssetFixtures.thumbs(ds, ImportFixtures.Event, Target.Id("zqmd_battle")).map(_.uid),
-      List(uid),
+      AssetFixtures.thumbs(ds, ImportFixtures.Event, Target.Id("zqmd_battle")).map(_.uid.value),
+      List(uid.value),
       "its card's picture"
     )
     val refused =
@@ -495,13 +495,13 @@ class MediaRepoSuite extends DbSuite with Bounded:
     // stored under an id that was later merged into zqmd_eq_b (its alias), from no item
     AssetFixtures.link(ds, plan, Target.TargetType("place"), Target.Id("zqmd_eq_old"), MediaRole.Wire(MediaRole.Plan), None, None, AssetFixtures.LinkRank(0))
     def uids(id: com.histmersion.domain.catalogue.Place.Id) = AssetFixtures.placeThumbs(ds, id, EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid)
-    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_a")), List(photo), "its own; the plan is the old id's, not an equivalent of a")
-    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b")), List(photo, plan), "the same site's other point, and its own old id")
-    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd")), List(photo), "the same Wikidata item")
+    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_a")).map(_.value), List(photo.value), "its own; the plan is the old id's, not an equivalent of a")
+    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b")).map(_.value), List(photo.value, plan.value), "the same site's other point, and its own old id")
+    assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd")).map(_.value), List(photo.value), "the same Wikidata item")
     assertEquals(uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_far")), Nil,"the same name far away is another place")
     assertEquals(
-      AssetFixtures.placeThumbs(ds, com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b"), EventMatcher.NearFinding.Km(0)).map(_.uid),
-      List(plan),
+      AssetFixtures.placeThumbs(ds, com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b"), EventMatcher.NearFinding.Km(0)).map(_.uid.value),
+      List(plan.value),
       "no same-site radius: the alias only"
     )
     assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), Target.Id("zqmd_eq_b")), Nil, "the plain lookup stays exact")
@@ -509,7 +509,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
   test("a place's own picture is shown before an equivalent's in the same role"):
     val (own, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd gobekli own.jpg")), (Target.TargetType("place"), Target.Id("zqmd_eq_wd")))
     AssetFixtures.link(ds, own, Target.TargetType("place"), Target.Id("zqmd_eq_wd"), MediaRole.Wire(MediaRole.Image), Some(AssetFixtures.LinkProperty("P18")), Some(AssetFixtures.LinkItem("Q90000011")), AssetFixtures.LinkRank(1))
-    assertEquals(AssetFixtures.placeThumbs(ds, com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd"), EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid).headOption, Some(own))
+    assertEquals(AssetFixtures.placeThumbs(ds, com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd"), EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid.value).headOption, Some(own.value))
 
   test("targets: one per Wikidata item, the place most sources cite; an item asked through any place is done"):
     connect(ds):
@@ -573,7 +573,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     AssetFixtures.setSourcePicture(ds, Citekey("zqmd2022_paper"), figUid, MediaRole.Wire(MediaRole.Illustration), None)
     assert(!CoverFixtures.illustrationCandidates(ds, None, refresh = CoverFixtures.Refresh(false), CoverFixtures.Limit(100000)).contains("zqmd2022_paper"))
     val t = AssetFixtures.sourceThumb(ds, Citekey("zqmd2022_paper")).get
-    assertEquals((t.uid, t.role, t.width), (fig.uid, MediaRole.Illustration, Some(900)))
+    assertEquals((t.uid.value, t.role, t.width), (fig.uid.value, MediaRole.Illustration, Some(900)))
     assertEquals(
       AssetFixtures.thumb(ds, figUid).map(_._2.value.toList),
       Some((png ++ Array[Byte](7)).toList),
@@ -605,8 +605,8 @@ class MediaRepoSuite extends DbSuite with Bounded:
     val (c1, _) = AssetFixtures.save(ds, cover, (Target.TargetType("source"), Target.Id("zqmd2022_paper")))
     AssetFixtures.setSourcePicture(ds, Citekey("zqmd2022_paper"), c1, MediaRole.Wire(MediaRole.Cover), Some(AssetFixtures.SetSourcePictureProperty("calibre")))
     assertEquals(
-      AssetFixtures.sourceThumb(ds, Citekey("zqmd2022_paper")).map(t => (t.uid, t.role, t.license)),
-      Some((c1, "cover", None))
+      AssetFixtures.sourceThumb(ds, Citekey("zqmd2022_paper")).map(t => (t.uid.value, t.role, t.license)),
+      Some((c1.value, "cover", None))
     )
     assertEquals(
       connect(ds)(sql"SELECT geom IS NULL FROM assets WHERE uid = $c1::uuid".query[Boolean].run().head),

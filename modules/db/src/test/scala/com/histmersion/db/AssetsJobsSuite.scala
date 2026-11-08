@@ -85,7 +85,7 @@ class AssetsJobsSuite extends DbSuite:
     val listed = AssetFixtures.list(ds, ck)
     assertEquals(listed.map(_.name).toList, List("a.png", "b.png"))
     assertEquals(listed.head.width, Some(10))
-    assertEquals(listed.head.bytes, png(1).value.length)
+    assertEquals(listed.head.bytes, png(1).value.length.toLong)
     val (mime, bytes) = AssetFixtures.read(ds, ck, AssetInfoRow.Name("a.png")).get
     assertEquals(mime, "image/png")
     assertEquals(bytes.value.toList, png(1).value.toList)

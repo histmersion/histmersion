@@ -47,7 +47,7 @@ class SourceNoteParseSuite extends munit.FunSuite:
     val s = SourceNote.parseNote(SourceNote.Text(note), Citekey("fallback")).get
     assertEquals(s.citekey, "heggarty2023_language")
     assertEquals(s.venue, None)
-    assertEquals(s.year, Some(2023))
+    assertEquals(s.year, Some(2023L))
     assertEquals(s.period, Some(Period(Year(-6000), Year(-3000))))
     assertEquals(s.status, Source.Status.Current)
 

@@ -65,7 +65,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         post(s"$url/api/maintenance/vacuum", """{"analyze":true,"tables":["place_overrides","place_removals"]}""")
       assertEquals(s, 200, body)
       val started = job(body)
-      assertEquals(started.kind, Vacuum.JobKind)
+      assertEquals(started.kind.value: String, Vacuum.JobKind: String)
       assertEquals(
         started.detail.flatMap(VacuumPlan.Detail.of),
         Some(VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("place_overrides"), Vacuum.Request.Tables("place_removals"))))

@@ -157,7 +157,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       val plan = decode[MergePlan](pl.body)
       // its own bundle: every source the same record by uid, nothing to decide; a resolution for no issue is an error
       assertEquals(plan.open, Nil)
-      assertEquals(plan.matches.byUid, plan.matches.sources)
+      assertEquals(plan.matches.byUid.value, plan.matches.sources.value)
       assert(plan.resolutionErrors.exists(_.value.startsWith("S-00000000")), pl.body)
       // a name that is no upload: 404; not a sha256: 400
       assertEquals(postJson(s"$url/api/merge/plan", s"""{"bundle":"${"0" * 64}"}""").statusCode, 404)

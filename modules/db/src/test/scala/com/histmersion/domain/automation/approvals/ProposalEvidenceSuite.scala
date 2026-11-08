@@ -35,8 +35,8 @@ class ProposalEvidenceSuite extends munit.FunSuite:
   test("every proposal's payload reads as its evidence and quote"):
     proposals.foreach { p =>
       val read = Jsonb.read[ProposalEvidence](Jsonb.JsonText(p.asJson.noSpaces))
-      assertEquals(read.flatMap(_.evidence).getOrElse(""), p.evidence)
-      assertEquals(read.flatMap(_.quote), p.quote)
+      assertEquals(read.flatMap(_.evidence).fold("")(_.value), p.evidence.value)
+      assertEquals(read.flatMap(_.quote).map(_.value), p.quote.map(_.value))
     }
 
   test("a payload that is no JSON reads as nothing"):

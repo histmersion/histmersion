@@ -57,7 +57,7 @@ class SeedImportSuite extends DbSuite:
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
     val second = run(dir)
     assertEquals(second.imported, 0)
-    assertEquals(second.skipped, List(ckS))
+    assertEquals(second.skipped.map(_.value: String), List(ckS))
     assert(sources.load(ckS).get.tags.exists(_.value == "enriched"))
 
     // --force: the file wins and the enrichment is gone (the deliberate re-import)

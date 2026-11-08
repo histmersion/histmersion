@@ -170,7 +170,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val now = Instant.parse("2026-10-17T12:00:00Z")
     val m = a.managing.create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)), now).fold(e => fail(e.message.value), identity)
     assertEquals(
-      (m.id, m.kind, m.goal, m.state, m.cron),
+      (m.id, m.kind, m.goal.map(_.value: String), m.state, m.cron),
       (watchId(ref(Goal)), "watch", Some(Goal), "paused", Some("@weekly"))
     )
     assertEquals(m.nextTickAt, Some("2026-10-18T00:00:00Z"))
@@ -179,7 +179,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       Transactor(ds)
         .read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(10)))
         ._1
-        .map(i => (i.kind, i.target, i.status))
+        .map(i => (i.kind, i.target.value: String, i.status))
         .sortBy(_._1.value),
       List((AcquisitionSweep, Goal, "pending"), (CurrencyCheck, Goal, "pending"))
     )
@@ -435,10 +435,10 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val ap = openHintApprovals(a)
     assertEquals(ap.size, 1)
     assertEquals(
-      (ap.head.subject, ap.head.hintEffect.map(p => (p.hint, p.effect.action, p.by))),
-      (Some(EnrichId), Some((hint.id, "hold", "mcp")))
+      (ap.head.subject, ap.head.hintEffect.map(p => (p.hint.value, p.effect.action, p.by))),
+      (Some(EnrichId), Some((hint.id.value, "hold", "mcp")))
     )
-    assertEquals(hint.proposal, Some(ap.head.id))
+    assertEquals(hint.proposal.map(_.value), Some(ap.head.id.value))
     assert(
       ManagersMarkdown.hint(hint).contains(s"approval #${ap.head.id} waits for a person"),
       ManagersMarkdown.hint(hint)
@@ -523,7 +523,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true))))
       .fold(e => fail(e.message.value), identity)
     val run = connect(ds)(AgentRepo.list(None, PageSize(20))).find(_.pipeline.value == "hint-effect").get
-    assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
+    assertEquals((run.target, run.origin, run.params.hint.map(_.value)), (EnrichId, Some("person"), Some(hint.id.value)))
     a.engine.execute(ApiIds.run(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
@@ -533,8 +533,8 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assertEquals(enrichItem(CkA).status, "pending", "nothing applied by the run")
     val ap = openHintApprovals(a)
     assertEquals(
-      ap.map(_.hintEffect.map(p => (p.effect.action, p.effect.targets, p.hint))),
-      List(Some(("hold", List(CkA), hint.id)))
+      ap.map(_.hintEffect.map(p => (p.effect.action, p.effect.targets.map(_.value: String), p.hint.value))),
+      List(Some(("hold", List(CkA), hint.id.value)))
     )
     assertEquals(ap.head.runId, Some(run.id))
     assert(

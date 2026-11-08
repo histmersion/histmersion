@@ -131,8 +131,8 @@ class PreviewSuite extends munit.FunSuite:
       timeBasis = Place.TimeBasis.Findings
     )
     assertEquals(
-      Preview.card(anatolia).facts.headOption,
-      Some(Place.TimeBasis.FindingsNote)
+      Preview.card(anatolia).facts.headOption.map(_.value),
+      Some(Place.TimeBasis.FindingsNote.value)
     )
     // across all time nothing is filtered, so nothing needs saying; a dated place never says it
     assert(

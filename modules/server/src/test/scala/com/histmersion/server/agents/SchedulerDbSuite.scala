@@ -260,11 +260,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       st.started.head.why
     )
     val first = st.waiting.head
-    assertEquals((first.goal, first.position, first.code), (Some(g(15)), 1, "capacity"))
+    assertEquals((first.goal.map(_.value: String), first.position, first.code), (Some(g(15)), 1, "capacity"))
     assert(first.why.value.contains("goal-first") && first.why.value.contains("no place free"), first.why)
     assert(first.behind.nonEmpty, first)
     // then the oldest goals, by age and slug (they were made in the same second)
-    assertEquals(st.waiting.map(_.goal).distinct.take(4), List(Some(g(15)), Some(g(1)), Some(g(2)), Some(g(3))))
+    assertEquals(st.waiting.map(_.goal.map(_.value: String)).distinct.take(4), List(Some(g(15)), Some(g(1)), Some(g(2)), Some(g(3))))
     // why, for one item: by id and by target
     val w =
       a.scheduler.why(ManagerItem.Ref(item(seedId(ref(g(15))), ProposeKind, target(g(15))).id.toString)).fold(e => fail(e.message.value), identity)
@@ -298,7 +298,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       (RunInfo.Pipeline("acquisition-sweep"), RunInfo.Target(g(20).value)),
       (RunInfo.Pipeline("currency-check"), RunInfo.Target(g(20).value))
     )
-    assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
+    assertEquals(next.map((pipeline, target) => (pipeline.value: String, target.value: String)), Set(("review-article", Art.value: String), ("propose-articles", g(15).value: String), ("acquisition-sweep", g(15).value: String)))
     assertEquals(b.scheduler.status().strategy, "type-balanced")
     note("scheduler status type-balanced", AgentSchedulerMarkdown.status(b.scheduler.status(Some(PageSize(500)))))
     // back to the config's
@@ -419,7 +419,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val d = a.digest.digest()
     val plans = d.kinds.find(_.kind.value == "goal-plan").getOrElse(fail(d.toString))
     assertEquals((plans.count, plans.decidedBy), (3, "person"))
-    assertEquals(plans.ids, ps.map(_.id).sortBy(x => (x.value: Long)))
+    assertEquals(plans.ids.map(_.value), ps.map(_.id).sortBy(x => (x.value: Long)).map(_.value))
     // once a day, after the hour (7 UTC by default)
     assertEquals(a.digest.tick(morning), Nil, "before the hour")
     assertEquals(a.digest.tick(morning.plusSeconds(120)), List("approval digest written"))
@@ -441,7 +441,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val done = a.digest
       .decideAll(ApprovalDigest.BulkDecide(ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)), by = Some(ApprovalDigest.BulkDecide.By("test"))))
       .fold(e => fail(e.message.value), identity)
-    assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
+    assertEquals((done.matched, done.decided.map(_.value), done.failed), (1, List(ps(1).id.value), Nil))
     assertEquals(
       TestRuns.approvals(ds).approval(ApiIds.approval(ps(1).id)).map(x => (x.state, x.note.exists(_.value.contains("in bulk by test")))),
       Some(("rejected", true))
@@ -462,7 +462,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       a.managing.autopilot.approvals
     )
     val (b, _, _) = handlers()
-    assertEquals(b.autoApprovals.goalPlanCap, cfg.agents.approvals.auto.goalPlansPerDay, "share 0: the fixed cap")
+    assertEquals(b.autoApprovals.goalPlanCap.value, cfg.agents.approvals.auto.goalPlansPerDay.value, "share 0: the fixed cap")
 
   test("drain: nothing new starts, the runs in flight finish, drained once none runs; undrain and on lift it"):
     val (a, h, up) = handlers(); seed(a, h, up)

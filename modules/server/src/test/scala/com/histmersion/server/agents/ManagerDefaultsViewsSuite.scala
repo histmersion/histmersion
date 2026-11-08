@@ -103,8 +103,8 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     val agents = AppConfig.load().agents
     val d = ManagerDefaultsViews.defaults(agents.managers)
     assertEquals(
-      (d.maxFailures, d.review.maxRuns, d.watch.maxRuns),
-      (agents.managers.maxFailures, agents.managers.review.maxRuns, agents.managers.watch.maxRuns)
+      (d.maxFailures.value, d.review.maxRuns.value, d.watch.maxRuns.value),
+      (agents.managers.maxFailures.value, agents.managers.review.maxRuns.value, agents.managers.watch.maxRuns.value)
     )
 
   test("the scheduler's configured settings reach the policy with the built-in weights and priorities beneath them"):

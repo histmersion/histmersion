@@ -230,7 +230,7 @@ class QueryRepoSuite extends DbSuite:
     val r = run("select current_user, (select rolsuper from pg_roles where rolname = current_user)").toOption.getOrElse(
       fail("current_user query failed")
     )
-    assertEquals(r.rows.head(0), Some(cfg.query.user))
+    assertEquals(r.rows.head(0).map(_.value), Some(cfg.query.user.value))
     assertEquals(r.rows.head(1), Some("f")) // pgjdbc renders a bool column as f/t
 
   test("pg_read_file is permission denied — the read-only TRANSACTION never stopped this"):

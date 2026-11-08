@@ -229,4 +229,4 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
     (0 to 4).foreach(n => assert(at(n).nonEmpty, s"finding $n has a place"))
 
   test("the placeholder area share is the configured one"):
-    assertEquals(PlaceFixtures.DefaultPlaceholderAreaShare, cfg.places.placeholderAreaShare)
+    assertEquals(PlaceFixtures.DefaultPlaceholderAreaShare.value, cfg.places.placeholderAreaShare.value)

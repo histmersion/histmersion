@@ -165,7 +165,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
   }
 
   private def changed(c: Place.OverrideChanged) =
-    (c.placeId, c.label, c.reset, c.kindBefore, c.kindAfter, c.periodBefore, c.periodAfter)
+    (c.placeId, c.label, c.reset, c.kindBefore, c.kindAfter, c.periodBefore.value: String, c.periodAfter.value: String)
 
   stest("a kind and period set over the source's, listed, kept by the next import, and reset") { s =>
     val p = s.places

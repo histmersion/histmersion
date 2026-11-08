@@ -136,7 +136,7 @@ class ArticleRepoSuite extends DbSuite:
     val cited = ArticleFixtures.sourcesCited(ds, slug).head
     assertEquals(
       (cited.title, cited.year, cited.status),
-      (Some("Title of zz_cline2014_year"), Some(2014), Some(Source.Status.Foundational))
+      (Some("Title of zz_cline2014_year"), Some(2014L), Some(Source.Status.Foundational))
     )
     // the article link is stored too — it is what makes the target's backlinks work
     val _ = ArticleFixtures.put(ds, article(Article.Body("# Other\n\n[[zz_article_sea]]"), Article.Slug("zz_article_other")))
@@ -210,9 +210,9 @@ class ArticleRepoSuite extends DbSuite:
         .map(_.slug.value)
         .filter(_.startsWith("zz_article"))
 
-    assertEquals(slugs(q = Some(Search.Query("Medinet"))), List(slug.value)) // body (weight C)
-    assertEquals(slugs(q = Some(Search.Query("\"Sea Peoples\""))), List(slug.value)) // title phrase (weight A)
-    assertEquals(slugs(q = Some(Search.Query("loose"))), List(slug.value)) // summary (weight B)
+    assertEquals(slugs(q = Some(Search.Query("Medinet"))), List(slug.value: String)) // body (weight C)
+    assertEquals(slugs(q = Some(Search.Query("\"Sea Peoples\""))), List(slug.value: String)) // title phrase (weight A)
+    assertEquals(slugs(q = Some(Search.Query("loose"))), List(slug.value: String)) // summary (weight B)
     assert(slugs(kind = Some(com.histmersion.domain.research.Article.Kind("concept"))).contains(slug.value))
     assertEquals(slugs(q = Some(Search.Query("zzznothingmatchesthis"))), Nil)
 
@@ -274,13 +274,13 @@ class ArticleRepoSuite extends DbSuite:
     val _ = ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(Article.Body("# T\n\nrewritten body"))))
     val v1 = ArticleFixtures.listVersions(ds, slug)
     assertEquals(v1.size, 1, "after one patch, one previous version")
-    assertEquals(v1.head.slug, slug.value)
+    assertEquals(v1.head.slug, slug.value: String)
     assert(v1.head.wordCount.value > 0, s"word count should be positive, got ${v1.head.wordCount}")
 
     val full1 = ArticleFixtures.getVersion(ds, slug, ArticleFixtures.VersionId(v1.head.id.value))
     assert(full1.isDefined, "getVersion should find the version by id")
     assertEquals(full1.get.body, "# T\n\noriginal body")
-    assertEquals(full1.get.slug, slug.value)
+    assertEquals(full1.get.slug, slug.value: String)
 
     // 3. Patch again — the "rewritten body" becomes version 2
     val _ = ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(Article.Body("# T\n\nthird version body"))))

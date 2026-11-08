@@ -211,7 +211,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       List("discover", "rank", "ingest", "backlog", "queue", "close")
     )
     val first = backlog(m.id).minBy(r => (r.id.value: Long))
-    assertEquals(first.state.oa.map(w => (w.goals, w.title, w.foundBy)), Some((List(Goal), "Work w21", Some(run.id))))
+    assertEquals(first.state.oa.map(w => (w.goals.map(_.value: String), w.title, w.foundBy.map(_.value: String))), Some((List(Goal), "Work w21", Some(run.id.value: String))))
     // the same day: the allowance is spent, nothing drains; the status says when it will
     b.managers.tick(now)
     assertEquals(ingestCalls(upb).size, 20)
@@ -293,7 +293,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     val open = Transactor(ds).read(ManagerRepo.backlogOpenIn())
     assertEquals(open.map(_.target.value).sorted, List(doi("x"), doi("y")), "x once, though both goals found it")
     val x = open.find(_.target.value == doi("x")).get
-    assertEquals((x.managerId, x.state.oa.map(_.goals)), (w1.id, Some(List(Goal, Goal2))))
+    assertEquals((x.managerId, x.state.oa.map(_.goals.map(_.value: String))), (w1.id, Some(List(Goal, Goal2))))
     assertEquals(acquire(h).map(i => Scheduling.dois(i.text.value)), List(Set(doi("z"))), "only the closed work")
     // the next day
     val tomorrow = now.plus(1, ChronoUnit.DAYS)
@@ -406,9 +406,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     )
     val entry = backlog(m.id)
     assertEquals(entry.map(_.target), List(doi("a")))
-    assertEquals(entry.head.state.oa.map(_.goals), Some(List(Goal)))
+    assertEquals(entry.head.state.oa.map(_.goals.map(_.value: String)), Some(List(Goal)))
     assert(entry.head.state.oa.flatMap(_.acquireText).exists(_.value.contains(doi("a"))), "its old wording kept")
-    assertEquals(done.rows.find(_.doi.value == doi("a")).flatMap(_.backlogItem), Some(entry.head.id))
+    assertEquals(done.rows.find(_.doi.value == doi("a")).flatMap(_.backlogItem).map(_.value), Some(entry.head.id.value))
     assert(
       !connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
         l.kind == LinkKind.QueueItem && !left.exists(i => GoalLink.Ref(i.id.toString) == l.ref)

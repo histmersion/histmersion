@@ -316,7 +316,7 @@ class PluginHostSuite extends munit.FunSuite:
   test("a plugin is disabled unless enabled; its settings are still reported"):
     val (g, _) = build(List(EchoPlugin()), "")
     val st = statusOf(g, "echo")
-    assertEquals((st.state, st.enabled), (PluginState.Disabled.wire, false))
+    assertEquals((st.state.value: String, st.enabled), (PluginState.Disabled.wire.value: String, false))
     assert(st.settings.contains(PluginSetting(PluginSetting.Key("greeting"), PluginSetting.Value("hello from the defaults"))), st.settings)
     assert(g.report.ok)
 
@@ -327,13 +327,13 @@ class PluginHostSuite extends munit.FunSuite:
       """histmersion.plugins.echo { enabled = true, greeting = "from the file", max-items = 6, mirrors = [x, y] }""",
       env("HISTMERSION_PLUGIN_ECHO_MAX_ITEMS" -> "9")
     )
-    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(seen.toList, List("from the file|9|x,y|None"))
 
   test("enabled can come from the environment through a defaults line, and as a string"):
     val seen = scala.collection.mutable.Buffer.empty[String]
     val (g, _) = build(List(EchoPlugin(seen)), """histmersion.plugins.echo.enabled = "true"""")
-    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
 
   test("a vault plugin's registration is committed and listed; a consumer's secrets resolve through it"):
     val got = scala.collection.mutable.Buffer.empty[String]
@@ -348,7 +348,7 @@ class PluginHostSuite extends munit.FunSuite:
     )
     assertEquals(g.registries.secretVaults.keys.toList, List("fake"))
     assertEquals(statusOf(g, "maker").provides, List("secret-vault:fake"))
-    assertEquals(statusOf(g, "consumer").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "consumer").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(got.toList, List("v(a)", "v(a)", "e-val", "v(b)"))
     assertEquals(calls.get, 2, "one vault call per reference per generation (a, b), then the generation's cache")
     // the values never reach the report
@@ -362,7 +362,7 @@ class PluginHostSuite extends munit.FunSuite:
       List(MakerPlugin(), ConsumerPlugin(got)),
       """histmersion.plugins { order = [consumer, maker], maker.enabled = true, consumer { enabled = true, token = "fake:t" } }"""
     )
-    assertEquals(statusOf(g, "consumer").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "consumer").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(got.toList, List("v(t)"))
     assertEquals(g.report.plugins.map(_.id), List("consumer", "maker"), "the report keeps the configured order")
 
@@ -373,14 +373,14 @@ class PluginHostSuite extends munit.FunSuite:
       """histmersion.plugins { echo.enabled = true, consumer { enabled = true, token = "keepassxc:x#password" } }"""
     )
     val st = statusOf(g, "consumer")
-    assertEquals(st.state, PluginState.Failed.wire)
+    assertEquals(st.state.value: String, PluginState.Failed.wire.value: String)
     assertEquals(
       st.error,
       Some(
         "histmersion.plugins.consumer: no secret vault 'keepassxc' is registered (enable the plugin that provides it)"
       )
     )
-    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
     assert(!g.report.ok)
     assert(
       logs.lines.exists(_.startsWith("W consumer: histmersion.plugins.consumer: no secret vault 'keepassxc'")),
@@ -410,7 +410,7 @@ class PluginHostSuite extends munit.FunSuite:
     val (g, logs) =
       build(List(ConsumerPlugin(got)), """histmersion.plugins.consumer { enabled = true, token = "value:hunter2" }""")
     val st = statusOf(g, "consumer")
-    assertEquals(st.state, PluginState.Registered.wire)
+    assertEquals(st.state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(got.toList, List("hunter2"))
     assert(st.warnings.exists(_.value.contains("a secret is written into the config")), st.warnings)
     assert(logs.lines.exists(_.contains("a secret is written into the config")))
@@ -433,7 +433,7 @@ class PluginHostSuite extends munit.FunSuite:
       statusOf(g, "thrower").error,
       Some("histmersion.plugins.thrower: register threw RuntimeException: bang")
     )
-    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
 
   test("a plugin whose library is missing fails alone, naming the class and what to do; the others load"):
     val (g, _) = build(
@@ -441,12 +441,12 @@ class PluginHostSuite extends munit.FunSuite:
       """histmersion.plugins { needs-lib.enabled = true, echo.enabled = true }"""
     )
     val st = statusOf(g, "needs-lib")
-    assertEquals(st.state, PluginState.Failed.wire)
+    assertEquals(st.state.value: String, PluginState.Failed.wire.value: String)
     assert(
       st.error.exists(e => e.value.contains("class org.example.xml.Elem is missing") && e.value.contains("histmersion plugin add")),
       st.error
     )
-    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
 
   test("missingClass: a NoClassDefFoundError or ClassNotFoundException, also as the cause; nothing else"):
     assertEquals(PluginHost.missingClass(NoClassDefFoundError("a/b/C")), Some("a.b.C"))
@@ -461,7 +461,7 @@ class PluginHostSuite extends munit.FunSuite:
       """histmersion.plugins { order = [maker, other], maker.enabled = true, other.enabled = true }"""
     )
     // `other` reads maker.conf too, so both register a vault named `fake`
-    assertEquals(statusOf(g, "maker").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "maker").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(
       statusOf(g, "other").error,
       Some("histmersion.plugins.other: secret-vault 'fake' is already registered")
@@ -481,7 +481,7 @@ class PluginHostSuite extends munit.FunSuite:
     )
     assertEquals(statusOf(g, "echo").error, Some("histmersion.plugins.echo.max-items must be a number, not \"many\""))
     assertEquals(statusOf(g, "echo").enabled, true)
-    assertEquals(statusOf(g, "maker").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "maker").state.value: String, PluginState.Registered.wire.value: String)
 
   test("refused plugins (foreign SPI, duplicate ids) are reported and never registered; config warnings collected"):
     val seen = scala.collection.mutable.Buffer.empty[String]
@@ -519,8 +519,8 @@ class PluginHostSuite extends munit.FunSuite:
         |}""".stripMargin,
       env("E" -> "e-val")
     )
-    assertEquals(statusOf(g, "c1").state, PluginState.Registered.wire)
-    assertEquals(statusOf(g, "c2").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "c1").state.value: String, PluginState.Registered.wire.value: String)
+    assertEquals(statusOf(g, "c2").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(batches.toList, List(List("a", "b", "c")), "one call, every reference of the vault, each once")
     assertEquals(singles.get, 0)
     assertEquals((got1.toList, got2.toList), (List("b(a)", "b(b)", "e-val"), List("b(b)", "b(c)")))
@@ -549,7 +549,7 @@ class PluginHostSuite extends munit.FunSuite:
       statusOf(g, "c2").error,
       Some("histmersion.plugins.c2: secret fake:unanswered: vault 'fake' gave no answer for it")
     )
-    assertEquals(statusOf(g, "c3").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "c3").state.value: String, PluginState.Registered.wire.value: String)
     assertEquals(got.toList, List("b(ok)"))
     assertEquals(batches.size, 1)
     val throwing = new Secret.Vault:
@@ -677,8 +677,8 @@ class PluginHostSuite extends munit.FunSuite:
       env("PATH" -> d.toString, "KP_PASSWORD" -> "kp-master")
     )
     assertEquals(
-      List("bitwarden", "c1", "c2", "keepassxc").map(statusOf(g, _).state),
-      List.fill(4)(PluginState.Registered.wire)
+      List("bitwarden", "c1", "c2", "keepassxc").map(statusOf(g, _).state.value: String),
+      List.fill(4)(PluginState.Registered.wire.value: String)
     )
     assertEquals(Files.readAllLines(d.resolve("kp-calls")).asScala.toList, List("open"), "one unlock for all four")
     assertEquals(
