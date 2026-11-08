@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *
   * Source: https://www.naturalearthdata.com (public domain), via the nvkelso/natural-earth-vector GeoJSON mirror. 1:10
@@ -19,14 +20,14 @@ object NaturalEarthLand:
   )
 
   /** The polygon geometries of a GeoJSON FeatureCollection, each as its own GeoJSON text. Pure. */
-  def geometries(rawJson: String): Either[GazetteerImports.Problem, List[PlaceDetailRow.Geometry]] =
-    io.circe.parser.parse(rawJson).left.map(e => GazetteerImports.Problem(s"invalid JSON: ${e.getMessage}")).flatMap {
+  def geometries(rawJson: String): Either[Problem, List[PlaceDetailRow.Geometry]] =
+    io.circe.parser.parse(rawJson).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap {
       doc =>
         doc.hcursor
           .downField("features")
           .focus
           .flatMap(_.asArray)
-          .toRight(GazetteerImports.Problem("not a GeoJSON FeatureCollection"))
+          .toRight(Problem("not a GeoJSON FeatureCollection"))
           .map(_.toList.flatMap { f =>
             f.hcursor
               .downField("geometry")
@@ -42,20 +43,20 @@ object NaturalEarthLand:
     * the number of polities now drawn clipped; `failed` carries the piece count as a note.
     */
   def run(
-      download: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text],
+      download: HttpDownload.Url => Either[Problem, HttpDownload.Text],
       geometry: PlaceGeometry,
       dryRun: GazetteerControllers.DryRun
-  ): Either[GazetteerImports.Problem, Place.ImportResult] =
+  ): Either[Problem, Place.ImportResult] =
     for
-      raws <- urls.foldLeft[Either[GazetteerImports.Problem, List[String]]](Right(Nil))((acc, u) =>
+      raws <- urls.foldLeft[Either[Problem, List[String]]](Right(Nil))((acc, u) =>
         acc.flatMap(l =>
-          download(HttpDownload.Url(u)).left.map(p => GazetteerImports.Problem(p.value)).map(l :+ _.value)
+          download(HttpDownload.Url(u)).left.map(p => Problem(p.value)).map(l :+ _.value)
         )
       )
-      geoms <- raws.foldLeft[Either[GazetteerImports.Problem, List[PlaceDetailRow.Geometry]]](Right(Nil))((acc, r) =>
+      geoms <- raws.foldLeft[Either[Problem, List[PlaceDetailRow.Geometry]]](Right(Nil))((acc, r) =>
         acc.flatMap(l => geometries(r).map(l ++ _))
       )
-      _ <- if geoms.isEmpty then Left(GazetteerImports.Problem("no land polygons in the download")) else Right(())
+      _ <- if geoms.isEmpty then Left(Problem("no land polygons in the download")) else Right(())
     yield
       if dryRun.value then
         Place.ImportResult(

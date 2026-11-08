@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.maintenance
 
+import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
@@ -62,7 +63,7 @@ final class VacuumJobs(
       def outcome(failed: Option[String]) =
         BackgroundJob.Outcome(
           Option.when(lines.nonEmpty)(BackgroundJob.Outcome.Summary(lines.mkString("; "))),
-          failed.map(BackgroundJob.Outcome.Error(_))
+          failed.map(Problem(_))
         )
       rest match
         case Nil                            => outcome(None)

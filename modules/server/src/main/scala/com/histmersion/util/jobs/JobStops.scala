@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -10,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class JobStops:
   private val requested = ConcurrentHashMap[Job.Id, JobStop]()
-  private val resumers = ConcurrentHashMap[Job.Id, () => Either[JobStops.Problem, Unit]]()
+  private val resumers = ConcurrentHashMap[Job.Id, () => Either[Problem, Unit]]()
 
   /** Ask job `id` to stop at its next part boundary. */
   def request(id: Job.Id, stop: JobStop): Unit = { val _ = requested.put(id, stop) }
@@ -22,20 +23,17 @@ final class JobStops:
   def answered(id: Job.Id): Unit = { val _ = requested.remove(id) }
 
   /** How paused job `id` goes on: runs its remaining parts on the same job row. */
-  def pausedWith(id: Job.Id, resume: () => Either[JobStops.Problem, Unit]): Unit = { val _ = resumers.put(id, resume) }
+  def pausedWith(id: Job.Id, resume: () => Either[Problem, Unit]): Unit = { val _ = resumers.put(id, resume) }
 
   /** Whether this server can resume paused job `id`. */
   def canResume(id: Job.Id): Boolean = resumers.containsKey(id)
 
   /** Resume paused job `id` (its way to go on is used once). */
-  def resume(id: Job.Id): Either[JobStops.Problem, Unit] =
-    Option(resumers.remove(id)).toRight(JobStops.Problem(s"job $id cannot be resumed by this server")).flatMap(_())
+  def resume(id: Job.Id): Either[Problem, Unit] =
+    Option(resumers.remove(id)).toRight(Problem(s"job $id cannot be resumed by this server")).flatMap(_())
 
   /** Paused job `id` was cancelled: it will not go on. */
   def forget(id: Job.Id): Unit =
     val _ = resumers.remove(id)
     answered(id)
 
-object JobStops:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data
 
+import com.histmersion.api.Problem
 import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
@@ -31,8 +32,6 @@ final class DataContributions private (val all: List[DataContribution]):
   def ownerOf(table: TableName): Option[DataOwner] = tables.collectFirst { case (o, t) if t.name == table => o }
 
 object DataContributions:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The registry, or what makes it inconsistent: an owner registered twice, a table claimed by two owners. */
 

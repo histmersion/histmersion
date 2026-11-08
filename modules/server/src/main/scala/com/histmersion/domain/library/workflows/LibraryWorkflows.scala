@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.config.AppConfig

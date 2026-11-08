@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.media.imports.{MediaMatch, Target}

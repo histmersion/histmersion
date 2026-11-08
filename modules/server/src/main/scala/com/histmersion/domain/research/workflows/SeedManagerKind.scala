@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.approvals.ApprovalChecks
@@ -135,7 +136,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         c.chainReview(
           review,
           Slug.assume(item.target.value),
-          ManagerContext.ChainReviewWhy(s"compiled by ${m.id}"),
+          Problem(s"compiled by ${m.id}"),
           out
         )
         c.event(

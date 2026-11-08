@@ -126,16 +126,16 @@ object MediaWire:
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[ConverterClient.Problem, ConvertedDoc] =
-      Left(ConverterClient.Problem("not used"))
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    ): Either[Problem, ConvertedDoc] =
+      Left(Problem("not used"))
+    def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
         maxPx: Pixels
-    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    ): Either[Problem, ConverterClient.Thumb] =
       Right(
         ConverterClient.Thumb(
           ConverterClient.Thumb.Bytes(jpeg(s"thumb:$filename:$maxPx")),

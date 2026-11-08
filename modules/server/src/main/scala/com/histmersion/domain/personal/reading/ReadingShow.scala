@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal.reading
 
+import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
@@ -13,8 +14,6 @@ object ReadingShow:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def parse(s: Option[Wire]): Either[Problem, ReadingShow] =
     s.map(_.value.trim.toLowerCase)

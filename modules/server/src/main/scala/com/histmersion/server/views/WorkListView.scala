@@ -1,6 +1,7 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Queue

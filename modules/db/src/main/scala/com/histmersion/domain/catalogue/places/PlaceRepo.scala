@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.given
@@ -1062,18 +1063,18 @@ private[places] object PlaceRepo:
       .run()
       .headOption
     if !exists(oldId) then
-      Left(Api.Error(Problem(s"No place '${oldId.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      Left(Api.Error(api.Problem(s"No place '${oldId.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newId) then
       Left(
         Api.Error(
-          Problem(s"'${newId.value}' is already the id of another place"),
+          api.Problem(s"'${newId.value}' is already the id of another place"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          Problem(
+          api.Problem(
             s"'${newId.value}' is an old id of '${aliasOf.get.value}' and still resolves to it — pick another"
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
@@ -1128,7 +1129,7 @@ private[places] object PlaceRepo:
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
     labelOf(id)
-      .toRight(Api.Error(Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(api.Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       .map { label =>
         val before =
           sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND import_source = ''"
@@ -1155,7 +1156,7 @@ private[places] object PlaceRepo:
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
     labelOf(id)
-      .toRight(Api.Error(Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(api.Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       .flatMap { label =>
         sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
           .query[Boolean]
@@ -1169,7 +1170,7 @@ private[places] object PlaceRepo:
             val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
             Left(
               Api.Error(
-                Problem(
+                api.Problem(
                   s"'$label' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
                 ),
                 Some(Api.Error.Code(Write.CodeNotFound))
@@ -1178,7 +1179,7 @@ private[places] object PlaceRepo:
           case Some(false) =>
             Left(
               Api.Error(
-                Problem(
+                api.Problem(
                   s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
                     "removing it would last only until the next import"
                 ),
@@ -1211,21 +1212,21 @@ private[places] object PlaceRepo:
     if taken then
       Left(
         Api.Error(
-          Problem(s"'${id.value}' is already the id of a place — choose another id"),
+          api.Problem(s"'${id.value}' is already the id of a place — choose another id"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if gone then
       Left(
         Api.Error(
-          Problem(s"'${id.value}' is the id of a place that was removed — choose another id"),
+          api.Problem(s"'${id.value}' is the id of a place that was removed — choose another id"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if alias.isDefined then
       Left(
         Api.Error(
-          Problem(
+          api.Problem(
             s"'${id.value}' is an old id of '${alias.get}' and still resolves to it — choose another id"
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
@@ -1237,7 +1238,7 @@ private[places] object PlaceRepo:
         .query[Place.Summary]
         .run()
         .headOption
-        .toRight(Api.Error(Problem(s"place '${id.value}' was not stored")))
+        .toRight(Api.Error(api.Problem(s"place '${id.value}' was not stored")))
 
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
   def count()(using DbCon): RowCount =

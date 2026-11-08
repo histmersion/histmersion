@@ -14,8 +14,6 @@ import com.histmersion.plugin.AiFailure
 object PluginAi:
   type ModelName = ModelName.T
   object ModelName extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** Whether the provider can serve `model` now, by its own check; an exception is a "no". */
 
@@ -34,13 +32,13 @@ object PluginAi:
     val answer =
       try
         Option(provider.turn(request, http))
-          .getOrElse(Left(AiFailure.Error(Problem("the provider answered null"))))
+          .getOrElse(Left(AiFailure.Error(plugin.Problem("the provider answered null"))))
       catch
         case e: InterruptedException => throw e
         case NonFatal(e)             =>
           Left(
             AiFailure.Error(
-              Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
+              plugin.Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
             )
           )
-    answer.flatMap(t => Option(t).toRight(AiFailure.Error(Problem("the provider answered null"))))
+    answer.flatMap(t => Option(t).toRight(AiFailure.Error(plugin.Problem("the provider answered null"))))

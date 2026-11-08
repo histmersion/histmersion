@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.api.BBox
 import com.histmersion.{ByteCount, ByteOffset}
 import io.github.iltotore.iron.*
@@ -121,7 +122,7 @@ object GeoTiffGrid:
     */
   def parse(
       head: RangeHttp.ResponseBytes,
-      read: (ByteOffset, ByteCount) => Either[RangeHttp.Problem, RangeHttp.ResponseBytes]
+      read: (ByteOffset, ByteCount) => Either[Problem, RangeHttp.ResponseBytes]
   ): Either[Problem, GeoTiffGrid] =
     parseBytes(
       head.value,

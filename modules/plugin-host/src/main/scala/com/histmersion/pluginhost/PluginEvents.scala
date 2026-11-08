@@ -27,12 +27,8 @@ object PluginEvents:
   export MediaConfig.RequestIntervalMs as IntervalMs
   type PartName = PartName.T
   object PartName extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Provider = CatalogRecord.Provider
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   export Polite.IntervalMs as SleepMs
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
@@ -240,7 +236,7 @@ object PluginEvents:
   private def checked(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     val id = Option(e.id).map(_.value).getOrElse("").trim
     val label = Option(e.label).map(_.value).getOrElse("").trim
-    def stated[A, B](a: Option[A])(f: A => Either[SpiValues.Problem, B]): Either[Problem, Option[B]] =
+    def stated[A, B](a: Option[A])(f: A => Either[Problem, B]): Either[Problem, Option[B]] =
       SpiValues.optional(a)(f).left.map(why => Problem(s"$id: catalogue '${provider.value}': ${why.value}"))
     def left(why: String) = Kept.Warnings(s"$id: catalogue '${provider.value}': $why, left out")
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)

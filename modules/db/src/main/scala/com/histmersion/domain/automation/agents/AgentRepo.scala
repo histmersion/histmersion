@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.*
@@ -33,14 +34,10 @@ import com.histmersion.domain.automation.Approval
 object AgentRepo:
   type ActiveOnly = ActiveOnly.T
   object ActiveOnly extends Newtype[Boolean, Pure]
-  type CloseReason = CloseReason.T
-  object CloseReason extends Newtype[String, Pure]
   type OutputChars = OutputChars.T
   object OutputChars extends Newtype[Int, Pure]
   type PageCursor = PageCursor.T
   object PageCursor extends Newtype[String, Pure]
-  type CursorProblem = CursorProblem.T
-  object CursorProblem extends Newtype[String, Pure]
 
   /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
     * ([[Jsonb]]).
@@ -181,7 +178,7 @@ object AgentRepo:
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
       before: Option[PageCursor] = None,
       upTo: Option[PageCursor] = None
-  )(using DbCon): Either[CursorProblem, (Vector[RunInfo], Boolean)] =
+  )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
     page(
       RunQuery(
         status = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(RunQuery.Status(_)).toList,
@@ -230,9 +227,9 @@ object AgentRepo:
       limit: PageSize,
       before: Option[PageCursor],
       upTo: Option[PageCursor]
-  )(using DbCon): Either[CursorProblem, (Vector[RunInfo], Boolean)] =
+  )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", str(c.value))) match
-      case Some(c) => Left(CursorProblem(s"No agent run '${c.value}' to page from"))
+      case Some(c) => Left(Problem(s"No agent run '${c.value}' to page from"))
       case None    =>
         val (rows, more) = Keyset.pageOn[RunRow](
           runFrom,
@@ -359,7 +356,7 @@ object AgentRepo:
       model: Option[StepRecord.Model],
       usage: Usage,
       costUsd: BigDecimal,
-      error: Option[StepRecord.Error],
+      error: Option[Problem],
       startedAt: java.time.Instant,
       actualModel: Option[StepRecord.ActualModel] = None,
       wouldWrite: List[WouldWrite] = Nil,
@@ -380,8 +377,6 @@ object AgentRepo:
     object PromptHash extends Newtype[String, Pure]
     type Model = Model.T
     object Model extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
     object ActualModel extends Newtype[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
@@ -616,7 +611,7 @@ object AgentRepo:
       limit: PageSize,
       before: Option[PageCursor] = None,
       upTo: Option[PageCursor] = None
-  )(using DbCon): Either[CursorProblem, (List[ApprovalInfo], Boolean)] =
+  )(using DbCon): Either[Problem, (List[ApprovalInfo], Boolean)] =
     approvalPage(ApprovalQuery(state), limit, before, upTo)
 
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
@@ -656,12 +651,12 @@ object AgentRepo:
       limit: PageSize,
       before: Option[PageCursor],
       upTo: Option[PageCursor]
-  )(using DbCon): Either[CursorProblem, (List[ApprovalInfo], Boolean)] =
-    def cursor(c: PageCursor): Either[CursorProblem, Param] =
+  )(using DbCon): Either[Problem, (List[ApprovalInfo], Boolean)] =
+    def cursor(c: PageCursor): Either[Problem, Param] =
       c.value.trim.toLongOption
         .map(lng(_))
         .filter(Keyset.existsOn("approvals", _))
-        .toRight(CursorProblem(s"No approval '${c.value}' to page from"))
+        .toRight(Problem(s"No approval '${c.value}' to page from"))
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
@@ -798,7 +793,7 @@ object AgentRepo:
       .map(info)
 
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
-  def closeForRun(jobId: Job.Id, why: CloseReason)(using DbCon): RowCount =
+  def closeForRun(jobId: Job.Id, why: Problem)(using DbCon): RowCount =
     RowCount(
       sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
           WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()

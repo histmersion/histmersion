@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.util.mcp.McpOut
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

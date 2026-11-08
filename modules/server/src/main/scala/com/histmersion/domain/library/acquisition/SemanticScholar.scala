@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse
@@ -28,7 +29,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
       work: WorkRef,
       since: Option[Year],
       limit: CitationsClient.CitingLimit
-  ): Either[CitationsClient.Problem, (CitationsClient.Backend, List[FollowupRow])] =
+  ): Either[Problem, (CitationsClient.Backend, List[FollowupRow])] =
     val semantic = CitationsClient.Backend("semantic-scholar")
     val openalex = CitationsClient.Backend("openalex")
     val found: Either[String, (CitationsClient.Backend, List[FollowupRow])] = work.doi match
@@ -40,7 +41,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             scribe.warn(s"acquire: Semantic Scholar unavailable ($err) — using OpenAlex citations")
             openalexCiting(work, since, limit.value).map((openalex, _))
       case None => openalexCiting(work, since, limit.value).map((openalex, _))
-    found.left.map(CitationsClient.Problem(_))
+    found.left.map(Problem(_))
 
   private def s2(doi: String, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
     def page(offset: Offset, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =

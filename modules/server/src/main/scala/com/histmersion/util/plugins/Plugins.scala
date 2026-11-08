@@ -69,7 +69,7 @@ object Plugins:
   private def generation(
       loaded: LoadedConfig,
       all: List[Plugin],
-      errors: List[PluginHost.Problem],
+      errors: List[Problem],
       http: () => Plugin.Http,
       quota: HostServices.Quotas,
       carry: Map[Plugin.Info.Id, (PluginStatus, Registries)]
@@ -86,7 +86,7 @@ object Plugins:
       legacy.user,
       legacy.env,
       HostServices(http, loaded.env, log, quotaOf(quota), files = new DiskLocalFiles, processes = new SystemProcesses),
-      errors ++ legacy.warnings.map(w => PluginHost.Problem(w.value)),
+      errors ++ legacy.warnings.map(w => Problem(w.value)),
       carry,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)

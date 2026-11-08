@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.PageSize
@@ -299,7 +300,7 @@ object BundleService:
               r
             }
             .left
-            .map(e => MergeApplyRuns.Failure(s"merge apply failed: $e"))
+            .map(e => Problem(s"merge apply failed: $e"))
         }
       }
 

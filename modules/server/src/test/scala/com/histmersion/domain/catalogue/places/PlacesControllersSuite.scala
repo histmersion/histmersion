@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.{Api, SpatialHierarchyResult}

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.api.Plural

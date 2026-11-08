@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
@@ -10,8 +11,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
   */
 object TerrariumPng:
-  type Problem = Problem
-  val Problem: Problem.type = Problem
   type TileSize = TileSize.T
   object TileSize extends Newtype[Int, Pure]
 

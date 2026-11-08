@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.PoolSink
 
 import com.histmersion.config.AppConfig
@@ -126,7 +127,7 @@ object FakeCli:
     )
 
   /** A pool sink in memory: records readings and blocks while `block` says so. */
-  final class Sink(var block: Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] = None)
+  final class Sink(var block: Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] = None)
       extends PoolSink:
     val recorded = java.util.concurrent.ConcurrentLinkedQueue[(PoolId, Reading)]()
     @volatile var refreshed = 0 // how often a client asked for a fresh read
@@ -134,5 +135,5 @@ object FakeCli:
     def blocked(
         p: PoolId,
         model: Option[AgentsControllers.ModelName]
-    ): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] = block
+    ): Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] = block
     def refresh(now: PlanQuotaRepo.EpochMillis): Unit = refreshed += 1

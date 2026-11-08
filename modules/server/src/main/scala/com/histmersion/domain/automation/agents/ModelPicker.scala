@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -222,8 +223,6 @@ final class ModelPicker(
   object ModelState:
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type PlanBlocked = PlanBlocked.T
     object PlanBlocked extends Newtype[Boolean, Pure]
     type Unavailable = Unavailable.T

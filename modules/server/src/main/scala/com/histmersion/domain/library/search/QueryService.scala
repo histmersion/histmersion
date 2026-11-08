@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 
 import com.histmersion.util.database.Transactor
@@ -19,12 +20,10 @@ trait QueryService:
       timeoutMs: Transactor.TimeoutMs,
       maxRows: QueryRepo.MaxRows,
       maxCellChars: QueryRepo.MaxCellChars
-  ): Either[QueryService.Problem, QueryResult]
+  ): Either[Problem, QueryResult]
   def tables: List[SchemaTable]
 
 object QueryService:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def apply(queries: DataSource, schema: DataSource)(using timer: Timer): QueryService =
     Implementation(Transactor(queries), Transactor(schema))

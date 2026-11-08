@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
@@ -44,12 +45,12 @@ final class PluginCollection(
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]] =
+  ): Either[Problem, List[Either[Problem, MediaRecord]]] =
     PluginMedia
       .guard(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
       .left
-      .map(why => SearchedCollection.Problem(why.value))
-      .map(_.map(_.left.map(why => SearchedCollection.Problem(why.value)).map { it =>
+      .map(why => Problem(why.value))
+      .map(_.map(_.left.map(why => Problem(why.value)).map { it =>
         items.update(it.key, it)
         PluginMedia.record(it)
       }))
@@ -79,14 +80,14 @@ final class PluginCollection(
         )
       case _ => matches(rec, place, resolve)
 
-  override def complete(fetch: Polite, rec: MediaRecord): Either[SearchedCollection.Problem, MediaRecord] =
+  override def complete(fetch: Polite, rec: MediaRecord): Either[Problem, MediaRecord] =
     items.get(MediaItem.Key(rec.key.value)) match
       case None     => Right(rec)
       case Some(it) =>
         PluginMedia
           .guard(col.complete(it, PluginMedia.http(fetch)))
           .left
-          .map(why => SearchedCollection.Problem(why.value))
+          .map(why => Problem(why.value))
           .map(PluginMedia.record)
 
 object PluginCollection:

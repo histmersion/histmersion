@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -128,7 +129,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     @volatile var probeOut: List[String] = Nil
     @volatile var probeArgs: List[String] = Nil
     @volatile var auth: String = """{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}"""
-    @volatile var codex: Either[RefreshGate.Problem, io.circe.Json] = Left(RefreshGate.Problem("no app-server here"))
+    @volatile var codex: Either[Problem, io.circe.Json] = Left(Problem("no app-server here"))
     @volatile var hold: Option[(CountDownLatch, CountDownLatch)] = None
     def seams: PlanPools.Seams = PlanPools.Seams(
       (_, _, _) => { codexReads.incrementAndGet(); codex },
@@ -172,7 +173,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}")),
+        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}")),
         CliRuntime(cfg, EngineContributions.roster),
         reads.seams
       ),
@@ -596,7 +597,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       |"resetsAt":${(now() + 3600000L) / 1000}},"secondary":{"usedPercent":10,"windowDurationMins":10080,"resetsAt":${(now() + 86400000L) / 1000}},
       |"planType":"plus","rateLimitReachedType":null}}""".stripMargin)
       .left
-      .map(e => RefreshGate.Problem(e.getMessage))
+      .map(e => Problem(e.getMessage))
     // the polling every poll-seconds never comes around in this test: only the refresh reads
     val cfg = baseCfg.agents
       .modify(_.quota)

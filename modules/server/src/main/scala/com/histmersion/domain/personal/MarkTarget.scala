@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -92,17 +93,15 @@ enum MarkTarget derives CanEqual:
       )
 
 object MarkTarget:
-  type ZoomProblem = ZoomProblem.T
-  object ZoomProblem extends Newtype[String, Pure]
 
   /** The deepest zoom the map has; a target's zoom is between 0 and this. */
 
   val MaxZoom = 24.0
 
   /** The target, when its zoom (if any) is one the map has. */
-  def zoomChecked(t: Target): Either[ZoomProblem, Target] =
+  def zoomChecked(t: Target): Either[Problem, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
-      case Some(z) => Left(ZoomProblem(s"zoom $z: between 0 and ${MaxZoom.toInt}"))
+      case Some(z) => Left(Problem(s"zoom $z: between 0 and ${MaxZoom.toInt}"))
       case None    => Right(t)
 
   /** The kind of record an item kind of the wire names. */

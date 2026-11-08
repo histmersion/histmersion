@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 
 import com.histmersion.config.*
@@ -17,7 +18,7 @@ final private[jobs] case class JobRow(
     status: JobRow.Status,
     citekey: Option[JobRow.Citekey],
     progress: Option[JobRow.Progress],
-    error: Option[JobRow.Error],
+    error: Option[Problem],
     sha256: Option[JobRow.Sha256],
     createdAt: JobRow.CreatedAt,
     updatedAt: JobRow.UpdatedAt,
@@ -36,8 +37,6 @@ object JobRow:
   val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
   type Progress = Progress.T
   object Progress extends Newtype[String, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
   type Sha256 = Sha256.T
   object Sha256 extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T

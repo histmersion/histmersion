@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -117,20 +118,20 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   /** The fixture's legal ingest: what `answer` says for each DOI; records the DOI and the source it was asked into. */
   final private class RecheckUpstream extends AgentUpstream:
     @volatile var generation = AcquireRecheck.LastCheck.Generation("g1")
-    @volatile var answer: (Doi, Option[Citekey]) => Either[AgentUpstream.Problem, Ingest.Report] = (d, _) =>
+    @volatile var answer: (Doi, Option[Citekey]) => Either[Problem, Ingest.Report] = (d, _) =>
       Left(
-        AgentUpstream.Problem(
+        Problem(
           s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
         )
       )
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(Doi, Option[Citekey])]()
-    def meta(doi: Doi) = Left(AgentUpstream.Problem("not stubbed"))
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(AgentUpstream.Problem("not stubbed"))
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(AgentUpstream.Problem("not stubbed"))
+    def meta(doi: Doi) = Left(Problem("not stubbed"))
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(Problem("not stubbed"))
     def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
-      AgentUpstream.Problem("not stubbed")
+      Problem("not stubbed")
     )
-    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(AgentUpstream.Problem("not stubbed"))
+    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(Problem("not stubbed"))
     override def ingestLegalInto(doi: Doi, into: Option[Citekey]) = { asked.add(doi -> into); answer(doi, into) }
     override def fetcherGeneration = generation
 
@@ -228,7 +229,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       if d.value == doi("meta") then found(d, into.get)
       else
         Left(
-          AgentUpstream.Problem(
+          Problem(
             s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none; landing: refused — bot-protection 403"
           )
         )
@@ -412,9 +413,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       (CitationsClient.Backend("stub"), Nil)
     )
   private object NoWiki extends WikiClient:
-    def refs(articleUrl: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used here"))
+    def refs(articleUrl: WikiClient.ArticleUrl) = Left(Problem("not used here"))
   private object NoRw extends RetractionWatchClient:
-    def csv() = Left(RetractionWatchClient.Problem("not used here"))
+    def csv() = Left(Problem("not used here"))
 
   test(
     "through the real chain: the legal fetchers only, even with acquire.allow-unauthorised = true; a copy found goes into the metadata-only source"
@@ -530,11 +531,11 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   final private class Gate:
     val started = java.util.concurrent.CountDownLatch(1)
     val release = java.util.concurrent.CountDownLatch(1)
-    def hold(d: Doi): Either[AgentUpstream.Problem, Ingest.Report] =
+    def hold(d: Doi): Either[Problem, Ingest.Report] =
       started.countDown()
       val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
       Left(
-        AgentUpstream.Problem(
+        Problem(
           s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
         )
       )
@@ -583,7 +584,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             Instant.now().minusSeconds(3600),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            AcquireCheckRow.Reason("x")
+            Problem("x")
           )
       )
     assertEquals(
@@ -609,10 +610,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     up.answer = (d, into) =>
       if d.value == doi("a3") then found(d, Citekey("zzrecheck_a3"))
       else if d.value == doi("a4") then
-        Left(AgentUpstream.Problem("HTTP 429 Too Many Requests from api.example.invalid"))
+        Left(Problem("HTTP 429 Too Many Requests from api.example.invalid"))
       else
         Left(
-          AgentUpstream.Problem(
+          Problem(
             s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
           )
         )
@@ -765,7 +766,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     val _ = transact(ds)(AutopilotRepo.setDrain(on = false, AutopilotRepo.Row.ChangedBy("test")))
     up.answer =
-      (d, _) => Left(AgentUpstream.Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
+      (d, _) => Left(Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
       resumed.exists(_.value.contains(s"job ${job.id} (${AcquireRecheck.StoppedDraining}) resumed as job")),
@@ -834,7 +835,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             since.plusSeconds(60),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            AcquireCheckRow.Reason("x")
+            Problem("x")
           )
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
@@ -876,7 +877,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         JobState.Running,
         JobState.Failed,
         None,
-        Some(JobRow.Error(JobState.Interrupted))
+        Some(Problem(JobState.Interrupted))
       )
     )
     assert(a.acquireRecheck.tick(Instant.now()).exists(_.value.contains(s"job ${k.id} (interrupted) resumed")))

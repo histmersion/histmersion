@@ -1,6 +1,7 @@
 package com.histmersion
 package util.ocr
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -14,7 +15,7 @@ enum ConverterState derives CanEqual:
 
   /** A conversion is in flight and the probe got no answer: the single worker is busy, not down. */
   case Busy(jobId: ConverterState.Busy.JobId)
-  case Down(reason: ConverterState.Down.Reason)
+  case Down(reason: Problem)
 
   /** The `converter` line of [[Health]]. */
   def render: ConverterState.Summary = this match
@@ -38,9 +39,6 @@ object ConverterState:
     type JobId = Job.Id
     val JobId: Job.Id.type = Job.Id
 
-  object Down:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
-    if probe.value == "ok" then Ok else busyJob.fold(Down(Down.Reason(probe.value)))(Busy(_))
+    if probe.value == "ok" then Ok else busyJob.fold(Down(Problem(probe.value)))(Busy(_))

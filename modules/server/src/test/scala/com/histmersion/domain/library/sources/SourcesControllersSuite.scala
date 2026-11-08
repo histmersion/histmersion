@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -57,8 +58,8 @@ class SourcesControllersSuite extends munit.FunSuite:
           List(com.histmersion.domain.library.Source.Text("double space"))
         )
       else (text, Nil)
-    def refusal(issues: List[FormatIssue]): Option[SourceFormatting.Problem] =
-      Option.when(issues.nonEmpty)(SourceFormatting.Problem("refused (strict)"))
+    def refusal(issues: List[FormatIssue]): Option[Problem] =
+      Option.when(issues.nonEmpty)(Problem("refused (strict)"))
 
   private val removed = AtomicReference(List.empty[SourceOriginals.RemoveFiles])
   private val originals = new SourceOriginals:

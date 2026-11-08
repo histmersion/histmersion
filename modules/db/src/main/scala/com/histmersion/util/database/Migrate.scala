@@ -1,5 +1,6 @@
 package com.histmersion
 package util.database
+import com.histmersion.api.Problem
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.ResourceProvider
@@ -17,8 +18,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Migrate:
   type MigrationName = MigrationName.T
   object MigrationName extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type RetryAttempts = RetryAttempts.T
   object RetryAttempts extends Newtype[Int, Pure]
   type RoleName = RoleName.T

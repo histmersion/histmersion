@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.database.Transactor
@@ -26,8 +27,8 @@ class BackgroundJobSuite extends DbSuite:
 
   test("an outcome: a summary, and why it failed when it did"):
     assertEquals(Outcome.of(Right(Outcome.Summary("3 places"))), Outcome(Some(Outcome.Summary("3 places")), None))
-    assertEquals(Outcome.of(Left(Outcome.Error("HTTP 404"))), Outcome(None, Some(Outcome.Error("HTTP 404"))))
-    assert(Outcome.failed(Outcome.Error("x")).failed && !Outcome.done(Outcome.Summary("y")).failed)
+    assertEquals(Outcome.of(Left(Problem("HTTP 404"))), Outcome(None, Some(Problem("HTTP 404"))))
+    assert(Outcome.failed(Problem("x")).failed && !Outcome.done(Outcome.Summary("y")).failed)
 
   test("a refusal names the running job; an exception names its class"):
     assertEquals(
@@ -89,7 +90,7 @@ class BackgroundJobSuite extends DbSuite:
     val slot = BackgroundJob.Slot()
     val f = BackgroundJob
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
-        Outcome(Some(Outcome.Summary("half")), Some(Outcome.Error("disk full")))
+        Outcome(Some(Outcome.Summary("half")), Some(Problem("disk full")))
       )
       .fold(e => fail(e.message.value), identity)
     assertEquals(await(f.id).error, Some("disk full"))

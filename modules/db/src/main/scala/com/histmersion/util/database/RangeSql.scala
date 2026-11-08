@@ -1,6 +1,7 @@
 package com.histmersion
 package util.database
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Write, YearFmt}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
@@ -99,7 +100,7 @@ object RangeSql:
         case (Some(a), Some(b)) if a > b =>
           Left(
             Api.Error(
-              Problem(
+              api.Problem(
                 s"$what: the period would start (${YearFmt(Year(a.value))}) after it ends (${YearFmt(Year(b.value))})"
               ),
               Some(Api.Error.Code(Write.CodeInvalid))

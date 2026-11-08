@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -583,7 +584,7 @@ final class BasemapService(
       case None        => Right(Nil)
     layers.flatMap(ls => focus.map((ls, _))).left.map(e => BasemapService.invalid(e)).flatMap { (ls, fs) =>
       if jobs.running.isDefined then
-        Left(jobs.busy(BasemapJobs.Target("a base-map fetch"), Some(BasemapJobs.Reason(BasemapApi.Busy))))
+        Left(jobs.busy(BasemapJobs.Target("a base-map fetch"), Some(Problem(BasemapApi.Busy))))
       else
         val store = files
         def gone(f: Store.Key, w: Store.Key): List[(String, Long)] =
@@ -703,10 +704,10 @@ final class BasemapService(
           BasemapService.JobKind,
           BasemapJobs.Description(what),
           BasemapJobs.Target("a base-map fetch"),
-          Some(BasemapJobs.Reason(BasemapApi.Busy))
+          Some(Problem(BasemapApi.Busy))
         )(note =>
           run(a, n => note(BasemapJobs.Target(n.value))).left
-            .map(e => BasemapJobs.Problem(e.value))
+            .map(e => Problem(e.value))
             .map(BasemapJobs.Description(_))
         )
       }

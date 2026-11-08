@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.upstreams.http.Url
 
 import com.histmersion.config.*
@@ -28,5 +29,5 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
         )
       )
       .left
-      .map(p => ScholarlyIndex.Problem(p.value))
+      .map(p => Problem(p.value))
       .map(t => Candidates.arxivWorks(t.value).filter(_.year.forall(_.value >= since.getYear)))

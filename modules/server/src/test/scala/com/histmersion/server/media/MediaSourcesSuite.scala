@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -117,17 +118,17 @@ class MediaSourcesSuite extends DbSuite:
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
-      ConverterClient.Problem("not used")
+    ): Either[Problem, ConvertedDoc] = Left(
+      Problem("not used")
     )
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
         maxPx: Pixels
-    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    ): Either[Problem, ConverterClient.Thumb] =
       calls += filename -> maxPx
       Right(
         ConverterClient.Thumb(

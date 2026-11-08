@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -140,7 +141,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
       ),
       h
     )
@@ -370,7 +371,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     Transactor(ds).transact(
       PlanQuotaRepo.setRefusal(
         PoolId.ChatgptPlan,
-        Some(PlanQuotaRepo.Pool.Refusal("ordinary usage not allowed")),
+        Some(Problem("ordinary usage not allowed")),
         None,
         Some(PlanQuotaRepo.Pool.PlanType("prolite"))
       )
@@ -404,7 +405,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val doc = AgentDoctor(
       baseCfg.modify(_.agents).setTo(unpricedPlan.agents),
       a.picker,
-      m => a.resolve(m).left.map(p => AgentDoctor.Problem(p.value))
+      m => a.resolve(m).left.map(p => Problem(p.value))
     ).report(online = Agents.DoctorReport.Online(false))
     val check =
       doc.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == s"model ${Plan.wire}").get

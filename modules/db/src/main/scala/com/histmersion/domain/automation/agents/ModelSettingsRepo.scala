@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 
@@ -40,15 +41,13 @@ private[agents] object ModelSettingsRepo:
     */
   final case class Saved(
       target: Saved.Target,
-      limits: Either[Saved.Problem, List[LimitSpec]],
+      limits: Either[Problem, List[LimitSpec]],
       reservePct: Saved.ReservePct
   )
 
   object Saved:
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type ReservePct = ReservePct.T
     object ReservePct extends Newtype[Int, Pure]
 
@@ -63,7 +62,7 @@ private[agents] object ModelSettingsRepo:
           Jsonb
             .decode[List[LimitSpec]](Jsonb.JsonText(json))
             .left
-            .map(e => Saved.Problem(s"saved limits of $t do not decode: $e")),
+            .map(e => Problem(s"saved limits of $t do not decode: $e")),
           Saved.ReservePct(r)
         )
       }

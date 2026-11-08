@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
@@ -27,8 +28,6 @@ enum Halt derives CanEqual:
   case Wait(id: Halt.Wait.Id, what: Halt.Wait.What)
 
 object Halt:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type WaitId = WaitId.T
   object WaitId extends Newtype[Long, Pure]
   object Pause:

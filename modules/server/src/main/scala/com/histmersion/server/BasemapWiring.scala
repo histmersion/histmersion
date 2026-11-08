@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
@@ -86,7 +87,7 @@ object BasemapWiring:
         HttpPolicy.MaxRetryAfterSeconds(maxRetryAfterSeconds.value),
         now
       ) match
-        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), RetryWait.Why(why.value)))
+        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), Problem(why.value)))
         case _                             => None
 
   /** The fetch as one of the server's background jobs: behind its write guard, pinned to the caller's generation, and
@@ -100,16 +101,16 @@ object BasemapWiring:
     def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
       deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
-    def busy(what: BasemapJobs.Target, busyCode: Option[BasemapJobs.Reason]): Api.Error =
+    def busy(what: BasemapJobs.Target, busyCode: Option[Problem]): Api.Error =
       BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.value)))
 
     def start(
         kind: Job.Kind,
         about: BasemapJobs.Description,
         what: BasemapJobs.Target,
-        busyCode: Option[BasemapJobs.Reason]
+        busyCode: Option[Problem]
     )(
-        body: (BasemapJobs.Target => Unit) => Either[BasemapJobs.Problem, BasemapJobs.Description]
+        body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
     ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
@@ -123,7 +124,7 @@ object BasemapWiring:
       )((_, note) =>
         BackgroundJob.Outcome.of(
           body(t => note(JobInfo.Progress(t.value))).left
-            .map(p => BackgroundJob.Outcome.Error(p.value))
+            .map(p => Problem(p.value))
             .map(d => BackgroundJob.Outcome.Summary(d.value))
         )
       )

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -124,7 +125,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
       ),
       h
     )

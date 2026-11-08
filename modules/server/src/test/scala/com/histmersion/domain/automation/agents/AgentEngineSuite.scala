@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -531,8 +532,8 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         id: AgentUpstream.FollowupsId,
         since: Option[com.histmersion.Year],
         limit: Option[FollowupsInput.Limit]
-    ) = Left(AgentUpstream.Problem("not in this test"))
-    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(AgentUpstream.Problem("not in this test"))
+    ) = Left(Problem("not in this test"))
+    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(Problem("not in this test"))
 
   test("enrich-source P2: metadata compared upstream, refs and assess run, the acquisition item ticked off"):
     val c = ScriptedClient(Model); happyScripts(c)
@@ -853,7 +854,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
-    (_, ref) => cs.find(_.model == ref).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
+    (_, ref) => cs.find(_.model == ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
 
   private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)

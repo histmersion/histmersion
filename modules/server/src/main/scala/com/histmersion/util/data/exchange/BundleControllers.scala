@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.PageSize
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{

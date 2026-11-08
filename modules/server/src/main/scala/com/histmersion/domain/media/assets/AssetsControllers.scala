@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.Citekey

@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
 import scala.collection.immutable.ListMap
@@ -35,16 +36,16 @@ final class FetchChain(
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
   def plan: List[(FetchChain.Step.Id, Access)] = steps.map(s => s.id -> s.fetcher.access)
 
-  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
+  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(false))
 
-  override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
+  override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(true))
 
   private def workOf(doi: Option[Doi], arxiv: Option[ArxivId]): WorkKey =
     WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
 
-  override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[OaFetcher.Problem, FetchedFile] =
+  override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problem, FetchedFile] =
     fetchWorkExplained(work, legalOnly).file
 
   override def fetchWorkExplained(work: WorkKey, legalOnly: FetchChain.LegalOnly): FetchChain.Outcome =
@@ -59,20 +60,20 @@ final class FetchChain(
         val refused = tried.collect { case (id, Fetch.Refused(why)) => s"${id.value}: ${why.value}" }.toList
         FetchChain.Outcome(
           Left(
-            OaFetcher.Problem(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))
+            Problem(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))
           ),
           tried.toList.collect {
             case (id, Fetch.Miss(why)) =>
               FetchChain.Answer(
                 FetchChain.Answer.Fetcher(id.value),
                 FetchChain.Answer.Kind.Miss,
-                FetchChain.Answer.Why(why.value)
+                Problem(why.value)
               )
             case (id, Fetch.Refused(why)) =>
               FetchChain.Answer(
                 FetchChain.Answer.Fetcher(id.value),
                 FetchChain.Answer.Kind.Refused,
-                FetchChain.Answer.Why(why.value)
+                Problem(why.value)
               )
           }
         )
@@ -100,7 +101,7 @@ final class FetchChain(
       try s.fetcher.fetch(work, ctx)
       catch
         case NonFatal(e) =>
-          Fetch.Miss(Problem(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          Fetch.Miss(plugin.Problem(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -108,7 +109,7 @@ final class FetchChain(
             s"acquire: ${s.id.value}: ${f.url.map(_.value).getOrElse("its copy")} is ${f.bytes.value.length} bytes that are not a PDF — no copy"
           )
         )
-        Fetch.Miss(Problem("not a PDF"))
+        Fetch.Miss(plugin.Problem("not a PDF"))
       case Fetch.Refused(why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.value}"))
         answer
@@ -122,8 +123,6 @@ object FetchChain:
   object Description extends Newtype[String, Pure]
   type LegalOnly = LegalOnly.T
   object LegalOnly extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type AllowUnauthorised = AllowUnauthorised.T
   object AllowUnauthorised extends Newtype[Boolean, Pure]
@@ -139,7 +138,7 @@ object FetchChain:
     object Id extends Newtype[String, Pure]
 
   /** What one fetcher that ran answered, when it had no copy. */
-  final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
+  final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Problem):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
     def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.value}")
   object Answer:
@@ -148,8 +147,6 @@ object FetchChain:
 
     type Fetcher = Fetcher.T
     object Fetcher extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
     enum Kind(val label: Kind.Label) derives CanEqual:
       case Miss extends Kind(Kind.Label("no copy"))
@@ -163,7 +160,7 @@ object FetchChain:
     * each fetcher that ran, in chain order; the fetcher that found the copy.
     */
   final case class Outcome(
-      file: Either[OaFetcher.Problem, FetchedFile],
+      file: Either[Problem, FetchedFile],
       answers: List[Answer],
       foundBy: Option[Outcome.FoundBy] = None
   )

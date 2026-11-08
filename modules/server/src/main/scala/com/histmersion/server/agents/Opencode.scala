@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -15,8 +16,6 @@ import sttp.apispec.circe.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Opencode:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SchemaNote = SchemaNote.T
   object SchemaNote extends Newtype[String, Pure]
 
@@ -47,7 +46,7 @@ object Opencode:
     // accumulators of ONE parse, over the events in order
     var finalText: Option[CliOutcome.FinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[CliOutcome.Error] = None
+    var error: Option[Problem] = None
     var turns = 0
     def strip(t: String) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
     events.foreach { e =>
@@ -89,7 +88,7 @@ object Opencode:
             .orElse(err.downField("message").as[String].toOption)
             .orElse(err.focus.map(_.noSpaces))
             .orElse(Some("error"))
-            .map(CliOutcome.Error(_))
+            .map(Problem(_))
         case _ => ()
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))

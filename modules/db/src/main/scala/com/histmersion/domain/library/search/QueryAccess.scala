@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.Problem
 import com.histmersion.config.{DbConfig, QueryConfig}
 import com.histmersion.util.database.Db
 import com.zaxxer.hikari.HikariDataSource
@@ -10,8 +11,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 /** The read-only `histmersion_query` role behind `POST /api/query`: its pool and its provisioning. */
 object QueryAccess:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011, which holds nothing
     * but SELECT. Deliberately tiny: the hatch is an interactive escape valve, not a serving path.

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.util.data.exchange.BundleImport
@@ -41,8 +42,6 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
     inBundleOrder.iterator.flatMap(_.blobIn(use, sha256, writer, files)).nextOption()
 
 object CarriedKinds:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The kinds in the format's order, or what is wrong with them: an entry no kind carries, one carried twice, one the
     * format does not have.

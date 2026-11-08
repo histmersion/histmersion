@@ -1,6 +1,7 @@
 package com.histmersion
 package util.process
 
+import com.histmersion.api.Problem
 import com.histmersion.util.storage.HandedFile
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, IOException, OutputStream}
@@ -15,16 +16,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait Processes:
   /** Start the process; `Left` with why it could not be. */
-  def start(launch: ProcessLaunch): Either[Processes.Problem, RunningProcess]
+  def start(launch: ProcessLaunch): Either[Problem, RunningProcess]
 
   /** Start the process, read its output and wait for it to end. */
-  def run(launch: ProcessLaunch): Either[Processes.Problem, ProcessResult]
+  def run(launch: ProcessLaunch): Either[Problem, ProcessResult]
 
 object Processes:
   type Pid = Pid.T
   object Pid extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type WaitTimeout = WaitTimeout.T
   object WaitTimeout extends Newtype[Long, Pure]
 

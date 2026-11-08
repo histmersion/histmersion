@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.domain.CoreQuota
@@ -64,10 +65,10 @@ class GazetteerTrafficSuite extends munit.FunSuite:
         wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
   /** Every place a download of `name` makes, in the order the runner upserts them. */
-  private def places(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, List[Place.Input]] =
+  private def places(name: Registries.GazetteerSourcesKey): Either[Problem, List[Place.Input]] =
     ImportRunner.places(sources(name), http).map(_._1)
 
-  private def dryRun(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
+  private def dryRun(name: Registries.GazetteerSourcesKey): Either[Problem, Place.ImportResult] =
     ImportRunner.fetchAndImport(
       sources(name),
       http,

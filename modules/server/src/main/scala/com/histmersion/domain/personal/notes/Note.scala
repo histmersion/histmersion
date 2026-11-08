@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal.notes
 
+import com.histmersion.api.Problem
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
@@ -38,8 +39,6 @@ final case class Note(
   )
 
 object Note:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
 

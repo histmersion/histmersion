@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -53,7 +54,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       range: Option[String],
       offset: Long,
       length: Long
-  ): Either[RangeHttp.Problem, ByteCount] =
+  ): Either[Problem, ByteCount] =
     RangeHttp.check(
       RangeHttp.Url("u"),
       RangeHttp.StatusCode(code),
@@ -391,7 +392,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       _ => (),
       _ =>
         if allowed > 0 then { allowed -= 1; Right(()) }
-        else Left(RangeHttp.Problem("full"))
+        else Left(Problem("full"))
     )
     assertEquals(stopped, Left("full"))
     assertEquals(http.downloads.get, 2)

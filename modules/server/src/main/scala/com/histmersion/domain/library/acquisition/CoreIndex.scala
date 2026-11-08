@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.ApiKey
 import com.histmersion.domain.*
 import com.histmersion.plugin.UpstreamQuota
@@ -17,13 +18,13 @@ import com.histmersion.domain.library.search.Search
 final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: CoreQuota.Limits)
     extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("core")
-  override def unavailable: Option[ScholarlyIndex.Problem] =
-    budget.unavailable(limits, CoreQuota.Purpose.Search).map(r => ScholarlyIndex.Problem(r.describe.value))
+  override def unavailable: Option[Problem] =
+    budget.unavailable(limits, CoreQuota.Purpose.Search).map(r => Problem(r.describe.value))
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     key match
       case None =>
         Left(
-          ScholarlyIndex.Problem(
+          Problem(
             "no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one"
           )
         )
@@ -36,5 +37,5 @@ final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, lim
             UpstreamQuota.TakePurpose(CoreQuota.Purpose.Search.wire.value)
           )
           .left
-          .map(f => ScholarlyIndex.Problem(f.message.value))
+          .map(f => Problem(f.message.value))
           .map(Candidates.coreWorks)

@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.model.Uri

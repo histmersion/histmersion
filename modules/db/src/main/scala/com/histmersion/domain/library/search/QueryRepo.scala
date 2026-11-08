@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 
 import com.histmersion.api.library.Query.*
@@ -34,8 +35,6 @@ private[search] object QueryRepo:
   object MaxCellChars extends Newtype[Int, Pure]
   type MaxRows = MaxRows.T
   object MaxRows extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Statement = Statement.T
   object Statement extends Newtype[String, Pure]
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The files the server itself can see, as the MCP `ingest` tool names one (a path a MODEL chose): confined to
@@ -8,10 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait ToolFiles:
   /** The file at `path`: why it may not be read, or `None` when there is no file there. */
-  def file(path: ToolFiles.Path): Either[ToolFiles.Problem, Option[Upload]]
+  def file(path: ToolFiles.Path): Either[Problem, Option[Upload]]
 
 object ToolFiles:
   type Path = Path.T
   object Path extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

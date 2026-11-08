@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.catalogue.CatalogueState

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.AcquireRecheck
 
 import java.time.Instant
@@ -14,7 +15,7 @@ final case class AcquireCheckRow(
     at: Instant,
     generation: AcquireRecheck.LastCheck.Generation,
     outcome: AcquireRecheck.Outcome.Wire,
-    reason: AcquireCheckRow.Reason,
+    reason: Problem,
     checks: AcquireCheckRow.Checks
 ):
   def last: AcquireRecheck.LastCheck =
@@ -28,7 +29,5 @@ final case class AcquireCheckRow(
 object AcquireCheckRow:
   type Item = Item.T
   object Item extends Newtype[Int, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type Checks = Checks.T
   object Checks extends Newtype[Int, Pure]

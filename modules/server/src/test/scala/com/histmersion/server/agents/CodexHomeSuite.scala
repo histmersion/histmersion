@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -104,7 +105,7 @@ class CodexHomeSuite extends munit.FunSuite:
         h,
         cfg.modify(_.keepSessionsDays).setTo(CodexConfig.KeepSessionsDays(0)),
         now,
-        _ => Left(Codex.Home.Problem("sqlite3: not found"))
+        _ => Left(Problem("sqlite3: not found"))
       )
       assertEquals(bad.problems.size, 2, bad.toString)
       assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.value.contains("no Codex home")))

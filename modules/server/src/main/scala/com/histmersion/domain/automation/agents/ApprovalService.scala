@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, StepInfo}
@@ -40,7 +41,7 @@ trait ApprovalService:
       limit: ApprovalQuery.Limit,
       before: Option[ApprovalQuery.Cursor] = None,
       upTo: Option[ApprovalQuery.UpTo] = None
-  ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
+  ): Either[Problem, (List[ApprovalInfo], Boolean)]
 
   /** One newest-first page of the approvals `q` matches. */
   def approvalPage(
@@ -48,7 +49,7 @@ trait ApprovalService:
       limit: ApprovalQuery.Limit,
       before: Option[ApprovalQuery.Cursor],
       upTo: Option[ApprovalQuery.UpTo]
-  ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
+  ): Either[Problem, (List[ApprovalInfo], Boolean)]
 
   /** Per state (every filter but the state's), and the kind and decided-by facets (each without its own filter). */
   def approvalFacets(
@@ -99,7 +100,7 @@ trait ApprovalService:
   def forStep(jobId: Job.Id, seq: ApprovalService.StepSeq): Option[ApprovalInfo]
 
   /** A cancelled run's open step approvals rejected with `why`; how many. */
-  def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount
+  def closeForRun(jobId: Job.Id, why: Problem): RowCount
 
   /** Compare-and-set an open one to its decision; false when it was decided already. */
   def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean
@@ -135,7 +136,7 @@ object ApprovalService:
         limit: ApprovalQuery.Limit,
         before: Option[ApprovalQuery.Cursor],
         upTo: Option[ApprovalQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+    ): Either[Problem, (List[ApprovalInfo], Boolean)] =
       db.read(
         AgentRepo.approvalPage(
           state,
@@ -149,7 +150,7 @@ object ApprovalService:
         limit: ApprovalQuery.Limit,
         before: Option[ApprovalQuery.Cursor],
         upTo: Option[ApprovalQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+    ): Either[Problem, (List[ApprovalInfo], Boolean)] =
       db.read(
         AgentRepo.approvalPage(
           q,
@@ -215,7 +216,7 @@ object ApprovalService:
       db.read(AgentRepo.openBySubject()).map((k, v) => ApprovalQuery.Subject(k.value) -> v)
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
-    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount =
+    def closeForRun(jobId: Job.Id, why: Problem): RowCount =
       db.transact(AgentRepo.closeForRun(jobId, why))
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       db.transact(
@@ -280,7 +281,7 @@ object ApprovalService:
         limit: ApprovalQuery.Limit,
         before: Option[ApprovalQuery.Cursor],
         upTo: Option[ApprovalQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+    ): Either[Problem, (List[ApprovalInfo], Boolean)] =
       approvalPage(ApprovalQuery(state), limit, before, upTo)
 
     private def decidedBy(r: ApprovalRecord): Option[String] =
@@ -312,11 +313,11 @@ object ApprovalService:
         limit: ApprovalQuery.Limit,
         before: Option[ApprovalQuery.Cursor],
         upTo: Option[ApprovalQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
-      def cursor(c: String): Either[AgentRepo.CursorProblem, ApprovalRecord] =
+    ): Either[Problem, (List[ApprovalInfo], Boolean)] =
+      def cursor(c: String): Either[Problem, ApprovalRecord] =
         c.trim.toLongOption
           .flatMap(id => rows.find(_.id.value == id))
-          .toRight(AgentRepo.CursorProblem(s"No approval '$c' to page from"))
+          .toRight(Problem(s"No approval '$c' to page from"))
       for
         b <- before.fold(Right(None))(c => cursor(c.value).map(Some(_)))
         u <- upTo.fold(Right(None))(c => cursor(c.value).map(Some(_)))
@@ -472,7 +473,7 @@ object ApprovalService:
       RowCount(
         state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which)
       )
-    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount =
+    def closeForRun(jobId: Job.Id, why: Problem): RowCount =
       val at = now
       change(r => r.jobId.contains(jobId) && r.seq.isDefined && r.state.value == Open)(
         _.modify(_.state)

@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
 
 import com.histmersion.server.ServerPlugins

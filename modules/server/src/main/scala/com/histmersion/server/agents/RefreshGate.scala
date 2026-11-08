@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.PlanQuota.*
 import io.circe.{parser, Json}
 
@@ -20,8 +21,8 @@ final class RefreshGate:
     * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
     */
   def exclusive[A](p: PoolId, at: => Long)(
-      body: Option[RefreshGate.Instant] => Either[RefreshGate.Problem, A]
-  ): Either[RefreshGate.Problem, A] =
+      body: Option[RefreshGate.Instant] => Either[Problem, A]
+  ): Either[Problem, A] =
     val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
     lock.lockInterruptibly()
     try
@@ -36,5 +37,3 @@ final class RefreshGate:
 object RefreshGate:
   type Instant = Instant.T
   object Instant extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

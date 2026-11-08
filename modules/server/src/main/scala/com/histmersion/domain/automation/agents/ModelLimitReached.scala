@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
@@ -17,7 +18,5 @@ final class ModelLimitReached(
 ) extends RuntimeException(message.value)
 
 object ModelLimitReached:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Message = Problem
   val Message: Problem.type = Problem

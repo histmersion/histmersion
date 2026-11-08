@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -10,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class JobRunState(
     id: JobRunState.Id,
     row: RunRow,
-    error: Option[JobRunState.Error],
+    error: Option[Problem],
     progress: Option[JobRunState.Progress],
     resumeAt: Option[Instant],
     warnings: List[JobRunState.Warnings],
@@ -24,8 +25,6 @@ final case class JobRunState(
 object JobRunState:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
   type Progress = Progress.T
   object Progress extends Newtype[String, Pure]
   type Warnings = Warnings.T

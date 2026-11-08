@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}

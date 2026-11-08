@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.workflows.*
@@ -117,7 +118,7 @@ class StepFailureSuite extends munit.FunSuite:
 
   test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
     val raw = """{"notes": 5}"""
-    val problem = Prompt.Problem("the answer does not match the schema at .notes: String")
+    val problem = Problem("the answer does not match the schema at .notes: String")
     val prompt = Prompt.retry(List(problem), Some(raw))
     assert(prompt.contains(s"- $problem") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"), prompt)
 
@@ -173,7 +174,7 @@ class StepFailureSuite extends munit.FunSuite:
         Vector.empty,
         Some(CliOutcome.FinalText("boom")),
         TokenUsage.Zero,
-        Some(CliOutcome.Error("crash")),
+        Some(Problem("crash")),
         CliOutcome.Turns(1)
       ),
       LlmCall.User("u"),

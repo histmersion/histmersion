@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.managers.Zero
 import com.histmersion.server.agents.Codex
@@ -176,7 +177,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 None,
                 Usage.Zero,
                 BigDecimal(0),
-                Some(AgentRepo.StepRecord.Error(m.take(2000))),
+                Some(Problem(m.take(2000))),
                 started,
                 wouldWrite = would
               ),
@@ -256,7 +257,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     None,
                     Usage.Zero,
                     BigDecimal(0),
-                    Some(AgentRepo.StepRecord.Error(m.take(2000))),
+                    Some(Problem(m.take(2000))),
                     started
                   ),
                   Nil
@@ -656,7 +657,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         Some(AgentRepo.StepRecord.Model(client.model.wire.value)),
         use,
         cost,
-        error.map(AgentRepo.StepRecord.Error(_)),
+        error.map(Problem(_)),
         started,
         actualModel = served.model,
         firstCallTokens = served.firstCallTokens,

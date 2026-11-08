@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.{ToolFiles, Upload}
 import com.histmersion.util.storage.SafePath
@@ -12,7 +13,7 @@ import com.histmersion.util.storage.HandedFile
   * it is not, the old behaviour stands and the operator is told why.
   */
 final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
-  def file(path: ToolFiles.Path): Either[ToolFiles.Problem, Option[Upload]] =
+  def file(path: ToolFiles.Path): Either[Problem, Option[Upload]] =
     val root = Option(cfg().corpus.dir.value).map(_.trim).filter(_.nonEmpty).map(SafePath.Base(_))
     if !SafePath.configured(root) then
       scribe.warn(
@@ -22,5 +23,5 @@ final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
     SafePath
       .confine(root, SafePath.Candidate(path.value))
       .left
-      .map(p => ToolFiles.Problem(p.value))
+      .map(p => Problem(p.value))
       .map(f => Option.when(Files.isRegularFile(f))(Upload.handed(HandedFile.snapshot(f.toFile))))

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -18,17 +19,15 @@ trait ScholarlyIndex:
       query: Search.Query,
       since: LocalDate,
       limit: ScholarlyIndex.Limit
-  ): Either[ScholarlyIndex.Problem, List[WorkRef]]
+  ): Either[Problem, List[WorkRef]]
 
   /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a sweep then
     * leaves its watches unread, keeping their watermarks, and says so.
     */
-  def unavailable: Option[ScholarlyIndex.Problem] = None
+  def unavailable: Option[Problem] = None
 
 object ScholarlyIndex:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

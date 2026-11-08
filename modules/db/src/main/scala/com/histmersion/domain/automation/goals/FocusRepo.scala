@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.api.Problem
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
@@ -14,8 +15,6 @@ import com.histmersion.domain.GoalFocus
   * themselves are in [[ManagerRepo]] (they are items).
   */
 object FocusRepo:
-  type JoinWhy = JoinWhy.T
-  object JoinWhy extends Newtype[String, Pure]
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
@@ -31,9 +30,9 @@ object FocusRepo:
       pinned: GoalRow.Pinned,
       priority: GoalRow.Priority,
       since: Option[GoalRow.Since],
-      why: Option[GoalRow.Why],
+      why: Option[Problem],
       leftAt: Option[GoalRow.LeftAt],
-      leftWhy: Option[GoalRow.LeftWhy]
+      leftWhy: Option[Problem]
   ) derives DbCodec
 
   object GoalRow:
@@ -55,12 +54,8 @@ object FocusRepo:
     object Priority extends Newtype[Int, Pure]
     type Since = Since.T
     object Since extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type LeftAt = LeftAt.T
     object LeftAt extends Newtype[String, Pure]
-    type LeftWhy = LeftWhy.T
-    object LeftWhy extends Newtype[String, Pure]
 
   def goals()(using DbCon): List[GoalRow] =
     Sql
@@ -157,7 +152,7 @@ object FocusRepo:
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
     */
-  def lastStops()(using DbCon): Map[Goal.Slug, GoalRow.LeftWhy] =
+  def lastStops()(using DbCon): Map[Goal.Slug, Problem] =
     sql"""SELECT goal, outcome FROM (
             SELECT DISTINCT ON (m.goal_slug) m.goal_slug AS goal, i.status, coalesce(i.outcome, i.status) AS outcome
             FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
@@ -167,7 +162,7 @@ object FocusRepo:
           WHERE status IN ('stopped', 'failed')"""
       .query[(String, String)]
       .run()
-      .map((goal, why) => Goal.Slug.assume(goal) -> GoalRow.LeftWhy(why))
+      .map((goal, why) => Goal.Slug.assume(goal) -> Problem(why))
       .toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
@@ -213,7 +208,7 @@ object FocusRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The goal became active now, `why`. */
-  def joined(slug: Goal.Slug, why: JoinWhy, now: java.time.Instant)(using DbCon): Unit =
+  def joined(slug: Goal.Slug, why: Problem, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
       sql"""INSERT INTO goal_focus (slug, active, since, why, updated_at) VALUES ($slug, true, $t::timestamptz, $why, now())
@@ -221,7 +216,7 @@ object FocusRepo:
         .run()
 
   /** The goal left the active set now, `why`. */
-  def left(slug: Goal.Slug, why: GoalRow.LeftWhy, now: java.time.Instant)(using DbCon): Unit =
+  def left(slug: Goal.Slug, why: Problem, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
       sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
@@ -238,7 +233,7 @@ object FocusRepo:
           ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
 
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
-  def clearActive(why: GoalRow.LeftWhy, now: java.time.Instant)(using DbCon): RowCount =
+  def clearActive(why: Problem, now: java.time.Instant)(using DbCon): RowCount =
     val t = now.toString
     RowCount(sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
           WHERE active""".update.run())

@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -164,7 +165,7 @@ object BundleImport:
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
           importing(MergeRepo.Importing(false))
           rename(old, label(a)).left
-            .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"$what $old → ${label(a)}: ${e.message}"))))
+            .foreach(e => throw ImportAbort(List(Problem(s"$what $old → ${label(a)}: ${e.message}"))))
           importing(MergeRepo.Importing(true))
         }
       }

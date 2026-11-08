@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -66,7 +67,7 @@ object BasemapExtractTool:
   private def workOf(out: Path): (Store, Store.Key) = at(out.resolveSibling(out.getFileName.toString + ".work"))
 
   /** The failure of a step, as the tool's own error. */
-  private def orDie[A](r: Either[RangeHttp.Problem, A]): A = r.fold(p => sys.error(p.value), identity)
+  private def orDie[A](r: Either[Problem, A]): A = r.fold(p => sys.error(p.value), identity)
 
   /** The politeness the configuration asks for. */
   private def paceOf(cfg: BasemapConfig): BasemapFetch.Pace = BasemapFetch.Pace(

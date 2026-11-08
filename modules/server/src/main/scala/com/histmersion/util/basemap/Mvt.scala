@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure

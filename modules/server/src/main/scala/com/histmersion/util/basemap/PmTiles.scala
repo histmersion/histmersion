@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.StandardCharsets

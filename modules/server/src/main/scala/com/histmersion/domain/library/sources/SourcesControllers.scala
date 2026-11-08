@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SourcesMarkdown

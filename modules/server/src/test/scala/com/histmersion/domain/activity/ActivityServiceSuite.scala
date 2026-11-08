@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Activity

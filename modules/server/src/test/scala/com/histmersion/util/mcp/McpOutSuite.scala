@@ -1,6 +1,7 @@
 package com.histmersion
 package util.mcp
 
+import com.histmersion.api.Problem
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.Api

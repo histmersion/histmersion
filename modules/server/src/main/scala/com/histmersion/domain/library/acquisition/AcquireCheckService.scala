@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
@@ -29,7 +30,7 @@ trait AcquireCheckService:
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
-      reason: AcquireCheckRow.Reason
+      reason: Problem
   ): Unit
 
   /** How many checks since `since`, per outcome. */
@@ -50,7 +51,7 @@ object AcquireCheckService:
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
-        reason: AcquireCheckRow.Reason
+        reason: Problem
     ): Unit =
       db.transact(AcquireCheckRepo.record(item, at, generation, outcome, reason))
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
@@ -70,7 +71,7 @@ object AcquireCheckService:
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
-        reason: AcquireCheckRow.Reason
+        reason: Problem
     ): Unit =
       val _ = state.updateAndGet(
         _.modify(_.checks).using { cs =>

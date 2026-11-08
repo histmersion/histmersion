@@ -1,5 +1,6 @@
 package com.histmersion
 package util.database
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -36,8 +37,6 @@ object Db:
   object PoolMax extends Newtype[Int, Pure]
   type PoolName = PoolName.T
   object PoolName extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SettingName = SettingName.T
   object SettingName extends Newtype[String, Pure]
 

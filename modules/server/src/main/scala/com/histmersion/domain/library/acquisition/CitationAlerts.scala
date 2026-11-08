@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -17,17 +18,15 @@ trait CitationAlerts:
       doi: Doi,
       since: LocalDate,
       limit: CitationAlerts.CitingLimit
-  ): Either[CitationAlerts.Problem, List[WorkRef]]
-  def authors(doi: Doi): Either[CitationAlerts.Problem, List[AuthorName]]
+  ): Either[Problem, List[WorkRef]]
+  def authors(doi: Doi): Either[Problem, List[AuthorName]]
   def byAuthor(
       authorId: CitationAlerts.ByAuthorAuthorId,
       since: LocalDate,
       limit: CitationAlerts.ByAuthorLimit
-  ): Either[CitationAlerts.Problem, List[WorkRef]]
+  ): Either[Problem, List[WorkRef]]
 
 object CitationAlerts:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type CitingLimit = CitingLimit.T
   object CitingLimit extends Newtype[Int, Pure]
   type ByAuthorAuthorId = ByAuthorAuthorId.T

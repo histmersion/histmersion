@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -114,7 +115,7 @@ final class GoalFocusService(
       facts: List[Facts],
       work: List[FocusRepo.WorkRow],
       titles: Map[Goal.Slug, FocusRepo.GoalRow.Title],
-      left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[FocusRepo.GoalRow.LeftWhy])],
+      left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[Problem])],
       openPlans: RowCount
   )
 
@@ -197,8 +198,8 @@ final class GoalFocusService(
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: FocusRepo.GoalRow.LeftWhy =
-    FocusRepo.GoalRow.LeftWhy("the central scheduler admits the work (agents.scheduler.strategy)")
+  private def notInForce: Problem =
+    Problem("the central scheduler admits the work (agents.scheduler.strategy)")
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
@@ -213,12 +214,12 @@ final class GoalFocusService(
   /** The goals that joined and left, recorded with why. */
   private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
-      agents.focusStore.joined(p.slug, FocusRepo.JoinWhy(p.why.value), now)
+      agents.focusStore.joined(p.slug, Problem(p.why.value), now)
       event(p.slug, s"focus: active — ${p.why.value}")
       s"+${p.slug.value} (${p.stage.wire.value})"
     }
     val left = plan.left.map { (g, why) =>
-      agents.focusStore.left(g, FocusRepo.GoalRow.LeftWhy(why.value), now)
+      agents.focusStore.left(g, Problem(why.value), now)
       event(g, s"focus: no longer active — ${why.value}")
       s"-${g.value} (${why.value})"
     }

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.config.AppConfig
@@ -30,7 +31,7 @@ final class GazetteerImports(
     stores: () => GazetteerLoad.Stores,
     cfg: () => AppConfig,
     download: GazetteerLoad.Download,
-    text: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text],
+    text: HttpDownload.Url => Either[Problem, HttpDownload.Text],
     registered: () => ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
     http: () => Plugin.Http
 ):
@@ -47,15 +48,15 @@ final class GazetteerImports(
       kind: Gazetteer.Kind,
       apply: GazetteerLoad.LoadApply,
       note: JobInfo.Progress => Unit
-  ): Either[GazetteerImports.Problem, List[Gazetteer.LoadCounts]] =
+  ): Either[Problem, List[Gazetteer.LoadCounts]] =
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
     * over every file that reported a dangling parent, then `finding_places`.
     */
-  def seed(seed: Store, note: JobInfo.Progress => Unit): Either[GazetteerImports.Problem, GazetteerImports.Summary] =
+  def seed(seed: Store, note: JobInfo.Progress => Unit): Either[Problem, GazetteerImports.Summary] =
     if !seed.isDirectory(Store.Key.Root) then
-      Left(GazetteerImports.Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
+      Left(Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
     else
       def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed
@@ -69,10 +70,10 @@ final class GazetteerImports(
       def importFile(
           f: Store.Key,
           kind: Option[Place.Kind.Wire]
-      ): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+      ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
-          .toRight(GazetteerImports.Problem(s"${f.value}: not found"))
+          .toRight(Problem(s"${f.value}: not found"))
           .flatMap(blob =>
             Lpf
               .parse(
@@ -80,7 +81,7 @@ final class GazetteerImports(
                 com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value))
               )
               .left
-              .map(e => GazetteerImports.Problem(s"${f.value}: $e"))
+              .map(e => Problem(s"${f.value}: $e"))
           )
           .map(
             _.grouped(batch).foldLeft(
@@ -102,8 +103,8 @@ final class GazetteerImports(
           )
       def pass(
           fs: List[(Store.Key, Option[Place.Kind.Wire])]
-      ): Either[GazetteerImports.Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])] =
-        fs.zipWithIndex.foldLeft[Either[GazetteerImports.Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])]](
+      ): Either[Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])] =
+        fs.zipWithIndex.foldLeft[Either[Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])]](
           Right((0, Nil))
         ) { case (acc, ((f, kind), i)) =>
           acc.flatMap { (n, retry) =>
@@ -111,7 +112,7 @@ final class GazetteerImports(
             importFile(f, kind).map(r => (n + r.places.value, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
           }
         }
-      if files.isEmpty then Left(GazetteerImports.Problem(s"no JSON files under ${seed.where()}"))
+      if files.isEmpty then Left(Problem(s"no JSON files under ${seed.where()}"))
       else
         for
           first <- pass(files)
@@ -124,14 +125,14 @@ final class GazetteerImports(
   /** Natural Earth's land downloaded and every polity clipped to it again (a dry run counts the polygons). */
   def land(
       dryRun: GazetteerControllers.DryRun
-  ): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+  ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
     NaturalEarthLand.run(text, geometry, dryRun)
 
   /** The source a plugin registered under `name` (or a built-in's), `unknown` when there is none. */
   def source(
       name: BuiltinGazetteers.Entry.Name,
-      unknown: GazetteerImports.Problem
-  ): Either[GazetteerImports.Problem, GazetteerSource] =
+      unknown: Problem
+  ): Either[Problem, GazetteerSource] =
     BuiltinGazetteers.resolve(name, registered(), unknown)
 
   /** The names the sources are known by, a plugin's among them. */
@@ -144,11 +145,9 @@ final class GazetteerImports(
   def fetch(
       source: GazetteerSource,
       dryRun: GazetteerControllers.DryRun
-  ): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+  ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
     ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, pointTolerance)
 
 object GazetteerImports:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]

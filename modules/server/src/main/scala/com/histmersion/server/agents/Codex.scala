@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -25,8 +26,6 @@ import com.histmersion.api.backup.Backup
 object Codex:
   private given CanEqual[Path, Path] = CanEqual.derived
 
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SchemaJson = SchemaJson.T
   object SchemaJson extends Newtype[String, Pure]
 
@@ -98,7 +97,7 @@ object Codex:
     // accumulators of ONE parse, over the events in order
     var finalText: Option[CliOutcome.FinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[CliOutcome.Error] = None
+    var error: Option[Problem] = None
     var turns = 0
     events.foreach { e =>
       val c = e.hcursor
@@ -144,8 +143,8 @@ object Codex:
             .as[String]
             .toOption
             .orElse(Some("turn failed"))
-            .map(CliOutcome.Error(_))
-        case "error" => error = error.orElse(c.downField("message").as[String].toOption.map(CliOutcome.Error(_)))
+            .map(Problem(_))
+        case "error" => error = error.orElse(c.downField("message").as[String].toOption.map(Problem(_)))
         case _       => ()
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
@@ -174,8 +173,6 @@ object Codex:
     object Argument extends Newtype[String, Pure]
     type ExitCode = ExitCode.T
     object ExitCode extends Newtype[Int, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
     private val lastPass = ConcurrentHashMap[Path, AtomicLong]()
@@ -197,7 +194,7 @@ object Codex:
         deleted: Report.Deleted = Report.Deleted(0),
         freedBytes: ByteCount = ByteCount(0L),
         vacuumed: List[(Report.VacuumedFile, ByteCount, ByteCount)] = Nil,
-        problems: List[Report.Problem] = Nil
+        problems: List[Problem] = Nil
     ):
       def summary: Report.Summary = Report.Summary(skipped.fold {
         val v = vacuumed.map((n, b, a) => s"$n ${Backup.humanBytes(b)} → ${Backup.humanBytes(a)}")
@@ -208,17 +205,13 @@ object Codex:
       }(_.value))
 
     object Report:
-      type Problem = Problem.T
-      object Problem extends Newtype[String, Pure]
-      type SkipReason = SkipReason.T
-      object SkipReason extends Newtype[String, Pure]
       type Summary = Summary.T
       object Summary extends Newtype[String, Pure]
       type VacuumedFile = VacuumedFile.T
       object VacuumedFile extends Newtype[String, Pure]
 
-      type Skipped = SkipReason
-      val Skipped: SkipReason.type = SkipReason
+      type Skipped = Problem
+      val Skipped: Problem.type = Problem
       type Deleted = Deleted.T
       object Deleted extends Newtype[Int, Pure]
 
@@ -251,17 +244,17 @@ object Codex:
         run: List[Argument] => Either[Problem, ExitCode] = runCommand
     ): Report =
       val w = lock(home).writeLock()
-      if !Files.isDirectory(home) then Report(skipped = Some(Report.SkipReason(s"no Codex home at $home")))
-      else if !w.tryLock() then Report(skipped = Some(Report.SkipReason("a Codex run is using the home — not now")))
+      if !Files.isDirectory(home) then Report(skipped = Some(Problem(s"no Codex home at $home")))
+      else if !w.tryLock() then Report(skipped = Some(Problem("a Codex run is using the home — not now")))
       else
         try
-          val problems = List.newBuilder[Report.Problem]
+          val problems = List.newBuilder[Problem]
           val files = CodexRetention.SessionDirs.flatMap(d => filesUnder(home, home.resolve(d.value)))
           val gone =
             CodexRetention.stale(files, nowMs, CodexRetention.KeepDays(cfg.keepSessionsDays.value)).filter { f =>
               scala.util
                 .Try(Files.deleteIfExists(home.resolve(f.rel.value)))
-                .fold(e => { problems += Report.Problem(s"${f.rel}: ${e.getMessage}"); false }, identity)
+                .fold(e => { problems += Problem(s"${f.rel}: ${e.getMessage}"); false }, identity)
             }
           CodexRetention.SessionDirs.foreach(d => pruneEmpty(home.resolve(d.value)))
           val vacuumed =
@@ -274,8 +267,8 @@ object Codex:
                 run(List(Argument(cfg.sqlite.value), Argument(f.toString), Argument("VACUUM;"))) match
                   case Right(c) if c.value == 0 =>
                     Some((Report.VacuumedFile(n.value), ByteCount(before), ByteCount(Files.size(f))))
-                  case Right(c) => problems += Report.Problem(s"$n: ${cfg.sqlite} exit $c"); None
-                  case Left(e)  => problems += Report.Problem(s"$n: $e"); None
+                  case Right(c) => problems += Problem(s"$n: ${cfg.sqlite} exit $c"); None
+                  case Left(e)  => problems += Problem(s"$n: $e"); None
               }
           Report(
             None,

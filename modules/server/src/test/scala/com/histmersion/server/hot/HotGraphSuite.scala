@@ -1,6 +1,7 @@
 package com.histmersion
 package server.hot
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import ox.{releaseAfterScope, useInScope}
@@ -26,8 +27,8 @@ class HotGraphSuite extends munit.FunSuite:
     def close(): Unit = { closed = true; log.add(s"close $name") }
 
   private val quiet = new Hot.Graph.Log:
-    def info(m: Hot.Graph.Log.Message) = ()
-    def warn(m: Hot.Graph.Log.Message) = ()
+    def info(m: Problem) = ()
+    def warn(m: Problem) = ()
 
   final private class Fixture:
     val log = ConcurrentLinkedQueue[String]()
@@ -37,7 +38,7 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db"))) { ctx =>
         builds.incrementAndGet()
         ctx.config("db") match
-          case "broken" => Left(Hot.Graph.Problem("cannot connect"))
+          case "broken" => Left(Problem("cannot connect"))
           case db       => Right(useInScope(Res(s"pool-$db", log))(_.close()))
       }
       .fold(p => fail(p.value), identity)
@@ -48,7 +49,7 @@ class HotGraphSuite extends munit.FunSuite:
       .fold(p => fail(p.value), identity)
     val query = graph
       .node[Res](Hot.Graph.Def.Name("query"), deps = List(pool), keys = List(HotNode.Keys("query"))) { ctx =>
-        if ctx.config("query") == "bad" then Left(Hot.Graph.Problem("role cannot log in"))
+        if ctx.config("query") == "bad" then Left(Problem("role cannot log in"))
         else Right(useInScope(Res(s"query-${ctx.config("query")}-on-${ctx(pool).name}", log))(_.close()))
       }
       .fold(p => fail(p.value), identity)
@@ -251,7 +252,7 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db"))) { ctx =>
         val r = useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close())
         releaseAfterScope(log.add(s"released ${r.name}"))
-        if ctx.config("db") == "half" then Left(Hot.Graph.Problem("the second half failed")) else Right(r)
+        if ctx.config("db") == "half" then Left(Problem("the second half failed")) else Right(r)
       }
       .fold(p => fail(p.value), identity)
     assert(graph.reload(Map("db" -> "half"), List(HotNode.Name("db"))).isLeft)

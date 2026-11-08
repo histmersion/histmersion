@@ -1,11 +1,10 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ServerArgs:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Usage = UsageValue
   type UsageValue = UsageValue.T

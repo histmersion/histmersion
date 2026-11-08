@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -76,7 +77,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
   private val formatting = new SourceFormatting:
     def issues(summary: Option[Source.Summary], notes: Option[SourceNote.Text]): List[FormatIssue] = Nil
     def fix(text: Source.Text, field: FormatField): (Source.Text, List[Source.Text]) = (text, Nil)
-    def refusal(issues: List[FormatIssue]): Option[SourceFormatting.Problem] = None
+    def refusal(issues: List[FormatIssue]): Option[Problem] = None
 
   private val originals = new SourceOriginals:
     def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult] = Nil

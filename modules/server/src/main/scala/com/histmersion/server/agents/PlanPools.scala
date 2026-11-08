@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -155,10 +156,10 @@ final class PlanPools(
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
-  ): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] =
+  ): Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] =
     verdict(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
-        Some((PoolSink.BlockedReason(why.value), until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
+        Some((Problem(why.value), until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
 
   def refresh(now: PlanQuotaRepo.EpochMillis): Unit = { val _ = poll(PlanQuota.Now(now.value)) }
@@ -505,7 +506,7 @@ object PlanPools:
           List[ProcessLaunch.Command],
           Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
           AgentsConfig.DoctorTimeoutSeconds
-      ) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
+      ) => Either[Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
       refreshes: Seams.Refreshes = Seams.Refreshes(true)
   )
 
@@ -520,7 +521,7 @@ object PlanPools:
     val Offline: Seams = Seams(
       (_, _, _) => Left(Problem("no app-server read in this context")),
       (_, _, _, _) => Left(Problem("no probe in this context")),
-      (_, _, _) => Left(AgentDoctor.Problem("not checked in this context")),
+      (_, _, _) => Left(Problem("not checked in this context")),
       refreshes = Refreshes(false)
     )
 
@@ -752,7 +753,7 @@ object PlanPools:
     */
   def codexReadings(result: Json, now: PlanQuota.Now): (
       List[Reading],
-      Option[(PlanQuotaRepo.Pool.Refusal, Option[PlanQuotaRepo.Pool.RefusalUntil])],
+      Option[(Problem, Option[PlanQuotaRepo.Pool.RefusalUntil])],
       Option[PlanQuotaRepo.Pool.PlanType]
   ) =
     val c = result.hcursor

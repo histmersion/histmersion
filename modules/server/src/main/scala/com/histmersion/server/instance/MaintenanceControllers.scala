@@ -1,6 +1,7 @@
 package com.histmersion
 package server.instance
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
@@ -69,10 +70,10 @@ final class MaintenanceControllers(
     * maintenance lock, or a backup or a vacuum is still running. pg_dump reads one consistent snapshot, so ingests, OCR
     * and agent runs going on beside it are fine.
     */
-  def housekeepingBlock: Option[MaintenanceControllers.Reason] =
-    if maintenance.active then Some(MaintenanceControllers.Reason("a restore holds the maintenance lock"))
-    else if backupJobs.running then Some(MaintenanceControllers.Reason("a backup is still running"))
-    else if vacuumJobs.isRunning then Some(MaintenanceControllers.Reason("a vacuum is still running"))
+  def housekeepingBlock: Option[Problem] =
+    if maintenance.active then Some(Problem("a restore holds the maintenance lock"))
+    else if backupJobs.running then Some(Problem("a backup is still running"))
+    else if vacuumJobs.isRunning then Some(Problem("a vacuum is still running"))
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
@@ -167,5 +168,3 @@ object MaintenanceControllers:
   object BackupFileName extends Newtype[String, Pure]
   type Cursor = Cursor.T
   object Cursor extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]

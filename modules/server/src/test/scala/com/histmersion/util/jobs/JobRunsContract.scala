@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.Run
@@ -21,7 +22,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
   protected def row(
       runs: JobRuns,
       id: Run.Id
-  ): (RunRow.Status, Option[JobRunState.Error], Option[JobRunState.Progress], Option[RunRow.Origin])
+  ): (RunRow.Status, Option[Problem], Option[JobRunState.Progress], Option[RunRow.Origin])
 
   protected def rtest(title: String)(body: (JobRuns, Instant) => Unit): Unit =
     test(title)(fresh(title).foreach(body.tupled))
@@ -70,7 +71,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     r.progress(Kind, id, JobRow.Progress("step 2"))
     r.warn(Kind, id, JobRepo.WarningText("a warning"))
     assertEquals(row(r, id)._3, Some("step 2"))
-    assert(r.move(Kind, id, RunRow.Status("running"), RunRow.Status("failed"), Some(JobRow.Error("boom")), None, None))
+    assert(r.move(Kind, id, RunRow.Status("running"), RunRow.Status("failed"), Some(Problem("boom")), None, None))
     assertEquals(row(r, id)._1 -> row(r, id)._2, "failed" -> Some("boom"))
     assertEquals(r.count(Kind, (RunRow.Status("queued"), RunRow.Status("running"))), 0)
   }
@@ -87,7 +88,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
       Kind,
       RunRow.Status("running"),
       RunRow.Status("paused"),
-      JobRow.Error("interrupted"),
+      Problem("interrupted"),
       RunRow.Status("queued"),
       List(kept)
     )
@@ -110,7 +111,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         soon,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(JobRow.Error("allowance: x")),
+        Some(Problem("allowance: x")),
         None,
         Some(now.minusSeconds(60))
       )
@@ -121,7 +122,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         later,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(JobRow.Error("allowance: y")),
+        Some(Problem("allowance: y")),
         None,
         Some(now.plusSeconds(3600))
       )
@@ -132,7 +133,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         held,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(JobRow.Error("plan-quota: z")),
+        Some(Problem("plan-quota: z")),
         None,
         None
       )

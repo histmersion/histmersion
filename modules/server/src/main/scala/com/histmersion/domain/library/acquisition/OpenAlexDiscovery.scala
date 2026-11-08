@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
 import com.histmersion.api.library.{RefRow, WorkRef}
@@ -11,14 +12,14 @@ import com.histmersion.domain.library.Doi
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */
 final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
-  private def problem(p: Problem) = DiscoveryClient.Problem(p.value)
+  private def problem(p: Problem) = Problem(p.value)
 
   def search(
       query: Search.Query,
       since: Option[Year],
       sort: Option[DiscoveryClient.SearchSort],
       limit: DiscoveryClient.SearchLimit
-  ): Either[DiscoveryClient.Problem, List[WorkRef]] =
+  ): Either[Problem, List[WorkRef]] =
     client
       .search(
         OpenAlexCrossref.SearchQuery(query.value),
@@ -29,9 +30,9 @@ final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
       .left
       .map(problem)
       .map(_.map(_.wire))
-  def meta(doi: Doi): Either[DiscoveryClient.Problem, WorkRef] =
+  def meta(doi: Doi): Either[Problem, WorkRef] =
     client.meta(com.histmersion.plugin.Doi(doi.value)).left.map(problem).map(_.wire)
-  def references(doi: Doi): Either[DiscoveryClient.Problem, (DiscoveryClient.Backend, List[RefRow])] =
+  def references(doi: Doi): Either[Problem, (DiscoveryClient.Backend, List[RefRow])] =
     client
       .references(com.histmersion.plugin.Doi(doi.value))
       .left

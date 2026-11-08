@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
 import com.histmersion.util.plugins.HostProvided
@@ -16,8 +17,6 @@ import com.histmersion.domain.Title
   * with their `agents.providers.<name>.*` settings, read at each call.
   */
 object BuiltinAi:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The command-line runtimes the host runs itself. */
   type Reserved = Reserved.T

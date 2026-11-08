@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{RefRow, UpdateNotice, WorkRef}
@@ -15,20 +16,18 @@ trait DiscoveryClient:
       since: Option[Year],
       sort: Option[DiscoveryClient.SearchSort],
       limit: DiscoveryClient.SearchLimit
-  ): Either[DiscoveryClient.Problem, List[WorkRef]]
-  def meta(doi: Doi): Either[DiscoveryClient.Problem, WorkRef]
+  ): Either[Problem, List[WorkRef]]
+  def meta(doi: Doi): Either[Problem, WorkRef]
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to
     * titles when the publisher deposited none.
     */
-  def references(doi: Doi): Either[DiscoveryClient.Problem, (DiscoveryClient.Backend, List[RefRow])]
+  def references(doi: Doi): Either[Problem, (DiscoveryClient.Backend, List[RefRow])]
 
   /** Crossref `update-to` notices (retraction / correction / expression of concern). */
-  def updates(doi: Doi): Either[DiscoveryClient.Problem, List[UpdateNotice]]
+  def updates(doi: Doi): Either[Problem, List[UpdateNotice]]
 
 object DiscoveryClient:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SearchSort = SearchSort.T
   object SearchSort extends Newtype[String, Pure]
   type SearchLimit = SearchLimit.T

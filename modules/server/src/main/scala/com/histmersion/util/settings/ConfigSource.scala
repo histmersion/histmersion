@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import ox.{forkDiscard, useInScope}
 
@@ -18,11 +19,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   what must exist before a pool can open on a database (the bundle creates it)
   */
 final case class ConfigSource(
-    read: () => Either[ConfigSource.Problem, LoadedConfig],
+    read: () => Either[Problem, LoadedConfig],
     adjust: AppConfig => AppConfig = identity,
-    prepare: AppConfig => Either[ConfigSource.Problem, Unit] = _ => Right(())
+    prepare: AppConfig => Either[Problem, Unit] = _ => Right(())
 )
 
-object ConfigSource:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

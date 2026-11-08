@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Duration

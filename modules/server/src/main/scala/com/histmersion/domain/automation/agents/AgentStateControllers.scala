@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.automation.{AgentStateDeleted, AgentStateEntry, AgentStatePut}
 import com.histmersion.util.data.maintenance.WriteGate

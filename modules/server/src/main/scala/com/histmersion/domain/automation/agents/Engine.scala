@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -228,7 +229,7 @@ final class Engine(
       jobKind,
       rowStatus(RunState.Running),
       rowStatus(RunState.Paused),
-      JobRow.Error(PauseReason.Interrupted.wire.value),
+      Problem(PauseReason.Interrupted.wire.value),
       rowStatus(RunState.Queued),
       running.keySet.asScala.toList
     )
@@ -340,7 +341,7 @@ final class Engine(
       id: Run.Id,
       from: RunState,
       to: RunState,
-      error: Option[Engine.Problem] = None,
+      error: Option[Problem] = None,
       progress: Option[String] = None,
       resumeAt: Option[java.time.Instant] = None
   ): Option[RunState] =
@@ -353,7 +354,7 @@ final class Engine(
             id,
             rowStatus(from),
             rowStatus(target),
-            error.map(e => JobRow.Error(e.value)),
+            error.map(e => Problem(e.value)),
             progress.map(JobRow.Progress(_)),
             resumeAt
           )
@@ -439,15 +440,15 @@ final class Engine(
             case Right(summary) =>
               transition(id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel) =>
-              transition(id, RunState.Running, RunState.Cancelled, error = Some(Engine.Problem("cancelled")))
+              transition(id, RunState.Running, RunState.Cancelled, error = Some(Problem("cancelled")))
             case Left(Halt.Fail(m)) =>
-              transition(id, RunState.Running, RunState.Failed, error = Some(Engine.Problem(m.value.take(2000))))
+              transition(id, RunState.Running, RunState.Failed, error = Some(Problem(m.value.take(2000))))
             case Left(Halt.Pause(reason, why, at)) =>
               transition(
                 id,
                 RunState.Running,
                 RunState.Paused,
-                error = Some(Engine.Problem(s"${reason.wire}: ${why.value.take(1000)}")),
+                error = Some(Problem(s"${reason.wire}: ${why.value.take(1000)}")),
                 resumeAt = at
               )
             case Left(Halt.Wait(approval, why)) =>
@@ -571,7 +572,7 @@ final class Engine(
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
-  private def conflict(m: Engine.Problem) =
+  private def conflict(m: Problem) =
     Api.Error(Problem(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   def pause(id: Run.Id): Either[Api.Error, RunInfo] =
@@ -585,11 +586,11 @@ final class Engine(
             id,
             RunState.Queued,
             RunState.Paused,
-            error = Some(Engine.Problem(s"${PauseReason.Requested.wire}: paused before it started"))
+            error = Some(Problem(s"${PauseReason.Requested.wire}: paused before it started"))
           )
-            .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
+            .toRight(conflict(Problem(s"run $id moved on; look again")))
             .flatMap(_ => get(id))
-        case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a queued or running run can be paused")))
+        case _ => Left(conflict(Problem(s"run $id is ${r.status}; only a queued or running run can be paused")))
     }
 
   def resume(
@@ -599,7 +600,7 @@ final class Engine(
   ): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
-        Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a paused run can be resumed")))
+        Left(conflict(Problem(s"run $id is ${r.status}; only a paused run can be resumed")))
       else
         agents.jobRuns.budget(
           jobKind,
@@ -608,7 +609,7 @@ final class Engine(
           budgetTokens.map(t => JobRepo.TokenBudget(t.value))
         )
         transition(id, RunState.Paused, RunState.Queued)
-          .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
+          .toRight(conflict(Problem(s"run $id moved on; look again")))
           .flatMap { _ => submit(id); get(id) }
     }
 
@@ -619,16 +620,16 @@ final class Engine(
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
-          transition(id, s, RunState.Cancelled, error = Some(Engine.Problem("cancelled")))
-            .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
+          transition(id, s, RunState.Cancelled, error = Some(Problem("cancelled")))
+            .toRight(conflict(Problem(s"run $id moved on; look again")))
             .flatMap { _ =>
               val _ = agents.approvalStore.closeForRun(
                 Job.Id.assume(id.value),
-                AgentRepo.CloseReason("rejected: the run was cancelled")
+                Problem("rejected: the run was cancelled")
               )
               get(id)
             }
-        case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; it has already finished")))
+        case _ => Left(conflict(Problem(s"run $id is ${r.status}; it has already finished")))
     }
 
   private def get(id: Run.Id): Either[Api.Error, RunInfo] =
@@ -648,8 +649,6 @@ object Engine:
   object Count extends Newtype[Int, Pure]
   type OutputCapLimit = OutputCapLimit.T
   object OutputCapLimit extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Stall = Stall.T
   object Stall extends Newtype[String, Pure]
 

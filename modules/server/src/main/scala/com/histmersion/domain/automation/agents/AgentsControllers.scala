@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.PageSize
@@ -170,7 +171,7 @@ final class AgentsControllers(
     approvalStore,
     cfg,
     site.approvalEffects,
-    p => managing.applyProposal(p).left.map(ApprovalEffects.Problem(_))
+    p => managing.applyProposal(p).left.map(Problem(_))
   )
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
@@ -611,7 +612,7 @@ final class AgentsControllers(
       AgentDoctor(
         site.config,
         picker,
-        resolve(_).left.map(p => AgentDoctor.Problem(p.value)),
+        resolve(_).left.map(p => Problem(p.value)),
         registry = Some(site.aiProviders().map((k, v) => AgentDoctor.RegistryKey(k.value) -> v)),
         aiHttp = aiHttp,
         paths = site.userPaths
@@ -1238,7 +1239,7 @@ final class AgentsControllers(
             go(
               attempt + 1,
               ask + Prompt.retry(
-                problems.map(Prompt.Problem(_)),
+                problems.map(Problem(_)),
                 answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)
               ),
               use,

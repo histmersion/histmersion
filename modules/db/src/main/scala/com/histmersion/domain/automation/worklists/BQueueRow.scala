@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 
@@ -16,7 +17,7 @@ final private[histmersion] case class BQueueRow(
     text: BQueueRow.Text,
     topic: Option[BQueueRow.Topic],
     status: BQueueRow.Status,
-    reason: Option[BQueueRow.Reason],
+    reason: Option[Problem],
     createdAt: BQueueRow.CreatedAt,
     doneAt: Option[BQueueRow.DoneAt],
     updatedAt: BQueueRow.UpdatedAt
@@ -31,8 +32,6 @@ object BQueueRow:
   object Topic extends Newtype[String, Pure]
   type Status = Status.T
   object Status extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]
   type DoneAt = DoneAt.T

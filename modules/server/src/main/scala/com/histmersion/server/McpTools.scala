@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.api.exchange.EditionsPolicy
 
 import com.histmersion.api.aliases.AliasKinds

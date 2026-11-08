@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that
@@ -16,8 +17,6 @@ object TerrainResample:
   object Metres extends Newtype[Double, Pure]
   type Pixel = Pixel.T
   object Pixel extends Newtype[Int, Pure]
-  type Problem = Problem
-  val Problem: Problem.type = Problem
   type ZoomDelta = ZoomDelta.T
   object ZoomDelta extends Newtype[Int, Pure]
 

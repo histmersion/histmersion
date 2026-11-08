@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.TlsConfig
 
@@ -24,8 +25,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `security find-certificate -a -p` prints the same roots as PEM and works in both.
   */
 object OutboundTls:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
 

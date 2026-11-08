@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.Sha256
@@ -42,7 +43,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     val j = jobs
       .start(sha('b'), plan('a')) { () =>
         release.await()
-        Left(MergeApplyRuns.Failure("nothing to apply"))
+        Left(Problem("nothing to apply"))
       }
       .fold(e => fail(e.message.value), identity)
     assertEquals(j.state, MergeJobState.Running)

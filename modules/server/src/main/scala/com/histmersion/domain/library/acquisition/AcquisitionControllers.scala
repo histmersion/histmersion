@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
@@ -658,7 +659,7 @@ final class AcquisitionControllers(
     val chain = skip match
       case Some(have) =>
         FetchChain.Outcome(
-          Left(OaFetcher.Problem(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")),
+          Left(Problem(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")),
           Nil
         )
       case None => oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value))

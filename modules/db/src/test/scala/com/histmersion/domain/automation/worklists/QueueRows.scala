@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.Problem
 import com.histmersion.db.*
 
 import com.histmersion.api.Write

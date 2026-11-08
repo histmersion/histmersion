@@ -140,7 +140,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     )
 
   test("a client that cannot connect is described as the providers always described it"):
-    val http = ScriptedAiHttp(Left(ScriptedAiHttp.Problem("ConnectException: ")))
+    val http = ScriptedAiHttp(Left(Problem("ConnectException: ")))
     val r = load(Plugin.Info.Id("ai-anthropic"), keys).aiTurn(Registries.AiProvidersKey("anthropic"), request(), http)
     assertEquals(
       r.turn,

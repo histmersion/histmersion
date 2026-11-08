@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Period, Year}
 import com.histmersion.api.catalogue.RegionNode
@@ -184,7 +185,7 @@ object PlaceService:
       db.transact(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), toleranceKm))
     def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
       db.transact(
-        PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason.map(r => PlaceOverrideRepo.RemovalReason(r.value)))
+        PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason.map(r => Problem(r.value)))
       )
 
   /** The places as a database holding only the catalogue's rows answers: no finding is stored, so none is matched to a
@@ -666,7 +667,7 @@ object PlaceService:
                   .modify(_.period)
                   .using(p => merged.orElse(p))
                   .modify(_.reason)
-                  .using(r => reason.map(x => HeldOverride.Reason(x.value)).orElse(r))
+                  .using(r => reason.map(x => Problem(x.value)).orElse(r))
                   .modify(_.updatedAt)
                   .setTo(now)
               )

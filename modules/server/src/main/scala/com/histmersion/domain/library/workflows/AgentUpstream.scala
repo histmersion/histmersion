@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.AcquisitionControllers
@@ -34,7 +35,7 @@ import com.histmersion.api.Api
   */
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
-  def meta(doi: Doi): Either[AgentUpstream.Problem, WorkRef]
+  def meta(doi: Doi): Either[Problem, WorkRef]
 
   /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a dry run: read,
     * nothing written).
@@ -42,7 +43,7 @@ trait AgentUpstream:
   def refs(
       citekey: Citekey,
       apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)
-  ): Either[AgentUpstream.Problem, RefsResult]
+  ): Either[Problem, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
@@ -50,30 +51,30 @@ trait AgentUpstream:
   def assess(
       citekey: Citekey,
       apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)
-  ): Either[AgentUpstream.Problem, Assessment]
+  ): Either[Problem, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
   def followups(
       id: AgentUpstream.FollowupsId,
       since: Option[Year],
       limit: Option[FollowupsInput.Limit]
-  ): Either[AgentUpstream.Problem, FollowupsResult]
+  ): Either[Problem, FollowupsResult]
 
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
-  def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[AgentUpstream.Problem, DiscoverResult]
+  def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[Problem, DiscoverResult]
 
   /** A watcher's auto-ingest of one DOI: the LEGAL open-access chain only (never an unauthorised fetcher, whatever
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: Doi): Either[AgentUpstream.Problem, Ingest.Report] = Left(
-    AgentUpstream.Problem("the acquisition toolset is not connected")
+  def ingestLegal(doi: Doi): Either[Problem, Ingest.Report] = Left(
+    Problem("the acquisition toolset is not connected")
   )
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
     */
-  def ingestLegalInto(doi: Doi, into: Option[Citekey]): Either[AgentUpstream.Problem, Ingest.Report] = ingestLegal(doi)
+  def ingestLegalInto(doi: Doi, into: Option[Citekey]): Either[Problem, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
   def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation("")
@@ -88,8 +89,8 @@ trait AgentUpstream:
   def sweepCandidates(
       goal: Goal.Slug,
       dryRun: AgentUpstream.SweepCandidatesDryRun
-  ): Either[AgentUpstream.Problem, CandidateSweep] = Left(
-    AgentUpstream.Problem("the candidate search is not connected")
+  ): Either[Problem, CandidateSweep] = Left(
+    Problem("the candidate search is not connected")
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
@@ -97,23 +98,21 @@ trait AgentUpstream:
       goal: Goal.Slug,
       state: Candidates.State.Wire,
       limit: AgentUpstream.Limit
-  ): Either[AgentUpstream.Problem, List[Source.Candidate]] = Left(
-    AgentUpstream.Problem("the candidate search is not connected")
+  ): Either[Problem, List[Source.Candidate]] = Left(
+    Problem("the candidate search is not connected")
   )
 
   /** Record a decision on candidates by id. */
   def markCandidates(
       ids: List[Source.Candidate.Id],
       state: Candidates.State.Wire
-  ): Either[AgentUpstream.Problem, RowCount] = Left(
-    AgentUpstream.Problem("the candidate search is not connected")
+  ): Either[Problem, RowCount] = Left(
+    Problem("the candidate search is not connected")
   )
 
 object AgentUpstream:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type RefsApply = RefsApply.T
   object RefsApply extends Newtype[Boolean, Pure]

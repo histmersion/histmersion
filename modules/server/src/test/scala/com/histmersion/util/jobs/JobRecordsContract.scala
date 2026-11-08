@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.jobs.{JobInfo, JobState}
@@ -57,7 +58,7 @@ abstract class JobRecordsContract extends DbSuite:
     val j = jobs.create(Job.Kind("reocr"), None, None, None)
     val _ = jobs.transition(jobId(j), JobState.Queued, JobState.Running)
     assertEquals(
-      jobs.transition(jobId(j), JobState.Running, JobState.Failed, error = Some(JobRow.Error("offline"))),
+      jobs.transition(jobId(j), JobState.Running, JobState.Failed, error = Some(Problem("offline"))),
       Some(JobState.Failed)
     )
     assertEquals(jobs.get(jobId(j)).map(j => (j.status, j.error)), Some(("failed", Some("offline"))))

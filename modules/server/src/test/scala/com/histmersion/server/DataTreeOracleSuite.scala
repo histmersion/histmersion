@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -126,7 +127,7 @@ class DataTreeOracleSuite extends DbSuite:
             (
               l,
               ConfigSource(() =>
-                AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => ConfigSource.Problem(p.value))
+                AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => Problem(p.value))
               )
             )
           )
@@ -248,7 +249,7 @@ class DataTreeOracleSuite extends DbSuite:
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
         url.value match
           case Sea(z, x, y) => Right(Option.when(x != "0")(RangeHttp.ResponseBytes(s"PNG$z/$x/$y".getBytes)))
-          case _            => Left(RangeHttp.Problem(s"${url.value}: unexpected"))
+          case _            => Left(Problem(s"${url.value}: unexpected"))
     val ds =
       val d = testPool(cfg.db)
       Migrate.run(d); d

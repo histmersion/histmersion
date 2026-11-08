@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.sources.SourceService

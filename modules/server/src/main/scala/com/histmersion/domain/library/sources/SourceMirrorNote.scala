@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.LibraryData
 import com.histmersion.api.Api
 import com.histmersion.util.data.mirror.Mirror

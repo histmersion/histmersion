@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.util.settings.{info, ConfigSource}
 
 import com.histmersion.api.plugins.PluginsMarkdown
@@ -68,7 +69,7 @@ import com.histmersion.util.console.Console
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
   val reread = () =>
-    AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path).left.map(p => ConfigSource.Problem(p.value))
+    AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path).left.map(p => Problem(p.value))
   // the native bundle: run the bundled Postgres + converter as children and point the config at them;
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)
   val explicit = environment.nonBlank(Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)

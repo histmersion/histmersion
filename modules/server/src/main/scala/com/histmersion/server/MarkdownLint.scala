@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -70,8 +71,6 @@ object MarkdownLint:
     type Article = Article.T
     object Article extends Newtype[Boolean, Pure]
 
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T

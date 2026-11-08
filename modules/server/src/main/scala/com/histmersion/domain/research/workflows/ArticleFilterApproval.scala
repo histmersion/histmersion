@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.approvals.{ApprovalEffects, SubjectEffect}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
@@ -12,9 +13,9 @@ import com.histmersion.domain.automation.Approval
 final class ArticleFilterApproval(articles: => ArticlesControllers, store: => ArticleService) extends SubjectEffect:
   val kind: Approval.Kind = Approval.Kind.ArticleFilter
 
-  def apply(a: ApprovalInfo): Either[ApprovalEffects.Problem, String] =
+  def apply(a: ApprovalInfo): Either[Problem, String] =
     a.filter
       .toRight("the approval carries no readable filter")
       .flatMap(InferFilterPipeline.applyProposal(articles, store, _))
       .left
-      .map(ApprovalEffects.Problem(_))
+      .map(Problem(_))

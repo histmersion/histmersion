@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 
 import java.awt.image.BufferedImage

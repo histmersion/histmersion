@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Query.*
 import com.histmersion.config.AppConfig
 import com.histmersion.api.library.Query

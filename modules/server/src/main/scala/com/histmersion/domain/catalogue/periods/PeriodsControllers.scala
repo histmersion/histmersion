@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.periods
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.domain.Caller

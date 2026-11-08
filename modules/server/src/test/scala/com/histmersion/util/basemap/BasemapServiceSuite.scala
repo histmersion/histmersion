@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -155,7 +156,7 @@ class BasemapServiceSuite extends DbSuite:
           case Sea(z, x, y) =>
             BasemapServiceSuite.seaGets.incrementAndGet()
             Right(Option.when(x != "0")(RangeHttp.ResponseBytes(s"PNG$z/$x/$y".getBytes)))
-          case _ => Left(RangeHttp.Problem(s"${url.value}: unexpected"))
+          case _ => Left(Problem(s"${url.value}: unexpected"))
     (
       BasemapWiring.service(
         Deps(
@@ -598,9 +599,9 @@ class BasemapServiceSuite extends DbSuite:
         Either.cond(
           url.value == "fake://gebco/n90.0_s0.0_w0.0_e90.0.tif",
           grid,
-          RangeHttp.Problem(s"${url.value}: unexpected")
+          Problem(s"${url.value}: unexpected")
         )
-      def text(url: RangeHttp.Url) = Left(RangeHttp.Problem("unexpected"))
+      def text(url: RangeHttp.Url) = Left(Problem("unexpected"))
       def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = mine(url).flatMap(_.bytes(url, o, l))
       def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) =
         mine(url).flatMap(_.download(url, o, l, to))

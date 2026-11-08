@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite}
@@ -222,7 +223,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
             .complete(fetch, j.rec)
             .filterOrElse(
               _.rights.exists(r => allow.allows(r.licence)),
-              SearchedCollection.Problem("licence not allowed on the full record")
+              Problem("licence not allowed on the full record")
             )
           completed.left.map(_.value).flatMap(rec => download(rec).map(d => (rec, d))) match
             case Left(why)                          => failed += s"${col.provider} ${j.rec.key}: $why"

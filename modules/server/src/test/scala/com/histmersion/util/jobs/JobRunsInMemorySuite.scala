@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.automation.Run
 
 import java.time.Instant
@@ -19,6 +20,6 @@ class JobRunsInMemorySuite extends JobRunsContract("memory"):
   protected def row(
       runs: JobRuns,
       id: Run.Id
-  ): (RunRow.Status, Option[JobRunState.Error], Option[JobRunState.Progress], Option[RunRow.Origin]) =
+  ): (RunRow.Status, Option[Problem], Option[JobRunState.Progress], Option[RunRow.Origin]) =
     stores(runs).get()(id) match
       case s => (s.row.status, s.error, s.progress, Some(s.row.origin))

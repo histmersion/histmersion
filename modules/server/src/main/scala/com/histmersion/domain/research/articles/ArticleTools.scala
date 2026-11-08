@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
 

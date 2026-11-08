@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.catalogue.places.GazetteerLoad
@@ -27,32 +28,30 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
     conn
 
   /** `url`'s text; a `.zip` is opened and its first file read. */
-  def text(url: HttpDownload.Url): Either[HttpDownload.Problem, HttpDownload.Text] =
+  def text(url: HttpDownload.Url): Either[Problem, HttpDownload.Text] =
     try
       val conn = open(url, 120000)
       val code = conn.getResponseCode
-      if code != 200 then Left(HttpDownload.Problem(s"HTTP $code from $url"))
+      if code != 200 then Left(Problem(s"HTTP $code from $url"))
       else
         val bytes = HttpDownload.readAll(conn.getInputStream)
         conn.disconnect()
         if url.value.endsWith(".zip") then HttpDownload.unzip(bytes)
         else Right(HttpDownload.Text(new String(bytes, "UTF-8")))
-    catch case e: Exception => Left(HttpDownload.Problem(s"download failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem(s"download failed: ${e.getMessage}"))
 
   /** `url` into the file reserved for it. */
   val file: GazetteerLoad.Download = (url, into, timeoutSeconds) =>
     try
       val conn = open(url, timeoutSeconds.value * 1000)
       val code = conn.getResponseCode
-      if code != 200 then Left(HttpDownload.Problem(s"HTTP $code from $url"))
+      if code != 200 then Left(Problem(s"HTTP $code from $url"))
       else
         Using.resource(conn.getInputStream)(in => Using.resource(into.output())(out => in.transferTo(out)))
         Right(())
-    catch case e: Exception => Left(HttpDownload.Problem(s"download of $url failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem(s"download of $url failed: ${e.getMessage}"))
 
 object HttpDownload:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
   type Url = Url.T

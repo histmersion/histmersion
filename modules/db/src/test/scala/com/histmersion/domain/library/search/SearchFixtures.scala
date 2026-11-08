@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Tree
 
 import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
@@ -59,7 +60,7 @@ object SearchFixtures:
       timeoutMs: Transactor.TimeoutMs,
       maxRows: QueryRepo.MaxRows,
       maxCellChars: QueryRepo.MaxCellChars
-  ): Either[QueryRepo.Problem, QueryResult] =
+  ): Either[Problem, QueryResult] =
     try Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
     catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)

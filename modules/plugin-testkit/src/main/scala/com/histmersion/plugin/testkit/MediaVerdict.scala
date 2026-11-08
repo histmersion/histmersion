@@ -20,5 +20,5 @@ final case class MediaVerdict(
     key: MediaRecord.Key,
     item: Option[MediaItem],
     licence: Option[com.histmersion.domain.Licence.Id],
-    refused: Option[PluginMedia.Refusal]
+    refused: Option[Problem]
 )

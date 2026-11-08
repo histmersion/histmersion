@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -15,8 +16,5 @@ trait IngestJobs:
     *   the acquired file in the acquisition spool, or `None` when no PDF was found (the source is still created from
     *   metadata, so it can be enriched and queued)
     */
-  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome]
+  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[Problem, IngestOutcome]
 
-object IngestJobs:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

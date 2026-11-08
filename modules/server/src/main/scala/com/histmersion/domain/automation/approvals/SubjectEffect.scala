@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 
@@ -9,4 +10,4 @@ import com.histmersion.domain.automation.Approval
   */
 trait SubjectEffect:
   def kind: Approval.Kind
-  def apply(a: ApprovalInfo): Either[ApprovalEffects.Problem, String]
+  def apply(a: ApprovalInfo): Either[Problem, String]

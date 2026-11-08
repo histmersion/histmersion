@@ -12,12 +12,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final case class MediaReport(
     verdicts: List[MediaVerdict],
-    failure: Option[MediaReport.Failure],
+    failure: Option[Problem],
     log: List[LogLine],
     requests: List[PluginHarness.Request]
 ):
   def kept: List[MediaVerdict] = verdicts.filter(_.refused.isEmpty)
 
-object MediaReport:
-  type Failure = Failure.T
-  object Failure extends Newtype[String, Pure]

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
@@ -61,7 +62,7 @@ class GazetteerStoreSuite extends DbSuite:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
-  private def importOnce(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
+  private def importOnce(name: Registries.GazetteerSourcesKey): Either[Problem, Place.ImportResult] =
     val db = Transactor(ds)
     ImportRunner.fetchAndImport(
       sources(name),

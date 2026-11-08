@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.Problem
 import com.histmersion.util.storage.Reservation
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -9,14 +10,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait RangeHttp:
   /** A small text document (the provider's list of builds). */
-  def text(url: RangeHttp.Url): Either[RangeHttp.Problem, RangeHttp.ResponseText]
+  def text(url: RangeHttp.Url): Either[Problem, RangeHttp.ResponseText]
 
   /** Bytes `[offset, offset + length)` of `url`, in memory (headers and directories). */
   def bytes(
       url: RangeHttp.Url,
       offset: ByteOffset,
       length: ByteCount
-  ): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)]
+  ): Either[Problem, (RangeHttp.ResponseBytes, RemoteFile)]
 
   /** The same, streamed into `to` (tile data, megabytes at a time); the caller commits it or discards it. */
   def download(
@@ -24,18 +25,16 @@ trait RangeHttp:
       offset: ByteOffset,
       length: ByteCount,
       to: Reservation
-  ): Either[RangeHttp.Problem, RemoteFile]
+  ): Either[Problem, RemoteFile]
 
   /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
-  def file(url: RangeHttp.Url): Either[RangeHttp.Problem, Option[RangeHttp.ResponseBytes]] = Left(
-    RangeHttp.Problem(s"${url.value}: whole files are not read by this client")
+  def file(url: RangeHttp.Url): Either[Problem, Option[RangeHttp.ResponseBytes]] = Left(
+    Problem(s"${url.value}: whole files are not read by this client")
   )
 
 object RangeHttp:
   type ContentRangeHeader = ContentRangeHeader.T
   object ContentRangeHeader extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ResponseBytes = ResponseBytes.T
   object ResponseBytes extends Newtype[Array[Byte], Pure]
   type ResponseText = ResponseText.T

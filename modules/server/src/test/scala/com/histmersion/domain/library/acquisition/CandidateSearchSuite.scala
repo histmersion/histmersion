@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -53,7 +54,7 @@ class CandidateSearchSuite extends DbSuite:
   private val Goal = com.histmersion.domain.automation.Goal.Slug("zzcand-goal")
 
   /** An index answering `hits` for every query, recording the `since` it was asked. */
-  final private class FakeIndex(val name: ScholarlyIndex.Name, hits: => Either[ScholarlyIndex.Problem, List[WorkRef]])
+  final private class FakeIndex(val name: ScholarlyIndex.Name, hits: => Either[Problem, List[WorkRef]])
       extends ScholarlyIndex:
     val asked = ConcurrentLinkedQueue[(Search.Query, LocalDate)]()
     def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = { asked.add((query, since)); hits }
@@ -190,7 +191,7 @@ class CandidateSearchSuite extends DbSuite:
     var crFails = false
     val cr = FakeIndex(
       ScholarlyIndex.Name("crossref"),
-      if crFails then Left(ScholarlyIndex.Problem("HTTP 503")) else Right(Nil)
+      if crFails then Left(Problem("HTTP 503")) else Right(Nil)
     )
     val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1))
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
@@ -214,7 +215,7 @@ class CandidateSearchSuite extends DbSuite:
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
     assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(CandidateSweep.Unseen(0)))))
-    assert(!WatchManagerKind.nothingNew(Left(AgentUpstream.Problem("not connected"))))
+    assert(!WatchManagerKind.nothingNew(Left(Problem("not connected"))))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
     fresh()
@@ -338,9 +339,9 @@ class CandidateSearchSuite extends DbSuite:
       val name = ScholarlyIndex.Name("core")
       val asked = ConcurrentLinkedQueue[String]()
       override def unavailable =
-        Option.when(!asked.isEmpty)(ScholarlyIndex.Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
+        Option.when(!asked.isEmpty)(Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = {
-        asked.add(query.value); Left(ScholarlyIndex.Problem("CORE not asked: CORE answered HTTP 429"))
+        asked.add(query.value); Left(Problem("CORE not asked: CORE answered HTTP 429"))
       }
     val core = Throttled()
     val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24))
@@ -361,7 +362,7 @@ class CandidateSearchSuite extends DbSuite:
     // a budget spent before the sweep: CORE is not asked at all
     val spent = new ScholarlyIndex:
       val name = ScholarlyIndex.Name("core")
-      override def unavailable = Some(ScholarlyIndex.Problem("CORE's daily budget for searches is spent"))
+      override def unavailable = Some(Problem("CORE's daily budget for searches is spent"))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24))
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(true))

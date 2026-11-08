@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure

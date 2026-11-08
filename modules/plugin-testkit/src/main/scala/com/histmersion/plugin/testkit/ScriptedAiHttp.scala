@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.Header
 
 import com.histmersion.domain.CoreQuota
@@ -11,7 +12,7 @@ import com.histmersion.domain.library.Doi
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
   * `Left("no scripted answer")`) and keeps every request, to assert on what the provider sent.
   */
-final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Response]*) extends AiHttp:
+final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends AiHttp:
   // the answers not yet given and the requests seen; guarded by `this` (a provider may call from several threads)
   private val left = scala.collection.mutable.Queue(answers*)
   private val seen = List.newBuilder[AiHttpRequest]
@@ -47,14 +48,12 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
       )
     ).left.map(p => plugin.Problem(p.value))
 
-  private def next(r: AiHttpRequest): Either[ScriptedAiHttp.Problem, AiHttp.Response] = synchronized {
+  private def next(r: AiHttpRequest): Either[Problem, AiHttp.Response] = synchronized {
     seen += r
-    if left.isEmpty then Left(ScriptedAiHttp.Problem("no scripted answer")) else left.dequeue()
+    if left.isEmpty then Left(Problem("no scripted answer")) else left.dequeue()
   }
 
 object ScriptedAiHttp:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   private def masked(
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -70,4 +69,4 @@ extension (work: WorkKey.type)
   /** The work a DOI names, with its title, authors and year from OpenAlex (else Crossref), as the server looks it up
     * before asking the acquisition chain ([[PluginHarness.workFromDoi]]).
     */
-  def fromDoi(doi: Doi, harness: PluginHarness): Either[PluginHarness.Problem, WorkKey] = harness.workFromDoi(doi)
+  def fromDoi(doi: Doi, harness: PluginHarness): Either[Problem, WorkKey] = harness.workFromDoi(doi)

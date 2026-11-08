@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.pluginhost.Registries
@@ -28,7 +29,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     assertEquals(BuiltinGazetteers.thirdParty(registered), Nil)
     assertEquals(
       BuiltinGazetteers
-        .resolve(BuiltinGazetteers.Entry.Name("awmc"), registered, GazetteerImports.Problem("unknown"))
+        .resolve(BuiltinGazetteers.Entry.Name("awmc"), registered, Problem("unknown"))
         .map(_.title),
       Right(
         "AWMC classical-world regional names and features"
@@ -42,7 +43,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
       .gazetteerSources
     assertEquals(off.keys.toSet, Set("cliopatria", "chronontology"))
     assertEquals(
-      BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("awmc"), off, GazetteerImports.Problem("unknown")),
+      BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("awmc"), off, Problem("unknown")),
       Left(
         "AWMC classical-world regional names and features (awmc) is switched off " +
           "(histmersion.plugins.gazetteer-awmc.enabled = false)"
@@ -50,7 +51,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     )
     assertEquals(
       BuiltinGazetteers
-        .resolve(BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")),
+        .resolve(BuiltinGazetteers.Entry.Name("nowhere"), off, Problem("unknown 'nowhere'")),
       Left("unknown 'nowhere'")
     )
     assertEquals(BuiltinGazetteers.available(off), List("cliopatria", "awmc", "chronontology"))
@@ -63,6 +64,6 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology", "elsewhere"))
     assertEquals(
       BuiltinGazetteers
-        .resolve(BuiltinGazetteers.Entry.Name("elsewhere"), registered, GazetteerImports.Problem("unknown")),
+        .resolve(BuiltinGazetteers.Entry.Name("elsewhere"), registered, Problem("unknown")),
       Right(Elsewhere)
     )

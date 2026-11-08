@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -15,7 +16,6 @@ import scala.annotation.tailrec
 import scala.util.Using
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.domain.catalogue.places.GazetteerImports.Problem
 import com.histmersion.server.{GazetteerPaths, HttpDownload}
 import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -54,7 +54,7 @@ object GazetteerLoad:
       legacy: Option[Store],
       lpf: Store,
       manifestAt: Stores.ManifestAt,
-      manifestText: () => Either[GazetteerPaths.Problem, GazetteerPaths.ManifestText]
+      manifestText: () => Either[Problem, GazetteerPaths.ManifestText]
   )
 
   object Stores:
@@ -113,7 +113,7 @@ object GazetteerLoad:
   /** The download seam: url → the file reserved for it (committed by the caller). A generic User-Agent, never a
     * personal one; the composition root gives the client.
     */
-  type Download = (HttpDownload.Url, Reservation, Settings.DownloadTimeoutSeconds) => Either[HttpDownload.Problem, Unit]
+  type Download = (HttpDownload.Url, Reservation, Settings.DownloadTimeoutSeconds) => Either[Problem, Unit]
 
   /** Why a pinned extract cannot be read, and what to do: a pin with no checksum is not built yet; a missing file whose
     * pin has no download url (the extracts are not hosted) must be PUT at the exact path the import reads — named here

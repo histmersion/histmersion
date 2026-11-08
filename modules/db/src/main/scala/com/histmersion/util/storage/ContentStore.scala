@@ -1,6 +1,7 @@
 package com.histmersion
 package util.storage
 
+import com.histmersion.api.Problem
 import java.io.InputStream
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -14,15 +15,13 @@ trait ContentStore:
   /** Keep `in` as `<sha256>.<ext>` unless a file with the digest is there already; `Left` with why when it could not be
     * — including content that does not hash to `sha256`.
     */
-  def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[ContentStore.Problem, Unit]
+  def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[Problem, Unit]
 
 object ContentStore:
   type Digest = Digest.T
   object Digest extends Newtype[Array[Byte], Pure]
   type Ext = Ext.T
   object Ext extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** A server that stores no originals. */
 

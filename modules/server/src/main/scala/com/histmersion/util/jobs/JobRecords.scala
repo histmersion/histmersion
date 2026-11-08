@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.jobs.{JobInfo, JobState}
@@ -37,7 +38,7 @@ trait JobRecords:
       from: JobState,
       to: JobState,
       progress: Option[JobRow.Progress] = None,
-      error: Option[JobRow.Error] = None
+      error: Option[Problem] = None
   ): Option[JobState]
 
   /** Free-text progress on a `running` job. */
@@ -62,7 +63,7 @@ object JobRecords:
         from: JobState,
         to: JobState,
         progress: Option[JobRow.Progress],
-        error: Option[JobRow.Error]
+        error: Option[Problem]
     ): Option[JobState] = Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error))
     def progress(id: Job.Id, text: JobRow.Progress): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
 
@@ -95,7 +96,7 @@ object JobRecords:
         from: JobState,
         to: JobState,
         progress: Option[JobRow.Progress],
-        error: Option[JobRow.Error]
+        error: Option[Problem]
     ): Option[JobState] =
       JobState.next(from, to).flatMap { target =>
         val now = clock.instant().toString

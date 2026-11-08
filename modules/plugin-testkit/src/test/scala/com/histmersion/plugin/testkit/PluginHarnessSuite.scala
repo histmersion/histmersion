@@ -168,7 +168,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     assert(h.fetch(WorkKey(doi = Some(Doi("10.1/none")))).outcome.toString.contains("HTTP 404"))
     assertEquals(
       h.fetch(WorkKey(title = Some(WorkKey.Title("No DOI")))).answers,
-      List(FetcherAnswer(FetchChain.Answer.Fetcher("kit-fetcher"), false, FetchChain.Answer.Why("no DOI")))
+      List(FetcherAnswer(FetchChain.Answer.Fetcher("kit-fetcher"), false, Problem("no DOI")))
     )
   }
 
@@ -304,7 +304,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     val none = loaded(KitAi)
     assertEquals(
       none.aiTurn(Registries.AiProvidersKey("kit-ai"), request),
-      AiReport(Left(PluginAi.Problem("no api-key configured")), None, Nil)
+      AiReport(Left(Problem("no api-key configured")), None, Nil)
     )
     val keyed = loaded(KitAi, "api-key = \"value:k-0000\"")
     assert(keyed.warnings.exists(_.value.contains("value:***")), keyed.warnings.toString)

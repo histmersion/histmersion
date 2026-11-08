@@ -1,6 +1,7 @@
 package com.histmersion
 package util.ocr
 
+import com.histmersion.api.Problem
 import com.histmersion.upstreams.jats.Jats
 
 import com.histmersion.api.ocr.ConvertedDoc
@@ -15,14 +16,14 @@ final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
       file: Blob,
       filename: ConverterClient.Filename,
       quality: ConverterClient.HighQuality
-  ): Either[ConverterClient.Problem, ConvertedDoc] =
+  ): Either[Problem, ConvertedDoc] =
     val jats =
       if !filename.value.toLowerCase.endsWith(".xml") then None
       else scala.util.Try(Jats.Xml(file.text().value)).toOption.filter(Jats.isJats)
     jats match
       case Some(xml) =>
         val md = Jats.toMarkdown(xml).value
-        if md.trim.isEmpty then Left(ConverterClient.Problem(s"$filename is a JATS article with no text"))
+        if md.trim.isEmpty then Left(Problem(s"$filename is a JATS article with no text"))
         else
           Right(
             ConvertedDoc(
@@ -34,11 +35,11 @@ final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
           )
       case None => sidecar.convert(file, filename, quality)
 
-  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = sidecar.health
+  def health: Either[Problem, ConverterClient.HealthSummary] = sidecar.health
 
   override def thumbnail(
       bytes: ConverterClient.DocumentBytes,
       filename: ConverterClient.Filename,
       maxPx: Pixels
-  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+  ): Either[Problem, ConverterClient.Thumb] =
     sidecar.thumbnail(bytes, filename, maxPx)

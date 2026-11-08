@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Problem
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.MediaConfig
 

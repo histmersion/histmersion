@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
+import com.histmersion.api.Problem
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -10,9 +11,9 @@ final case class FocusRecord(
     pinned: FocusRecord.Pinned,
     priority: FocusRecord.Priority,
     since: Option[Instant],
-    why: Option[FocusRecord.Why],
+    why: Option[Problem],
     leftAt: Option[Instant],
-    leftWhy: Option[FocusRecord.LeftWhy]
+    leftWhy: Option[Problem]
 )
 
 object FocusRecord:
@@ -22,9 +23,5 @@ object FocusRecord:
   object Pinned extends Newtype[Boolean, Pure]
   type Priority = Priority.T
   object Priority extends Newtype[Int, Pure]
-  type Why = Why.T
-  object Why extends Newtype[String, Pure]
-  type LeftWhy = LeftWhy.T
-  object LeftWhy extends Newtype[String, Pure]
 
   val none: FocusRecord = FocusRecord(Active(false), Pinned(false), Priority(0), None, None, None, None)

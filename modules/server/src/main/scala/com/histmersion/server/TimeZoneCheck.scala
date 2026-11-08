@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.zone.ZoneRulesProvider
 import scala.util.Try
@@ -19,9 +20,6 @@ object TimeZoneCheck:
   type Report = Report.T
   object Report extends Newtype[String, Pure]
 
-  /** Why a zone could not be resolved. */
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** How many region ids the JDK knows. */
   type ZoneCount = ZoneCount.T

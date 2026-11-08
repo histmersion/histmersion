@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.scheduler
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.*

@@ -17,75 +17,75 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
     HostCollection.Description(guardedValue(collection.description.value, ""))
   def capabilities: Set[CollectionCapability] = guardedValue(collection.capabilities, Set(CollectionCapability.Read))
 
-  def reach: Either[HostCollection.Problem, Unit] = guarded(collection.reach)(_.value)
-  def search(query: CollectionQuery): Either[HostCollection.Problem, List[CollectionItem]] =
+  def reach: Either[Problem, Unit] = guarded(collection.reach)(_.value)
+  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] =
     guarded(collection.search(query))(_.value)
-  def item(id: CollectionId): Either[HostCollection.Problem, Option[CollectionItem]] =
+  def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
     guarded(collection.item(id))(_.value)
-  def admits(item: CollectionItem): Either[HostCollection.Problem, Unit] = guarded(collection.admits(item))(_.value)
+  def admits(item: CollectionItem): Either[Problem, Unit] = guarded(collection.admits(item))(_.value)
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[HostCollection.Problem, CollectionFile] =
+  ): Either[Problem, CollectionFile] =
     guarded(collection.file(item, format))(_.value)
-  def original(item: CollectionItem, file: CollectionFile): Either[HostCollection.Problem, FetchedFile] =
+  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
     guarded(collection.original(item, file))(_.value)
-  def cover(item: CollectionItem): Either[HostCollection.Problem, Option[FetchedFile]] =
+  def cover(item: CollectionItem): Either[Problem, Option[FetchedFile]] =
     guarded(collection.cover(item))(_.value)
-  def audit(records: List[CollectionRecord]): Either[HostCollection.Problem, List[CollectionFinding]] =
+  def audit(records: List[CollectionRecord]): Either[Problem, List[CollectionFinding]] =
     guarded(collection.audit(records))(_.value)
 
-  def add(metadata: CollectionMetadata, file: FetchedFile): Either[HostCollection.Problem, CollectionId] =
+  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problem, CollectionId] =
     writing(CollectionCapability.Add)(collection.add(metadata, file))(_.value)
   def replace(
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
-  ): Either[HostCollection.Problem, HostCollection.Id] =
+  ): Either[Problem, HostCollection.Id] =
     writing(CollectionCapability.Add)(collection.replace(id, key, file))(_.value).map(r => HostCollection.Id(r.value))
-  def update(id: CollectionId, metadata: CollectionMetadata): Either[HostCollection.Problem, List[CollectionChange]] =
+  def update(id: CollectionId, metadata: CollectionMetadata): Either[Problem, List[CollectionChange]] =
     writing(CollectionCapability.Update)(collection.update(id, metadata))(_.value)
   def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
-  ): Either[HostCollection.Problem, List[CollectionUpdateEntry]] =
+  ): Either[Problem, List[CollectionUpdateEntry]] =
     if apply.value then writing(CollectionCapability.Update)(collection.updateAll(links, apply))(_.value)
     else guarded(collection.updateAll(links, apply))(_.value)
   def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
-  ): Either[HostCollection.Problem, Unit] =
+  ): Either[Problem, Unit] =
     writing(CollectionCapability.Update)(collection.set(id, fields))(_.value)
 
   /** Whether the collection declares `capability`. */
   def can(capability: CollectionCapability): Boolean = capabilities.contains(capability)
 
   /** The refusal of a write the collection does not declare. */
-  def readOnly: HostCollection.Problem =
-    HostCollection.Problem(
+  def readOnly: Problem =
+    Problem(
       s"${title.value} is read-only here: ${guardedValue(collection.readOnlyReason.value, "it is read-only")}"
     )
 
   private def writing[E, A](capability: CollectionCapability)(call: => Either[E, A])(
       text: E => String
-  ): Either[HostCollection.Problem, A] =
+  ): Either[Problem, A] =
     if can(capability) then guarded(call)(text) else Left(readOnly)
 
-  private def guarded[E, A](call: => Either[E, A])(text: E => String): Either[HostCollection.Problem, A] =
+  private def guarded[E, A](call: => Either[E, A])(text: E => String): Either[Problem, A] =
     try
       call match
-        case null => Left(HostCollection.Problem(s"source collection '${name.value}' answered nothing"))
-        case r    => r.left.map(e => HostCollection.Problem(text(e)))
+        case null => Left(Problem(s"source collection '${name.value}' answered nothing"))
+        case r    => r.left.map(e => Problem(text(e)))
     catch
       case e: LinkageError =>
         Left(
-          HostCollection.Problem(
+          Problem(
             s"source collection '${name.value}' failed: ${e.getClass.getSimpleName}: ${e.getMessage}"
           )
         )
       case NonFatal(e) =>
         Left(
-          HostCollection.Problem(
+          Problem(
             s"source collection '${name.value}' failed: ${e.getClass.getSimpleName}: ${e.getMessage}"
           )
         )
@@ -101,7 +101,5 @@ object HostCollection:
   object Description extends Newtype[String, Pure]
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]

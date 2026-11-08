@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.links
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 
 import com.augustnagro.magnum.*

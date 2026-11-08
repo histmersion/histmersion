@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.Title
@@ -18,7 +19,7 @@ trait Referable:
   def kinds: Set[ItemKind]
 
   /** The record `key` names now — an alias of a renamed key followed — or why there is none. */
-  def resolve(kind: ItemKind, key: ItemKey): Either[Referable.Problem, ItemRef]
+  def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef]
 
   /** How each record shows wherever it is referenced; a reference to a record this domain never held is left out. One
     * call per kind on a page, batched.
@@ -26,8 +27,6 @@ trait Referable:
   def describe(refs: Set[ItemRef]): Map[ItemRef, Described]
 
 object Referable:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The records of one kind held in memory (tests), resolved and described by the rules the tables keep: a uid that
     * survives a rename, an alias for the old key, a merge's uid redirect, a deletion's tombstone.

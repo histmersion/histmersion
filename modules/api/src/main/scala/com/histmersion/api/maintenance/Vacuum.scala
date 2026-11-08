@@ -1,6 +1,8 @@
 package com.histmersion
 package api.maintenance
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.Write
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given

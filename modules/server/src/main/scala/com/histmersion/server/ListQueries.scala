@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.Problem
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}

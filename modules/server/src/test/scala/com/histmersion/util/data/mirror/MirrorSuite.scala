@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.mirror
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.research.ResearchData
