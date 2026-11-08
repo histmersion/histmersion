@@ -1,7 +1,10 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.WireEnumValues
 import com.histmersion.{Ascii, WireEnumValues}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Issue:
 
@@ -55,35 +58,35 @@ object Issue:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def wireOf(k: Kind): com.histmersion.util.data.exchange.Issue.Kind.Wire = k match
-      case SameWork                => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("same-work")
-      case CitekeyCollision        => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("citekey-collision")
-      case DoiDiffers              => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("doi-differs")
-      case YearDiffers             => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("year-differs")
-      case StatusDiffers           => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("status-differs")
-      case TitleDiffers            => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("title-differs")
-      case AuthorsDiffers          => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("authors-differs")
-      case SummaryDiffers          => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("summary-differs")
-      case NotesDiffers            => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("notes-differs")
-      case PeriodDiffers           => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("period-differs")
-      case BodyDiffers             => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("body-differs")
-      case ChangedBothSides        => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("changed-both-sides")
-      case DeletedThereChangedHere => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("deleted-there-changed-here")
-      case ArticleDiverged         => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("article-diverged")
-      case LabelTaken              => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("label-taken")
-      case AliasConflict           => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("alias-conflict")
-      case FindingNearDuplicate    => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("finding-near-duplicate")
-      case AttestationUnanchored   => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("attestation-unanchored")
-      case PlaceDiffers            => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("place-differs")
-      case NamedPeriodDiffers      => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("named-period-differs")
-      case GoalPlanDiffers         => _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire("goal-plan-differs")
+    def wireOf(k: Kind): Wire = k match
+      case SameWork                => Wire("same-work")
+      case CitekeyCollision        => Wire("citekey-collision")
+      case DoiDiffers              => Wire("doi-differs")
+      case YearDiffers             => Wire("year-differs")
+      case StatusDiffers           => Wire("status-differs")
+      case TitleDiffers            => Wire("title-differs")
+      case AuthorsDiffers          => Wire("authors-differs")
+      case SummaryDiffers          => Wire("summary-differs")
+      case NotesDiffers            => Wire("notes-differs")
+      case PeriodDiffers           => Wire("period-differs")
+      case BodyDiffers             => Wire("body-differs")
+      case ChangedBothSides        => Wire("changed-both-sides")
+      case DeletedThereChangedHere => Wire("deleted-there-changed-here")
+      case ArticleDiverged         => Wire("article-diverged")
+      case LabelTaken              => Wire("label-taken")
+      case AliasConflict           => Wire("alias-conflict")
+      case FindingNearDuplicate    => Wire("finding-near-duplicate")
+      case AttestationUnanchored   => Wire("attestation-unanchored")
+      case PlaceDiffers            => Wire("place-differs")
+      case NamedPeriodDiffers      => Wire("named-period-differs")
+      case GoalPlanDiffers         => Wire("goal-plan-differs")
 
     given WireEnumValues[Kind]:
-      def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange.Issue.Kind.Wire((s).value.trim))
+      def all: Array[Kind] = values
+      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
 
   /** How much an issue holds the merge up. */
   enum Severity:
@@ -98,12 +101,12 @@ object Issue:
 
   object Severity:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     given WireEnumValues[Severity]:
-      def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))))
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def all: Array[Severity] = values
+      def wire(e: Severity): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def fromWire(s: WireEnumValues.Wire): Option[Severity] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
   enum DecidedBy:
@@ -123,9 +126,9 @@ object Issue:
 
   object DecidedBy:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     given WireEnumValues[DecidedBy]:
-      def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))))
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def all: Array[DecidedBy] = values
+      def wire(e: DecidedBy): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def fromWire(s: WireEnumValues.Wire): Option[DecidedBy] = values.find(_.toString.equalsIgnoreCase((s).value.trim))

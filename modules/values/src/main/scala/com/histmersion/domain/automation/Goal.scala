@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.*
@@ -21,33 +22,33 @@ object Goal:
   /** The stages of a research goal, as the store and the wire spell them. */
   object Status:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     val Planned = "planned"
     val Seeding = "seeding"
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: List[com.histmersion.domain.automation.Goal.Status.Wire] = List(_root_.com.histmersion.domain.automation.Goal.Status.Wire(Planned), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Seeding), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Compiled), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Reviewed), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Done))
+    val all: List[Wire] = List(Wire(Planned), Wire(Seeding), Wire(Compiled), Wire(Reviewed), Wire(Done))
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: LinkKind.Wire):
-    case Source extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("source"))
-    case Article extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("article"))
-    case Query extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("query"))
-    case QueueItem extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("queue-item"))
+    case Source extends LinkKind(LinkKind.Wire("source"))
+    case Article extends LinkKind(LinkKind.Wire("article"))
+    case Query extends LinkKind(LinkKind.Wire("query"))
+    case QueueItem extends LinkKind(LinkKind.Wire("queue-item"))
 
   object LinkKind:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.Wire): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[LinkKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
-      def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value))
+      def all: Array[LinkKind] = values
+      def wire(e: LinkKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      def fromWire(s: WireEnumValues.Wire): Option[LinkKind] = parse(Wire((s).value))

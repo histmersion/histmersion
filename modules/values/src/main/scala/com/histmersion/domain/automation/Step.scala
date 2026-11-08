@@ -1,15 +1,19 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Step:
 
   /** How one attempt of a run's step ended, stored in `agent_steps.status`. */
   enum Status(val wire: Status.Wire):
-    case Done extends Status(_root_.com.histmersion.domain.automation.Step.Status.Wire("done"))
-    case Failed extends Status(_root_.com.histmersion.domain.automation.Step.Status.Wire("failed"))
+    case Done extends Status(Status.Wire("done"))
+    case Failed extends Status(Status.Wire("failed"))
 
   object Status:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.domain.automation.Step.Status.Wire): Option[Status] = values.find(_.wire == s)
+    def parse(s: Wire): Option[Status] = values.find(_.wire == s)

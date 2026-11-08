@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 
