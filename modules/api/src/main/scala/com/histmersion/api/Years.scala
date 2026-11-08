@@ -23,9 +23,7 @@ object Years:
   object Text extends Newtype[String, Pure]
 
   export com.histmersion.api.catalogue.Year as ShiftH
-  type NoYearZero = NoYearZeroValue
-  type NoYearZeroValue = Problem
-  val NoYearZeroValue: Problem.type = Problem
+  type NoYearZero = Problem
 
   def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else Year((a).value)
 

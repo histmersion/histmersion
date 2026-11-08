@@ -24,10 +24,6 @@ object MediaSources:
   object Key extends Newtype[String, io.github.iltotore.iron.Pure]
 
   enum Error derives CanEqual:
-    case Invalid(message: Error.Invalid.Message)
+    case Invalid(message: Problem)
     case NotFound
 
-  object Error:
-    object Invalid:
-      type Message = Problem
-      val Message: Problem.type = Problem

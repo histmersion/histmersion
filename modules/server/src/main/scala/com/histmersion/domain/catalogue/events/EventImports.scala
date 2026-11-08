@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
 
-import com.histmersion.api.Problem
+import com.histmersion.plugin.Problem as SpiProblem
+import com.histmersion.domain.Problem
 import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
@@ -76,7 +77,7 @@ final class EventImports(
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
   /** One catalogue part read: its key and the records (or why not). */
-  private type Fetched = Either[Problem, List[CatalogRecord]]
+  private type Fetched = Either[SpiProblem, List[CatalogRecord]]
 
   /** The import itself — blocking; the job runs it. Part by part: read, keep what passes the thresholds and the years,
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry
@@ -326,7 +327,7 @@ final class EventImports(
         val s =
           store.save(
             batch
-              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, Problem("re-derived")))
+              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, domain.Problem("re-derived")))
           )
         updated += s.updated.value
         counts = counts + s.corrections

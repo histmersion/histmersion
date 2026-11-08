@@ -197,8 +197,6 @@ object Store:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location
 
-    type Message = Problem
-    val Message: Problem.type = Problem
 
   /** A name inside a store: `/`-separated segments, relative, never `.` or `..`, no empty segment, no backslash or NUL.
     * The empty key is the store itself.

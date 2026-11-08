@@ -793,8 +793,7 @@ object PlanPools:
       .filter(!_)
       .map(_ =>
         (
-          PlanQuotaRepo.Pool
-            .Refusal("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
+            Problem("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
           Option.empty[PlanQuotaRepo.Pool.RefusalUntil]
         )
       )

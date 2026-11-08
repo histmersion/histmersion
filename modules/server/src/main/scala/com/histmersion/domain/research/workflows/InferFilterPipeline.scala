@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -47,7 +47,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   import InferFilterPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Halt.Fail.Message(p.value))).flatMap(runFor(ctx, _))
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(api.Problem(p.value))).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId

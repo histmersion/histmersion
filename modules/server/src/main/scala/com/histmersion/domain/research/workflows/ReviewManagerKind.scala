@@ -81,7 +81,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[ManagerContext.EvaluateStepError],
+      error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
@@ -94,7 +94,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[ManagerContext.EvaluateStepError],
+      error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
@@ -126,7 +126,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item.state,
       run,
       st.transformInto[Run.State],
-      error,
+      error.map(domain.Problem.fromApi),
       facts,
       task,
       now
@@ -253,7 +253,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       c.chainReview(
         ManagerLight.Id(m.id.value),
         Slug.assume(item.target.value),
-        Problem(s"extended by run ${run.fold("")(_.value.take(8))}"),
+        api.Problem(s"extended by run ${run.fold("")(_.value.take(8))}"),
         out
       )
 
@@ -309,7 +309,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .flatMap(_._3) match
           case Some(itemId) =>
             Option
-              .when(c.restale(itemId, prio, Problem(p.why.value)))(s"${p.target} (${p.why}$boost)")
+              .when(c.restale(itemId, prio, api.Problem(p.why.value)))(s"${p.target} (${p.why}$boost)")
           case None =>
             val (_, isNew) = c.upsert(
               manager,
@@ -414,7 +414,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       goal: Option[Goal.Slug],
       room: Int,
       now: Instant
-  ): List[(Slug, Problem, Option[ManagerContext.ItemId])] =
+  ): List[(Slug, domain.Problem, Option[ManagerContext.ItemId])] =
     val last = Option(lastStale.get(m.id.value)).map(_.longValue).getOrElse(Long.MinValue)
     val every = math.max(1, cfg.managers.review.staleScanMinutes.value).toLong * 60000L
     if s.staleAfterDays.value <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil
@@ -482,7 +482,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .map(_ => Articles.notFound(Article.Slug(raw.value.trim)))
           .flatMap(site.articles.get(_))
           .map(v => ManagerContext.ItemTarget(v.article.slug.value))
-      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(api.Problem(s"unknown item kind '$other'")))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).

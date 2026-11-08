@@ -8,15 +8,13 @@ import io.github.iltotore.iron.constraint.all.*
   * and the server's would win, so the plugin cannot be linked.
   */
 final case class Conflict(plugin: Conflict.Plugin, key: ModuleKey, wanted: ModuleVersion, shipped: ModuleVersion):
-  def message: Conflict.MessageResult =
+  def message: Problem =
     Problem(
       s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
         s"build the plugin against ${shipped.value} (the histmersion-plugin-platform POM), or install a Histmersion that ships ${wanted.value}"
     )
 
 object Conflict:
-  type MessageResult = Problem
-  val MessageResult: Problem.type = Problem
 
   type Plugin = Resolver.FileName
   val Plugin: Resolver.FileName.type = Resolver.FileName

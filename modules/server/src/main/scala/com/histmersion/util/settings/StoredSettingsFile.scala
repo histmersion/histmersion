@@ -2,7 +2,6 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.config.AppConfig
-import com.histmersion.config.Problem
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}
 import org.ekrich.config.{Config, ConfigFactory}

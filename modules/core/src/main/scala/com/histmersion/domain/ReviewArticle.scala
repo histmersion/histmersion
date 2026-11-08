@@ -525,7 +525,7 @@ object ReviewArticle:
 
   final case class RejectionAnswer(
       id: RejectionAnswer.Id,
-      reason: RejectionAnswer.Reason,
+      reason: Problem,
       citekey: RejectionAnswer.Citekey,
       quote: RejectionAnswer.Quote
   ) derives KindlingsCodecAsObject
@@ -535,8 +535,6 @@ object ReviewArticle:
       extension (c: Citekey) def normalised: String = c.value.trim
     type Id = Rejection.Id
     val Id: Rejection.Id.type = Rejection.Id
-    type Reason = Problem
-    val Reason: Problem.type = Problem
     type Quote = Rejection.Quote
     val Quote: Rejection.Quote.type = Rejection.Quote
 
@@ -602,15 +600,13 @@ object ReviewArticle:
   final case class SetAsideAnswer(
       id: SetAsideAnswer.Id,
       pair: Option[SetAsideAnswer.Pair] = None,
-      reason: SetAsideAnswer.Reason
+      reason: Problem
   ) derives KindlingsCodecAsObject
   object SetAsideAnswer:
     type Id = SetAside.Id
     val Id: SetAside.Id.type = SetAside.Id
     type Pair = NotMaterialAnswer.Pair
     val Pair: NotMaterialAnswer.Pair.type = NotMaterialAnswer.Pair
-    type Reason = Problem
-    val Reason: Problem.type = Problem
 
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
@@ -627,12 +623,10 @@ object ReviewArticle:
         )
       )
 
-  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: WontFixAnswer.Reason) derives KindlingsCodecAsObject
+  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Problem) derives KindlingsCodecAsObject
   object WontFixAnswer:
     type Id = WontFix.Id
     val Id: WontFix.Id.type = WontFix.Id
-    type Reason = Problem
-    val Reason: Problem.type = Problem
 
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
@@ -2205,8 +2199,8 @@ object ReviewArticle:
       Article.Slug(slug.value),
       kind,
       applied.results,
-      applied.problems.map(p => Article.Edits.ArticleCheck.Problems(p.value)) ++ bodyProblems.map(
-        Article.Edits.ArticleCheck.Problems(_)
+      applied.problems.map(p => api.Problem(p.value)) ++ bodyProblems.map(
+        api.Problem(_)
       ),
       Article.Edits.ArticleCheck.Fatal(fatal),
       Article.Edits.ArticleCheck.WordsBefore(words(before.value)),

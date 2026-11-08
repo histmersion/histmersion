@@ -659,7 +659,7 @@ final class AcquisitionControllers(
     val chain = skip match
       case Some(have) =>
         FetchChain.Outcome(
-          Left(Problem(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")),
+          Left(plugin.Problem(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")),
           Nil
         )
       case None => oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value))

@@ -190,7 +190,7 @@ object Codex:
 
     /** What a pass did: `skipped` says why it did nothing. */
     final case class Report(
-        skipped: Option[Report.Skipped] = None,
+        skipped: Option[Problem] = None,
         deleted: Report.Deleted = Report.Deleted(0),
         freedBytes: ByteCount = ByteCount(0L),
         vacuumed: List[(Report.VacuumedFile, ByteCount, ByteCount)] = Nil,
@@ -210,8 +210,6 @@ object Codex:
       type VacuumedFile = VacuumedFile.T
       object VacuumedFile extends Newtype[String, Pure]
 
-      type Skipped = Problem
-      val Skipped: Problem.type = Problem
       type Deleted = Deleted.T
       object Deleted extends Newtype[Int, Pure]
 

@@ -111,7 +111,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         Left(
           Halt
             .Fail(
-              Halt.Fail.Message(
+              Problem(
                 s"step $seq is '$recorded' in the checkpoint but '$name' now — the pipeline changed; start a new run"
               )
             )
@@ -119,7 +119,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       else
         decode[O](json.value).left
           .map(e =>
-            Halt.Fail(Halt.Fail.Message(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
+            Halt.Fail(Problem(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
           )
     }
 
@@ -183,7 +183,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               ),
               Nil
             )
-            Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
+            Left(Halt.Fail(Problem(s"$name: $m")))
       }
     }
 
@@ -262,7 +262,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                   ),
                   Nil
                 )
-                Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
+                Left(Halt.Fail(Problem(s"$name: $m")))
               case Right(json) if dryRun =>
                 skipped.add(
                   WouldWrite(
@@ -315,7 +315,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[domain.Problem], Checked[O]]): Either[Halt, O] =
     llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses. `maxTokens` overrides
@@ -331,7 +331,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[domain.Problem], Checked[O]]): Either[Halt, O] =
     llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
 
   /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's and the earlier
@@ -347,7 +347,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[domain.Problem], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
         engine.beat(runId, Some(Engine.BeatSeq(seq.value)))
@@ -356,7 +356,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           d <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(Prompt.System(sys), Prompt.User(user.value)))).left
-          .map(m => Halt.Fail(Halt.Fail.Message(s"$name: $m")))
+          .map(m => Halt.Fail(Problem(s"$name: $m")))
           .flatMap { (d, prompt) =>
             attempts(
               seq,
@@ -390,8 +390,8 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       run.modelFor(role).map(m => AgentsControllers.ModelName(m.value)),
       onRefresh = n => warn(s"${role.wire}: $n")
     ) match
-      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
-      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, Halt.Pause.Detail(s"$name: $m"), at))
+      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(Problem(s"$name: $m")))
+      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, Problem(s"$name: $m"), at))
       case Right(p)                                =>
         p.skipped
           .filter(warnedSkips.add)
@@ -406,7 +406,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: RunCtx.MaxTokens,
       turns: AgentDef.MaxTurns,
-      validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]],
+      validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[domain.Problem], Checked[O]],
       capKey: Engine.CapKey
   ): Either[Halt, O] =
     val role = agent.role
@@ -421,7 +421,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     def go(
         attempt: Int,
         tries: Int,
-        problems: List[Problem],
+        problems: List[domain.Problem],
         previous: Option[String],
         seen: List[ToolUse]
     ): Either[Halt, O] =
@@ -430,7 +430,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(
             Halt.Fail(
-              Halt.Fail.Message(
+              Problem(
                 s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"
               )
             )
@@ -491,7 +491,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               Left(
                 Halt.Pause(
                   PauseReason.Provider,
-                  Halt.Pause.Detail(s"$name: ${e.message} — fix the provider, then resume")
+                  Problem(s"$name: ${e.message} — fix the provider, then resume")
                 )
               )
             case Right(res) =>
@@ -517,7 +517,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Budget, Halt.Pause.Detail(s"$name: the run's budget is exhausted")))
+                  Left(Halt.Pause(PauseReason.Budget, Problem(s"$name: the run's budget is exhausted")))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(
                     seq,
@@ -559,11 +559,11 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Provider, Halt.Pause.Detail(msg)))
+                  Left(Halt.Pause(PauseReason.Provider, Problem(msg)))
                 case _ =>
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
-                    case Left(f)  => Left(List(Problem(Engine.answerProblem(f, res.finishReason).value)))
+                    case Left(f)  => Left(List(domain.Problem(Engine.answerProblem(f, res.finishReason).value)))
                     case Right(a) => validate(a, RunCtx.LastAttempt(last), calls)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
@@ -605,7 +605,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                       if last then
                         Left(
                           Halt.Fail(
-                            Halt.Fail.Message(
+                            Problem(
                               s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"
                             )
                           )

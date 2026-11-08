@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
@@ -129,7 +129,7 @@ final class ReviewArticlePipeline(
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Halt.Fail.Message(p.value))).flatMap(runFor(ctx, _))
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(api.Problem(p.value))).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes
@@ -412,7 +412,7 @@ final class ReviewArticlePipeline(
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
-    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, Problem(a.reason.value))) ++ f.pairsAside)
+    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, api.Problem(a.reason.value))) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
       .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
 
@@ -1048,7 +1048,7 @@ final class ReviewArticlePipeline(
           val p =
             QueuePatch(
               status = Some(Queue.QueueItem.Status(Queue.Done)),
-              reason = Some(Problem(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
+              reason = Some(api.Problem(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
             )
           val _ =
             ctx.write(s"tasks item #${item.id} done", p.asJson)(
@@ -1071,7 +1071,7 @@ final class ReviewArticlePipeline(
           s"superseded by #$id (one item per article)"
         )
         val p =
-          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(Problem(why)))
+          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(api.Problem(why)))
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(
             site.workLists.patch(QueueItemId(item.id.value), p).map(_ => ())

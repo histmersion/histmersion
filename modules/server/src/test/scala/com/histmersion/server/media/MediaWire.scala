@@ -4,7 +4,7 @@ package server.media
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.augustnagro.magnum.*
-import com.histmersion.config.{AppConfig, Problem, LoadedConfig}
+import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient

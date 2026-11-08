@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
@@ -71,7 +71,7 @@ final class PlanGoalPipeline(
     DomainGoal.Slug
       .either(ctx.run.target.value)
       .left
-      .map(_ => Halt.Fail(Halt.Fail.Message(s"invalid goal slug '${ctx.run.target.value}'")))
+      .map(_ => Halt.Fail(api.Problem(s"invalid goal slug '${ctx.run.target.value}'")))
       .flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: DomainGoal.Slug): Either[Halt, PipelineDef.Summary] =

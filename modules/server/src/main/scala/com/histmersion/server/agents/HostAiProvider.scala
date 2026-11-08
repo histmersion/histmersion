@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.plugin.Problem as SpiProblem
 import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
@@ -17,7 +18,7 @@ final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKin
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     Left(
       AiFailure.Error(
-        Problem(
+        SpiProblem(
           s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI"
         )
       )

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
 
@@ -78,7 +78,7 @@ final class HintEffectPipeline(
           .map(_.map(p => Problem(p.value)))
           .map((e, ws) =>
             Checked(
-              Proposed(e, Problem(Option(a.why).map(_.value.trim).getOrElse("")), ws),
+              Proposed(e, domain.Problem(Option(a.why).map(_.value.trim).getOrElse("")), ws),
               ws.map(w => Checked.Warnings(w.value))
             )
           )
@@ -154,7 +154,7 @@ final class HintEffectPipeline(
           HintProposal.Text(l.text.value),
           e,
           HintProposal.By(by),
-          Problem(p.why.value)
+          api.Problem(p.why.value)
         )
         val what = ManagersMarkdown.effect(e)
         ctx.write(

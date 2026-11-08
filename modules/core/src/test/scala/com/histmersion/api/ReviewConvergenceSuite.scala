@@ -594,7 +594,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           SetAsideAnswer(
             ReviewArticle.SetAsideAnswer.Id(""),
             Some(CritiqueRef.Wire("zz2021_crit>zz2020_new")),
-            ReviewArticle.SetAsideAnswer.Reason("The critique concerns its dating, not the ore source cited here.")
+            Problem("The critique concerns its dating, not the ore source cited here.")
           )
         )
       )

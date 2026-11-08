@@ -215,8 +215,8 @@ final class AutoApprovals(
     a.approvalKind match
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
-          case (_, Some(wait)) => Verdict.Leave(Problem(wait.value))
-          case (None, _)       => Verdict.Leave(Problem("the approval carries no readable plan"))
+          case (_, Some(wait)) => Verdict.Leave(domain.Problem(wait.value))
+          case (None, _)       => Verdict.Leave(domain.Problem("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
             (com.histmersion.domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
@@ -248,10 +248,10 @@ final class AutoApprovals(
                   case v @ Verdict.Approve(_) =>
                     agents.focus
                       .goalPlanBlock(goal, AutopilotPolicy.Proposed(p.subGoals.size))
-                      .fold(v)(d => Verdict.Leave(Problem(d.value)))
+                      .fold(v)(d => Verdict.Leave(domain.Problem(d.value)))
                   case v => v
-              case _ => Verdict.Leave(Problem("the approval names no valid goal"))
-      case _ => Verdict.Leave(Problem("not a kind the autopilot decides"))
+              case _ => Verdict.Leave(domain.Problem("the approval names no valid goal"))
+      case _ => Verdict.Leave(domain.Problem("not a kind the autopilot decides"))
 
   def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =
     agents.runs

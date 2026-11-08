@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 

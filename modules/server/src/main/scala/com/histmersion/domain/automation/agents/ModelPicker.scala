@@ -209,7 +209,7 @@ final class ModelPicker(
     */
   final case class ModelState(
       usable: ModelState.Usable,
-      why: Option[ModelState.Why],
+      why: Option[Problem],
       freesAt: Option[PlanQuotaRepo.EpochMillis],
       headroomTokens: Option[Picked.HeadroomTokens],
       headroomUsd: Option[BigDecimal],
@@ -248,7 +248,7 @@ final class ModelPicker(
     val cool = cooling(m, now)
     val (headroomTokens, hu) = headroom(ss)
     val ht = headroomTokens.map(h => Picked.HeadroomTokens(h.value))
-    val noLogin = pools.unavailable(m, poolInstant(now)).map(r => ModelState.Why(r.value))
+    val noLogin = pools.unavailable(m, poolInstant(now)).map(r => Problem(r.value))
     // a fresh reading only for a model that could otherwise be used: not one cooling down or capped
     val wanted = refresh.filter(_ => noLogin.isEmpty && broken.isEmpty && cool.isEmpty && ok)
     val plan = pools.poolOf(m).map { p =>
@@ -264,7 +264,7 @@ final class ModelPicker(
     else if broken.nonEmpty then
       ModelState(
         ModelState.Usable(false),
-        Some(ModelState.Why(s"its allowance cannot be read (${broken.mkString("; ")})")),
+        Some(Problem(s"its allowance cannot be read (${broken.mkString("; ")})")),
         None,
         ht,
         hu
@@ -272,7 +272,7 @@ final class ModelPicker(
     else if cool.isDefined then
       ModelState(
         ModelState.Usable(false),
-        Some(ModelState.Why(s"${ModelPicker.CoolingWhy}; skipped until ${Instant.ofEpochMilli(cool.get.value)}")),
+        Some(Problem(s"${ModelPicker.CoolingWhy}; skipped until ${Instant.ofEpochMilli(cool.get.value)}")),
         cool,
         ht,
         hu,
@@ -286,7 +286,7 @@ final class ModelPicker(
         case _                               => (Problem(""), None)
       ModelState(
         ModelState.Usable(false),
-        Some(ModelState.Why(s"the ${p.title} is below its floor: $why")),
+        Some(Problem(s"the ${p.title} is below its floor: $why")),
         until.map(u => PlanQuotaRepo.EpochMillis(u.value)),
         ht,
         hu,
@@ -300,7 +300,7 @@ final class ModelPicker(
         .map(s => s"${s.limit.text} (${fmt(s.used, s.limit.measure)} used, reserve ${fmt(s.reserve, s.limit.measure)})")
       ModelState(
         ModelState.Usable(false),
-        Some(ModelState.Why(s"below its allowance: ${which.mkString(", ")}")),
+        Some(Problem(s"below its allowance: ${which.mkString(", ")}")),
         frees.map(f => PlanQuotaRepo.EpochMillis(f.value)),
         ht,
         hu,
@@ -339,8 +339,7 @@ final class ModelPicker(
             if exhausted.isEmpty then
               Left(
                 PickFailure.Unavailable(
-                  PickFailure.Unavailable
-                    .Message(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
+                    Problem(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
                 )
               )
             else
@@ -348,7 +347,7 @@ final class ModelPicker(
               val what = if planHit then "below their plan floor or allowance" else "below their allowance"
               Left(
                 PickFailure.Exhausted(
-                  PickFailure.Exhausted.Message(
+                  Problem(
                     s"all models for role ${role.wire} are $what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})"
                   ),
                   frees.map(f => Instant.ofEpochMilli(f.value)),

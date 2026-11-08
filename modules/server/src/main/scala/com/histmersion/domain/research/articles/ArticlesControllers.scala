@@ -197,7 +197,7 @@ final class ArticlesControllers(
                                                 else s" · `${i.excerpt.value.replace("`", "'")}`")
           }
           .distinct
-          .map(Problem(_)),
+          .map(domain.Problem(_)),
       generated
     )
 

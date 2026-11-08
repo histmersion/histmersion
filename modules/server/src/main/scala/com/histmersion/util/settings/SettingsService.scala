@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.config.{AppConfig, Problem, LoadedConfig, SetupConfig}
+import com.histmersion.config.{AppConfig, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 

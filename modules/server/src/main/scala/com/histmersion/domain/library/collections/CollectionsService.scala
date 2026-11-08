@@ -182,7 +182,7 @@ object CollectionsService:
     private def fail(message: String): Api.Error = Api.Error(Problem(message))
     private def usage(message: String): Api.Error =
       Api.Error(Problem(message), Some(Api.Error.Code(CollectionsApi.Usage)))
-    private def failed(problem: Problem): Api.Error = fail(problem.value)
+    private def failed(problem: plugin.Problem): Api.Error = fail(problem.value)
 
     private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
 

@@ -186,7 +186,7 @@ trait ManagerContext:
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[ManagerContext.EvaluateStepError],
+      error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]],
       kind: ManagerKindDefinition
@@ -219,7 +219,5 @@ object ManagerContext:
   val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
   type StartWhat = StartWhat.T
   object StartWhat extends Newtype[String, Pure]
-  type EvaluateStepError = Problem
-  val EvaluateStepError: Problem.type = Problem
   type TickLine = TickLine.T
   object TickLine extends Newtype[String, Pure]

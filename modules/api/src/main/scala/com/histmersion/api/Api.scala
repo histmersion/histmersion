@@ -2703,8 +2703,6 @@ object Api:
       * `Matchable`), so the value is checked with a type test.
       */
 
-    type Message = Problem
-    val Message: Problem.type = Problem
     type Code = Code.T
     object Code extends Newtype[String, Pure]
 

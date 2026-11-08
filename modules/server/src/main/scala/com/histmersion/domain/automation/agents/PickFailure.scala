@@ -15,17 +15,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * before chains existed.
   */
 enum PickFailure derives CanEqual:
-  case Unavailable(message: PickFailure.Unavailable.Message)
+  case Unavailable(message: Problem)
   case Exhausted(
-      message: PickFailure.Exhausted.Message,
+      message: Problem,
       freesAt: Option[Instant],
       reason: PauseReason = PauseReason.Allowance
   )
 
-object PickFailure:
-  object Unavailable:
-    type Message = Problem
-    val Message: Problem.type = Problem
-  object Exhausted:
-    type Message = Problem
-    val Message: Problem.type = Problem

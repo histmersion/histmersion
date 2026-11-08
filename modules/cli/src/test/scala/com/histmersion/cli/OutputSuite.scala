@@ -68,7 +68,7 @@ class OutputSuite extends munit.FunSuite:
       (r.state, r.reason, r.changes.map(_.from)),
       (
         Calibre.Json.UpdateRow.State("failed"),
-        Some(Calibre.Json.UpdateRow.Reason("locked")),
+        Some(Problem("locked")),
         List(Calibre.Change.From("a"))
       )
     )

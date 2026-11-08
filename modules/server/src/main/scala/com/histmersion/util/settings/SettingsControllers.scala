@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.Problem as ValuesProblem
 import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
@@ -22,7 +23,7 @@ final class SettingsControllers(
       p <- prefix
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold[Either[Problem, Option[SettingKey]]](Right(None))(raw =>
+        .fold[Either[ValuesProblem, Option[SettingKey]]](Right(None))(raw =>
           SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
         )
         .left

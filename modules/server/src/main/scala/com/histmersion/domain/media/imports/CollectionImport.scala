@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite}

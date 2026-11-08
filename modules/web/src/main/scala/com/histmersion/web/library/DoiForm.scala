@@ -32,8 +32,7 @@ object DoiForm:
                 r.fold(
                   e =>
                     State.Failed(
-                      ErrorLine
-                        .Problem(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}")
+                      Problem(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}")
                     ),
                   State.Added(_)
                 )

@@ -604,7 +604,7 @@ object Article:
         slug: Slug,
         kind: Kind.Wire,
         edits: scala.List[EditResult],
-        problems: scala.List[ArticleCheck.Problems],
+        problems: scala.List[Problem],
         fatal: ArticleCheck.Fatal,
         wordsBefore: ArticleCheck.WordsBefore,
         wordsAfter: ArticleCheck.WordsAfter,
@@ -616,8 +616,6 @@ object Article:
 
     object ArticleCheck:
 
-      type Problems = Problem
-      val Problems: Problem.type = Problem
       type Fatal = Fatal.T
       object Fatal extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type WordsBefore = WordsBefore.T
