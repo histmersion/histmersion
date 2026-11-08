@@ -926,7 +926,7 @@ final class ManagerSupervisor(
   def stepOutput(run: DomainRun.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output] =
     agents.runs
       .steps(run.transformInto[com.histmersion.util.jobs.Job.Id], com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
-      .filter(s => s.name == step && s.status == StepStatus.Done)
+      .filter(s => s.name.value == step.value && s.status.value == StepStatus.Done.wire.value)
       .lastOption
       .flatMap(_.output)
       .map(o => com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output(o.value))
