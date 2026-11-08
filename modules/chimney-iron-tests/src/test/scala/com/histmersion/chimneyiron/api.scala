@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron.api
+package com.histmersion
+package chimneyiron.api
 
 import com.histmersion.chimneyiron.{CitekeyRule, NonBlankCounted}
 import io.github.iltotore.iron.*

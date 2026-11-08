@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron
+package com.histmersion
+package chimneyiron
 
 import io.scalaland.chimney.histmersion.IronNewtypePairs
 

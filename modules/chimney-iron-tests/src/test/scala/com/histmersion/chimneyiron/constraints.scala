@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron
+package com.histmersion
+package chimneyiron
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
