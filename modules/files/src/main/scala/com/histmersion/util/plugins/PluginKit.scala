@@ -75,7 +75,7 @@ object PluginKit:
 
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
-  enum Verdict:
+  enum Verdict derives CanEqual:
     /** The plugins directory is what the installed binary was linked with, and the server runs it. */
     case UpToDate
 
@@ -184,7 +184,7 @@ object PluginKit:
       case plain(g, a, v)  => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
       case other => Left(Problem(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)"))
 
-  enum Origin:
+  enum Origin derives CanEqual:
     case File(path: Origin.File.Path)
     case Url(url: Origin.Url.Value)
     case Maven(coordinates: Coordinates)

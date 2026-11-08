@@ -174,7 +174,7 @@ object BundleEntities:
   final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean)
 
   /** What a blob is for. */
-  enum BlobUse:
+  enum BlobUse derives CanEqual:
     case Body(sourceUid: UUID)
     case Original(sourceUid: UUID, ext: Bundle.Source.OriginalExt)
     case VersionBody(versionUid: UUID)
