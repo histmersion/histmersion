@@ -156,7 +156,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
           Some(CompareRuns.Step.FirstCallTokens(6200L)),
           Some(CompareRuns.Step.Turns(7)),
           Some(CompareRuns.Step.Output("{}")),
-          Some(Problem("bad"))
+          Some(domain.Problem("bad"))
         )
       )
     )

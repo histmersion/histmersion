@@ -1,6 +1,7 @@
 package com.histmersion
 package web.marks
 
+import com.histmersion.api.Problem
 import com.histmersion.api.personal.*
 import com.histmersion.web.{ApiClient, ApiFailure, Auth}
 import com.raquo.laminar.api.L.*
@@ -15,8 +16,6 @@ import com.histmersion.api.library.Title
   * why ([[problem]]).
   */
 object MyItems:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Loaded = Loaded.T
   object Loaded extends Newtype[Boolean, Pure]
 

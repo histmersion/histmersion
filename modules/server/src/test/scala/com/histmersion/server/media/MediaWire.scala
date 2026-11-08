@@ -1,6 +1,8 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.Problem as ValuesProblem
+import com.histmersion.api.Problem
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.augustnagro.magnum.*
@@ -165,7 +167,7 @@ object MediaWire:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
 
-  def load(more: String): Either[Problem, LoadedConfig] =
+  def load(more: String): Either[ValuesProblem, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
   private def place(

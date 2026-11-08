@@ -23,7 +23,6 @@ object Years:
   object Text extends Newtype[String, Pure]
 
   export com.histmersion.api.catalogue.Year as ShiftH
-  type NoYearZero = Problem
 
   def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else Year((a).value)
 
@@ -33,7 +32,7 @@ object Years:
 
   def shift(h: Years.ShiftH, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
 
-  val NoYearZero: NoYearZero = Problem("there is no year 0 (1 BCE is -1, 1 CE is 1)")
+  val NoYearZero: Problem = Problem("there is no year 0 (1 BCE is -1, 1 CE is 1)")
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"

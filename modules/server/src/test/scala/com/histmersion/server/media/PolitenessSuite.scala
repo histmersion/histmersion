@@ -38,7 +38,7 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(
       Politeness
         .decide(answer(404), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.GiveUp(Problem("HTTP 404"))
+      Step.GiveUp(domain.Problem("HTTP 404"))
     )
 
   test("429 and 503 wait for Retry-After (seconds or a date), else back off 1, 2, 4 … s"):
@@ -50,7 +50,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(7000), Problem("HTTP 429"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(7000), domain.Problem("HTTP 429"))
     )
     assertEquals(
       Politeness.decide(
@@ -60,12 +60,12 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(3000), Problem("HTTP 503"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(3000), domain.Problem("HTTP 503"))
     )
     assertEquals(
       Politeness
         .decide(answer(503), HttpPolicy.Attempt(2), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(4000), Problem("HTTP 503"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(4000), domain.Problem("HTTP 503"))
     )
 
   test("maxlag: the MediaWiki-API-Error header (HTTP 200) or the error code in the body"):
@@ -78,7 +78,7 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(
       Politeness
         .decide(lagged, HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(5000), Problem("maxlag"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(5000), domain.Problem("maxlag"))
     )
     assert(Politeness.isMaxlag(answer(200, body = """{"error":{"code":"maxlag"}}""")))
     assert(!Politeness.isMaxlag(answer(200, body = """{"entities":{}}""")))
@@ -92,7 +92,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 429 after 5 retries"))
+      Step.GiveUp(domain.Problem("HTTP 429 after 5 retries"))
     )
     assertEquals(
       Politeness.decide(
@@ -102,7 +102,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 429: asked to wait 3600 s"))
+      Step.GiveUp(domain.Problem("HTTP 429: asked to wait 3600 s"))
     )
 
   test("Retry-After parsing: seconds, a date in the past is now, junk is none"):

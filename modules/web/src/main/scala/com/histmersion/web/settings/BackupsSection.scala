@@ -1,6 +1,7 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.web.{ApiClient, Auth}
 import com.raquo.laminar.api.L.*
@@ -13,9 +14,9 @@ import com.histmersion.web.ErrorLine
   */
 object BackupsSection:
   def pane: HtmlElement =
-    val list = Var(Option.empty[Either[SettingsStore.Problem, List[Backup.Info]]])
+    val list = Var(Option.empty[Either[Problem, List[Backup.Info]]])
     val busy = Var(false)
-    val said = Var(Option.empty[Either[SettingsStore.Problem, String]])
+    val said = Var(Option.empty[Either[Problem, String]])
     def load(): Unit = ApiClient.backups().onComplete(r => list.set(Some(r.toEither.left.map(SettingsStore.message))))
     def now(): Unit =
       busy.set(true)
@@ -70,12 +71,12 @@ object BackupsSection:
             )
           ),
           child.maybe <-- said.signal.map(_.map {
-            case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
+            case Left(why) => ErrorLine.text(Problem(why.value))
             case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
           }),
           child <-- list.signal.map {
             case None             => p(cls := "muted", "Loading…")
-            case Some(Left(m))    => ErrorLine.text(ErrorLine.Problem(s"Could not list the backups: $m"))
+            case Some(Left(m))    => ErrorLine.text(Problem(s"Could not list the backups: $m"))
             case Some(Right(Nil)) => p(cls := "muted", "No backup yet.")
             case Some(Right(bs))  =>
               table(

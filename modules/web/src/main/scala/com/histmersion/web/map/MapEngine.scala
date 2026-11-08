@@ -1,6 +1,7 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -12,7 +13,7 @@ trait MapEngine:
   def probe(): Capabilities
 
   /** Why this engine cannot draw in a browser with `c` (None: it can). */
-  def unsupported(c: Capabilities): Option[MapEngine.Problem] = None
+  def unsupported(c: Capabilities): Option[Problem] = None
 
   /** A surface in `el`, its zoom limits and pixel ratio (`None`: the screen's). */
   def create(el: dom.HTMLElement, maxZoom: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio]): MapSurface
@@ -22,5 +23,3 @@ object MapEngine:
   object MaxZoom extends Newtype[Double, Pure]
   type PixelRatio = PixelRatio.T
   object PixelRatio extends Newtype[Double, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

@@ -59,7 +59,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http {
     def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-      Left(Problem("offline"))
+      Left(plugin.Problem("offline"))
   }
 
   /** The class path's plugins (the first-party media collections among them, supplied the host's settings) and `extra`,
@@ -416,8 +416,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
         def warn(m: Plugin.Log.Line) = ()
       }
       def env(n: EnvVar.Name) = None
-      def secret(s: Secret) = Left(Problem("none"))
-      def secretVaults = Registry.refusing(Problem("x"))
+      def secret(s: Secret) = Left(plugin.Problem("none"))
+      def secretVaults = Registry.refusing(plugin.Problem("x"))
     assert(ctx.mediaCollections.add(Registry.AddId("x"), Collection(MediaItem.Role("object"))).isLeft)
     assert(ctx.eventCatalogues.add(Registry.AddId("x"), Catalogue).isLeft)
     assertEquals(Spi.Version, 2)
@@ -549,7 +549,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(r.rights.map(_.licence.family), Right(com.histmersion.domain.Licence.Family.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
     assertEquals(
-      PluginMedia.record(it.modify(_.rights).setTo(Left(Problem("not open access")))).rights,
+      PluginMedia.record(it.modify(_.rights).setTo(Left(plugin.Problem("not open access")))).rights,
       Left("not open access")
     )
 
@@ -731,14 +731,14 @@ class ProviderPluginsSuite extends munit.FunSuite:
       override def floorYear = Some(Year(-9700))
       def parts(q: CatalogueQuery) = Nil
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
-        Left(Problem("no"))
+        Left(plugin.Problem("no"))
     val throws = new EventCatalogue:
       val title = EventCatalogue.Title("t"); val licence = Licence("l");
       val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
-        Left(Problem("no"))
+        Left(plugin.Problem("no"))
     import com.histmersion.upstreams.dating.CatalogDating.Limits
     assertEquals(
       PluginEvents.limits(Some(floored), DeepTime.SignedYear(2026)),

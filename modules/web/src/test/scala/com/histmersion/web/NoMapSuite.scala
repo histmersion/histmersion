@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.map.{Capabilities, NoMap}
@@ -47,7 +48,7 @@ class NoMapSuite extends munit.FunSuite:
     )
 
   test("the message says why, then what to do, and that the rest works; markup is escaped"):
-    val (head, body) = NoMap.message(NoMapSurface.Why("this browser draws WebGL 1 only, not WebGL 2"))
+    val (head, body) = NoMap.message(Problem("this browser draws WebGL 1 only, not WebGL 2"))
     assertEquals(head, "The map cannot be drawn here: this browser draws WebGL 1 only, not WebGL 2.")
     assert(
       body.value.contains("online ones and the local ones") && body.value.contains("hardware") && body.value.contains(
@@ -55,5 +56,5 @@ class NoMapSuite extends munit.FunSuite:
       )
     )
     assert(
-      NoMap.html(NoMapSurface.Why("the map engine did not start (<b>x</b>)")).value.contains("(&lt;b&gt;x&lt;/b&gt;)")
+      NoMap.html(Problem("the map engine did not start (<b>x</b>)")).value.contains("(&lt;b&gt;x&lt;/b&gt;)")
     )

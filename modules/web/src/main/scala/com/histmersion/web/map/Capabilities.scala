@@ -1,6 +1,7 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -29,10 +30,10 @@ object Capabilities:
   type Webgl2 = Webgl2.T
   object Webgl2 extends Newtype[Boolean, Pure]
 
-  def withoutWebgl2(c: Capabilities): Option[MapEngine.Problem] =
+  def withoutWebgl2(c: Capabilities): Option[Problem] =
     if !c.webgl.value then
-      Some(MapEngine.Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
-    else if !c.webgl2.value then Some(MapEngine.Problem("this browser draws WebGL 1 only, not WebGL 2"))
+      Some(Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
+    else if !c.webgl2.value then Some(Problem("this browser draws WebGL 1 only, not WebGL 2"))
     else None
 
   /** Pure: a WebGL renderer string that names a software rasteriser. */

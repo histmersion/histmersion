@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -61,7 +61,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-      Left(Problem("offline"))
+      Left(plugin.Problem("offline"))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(
@@ -108,7 +108,7 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem("script exhausted"))))(r)
+        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(plugin.Problem("script exhausted"))))(r)
 
   /** A third-party plugin registering `provider` under `name`. */
   final private class AiPlugin(name: Registry.AddId, provider: AiProvider, id: Plugin.Info.Id = Plugin.Info.Id("zq-ai"))
@@ -440,7 +440,7 @@ class AiProvidersSuite extends munit.FunSuite:
       List(_ =>
         Left(
           AiFailure.LimitReached(
-            Problem("usage limit reached"),
+            plugin.Problem("usage limit reached"),
             Some(AiFailure.LimitReached.UntilEpochMs(4102444800000L))
           )
         )
@@ -451,7 +451,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val err = intercept[java.io.IOException](
       PluginAiClient(
         ref,
-        Scripted(List(_ => Left(AiFailure.Error(Problem("HTTP 500"))))),
+        Scripted(List(_ => Left(AiFailure.Error(plugin.Problem("HTTP 500"))))),
         AiHttp.Offline
       ).run(call())
     )
@@ -515,7 +515,7 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem("script exhausted"))))(r)
+        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(plugin.Problem("script exhausted"))))(r)
 
   test("the request options a provider asks for: the loop's notes, the rendered schema, reasoning, verbatim failures"):
     val p = Wired(
@@ -573,7 +573,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
     val failing = Wired(
-      List(_ => Left(AiFailure.Error(Problem("RuntimeException: Claude API error: Overloaded")))),
+      List(_ => Left(AiFailure.Error(plugin.Problem("RuntimeException: Claude API error: Overloaded")))),
       Right(())
     )
     assertEquals(
@@ -588,7 +588,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assertEquals(refused.left.toOption, Some("no Gemini key — set GEMINI_KEY"))
     // any other provider's error names the model and the exception, as before
-    val other = Scripted(List(_ => Left(AiFailure.Error(Problem("HTTP 500")))))
+    val other = Scripted(List(_ => Left(AiFailure.Error(plugin.Problem("HTTP 500")))))
     assertEquals(
       AgentsControllers.attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call())).left.map(_.message),
       Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")

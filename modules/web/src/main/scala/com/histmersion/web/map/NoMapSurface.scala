@@ -1,6 +1,7 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -11,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
   * windows behave as with a map.
   */
-final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: MapSurface.MaxZoom)
+final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, maxZoom0: MapSurface.MaxZoom)
     extends MapSurface:
 
   // `var`s: the view the app asked for, kept so it reads back what it set; the max zoom
@@ -97,8 +98,5 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def destroy(): Unit = { note.remove(); overlay.remove() }
 
   /** Why there is no map (what the message says first). */
-  def unavailable: NoMapSurface.Why = why
+  def unavailable: Problem = why
 
-object NoMapSurface:
-  type Why = Why.T
-  object Why extends Newtype[String, Pure]

@@ -445,7 +445,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
               FetchedFile.Extension("pdf")
             )
           )
-        else Fetch.Miss(Problem("no open-access location"))
+        else Fetch.Miss(plugin.Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -900,7 +900,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem("no open-access location"))
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(plugin.Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)

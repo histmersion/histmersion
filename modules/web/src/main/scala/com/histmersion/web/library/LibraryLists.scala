@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Api
@@ -75,7 +76,7 @@ object LibraryLists:
       .setTo(Filter.Offset(offset.value))
     latestSources(ApiClient.sources(page))(
       r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
-      m => sources.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))
+      m => sources.update(_.copy(loading = false, loaded = true, error = Some(Problem(m))))
     )
 
   private def readArticles(f: Filter, offset: Offset): Unit =
@@ -87,7 +88,7 @@ object LibraryLists:
       .setTo(Filter.Offset(offset.value))
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
       r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
-      m => articles.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))
+      m => articles.update(_.copy(loading = false, loaded = true, error = Some(Problem(m))))
     )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */

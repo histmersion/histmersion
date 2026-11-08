@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Activity.{Entry, EntryKind}
 import com.raquo.laminar.api.L.*

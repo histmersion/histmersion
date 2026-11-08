@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -12,8 +13,6 @@ trait Shell:
   def isRunning(processMatch: Shell.ProcessMatch): Boolean
 
 object Shell:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ProcessMatch = ProcessMatch.T
   object ProcessMatch extends Newtype[String, Pure]
 

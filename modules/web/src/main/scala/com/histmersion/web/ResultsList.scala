@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -26,8 +27,6 @@ object ResultsList:
   object Busy extends Newtype[Boolean, Pure]
   type InPanel = InPanel.T
   object InPanel extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type HitRowInPanel = InPanel
   val HitRowInPanel: InPanel.type = InPanel

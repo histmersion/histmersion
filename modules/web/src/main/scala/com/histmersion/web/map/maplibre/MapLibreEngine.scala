@@ -1,6 +1,7 @@
 package com.histmersion
 package web.map.maplibre
 
+import com.histmersion.api.Problem
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
@@ -69,7 +70,7 @@ object MapLibreEngine extends MapEngine:
       )
 
   /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
-  override def unsupported(c: Capabilities): Option[MapEngine.Problem] = Capabilities.withoutWebgl2(c)
+  override def unsupported(c: Capabilities): Option[Problem] = Capabilities.withoutWebgl2(c)
 
   def create(el: dom.HTMLElement, maxZoom: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio]): MapSurface =
     MapLibreSurface(el, maxZoom, pixelRatio, probe())

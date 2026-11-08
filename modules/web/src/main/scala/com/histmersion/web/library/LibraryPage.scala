@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.Problem
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.*
 import com.histmersion.web.ui.Layout
@@ -73,7 +74,7 @@ object LibraryPage:
         else sortSelect,
         pager(section, page)
       ),
-      child.maybe <-- page.map(_.error.map(m => ErrorLine.text(ErrorLine.Problem(s"Could not list the $noun: $m")))),
+      child.maybe <-- page.map(_.error.map(m => ErrorLine.text(Problem(s"Could not list the $noun: $m")))),
       LibraryTable.element(section, page.map(_.rows), chosen, choose(section)),
       child.maybe <-- page.map(listed =>
         Option.when(listed.loaded && listed.rows.isEmpty && listed.error.isEmpty)(

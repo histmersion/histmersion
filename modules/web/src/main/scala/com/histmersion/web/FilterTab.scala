@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -82,7 +83,7 @@ final class FilterTab[Q, Row](
     state.update(TabState.loading)
     latest(fetch(q, Filter.Offset(0)))(
       p => state.set(TabState.first(p, page)),
-      m => state.update(TabState.failed(_, TabState.Problem(m)))
+      m => state.update(TabState.failed(_, Problem(m)))
     )
 
   /** "show more": the loaded rows first, then the next page from the server. */
@@ -94,7 +95,7 @@ final class FilterTab[Q, Row](
         state.update(TabState.loading)
         latest(fetch(q, Filter.Offset(offset.value)))(
           p => state.update(TabState.appended(_, p, page)),
-          m => state.update(TabState.failed(_, TabState.Problem(m)))
+          m => state.update(TabState.failed(_, Problem(m)))
         )
 
 object FilterTab:

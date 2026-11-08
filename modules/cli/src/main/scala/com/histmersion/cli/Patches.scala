@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.ListPatch

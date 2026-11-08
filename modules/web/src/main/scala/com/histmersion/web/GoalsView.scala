@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
 import com.histmersion.api.automation.Goal.Plans.*
@@ -26,8 +27,6 @@ object GoalsView:
   object CreatedNote extends Newtype[String, Pure]
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type TagsText = TagsText.T
   object TagsText extends Newtype[String, Pure]
   type PerDay = PerDay.T

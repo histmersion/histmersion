@@ -1,6 +1,7 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -36,7 +37,7 @@ object NoMap:
   private def esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
-  def message(why: NoMapSurface.Why): (MessageText, MessageText) =
+  def message(why: Problem): (MessageText, MessageText) =
     (
       MessageText(s"The map cannot be drawn here: $why."),
       MessageText(
@@ -46,6 +47,6 @@ object NoMap:
       )
     )
 
-  def html(why: NoMapSurface.Why): Html =
+  def html(why: Problem): Html =
     val (head, body) = message(why)
     Html(s"""<p class="map-unavailable-title">${esc(head.value)}</p><p>${esc(body.value)}</p>""")

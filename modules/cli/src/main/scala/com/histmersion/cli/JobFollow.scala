@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup

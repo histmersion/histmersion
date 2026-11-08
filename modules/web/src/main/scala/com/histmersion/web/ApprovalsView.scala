@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L.*
@@ -284,7 +285,7 @@ object ApprovalsView:
       .decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_)))
       .onComplete { r =>
         busy.update(_ - a.id)
-        r.failed.foreach(e => list.failure.set(Some(PolledList.Problem(e.getMessage))))
+        r.failed.foreach(e => list.failure.set(Some(Problem(e.getMessage))))
         refresh()
         // decided here or in a goal's window: the count drops, and the decision is not news to its maker
         Notices.ownWrite(UiNotices.Board.Approvals)
@@ -310,7 +311,7 @@ object ApprovalsView:
       selected.set(Set.empty)
       list.failure.set(
         Option.when(errs.nonEmpty)(
-          PolledList.Problem(
+          Problem(
             s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
           )
         )
@@ -482,7 +483,7 @@ object ApprovalsView:
         "Changes agent runs proposed. Approving applies the change; " +
           "rejecting keeps it on record and changes nothing."
       ),
-      ErrorLine(list.failure.signal.map(_.map(m => ErrorLine.Problem(m.value)))),
+      ErrorLine(list.failure.signal.map(_.map(m => Problem(m.value)))),
       bulkBar,
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         val st = shownState(f.normalized.state)

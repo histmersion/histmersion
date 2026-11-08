@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Tree
 
 import com.histmersion.api.library.SearchMarkdown
@@ -40,12 +41,8 @@ object Cli:
   object DryRun extends Newtype[Boolean, Pure]
   type JsonOutput = JsonOutput.T
   object JsonOutput extends Newtype[Boolean, Pure]
-  type Message = Message.T
-  object Message extends Newtype[String, Pure]
   type NoWait = NoWait.T
   object NoWait extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Question = Question.T
   object Question extends Newtype[String, Pure]
   type QuietOutput = QuietOutput.T
@@ -781,7 +778,5 @@ object Cli:
   final case class Error(message: Problem, exitCode: ExitCode = ExitCode.Unreachable)
 
   object Error:
-    type Message = Message.T
-    object Message extends Newtype[String, Pure]
     type ExitCode = com.histmersion.cli.ExitCode
     val ExitCode: com.histmersion.cli.ExitCode.type = com.histmersion.cli.ExitCode

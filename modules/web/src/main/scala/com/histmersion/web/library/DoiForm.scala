@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.Problem
 import com.histmersion.web.{ApiClient, Auth, ErrorLine, SourceLink}
 import com.raquo.laminar.api.L.*
 
@@ -14,7 +15,7 @@ object DoiForm:
   private enum State derives CanEqual:
     case Idle
     case Adding
-    case Failed(message: ErrorLine.Problem)
+    case Failed(message: Problem)
     case Added(report: Ingest.Report)
 
   def pane: HtmlElement =

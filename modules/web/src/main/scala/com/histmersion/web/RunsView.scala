@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
@@ -544,7 +545,7 @@ object RunsView:
         )
         .onComplete { r =>
           busy.set(false)
-          r.failed.foreach(e => run.failure.set(Some(PolledList.Problem(e.getMessage))))
+          r.failed.foreach(e => run.failure.set(Some(Problem(e.getMessage))))
           if r.isSuccess then raise.set("")
           refresh(changed = Poll.DataChanged(true))
         }
@@ -552,7 +553,7 @@ object RunsView:
     div(
       cls := "tool-pane run-pane",
       run.lifecycle,
-      ErrorLine(run.failure.signal.map(_.map(m => ErrorLine.Problem(m.value)))),
+      ErrorLine(run.failure.signal.map(_.map(m => Problem(m.value)))),
       child <-- run.item.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)

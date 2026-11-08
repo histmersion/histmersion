@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import com.monovore.decline.Command
 import com.histmersion.config.*
 
