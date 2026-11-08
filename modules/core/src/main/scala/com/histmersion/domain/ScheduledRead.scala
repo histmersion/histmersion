@@ -3,7 +3,7 @@ package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum ScheduledRead:
+enum ScheduledRead derives CanEqual:
   case Due
   case NotDue(why: ScheduledRead.NotDue.Why)
 

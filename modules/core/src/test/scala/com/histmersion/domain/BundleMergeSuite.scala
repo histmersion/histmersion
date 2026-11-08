@@ -19,6 +19,8 @@ import com.histmersion.api.library.Citekey
   * decisions.
   */
 class BundleMergeSuite extends munit.FunSuite:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")

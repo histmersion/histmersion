@@ -88,6 +88,8 @@ import com.histmersion.api.exchange.PlanMatches
   * records do not change, and a resolution whose id is no longer in the plan is reported, never re-applied.
   */
 object MergePlanner:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
   type IssueExtra = IssueExtra.T
   object IssueExtra extends Newtype[String, Pure]
 
@@ -464,11 +466,11 @@ object MergePlanner:
   final private case class Draft(issue: MergeIssue, importable: Set[MergeDecision.Kind])
 
   /** Whether an issue applies, given the decisions of the issues it is conditional on. */
-  private enum Standing:
+  private enum Standing derives CanEqual:
     case Live, Conditional, Dropped
 
   /** What M4 merges by itself, decided before the resolutions. */
-  private enum Merges:
+  private enum Merges derives CanEqual:
     /** This collection's article already contains the bundle's text: ours stays. */
     case ArticleKeep
 

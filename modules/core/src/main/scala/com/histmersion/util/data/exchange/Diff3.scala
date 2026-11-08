@@ -22,7 +22,7 @@ object Diff3:
   object MergeRight extends Newtype[String, Pure]
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
-  enum Hunk:
+  enum Hunk derives CanEqual:
     case Agreed(lines: Vector[Hunk.Agreed.Lines])
     case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
 

@@ -4,7 +4,7 @@ package domain.catalogue.maptiles
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tile feature's property value, as the vector tile format types it. */
-enum TileValue:
+enum TileValue derives CanEqual:
   case Text(value: TileValue.Text.Value)
   case Whole(value: TileValue.Whole.Value)
   case Real(value: TileValue.Real.Value)

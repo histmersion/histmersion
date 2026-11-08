@@ -112,7 +112,7 @@ object ReviewArticle:
   val CheckRecheckLast: LastRound.type = LastRound
   export Merged.{Round as MergeRound}
 
-  enum Reviewer(val wire: Reviewer.Wire, val prefix: Reviewer.Prefix):
+  enum Reviewer(val wire: Reviewer.Wire, val prefix: Reviewer.Prefix) derives CanEqual:
     case Mechanical extends Reviewer(Reviewer.Wire("mechanical"), Reviewer.Prefix("M"))
     case Rules extends Reviewer(Reviewer.Wire("rules"), Reviewer.Prefix("R"))
     case ColdReader extends Reviewer(Reviewer.Wire("cold-reader"), Reviewer.Prefix("C"))
@@ -134,7 +134,7 @@ object ReviewArticle:
     given Decoder[Reviewer] = WireEnum.decoder
     given Schema[Reviewer] = WireEnum.schema
 
-  enum Severity(val wire: Severity.Wire):
+  enum Severity(val wire: Severity.Wire) derives CanEqual:
     case Major extends Severity(Severity.Wire("major"))
     case Minor extends Severity(Severity.Wire("minor"))
 
@@ -153,7 +153,7 @@ object ReviewArticle:
     given Schema[Severity] = WireEnum.schema
 
   /** An article's (or one reviewer's) verdict, ordered: the worst one wins. */
-  enum Verdict(val wire: Verdict.Wire, val rank: Verdict.Rank):
+  enum Verdict(val wire: Verdict.Wire, val rank: Verdict.Rank) derives CanEqual:
     case Pass extends Verdict(Verdict.Wire("PASS"), Verdict.Rank(0))
     case Minor extends Verdict(Verdict.Wire("MINOR"), Verdict.Rank(1))
     case Major extends Verdict(Verdict.Wire("MAJOR"), Verdict.Rank(2))

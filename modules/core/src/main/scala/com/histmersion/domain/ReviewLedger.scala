@@ -56,7 +56,7 @@ object ReviewLedger:
   type ArticleTaskSlug = com.histmersion.domain.research.Slug
   val ArticleTaskSlug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
 
-  enum Status(val wire: WireEnumValues.Wire):
+  enum Status(val wire: WireEnumValues.Wire) derives CanEqual:
     case Open extends Status(WireEnumValues.Wire("open"))
     case Fixed extends Status(WireEnumValues.Wire("fixed"))
     case Rejected extends Status(WireEnumValues.Wire("rejected"))
@@ -77,7 +77,7 @@ object ReviewLedger:
     given Decoder[Status] = WireEnum.decoder
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
-  enum LessonSource(val wire: WireEnumValues.Wire):
+  enum LessonSource(val wire: WireEnumValues.Wire) derives CanEqual:
     case Rejection extends LessonSource(WireEnumValues.Wire("rejection"))
     case Recheck extends LessonSource(WireEnumValues.Wire("recheck"))
 
@@ -487,7 +487,7 @@ object ReviewLedger:
     s"${e.id} ${e.finding.severity.wire}$at: ${e.finding.problem.value.trim.take(140)} → $how"
 
   /** How much of the open findings a prompt shows: in full, one line each, or not at all. */
-  enum OpenStyle:
+  enum OpenStyle derives CanEqual:
     case Full, Lines, Omit
 
   /** The ledger as a prompt shows it (inside `<review-ledger>`): the open findings (`style`; with `only`, just that

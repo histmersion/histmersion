@@ -178,7 +178,7 @@ object ManagerPolicy:
   // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
 
   /** What a manager's cron does at a tick. */
-  enum CronStep:
+  enum CronStep derives CanEqual:
     /** Nothing: no cron, or not due yet. */
     case Idle
 
@@ -237,7 +237,7 @@ object ManagerPolicy:
   def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)
 
   /** What the next step of an item is, once its run settled. */
-  enum Next:
+  enum Next derives CanEqual:
     /** Run it again (not before `notBefore`). */
     case Again(notBefore: Option[Instant], state: ItemState, note: ItemNote)
 
@@ -272,7 +272,7 @@ object ManagerPolicy:
     * waits for a person's decision on approval `id`, or it ended without doing its work (`task`: what a person should
     * look at, if anything).
     */
-  enum StepFacts:
+  enum StepFacts derives CanEqual:
     case Finished(outcome: ItemOutcome)
     case Waiting(approval: ApprovalId, what: ItemNote)
     case NotDone(outcome: ItemOutcome, task: Option[ItemTask])
@@ -417,7 +417,7 @@ object ManagerPolicy:
   /** Several managers sharing the global room: one item from each in turn (in the order given), each within its own
     * `cap`, until `room` is used or nothing is left.
     */
-  def roundRobin[M, A](queues: List[(M, Quota, List[A])], room: Room): List[(M, A)] =
+  def roundRobin[M, A](queues: List[(M, Quota, List[A])], room: Room)(using CanEqual[M, M]): List[(M, A)] =
     @annotation.tailrec
     def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
       val live = qs.filter((_, cap, as) => cap > 0 && as.nonEmpty)

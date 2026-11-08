@@ -72,7 +72,7 @@ object AgentProposals:
 
 
   /** What becomes of a proposal. */
-  enum Route:
+  enum Route derives CanEqual:
     /** Applied by code now: the fill rule, or a kind configured `auto`. */
     case Apply
 

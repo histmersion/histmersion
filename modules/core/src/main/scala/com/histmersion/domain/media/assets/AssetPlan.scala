@@ -18,6 +18,8 @@ import java.util.UUID
   * is one; a figure added under a name another figure of its source has here arrives renamed.
   */
 final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   private val assetSource = in.foreign.assets.map(a => a.uid -> a.sourceUid).toMap
   private val linkAsset = in.foreign.assetLinks.map(l => l.uid -> l.assetUid).toMap
@@ -65,11 +67,11 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     // the links of a folded figure that this collection's figure already has are one
     in.foreign.assetLinks.foreach { k =>
       folds.foldedTo(k.assetUid).foreach { here =>
-        val target = k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u)).toString).getOrElse(k.targetId)
+        val target = k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u)).toString).getOrElse(k.targetId.value)
         in.local.assetLinks
           .find(x =>
             x.assetUid == here && x.relation == k.relation &&
-              x.targetType == k.targetType && x.targetUid.map(_.toString).getOrElse(x.targetId) == target
+              x.targetType == k.targetType && x.targetUid.map(_.toString).getOrElse(x.targetId.value) == target
           )
           .foreach { x =>
             folds.fold(k.uid, x.uid, Bundle.Kind.AssetLink)

@@ -36,6 +36,7 @@ final case class Cron(
     * expression that never fires, e.g. 30 February).
     */
   def next(after: Instant): Option[Instant] =
+    given CanEqual[LocalDate, LocalDate] = CanEqual.derived
     val start = after.truncatedTo(ChronoUnit.MINUTES).plus(1, ChronoUnit.MINUTES).atOffset(ZoneOffset.UTC)
     val day0 = start.toLocalDate
     Iterator

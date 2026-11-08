@@ -38,6 +38,8 @@ import com.histmersion.api.library.AuthorName
   * a pair folded field by field, a source renamed, how each was matched, and the final lines.
   */
 final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
   import SourcePlan.*
 
   private val km = MergeDecision.Kind
@@ -415,6 +417,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   }
 
 object SourcePlan:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   private def wire(ck: String): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck)
 

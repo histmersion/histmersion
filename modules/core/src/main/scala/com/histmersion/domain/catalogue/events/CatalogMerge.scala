@@ -32,7 +32,7 @@ object CatalogMerge:
   /** Where one record goes: into a stored event (`existing`), or into the NEW event `id` (several records of one thing
     * share it). `why` says what matched.
     */
-  enum Placement:
+  enum Placement derives CanEqual:
     case Existing(eventId: Event.Id, why: Placement.Why)
     case New(eventId: Event.Id, why: Placement.Why)
     def eventId: Event.Id

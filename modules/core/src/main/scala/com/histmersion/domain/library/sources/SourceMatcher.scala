@@ -32,6 +32,8 @@ import com.histmersion.domain.library.Citekey
   * classified: auto-merge, needs-decision, or new.
   */
 object SourceMatcher:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
@@ -249,7 +251,7 @@ object SourceMatcher:
 
   // ── assignment ──────────────────────────────────────────────────────────────────────────────
 
-  enum Outcome:
+  enum Outcome derives CanEqual:
     case AutoMerge, NeedsDecision
 
   final case class Pair(

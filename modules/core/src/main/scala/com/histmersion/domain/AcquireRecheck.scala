@@ -106,7 +106,7 @@ object AcquireRecheck:
     object HasOriginal extends Newtype[Boolean, Pure]
 
   /** What a pass does with one open item. */
-  enum Action:
+  enum Action derives CanEqual:
     /** No DOI in its text: nothing to look up. */
     case NoDoi
 
@@ -126,7 +126,7 @@ object AcquireRecheck:
           case other                    => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_checks.outcome`). */
-  enum Outcome(val wire: Outcome.Wire):
+  enum Outcome(val wire: Outcome.Wire) derives CanEqual:
     /** In the corpus with its original: closed. */
     case Closed extends Outcome(Outcome.Wire("closed"))
 

@@ -24,7 +24,7 @@ object CurrencyCheckRules:
   type AcquireText = AcquireText.T
   object AcquireText extends Newtype[String, Pure]
 
-  enum CurrencyAction:
+  enum CurrencyAction derives CanEqual:
     case Propose(p: Proposal)
     case Fetch(row: FollowupRow)
     case Ignore

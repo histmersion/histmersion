@@ -23,6 +23,8 @@ import com.histmersion.api.exchange.MergeTally
   * compared them: `periodMatches`); what points at a matched one by id points at ours.
   */
 final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
   import PeriodPlan.*
 
   private val km = MergeDecision.Kind

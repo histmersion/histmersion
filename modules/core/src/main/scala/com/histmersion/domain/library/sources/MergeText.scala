@@ -233,7 +233,7 @@ object MergeText:
     person(name).toSet.flatMap(p => Set(p.key, SurnameKey(p.surname.last.value)))
 
   /** How two author lists agree, as the score of §5.2 reads it. */
-  enum AuthorAgreement:
+  enum AuthorAgreement derives CanEqual:
     case Same, FirstAuthor, Overlap, Disjoint, Unknown
 
   def authors(a: List[AuthorName], b: List[AuthorName]): AuthorAgreement =
