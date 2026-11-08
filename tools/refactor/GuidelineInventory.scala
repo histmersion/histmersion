@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters._
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.meta.internal.{semanticdb => s}
 
-/** Read-only inventory of guideline violations (G3, G9/G50, G44, G45, G46, G47, G48, G49, silent comparisons).
+/** Read-only inventory of guideline violations (G3, G9/G50, G44, G45, G46, G47, G48, G49, G58raw, silent comparisons).
   * Writes one row per finding: rule, module, path, line, detail. Never patches sources. */
 object GuidelineInventory {
   case class Policy(
@@ -24,6 +24,8 @@ object GuidelineInventory {
     semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
     testMarkers: List[String] = List("/src/test/"),
     controllerFile: String = ".*(Controller|Controllers|Routes)\\.scala",
+    rawSqlOwners: List[String] = List("com/histmersion/util/database/Sql#", "com/histmersion/util/database/Sql."),
+    rawSqlText: List[String] = List("com/histmersion/util/database/Sql.Text."),
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
@@ -83,7 +85,8 @@ object GuidelineInventory {
     "G49" -> "`.value` inside a lambda passed to a collection operation, as an argument of contains/indexOf, or in `a.value == b.value` / `.value.equalsIgnoreCase(...)`",
     "silentCompare" -> "==/!=/contains/indexOf whose sides have unrelated types (opaque newtype vs primitive, two newtypes, enum vs primitive/newtype)",
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
-    "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)")
+    "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
+    "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
   val primitives = Set("java/lang/String#", "scala/Predef.String#", "scala/Int#", "scala/Long#", "scala/Double#", "scala/Boolean#",
@@ -286,6 +289,41 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case Term.Select(_, n) => Set("parse", "fromWire", "fromString", "either", "option", "transformIntoPartial")(n.value) && n.symbol.value.startsWith(policy.projectPrefix)
       case _ => false
     })
+    def isLiteral(t: Term): Boolean = t match {
+      case _: Lit.Null | _: Lit.Unit => false
+      case _: Lit => true
+      case u: Term.ApplyUnary => u.op.value == "-" && (u.arg match { case _: Lit.Int | _: Lit.Long | _: Lit.Double | _: Lit.Float => true; case _ => false })
+      case _ => false
+    }
+
+    // ---- G58raw: raw SQL text handed to an operator that bypasses the codecs --------------------------------------
+    def isRawText(sym: Symbol): Boolean = !sym.isNone && (policy.rawSqlText.contains(sym.value) || (resultOf(sym) match {
+      case Some(st: s.SingleType) => policy.rawSqlText.contains(st.symbol)
+      case _ => false
+    }))
+    def takesText(sym: Symbol): Boolean = info(sym).map(_.signature).exists {
+      case m: s.MethodSignature => m.parameterLists.flatMap(_.symlinks).exists { p =>
+        infoS(p).map(_.signature).exists {
+          case v: s.ValueSignature =>
+            val t = dealias(v.tpe)
+            typeSymbol(t).value == "java/lang/String#" || typeSymbol(t).value == "scala/Predef.String#" || newtypeOf(t).exists(o => policy.rawSqlText.contains(o.value))
+          case _ => false
+        }
+      }
+      case _ => false
+    }
+    def rawSqlOperator(sym: Symbol): Boolean = !sym.isNone && policy.rawSqlOwners.contains(sym.owner.value) && takesText(sym)
+    def rawSqlOf(fun: Term): Option[String] = fun match {
+      case n: Term.Name if isRawText(n.symbol) => Some("text:" + n.value)
+      case n: Term.Name if rawSqlOperator(n.symbol) => Some("operator:" + n.value)
+      case Term.Select(q, n) if isRawText(n.symbol) => Some("text:" + n.value)
+      case Term.Select(q, n) if constructNames(n.value) && (q match { case qn: Term.Name => isRawText(qn.symbol); case qs: Term.Select => isRawText(qs.name.symbol); case _ => false }) =>
+        Some("text:" + (q match { case qn: Term.Name => qn.value; case qs: Term.Select => qs.name.value; case _ => "" }) + "." + n.value)
+      case Term.Select(_, n) if rawSqlOperator(n.symbol) => Some("operator:" + n.value)
+      case Term.ApplyType(f, _) => rawSqlOf(f)
+      case _ => None
+    }
+
     def allowedInCompanion(t: Tree, nt: Option[Symbol]): Boolean = {
       val enclosing = enclosingNewtypes(t)
       enclosing.nonEmpty && nt.forall(enclosing.contains)
@@ -335,9 +373,10 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val (obj, how) = constructionOf(a.fun).get
         val args = a.argClause.values
         val bridged = args.exists { case s: Term.Select => isIronValue(s.name); case _ => false }
-        if (!bridged && !allowedInCompanion(a, Some(obj))) {
-          val literal = args.nonEmpty && args.forall(_.is[Lit])
-          val detail = s"construct:${obj.displayName}.$how;" + (if (literal) "literal" else "expr")
+        // a newtype built from a literal is checked by Iron at compile time and allowed anywhere (decision 2026-11-08)
+        val literal = how == "apply" && args.nonEmpty && args.forall(isLiteral)
+        if (!bridged && !literal && !allowedInCompanion(a, Some(obj))) {
+          val detail = s"construct:${obj.displayName}.$how;expr"
           if (boundary) report("G45boundary", a, detail + ";" + boundaryKinds(path))
           else if (isController) report("G44conversion", a, detail)
           else report("G44", a, detail)
@@ -358,6 +397,11 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           else report("G44", s, detail)
           if (Set("option", "either", "optionAll", "eitherAll")(n.value) && newtypeParents(obj).exists(_._3.value == pure)) report("silentPure", s, s"${obj.displayName}.${n.value}")
         }
+    }
+
+    doc.tree.traverse {
+      case a: Term.Apply if !inImport(a) => rawSqlOf(a.fun).foreach(d => report("G58raw", a, d))
+      case i: Term.ApplyInfix if rawSqlOperator(i.op.symbol) => report("G58raw", i, "operator:" + i.op.value)
     }
 
     // ---- G44 plain-typed defs fed by newtypes: record defs and calls --------------------------------------------
