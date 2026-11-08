@@ -1,9 +1,12 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.FetchChain
 
 import java.nio.file.Path
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the acquisition chain made of one work, after the server's own checks of each answer. */
 enum FetchOutcome:
@@ -21,7 +24,7 @@ enum FetchOutcome:
 object FetchOutcome:
   object Miss:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
   object Refused:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]

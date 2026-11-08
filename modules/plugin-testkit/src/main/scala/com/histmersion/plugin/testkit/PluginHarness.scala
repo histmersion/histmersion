@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
@@ -36,6 +37,15 @@ import com.histmersion.plugin.testkit.internal.{Lines, Scrubber, TestVaults, Wir
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.config.MediaPluginCollectionsConfig
+import com.histmersion.domain.Attribution
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.pluginhost.HostAiHttp
+import com.histmersion.config.AcquireConfig
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.pluginhost.SystemProcesses
 
 /** A plugin loaded as the Histmersion server loads it — without the server, its database or Postgres — and run as the
   * server runs it.
@@ -119,7 +129,7 @@ final class PluginHarness private (
     */
   def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[PluginHarness.Problem, WorkKey] =
     val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
-    def json(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url) = acquisition
+    def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))
       .left
       .map(e => WorkLookup.Problem(e.value))
@@ -200,7 +210,7 @@ final class PluginHarness private (
             hostLog
           )
           val http = PluginMedia.http(polite)
-          val allow = host.media.collections.allowed(com.histmersion.config.MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
+          val allow = host.media.collections.allowed(MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
           PluginMedia.guard(col.search(place, http)) match
             case Left(why)    => (Nil, Some(MediaReport.Failure(why.value)))
             case Right(items) => (items.map(judge(PluginMedia.Provider(collection.value), col, http, allow)), None)
@@ -315,7 +325,7 @@ final class PluginHarness private (
         val (got, logged, asked) = run {
           val http = PluginGazetteers.http(wire.transport(PluginGazetteers.transport(host.places)), hostLog)
           PluginGazetteers.guard(src.fetch(http)).map { places =>
-            val credit = PluginGazetteers.guard(Right(com.histmersion.domain.Attribution.Credit(src.rights.credit.value))).getOrElse(com.histmersion.domain.Attribution.Credit(""))
+            val credit = PluginGazetteers.guard(Right(Attribution.Credit(src.rights.credit.value))).getOrElse(Attribution.Credit(""))
             places.map(p => PluginGazetteers.input(p, credit).map(in => AcceptedPlace(p, in.place.source)))
           }
         }
@@ -358,17 +368,17 @@ final class PluginHarness private (
 object PluginHarness:
   /** Why a harness could not be built or a lookup could not be made. */
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** One request made through the harness: `GET <url>`, with secrets shown as `{secret}`. */
   type Request = Request.T
-  object Request extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Request extends RefinedType[String, Pure]
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
   val TestVaultsId: Plugin.Info.Id = Plugin.Info.Id("testkit-vaults")
 
   /** The server's client for model calls, to run an AI provider against the real service. */
-  def liveAiHttp: AiHttp = com.histmersion.pluginhost.HostAiHttp()
+  def liveAiHttp: AiHttp = HostAiHttp()
 
   /** Load the plugin `id` from the test class path as the server would, and register it.
     *
@@ -399,7 +409,7 @@ object PluginHarness:
       secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2] = Map.empty,
       env: Map[String, String] = sys.env,
       histmersionConf: Option[Path] = None
-  ): Either[PluginHarness.Problem, PluginHarness] =
+  ): Either[Problem, PluginHarness] =
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
     val envSecrets = secrets.collect { case (k, v) if k.value.startsWith(s"${Secret.Ref.EnvScheme}:") => k.value.drop(4).trim -> v.value }
     val environment = env ++ envSecrets
@@ -423,17 +433,17 @@ object PluginHarness:
       )
     yield harness
 
-  private def configText(config: String | Path): Either[PluginHarness.Problem, String] = config match
+  private def configText(config: String | Path): Either[Problem, String] = config match
     case p: Path =>
-      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(PluginHarness.Problem(s"no config file $p"))
+      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(Problem(s"no config file $p"))
     case s: String => Right(s)
 
   /** The plugin with this id among the providers ServiceLoader finds, or what is missing. */
-  private def discover(loader: ClassLoader, id: Plugin.Info.Id): Either[PluginHarness.Problem, Plugin] =
+  private def discover(loader: ClassLoader, id: Plugin.Info.Id): Either[Problem, Plugin] =
     val services = s"META-INF/services/${classOf[Plugin].getName}"
     if !loader.getResources(services).hasMoreElements then
       Left(
-        PluginHarness.Problem(
+        Problem(
           s"no $services on the test class path: the server would find no plugin (the file names the plugin class, one per line)"
         )
       )
@@ -443,25 +453,25 @@ object PluginHarness:
         case List(p) => Right(p)
         case Nil     =>
           Left(
-            PluginHarness.Problem(
+            Problem(
               s"no plugin with the id '$id' on the test class path (found: ${found.map(_.info.id).mkString(", ")})" +
                 errors.map("; " + _.value).mkString
             )
           )
         case many =>
           Left(
-            PluginHarness.Problem(
+            Problem(
               s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}"
             )
           )
 
   /** The plugin's defaults, which must exist: without them the server knows none of its settings. */
-  private def defaultsOf(p: Plugin): Either[PluginHarness.Problem, String] =
+  private def defaultsOf(p: Plugin): Either[Problem, String] =
     val loader = Option(p.getClass.getClassLoader).getOrElse(getClass.getClassLoader)
     Option(loader.getResource(p.defaultsResource.value)) match
       case None =>
         Left(
-          PluginHarness.Problem(
+          Problem(
             s"${p.info.id}: no ${p.defaultsResource} beside the plugin class — the server would know none of " +
               "its settings and leave it disabled"
           )
@@ -470,22 +480,22 @@ object PluginHarness:
         PluginHost
           .defaults(p)
           .left
-          .map(e => PluginHarness.Problem(e.value))
+          .map(e => Problem(e.value))
           .flatMap(_ =>
             scala.util
               .Using(url.openStream)(in => new String(in.readAllBytes, UTF_8))
               .toEither
               .left
-              .map(e => PluginHarness.Problem(s"${p.defaultsResource}: ${e.getMessage}"))
+              .map(e => Problem(s"${p.defaultsResource}: ${e.getMessage}"))
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
-  private def testVaults(secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]): Either[PluginHarness.Problem, Option[Plugin]] =
+  private def testVaults(secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]): Either[Problem, Option[Plugin]] =
     val refs = secrets.toList
       .filterNot(_._1.value.startsWith(s"${Secret.Ref.EnvScheme}:"))
       .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
     refs.collectFirst { case Left(e) => e } match
-      case Some(e) => Left(PluginHarness.Problem(s"secrets: ${e.value}"))
+      case Some(e) => Left(Problem(s"secrets: ${e.value}"))
       case None    =>
         val byVault = refs
           .collect { case Right((Secret.Ref.Vault(vault, ref), v)) => (vault, ref, v) }
@@ -495,13 +505,13 @@ object PluginHarness:
           .toMap
         Right(Option.when(byVault.nonEmpty)(TestVaults(TestVaultsId, byVault)))
 
-  private def userConfig(id: Plugin.Info.Id, text: String, withVaults: Boolean): Either[PluginHarness.Problem, Config] =
+  private def userConfig(id: Plugin.Info.Id, text: String, withVaults: Boolean): Either[Problem, Config] =
     val path = s"${PluginHost.Root}.$id"
     scala.util
       .Try(ConfigFactory.parseString(text))
       .toEither
       .left
-      .map(e => PluginHarness.Problem(s"the config does not parse: ${e.getMessage}"))
+      .map(e => Problem(s"the config does not parse: ${e.getMessage}"))
       .map { parsed =>
         val block = if parsed.hasPath(path) then parsed.getConfig(path) else parsed
         val on = if block.hasPath("enabled") then block
@@ -523,14 +533,14 @@ object PluginHarness:
   /** The server's settings: its defaults and the environment's overrides (or a `histmersion.conf`), with the contact
     * e-mail left out so that no request of a test carries it — the settings a first-party plugin is supplied from too.
     */
-  private def hostConfig(env: Config, file: Option[Path]): Either[PluginHarness.Problem, LoadedConfig] =
+  private def hostConfig(env: Config, file: Option[Path]): Either[Problem, LoadedConfig] =
     AppConfig
       .loadWithUserFile(env, file)
       .left
-      .map(e => PluginHarness.Problem(e.value))
+      .map(e => Problem(e.value))
       .map(l =>
         l.copy(
-          config = l.config.modify(_.acquire.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail("")),
+          config = l.config.modify(_.acquire.contactEmail).setTo(AcquireConfig.ContactEmail("")),
           merged = l.merged.withValue(ContactPath, ConfigValueFactory.fromAnyRef(""))
         )
       )
@@ -552,13 +562,13 @@ object PluginHarness:
       loaded: LoadedConfig,
       mode: HttpMode,
       scrub: Scrubber
-  ): Either[PluginHarness.Problem, PluginHarness] =
+  ): Either[Problem, PluginHarness] =
     val host = loaded.config
     val lines = Lines()
     val wire = Wire(mode, scrub)
     val acquisition =
       PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), ms => if mode.live then Thread.sleep(ms.value), lines.host)
-    val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
+    val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new DiskLocalFiles, processes = new SystemProcesses)
     // a first-party plugin is supplied the server's own settings it reads, as the server supplies them
     val supplied = FirstPartySettings.hostView(loaded.merged, user, env, List(plugin))
     val generation = PluginHost.build(
@@ -572,7 +582,7 @@ object PluginHarness:
     val statuses = generation.report.plugins
     val failedVaults = statuses.find(s => s.id.value == TestVaultsId.value && s.state != PluginState.Registered.wire)
     statuses.find(_.id.value == id.value) match
-      case None                                                => Left(PluginHarness.Problem(s"$id: the server did not consider the plugin"))
+      case None                                                => Left(Problem(s"$id: the server did not consider the plugin"))
       case Some(st) if st.state == PluginState.Registered.wire =>
         Right(
           PluginHarness(
@@ -589,9 +599,9 @@ object PluginHarness:
           )
         )
       case Some(st) if st.state == PluginState.Disabled.wire =>
-        Left(PluginHarness.Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
+        Left(Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
       case Some(st) =>
-        Left(PluginHarness.Problem(st.error.map(_.value).getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")))
+        Left(Problem(st.error.map(_.value).getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")))
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
   private def save(dir: Path, fetcher: FetchChain.Outcome.FoundBy, work: WorkKey, file: FetchedFile): Path =

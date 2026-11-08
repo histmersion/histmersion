@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit.kit
+package com.histmersion
+package plugin.testkit.kit
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given

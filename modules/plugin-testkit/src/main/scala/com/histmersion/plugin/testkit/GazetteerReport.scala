@@ -1,4 +1,8 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One import of a gazetteer source, read as the server reads it: the download through the server's gazetteer client,
   * each place checked as the server stores it.
@@ -20,6 +24,6 @@ final case class GazetteerReport(
 
 object GazetteerReport:
   type Refused = Refused.T
-  object Refused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refused extends RefinedType[String, Pure]
   type Failure = Failure.T
-  object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Failure extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.plugin.*

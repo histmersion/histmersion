@@ -1,6 +1,9 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.plugin.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One search of a media collection for one place, as the server's import runs it: through the collection's polite
   * client, the records judged, each record the server would keep completed.
@@ -18,4 +21,4 @@ final case class MediaReport(
 
 object MediaReport:
   type Failure = Failure.T
-  object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Failure extends RefinedType[String, Pure]

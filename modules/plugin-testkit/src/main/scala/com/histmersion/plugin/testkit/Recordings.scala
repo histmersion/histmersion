@@ -1,4 +1,5 @@
-package com.histmersion.plugin.testkit
+package com.histmersion
+package plugin.testkit
 
 import com.histmersion.plugin.testkit.internal.RecordedExchange
 
