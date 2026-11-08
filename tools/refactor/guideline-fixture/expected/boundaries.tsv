@@ -1,0 +1,2 @@
+path	kind	reason
+modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	sql	fixture: binds parameters and reads rows
