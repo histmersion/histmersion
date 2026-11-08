@@ -460,7 +460,7 @@ package com.histmersion.domain                               // shared kernel
 final case class ItemRef(kind: ItemKind, key: ItemKey, uid: Option[ItemUid])
 
 type ItemKind = ItemKind.T                                     // "source", "article", … — registered by the owners
-object ItemKind extends RefinedType[String, Match["[a-z][a-z-]*"]]
+object ItemKind extends Newtype[String, Match["[a-z][a-z-]*"]]
 
 /** Implemented by each domain whose records others point at. */
 trait Referable:
@@ -554,7 +554,7 @@ licence-ish fields today: `license: Option[String]` 19, `licence: String` 10, `l
   feature uses it. It goes in `domain.<domain>.<feature>` when only one feature's logic uses it. It goes in
   `config.<domain>` when it is a setting with no meaning outside configuration. `plugin-api` keeps its own
   copies (`Year`, `Doi`, …; SPI 2), which chimney-iron converts because the names and constraints are the same.
-- **Shape.** Rule 1's `type X = X.T; object X extends RefinedType[Base, C]`. The constraint is `Pure` unless the
+- **Shape.** Rule 1's `type X = X.T; object X extends Newtype[Base, C]` (`Newtype` extends Iron's `RefinedType`). The constraint is `Pure` unless the
   code already rejects values today, so no valid input is refused that is accepted now. Where a value has a rule,
   that rule is the one the code already enforces (taken from the current regexes and checks). Where two rules
   disagree today, the stricter one consistent with live data wins and the change is listed (`Citekeys.valid` vs
