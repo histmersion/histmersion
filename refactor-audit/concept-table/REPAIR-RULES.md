@@ -94,3 +94,8 @@ Literal constructors (`Citekey("x")`, `PageSize(20)`) are allowed anywhere (user
 ## No compatibility engineering (user, 2026-11-08; overrides anything above)
 
 Until the user says the code is published, the only constraint is that the data in the user's current database survives. API, MCP, CLI output, plugin SPI, wire formats, JSON types, schema names, migration history: change them freely and update every consumer in the repo (web, cli, plugins, tests) in the same change. Contract snapshots (openapi.json, mcp-tools.json, toolbox.json, plugin-testkit-api.txt, contracts.tsv) are regenerated, never defended; a recorded traffic fixture is updated to the new shape. Spend nothing on keeping an old shape.
+
+## Failure messages (user, 2026-11-08)
+- A failure message is the layer's one `Problem` type, never a per-function `XResultPart1` / `X.Problem` / `Reason` copy.
+- If any caller matches on or branches by the failure (checks its text, maps it to a status code, retries on one kind), make the failure a closed `enum` of cases on the owning type's companion; render it to text only at the boundary.
+- No positional names (`Part1`, `Part2`, `Result1`): name the concept (`Header.Name`, `Header.Value`).
