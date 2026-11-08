@@ -4,7 +4,6 @@ package pluginhost
 import sttp.client4.*
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.CoreQuota
@@ -14,7 +13,7 @@ import com.histmersion.domain.CoreQuota
   */
 object Challenge:
   type Body = Body.T
-  object Body extends RefinedType[Array[Byte], Pure]
+  object Body extends Newtype[Array[Byte], Pure]
   def isChallenge(code: HttpPolicy.StatusCode, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue], body: Body): Boolean =
     val mitigated = headers.exists((k, v) => k.value.equalsIgnoreCase("cf-mitigated") && v.value.toLowerCase.contains("challenge"))
     val page = new String(body.value.take(4096), "ISO-8859-1").toLowerCase

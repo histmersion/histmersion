@@ -3,7 +3,6 @@ package util.database
 
 import com.augustnagro.magnum.{connect as connectTo, transact as transactOn, DbCon}
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Transactor:
@@ -15,7 +14,7 @@ trait Transactor:
 
 object Transactor:
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends RefinedType[Int, Pure]
+  object TimeoutMs extends Newtype[Int, Pure]
 
   def apply(dataSource: DataSource): Transactor = Implementation(dataSource)
   def onConnection(using con: DbCon): Session = new Session(con)

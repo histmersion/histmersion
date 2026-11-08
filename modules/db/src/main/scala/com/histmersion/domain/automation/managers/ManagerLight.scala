@@ -6,7 +6,6 @@ import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
@@ -25,19 +24,19 @@ final case class ManagerLight(
 
 object ManagerLight:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
   type Cron = Cron.T
-  object Cron extends RefinedType[String, Pure]
+  object Cron extends Newtype[String, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends RefinedType[String, Pure]
+  object StatusNote extends Newtype[String, Pure]
   type PlanItem = PlanItem.T
-  object PlanItem extends RefinedType[Boolean, Pure]
+  object PlanItem extends Newtype[Boolean, Pure]
 
   private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
   given DbCodec[ManagerLight] = DbCodec.derived

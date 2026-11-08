@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.media
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Free-text object dates as museums write them (`1550-1196 BCE`, `100 BCE-100 CE`, `ca. 3300-ca. 2250 BCE`,
@@ -12,9 +11,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object FreeTextDates:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[Long, Pure]
+  object Year extends Newtype[Long, Pure]
 
 
   private val Part =

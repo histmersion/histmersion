@@ -4,7 +4,6 @@ package domain.catalogue.evidence
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A dated, placed finding near an event: how far, and the years between. */
@@ -20,10 +19,10 @@ final private[evidence] case class NearFindingRow(
 
 object NearFindingRow:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type Km = Km.T
-  object Km extends RefinedType[Double, Pure]
+  object Km extends Newtype[Double, Pure]
   type YearGap = YearGap.T
-  object YearGap extends RefinedType[Long, Pure]
+  object YearGap extends Newtype[Long, Pure]

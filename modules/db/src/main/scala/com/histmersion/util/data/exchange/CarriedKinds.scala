@@ -10,7 +10,6 @@ import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
@@ -43,7 +42,7 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
 
 object CarriedKinds:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The kinds in the format's order, or what is wrong with them: an entry no kind carries, one carried twice, one the
     * format does not have.
     */

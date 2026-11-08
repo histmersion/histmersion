@@ -6,7 +6,6 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which events a list, the map's events or the leads select: those related to the filter's sources (read with the
@@ -28,8 +27,8 @@ final case class EventSelection(
 
 object EventSelection:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]

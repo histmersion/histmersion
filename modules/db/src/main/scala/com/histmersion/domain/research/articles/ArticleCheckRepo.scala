@@ -13,7 +13,6 @@ import com.histmersion.api.checks.{FormatField, Lint}
 import com.histmersion.api.research.CritiquePairing
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
@@ -30,7 +29,7 @@ private[articles] object ArticleCheckRepo:
 
   /** Rules that are one SQL statement. Ordered so the report is stable. */
   type ReportMaxItems = ReportMaxItems.T
-  object ReportMaxItems extends RefinedType[Int, Pure]
+  object ReportMaxItems extends Newtype[Int, Pure]
 
   val projections: Map[String, String] = Map(
     // The article-side twin of `dangling-edges`, resolved exactly the way the RENDERER resolves a
@@ -164,7 +163,7 @@ private[articles] object ArticleCheckRepo:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
 
   /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not written:
     * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its

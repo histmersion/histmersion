@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.helloai
 
+import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
@@ -44,4 +45,4 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
 
 object HelloAiProvider:
   type HasToken = HasToken.T
-  object HasToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HasToken extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

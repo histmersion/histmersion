@@ -8,7 +8,6 @@ import com.histmersion.config.PlacesConfig
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.Attribution
@@ -18,13 +17,13 @@ import com.histmersion.domain.Attribution
   */
 object PluginGazetteers:
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Warning = Warning.T
-  object Warning extends RefinedType[String, Pure]
+  object Warning extends Newtype[String, Pure]
 
   /** The User-Agent of a gazetteer download (the outbound policy makes sure it names no person). */
   val UserAgent: HttpPolicy.UserAgent = HttpPolicy.UserAgent(s"Histmersion/${Version.version} (gazetteer import)")

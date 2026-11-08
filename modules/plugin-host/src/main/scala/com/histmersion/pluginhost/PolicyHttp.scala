@@ -8,7 +8,6 @@ import sttp.client4.*
 
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Plugin
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition client: every request a source fetcher (a plugin's through [[Plugin.Http]], or a built-in one) and
@@ -98,7 +97,7 @@ final class PolicyHttp(
 
 object PolicyHttp:
   type Tries = Tries.T
-  object Tries extends RefinedType[Int, Pure]
+  object Tries extends Newtype[Int, Pure]
 
   val UserAgent: CoreQuota.HeaderName = CoreQuota.HeaderName("User-Agent")
 

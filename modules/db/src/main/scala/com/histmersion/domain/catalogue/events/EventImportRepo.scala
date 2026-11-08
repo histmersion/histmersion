@@ -11,7 +11,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
@@ -19,7 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 private[events] object EventImportRepo:
   type PartName = PartName.T
-  object PartName extends RefinedType[String, Pure]
+  object PartName extends Newtype[String, Pure]
 
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).

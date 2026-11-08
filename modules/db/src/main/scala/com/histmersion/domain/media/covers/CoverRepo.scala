@@ -7,7 +7,6 @@ import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 
@@ -16,11 +15,11 @@ import com.histmersion.domain.library.Citekey
   */
 private[covers] object CoverRepo:
   type Only = Only.T
-  object Only extends RefinedType[String, Pure]
+  object Only extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]
 
   /** Sources with figures, for illustrations: those without one yet (all with `refresh`), or `only`. */
 

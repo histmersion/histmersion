@@ -18,7 +18,6 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.SourceColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
@@ -29,7 +28,7 @@ import com.histmersion.api.catalogue.Year
   */
 private[citations] object CitationRepo:
   type Since = Since.T
-  object Since extends RefinedType[Long, Pure]
+  object Since extends Newtype[Long, Pure]
 
 
 

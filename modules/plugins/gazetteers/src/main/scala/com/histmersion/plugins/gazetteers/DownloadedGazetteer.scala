@@ -7,7 +7,6 @@ import io.circe.JsonObject
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.ZipInputStream
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A gazetteer that is one file at a fixed address: downloaded whole through the host's client, unpacked when it is a
@@ -48,11 +47,11 @@ object DownloadedGazetteer:
   type Problem = GazetteerSource.FetchResultPart1
   val Problem: GazetteerSource.FetchResultPart1.type = GazetteerSource.FetchResultPart1
   type Slug = Slug.T
-  object Slug extends RefinedType[String, Pure]
+  object Slug extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[Long, Pure]
+  object Year extends Newtype[Long, Pure]
   /** The first usable file of a zip archive, as UTF-8 text. */
 
 

@@ -4,7 +4,6 @@ package pluginhost
 import com.histmersion.plugin.{Access, FetchedFile, WorkKey}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the plugins registered,
@@ -39,4 +38,4 @@ trait OaFetcher:
 
 object OaFetcher:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

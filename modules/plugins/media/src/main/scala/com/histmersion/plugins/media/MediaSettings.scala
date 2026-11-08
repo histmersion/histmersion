@@ -3,7 +3,6 @@ package plugins.media
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.media` as the collections read it: the pace, the widths of the stored rendition and of the card's
@@ -30,10 +29,10 @@ final case class MediaSettings(
 
 object MediaSettings:
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends RefinedType[Int, Pure]
+  object DisplayPx extends Newtype[Int, Pure]
   type ThumbPx = ThumbPx.T
-  object ThumbPx extends RefinedType[Int, Pure]
+  object ThumbPx extends Newtype[Int, Pure]
   type PerProperty = PerProperty.T
-  object PerProperty extends RefinedType[Int, Pure]
+  object PerProperty extends Newtype[Int, Pure]

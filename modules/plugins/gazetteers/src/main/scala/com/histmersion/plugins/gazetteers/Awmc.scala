@@ -3,7 +3,6 @@ package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
@@ -17,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Awmc extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
-  object Ordinal extends RefinedType[Int, Pure]
+  object Ordinal extends Newtype[Int, Pure]
 
   val title = GazetteerSource.TitleResult("AWMC classical-world regional names and features")
   override val description = GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")

@@ -14,7 +14,6 @@ import com.histmersion.api.library.{DeleteCount, DeletePart, Edge}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
@@ -59,7 +58,7 @@ private[sources] object SourceDeleteRepo:
     type Title = com.histmersion.domain.Title
     val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
     type CalibreId = CalibreId.T
-    object CalibreId extends RefinedType[String, Pure]
+    object CalibreId extends Newtype[String, Pure]
 
   private def keysOf(ck: Citekey, keys: List[Citekey])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))

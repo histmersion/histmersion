@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A goal's link as a bundle reads it, the linked record by its uid (Magnum maps a SELECT's columns positionally). */
@@ -21,10 +20,10 @@ final private[histmersion] case class BGoalLinkRow(
 
 object BGoalLinkRow:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Ref = Ref.T
-  object Ref extends RefinedType[String, Pure]
+  object Ref extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]

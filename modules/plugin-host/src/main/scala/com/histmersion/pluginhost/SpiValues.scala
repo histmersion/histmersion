@@ -2,7 +2,6 @@ package com.histmersion
 package pluginhost
 
 import com.histmersion.plugin as spi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Year
 import com.histmersion.domain.DeepTime
@@ -26,7 +25,7 @@ import com.histmersion.plugin.Licence
   */
 object SpiValues:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   // ── towards a plugin ────────────────────────────────────────────────────────────────────────
 

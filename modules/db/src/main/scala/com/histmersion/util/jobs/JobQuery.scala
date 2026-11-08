@@ -1,7 +1,6 @@
 package com.histmersion
 package util.jobs
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the jobs list is filtered by (core `ListFilters.JobFilter`, validated): any of these states and kinds; `since`
@@ -18,8 +17,8 @@ final case class JobQuery(
 
 object JobQuery:
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Kinds = Kinds.T
-  object Kinds extends RefinedType[String, Pure]
+  object Kinds extends Newtype[String, Pure]
   type Q = Q.T
-  object Q extends RefinedType[String, Pure]
+  object Q extends Newtype[String, Pure]

@@ -8,7 +8,6 @@ import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy, EventTier}
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 
@@ -17,7 +16,7 @@ import com.histmersion.domain.catalogue.Place
   */
 object EventSql:
   type Point = Point.T
-  object Point extends RefinedType[String, Pure]
+  object Point extends Newtype[String, Pure]
 
   /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. */
 
@@ -58,9 +57,9 @@ object EventSql:
 
   object Narrow:
     type Tier = Tier.T
-    object Tier extends RefinedType[String, Pure]
+    object Tier extends Newtype[String, Pure]
     type Context = Context.T
-    object Context extends RefinedType[Boolean, Pure]
+    object Context extends Newtype[Boolean, Pure]
 
   /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related to
     * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),

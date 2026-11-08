@@ -7,7 +7,6 @@ import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
@@ -20,7 +19,7 @@ private[maptiles] object UndatedSiteRepo:
 
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
   type Group = Group.T
-  object Group extends RefinedType[String, Pure]
+  object Group extends Newtype[String, Pure]
   export TileRepo.{SiteType as CandidatesSiteType}
 
   val UndatedGroup: Group = Group("undated")

@@ -5,12 +5,11 @@ package domain.library.sources.referrers
   * links moved in each).
   */
 import com.histmersion.api.library.Rename
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class RenamedReferences(columns: List[Rename.Count] = Nil, texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil)
 
 object RenamedReferences:
   type TextsPart1 = TextsPart1.T
-  object TextsPart1 extends RefinedType[String, Pure]
+  object TextsPart1 extends Newtype[String, Pure]
   type TextsPart2 = TextsPart2.T
-  object TextsPart2 extends RefinedType[Int, Pure]
+  object TextsPart2 extends Newtype[Int, Pure]

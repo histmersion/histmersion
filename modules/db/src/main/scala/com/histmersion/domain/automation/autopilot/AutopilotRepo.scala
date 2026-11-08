@@ -4,7 +4,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 
@@ -14,13 +13,13 @@ import com.histmersion.api.automation.Managers
   */
 object AutopilotRepo:
   type Digest = Digest.T
-  object Digest extends RefinedType[String, Pure]
+  object Digest extends Newtype[String, Pure]
   type StrategyName = StrategyName.T
-  object StrategyName extends RefinedType[String, Pure]
+  object StrategyName extends Newtype[String, Pure]
   type DrainSince = DrainSince.T
-  object DrainSince extends RefinedType[String, Pure]
+  object DrainSince extends Newtype[String, Pure]
   type DrainedAt = DrainedAt.T
-  object DrainedAt extends RefinedType[String, Pure]
+  object DrainedAt extends Newtype[String, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
@@ -39,19 +38,19 @@ object AutopilotRepo:
 
   object Row:
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type ChangedAt = ChangedAt.T
-    object ChangedAt extends RefinedType[String, Pure]
+    object ChangedAt extends Newtype[String, Pure]
     type ChangedBy = ChangedBy.T
-    object ChangedBy extends RefinedType[String, Pure]
+    object ChangedBy extends Newtype[String, Pure]
     type Paused = Paused.T
-    object Paused extends RefinedType[String, Pure]
+    object Paused extends Newtype[String, Pure]
     type LastEnsureAt = LastEnsureAt.T
-    object LastEnsureAt extends RefinedType[String, Pure]
+    object LastEnsureAt extends Newtype[String, Pure]
     type LastBackupAt = LastBackupAt.T
-    object LastBackupAt extends RefinedType[String, Pure]
+    object LastBackupAt extends Newtype[String, Pure]
     type LastLintAt = LastLintAt.T
-    object LastLintAt extends RefinedType[String, Pure]
+    object LastLintAt extends Newtype[String, Pure]
 
   /** The row, made first if it is not there yet. */
   def get()(using DbCon): Row =

@@ -3,7 +3,6 @@ package domain.library.sources.referrers
 
 import com.histmersion.api.library.Rename
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source given a new citekey: `from` becomes `to`; `shortForms` are the short citekeys (`beckman2025` for
@@ -25,4 +24,4 @@ final case class SourceRename(from: Citekey, to: Citekey, shortForms: Set[Citeke
 
 object SourceRename:
   type Needle = Needle.T
-  object Needle extends RefinedType[String, Pure]
+  object Needle extends Newtype[String, Pure]

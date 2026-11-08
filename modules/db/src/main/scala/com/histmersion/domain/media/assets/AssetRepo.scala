@@ -10,7 +10,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.media.{AssetDetail, AssetInfo, AssetPatch}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.ByteCount
@@ -31,7 +30,7 @@ import com.histmersion.domain.DeepTime
   */
 private[assets] object AssetRepo:
   type ReplaceExisting = ReplaceExisting.T
-  object ReplaceExisting extends RefinedType[Boolean, Pure]
+  object ReplaceExisting extends Newtype[Boolean, Pure]
 
   /** REPLACE the whole set for one source (what a re-conversion does). Returns how many were kept after sha256
     * deduplication.

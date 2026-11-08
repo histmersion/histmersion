@@ -7,7 +7,6 @@ import com.histmersion.api.library.Query.*
 
 import java.sql.{Connection, ResultSet, SQLException}
 import com.augustnagro.magnum.DbCon
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.Timer
 import com.histmersion.api.library.Query
@@ -32,13 +31,13 @@ import com.histmersion.api.library.Query
   */
 private[search] object QueryRepo:
   type MaxCellChars = MaxCellChars.T
-  object MaxCellChars extends RefinedType[Int, Pure]
+  object MaxCellChars extends Newtype[Int, Pure]
   type MaxRows = MaxRows.T
-  object MaxRows extends RefinedType[Int, Pure]
+  object MaxRows extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Statement = Statement.T
-  object Statement extends RefinedType[String, Pure]
+  object Statement extends Newtype[String, Pure]
 
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.

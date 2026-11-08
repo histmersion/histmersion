@@ -7,7 +7,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
@@ -15,9 +14,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 private[agents] object ModelSettingsRepo:
   type ChainRole = ChainRole.T
-  object ChainRole extends RefinedType[String, Pure]
+  object ChainRole extends Newtype[String, Pure]
   type WindowSeconds = WindowSeconds.T
-  object WindowSeconds extends RefinedType[Long, Pure]
+  object WindowSeconds extends Newtype[Long, Pure]
 
   /** A saved chain: the role and its models (`provider:model`, first choice first). */
 
@@ -43,11 +42,11 @@ private[agents] object ModelSettingsRepo:
 
   object Saved:
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type ReservePct = ReservePct.T
-    object ReservePct extends RefinedType[Int, Pure]
+    object ReservePct extends Newtype[Int, Pure]
 
   def allowances(using DbCon): List[Saved] =
     sql"SELECT target, limits::text, reserve_pct FROM agent_allowances ORDER BY target"

@@ -7,7 +7,6 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
@@ -40,38 +39,38 @@ final private[events] case class BEventRow(
 
 object BEventRow:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type NotBefore = NotBefore.T
-  object NotBefore extends RefinedType[Long, Pure]
+  object NotBefore extends Newtype[Long, Pure]
   type BeginBy = BeginBy.T
-  object BeginBy extends RefinedType[Long, Pure]
+  object BeginBy extends Newtype[Long, Pure]
   type EndFrom = EndFrom.T
-  object EndFrom extends RefinedType[Long, Pure]
+  object EndFrom extends Newtype[Long, Pure]
   type NotAfter = NotAfter.T
-  object NotAfter extends RefinedType[Long, Pure]
+  object NotAfter extends Newtype[Long, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]
   type Geom = Geom.T
-  object Geom extends RefinedType[String, Pure]
+  object Geom extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
   type Scale = Scale.T
-  object Scale extends RefinedType[String, Pure]
+  object Scale extends Newtype[String, Pure]
   type Catalogue = Catalogue.T
-  object Catalogue extends RefinedType[String, Pure]
+  object Catalogue extends Newtype[String, Pure]
   type Names = Names.T
-  object Names extends RefinedType[String, Pure]
+  object Names extends Newtype[String, Pure]
   type Wikidata = Wikidata.T
-  object Wikidata extends RefinedType[String, Pure]
+  object Wikidata extends Newtype[String, Pure]
   type Central = Central.T
-  object Central extends RefinedType[Long, Pure]
+  object Central extends Newtype[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends RefinedType[Long, Pure]
+  object PlusMinus extends Newtype[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends RefinedType[String, Pure]
+  object DatingMethod extends Newtype[String, Pure]

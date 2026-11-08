@@ -11,7 +11,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
@@ -22,7 +21,7 @@ import com.histmersion.api.catalogue.Year
   */
 private[places] object FindingPlaceRepo:
   type PlaceholderAreaShare = PlaceholderAreaShare.T
-  object PlaceholderAreaShare extends RefinedType[Double, Pure]
+  object PlaceholderAreaShare extends Newtype[Double, Pure]
 
   import PlaceRepo.*
 
@@ -136,9 +135,9 @@ private[places] object FindingPlaceRepo:
 
   object Placeholder:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
   val placeholderFindingsSql: String =

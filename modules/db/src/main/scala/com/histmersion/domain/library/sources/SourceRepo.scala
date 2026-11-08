@@ -23,7 +23,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{CalibreGap, Edge, Finding, Rename, Source, TocEntry}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
@@ -40,13 +39,13 @@ import com.histmersion.domain.library.search.FilterSql
   */
 private[sources] object SourceRepo:
   type BodyChars = BodyChars.T
-  object BodyChars extends RefinedType[Int, Pure]
+  object BodyChars extends Newtype[Int, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Long, Pure]
+  object Count extends Newtype[Long, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
   private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck.value)
 
@@ -695,23 +694,23 @@ private[sources] object SourceRepo:
 
   object GapRow:
     type Doi = Doi.T
-    object Doi extends RefinedType[String, Pure]
+    object Doi extends Newtype[String, Pure]
     type Title = com.histmersion.domain.Title
     val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
     type Authors = Authors.T
-    object Authors extends RefinedType[String, Pure]
+    object Authors extends Newtype[String, Pure]
     type Venue = Venue.T
-    object Venue extends RefinedType[String, Pure]
+    object Venue extends Newtype[String, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
     type Provenance = Provenance.T
-    object Provenance extends RefinedType[String, Pure]
+    object Provenance extends Newtype[String, Pure]
     type CalibreId = CalibreId.T
-    object CalibreId extends RefinedType[String, Pure]
+    object CalibreId extends Newtype[String, Pure]
     type Isbn = Isbn.T
-    object Isbn extends RefinedType[String, Pure]
+    object Isbn extends Newtype[String, Pure]
 
   /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
     * has been written back, in citekey order, at most `limit`.

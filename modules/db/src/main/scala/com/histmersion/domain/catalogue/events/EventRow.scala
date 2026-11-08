@@ -9,7 +9,6 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An `events` row as the reads select it, with what its scale is derived from (its place's kind, its geometry's type)
@@ -71,36 +70,36 @@ final private[events] case class EventRow(
 
 object EventRow:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type NotBefore = NotBefore.T
-  object NotBefore extends RefinedType[Long, Pure]
+  object NotBefore extends Newtype[Long, Pure]
   type BeginBy = BeginBy.T
-  object BeginBy extends RefinedType[Long, Pure]
+  object BeginBy extends Newtype[Long, Pure]
   type EndFrom = EndFrom.T
-  object EndFrom extends RefinedType[Long, Pure]
+  object EndFrom extends Newtype[Long, Pure]
   type NotAfter = NotAfter.T
-  object NotAfter extends RefinedType[Long, Pure]
+  object NotAfter extends Newtype[Long, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]
   type ParentId = ParentId.T
-  object ParentId extends RefinedType[String, Pure]
+  object ParentId extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Scale = Scale.T
-  object Scale extends RefinedType[String, Pure]
+  object Scale extends Newtype[String, Pure]
   type PlaceKind = PlaceKind.T
-  object PlaceKind extends RefinedType[String, Pure]
+  object PlaceKind extends Newtype[String, Pure]
   type GeometryType = GeometryType.T
-  object GeometryType extends RefinedType[String, Pure]
+  object GeometryType extends Newtype[String, Pure]
   type Tier = Tier.T
-  object Tier extends RefinedType[String, Pure]
+  object Tier extends Newtype[String, Pure]
   type Central = Central.T
-  object Central extends RefinedType[Long, Pure]
+  object Central extends Newtype[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends RefinedType[Long, Pure]
+  object PlusMinus extends Newtype[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends RefinedType[String, Pure]
+  object DatingMethod extends Newtype[String, Pure]
   type Uncertainty = Uncertainty.T
-  object Uncertainty extends RefinedType[Long, Pure]
+  object Uncertainty extends Newtype[Long, Pure]

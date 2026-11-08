@@ -12,7 +12,6 @@ import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
@@ -34,17 +33,17 @@ import com.histmersion.api.exchange.MergePlan
   */
 object JobRepo:
   type DueAt = DueAt.T
-  object DueAt extends RefinedType[String, Pure]
+  object DueAt extends Newtype[String, Pure]
   type PageCursor = PageCursor.T
-  object PageCursor extends RefinedType[String, Pure]
+  object PageCursor extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ResumeAt = ResumeAt.T
-  object ResumeAt extends RefinedType[String, Pure]
+  object ResumeAt extends Newtype[String, Pure]
   type TokenBudget = TokenBudget.T
-  object TokenBudget extends RefinedType[Long, Pure]
+  object TokenBudget extends Newtype[Long, Pure]
   type WarningText = WarningText.T
-  object WarningText extends RefinedType[String, Pure]
+  object WarningText extends Newtype[String, Pure]
 
   /** ONE projection, reused by both reads (AGENTS.md: no duplicated column lists). Magnum's `sql""` cannot splice a
     * `Frag`, so composition goes through the module's own [[Sql]] fragment type.

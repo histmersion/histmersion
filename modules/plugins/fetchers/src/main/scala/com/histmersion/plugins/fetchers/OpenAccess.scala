@@ -13,7 +13,6 @@ import com.histmersion.upstreams.http.Url
 import io.circe.Json
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Access
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),
@@ -230,7 +229,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
 
 object OpenAccess:
   type CoreKey = CoreKey.T
-  object CoreKey extends RefinedType[String, Pure]
+  object CoreKey extends Newtype[String, Pure]
 
   /** The plugins whose upstreams the landing step reads on their behalf. */
   val Unpaywall: Fetch.Context.RegisteredPluginId = Fetch.Context.RegisteredPluginId("oa-unpaywall")

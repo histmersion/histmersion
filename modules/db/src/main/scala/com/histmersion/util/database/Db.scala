@@ -7,7 +7,6 @@ import com.zaxxer.hikari.HikariDataSource
 import org.postgresql.ds.PGSimpleDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
@@ -24,29 +23,29 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Db:
   type ActiveConnections = ActiveConnections.T
-  object ActiveConnections extends RefinedType[Int, Pure]
+  object ActiveConnections extends Newtype[Int, Pure]
   type DatabaseName = DatabaseName.T
-  object DatabaseName extends RefinedType[String, Pure]
+  object DatabaseName extends Newtype[String, Pure]
   type JdbcUrl = JdbcUrl.T
-  object JdbcUrl extends RefinedType[String, Pure]
+  object JdbcUrl extends Newtype[String, Pure]
   type Login = Login.T
-  object Login extends RefinedType[String, Pure]
+  object Login extends Newtype[String, Pure]
   type Password = Password.T
-  object Password extends RefinedType[String, Pure]
+  object Password extends Newtype[String, Pure]
   type PoolMax = PoolMax.T
-  object PoolMax extends RefinedType[Int, Pure]
+  object PoolMax extends Newtype[Int, Pure]
   type PoolName = PoolName.T
-  object PoolName extends RefinedType[String, Pure]
+  object PoolName extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SettingName = SettingName.T
-  object SettingName extends RefinedType[String, Pure]
+  object SettingName extends Newtype[String, Pure]
 
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
   type PooledUrl = JdbcUrl
   val PooledUrl: JdbcUrl.type = JdbcUrl
   type SettingValue = SettingValue.T
-  object SettingValue extends RefinedType[String, Pure]
+  object SettingValue extends Newtype[String, Pure]
 
   def pool(cfg: DbConfig): HikariDataSource =
     pooled(

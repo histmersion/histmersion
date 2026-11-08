@@ -3,7 +3,6 @@ package plugins.events
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.events.gvp`: the WFS, the most eruptions one window may hold, a window's years, the pace, and the
@@ -14,12 +13,12 @@ final case class GvpSettings(url: GvpSettings.Url, pageSize: GvpSettings.PageSiz
 
 object GvpSettings:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type PageSize = PageSize.T
-  object PageSize extends RefinedType[Int, Pure]
+  object PageSize extends Newtype[Int, Pure]
   type WindowYears = WindowYears.T
-  object WindowYears extends RefinedType[Long, Pure]
+  object WindowYears extends Newtype[Long, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type FloorYear = FloorYear.T
-  object FloorYear extends RefinedType[Long, Pure]
+  object FloorYear extends Newtype[Long, Pure]

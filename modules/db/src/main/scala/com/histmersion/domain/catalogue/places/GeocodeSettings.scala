@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `placeholderMin`: a point shared by this many places is a placeholder (`places.geocode-placeholder-min`);
@@ -12,8 +11,8 @@ final case class GeocodeSettings(placeholderMin: GeocodeSettings.PlaceholderMin,
 
 object GeocodeSettings:
   type PlaceholderMin = PlaceholderMin.T
-  object PlaceholderMin extends RefinedType[Int, Pure]
+  object PlaceholderMin extends Newtype[Int, Pure]
   type RepairKm = RepairKm.T
-  object RepairKm extends RefinedType[Double, Pure]
+  object RepairKm extends Newtype[Double, Pure]
   type ToleranceKm = ToleranceKm.T
-  object ToleranceKm extends RefinedType[Double, Pure]
+  object ToleranceKm extends Newtype[Double, Pure]

@@ -10,7 +10,6 @@ import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.CollectionQuery
 import com.histmersion.plugin.CollectionFile
 import com.histmersion.plugin.Processes
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Plugin
 
@@ -190,22 +189,22 @@ object Calibre:
   type Problem = Shell.Problem
   val Problem: Shell.Problem.type = Shell.Problem
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type SqlLiteral = SqlLiteral.T
-  object SqlLiteral extends RefinedType[String, Pure]
+  object SqlLiteral extends Newtype[String, Pure]
   type SqlWhere = SqlWhere.T
-  object SqlWhere extends RefinedType[String, Pure]
+  object SqlWhere extends Newtype[String, Pure]
   type SqlQuery = SqlQuery.T
-  object SqlQuery extends RefinedType[String, Pure]
+  object SqlQuery extends Newtype[String, Pure]
 
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends RefinedType[Int, Pure]
+  object SearchLimit extends Newtype[Int, Pure]
   type AllLimit = AllLimit.T
-  object AllLimit extends RefinedType[Int, Pure]
+  object AllLimit extends Newtype[Int, Pure]
   type UpdateAllApply = UpdateAllApply.T
-  object UpdateAllApply extends RefinedType[Boolean, Pure]
+  object UpdateAllApply extends Newtype[Boolean, Pure]
   type SqliteQueryLimit = SqliteQueryLimit.T
-  object SqliteQueryLimit extends RefinedType[Int, Pure]
+  object SqliteQueryLimit extends Newtype[Int, Pure]
 
   private def argv(parts: String*): List[Argument] = parts.toList.map(part => Argument(part))
 
@@ -627,30 +626,30 @@ object Calibre:
 
   object Book:
     type Year = Year.T
-    object Year extends RefinedType[Int, Pure]
+    object Year extends Newtype[Int, Pure]
 
     type Id = Id.T
-    object Id extends RefinedType[Int, Pure]
+    object Id extends Newtype[Int, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Authors = Author
     val Authors: Author.type = Author
     type Pubdate = Pubdate.T
-    object Pubdate extends RefinedType[String, Pure]
+    object Pubdate extends Newtype[String, Pure]
     type Publisher = Publisher.T
-    object Publisher extends RefinedType[String, Pure]
+    object Publisher extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Comments = Comments.T
-    object Comments extends RefinedType[String, Pure]
+    object Comments extends Newtype[String, Pure]
     type IdentifiersKey = IdentifiersKey.T
-    object IdentifiersKey extends RefinedType[String, Pure]
+    object IdentifiersKey extends Newtype[String, Pure]
     type IdentifiersValue = IdentifiersValue.T
-    object IdentifiersValue extends RefinedType[String, Pure]
+    object IdentifiersValue extends Newtype[String, Pure]
     type Formats = Formats.T
-    object Formats extends RefinedType[String, Pure]
+    object Formats extends Newtype[String, Pure]
     type Cover = Cover.T
-    object Cover extends RefinedType[String, Pure]
+    object Cover extends Newtype[String, Pure]
 
     /** The first year a pubdate is taken as one: Calibre's "no date" is year 101, and the library cites nothing older
       * by its printing (the host's citekeys use the same bound).
@@ -662,9 +661,9 @@ object Calibre:
 
   object Change:
     type From = From.T
-    object From extends RefinedType[String, Pure]
+    object From extends Newtype[String, Pure]
     type To = To.T
-    object To extends RefinedType[String, Pure]
+    object To extends Newtype[String, Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: Field.Name):
@@ -678,9 +677,9 @@ object Calibre:
 
   object Field:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
   /** Where the library is and how it is reached, resolved from the plugin's settings: the library's folder (`~`
     * expanded), the `calibredb` and `sqlite3` to run, and the process whose presence means the Calibre GUI holds the
@@ -690,7 +689,7 @@ object Calibre:
 
   object Library:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
   /** What `calibre push` sends into Calibre for one source. */
   final case class Push(
@@ -706,21 +705,21 @@ object Calibre:
 
   object Push:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Authors = Author
     val Authors: Author.type = Author
     type Doi = Doi.T
-    object Doi extends RefinedType[String, Pure]
+    object Doi extends Newtype[String, Pure]
     type Isbn = Isbn.T
-    object Isbn extends RefinedType[String, Pure]
+    object Isbn extends Newtype[String, Pure]
     type Year = Book.Year
     val Year: Book.Year.type = Book.Year
     type Publisher = Publisher.T
-    object Publisher extends RefinedType[String, Pure]
+    object Publisher extends Newtype[String, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
 
   /** The `calibre` plugin's block (`histmersion.plugins.calibre`).
     *
@@ -762,22 +761,22 @@ object Calibre:
 
   object Settings:
     type ExecutablePath = ExecutablePath.T
-    object ExecutablePath extends RefinedType[String, Pure]
+    object ExecutablePath extends Newtype[String, Pure]
 
     /** Where Calibre's installers put `calibredb`: the macOS app (system-wide or the user's), Homebrew on Apple silicon
       * and Intel, and the Linux installer's `/opt/calibre`.
       */
     type InstallDir = InstallDir.T
-    object InstallDir extends RefinedType[String, Pure]
+    object InstallDir extends Newtype[String, Pure]
 
     type LibraryPath = LibraryPath.T
-    object LibraryPath extends RefinedType[String, Pure]
+    object LibraryPath extends Newtype[String, Pure]
     type Calibredb = Calibredb.T
-    object Calibredb extends RefinedType[String, Pure]
+    object Calibredb extends Newtype[String, Pure]
     type Sqlite = Sqlite.T
-    object Sqlite extends RefinedType[String, Pure]
+    object Sqlite extends Newtype[String, Pure]
     type WriteBack = WriteBack.T
-    object WriteBack extends RefinedType[Boolean, Pure]
+    object WriteBack extends Newtype[Boolean, Pure]
     type GuiProcess = Shell.ProcessMatch
     val GuiProcess: Shell.ProcessMatch.type = Shell.ProcessMatch
 

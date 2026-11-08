@@ -1,7 +1,6 @@
 package com.histmersion
 package pluginhost
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin's record as the host keeps it, and why each field it left out was left out (a value the model's type
@@ -11,4 +10,4 @@ final case class Kept[A](record: A, warnings: List[Kept.Warnings])
 
 object Kept:
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]

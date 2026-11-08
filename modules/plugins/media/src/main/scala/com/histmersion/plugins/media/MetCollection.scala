@@ -3,7 +3,6 @@ package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.Json
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `met`: The Metropolitan Museum of Art Collection API (https://metmuseum.github.io/), no key. Search is
@@ -36,11 +35,11 @@ final class MetCollection(conf: CollectionSettings)
 
 object MetCollection:
   type ObjectId = ObjectId.T
-  object ObjectId extends RefinedType[Long, Pure]
+  object ObjectId extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[Long, Pure]
+  object Year extends Newtype[Long, Pure]
 
   /** What every museum's description adds: what it takes and how a dry run shows it. */
   val Museum = " — Open Access objects only (as the record itself says), tied to a place on the map " +

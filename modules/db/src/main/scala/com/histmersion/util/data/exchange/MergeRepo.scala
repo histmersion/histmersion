@@ -26,7 +26,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
 
@@ -36,17 +35,17 @@ import com.histmersion.util.data.TableName
   */
 object MergeRepo:
   type ListLimit = ListLimit.T
-  object ListLimit extends RefinedType[Int, Pure]
+  object ListLimit extends Newtype[Int, Pure]
   type BundleName = BundleName.T
-  object BundleName extends RefinedType[String, Pure]
+  object BundleName extends Newtype[String, Pure]
   type DecisionKey = DecisionKey.T
-  object DecisionKey extends RefinedType[String, Pure]
+  object DecisionKey extends Newtype[String, Pure]
   type Importing = Importing.T
-  object Importing extends RefinedType[Boolean, Pure]
+  object Importing extends Newtype[Boolean, Pure]
   type MergeIdOrPrefix = MergeIdOrPrefix.T
-  object MergeIdOrPrefix extends RefinedType[String, Pure]
+  object MergeIdOrPrefix extends Newtype[String, Pure]
   type UidText = UidText.T
-  object UidText extends RefinedType[String, Pure]
+  object UidText extends Newtype[String, Pure]
 
 
 

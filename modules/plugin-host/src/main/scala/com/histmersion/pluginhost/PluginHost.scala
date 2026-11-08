@@ -25,7 +25,6 @@ import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
 
@@ -36,17 +35,17 @@ import com.histmersion.util.plugins.PluginKit
   */
 object PluginHost:
   type ClassName = ClassName.T
-  object ClassName extends RefinedType[String, Pure]
+  object ClassName extends Newtype[String, Pure]
   type ConfigPath = ConfigPath.T
-  object ConfigPath extends RefinedType[String, Pure]
+  object ConfigPath extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type SecretValue = SecretValue.T
-  object SecretValue extends RefinedType[String, Pure]
+  object SecretValue extends Newtype[String, Pure]
   type Warning = Warning.T
-  object Warning extends RefinedType[String, Pure]
+  object Warning extends Newtype[String, Pure]
 
   val Root = "histmersion.plugins"
 

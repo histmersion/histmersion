@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 import io.circe.Json
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `loc`: the Library of Congress JSON API (https://www.loc.gov/apis/json-and-yaml/), no key: the maps format
@@ -51,9 +50,9 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
 
 object LocCollection:
   type Date = Date.T
-  object Date extends RefinedType[String, Pure]
+  object Date extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type ThumbPx = MediaSettings.ThumbPx
   val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx

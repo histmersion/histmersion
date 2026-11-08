@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.calibre
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One Calibre entry that disagrees with the corpus, judged against the record it matches best (an entry shared by a
@@ -22,6 +21,6 @@ final case class AuditFinding(
 object AuditFinding:
 
   type CalibreId = CalibreId.T
-  object CalibreId extends RefinedType[Int, Pure]
+  object CalibreId extends Newtype[Int, Pure]
   type Citekeys = Citekeys.T
-  object Citekeys extends RefinedType[String, Pure]
+  object Citekeys extends Newtype[String, Pure]

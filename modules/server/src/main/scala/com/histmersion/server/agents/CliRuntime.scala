@@ -54,4 +54,4 @@ object CliRuntime:
     */
 
   def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: Stores, resources: Resources, clock: java.time.Clock, jvmHome: JvmHome): CliRuntime =
-    new CliRuntime(app, AgentDefinitions(Prompts(Prompts.OverrideDir(app.agents.promptsDir.value)), roster), paths)
+    new CliRuntime(app, AgentDefinitions(new Prompts(Prompts.OverrideDir(app.agents.promptsDir.value)), roster), paths)

@@ -3,7 +3,6 @@ package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Polity polygons from the Seshat Cliopatria dataset.
@@ -19,7 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Cliopatria extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
-  object Ordinal extends RefinedType[Int, Pure]
+  object Ordinal extends Newtype[Int, Pure]
 
   val title = GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
   override val description = GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")

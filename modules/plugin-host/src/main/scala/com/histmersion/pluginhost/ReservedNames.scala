@@ -1,7 +1,6 @@
 package com.histmersion
 package pluginhost
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Gazetteer
 
@@ -11,7 +10,7 @@ import com.histmersion.api.catalogue.Gazetteer
   */
 object ReservedNames:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
   import com.histmersion.api.automation.Agents
   import com.histmersion.api.media.MediaProvider

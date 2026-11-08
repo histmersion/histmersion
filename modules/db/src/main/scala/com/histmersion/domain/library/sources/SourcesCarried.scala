@@ -25,7 +25,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 
@@ -37,7 +36,7 @@ import com.histmersion.domain.library.sources.referrers.SourceReferrers
   */
 object SourcesCarried:
   type Stem = Stem.T
-  object Stem extends RefinedType[String, Pure]
+  object Stem extends Newtype[String, Pure]
 
   private val Library = DataOwner("library")
 

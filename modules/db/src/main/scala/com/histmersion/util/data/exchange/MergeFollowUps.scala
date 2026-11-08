@@ -6,7 +6,6 @@ import com.histmersion.domain.MergePlanner
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
 import com.histmersion.api.automation.Queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a merge leaves to do, written in the merge's own transaction by the owner of the work lists: a review of each
@@ -27,6 +26,6 @@ trait MergeFollowUps:
 
 object MergeFollowUps:
   type DumpRecordRef = DumpRecordRef.T
-  object DumpRecordRef extends RefinedType[String, Pure]
+  object DumpRecordRef extends Newtype[String, Pure]
   type FromRecordRef = FromRecordRef.T
-  object FromRecordRef extends RefinedType[String, Pure]
+  object FromRecordRef extends Newtype[String, Pure]

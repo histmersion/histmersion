@@ -2,7 +2,6 @@ package com.histmersion
 package pluginhost
 
 import com.histmersion.plugin.Plugin
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where host code writes a log line: scribe on the server, a buffer in a test. */
@@ -19,7 +18,7 @@ trait HostLog:
 
 object HostLog:
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]
 
 
   val scribe: HostLog = new HostLog:

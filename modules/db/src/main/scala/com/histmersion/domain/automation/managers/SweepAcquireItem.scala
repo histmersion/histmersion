@@ -5,7 +5,6 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the
@@ -30,24 +29,24 @@ final case class SweepAcquireItem(
 
 object SweepAcquireItem:
   type Item = Item.T
-  object Item extends RefinedType[Int, Pure]
+  object Item extends Newtype[Int, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Topic = Topic.T
-  object Topic extends RefinedType[String, Pure]
+  object Topic extends Newtype[String, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type ManagerId = ManagerId.T
-  object ManagerId extends RefinedType[String, Pure]
+  object ManagerId extends Newtype[String, Pure]
   type Job = Job.T
-  object Job extends RefinedType[String, Pure]
+  object Job extends Newtype[String, Pure]
   type IsOa = IsOa.T
-  object IsOa extends RefinedType[Boolean, Pure]
+  object IsOa extends Newtype[Boolean, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type Why = Why.T
-  object Why extends RefinedType[String, Pure]
+  object Why extends Newtype[String, Pure]

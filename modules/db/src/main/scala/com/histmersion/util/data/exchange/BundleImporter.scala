@@ -20,7 +20,6 @@ import io.circe.syntax.*
 import java.io.InputStream
 import java.util.UUID
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 
@@ -39,9 +38,9 @@ import com.histmersion.domain.library.Citekey
   */
 object BundleImporter:
   type BackupFile = BackupFile.T
-  object BackupFile extends RefinedType[String, Pure]
+  object BackupFile extends Newtype[String, Pure]
   type IssueName = IssueName.T
-  object IssueName extends RefinedType[String, Pure]
+  object IssueName extends Newtype[String, Pure]
 
 
 

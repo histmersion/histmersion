@@ -6,7 +6,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.ReviewLedger.Ledger
 
 import com.augustnagro.magnum.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 
@@ -15,7 +14,7 @@ import com.histmersion.domain.research.Slug
   */
 private[workflows] object ReviewLedgerRepo:
   type ReviewId = ReviewId.T
-  object ReviewId extends RefinedType[String, Pure]
+  object ReviewId extends Newtype[String, Pure]
 
   /** The article's ledger; None when it has none yet. A value that no longer decodes is an error (the run fails rather
     * than start over and lose its history).

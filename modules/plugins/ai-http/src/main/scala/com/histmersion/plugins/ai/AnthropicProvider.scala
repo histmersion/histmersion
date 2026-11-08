@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.ai
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Anthropic Messages API (`anthropic:<model>`) over the host's [[AiHttp]]: one call per turn, keyed by
@@ -57,7 +56,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
 object AnthropicProvider:
   type WithoutStructuredOutput = WithoutStructuredOutputValue
   type WithoutStructuredOutputValue = WithoutStructuredOutputValue.T
-  object WithoutStructuredOutputValue extends RefinedType[String, Pure]
+  object WithoutStructuredOutputValue extends Newtype[String, Pure]
 
   val Version = "2023-06-01"
 

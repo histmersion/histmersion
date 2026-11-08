@@ -26,7 +26,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.EventGeometry
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.catalogue.Event
@@ -38,11 +37,11 @@ import com.histmersion.util.identity.AliasTable
   */
 private[events] object EventRepo:
   type EventCount = EventCount.T
-  object EventCount extends RefinedType[Long, Pure]
+  object EventCount extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Tier = Tier.T
-  object Tier extends RefinedType[String, Pure]
+  object Tier extends Newtype[String, Pure]
 
   /** How many events the catalogue holds. */
 

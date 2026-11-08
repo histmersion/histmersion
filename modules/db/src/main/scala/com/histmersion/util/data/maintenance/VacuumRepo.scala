@@ -5,7 +5,6 @@ import com.histmersion.api.maintenance.Vacuum
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `VACUUM` for `histmersion maintenance vacuum`. VACUUM cannot run inside a transaction block, so it runs on a
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object VacuumRepo:
   type Analyze = Analyze.T
-  object Analyze extends RefinedType[Boolean, Pure]
+  object Analyze extends Newtype[Boolean, Pure]
 
   /** One table's dead row versions (the statistics collector's count) and its size with indexes and TOAST.
     */
@@ -22,7 +21,7 @@ object VacuumRepo:
 
   object TableState:
     type DeadRows = DeadRows.T
-    object DeadRows extends RefinedType[Long, Pure]
+    object DeadRows extends Newtype[Long, Pure]
     type Bytes = ByteCount
     val Bytes: ByteCount.type = ByteCount
 

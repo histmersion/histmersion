@@ -10,7 +10,6 @@ import java.net.URI
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per host; every request
@@ -122,17 +121,17 @@ final class Polite(
 
 object Polite:
   type Host = Host.T
-  object Host extends RefinedType[String, Pure]
+  object Host extends Newtype[String, Pure]
   type IntervalMs = IntervalMs.T
-  object IntervalMs extends RefinedType[Long, Pure]
+  object IntervalMs extends Newtype[Long, Pure]
   type EpochMs = EpochMs.T
-  object EpochMs extends RefinedType[Long, Pure]
+  object EpochMs extends Newtype[Long, Pure]
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
   type RequestCount = RequestCount.T
-  object RequestCount extends RefinedType[Int, Pure]
+  object RequestCount extends Newtype[Int, Pure]
   type RefusalBackoffMs = RefusalBackoffMs.T
-  object RefusalBackoffMs extends RefinedType[Long, Pure]
+  object RefusalBackoffMs extends Newtype[Long, Pure]
 
   /** A host is never asked more than this many times slower than its configured pace. */
   val MaxSlowdown = 16

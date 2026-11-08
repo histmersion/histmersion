@@ -11,7 +11,6 @@ import com.histmersion.domain.catalogue.places.PointAreas.{Dating, Group, Listed
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.{Gazetteer, Geocode}
 import com.histmersion.api.checks.Lint
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
@@ -26,7 +25,7 @@ import com.histmersion.domain.library.Citekey
   */
 private[places] object PointAreaRepo:
   type NameKey = NameKey.T
-  object NameKey extends RefinedType[String, Pure]
+  object NameKey extends Newtype[String, Pure]
 
   /** `kinds` is `places.sources.point-area-kinds`; `batch` places per transaction; `budgetMs` the time one call may
     * spend before it returns what is left (an HTTP request must end well inside netty's idle timeout); `toleranceKm`
@@ -37,13 +36,13 @@ private[places] object PointAreaRepo:
 
   object Settings:
     type Kinds = Kinds.T
-    object Kinds extends RefinedType[String, Pure]
+    object Kinds extends Newtype[String, Pure]
     type Batch = Batch.T
-    object Batch extends RefinedType[Int, Pure]
+    object Batch extends Newtype[Int, Pure]
     type BudgetMs = BudgetMs.T
-    object BudgetMs extends RefinedType[Long, Pure]
+    object BudgetMs extends Newtype[Long, Pure]
     type ToleranceKm = ToleranceKm.T
-    object ToleranceKm extends RefinedType[Double, Pure]
+    object ToleranceKm extends Newtype[Double, Pure]
 
   /** What one [[remove]] call did. */
   final case class Removal(removed: Removal.Removed, remaining: Removal.Remaining, findings: Removal.Findings, sources: Removal.Sources):
@@ -58,13 +57,13 @@ private[places] object PointAreaRepo:
 
   object Removal:
     type Removed = Removed.T
-    object Removed extends RefinedType[Int, Pure]
+    object Removed extends Newtype[Int, Pure]
     type Remaining = Remaining.T
-    object Remaining extends RefinedType[Int, Pure]
+    object Remaining extends Newtype[Int, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Sources = Sources.T
-    object Sources extends RefinedType[Int, Pure]
+    object Sources extends Newtype[Int, Pure]
 
   private val sources: List[Group.Source] =
     Gazetteer.PointAreaSources.map(s => Group.Source(s.value))
@@ -95,25 +94,25 @@ private[places] object PointAreaRepo:
 
   object Row:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type StartUnknown = StartUnknown.T
-    object StartUnknown extends RefinedType[Boolean, Pure]
+    object StartUnknown extends Newtype[Boolean, Pure]
     type LowerInf = LowerInf.T
-    object LowerInf extends RefinedType[Boolean, Pure]
+    object LowerInf extends Newtype[Boolean, Pure]
     type UpperInf = UpperInf.T
-    object UpperInf extends RefinedType[Boolean, Pure]
+    object UpperInf extends Newtype[Boolean, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Alone = Alone.T
-    object Alone extends RefinedType[Int, Pure]
+    object Alone extends Newtype[Int, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Int, Pure]
+    object Pinned extends Newtype[Int, Pure]
 
   /** The counts by source, kind and dating. */
   def groupsIn(kinds: List[Place.Kind.Wire])(using DbCon): List[Group] =

@@ -4,7 +4,6 @@ package util.data.diagnostics
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
 
@@ -13,9 +12,9 @@ import com.histmersion.util.data.TableName
   */
 object StatsRepo:
   type ColumnName = ColumnName.T
-  object ColumnName extends RefinedType[String, Pure]
+  object ColumnName extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Long, Pure]
+  object Count extends Newtype[Long, Pure]
 
   /** The rows of `table`. */
 

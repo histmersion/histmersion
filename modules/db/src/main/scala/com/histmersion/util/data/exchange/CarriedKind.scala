@@ -11,7 +11,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import io.circe.Encoder
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
@@ -46,9 +45,9 @@ trait CarriedKind:
 
 object CarriedKind:
   type OwnedClock = OwnedClock.T
-  object OwnedClock extends RefinedType[String, Pure]
+  object OwnedClock extends Newtype[String, Pure]
   type RecordsClock = RecordsClock.T
-  object RecordsClock extends RefinedType[String, Pure]
+  object RecordsClock extends Newtype[String, Pure]
 
   /** A kind of record whose lines use no blob: its lines stamped with their revs, `clock` the change each carries. */
 

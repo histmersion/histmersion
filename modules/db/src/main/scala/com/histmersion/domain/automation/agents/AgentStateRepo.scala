@@ -5,16 +5,15 @@ import com.histmersion.api.automation.AgentStateEntry
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The agents' scratch state (`agent_state`): a JSON value under a key, with when it was last set. */
 private[agents] object AgentStateRepo:
   type StateKey = StateKey.T
-  object StateKey extends RefinedType[String, Pure]
+  object StateKey extends Newtype[String, Pure]
 
   type SetValue = SetValue.T
-  object SetValue extends RefinedType[String, Pure]
+  object SetValue extends Newtype[String, Pure]
 
   private given DbCodec[AgentStateEntry] = DbCodec.derived
 

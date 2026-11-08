@@ -2,7 +2,6 @@ package com.histmersion
 package util.storage
 
 import java.io.InputStream
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A content-addressed set of files, each kept as `<sha256>.<ext>`: found by its digest, and stored only when its
@@ -19,11 +18,11 @@ trait ContentStore:
 
 object ContentStore:
   type Digest = Digest.T
-  object Digest extends RefinedType[Array[Byte], Pure]
+  object Digest extends Newtype[Array[Byte], Pure]
   type Ext = Ext.T
-  object Ext extends RefinedType[String, Pure]
+  object Ext extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** A server that stores no originals. */
 
 

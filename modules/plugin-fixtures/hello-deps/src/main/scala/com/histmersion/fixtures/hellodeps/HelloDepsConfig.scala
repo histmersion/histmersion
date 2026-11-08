@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.hellodeps
 
+import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
@@ -12,4 +13,4 @@ final case class HelloDepsConfig(greeting: HelloDepsConfig.Greeting) derives Con
 
 object HelloDepsConfig:
   type Greeting = Greeting.T
-  object Greeting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Greeting extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
 import com.histmersion.domain.Title
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin's [[SourceCollection]] as the host calls it: every call guarded (an exception or a linkage error becomes
@@ -68,10 +67,10 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
 
 object HostCollection:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Smithsonian Open Access API (https://edan.si.edu/openaccess/apidocs/): `GET {api}/search?q=&rows=
@@ -20,11 +19,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Smithsonian:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Unit = Unit.T
-  object Unit extends RefinedType[String, Pure]
+  object Unit extends Newtype[String, Pure]
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
   val KeyHeader = "X-Api-Key"

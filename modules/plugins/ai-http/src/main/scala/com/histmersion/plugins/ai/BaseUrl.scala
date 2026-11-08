@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.ai
 
 import sttp.model.Uri
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A provider's base URL (`agents.providers.<name>.base-url`), parsed as the provider APIs have always been addressed:
@@ -14,11 +13,11 @@ final case class BaseUrl(uri: Uri):
 
 object BaseUrl:
   type Endpoint = Endpoint.T
-  object Endpoint extends RefinedType[String, Pure]
+  object Endpoint extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Setting = Setting.T
-  object Setting extends RefinedType[String, Pure]
+  object Setting extends Newtype[String, Pure]
   /** `text` as a base URL, or why not, naming the `setting` it came from. */
 
   def parse(text: ProviderSettings.BaseUrl, setting: Setting): Either[Problem, BaseUrl] =

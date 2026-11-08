@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -23,7 +22,7 @@ object PlaceSql:
     */
   type ImportedList = ImportedListValue
   type ImportedListValue = ImportedListValue.T
-  object ImportedListValue extends RefinedType[String, Pure]
+  object ImportedListValue extends Newtype[String, Pure]
   type ModernSqlAlias = String
   type DefaultModernFrom = DefaultModernFromValue
   export com.histmersion.domain.DeepTime.{SignedYear as DefaultModernFromValue}

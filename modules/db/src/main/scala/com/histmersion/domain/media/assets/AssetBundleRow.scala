@@ -4,7 +4,6 @@ package domain.media.assets
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -31,30 +30,30 @@ final private[assets] case class AssetBundleRow(
 
 object AssetBundleRow:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
   type Sha = Sha256
   val Sha: Sha256.type = Sha256
   type Bytes = ByteCount
   val Bytes: ByteCount.type = ByteCount
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Caption = Caption.T
-  object Caption extends RefinedType[String, Pure]
+  object Caption extends Newtype[String, Pure]
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type Geom = Geom.T
-  object Geom extends RefinedType[String, Pure]
+  object Geom extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = DeepTime.SignedYear
   val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PHi = DeepTime.SignedYear
   val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

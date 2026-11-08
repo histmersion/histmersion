@@ -10,7 +10,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.research.{CritiqueReason, Critiques}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Citekey
@@ -21,9 +20,9 @@ import com.histmersion.api.library.Citekey
   */
 private[articles] object CritiqueRepo:
   type By = By.T
-  object By extends RefinedType[String, Pure]
+  object By extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
 
   /** The article's reasons, by pair. */
 

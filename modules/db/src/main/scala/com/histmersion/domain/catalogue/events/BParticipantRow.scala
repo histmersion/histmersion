@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of an event's participants, as its bundle line reads it. */
@@ -20,6 +19,6 @@ final private[events] case class BParticipantRow(
 
 object BParticipantRow:
   type Actor = Actor.T
-  object Actor extends RefinedType[String, Pure]
+  object Actor extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]

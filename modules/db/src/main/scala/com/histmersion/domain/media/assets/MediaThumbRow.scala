@@ -3,7 +3,6 @@ package domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final private[assets] case class MediaThumbRow(
@@ -19,18 +18,18 @@ final private[assets] case class MediaThumbRow(
 
 object MediaThumbRow:
   type Uid = Uid.T
-  object Uid extends RefinedType[String, Pure]
+  object Uid extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends RefinedType[String, Pure]
+  object LicenseUrl extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]

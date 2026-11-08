@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Open Context (https://opencontext.org/about/services), no key: its search API's JSON answer
@@ -18,24 +17,24 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object OpenContext:
   type Cite = Cite.T
-  object Cite extends RefinedType[String, Pure]
+  object Cite extends Newtype[String, Pure]
   type ContextLabel = ContextLabel.T
-  object ContextLabel extends RefinedType[String, Pure]
+  object ContextLabel extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Project = Project.T
-  object Project extends RefinedType[String, Pure]
+  object Project extends Newtype[String, Pure]
   type Segment = Segment.T
-  object Segment extends RefinedType[String, Pure]
+  object Segment extends Newtype[String, Pure]
   type Uuid = Uuid.T
-  object Uuid extends RefinedType[String, Pure]
+  object Uuid extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[String, Pure]
+  object Year extends Newtype[String, Pure]
 
 
   type Attributes = AttributesValue
   type AttributesValue = AttributesValue.T
-  object AttributesValue extends RefinedType[String, Pure]
+  object AttributesValue extends Newtype[String, Pure]
 
   val Attributes: Attributes =
     AttributesValue(List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(","))

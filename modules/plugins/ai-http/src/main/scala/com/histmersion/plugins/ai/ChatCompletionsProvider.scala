@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.ai
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An OpenAI-compatible chat-completions API (`openai:<model>`, `local:<model>`) over the host's [[AiHttp]]: one call
@@ -59,11 +58,11 @@ final class ChatCompletionsProvider(
 
 object ChatCompletionsProvider:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type KeyLabel = KeyLabel.T
-  object KeyLabel extends RefinedType[String, Pure]
+  object KeyLabel extends Newtype[String, Pure]
   type KeyVariable = KeyVariable.T
-  object KeyVariable extends RefinedType[String, Pure]
+  object KeyVariable extends Newtype[String, Pure]
 
   def headers(key: ProviderSettings.ApiKey): Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2] =
     Map(

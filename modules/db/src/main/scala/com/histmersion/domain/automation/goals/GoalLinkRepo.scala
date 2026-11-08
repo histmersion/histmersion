@@ -8,7 +8,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 
@@ -17,7 +16,7 @@ import com.histmersion.api.automation.Goal
   */
 object GoalLinkRepo:
   type ItemId = ItemId.T
-  object ItemId extends RefinedType[Int, Pure]
+  object ItemId extends Newtype[Int, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""

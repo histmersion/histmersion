@@ -6,7 +6,6 @@ import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** NOAA NCEI's significant earthquakes, eruptions and tsunamis: its hazard service
@@ -59,19 +58,19 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
 
 object NoaaCatalogue:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Dataset = Dataset.T
-  object Dataset extends RefinedType[String, Pure]
+  object Dataset extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type PageNumber = PageNumber.T
-  object PageNumber extends RefinedType[Int, Pure]
+  object PageNumber extends Newtype[Int, Pure]
 
   val Earthquakes: Dataset = Dataset("earthquakes")
   val Volcanoes: Dataset = Dataset("volcanoes")

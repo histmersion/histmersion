@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -35,18 +34,18 @@ object BArticleRow:
   type Kind = Article.Kind
   val Kind: Article.Kind.type = Article.Kind
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = DeepTime.SignedYear
   val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PHi = DeepTime.SignedYear
   val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

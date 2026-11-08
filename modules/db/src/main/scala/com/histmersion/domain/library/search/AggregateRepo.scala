@@ -17,7 +17,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Period
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
@@ -30,7 +29,7 @@ import com.histmersion.api.catalogue.RegionNode
   */
 private[search] object AggregateRepo:
   type Unit = Unit.T
-  object Unit extends RefinedType[String, Pure]
+  object Unit extends Newtype[String, Pure]
 
   private given DbCodec[Period.Row] = DbCodec.derived
 
@@ -101,11 +100,11 @@ private[search] object AggregateRepo:
 
   object TreeRowRaw:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type PlaceIds = PlaceIds.T
-    object PlaceIds extends RefinedType[String, Pure]
+    object PlaceIds extends Newtype[String, Pure]
 
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 

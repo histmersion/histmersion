@@ -7,7 +7,6 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
@@ -17,7 +16,7 @@ import com.histmersion.domain.library.Citekey
   */
 private[acquisition] object AcquireCheckRepo:
   type CheckedAtMs = CheckedAtMs.T
-  object CheckedAtMs extends RefinedType[Long, Pure]
+  object CheckedAtMs extends Newtype[Long, Pure]
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image).
 

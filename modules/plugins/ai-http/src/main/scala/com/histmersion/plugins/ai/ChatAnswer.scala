@@ -6,7 +6,6 @@ import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
 import io.circe.parser.{decode, parse}
 import com.histmersion.plugin.AiTool
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiMessage
 
@@ -24,16 +23,16 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
 object ChatAnswer:
   type FinishReason = FinishReason.T
-  object FinishReason extends RefinedType[String, Pure]
+  object FinishReason extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The most of an unreadable error answer's body its description keeps. */
 
   type Status = Status.T
-  object Status extends RefinedType[Int, Pure]
+  object Status extends Newtype[Int, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
 
   val MaxRawErrorBody = 500
 

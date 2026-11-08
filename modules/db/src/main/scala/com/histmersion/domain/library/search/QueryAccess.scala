@@ -6,13 +6,12 @@ import com.histmersion.util.database.Db
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The read-only `histmersion_query` role behind `POST /api/query`: its pool and its provisioning. */
 object QueryAccess:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011, which holds nothing
     * but SELECT. Deliberately tiny: the hatch is an interactive escape valve, not a serving path.

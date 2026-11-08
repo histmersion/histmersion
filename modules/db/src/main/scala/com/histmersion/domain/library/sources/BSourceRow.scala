@@ -9,7 +9,6 @@ import java.util.UUID
 import com.histmersion.domain.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -45,37 +44,37 @@ final private[sources] case class BSourceRow(
 
 object BSourceRow:
   type Doi = Doi.T
-  object Doi extends RefinedType[String, Pure]
+  object Doi extends Newtype[String, Pure]
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = DeepTime.SignedYear
   val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PHi = DeepTime.SignedYear
   val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends RefinedType[String, Pure]
+  object Provenance extends Newtype[String, Pure]
   type CitedBy = CitedBy.T
-  object CitedBy extends RefinedType[Int, Pure]
+  object CitedBy extends Newtype[Int, Pure]
   type Influential = Influential.T
-  object Influential extends RefinedType[Int, Pure]
+  object Influential extends Newtype[Int, Pure]
   type AddedDate = AddedDate.T
-  object AddedDate extends RefinedType[String, Pure]
+  object AddedDate extends Newtype[String, Pure]
   type BodySha = Sha256
   val BodySha: Sha256.type = Sha256
   type BodyBytes = ByteCount
@@ -83,6 +82,6 @@ object BSourceRow:
   type OriginalSha = Sha256
   val OriginalSha: Sha256.type = Sha256
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
   type Isbns = Isbns.T
-  object Isbns extends RefinedType[String, Pure]
+  object Isbns extends Newtype[String, Pure]

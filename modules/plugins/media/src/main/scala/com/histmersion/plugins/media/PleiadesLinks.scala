@@ -5,7 +5,6 @@ import com.histmersion.plugin.{GazetteerPlace, Plugin}
 import io.circe.Json
 
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Pictures a Pleiades place record links (https://pleiades.stoa.org/places/{id}/json, no key). A place's `references`
@@ -15,9 +14,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PleiadesLinks:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
   def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")

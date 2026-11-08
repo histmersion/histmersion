@@ -14,7 +14,7 @@ object PluginTree:
   object OwnedValue extends RefinedType[String, Pure]
 
   def tree(roster: AgentRoster)(using Stores, Resources): Either[Problem, Map[SafePath.Candidate, String]] =
-    val defs = AgentDefinitions(Prompts(Prompts.OverrideDir("")), roster)
+    val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), roster)
     val files =
       for
         as <- defs.agents

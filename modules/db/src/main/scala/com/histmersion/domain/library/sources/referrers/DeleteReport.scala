@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.sources.referrers
 
 import com.histmersion.api.library.{DeleteBlocker, DeleteCount}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a delete would touch of a referrer's records: what refuses it, how many go, the records whose reasons name it
@@ -17,6 +16,6 @@ final case class DeleteReport(
 
 object DeleteReport:
   type Coverage = Coverage.T
-  object Coverage extends RefinedType[String, Pure]
+  object Coverage extends Newtype[String, Pure]
   type Mentions = Mentions.T
-  object Mentions extends RefinedType[Int, Pure]
+  object Mentions extends Newtype[Int, Pure]

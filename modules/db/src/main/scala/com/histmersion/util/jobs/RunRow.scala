@@ -1,7 +1,6 @@
 package com.histmersion
 package util.jobs
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
@@ -30,36 +29,36 @@ final case class RunRow(
 
 object RunRow:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Pipeline = Pipeline.T
-  object Pipeline extends RefinedType[String, Pure]
+  object Pipeline extends Newtype[String, Pure]
   type PipelineVersion = com.histmersion.domain.automation.Pipeline.Version
   val PipelineVersion: com.histmersion.domain.automation.Pipeline.Version.type = com.histmersion.domain.automation.Pipeline.Version
   type TargetKind = TargetKind.T
-  object TargetKind extends RefinedType[String, Pure]
+  object TargetKind extends Newtype[String, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   type Citekey = com.histmersion.domain.library.Citekey
   val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
   type Model = Model.T
-  object Model extends RefinedType[String, Pure]
+  object Model extends Newtype[String, Pure]
   type BudgetTokens = JobRepo.TokenBudget
   val BudgetTokens: JobRepo.TokenBudget.type = JobRepo.TokenBudget
   type Params = Params.T
-  object Params extends RefinedType[String, Pure]
+  object Params extends Newtype[String, Pure]
   type AcquireItem = AcquireItem.T
-  object AcquireItem extends RefinedType[Int, Pure]
+  object AcquireItem extends Newtype[Int, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type Parent = Parent.T
-  object Parent extends RefinedType[String, Pure]
+  object Parent extends Newtype[String, Pure]
   type Origin = Origin.T
-  object Origin extends RefinedType[String, Pure]
+  object Origin extends Newtype[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type ManagerId = ManagerId.T
-  object ManagerId extends RefinedType[String, Pure]
+  object ManagerId extends Newtype[String, Pure]
   type ManagerItem = ManagerItem.T
-  object ManagerItem extends RefinedType[Long, Pure]
+  object ManagerItem extends Newtype[Long, Pure]

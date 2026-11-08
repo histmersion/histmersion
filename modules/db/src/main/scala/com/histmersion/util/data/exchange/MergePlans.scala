@@ -10,7 +10,6 @@ import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.text.MinHash
 
@@ -24,7 +23,7 @@ import com.histmersion.util.text.MinHash
   */
 object MergePlans:
   type PlanFileText = PlanFileText.T
-  object PlanFileText extends RefinedType[String, Pure]
+  object PlanFileText extends Newtype[String, Pure]
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
 

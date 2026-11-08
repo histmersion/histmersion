@@ -7,7 +7,6 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 // ── 1Password ───────────────────────────────────────────────────────────────────────────────────
@@ -25,8 +24,8 @@ final case class OnePasswordConfig(
 
 object OnePasswordConfig:
   type Cli = Cli.T
-  object Cli extends RefinedType[String, Pure]
+  object Cli extends Newtype[String, Pure]
   type Account = Account.T
-  object Account extends RefinedType[String, Pure]
+  object Account extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]

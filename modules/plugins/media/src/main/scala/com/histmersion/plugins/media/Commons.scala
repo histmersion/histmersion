@@ -8,7 +8,6 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.
@@ -16,15 +15,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Commons:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The `extmetadata` fields read — and asked for, so the answer stays small. */
 
   type MetaFields = MetaFieldsValue
   type MetaFieldsValue = MetaFieldsValue.T
-  object MetaFieldsValue extends RefinedType[String, Pure]
+  object MetaFieldsValue extends Newtype[String, Pure]
   type ImageInfoUrlMeta = ImageInfoUrlMeta.T
-  object ImageInfoUrlMeta extends RefinedType[Boolean, Pure]
+  object ImageInfoUrlMeta extends Newtype[Boolean, Pure]
 
   val MetaFields: List[MetaFields] = List(
     MetaFieldsValue("LicenseShortName"),
@@ -258,7 +257,7 @@ object Commons:
     */
   object Depicts:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
 
     val Depicts = "P180"
     val DepictedBy = "P1299"
@@ -341,29 +340,29 @@ object Commons:
 
   object File:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type PageUrl = PageUrl.T
-    object PageUrl extends RefinedType[String, Pure]
+    object PageUrl extends Newtype[String, Pure]
     type OriginalUrl = OriginalUrl.T
-    object OriginalUrl extends RefinedType[String, Pure]
+    object OriginalUrl extends Newtype[String, Pure]
     type RenditionUrl = RenditionUrl.T
-    object RenditionUrl extends RefinedType[String, Pure]
+    object RenditionUrl extends Newtype[String, Pure]
     type RenditionWidth = RenditionWidth.T
-    object RenditionWidth extends RefinedType[Int, Pure]
+    object RenditionWidth extends Newtype[Int, Pure]
     type RenditionHeight = RenditionHeight.T
-    object RenditionHeight extends RefinedType[Int, Pure]
+    object RenditionHeight extends Newtype[Int, Pure]
     type Mime = Mime.T
-    object Mime extends RefinedType[String, Pure]
+    object Mime extends Newtype[String, Pure]
     type Width = Width.T
-    object Width extends RefinedType[Int, Pure]
+    object Width extends Newtype[Int, Pure]
     type Height = Height.T
-    object Height extends RefinedType[Int, Pure]
+    object Height extends Newtype[Int, Pure]
     type Size = Size.T
-    object Size extends RefinedType[Long, Pure]
+    object Size extends Newtype[Long, Pure]
     type MetaKey = MetaKey.T
-    object MetaKey extends RefinedType[String, Pure]
+    object MetaKey extends Newtype[String, Pure]
     type MetaValue = MetaValue.T
-    object MetaValue extends RefinedType[String, Pure]
+    object MetaValue extends Newtype[String, Pure]
 
   /** The Commons half every Commons-backed collection shares: what Commons says about each file — licence, author and
     * credit from `imageinfo` + `extmetadata`, read and never assumed, as the item to state — and, for the files to
@@ -481,8 +480,8 @@ object Commons:
 
   object Settings:
     type ApiUrl = ApiUrl.T
-    object ApiUrl extends RefinedType[String, Pure]
+    object ApiUrl extends Newtype[String, Pure]
     type Batch = Batch.T
-    object Batch extends RefinedType[Int, Pure]
+    object Batch extends Newtype[Int, Pure]
     type Maxlag = Maxlag.T
-    object Maxlag extends RefinedType[Int, Pure]
+    object Maxlag extends Newtype[Int, Pure]

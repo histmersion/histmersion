@@ -23,7 +23,6 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.SourceColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.LikePattern
 import com.histmersion.domain.catalogue.Place
@@ -46,7 +45,7 @@ object FilterSql:
 
 
   type FacetPrefix = FacetPrefix.T
-  object FacetPrefix extends RefinedType[String, Pure]
+  object FacetPrefix extends Newtype[String, Pure]
 
   private def raw(text: String): Sql = Sql.raw(Sql.RawText(text))
   private def of(text: String, ps: Param*): Sql = Sql.of(Sql.OfText(text), ps*)
@@ -404,9 +403,9 @@ object FilterSql:
 
   object SnippetRow:
     type Heading = Heading.T
-    object Heading extends RefinedType[String, Pure]
+    object Heading extends Newtype[String, Pure]
     type Snippet = Snippet.T
-    object Snippet extends RefinedType[String, Pure]
+    object Snippet extends Newtype[String, Pure]
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
@@ -526,7 +525,7 @@ object FilterSql:
   // ── pure match explanation ───────────────────────────────────────────────────────────────────
 
   type SourceDoi = SourceDoi.T
-  object SourceDoi extends RefinedType[String, Pure]
+  object SourceDoi extends Newtype[String, Pure]
 
   /** One row of [[sourcesQuery]]: a `SearchHit` plus the extra columns `why` needs. */
   final case class SourceRow(
