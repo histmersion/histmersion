@@ -7,7 +7,6 @@ import com.histmersion.domain.DeepTime
 
 import java.util.Locale
 import com.histmersion.api.catalogue.Period
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place as the in-memory catalogue holds it: the row an import or a person wrote, the dataset it came in with, its
@@ -59,7 +58,7 @@ object HeldPlace:
 
   object Name:
     type Manual = Manual.T
-    object Manual extends RefinedType[Boolean, Pure]
+    object Manual extends Newtype[Boolean, Pure]
 
     def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual(false))
 

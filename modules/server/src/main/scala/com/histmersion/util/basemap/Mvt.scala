@@ -3,7 +3,6 @@ package util.basemap
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Just enough of the Mapbox Vector Tile protobuf (https://github.com/mapbox/vector-tile-spec) to thin a tile WITHOUT
@@ -15,33 +14,33 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Mvt:
   type GeomType = GeomType.T
-  object GeomType extends RefinedType[Int, Pure]
+  object GeomType extends Newtype[Int, Pure]
   type GeometryCommand = GeometryCommand.T
-  object GeometryCommand extends RefinedType[Int, Pure]
+  object GeometryCommand extends Newtype[Int, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type LayerBytes = LayerBytes.T
-  object LayerBytes extends RefinedType[Array[Byte], Pure]
+  object LayerBytes extends Newtype[Array[Byte], Pure]
   type LayerName = LayerName.T
-  object LayerName extends RefinedType[String, Pure]
+  object LayerName extends Newtype[String, Pure]
   type Others = Others.T
-  object Others extends RefinedType[Boolean, Pure]
+  object Others extends Newtype[Boolean, Pure]
   type PointX = PointX.T
-  object PointX extends RefinedType[Int, Pure]
+  object PointX extends Newtype[Int, Pure]
   type PointY = PointY.T
-  object PointY extends RefinedType[Int, Pure]
+  object PointY extends Newtype[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type PropKey = PropKey.T
-  object PropKey extends RefinedType[String, Pure]
+  object PropKey extends Newtype[String, Pure]
   type PropText = PropText.T
-  object PropText extends RefinedType[String, Pure]
+  object PropText extends Newtype[String, Pure]
   type SignedNumber = SignedNumber.T
-  object SignedNumber extends RefinedType[Long, Pure]
+  object SignedNumber extends Newtype[Long, Pure]
   type TileBytes = PmTiles.PlainBytes
   val TileBytes: PmTiles.PlainBytes.type = PmTiles.PlainBytes
   type Varint = Varint.T
-  object Varint extends RefinedType[Long, Pure]
+  object Varint extends Newtype[Long, Pure]
 
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
@@ -133,15 +132,15 @@ object Mvt:
   object Rule:
 
     type Keep = Keep.T
-    object Keep extends RefinedType[String, Pure]
+    object Keep extends Newtype[String, Pure]
     type Drop = Drop.T
-    object Drop extends RefinedType[String, Pure]
+    object Drop extends Newtype[String, Pure]
     type Empty = Empty.T
-    object Empty extends RefinedType[Boolean, Pure]
+    object Empty extends Newtype[Boolean, Pure]
     type Geoms = Geoms.T
-    object Geoms extends RefinedType[Int, Pure]
+    object Geoms extends Newtype[Int, Pure]
     type Props = Props.T
-    object Props extends RefinedType[String, Pure]
+    object Props extends Newtype[String, Pure]
 
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.

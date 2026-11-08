@@ -7,7 +7,6 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
@@ -15,22 +14,22 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MapKey:
   type Events = Events.T
-  object Events extends RefinedType[Boolean, Pure]
+  object Events extends Newtype[Boolean, Pure]
   type EventsHtml = EventsHtml.T
-  object EventsHtml extends RefinedType[String, Pure]
+  object EventsHtml extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type ShapesHtml = ShapesHtml.T
-  object ShapesHtml extends RefinedType[String, Pure]
+  object ShapesHtml extends Newtype[String, Pure]
   type Sites = Sites.T
-  object Sites extends RefinedType[Boolean, Pure]
+  object Sites extends Newtype[Boolean, Pure]
   type SitesHtml = SitesHtml.T
-  object SitesHtml extends RefinedType[String, Pure]
+  object SitesHtml extends Newtype[String, Pure]
   type Undated = Undated.T
-  object Undated extends RefinedType[Boolean, Pure]
+  object Undated extends Newtype[Boolean, Pure]
 
   type UndatedHtml = UndatedHtml.T
-  object UndatedHtml extends RefinedType[String, Pure]
+  object UndatedHtml extends Newtype[String, Pure]
 
   def eventsHtml: EventsHtml =
     EventsHtml(

@@ -11,7 +11,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.basemap.Basemap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.BaseMapSpec
@@ -24,7 +23,7 @@ import com.histmersion.api.BBox
   */
 object MapLibreStyles:
   type Origin = Origin.T
-  object Origin extends RefinedType[String, Pure]
+  object Origin extends Newtype[String, Pure]
 
   private val docs = mutable.HashMap.empty[VectorStyle.Id, Future[js.Dynamic]]
 

@@ -8,7 +8,6 @@ import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.basemap.BasemapJobKinds
 import com.histmersion.api.exchange.ExchangeJobKinds
@@ -25,7 +24,7 @@ object DownloadJobs:
 
   /** The job kinds Data and downloads follows. */
   type ConfigureMs = ConfigureMs.T
-  object ConfigureMs extends RefinedType[Int, Pure]
+  object ConfigureMs extends Newtype[Int, Pure]
 
   val Kinds: List[JobInfo.Kind] =
     List(

@@ -1,18 +1,17 @@
 package com.histmersion
 package web.marks
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date. Pure.
   */
 object Ago:
   type IsoDate = IsoDate.T
-  object IsoDate extends RefinedType[String, Pure]
+  object IsoDate extends Newtype[String, Pure]
   type Millis = Millis.T
-  object Millis extends RefinedType[Double, Pure]
+  object Millis extends Newtype[Double, Pure]
   type Phrase = Phrase.T
-  object Phrase extends RefinedType[String, Pure]
+  object Phrase extends Newtype[String, Pure]
 
   def apply(thenMs: Millis, nowMs: Millis, isoDate: IsoDate): Phrase =
     val s = math.max(0.0, (nowMs.value - thenMs.value) / 1000)

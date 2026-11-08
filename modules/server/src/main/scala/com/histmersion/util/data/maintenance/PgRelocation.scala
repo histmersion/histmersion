@@ -4,7 +4,6 @@ package util.data.maintenance
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
@@ -22,15 +21,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PgRelocation:
   type BytePattern = BytePattern.T
-  object BytePattern extends RefinedType[Array[Byte], Pure]
+  object BytePattern extends Newtype[Array[Byte], Pure]
   type FileBytes = FileBytes.T
-  object FileBytes extends RefinedType[Array[Byte], Pure]
+  object FileBytes extends Newtype[Array[Byte], Pure]
   type MacOsMode = MacOsMode.T
-  object MacOsMode extends RefinedType[Boolean, Pure]
+  object MacOsMode extends Newtype[Boolean, Pure]
   type PatchCount = PatchCount.T
-  object PatchCount extends RefinedType[Int, Pure]
+  object PatchCount extends Newtype[Int, Pure]
   type Replacement = Replacement.T
-  object Replacement extends RefinedType[Array[Byte], Pure]
+  object Replacement extends Newtype[Array[Byte], Pure]
 
   type PatchFrom = BytePattern
   val PatchFrom: BytePattern.type = BytePattern
@@ -44,11 +43,11 @@ object PgRelocation:
 
   object Result:
     type Files = Files.T
-    object Files extends RefinedType[Int, Pure]
+    object Files extends Newtype[Int, Pure]
     type Signed = Signed.T
-    object Signed extends RefinedType[Int, Pure]
+    object Signed extends Newtype[Int, Pure]
     type TooLong = TooLong.T
-    object TooLong extends RefinedType[Int, Pure]
+    object TooLong extends Newtype[Int, Pure]
 
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.

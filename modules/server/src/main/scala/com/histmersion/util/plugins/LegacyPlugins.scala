@@ -10,7 +10,6 @@ import org.ekrich.config.{Config, ConfigValueFactory}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import com.histmersion.util.process.ProcessLaunch
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Plugin ids that were SPLIT, and how their settings are still honoured (docs/research-plugins.md §20.2).
@@ -60,7 +59,7 @@ object LegacyPlugins:
 
   object Migrated:
     type Warnings = Warnings.T
-    object Warnings extends RefinedType[String, Pure]
+    object Warnings extends Newtype[String, Pure]
 
   /** Map every former id's settings onto its successors. `known(id)`: the keys of plugin `id`'s defaults (`enabled`
     * aside), which decide where a key other than `enabled` goes.

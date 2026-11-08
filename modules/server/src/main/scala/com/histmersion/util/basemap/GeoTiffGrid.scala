@@ -63,13 +63,13 @@ final case class GeoTiffGrid(
 
 object GeoTiffGrid:
   type PixelX = PixelX.T
-  object PixelX extends RefinedType[Double, Pure]
+  object PixelX extends Newtype[Double, Pure]
   type PixelY = PixelY.T
-  object PixelY extends RefinedType[Double, Pure]
+  object PixelY extends Newtype[Double, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type NoData = NoData.T
-  object NoData extends RefinedType[Short, Pure]
+  object NoData extends Newtype[Short, Pure]
 
   // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
   private val ImageWidth = 256; private val ImageLength = 257; private val BitsPerSample = 258

@@ -16,7 +16,6 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.pluginhost.Registries
 import com.histmersion.server.HttpDownload
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
@@ -128,6 +127,6 @@ final class GazetteerImports(
 
 object GazetteerImports:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]

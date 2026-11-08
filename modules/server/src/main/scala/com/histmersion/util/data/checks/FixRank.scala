@@ -7,4 +7,4 @@ import io.github.iltotore.iron.*
   * the findings' places, those before the places' own repairs (which re-match findings), and the articles' last.
   */
 type FixRank = FixRank.T
-object FixRank extends RefinedType[Int, Pure]
+object FixRank extends Newtype[Int, Pure]

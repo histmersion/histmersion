@@ -11,7 +11,7 @@ import java.nio.file.Path
   */
 type PluginRepository = PluginRepository.T
 
-object PluginRepository extends RefinedType[String, Match["(https?|file):.+"]]:
+object PluginRepository extends Newtype[String, Match["(https?|file):.+"]]:
   /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a directory must exist.
     */
 

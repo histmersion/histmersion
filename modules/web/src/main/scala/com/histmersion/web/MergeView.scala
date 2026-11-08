@@ -35,7 +35,6 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Sha256
@@ -56,15 +55,15 @@ import com.histmersion.web.map.MapStart
   */
 object MergeView:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
   type KindLabel = KindLabel.T
-  object KindLabel extends RefinedType[String, Pure]
+  object KindLabel extends Newtype[String, Pure]
   type MarkedText = MarkedText.T
-  object MarkedText extends RefinedType[String, Pure]
+  object MarkedText extends Newtype[String, Pure]
   type ResultText = ResultText.T
-  object ResultText extends RefinedType[String, Pure]
+  object ResultText extends Newtype[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -80,7 +79,7 @@ object MergeView:
 
   object Group:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
 
   def groupOf(i: MergeIssue): Group =
     if i.condition.isDefined then Group.Conditional

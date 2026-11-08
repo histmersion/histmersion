@@ -19,7 +19,6 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerLight
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.goals.FocusRepo
@@ -88,13 +87,13 @@ trait RunService:
 
 object RunService:
   type Active = Active.T
-  object Active extends RefinedType[Boolean, Pure]
+  object Active extends Newtype[Boolean, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type RetentionDays = RetentionDays.T
-  object RetentionDays extends RefinedType[Int, Pure]
+  object RetentionDays extends Newtype[Int, Pure]
 
   def apply(db: Transactor): RunService = Implementation(db)
 

@@ -6,7 +6,6 @@ package domain.automation.goals
   * store is given them.
   */
 import com.histmersion.domain.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 trait GoalLinkTargets:
   def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult]
@@ -15,9 +14,9 @@ trait GoalLinkTargets:
 object GoalLinkTargets:
   /** Nothing exists anywhere. */
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type QueueListResult = QueueListResult.T
-  object QueueListResult extends RefinedType[String, Pure]
+  object QueueListResult extends Newtype[String, Pure]
 
   val none: GoalLinkTargets = new GoalLinkTargets:
     def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[TitleResult] = None

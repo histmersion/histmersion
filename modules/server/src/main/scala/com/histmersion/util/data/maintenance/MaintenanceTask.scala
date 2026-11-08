@@ -19,4 +19,4 @@ object MaintenanceTask:
 
   /** What a piece of upkeep is called (`reindex`): unique among the registered ones, and the name its guard refuses. */
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]

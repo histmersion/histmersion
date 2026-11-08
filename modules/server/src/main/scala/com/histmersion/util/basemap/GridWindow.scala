@@ -11,10 +11,10 @@ final case class GridWindow(first: GridWindow.First, last: GridWindow.Last, firs
 object GridWindow:
 
   type First = First.T
-  object First extends RefinedType[Int, Pure]
+  object First extends Newtype[Int, Pure]
   type Last = Last.T
-  object Last extends RefinedType[Int, Pure]
+  object Last extends Newtype[Int, Pure]
   type FirstCol = FirstCol.T
-  object FirstCol extends RefinedType[Int, Pure]
+  object FirstCol extends Newtype[Int, Pure]
   type LastCol = LastCol.T
-  object LastCol extends RefinedType[Int, Pure]
+  object LastCol extends Newtype[Int, Pure]

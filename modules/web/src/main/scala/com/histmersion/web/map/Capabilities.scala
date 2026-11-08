@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the browser can draw: `software` when its WebGL is rasterised on the CPU (SwiftShader, llvmpipe…) — the GL map
@@ -17,13 +16,13 @@ object Capabilities:
   /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
 
   type Webgl = Webgl.T
-  object Webgl extends RefinedType[Boolean, Pure]
+  object Webgl extends Newtype[Boolean, Pure]
   type Software = Software.T
-  object Software extends RefinedType[Boolean, Pure]
+  object Software extends Newtype[Boolean, Pure]
   type Renderer = Renderer.T
-  object Renderer extends RefinedType[String, Pure]
+  object Renderer extends Newtype[String, Pure]
   type Webgl2 = Webgl2.T
-  object Webgl2 extends RefinedType[Boolean, Pure]
+  object Webgl2 extends Newtype[Boolean, Pure]
 
   def withoutWebgl2(c: Capabilities): Option[MapEngine.Problem] =
     if !c.webgl.value then Some(MapEngine.Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))

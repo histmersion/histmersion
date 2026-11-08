@@ -7,7 +7,6 @@ import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 
@@ -17,17 +16,17 @@ import com.histmersion.web.ErrorLine
   */
 object KeysSection:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Reference = Reference.T
-  object Reference extends RefinedType[String, Pure]
+  object Reference extends Newtype[String, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
 
   /** The ways a reference is written: its scheme, the name shown, what the entry box asks for. */
   type ReferenceEntry = ReferenceEntry.T
-  object ReferenceEntry extends RefinedType[String, Pure]
+  object ReferenceEntry extends Newtype[String, Pure]
 
   enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint):
     case Env extends Form(Form.Scheme("env"), Form.Label("Environment variable"), Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
@@ -38,11 +37,11 @@ object KeysSection:
 
   object Form:
     type Scheme = Scheme.T
-    object Scheme extends RefinedType[String, Pure]
+    object Scheme extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Hint = Hint.T
-    object Hint extends RefinedType[String, Pure]
+    object Hint extends Newtype[String, Pure]
 
 
     def of(scheme: Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)

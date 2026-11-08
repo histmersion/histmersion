@@ -9,7 +9,6 @@ import com.histmersion.domain.automation.managers.{ManagerEventRecord, ManagerIt
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.domain.automation.agents.AgentStateRecord
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The engine's rows held in memory, one record the `InMemory` services of its features share (each reads and changes
@@ -37,23 +36,23 @@ final case class AutomationState(
 
 object AutomationState:
   type Timestamp = Timestamp.T
-  object Timestamp extends RefinedType[String, Pure]
+  object Timestamp extends Newtype[String, Pure]
 
 
   type GoalsKey = GoalsKey.T
-  object GoalsKey extends RefinedType[String, Pure]
+  object GoalsKey extends Newtype[String, Pure]
   type FocusKey = FocusKey.T
-  object FocusKey extends RefinedType[String, Pure]
+  object FocusKey extends Newtype[String, Pure]
   type LastApprovalId = LastApprovalId.T
-  object LastApprovalId extends RefinedType[Long, Pure]
+  object LastApprovalId extends Newtype[Long, Pure]
   type LastItemId = LastItemId.T
-  object LastItemId extends RefinedType[Long, Pure]
+  object LastItemId extends Newtype[Long, Pure]
   type LastEventId = LastEventId.T
-  object LastEventId extends RefinedType[Long, Pure]
+  object LastEventId extends Newtype[Long, Pure]
   type GoalAliasesKey = GoalAliasesKey.T
-  object GoalAliasesKey extends RefinedType[String, Pure]
+  object GoalAliasesKey extends Newtype[String, Pure]
   type GoalAliasesValue = GoalAliasesValue.T
-  object GoalAliasesValue extends RefinedType[String, Pure]
+  object GoalAliasesValue extends Newtype[String, Pure]
 
   import hearth.kindlings.optics.syntax.*
 

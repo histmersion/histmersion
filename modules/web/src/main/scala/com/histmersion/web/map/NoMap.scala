@@ -4,15 +4,14 @@ package web.map
 import org.scalajs.dom
 
 import scala.collection.mutable
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.basemap.BasemapApi
 
 object NoMap:
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type MessageText = MessageText.T
-  object MessageText extends RefinedType[String, Pure]
+  object MessageText extends Newtype[String, Pure]
 
   /** A shape set that draws nothing and reads back the ids it was given. */
   final class Shapes(val id: Shapes.Id) extends ShapeSet:
@@ -24,7 +23,7 @@ object NoMap:
 
   object Shapes:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
 
   /** Tiles that are never asked for: no map, no features. */
   object Tiles extends PointTiles:

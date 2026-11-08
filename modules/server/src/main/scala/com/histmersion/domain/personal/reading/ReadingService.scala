@@ -11,7 +11,6 @@ import com.histmersion.{Offset, PageSize, UserId}
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
@@ -35,7 +34,7 @@ trait ReadingService:
 
 object ReadingService:
   type Read = Read.T
-  object Read extends RefinedType[Boolean, Pure]
+  object Read extends Newtype[Boolean, Pure]
 
 
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =

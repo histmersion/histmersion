@@ -7,7 +7,6 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One piece of UI state, typed. The web UI's SINGLE source of truth: every component reads a field's `signal`/`now()`
@@ -51,11 +50,11 @@ object Field:
   type Token = FieldCodec.Token
   val Token: FieldCodec.Token.type = FieldCodec.Token
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type HashKey = HashKey.T
-  object HashKey extends RefinedType[String, Pure]
+  object HashKey extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Chip = Chip.T
-  object Chip extends RefinedType[Boolean, Pure]
+  object Chip extends Newtype[Boolean, Pure]
 

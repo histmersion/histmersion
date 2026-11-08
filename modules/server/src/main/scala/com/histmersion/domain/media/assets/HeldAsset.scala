@@ -4,7 +4,6 @@ package domain.media.assets
 import java.time.Instant
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.DeepTime
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A picture as the in-memory store holds it: a row of `assets` — a source's figure (its `citekey`) or a provider's
@@ -40,26 +39,26 @@ final case class HeldAsset(
 
 object HeldAsset:
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Caption = Caption.T
-  object Caption extends RefinedType[String, Pure]
+  object Caption extends Newtype[String, Pure]
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends RefinedType[String, Pure]
+  object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends RefinedType[String, Pure]
+  object OriginalUrl extends Newtype[String, Pure]
   type Latitude = Latitude.T
-  object Latitude extends RefinedType[Double, Pure]
+  object Latitude extends Newtype[Double, Pure]
   type Longitude = Longitude.T
-  object Longitude extends RefinedType[Double, Pure]
+  object Longitude extends Newtype[Double, Pure]

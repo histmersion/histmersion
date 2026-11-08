@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence.passages
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One source's text, searched for passages: a phrase or a regular expression, each hit with its context; `limit`
@@ -19,12 +18,12 @@ trait PassageReader:
 
 object PassageReader:
   type Context = Context.T
-  object Context extends RefinedType[Int, Pure]
+  object Context extends Newtype[Int, Pure]
   type MaxMatches = MaxMatches.T
-  object MaxMatches extends RefinedType[Int, Pure]
+  object MaxMatches extends Newtype[Int, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Regex = Regex.T
-  object Regex extends RefinedType[Boolean, Pure]
+  object Regex extends Newtype[Boolean, Pure]
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends RefinedType[Long, Pure]
+  object TimeoutMs extends Newtype[Long, Pure]

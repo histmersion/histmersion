@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A group of points drawn as ONE cluster layer: nearby points of every kind join one bubble ([[Clustering]]), the rest
@@ -439,14 +438,14 @@ object PointSet:
   type Key = Clustering.GroupKey
   val Key: Clustering.GroupKey.type = Clustering.GroupKey
   type PointCount = PointCount.T
-  object PointCount extends RefinedType[Int, Pure]
+  object PointCount extends Newtype[Int, Pure]
   type FadeIn = FadeIn.T
-  object FadeIn extends RefinedType[Boolean, Pure]
+  object FadeIn extends Newtype[Boolean, Pure]
   type AnimateMax = AnimateMax.T
-  object AnimateMax extends RefinedType[Int, Pure]
+  object AnimateMax extends Newtype[Int, Pure]
   type ExitMs = ExitMs.T
-  object ExitMs extends RefinedType[Int, Pure]
+  object ExitMs extends Newtype[Int, Pure]
   type FadeOut = FadeOut.T
-  object FadeOut extends RefinedType[String, Pure]
+  object FadeOut extends Newtype[String, Pure]
   type Animations = Animations.T
-  object Animations extends RefinedType[Int, Pure]
+  object Animations extends Newtype[Int, Pure]

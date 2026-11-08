@@ -1,7 +1,6 @@
 package com.histmersion
 package web.marks
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 
@@ -11,9 +10,9 @@ import com.histmersion.api.library.Citekey
   */
 object NoteMarkdown:
   type Href = Href.T
-  object Href extends RefinedType[String, Pure]
+  object Href extends Newtype[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
   enum Inline:
     case Text(s: String)
@@ -33,10 +32,10 @@ object NoteMarkdown:
   object Block:
     object Heading:
       type Level = Level.T
-      object Level extends RefinedType[Int, Pure]
+      object Level extends Newtype[Int, Pure]
     object Items:
       type Ordered = Ordered.T
-      object Ordered extends RefinedType[Boolean, Pure]
+      object Ordered extends Newtype[Boolean, Pure]
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r

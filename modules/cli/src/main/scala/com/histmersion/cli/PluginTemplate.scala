@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PluginTemplate:
   type ClassName = ClassName.T
-  object ClassName extends RefinedType[String, Pure]
+  object ClassName extends Newtype[String, Pure]
 
 
   final case class Request(
@@ -25,7 +25,7 @@ object PluginTemplate:
 
   object Request:
     type AgentNotes = AgentNotes.T
-    object AgentNotes extends RefinedType[Boolean, Pure]
+    object AgentNotes extends Newtype[Boolean, Pure]
 
   /** The version a new plugin is published under, as its `Plugin.Info` states it too. */
   val FirstVersion = "0.1.0"

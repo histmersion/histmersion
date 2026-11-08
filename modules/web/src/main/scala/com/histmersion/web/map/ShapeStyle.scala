@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a set of shapes is drawn: a fill (`fillOpacity` 0: none) and an outline in the feature's colour (or `colour`, a
@@ -24,18 +23,18 @@ final case class ShapeStyle(
 
 object ShapeStyle:
   type FillOpacity = FillOpacity.T
-  object FillOpacity extends RefinedType[Double, Pure]
+  object FillOpacity extends Newtype[Double, Pure]
   type LineWidth = LineWidth.T
-  object LineWidth extends RefinedType[Double, Pure]
+  object LineWidth extends Newtype[Double, Pure]
   type LineOpacity = LineOpacity.T
-  object LineOpacity extends RefinedType[Double, Pure]
+  object LineOpacity extends Newtype[Double, Pure]
   type Colour = Colour.T
-  object Colour extends RefinedType[String, Pure]
+  object Colour extends Newtype[String, Pure]
   type Dash = Dash.T
-  object Dash extends RefinedType[Double, Pure]
+  object Dash extends Newtype[Double, Pure]
   type DashedLineOpacity = DashedLineOpacity.T
-  object DashedLineOpacity extends RefinedType[Double, Pure]
+  object DashedLineOpacity extends Newtype[Double, Pure]
   type CircleRadius = CircleRadius.T
-  object CircleRadius extends RefinedType[Double, Pure]
+  object CircleRadius extends Newtype[Double, Pure]
   type Interactive = Interactive.T
-  object Interactive extends RefinedType[Boolean, Pure]
+  object Interactive extends Newtype[Boolean, Pure]

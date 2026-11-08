@@ -5,7 +5,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import scala.jdk.OptionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
 
@@ -30,9 +29,9 @@ enum ConverterState:
 
 object ConverterState:
   type Probe = Probe.T
-  object Probe extends RefinedType[String, Pure]
+  object Probe extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
   object Busy:
     type JobId = Job.Id
@@ -40,7 +39,7 @@ object ConverterState:
 
   object Down:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
 
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =

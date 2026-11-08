@@ -10,7 +10,6 @@ import com.histmersion.util.ocr.ConverterClient
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 import com.histmersion.api.media.MediaProvider
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.config.MediaPluginCollectionsConfig
@@ -20,9 +19,9 @@ import com.histmersion.config.MediaPluginCollectionsConfig
   */
 object MediaImporters:
   type ImporterKey = ImporterKey.T
-  object ImporterKey extends RefinedType[String, Pure]
+  object ImporterKey extends Newtype[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends RefinedType[String, Pure]
+  object Refusal extends Newtype[String, Pure]
 
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.

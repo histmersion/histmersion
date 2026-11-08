@@ -6,7 +6,6 @@ import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 import com.histmersion.util.database.Transactor
 
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.Timer
 
@@ -20,7 +19,7 @@ trait QueryService:
 
 object QueryService:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   def apply(queries: DataSource, schema: DataSource)(using timer: Timer): QueryService =
     Implementation(Transactor(queries), Transactor(schema))

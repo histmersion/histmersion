@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Makes surfaces. */
@@ -20,8 +19,8 @@ trait MapEngine:
 
 object MapEngine:
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Double, Pure]
+  object MaxZoom extends Newtype[Double, Pure]
   type PixelRatio = PixelRatio.T
-  object PixelRatio extends RefinedType[Double, Pure]
+  object PixelRatio extends Newtype[Double, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

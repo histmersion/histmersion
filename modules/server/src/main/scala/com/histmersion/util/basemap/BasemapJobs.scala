@@ -4,7 +4,6 @@ package util.basemap
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The background job a base-map fetch runs as: one at a time, behind the server's write guard, its row in the jobs
@@ -30,12 +29,12 @@ trait BasemapJobs:
 
 object BasemapJobs:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Operation = Operation.T
-  object Operation extends RefinedType[String, Pure]
+  object Operation extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]

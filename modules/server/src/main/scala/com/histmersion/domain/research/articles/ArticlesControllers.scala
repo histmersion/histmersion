@@ -46,7 +46,6 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
@@ -639,8 +638,8 @@ final class ArticlesControllers(
 
 object ArticlesControllers:
   type NewSourceCount = NewSourceCount.T
-  object NewSourceCount extends RefinedType[Int, Pure]
+  object NewSourceCount extends Newtype[Int, Pure]
   type GetBrief = GetBrief.T
-  object GetBrief extends RefinedType[Boolean, Pure]
+  object GetBrief extends Newtype[Boolean, Pure]
   type FilterReachCap = FilterReachCap.T
-  object FilterReachCap extends RefinedType[Int, Pure]
+  object FilterReachCap extends Newtype[Int, Pure]

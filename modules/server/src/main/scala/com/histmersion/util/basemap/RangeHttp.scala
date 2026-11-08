@@ -2,7 +2,6 @@ package com.histmersion
 package util.basemap
 
 import com.histmersion.util.storage.Reservation
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE seam between the base-map fetch and the network: a test answers from a local file and never opens a socket.
@@ -23,17 +22,17 @@ trait RangeHttp:
 
 object RangeHttp:
   type ContentRangeHeader = ContentRangeHeader.T
-  object ContentRangeHeader extends RefinedType[String, Pure]
+  object ContentRangeHeader extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ResponseBytes = ResponseBytes.T
-  object ResponseBytes extends RefinedType[Array[Byte], Pure]
+  object ResponseBytes extends Newtype[Array[Byte], Pure]
   type ResponseText = ResponseText.T
-  object ResponseText extends RefinedType[String, Pure]
+  object ResponseText extends Newtype[String, Pure]
   type StatusCode = StatusCode.T
-  object StatusCode extends RefinedType[Int, Pure]
+  object StatusCode extends Newtype[Int, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   /** Pure: `Content-Range: bytes 0-99/12345` → `(0, 99, Some(12345))`. */
 

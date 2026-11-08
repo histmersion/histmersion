@@ -4,7 +4,6 @@ package domain.automation.goals
 import com.histmersion.api.automation.Goal
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A goal as [[GoalService.InMemory]] holds it: what a person put, its approved plan and run cap, and when it was made
@@ -21,4 +20,4 @@ final case class GoalRecord(
 
 object GoalRecord:
   type Plan = Plan.T
-  object Plan extends RefinedType[String, Pure]
+  object Plan extends Newtype[String, Pure]

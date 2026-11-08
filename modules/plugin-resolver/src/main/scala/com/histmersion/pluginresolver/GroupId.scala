@@ -6,4 +6,4 @@ import io.github.iltotore.iron.constraint.all.*
 
 /** A Maven group id: `org.scala-lang.modules`. */
 type GroupId = GroupId.T
-object GroupId extends RefinedType[String, MavenNameRule]
+object GroupId extends Newtype[String, MavenNameRule]

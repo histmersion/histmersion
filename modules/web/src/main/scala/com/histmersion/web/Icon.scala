@@ -6,7 +6,6 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.js
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.library.{Acquire, Filter}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
@@ -184,7 +183,7 @@ enum Icon(val paths: List[String]):
 
 object Icon:
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
 
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
   def html(i: Icon): Html =

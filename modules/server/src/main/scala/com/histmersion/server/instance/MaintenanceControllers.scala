@@ -17,7 +17,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.util.data.maintenance.MaintenanceTask
 import com.histmersion.util.data.maintenance.WriteGate
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
@@ -155,8 +154,8 @@ final class MaintenanceControllers(
 
 object MaintenanceControllers:
   type BackupFileName = BackupFileName.T
-  object BackupFileName extends RefinedType[String, Pure]
+  object BackupFileName extends Newtype[String, Pure]
   type Cursor = Cursor.T
-  object Cursor extends RefinedType[String, Pure]
+  object Cursor extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]

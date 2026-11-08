@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
@@ -86,6 +85,6 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
 
 object MarkerPane:
   type MarkerCount = MarkerCount.T
-  object MarkerCount extends RefinedType[Int, Pure]
+  object MarkerCount extends Newtype[Int, Pure]
   type RetireMs = RetireMs.T
-  object RetireMs extends RefinedType[Int, Pure]
+  object RetireMs extends Newtype[Int, Pure]

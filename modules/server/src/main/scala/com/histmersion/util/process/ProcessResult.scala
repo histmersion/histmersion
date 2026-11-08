@@ -1,7 +1,6 @@
 package com.histmersion
 package util.process
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a child process that was waited for ended: its exit code and its output, line by line. */
@@ -11,6 +10,6 @@ final case class ProcessResult(exitCode: ProcessResult.ExitCode, lines: List[Pro
 object ProcessResult:
 
   type ExitCode = ExitCode.T
-  object ExitCode extends RefinedType[Int, Pure]
+  object ExitCode extends Newtype[Int, Pure]
   type Lines = Lines.T
-  object Lines extends RefinedType[String, Pure]
+  object Lines extends Newtype[String, Pure]

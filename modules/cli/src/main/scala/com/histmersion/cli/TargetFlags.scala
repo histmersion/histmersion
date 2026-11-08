@@ -8,7 +8,6 @@ import com.monovore.decline.*
 import com.histmersion.api.personal.{ItemKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bookmark or a note points at, from the command line: `<kind> [<id>]` and the flags of a point on the map, a
@@ -16,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object TargetFlags:
   type Views = Views.T
-  object Views extends RefinedType[Boolean, Pure]
+  object Views extends Newtype[Boolean, Pure]
 
 
 

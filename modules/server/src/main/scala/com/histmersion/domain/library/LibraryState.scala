@@ -6,7 +6,6 @@ import com.histmersion.util.ocr.Chunk
 
 import java.time.Instant
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's records the in-memory services share: the sources (each with its findings, chunks and identity), the
@@ -22,13 +21,13 @@ final case class LibraryState(
 
 object LibraryState:
   type SourcesKey = SourcesKey.T
-  object SourcesKey extends RefinedType[String, Pure]
+  object SourcesKey extends Newtype[String, Pure]
   type AliasesKey = AliasesKey.T
-  object AliasesKey extends RefinedType[String, Pure]
+  object AliasesKey extends Newtype[String, Pure]
   type AliasesValue = AliasesValue.T
-  object AliasesValue extends RefinedType[String, Pure]
+  object AliasesValue extends Newtype[String, Pure]
   type AliasTombstones = AliasTombstones.T
-  object AliasTombstones extends RefinedType[String, Pure]
+  object AliasTombstones extends Newtype[String, Pure]
 
   val empty: LibraryState = LibraryState(Map.empty, Map.empty, Set.empty, Set.empty, Set.empty)
 
@@ -47,6 +46,6 @@ object LibraryState:
 
   object Stored:
     type FindingUidsKey = FindingUidsKey.T
-    object FindingUidsKey extends RefinedType[String, Pure]
+    object FindingUidsKey extends Newtype[String, Pure]
     type Licence = Licence.T
-    object Licence extends RefinedType[String, Pure]
+    object Licence extends Newtype[String, Pure]

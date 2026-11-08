@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 import com.histmersion.pluginhost.FetchChain
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the acquisition chain made of one work, after the server's own checks of each answer. */
@@ -24,7 +23,7 @@ enum FetchOutcome:
 object FetchOutcome:
   object Miss:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
   object Refused:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]

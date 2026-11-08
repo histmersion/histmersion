@@ -10,7 +10,6 @@ import io.circe.{Json, JsonObject}
 import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The agents' scratch state: a JSON value under a key, by key. */
@@ -26,7 +25,7 @@ trait AgentStateService:
 
 object AgentStateService:
   type SetValue = SetValue.T
-  object SetValue extends RefinedType[String, Pure]
+  object SetValue extends Newtype[String, Pure]
 
   def apply(db: Transactor): AgentStateService = Implementation(db)
 

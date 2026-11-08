@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One shape: its id (unique in its set), GeoJSON geometry, colour, whether it is drawn dashed, and its visibility
@@ -20,10 +19,10 @@ final case class ShapeFeature(
 
 object ShapeFeature:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Colour = Colour.T
-  object Colour extends RefinedType[String, Pure]
+  object Colour extends Newtype[String, Pure]
   type Dashed = Dashed.T
-  object Dashed extends RefinedType[Boolean, Pure]
+  object Dashed extends Newtype[Boolean, Pure]
   type Alpha = Alpha.T
-  object Alpha extends RefinedType[Double, Pure]
+  object Alpha extends Newtype[Double, Pure]

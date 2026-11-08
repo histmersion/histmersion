@@ -15,7 +15,6 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.checks.FormatReport
@@ -27,7 +26,7 @@ import com.histmersion.domain.library.Edge
   */
 object Pages:
   type Anchor = Anchor.T
-  object Anchor extends RefinedType[String, Pure]
+  object Anchor extends Newtype[String, Pure]
 
   private def esc(s: String): String = HtmlRender.esc(HtmlRender.Text(s)).value
 

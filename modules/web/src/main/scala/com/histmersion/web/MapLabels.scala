@@ -11,7 +11,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Years
@@ -49,11 +48,11 @@ import com.histmersion.api.Geo
   */
 object MapLabels:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type WrapClass = WrapClass.T
-  object WrapClass extends RefinedType[String, Pure]
+  object WrapClass extends Newtype[String, Pure]
 
   /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer target (the shape
     * under a name answers the pointer).
@@ -85,7 +84,7 @@ object MapLabels:
 
   object Entry:
     type Rank = Rank.T
-    object Rank extends RefinedType[Double, Pure]
+    object Rank extends Newtype[Double, Pure]
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 

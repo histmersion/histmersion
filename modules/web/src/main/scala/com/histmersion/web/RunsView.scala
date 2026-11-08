@@ -12,7 +12,6 @@ import com.histmersion.api.automation.{Agents, AgentsMarkdown, ListFilters}
 import com.histmersion.api.library.{Facet, Label}
 import com.histmersion.api.research.Article
 import com.histmersion.api.UiLabels.Text
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.RowCount
@@ -31,7 +30,7 @@ object RunsView:
   /** How many runs a page lists. */
 
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
 
   val Limit = 100
 
@@ -189,7 +188,7 @@ object RunsView:
 
   object Action:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Text
     val Label: Text.type = Text
 

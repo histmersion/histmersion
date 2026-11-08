@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type SeenBoard = SeenBoard.T
 
-object SeenBoard extends RefinedType[String, Pure]
+object SeenBoard extends Newtype[String, Pure]

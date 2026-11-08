@@ -3,7 +3,6 @@ package domain.library.ingest
 
 import com.histmersion.api.library.Edge
 import com.histmersion.domain.library.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The metadata an ingest carries, whatever the acquisition channel was. */
@@ -25,14 +24,14 @@ object IngestMeta:
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends RefinedType[String, Pure]
+  object Provenance extends Newtype[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends RefinedType[Int, Pure]
+  object CitedByCount extends Newtype[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends RefinedType[Int, Pure]
+  object InfluentialCitations extends Newtype[Int, Pure]

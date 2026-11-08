@@ -6,7 +6,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Dataset, PeriodODataset}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.api.catalogue.Period
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
@@ -82,16 +81,16 @@ final class PeriodImports(
 
 object PeriodImports:
   type Dataset = Dataset.T
-  object Dataset extends RefinedType[String, Pure]
+  object Dataset extends Newtype[String, Pure]
   type DatasetBody = DatasetBody.T
-  object DatasetBody extends RefinedType[String, Pure]
+  object DatasetBody extends Newtype[String, Pure]
   /** The text of a PeriodO dataset: the bundled seed or a dump. */
   type Document = Document.T
-  object Document extends RefinedType[String, Pure]
+  object Document extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Replace = Replace.T
-  object Replace extends RefinedType[Boolean, Pure]
+  object Replace extends Newtype[Boolean, Pure]
   /** The `seed_versions` name of the bundled period seed. */
 
 

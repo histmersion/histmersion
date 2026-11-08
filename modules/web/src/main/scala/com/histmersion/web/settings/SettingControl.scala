@@ -4,7 +4,6 @@ package web.settings
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object SettingControl:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
 

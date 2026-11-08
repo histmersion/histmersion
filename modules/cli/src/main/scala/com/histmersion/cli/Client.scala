@@ -92,7 +92,6 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.instance.CorpusCounts
 import com.histmersion.api.media.AssetLinks
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
@@ -420,17 +419,17 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
 object Client:
   type HttpStatus = HttpStatus.T
-  object HttpStatus extends RefinedType[Int, Pure]
+  object HttpStatus extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Write = Write.T
-  object Write extends RefinedType[Boolean, Pure]
+  object Write extends Newtype[Boolean, Pure]
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 
   type ServerUrl = ServerUrl.T
-  object ServerUrl extends RefinedType[String, Pure]
+  object ServerUrl extends Newtype[String, Pure]
   type Token = Token.T
-  object Token extends RefinedType[String, Pure]
+  object Token extends Newtype[String, Pure]
 
 
   def isWrite(m: sttp.model.Method): Boolean =

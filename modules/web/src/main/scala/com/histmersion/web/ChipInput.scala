@@ -10,7 +10,6 @@ import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
 import com.histmersion.api.library.{Facet, Label}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.UiLabels
@@ -23,9 +22,9 @@ import com.histmersion.api.UiLabels
   */
 object ChipInput:
   type Entry = Entry.T
-  object Entry extends RefinedType[String, Pure]
+  object Entry extends Newtype[String, Pure]
   type HintLabel = HintLabel.T
-  object HintLabel extends RefinedType[String, Pure]
+  object HintLabel extends Newtype[String, Pure]
 
 
 
@@ -48,18 +47,18 @@ object ChipInput:
 
   object Config:
     type DisplayResult = DisplayResult.T
-    object DisplayResult extends RefinedType[String, Pure]
+    object DisplayResult extends Newtype[String, Pure]
     type MarkResult = MarkResult.T
-    object MarkResult extends RefinedType[String, Pure]
+    object MarkResult extends Newtype[String, Pure]
 
     type Field = Field.T
-    object Field extends RefinedType[String, Pure]
+    object Field extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Placeholder = Placeholder.T
-    object Placeholder extends RefinedType[String, Pure]
+    object Placeholder extends Newtype[String, Pure]
     type DebounceMs = DebounceMs.T
-    object DebounceMs extends RefinedType[Int, Pure]
+    object DebounceMs extends Newtype[Int, Pure]
 
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.

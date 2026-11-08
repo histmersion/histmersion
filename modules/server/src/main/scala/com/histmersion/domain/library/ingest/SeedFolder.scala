@@ -3,7 +3,6 @@ package domain.library.ingest
 
 import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The folder of `wiki/sources/` notes a seed reads — one the person names, which only the composition root sees as a
@@ -21,8 +20,8 @@ trait SeedFolder:
 
 object SeedFolder:
   type MaxBytes = MaxBytes.T
-  object MaxBytes extends RefinedType[Long, Pure]
+  object MaxBytes extends Newtype[Long, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type NotesResult = NotesResult.T
-  object NotesResult extends RefinedType[String, Pure]
+  object NotesResult extends Newtype[String, Pure]

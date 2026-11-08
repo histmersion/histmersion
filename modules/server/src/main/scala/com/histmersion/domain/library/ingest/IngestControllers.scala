@@ -20,7 +20,6 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.AuthorName
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
@@ -269,4 +268,4 @@ final class IngestControllers(
 
 object IngestControllers:
   type Base64 = Base64.T
-  object Base64 extends RefinedType[String, Pure]
+  object Base64 extends Newtype[String, Pure]

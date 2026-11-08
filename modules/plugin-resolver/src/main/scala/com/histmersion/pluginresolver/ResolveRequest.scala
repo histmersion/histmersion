@@ -3,7 +3,6 @@ package pluginresolver
 
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one `resolve` run is asked.
@@ -34,4 +33,4 @@ final case class ResolveRequest(
 
 object ResolveRequest:
   type Check = Check.T
-  object Check extends RefinedType[Boolean, Pure]
+  object Check extends Newtype[Boolean, Pure]

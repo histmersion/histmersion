@@ -7,7 +7,6 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.time.Instant
 import com.histmersion.util.basemap.PmTiles
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A file in a store, as it is when it is read. Big files stream ([[open]]) or are read by position ([[readAt]],
@@ -43,8 +42,8 @@ trait Blob:
 
 object Blob:
   type Location = Location.T
-  object Location extends RefinedType[String, Pure]
+  object Location extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 

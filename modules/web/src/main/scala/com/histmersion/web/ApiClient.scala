@@ -72,7 +72,6 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.api.media.MediaProvider
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Edge
@@ -99,7 +98,7 @@ import com.histmersion.api.automation.ItemStatus
 
 object ApiClient:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   private val backend = FetchBackend()
   private val interp = SttpClientInterpreter()

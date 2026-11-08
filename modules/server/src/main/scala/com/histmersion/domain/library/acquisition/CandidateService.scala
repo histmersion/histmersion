@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
@@ -46,7 +45,7 @@ trait CandidateService:
 
 object CandidateService:
   type ListLimit = ListLimit.T
-  object ListLimit extends RefinedType[Int, Pure]
+  object ListLimit extends Newtype[Int, Pure]
 
   def apply(db: Transactor): CandidateService = Implementation(db)
 

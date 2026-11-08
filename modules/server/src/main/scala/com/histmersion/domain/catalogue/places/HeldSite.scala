@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A Wikidata site as the in-memory catalogue keeps it for the refinement of its type: whether it is on the map (a
@@ -17,12 +16,12 @@ final case class HeldSite(
 
 object HeldSite:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type OnMap = OnMap.T
-  object OnMap extends RefinedType[Boolean, Pure]
+  object OnMap extends Newtype[Boolean, Pure]
   type ImportClass = ImportClass.T
-  object ImportClass extends RefinedType[String, Pure]
+  object ImportClass extends Newtype[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends RefinedType[String, Pure]
+  object SiteType extends Newtype[String, Pure]
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends RefinedType[Long, Pure]
+  object CheckedAt extends Newtype[Long, Pure]

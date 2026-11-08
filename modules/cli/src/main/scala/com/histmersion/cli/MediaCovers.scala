@@ -18,7 +18,6 @@ import com.histmersion.api.media.{
   MediaSourceLine,
   SourceCoverParams
 }
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
 import com.histmersion.api.Paging
@@ -69,7 +68,7 @@ object MediaCovers:
   object Outcome:
     object Skipped:
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
 
   def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
     CoverChoice.choose(

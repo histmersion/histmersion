@@ -6,7 +6,6 @@ import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.Instant
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Research's records the in-memory services share: the articles (each with its uid, its last write and the targets its
@@ -24,17 +23,17 @@ final case class ResearchState(
 
 object ResearchState:
   type ArticlesKey = ArticlesKey.T
-  object ArticlesKey extends RefinedType[String, Pure]
+  object ArticlesKey extends Newtype[String, Pure]
   type AliasesKey = AliasesKey.T
-  object AliasesKey extends RefinedType[String, Pure]
+  object AliasesKey extends Newtype[String, Pure]
   type AliasesValue = AliasesValue.T
-  object AliasesValue extends RefinedType[String, Pure]
+  object AliasesValue extends Newtype[String, Pure]
   type NextVersion = NextVersion.T
-  object NextVersion extends RefinedType[Long, Pure]
+  object NextVersion extends Newtype[Long, Pure]
   type CritiquesKey = CritiquesKey.T
-  object CritiquesKey extends RefinedType[String, Pure]
+  object CritiquesKey extends Newtype[String, Pure]
   type LedgersKey = LedgersKey.T
-  object LedgersKey extends RefinedType[String, Pure]
+  object LedgersKey extends Newtype[String, Pure]
 
   val empty: ResearchState = ResearchState(Map.empty, Map.empty, Vector.empty, NextVersion(1L), Map.empty)
 
@@ -45,7 +44,7 @@ object ResearchState:
 
   object Stored:
     type Links = Links.T
-    object Links extends RefinedType[String, Pure]
+    object Links extends Newtype[String, Pure]
 
   /** A body and summary an article had before a write replaced them. */
   final case class Replaced(
@@ -59,10 +58,10 @@ object ResearchState:
 
   object Replaced:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Body = Body.T
-    object Body extends RefinedType[String, Pure]
+    object Body extends Newtype[String, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]

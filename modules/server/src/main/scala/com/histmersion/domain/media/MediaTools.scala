@@ -17,7 +17,6 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.api.media.MediaItem
@@ -50,13 +49,13 @@ object MediaTools:
   )
   object PatchAssetInput:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Caption = Caption.T
-    object Caption extends RefinedType[String, Pure]
+    object Caption extends Newtype[String, Pure]
     type License = License.T
-    object License extends RefinedType[String, Pure]
+    object License extends Newtype[String, Pure]
 
     given Schema[PatchAssetInput] = KindlingsSchema
       .derived[PatchAssetInput]
@@ -77,17 +76,17 @@ object MediaTools:
   ) derives KindlingsCodecAsObject
   object AssetLinksInput:
     type Asset = Asset.T
-    object Asset extends RefinedType[String, Pure]
+    object Asset extends Newtype[String, Pure]
     type TargetType = TargetType.T
-    object TargetType extends RefinedType[String, Pure]
+    object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type Relation = Relation.T
-    object Relation extends RefinedType[String, Pure]
+    object Relation extends Newtype[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends RefinedType[String, Pure]
+    object Xywh extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
 
     given Schema[AssetLinksInput] = KindlingsSchema
       .derived[AssetLinksInput]
@@ -101,7 +100,7 @@ object MediaTools:
   final case class DeleteAssetLinkInput(id: DeleteAssetLinkInput.Id) derives KindlingsCodecAsObject
   object DeleteAssetLinkInput:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
 
     given Schema[DeleteAssetLinkInput] = KindlingsSchema
       .derived[DeleteAssetLinkInput]

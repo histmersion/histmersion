@@ -4,7 +4,6 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
@@ -25,9 +24,9 @@ enum MapLayer(val wire: MapLayer.Wire, val label: MapLayer.Label, val icon: Icon
 
 object MapLayer:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   def fromWire(s: Wire): Option[MapLayer] = values.find(_.wire.value == s.value.trim.toLowerCase)

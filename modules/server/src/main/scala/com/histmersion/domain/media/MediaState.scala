@@ -4,7 +4,6 @@ package domain.media
 import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.assets.{HeldAsset, HeldMediaLink}
 import com.histmersion.domain.media.imports.HeldCheck
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Media's rows held in memory, one record the `InMemory` services of its features share (each reads and changes its
@@ -21,6 +20,6 @@ final case class MediaState(
 
 object MediaState:
   type LastAssetLinkId = LastAssetLinkId.T
-  object LastAssetLinkId extends RefinedType[Long, Pure]
+  object LastAssetLinkId extends Newtype[Long, Pure]
 
   val empty: MediaState = MediaState(Vector.empty, Vector.empty, Vector.empty, LastAssetLinkId(0L), Vector.empty)

@@ -11,7 +11,6 @@ import org.yaml.snakeyaml.constructor.SafeConstructor
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.util.storage.SafePath
@@ -22,13 +21,13 @@ import com.histmersion.util.storage.SafePath
   */
 object AgentDefinitions:
   type FragmentBody = FragmentBody.T
-  object FragmentBody extends RefinedType[String, Pure]
+  object FragmentBody extends Newtype[String, Pure]
   type FragmentName = FragmentName.T
-  object FragmentName extends RefinedType[String, Pure]
+  object FragmentName extends Newtype[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
   type ResourcePath = ResourcePath.T
-  object ResourcePath extends RefinedType[String, Pure]
+  object ResourcePath extends Newtype[String, Pure]
 
   /** The MCP server's name in every runtime's configuration. */
 

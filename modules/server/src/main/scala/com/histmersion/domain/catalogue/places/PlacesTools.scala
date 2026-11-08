@@ -17,7 +17,6 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
@@ -37,15 +36,15 @@ object PlacesTools:
   ) derives KindlingsCodecAsObject
   object PlacesInput:
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type AsOf = AsOf.T
-    object AsOf extends RefinedType[Long, Pure]
+    object AsOf extends Newtype[Long, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
 
     given Schema[PlacesInput] = KindlingsSchema
       .derived[PlacesInput]
@@ -70,21 +69,21 @@ object PlacesTools:
   )
   object PlaceOverrideInput:
     type PlaceId = PlaceId.T
-    object PlaceId extends RefinedType[String, Pure]
+    object PlaceId extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type Reset = Reset.T
-    object Reset extends RefinedType[Boolean, Pure]
+    object Reset extends Newtype[Boolean, Pure]
     type MergeInto = MergeInto.T
-    object MergeInto extends RefinedType[String, Pure]
+    object MergeInto extends Newtype[String, Pure]
     type Remove = Remove.T
-    object Remove extends RefinedType[Boolean, Pure]
+    object Remove extends Newtype[Boolean, Pure]
     type PointLat = PointLat.T
-    object PointLat extends RefinedType[Double, Pure]
+    object PointLat extends Newtype[Double, Pure]
     type PointLon = PointLon.T
-    object PointLon extends RefinedType[Double, Pure]
+    object PointLon extends Newtype[Double, Pure]
 
     given Schema[PlaceOverrideInput] = KindlingsSchema
       .derived[PlaceOverrideInput]
@@ -114,13 +113,13 @@ object PlacesTools:
   )
   object PlaceNamesInput:
     type PlaceId = PlaceId.T
-    object PlaceId extends RefinedType[String, Pure]
+    object PlaceId extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Lang = Lang.T
-    object Lang extends RefinedType[String, Pure]
+    object Lang extends Newtype[String, Pure]
     type Remove = Remove.T
-    object Remove extends RefinedType[Boolean, Pure]
+    object Remove extends Newtype[Boolean, Pure]
 
     given Schema[PlaceNamesInput] = KindlingsSchema
       .derived[PlaceNamesInput]

@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.histmersion.api.automation.Queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Api
@@ -28,13 +27,13 @@ object QueueItemRef:
 
   object Ref:
     type Authors = Authors.T
-    object Authors extends RefinedType[String, Pure]
+    object Authors extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Year = Year.T
-    object Year extends RefinedType[Int, Pure]
+    object Year extends Newtype[Int, Pure]
     type Doi = Doi.T
-    object Doi extends RefinedType[String, Pure]
+    object Doi extends Newtype[String, Pure]
 
   private val AuthorYear = """^(.+?)\s+((?:1[5-9]|20)\d\d)[a-z]?\.\s+['‘"“](.+?)['’"”][,.]\s*(.*)$""".r
   private val Paren = """\(([^()]*)\)""".r

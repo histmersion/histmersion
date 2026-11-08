@@ -20,7 +20,6 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.views.AutopilotStatus
 import com.histmersion.api.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Managers
@@ -42,49 +41,49 @@ import com.histmersion.api.Offset
   */
 object ManagersView:
   type Badge = Badge.T
-  object Badge extends RefinedType[String, Pure]
+  object Badge extends Newtype[String, Pure]
   type ButtonLabel = ButtonLabel.T
-  object ButtonLabel extends RefinedType[String, Pure]
+  object ButtonLabel extends Newtype[String, Pure]
   type ConfigKey = ConfigKey.T
-  object ConfigKey extends RefinedType[String, Pure]
+  object ConfigKey extends Newtype[String, Pure]
   type ConfigText = ConfigText.T
-  object ConfigText extends RefinedType[String, Pure]
+  object ConfigText extends Newtype[String, Pure]
   type CountsText = CountsText.T
-  object CountsText extends RefinedType[String, Pure]
+  object CountsText extends Newtype[String, Pure]
   type DrainLine = DrainLine.T
-  object DrainLine extends RefinedType[String, Pure]
+  object DrainLine extends Newtype[String, Pure]
   type EnqueuedNote = EnqueuedNote.T
-  object EnqueuedNote extends RefinedType[String, Pure]
+  object EnqueuedNote extends Newtype[String, Pure]
   type FocusHead = FocusHead.T
-  object FocusHead extends RefinedType[String, Pure]
+  object FocusHead extends Newtype[String, Pure]
   type FocusPace = FocusPace.T
-  object FocusPace extends RefinedType[String, Pure]
+  object FocusPace extends Newtype[String, Pure]
   type GoalLine = GoalLine.T
-  object GoalLine extends RefinedType[String, Pure]
+  object GoalLine extends Newtype[String, Pure]
   type Hint = Hint.T
-  object Hint extends RefinedType[String, Pure]
+  object Hint extends Newtype[String, Pure]
   type ItemAction = ItemAction.T
-  object ItemAction extends RefinedType[String, Pure]
+  object ItemAction extends Newtype[String, Pure]
   type JobTypeMeaning = JobTypeMeaning.T
-  object JobTypeMeaning extends RefinedType[String, Pure]
+  object JobTypeMeaning extends Newtype[String, Pure]
   type ManagerMeaning = ManagerMeaning.T
-  object ManagerMeaning extends RefinedType[String, Pure]
+  object ManagerMeaning extends Newtype[String, Pure]
   type SchedulerHead = SchedulerHead.T
-  object SchedulerHead extends RefinedType[String, Pure]
+  object SchedulerHead extends Newtype[String, Pure]
   type Stages = Stages.T
-  object Stages extends RefinedType[String, Pure]
+  object Stages extends Newtype[String, Pure]
   type StatusMeaning = StatusMeaning.T
-  object StatusMeaning extends RefinedType[String, Pure]
+  object StatusMeaning extends Newtype[String, Pure]
   type StrategyLabel = StrategyLabel.T
-  object StrategyLabel extends RefinedType[String, Pure]
+  object StrategyLabel extends Newtype[String, Pure]
   type WaitLabel = WaitLabel.T
-  object WaitLabel extends RefinedType[String, Pure]
+  object WaitLabel extends Newtype[String, Pure]
   type WaitMeaning = WaitMeaning.T
-  object WaitMeaning extends RefinedType[String, Pure]
+  object WaitMeaning extends Newtype[String, Pure]
   type WaitingSummary = WaitingSummary.T
-  object WaitingSummary extends RefinedType[String, Pure]
+  object WaitingSummary extends Newtype[String, Pure]
   type WriteLabel = WriteLabel.T
-  object WriteLabel extends RefinedType[String, Pure]
+  object WriteLabel extends Newtype[String, Pure]
 
   /** Items per page, events per page. */
   val ItemLimit = Paging.Limit(25)

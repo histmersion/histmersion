@@ -5,7 +5,6 @@ import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The marker SHAPE — what kind of thing a point is (docs/visualization-guide.md §2): a diamond a finding (a source's
@@ -19,4 +18,4 @@ enum Shape(val cls: Shape.Cls):
 
 object Shape:
   type Cls = Cls.T
-  object Cls extends RefinedType[String, Pure]
+  object Cls extends Newtype[String, Pure]

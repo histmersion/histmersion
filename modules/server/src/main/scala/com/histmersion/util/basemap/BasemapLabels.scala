@@ -12,7 +12,6 @@ import io.circe.Json
 import scala.collection.mutable
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Label
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The base maps' physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's label layers — public
@@ -27,27 +26,27 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object BasemapLabels:
   type Area = Area.T
-  object Area extends RefinedType[Double, Pure]
+  object Area extends Newtype[Double, Pure]
   type Buffer = Buffer.T
-  object Buffer extends RefinedType[Double, Pure]
+  object Buffer extends Newtype[Double, Pure]
   type FeatureClass = FeatureClass.T
-  object FeatureClass extends RefinedType[String, Pure]
+  object FeatureClass extends Newtype[String, Pure]
   type FileName = FileName.T
-  object FileName extends RefinedType[String, Pure]
+  object FileName extends Newtype[String, Pure]
   type Language = Language.T
-  object Language extends RefinedType[String, Pure]
+  object Language extends Newtype[String, Pure]
   type Margin = Margin.T
-  object Margin extends RefinedType[Double, Pure]
+  object Margin extends Newtype[Double, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Tolerance = Tolerance.T
-  object Tolerance extends RefinedType[Double, Pure]
+  object Tolerance extends Newtype[Double, Pure]
   type WorldX = WorldX.T
-  object WorldX extends RefinedType[Double, Pure]
+  object WorldX extends Newtype[Double, Pure]
   type WorldY = WorldY.T
-  object WorldY extends RefinedType[Double, Pure]
+  object WorldY extends Newtype[Double, Pure]
 
   /** One name to place: a point (`line` empty) or a river's line (`line` its parts, lon/lat), shown from map zoom
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
@@ -65,17 +64,17 @@ object BasemapLabels:
 
   object Label:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Lon = Lon.T
-    object Lon extends RefinedType[Double, Pure]
+    object Lon extends Newtype[Double, Pure]
     type Lat = Lat.T
-    object Lat extends RefinedType[Double, Pure]
+    object Lat extends Newtype[Double, Pure]
     type MinZoom = MinZoom.T
-    object MinZoom extends RefinedType[Int, Pure]
+    object MinZoom extends Newtype[Int, Pure]
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends RefinedType[Int, Pure]
+    object MaxZoom extends Newtype[Int, Pure]
     type Elevation = Elevation.T
-    object Elevation extends RefinedType[Long, Pure]
+    object Elevation extends Newtype[Long, Pure]
 
   /** Natural Earth's feature classes, lower-cased → the `kind` a style selects; `None` = not kept. */
   def kindOf(featureClass: FeatureClass): Option[Label.Kind] =

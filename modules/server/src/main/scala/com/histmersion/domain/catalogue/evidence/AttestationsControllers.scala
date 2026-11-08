@@ -21,7 +21,6 @@ import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.evidence.passages.Passage
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
@@ -98,4 +97,4 @@ final class AttestationsControllers(
 object AttestationsControllers:
   /** An identifier an alias table reads: the text of a record's old or current name. */
   type Alias = Alias.T
-  object Alias extends RefinedType[String, Pure]
+  object Alias extends Newtype[String, Pure]

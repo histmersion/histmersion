@@ -6,14 +6,13 @@ import sttp.tapir.files.*
 import sttp.tapir.json.circe.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Static:
   type Asset = Asset.T
-  object Asset extends RefinedType[String, Pure]
+  object Asset extends Newtype[String, Pure]
   type ReadPath = ReadPath.T
-  object ReadPath extends RefinedType[String, Pure]
+  object ReadPath extends Newtype[String, Pure]
 
   def read(path: ReadPath): Asset =
     val is = Option(classOf[HttpApi].getClassLoader.getResourceAsStream(path.value))

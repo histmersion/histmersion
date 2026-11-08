@@ -6,7 +6,6 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.library.GeoHit
 import com.histmersion.web.map.GeoBounds
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it counts for (a
@@ -31,8 +30,8 @@ final case class Member(
 object Member:
 
   type N = N.T
-  object N extends RefinedType[Int, Pure]
+  object N extends Newtype[Int, Pure]
   type Mids = Mids.T
-  object Mids extends RefinedType[Double, Pure]
+  object Mids extends Newtype[Double, Pure]
   type Undated = Undated.T
-  object Undated extends RefinedType[Int, Pure]
+  object Undated extends Newtype[Int, Pure]

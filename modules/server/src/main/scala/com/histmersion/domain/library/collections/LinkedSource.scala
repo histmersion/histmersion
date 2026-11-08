@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.collections
 
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
 
@@ -11,7 +10,7 @@ final case class LinkedSource(citekey: Citekey, id: LinkedSource.Id, title: Link
 
 object LinkedSource:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = AuthorName

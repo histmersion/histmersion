@@ -10,7 +10,6 @@ import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
 import com.histmersion.api.Years
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one KIND of point is (docs/map-layers.md): everything the map does with a point that differs between findings,
@@ -81,8 +80,8 @@ trait PointKind[A]:
 
 object PointKind:
   type BoxPixels = BoxPixels.T
-  object BoxPixels extends RefinedType[Int, Pure]
+  object BoxPixels extends Newtype[Int, Pure]
   type PointKey = PointKey.T
-  object PointKey extends RefinedType[String, Pure]
+  object PointKey extends Newtype[String, Pure]
   type ZIndex = ZIndex.T
-  object ZIndex extends RefinedType[Int, Pure]
+  object ZIndex extends Newtype[Int, Pure]

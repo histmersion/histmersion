@@ -3,7 +3,6 @@ package plugin.testkit
 
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{AiHttp, WorkKey}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
@@ -53,7 +52,7 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
 
 object ScriptedAiHttp:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   private def masked(headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
     headers.map { (k, v) =>

@@ -3,7 +3,6 @@ package util.data.checks
 
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.Transactor
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies
@@ -63,4 +62,4 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
 
 object CheckRunner:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

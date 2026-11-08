@@ -17,7 +17,6 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.plugin.WorkKey
 import com.histmersion.util.ocr.Pixels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
@@ -284,6 +283,6 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
 
 object CollectionImport:
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]

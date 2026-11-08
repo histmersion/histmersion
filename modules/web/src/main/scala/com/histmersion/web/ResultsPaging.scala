@@ -3,7 +3,6 @@ package web
 
 import com.histmersion.api.Plural
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
@@ -17,11 +16,11 @@ import com.histmersion.api.catalogue.Year
   */
 object ResultsPaging:
   type Failed = Failed.T
-  object Failed extends RefinedType[Boolean, Pure]
+  object Failed extends Newtype[Boolean, Pure]
   type Loading = Loading.T
-  object Loading extends RefinedType[Boolean, Pure]
+  object Loading extends Newtype[Boolean, Pure]
   type PageNumber = PageNumber.T
-  object PageNumber extends RefinedType[Int, Pure]
+  object PageNumber extends Newtype[Int, Pure]
 
   /** The count line: `showing 1–shown of total things` while rows are left, `total things` when all are shown,
     * `no things` for none; then the tab's own `extras`, each after a ` · `.

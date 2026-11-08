@@ -10,7 +10,6 @@ import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.util.time.Timer
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The registered checks as REST, MCP and the CLI reach them: the lint report (an unknown rule name is a 400: a typo
@@ -60,5 +59,5 @@ final class CheckControllers(
 
 object CheckControllers:
   type ApplyFix = ApplyFix.T
-  object ApplyFix extends RefinedType[Boolean, Pure]
+  object ApplyFix extends Newtype[Boolean, Pure]
 

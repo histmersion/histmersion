@@ -8,14 +8,13 @@ import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object MapTiles:
   type Etag = Etag.T
-  object Etag extends RefinedType[String, Pure]
+  object Etag extends Newtype[String, Pure]
   type TileKey = TileKey.T
-  object TileKey extends RefinedType[String, Pure]
+  object TileKey extends Newtype[String, Pure]
   /** A tile's caching rule: the browser asks again each time and the server answers 304 while the data's version is
     * unchanged — never a stale tile after a write, a few bytes when nothing changed.
     */

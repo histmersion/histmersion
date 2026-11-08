@@ -8,7 +8,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which standalone page a document is — the web bundle's page entry point reads it from `<body data-page>` to wire
@@ -20,4 +19,4 @@ enum PageKind(val wire: PageKind.Wire):
 
 object PageKind:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

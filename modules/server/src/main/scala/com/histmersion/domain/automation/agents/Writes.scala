@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a role may change: nothing; a typed answer code writes (`propose` — every embedded step); or directly (an
@@ -18,4 +17,4 @@ enum Writes(val wire: Writes.Wire):
 
 object Writes:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one tool call of an agent step may return (`agents.tools`). Every later turn of a step re-sends every earlier
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ToolResultCap:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
   /** A chip link of the web UI (`[pie religion](/#topic=pie_religion)`): an agent reads the label and never follows the
     * link, so the target is dropped. Article links (`/article/<slug>`) stay.
@@ -21,7 +20,7 @@ object ToolResultCap:
   type CompactSourceMd = Markdown
   val CompactSourceMd: Markdown.type = Markdown
   type CapMax = CapMax.T
-  object CapMax extends RefinedType[Int, Pure]
+  object CapMax extends Newtype[Int, Pure]
   type CapHint = String
   type SourceMax = CapMax
   val SourceMax: CapMax.type = CapMax

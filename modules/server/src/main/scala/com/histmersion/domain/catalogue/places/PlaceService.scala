@@ -16,7 +16,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place as DPlace
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
@@ -82,11 +81,11 @@ trait PlaceService:
 
 object PlaceService:
   type DepthLimit = DepthLimit.T
-  object DepthLimit extends RefinedType[Int, Pure]
+  object DepthLimit extends Newtype[Int, Pure]
   type SearchQ = SearchQ.T
-  object SearchQ extends RefinedType[String, Pure]
+  object SearchQ extends Newtype[String, Pure]
   type ScopeForValues = ScopeForValues.T
-  object ScopeForValues extends RefinedType[String, Pure]
+  object ScopeForValues extends Newtype[String, Pure]
 
   def apply(db: Transactor): PlaceService = Implementation(db)
 

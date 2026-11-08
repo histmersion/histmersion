@@ -6,7 +6,6 @@ import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
@@ -14,11 +13,11 @@ final case class FollowupsInput(id: FollowupsInput.Id, since: Option[FollowupsIn
     derives KindlingsCodecAsObject
 object FollowupsInput:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Since = Year
   val Since: Year.type = Year
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
 
   given Schema[FollowupsInput] = KindlingsSchema
     .derived[FollowupsInput]

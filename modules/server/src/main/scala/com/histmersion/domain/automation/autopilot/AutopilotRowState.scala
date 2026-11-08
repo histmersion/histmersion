@@ -2,7 +2,6 @@ package com.histmersion
 package domain.automation.autopilot
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The autopilot's one row as [[AutopilotRowService.InMemory]] holds it: the switch and who turned it, the managers it
@@ -28,17 +27,17 @@ final case class AutopilotRowState(
 object AutopilotRowState:
   /** The row as the database makes it: off, changed by nobody at `now`, nothing paused. */
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type ChangedBy = ChangedBy.T
-  object ChangedBy extends RefinedType[String, Pure]
+  object ChangedBy extends Newtype[String, Pure]
   type Paused = Paused.T
-  object Paused extends RefinedType[String, Pure]
+  object Paused extends Newtype[String, Pure]
   type Strategy = Strategy.T
-  object Strategy extends RefinedType[String, Pure]
+  object Strategy extends Newtype[String, Pure]
   type StrategyBy = StrategyBy.T
-  object StrategyBy extends RefinedType[String, Pure]
+  object StrategyBy extends Newtype[String, Pure]
   type DrainBy = DrainBy.T
-  object DrainBy extends RefinedType[String, Pure]
+  object DrainBy extends Newtype[String, Pure]
 
   def made(now: Instant): AutopilotRowState =
     AutopilotRowState(Enabled(false), now, ChangedBy(""), Nil, None, None, None, None, None, None, None, None, None, None)

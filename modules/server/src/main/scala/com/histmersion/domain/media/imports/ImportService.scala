@@ -13,7 +13,6 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
@@ -74,25 +73,25 @@ object ImportService:
   type TargetType = Target.TargetType
   val TargetType: Target.TargetType.type = Target.TargetType
   type CheckName = CheckName.T
-  object CheckName extends RefinedType[String, Pure]
+  object CheckName extends Newtype[String, Pure]
   type CommonsCategory = CommonsCategory.T
-  object CommonsCategory extends RefinedType[String, Pure]
+  object CommonsCategory extends Newtype[String, Pure]
   type PlaceKey = PlaceKey.T
-  object PlaceKey extends RefinedType[String, Pure]
+  object PlaceKey extends Newtype[String, Pure]
   type Places = Places.T
-  object Places extends RefinedType[Boolean, Pure]
+  object Places extends Newtype[Boolean, Pure]
   type PleiadesOnly = PleiadesOnly.T
-  object PleiadesOnly extends RefinedType[Boolean, Pure]
+  object PleiadesOnly extends Newtype[Boolean, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]
   type Since = Since.T
-  object Since extends RefinedType[Long, Pure]
+  object Since extends Newtype[Long, Pure]
   type TargetsText = TargetsText.T
-  object TargetsText extends RefinedType[String, Pure]
+  object TargetsText extends Newtype[String, Pure]
   type TargetsLimit = TargetsLimit.T
-  object TargetsLimit extends RefinedType[Int, Pure]
+  object TargetsLimit extends Newtype[Int, Pure]
   type CollectionTargetsLimit = CollectionTargetsLimit.T
-  object CollectionTargetsLimit extends RefinedType[Int, Pure]
+  object CollectionTargetsLimit extends Newtype[Int, Pure]
 
   def apply(db: Transactor): ImportService = Implementation(db)
 

@@ -3,7 +3,6 @@ package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE menu with icons (a native `<select>` cannot show one): a button showing the current choice — its icon and label
@@ -17,9 +16,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object IconSelect:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
 
   /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under, and what it
     * means (its tooltip), when the label alone does not say.
@@ -34,13 +33,13 @@ object IconSelect:
 
   object Opt:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Group = Group.T
-    object Group extends RefinedType[String, Pure]
+    object Group extends Newtype[String, Pure]
     type Hint = Hint.T
-    object Hint extends RefinedType[String, Pure]
+    object Hint extends Newtype[String, Pure]
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =

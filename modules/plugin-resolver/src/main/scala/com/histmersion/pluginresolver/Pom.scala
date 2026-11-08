@@ -12,7 +12,6 @@ import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The one thing read from a plugin's POM here: whose it is. Everything else in it (dependencies, properties, parents,
@@ -20,9 +19,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Pom:
   type ElementName = ElementName.T
-  object ElementName extends RefinedType[String, Pure]
+  object ElementName extends Newtype[String, Pure]
   type ElementText = ElementText.T
-  object ElementText extends RefinedType[String, Pure]
+  object ElementText extends Newtype[String, Pure]
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
   export Resolver.{Problem as CoordinatesResultPart1}

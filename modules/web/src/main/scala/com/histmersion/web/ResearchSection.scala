@@ -3,7 +3,6 @@ package web
 
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Research's sections, in the order of its side navigation. `agents`: shown only where the server runs research
@@ -24,4 +23,4 @@ object ResearchSection:
   type Label = UiLabels.Text
   val Label: UiLabels.Text.type = UiLabels.Text
   type Agents = Agents.T
-  object Agents extends RefinedType[Boolean, Pure]
+  object Agents extends Newtype[Boolean, Pure]

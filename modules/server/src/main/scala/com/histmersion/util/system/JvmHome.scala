@@ -2,7 +2,6 @@ package com.histmersion
 package util.system
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class JvmHome(path: Path):
@@ -10,4 +9,4 @@ final case class JvmHome(path: Path):
 
 object JvmHome:
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]

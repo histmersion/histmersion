@@ -41,7 +41,6 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
@@ -294,18 +293,18 @@ object ProposeArticlesPipeline:
 
   object Loaded:
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Regions = Regions.T
-    object Regions extends RefinedType[String, Pure]
+    object Regions extends Newtype[String, Pure]
     type Queries = Queries.T
-    object Queries extends RefinedType[String, Pure]
+    object Queries extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
 
   final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line) derives KindlingsCodecAsObject
 
   object Recorded:
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]

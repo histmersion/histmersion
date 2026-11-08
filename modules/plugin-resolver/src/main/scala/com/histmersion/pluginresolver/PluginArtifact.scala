@@ -5,7 +5,6 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin jar to resolve the dependencies of, with the text of the POM that lists them when it was published with
@@ -19,4 +18,4 @@ object PluginArtifact:
   val FileNameResult: Resolver.FileName.type = Resolver.FileName
 
   type Pom = Pom.T
-  object Pom extends RefinedType[String, Pure]
+  object Pom extends Newtype[String, Pure]

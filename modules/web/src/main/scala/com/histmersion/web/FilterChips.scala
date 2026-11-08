@@ -4,7 +4,6 @@ package web
 import com.histmersion.api.Wording
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
@@ -14,7 +13,7 @@ import com.histmersion.api.catalogue.Year
   */
 object FilterChips:
   type ChipCount = ChipCount.T
-  object ChipCount extends RefinedType[Int, Pure]
+  object ChipCount extends Newtype[Int, Pure]
 
   /** Pure: is the span `from`–`to` other than the default one? */
 

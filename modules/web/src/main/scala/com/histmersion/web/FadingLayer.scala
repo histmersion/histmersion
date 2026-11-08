@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.histmersion.web.ui.CssClass
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The fade of what the map adds and removes by key (a point, a name): new members fade in, vanished ones fade out and
@@ -10,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object FadingLayer:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
 
 
   final case class Plan(entering: Set[Key], staying: Set[Key], exiting: Set[Key])

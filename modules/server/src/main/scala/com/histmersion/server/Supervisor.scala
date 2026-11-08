@@ -19,7 +19,6 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import com.histmersion.api.backup.Backup
 import com.histmersion.util.storage.Store
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
 
@@ -42,7 +41,7 @@ import com.histmersion.config.Environment
   */
 object Supervisor:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   private def command(text: String): ProcessLaunch.Command = ProcessLaunch.Command(text)
 

@@ -8,7 +8,6 @@ import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 
@@ -17,11 +16,11 @@ import com.histmersion.web.ErrorLine
   */
 object SettingsForm:
   type Intro = Intro.T
-  object Intro extends RefinedType[String, Pure]
+  object Intro extends Newtype[String, Pure]
 
   /** One setting of the form: its key, and the name and help shown instead of reference.conf's words. */
   type ApplyTitle = ApplyTitle.T
-  object ApplyTitle extends RefinedType[String, Pure]
+  object ApplyTitle extends Newtype[String, Pure]
 
   final case class Item(
       key: Item.Key,
@@ -34,11 +33,11 @@ object SettingsForm:
     type Key = ConfigEdit.Field.Key
     val Key: ConfigEdit.Field.Key.type = ConfigEdit.Field.Key
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Help = Help.T
-    object Help extends RefinedType[String, Pure]
+    object Help extends Newtype[String, Pure]
     type Fallback = Fallback.T
-    object Fallback extends RefinedType[String, Pure]
+    object Fallback extends Newtype[String, Pure]
 
   def apply(title: ApplyTitle, intro: Option[Intro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
     val draft = Draft()

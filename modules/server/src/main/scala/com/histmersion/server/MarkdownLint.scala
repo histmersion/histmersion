@@ -33,7 +33,6 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, For
 import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.api.text.WikiLinks
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.articles.ArticleSummaryRow
 import com.histmersion.domain.library.sources.SourceNote
@@ -69,14 +68,14 @@ object MarkdownLint:
 
   object Context:
     type Article = Article.T
-    object Article extends RefinedType[Boolean, Pure]
+    object Article extends Newtype[Boolean, Pure]
 
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T
-  object Repair extends RefinedType[String, Pure]
+  object Repair extends Newtype[String, Pure]
 
   /** One text replacement on the STORED text: `[start, end)` becomes `replacement`. */
   final case class Edit(start: Int, end: Int, replacement: String)
@@ -1379,4 +1378,4 @@ object MarkdownLint:
 
   object Scan:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]

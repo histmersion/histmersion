@@ -3,19 +3,18 @@ package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure rules of a pinned place card (#1441). */
 object PinRules:
   type ChosenNow = ChosenNow.T
-  object ChosenNow extends RefinedType[Boolean, Pure]
+  object ChosenNow extends Newtype[Boolean, Pure]
   type ElementSize = ElementSize.T
-  object ElementSize extends RefinedType[Double, Pure]
+  object ElementSize extends Newtype[Double, Pure]
   type KeyName = KeyName.T
-  object KeyName extends RefinedType[String, Pure]
+  object KeyName extends Newtype[String, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends RefinedType[Double, Pure]
+  object ScreenPixels extends Newtype[Double, Pure]
   /** Does this key close a pinned card? */
 
   def dismisses(key: KeyName): Boolean = key.value == "Escape" || key.value == "Esc"

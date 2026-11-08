@@ -9,7 +9,6 @@ import io.circe.Json
 import java.io.{BufferedOutputStream, IOException, OutputStream}
 import java.security.MessageDigest
 import scala.collection.mutable
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Writes a clustered PMTiles v3 archive: tiles are [[add]]ed in ascending tile-id order, identical contents are stored
@@ -84,7 +83,7 @@ final class PmTilesWriter(out: Reservation):
 
 object PmTilesWriter:
   type EntriesPerLeaf = EntriesPerLeaf.T
-  object EntriesPerLeaf extends RefinedType[Int, Pure]
+  object EntriesPerLeaf extends Newtype[Int, Pure]
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
   def apply(store: Store, key: Store.Key): PmTilesWriter =

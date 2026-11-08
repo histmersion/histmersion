@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.histmersion.api.library.GeoHit
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 import com.histmersion.api.Paging
@@ -14,7 +13,7 @@ import com.histmersion.api.Paging
   */
 object PlaybackFeed:
   type WindowHalfYears = WindowHalfYears.T
-  object WindowHalfYears extends RefinedType[Long, Pure]
+  object WindowHalfYears extends Newtype[Long, Pure]
 
   /** Pure: how many years one request covers — `seconds` of playback at `yearsPerSecond`, and at least four windows
     * (`windowHalf` either side of the playhead).

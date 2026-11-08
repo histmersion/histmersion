@@ -19,7 +19,6 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Filter, GeoHit}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.ShapeStyle
@@ -37,26 +36,26 @@ import com.histmersion.api.Paging
 
 object MapView:
   type ClassName = ClassName.T
-  object ClassName extends RefinedType[String, Pure]
+  object ClassName extends Newtype[String, Pure]
   type Color = Color.T
-  object Color extends RefinedType[String, Pure]
+  object Color extends Newtype[String, Pure]
   type HoldsCell = HoldsCell.T
-  object HoldsCell extends RefinedType[Boolean, Pure]
+  object HoldsCell extends Newtype[Boolean, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   export DotCluster.Mid
   type Playback = Playback.T
-  object Playback extends RefinedType[Boolean, Pure]
+  object Playback extends Newtype[Boolean, Pure]
   type Ring = Ring.T
-  object Ring extends RefinedType[Int, Pure]
+  object Ring extends Newtype[Int, Pure]
   type ShowSources = ShowSources.T
-  object ShowSources extends RefinedType[Boolean, Pure]
+  object ShowSources extends Newtype[Boolean, Pure]
   type SourceLabel = SourceLabel.T
-  object SourceLabel extends RefinedType[String, Pure]
+  object SourceLabel extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   export PlaybackBuckets.YearsPerSecond
 
 

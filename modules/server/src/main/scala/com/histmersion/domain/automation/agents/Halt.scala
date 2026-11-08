@@ -10,7 +10,6 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's for-comprehension: a step
@@ -29,9 +28,9 @@ enum Halt:
 
 object Halt:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type WaitId = WaitId.T
-  object WaitId extends RefinedType[Long, Pure]
+  object WaitId extends Newtype[Long, Pure]
   object Pause:
     type Detail = Problem
     val Detail: Problem.type = Problem
@@ -42,4 +41,4 @@ object Halt:
     type Id = WaitId
     val Id: WaitId.type = WaitId
     type What = What.T
-    object What extends RefinedType[String, Pure]
+    object What extends Newtype[String, Pure]

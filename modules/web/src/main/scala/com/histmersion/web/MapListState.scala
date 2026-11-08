@@ -4,7 +4,6 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a Places or Pictures tab shows: its rows, how many there are in all (some only counted by the map, which lists
@@ -14,6 +13,6 @@ final case class MapListState(rows: List[MapListRow], total: MapListState.Total,
 
 object MapListState:
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

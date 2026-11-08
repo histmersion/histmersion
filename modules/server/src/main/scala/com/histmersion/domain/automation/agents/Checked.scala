@@ -10,7 +10,6 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An LLM answer after code validation: the value to checkpoint, and what was dropped or doubted on the way (run
@@ -20,4 +19,4 @@ final case class Checked[O](value: O, warnings: List[Checked.Warnings] = Nil)
 
 object Checked:
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]

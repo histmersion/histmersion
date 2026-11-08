@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.string.Match
   */
 type ToolName = ToolName.T
 
-object ToolName extends RefinedType[String, Match["[a-z][a-z0-9_]*"]]
+object ToolName extends Newtype[String, Match["[a-z][a-z0-9_]*"]]

@@ -1,7 +1,6 @@
 package com.histmersion
 package web.ui
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum AggregateBy(val param: AggregateBy.Param):
@@ -11,4 +10,4 @@ enum AggregateBy(val param: AggregateBy.Param):
 
 object AggregateBy:
   type Param = Param.T
-  object Param extends RefinedType[String, Pure]
+  object Param extends Newtype[String, Pure]

@@ -4,7 +4,6 @@ package server.agents
 import com.histmersion.domain.automation.agents.AgentGenerator
 
 import io.circe.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The quota-guard mod (docs/research-agent-runtimes.md §2.5, §3a P3): a Claude Code mod module that POSTs every
@@ -15,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object QuotaGuard:
   type SourceLabel = SourceLabel.T
-  object SourceLabel extends RefinedType[String, Pure]
+  object SourceLabel extends Newtype[String, Pure]
 
   def source(m: AgentGenerator.QuotaMod): SourceLabel =
     val guard = m == AgentGenerator.QuotaMod.Guard

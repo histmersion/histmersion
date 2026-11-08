@@ -2,7 +2,6 @@ package com.histmersion
 package domain.automation.agents
 
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One LLM step's prompt. `system` is the step's prompt FILE(S) (bundled as resources, so one copy per prompt and its
@@ -14,17 +13,17 @@ final case class Prompt(system: Prompt.System, user: Prompt.User):
 
 object Prompt:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type UserText = UserText.T
-  object UserText extends RefinedType[String, Pure]
+  object UserText extends Newtype[String, Pure]
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
     * copy of the closing tag inside it defused so the text cannot end its own fence.
     */
 
   type System = System.T
-  object System extends RefinedType[String, Pure]
+  object System extends Newtype[String, Pure]
   type User = User.T
-  object User extends RefinedType[String, Pure]
+  object User extends Newtype[String, Pure]
 
   def data(tag: String, text: String): String =
     val safe = text.replace(s"</$tag>", s"</ $tag>")

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.personal
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The words a search over marks asks for, lower-cased, each to be found (case does not matter). */
@@ -14,10 +13,10 @@ final case class SearchWords(words: List[SearchWords.Words]):
 
 object SearchWords:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
 
   type Words = Words.T
-  object Words extends RefinedType[String, Pure]
+  object Words extends Newtype[String, Pure]
 
   val Everything: SearchWords = SearchWords(Nil)
 

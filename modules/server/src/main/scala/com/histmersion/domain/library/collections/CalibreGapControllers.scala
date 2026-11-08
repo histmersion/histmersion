@@ -13,7 +13,6 @@ import com.histmersion.domain.library.Citekey
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, CalibrePushResult}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sources not in Calibre yet, what a push names one by, and the Calibre id written back after a push — what the
@@ -58,4 +57,4 @@ final class CalibreGapControllers(
 
 object CalibreGapControllers:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]

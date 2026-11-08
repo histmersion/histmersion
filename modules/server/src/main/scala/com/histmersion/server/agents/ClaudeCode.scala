@@ -10,7 +10,6 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.system.JvmHome
 import com.histmersion.api.automation.PlanQuota
@@ -22,18 +21,18 @@ import com.histmersion.config.ServerConfig
   */
 object ClaudeCode:
   type Argument = Argument.T
-  object Argument extends RefinedType[String, Pure]
+  object Argument extends Newtype[String, Pure]
   type ModelId = ModelRef.Model
   val ModelId: ModelRef.Model.type = ModelRef.Model
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type McpConfigToken = McpConfigToken.T
-  object McpConfigToken extends RefinedType[String, Pure]
+  object McpConfigToken extends Newtype[String, Pure]
 
   /** The typed answer's JSON Schema, as text for `--json-schema`. */
   type SchemaJson = SchemaJson.T
-  object SchemaJson extends RefinedType[String, Pure]
+  object SchemaJson extends Newtype[String, Pure]
 
   val McpServer = AgentDefinitions.McpServer
   def toolId(name: ToolUse.Tool): String = ToolStyle.Claude.tool(name)
@@ -62,14 +61,14 @@ object ClaudeCode:
   object Launch:
     object Agent:
       type PluginDir = PluginDir.T
-      object PluginDir extends RefinedType[String, Pure]
+      object PluginDir extends Newtype[String, Pure]
       type Name = Name.T
-      object Name extends RefinedType[String, Pure]
+      object Name extends Newtype[String, Pure]
       type Settings = Settings.T
-      object Settings extends RefinedType[String, Pure]
+      object Settings extends Newtype[String, Pure]
     object SystemPrompt:
       type File = File.T
-      object File extends RefinedType[String, Pure]
+      object File extends Newtype[String, Pure]
 
   /** `claude -p …`, in a fixed order. `offered` are the step's tools (MCP names, unprefixed); `all` every agent tool,
     * so the ones not offered are removed from the model's context outright; `web` the built-in web tools a web role
@@ -233,21 +232,21 @@ object ClaudeCode:
 
   object Result:
     type Subtype = Subtype.T
-    object Subtype extends RefinedType[String, Pure]
+    object Subtype extends Newtype[String, Pure]
     type IsError = IsError.T
-    object IsError extends RefinedType[Boolean, Pure]
+    object IsError extends Newtype[Boolean, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Turns = Turns.T
-    object Turns extends RefinedType[Int, Pure]
+    object Turns extends Newtype[Int, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type Denials = Denials.T
-    object Denials extends RefinedType[String, Pure]
+    object Denials extends Newtype[String, Pure]
     type Errors = Errors.T
-    object Errors extends RefinedType[String, Pure]
+    object Errors extends Newtype[String, Pure]
     type TerminalReason = TerminalReason.T
-    object TerminalReason extends RefinedType[String, Pure]
+    object TerminalReason extends Newtype[String, Pure]
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their results, in order), the
     * result line, the usage and the model that served it — the result's `modelUsage` entry with the most output tokens
@@ -268,7 +267,7 @@ object ClaudeCode:
 
   object Outcome:
     type McpProblem = McpProblem.T
-    object McpProblem extends RefinedType[String, Pure]
+    object McpProblem extends Newtype[String, Pure]
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -413,7 +412,7 @@ object ClaudeCode:
 
   object Limit:
     type Message = Message.T
-    object Message extends RefinedType[String, Pure]
+    object Message extends Newtype[String, Pure]
 
   def usageLimit(r: Result): Option[Limit] =
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")

@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.basemap.Basemap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A base map, as the app describes it; the adapter makes its library's style of it. */
@@ -36,22 +35,22 @@ enum BaseMapSpec:
 object BaseMapSpec:
   object Vector:
     type Lang = Lang.T
-    object Lang extends RefinedType[String, Pure]
+    object Lang extends Newtype[String, Pure]
     type Names = Names.T
-    object Names extends RefinedType[Boolean, Pure]
+    object Names extends Newtype[Boolean, Pure]
     type Contours = Contours.T
-    object Contours extends RefinedType[Boolean, Pure]
+    object Contours extends Newtype[Boolean, Pure]
     type SeaDepth = SeaDepth.T
-    object SeaDepth extends RefinedType[Boolean, Pure]
+    object SeaDepth extends Newtype[Boolean, Pure]
     type Reduced = Reduced.T
-    object Reduced extends RefinedType[Boolean, Pure]
+    object Reduced extends Newtype[Boolean, Pure]
   object Raster:
     export com.histmersion.api.basemap.BasemapApi.{TileTemplate as Template}
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends RefinedType[Int, Pure]
+    object MaxZoom extends Newtype[Int, Pure]
     type Attribution = Attribution.T
-    object Attribution extends RefinedType[String, Pure]
+    object Attribution extends Newtype[String, Pure]
     type Dark = Dark.T
-    object Dark extends RefinedType[Boolean, Pure]
+    object Dark extends Newtype[Boolean, Pure]
     type Opacity = Opacity.T
-    object Opacity extends RefinedType[Double, Pure]
+    object Opacity extends Newtype[Double, Pure]

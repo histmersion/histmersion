@@ -6,7 +6,6 @@ import com.histmersion.plugin.*
 import com.histmersion.util.plugins.HostProvided
 
 import scala.collection.immutable.ListMap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 
@@ -18,11 +17,11 @@ import com.histmersion.domain.Title
   */
 object BuiltinAi:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The command-line runtimes the host runs itself. */
   type Reserved = Reserved.T
-  object Reserved extends RefinedType[String, Pure]
+  object Reserved extends Newtype[String, Pure]
 
   val runtimes: List[ProviderKind] = List(ProviderKind.ClaudeCode, ProviderKind.Codex, ProviderKind.Opencode)
 

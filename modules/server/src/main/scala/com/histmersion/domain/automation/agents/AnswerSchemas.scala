@@ -5,7 +5,6 @@ import com.histmersion.domain.{HintProposals, PlanGoal}
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The typed answer of every LLM step the engine's own workflows run, one value each (the domains' are their
@@ -16,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object AnswerSchemas:
   type SchemaName = SchemaName.T
-  object SchemaName extends RefinedType[String, Pure]
+  object SchemaName extends Newtype[String, Pure]
 
   val probe: ResponseSchema[ProbeAnswer] = ResponseSchema.derived[ProbeAnswer]()
   val plan: ResponseSchema[PlanGoal.PlanAnswer] = ResponseSchema.derived[PlanGoal.PlanAnswer]()

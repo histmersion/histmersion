@@ -9,7 +9,6 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, ListFilters, Managers, Queue}
 import com.histmersion.api.research.Articles
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
@@ -24,26 +23,26 @@ import com.histmersion.api.research.Article
   */
 object GoalsView:
   type CreatedNote = CreatedNote.T
-  object CreatedNote extends RefinedType[String, Pure]
+  object CreatedNote extends Newtype[String, Pure]
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type TagsText = TagsText.T
-  object TagsText extends RefinedType[String, Pure]
+  object TagsText extends Newtype[String, Pure]
   type PerDay = PerDay.T
-  object PerDay extends RefinedType[String, Pure]
+  object PerDay extends Newtype[String, Pure]
   type Planned = Planned.T
-  object Planned extends RefinedType[Boolean, Pure]
+  object Planned extends Newtype[Boolean, Pure]
   type Watch = Watch.T
-  object Watch extends RefinedType[Boolean, Pure]
+  object Watch extends Newtype[Boolean, Pure]
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
 
   export NewArea.{Plan as NewAreaPlan, Seed as NewAreaSeed}
   export Goal.{StatusValue as BadgeStatus}
   type BadgeText = BadgeText.T
-  object BadgeText extends RefinedType[String, Pure]
+  object BadgeText extends Newtype[String, Pure]
   export Goal.{Slug as PlanSectionSlug}
 
   val Limit = 500
@@ -112,9 +111,9 @@ object GoalsView:
 
   object NewArea:
     type Plan = Plan.T
-    object Plan extends RefinedType[Boolean, Pure]
+    object Plan extends Newtype[Boolean, Pure]
     type Seed = Seed.T
-    object Seed extends RefinedType[Boolean, Pure]
+    object Seed extends Newtype[Boolean, Pure]
 
   /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching: auto-ingest is
     * OFF unless ticked; its cap (blank = the server's default) a whole number.

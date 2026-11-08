@@ -4,7 +4,6 @@ package web
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Years
@@ -25,9 +24,9 @@ import com.histmersion.api.Years
 object PlaceHover:
   export Pages.PlaceId
   type PlaceKind = PlaceKind.T
-  object PlaceKind extends RefinedType[String, Pure]
+  object PlaceKind extends Newtype[String, Pure]
   type PointerType = PointerType.T
-  object PointerType extends RefinedType[String, Pure]
+  object PointerType extends Newtype[String, Pure]
   export ShapeHit.{Set as ShapeSetName}
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map

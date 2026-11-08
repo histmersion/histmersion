@@ -3,7 +3,6 @@ package web
 
 import com.histmersion.web.map.{MapEventKind, MapSurface}
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The map's overlays that fold away on a phone: its foot (the past-landscape notice and the credits) and its legend
@@ -13,19 +12,19 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MapFold:
   type Changed = Changed.T
-  object Changed extends RefinedType[Boolean, Pure]
+  object Changed extends Newtype[Boolean, Pure]
   type ClassName = ClassName.T
-  object ClassName extends RefinedType[String, Pure]
+  object ClassName extends Newtype[String, Pure]
   type ControlsId = ControlsId.T
-  object ControlsId extends RefinedType[String, Pure]
+  object ControlsId extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type InnerHtml = InnerHtml.T
-  object InnerHtml extends RefinedType[String, Pure]
+  object InnerHtml extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Open = Open.T
-  object Open extends RefinedType[Boolean, Pure]
+  object Open extends Newtype[Boolean, Pure]
 
   /** The class an opened overlay carries. */
   val OpenClass = "is-open"

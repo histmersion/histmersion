@@ -2,7 +2,6 @@ package com.histmersion
 package util.jobs
 
 import java.util.concurrent.ConcurrentHashMap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by the server
@@ -39,4 +38,4 @@ final class JobStops:
 
 object JobStops:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

@@ -8,7 +8,6 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.{Duration, Instant}
 import scala.util.Using
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The real client: java.net.http over `client` (the composition root's: HTTP/1.1, one stream per request — the
@@ -128,8 +127,8 @@ final class JavaRangeHttp(
 
 object JavaRangeHttp:
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type Retries = Retries.T
-  object Retries extends RefinedType[Int, Pure]
+  object Retries extends Newtype[Int, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends RefinedType[String, Pure]
+  object UserAgent extends Newtype[String, Pure]

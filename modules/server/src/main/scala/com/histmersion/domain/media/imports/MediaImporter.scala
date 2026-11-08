@@ -12,7 +12,6 @@ import com.histmersion.api.media.MediaImportReport
 import com.histmersion.domain.Title
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
@@ -45,13 +44,13 @@ trait MediaImporter:
 
 object MediaImporter:
   type CheckName = CheckName.T
-  object CheckName extends RefinedType[String, Pure]
+  object CheckName extends Newtype[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type ImporterName = ImporterName.T
-  object ImporterName extends RefinedType[String, Pure]
+  object ImporterName extends Newtype[String, Pure]
   type OverText = OverText.T
-  object OverText extends RefinedType[String, Pure]
+  object OverText extends Newtype[String, Pure]
 
   trait Run:
     def run(targets: List[Target], dryRun: DryRun, refresh: ImportService.Refresh): MediaImportReport

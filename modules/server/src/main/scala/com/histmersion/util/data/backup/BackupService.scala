@@ -14,7 +14,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
@@ -54,9 +53,9 @@ trait BackupService:
 
 object BackupService:
   type RestoreDuration = RestoreDuration.T
-  object RestoreDuration extends RefinedType[Long, Pure]
+  object RestoreDuration extends Newtype[Long, Pure]
   type RestoreNote = RestoreNote.T
-  object RestoreNote extends RefinedType[String, Pure]
+  object RestoreNote extends Newtype[String, Pure]
 
   /** Over the backups store of `storage`, the client tools found in `backups.pg-bin-dir` (its store) or else on
     * `searchPath`, launched through `processes`; the guarded tables of `registry` counted through `transactor`.
@@ -371,4 +370,4 @@ object BackupService:
 
   object InMemory:
     type Keep = Keep.T
-    object Keep extends RefinedType[Int, Pure]
+    object Keep extends Newtype[Int, Pure]

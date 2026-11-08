@@ -4,7 +4,6 @@ package domain.automation.agents
 import io.netty.handler.codec.http.*
 
 import java.util.concurrent.ConcurrentHashMap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Per-step run tokens (docs/research-agent-runtimes.md §2.4): each CLI step attempt gets a fresh random token bound to
@@ -59,7 +58,7 @@ object RunTokens:
   type Token = RunGrant.Token
   val Token: RunGrant.Token.type = RunGrant.Token
   type TtlMillis = TtlMillis.T
-  object TtlMillis extends RefinedType[Long, Pure]
+  object TtlMillis extends Newtype[Long, Pure]
   /** The agent MCP endpoint: `/mcp/agent` (the run token picks the agent) and `/mcp/agent/<agent>`. */
 
   val Path = "/mcp/agent"

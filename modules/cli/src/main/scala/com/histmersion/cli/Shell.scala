@@ -2,7 +2,6 @@ package com.histmersion
 package cli
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
@@ -14,9 +13,9 @@ trait Shell:
 
 object Shell:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ProcessMatch = ProcessMatch.T
-  object ProcessMatch extends RefinedType[String, Pure]
+  object ProcessMatch extends Newtype[String, Pure]
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
   object System extends Shell:

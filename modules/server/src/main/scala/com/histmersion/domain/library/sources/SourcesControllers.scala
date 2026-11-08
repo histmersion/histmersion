@@ -26,7 +26,6 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.time.Timer
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
@@ -372,15 +371,15 @@ final class SourcesControllers(
 
 object SourcesControllers:
   type Chars = Chars.T
-  object Chars extends RefinedType[Int, Pure]
+  object Chars extends Newtype[Int, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
   type GetBody = GetBody.T
-  object GetBody extends RefinedType[Boolean, Pure]
+  object GetBody extends Newtype[Boolean, Pure]
   type PutStrict = PutStrict.T
-  object PutStrict extends RefinedType[Boolean, Pure]
+  object PutStrict extends Newtype[Boolean, Pure]
   type PatchStrict = PatchStrict.T
-  object PatchStrict extends RefinedType[Boolean, Pure]
+  object PatchStrict extends Newtype[Boolean, Pure]
   type MarkdownFullText = MarkdownFullText.T
-  object MarkdownFullText extends RefinedType[Boolean, Pure]
+  object MarkdownFullText extends Newtype[Boolean, Pure]

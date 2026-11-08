@@ -8,7 +8,7 @@ import java.nio.file.Path
 
 /** A Maven repository the dependencies are looked up in: an `https://` or `file:` URL. */
 type RepositoryUrl = RepositoryUrl.T
-object RepositoryUrl extends RefinedType[String, Match["(https?|file):.+"]]:
+object RepositoryUrl extends Newtype[String, Match["(https?|file):.+"]]:
   /** A URL as given, or a local directory as its `file:` URL. */
   export Resolver.{Problem as FromArgumentResultPart1}
 

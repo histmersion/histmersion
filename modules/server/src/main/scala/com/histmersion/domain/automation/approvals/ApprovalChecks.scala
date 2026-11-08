@@ -8,7 +8,6 @@ import java.time.Instant
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.agents.AgentRepo
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a manager kind's checks of an approval its items wait for are given ([[AutoApprovals]] is one): what was
@@ -31,6 +30,6 @@ trait ApprovalChecks:
 
 object ApprovalChecks:
   type PublishCap = PublishCap.T
-  object PublishCap extends RefinedType[Int, Pure]
+  object PublishCap extends Newtype[Int, Pure]
   type Slug = Slug.T
-  object Slug extends RefinedType[String, Pure]
+  object Slug extends Newtype[String, Pure]

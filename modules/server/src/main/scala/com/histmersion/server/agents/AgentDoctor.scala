@@ -24,7 +24,6 @@ import com.histmersion.plugin.AiHttp
 import com.histmersion.config.UserPaths
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.plugin.AiCheck
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md §15). Per
@@ -372,16 +371,16 @@ final class AgentDoctor(
 
 object AgentDoctor:
   type HeaderName = HeaderName.T
-  object HeaderName extends RefinedType[String, Pure]
+  object HeaderName extends Newtype[String, Pure]
   type HeaderText = HeaderText.T
-  object HeaderText extends RefinedType[String, Pure]
+  object HeaderText extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** What a local command printed. */
   type Output = Output.T
-  object Output extends RefinedType[String, Pure]
+  object Output extends Newtype[String, Pure]
   type RegistryKey = RegistryKey.T
-  object RegistryKey extends RefinedType[String, Pure]
+  object RegistryKey extends Newtype[String, Pure]
 
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.

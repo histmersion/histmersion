@@ -3,7 +3,6 @@ package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
@@ -36,7 +35,7 @@ final class HoverIntent[K](
 
 object HoverIntent:
   type DelayMs = DelayMs.T
-  object DelayMs extends RefinedType[Int, Pure]
+  object DelayMs extends Newtype[Int, Pure]
   type TimerId = TimerId.T
-  object TimerId extends RefinedType[Int, Pure]
+  object TimerId extends Newtype[Int, Pure]
 

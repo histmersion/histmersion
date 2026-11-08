@@ -8,7 +8,6 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Named periods for agents — the same two modes as `places`: no `id` → search, `id` → show. */
@@ -25,15 +24,15 @@ object PeriodsTools:
   ) derives KindlingsCodecAsObject
   object PeriodsInput:
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     type From = From.T
-    object From extends RefinedType[Long, Pure]
+    object From extends Newtype[Long, Pure]
     type To = To.T
-    object To extends RefinedType[Long, Pure]
+    object To extends Newtype[Long, Pure]
 
     given Schema[PeriodsInput] = KindlingsSchema
       .derived[PeriodsInput]

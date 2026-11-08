@@ -6,7 +6,6 @@ import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 
@@ -16,11 +15,11 @@ import com.histmersion.api.Years
   */
 object PlaybackBuckets:
   type BucketYears = BucketYears.T
-  object BucketYears extends RefinedType[Long, Pure]
+  object BucketYears extends Newtype[Long, Pure]
   type Seconds = Seconds.T
-  object Seconds extends RefinedType[Double, Pure]
+  object Seconds extends Newtype[Double, Pure]
   type YearsPerSecond = YearsPerSecond.T
-  object YearsPerSecond extends RefinedType[Double, Pure]
+  object YearsPerSecond extends Newtype[Double, Pure]
   /** Pure: the bucket of `yearsPerSecond` × `seconds`, up to a round 1, 2 or 5 × 10ⁿ years (at least 1). */
 
   def years(yearsPerSecond: YearsPerSecond, seconds: Seconds): BucketYears =

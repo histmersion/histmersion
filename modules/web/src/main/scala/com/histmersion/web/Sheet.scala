@@ -7,7 +7,6 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How far the sidebar is pulled up in the narrow (phone) layout, where it is a bottom sheet: a strip, half the screen,
@@ -20,9 +19,9 @@ enum Sheet(val wire: Sheet.Wire):
 
 object Sheet:
   type Fraction = Fraction.T
-  object Fraction extends RefinedType[Double, Pure]
+  object Fraction extends Newtype[Double, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def fromWire(s: String): Option[Sheet] = values.find(_.wire == Wire(s.trim.toLowerCase))

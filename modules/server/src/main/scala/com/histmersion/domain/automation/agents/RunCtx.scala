@@ -23,7 +23,6 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
@@ -619,5 +618,5 @@ object RunCtx:
   type Problem = Prompt.Problem
   val Problem: Prompt.Problem.type = Prompt.Problem
   type LastAttempt = LastAttempt.T
-  object LastAttempt extends RefinedType[Boolean, Pure]
+  object LastAttempt extends Newtype[Boolean, Pure]
 

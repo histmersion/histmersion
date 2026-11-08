@@ -10,13 +10,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PluginArtifacts:
   type Coordinates = Coordinates.T
-  object Coordinates extends RefinedType[String, Pure]
+  object Coordinates extends Newtype[String, Pure]
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type CoordinatesName = CoordinatesName.T
-  object CoordinatesName extends RefinedType[String, Pure]
+  object CoordinatesName extends Newtype[String, Pure]
   type PathName = PathName.T
-  object PathName extends RefinedType[String, Pure]
+  object PathName extends Newtype[String, Pure]
 
   val Api = "histmersion-plugin-api"
   val Platform = "histmersion-plugin-platform"

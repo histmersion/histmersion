@@ -4,7 +4,6 @@ package web
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
@@ -24,11 +23,11 @@ enum PlaceGlyph:
 
 object PlaceGlyph:
   type GeometryType = GeometryType.T
-  object GeometryType extends RefinedType[String, Pure]
+  object GeometryType extends Newtype[String, Pure]
   type LabelHidden = LabelHidden.T
-  object LabelHidden extends RefinedType[Boolean, Pure]
+  object LabelHidden extends Newtype[Boolean, Pure]
   type ZoomLevel = ZoomLevel.T
-  object ZoomLevel extends RefinedType[Int, Pure]
+  object ZoomLevel extends Newtype[Int, Pure]
 
   /** Pure: the glyph for a place of `kind` whose GeoJSON geometry type is `geometryType`. */
   def of(kind: Place.Summary.Kind, geometryType: GeometryType): PlaceGlyph =

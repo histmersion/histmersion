@@ -21,7 +21,6 @@ import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.CritiqueReason
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Articles
 import com.histmersion.api.research.ReviewGoal
@@ -34,7 +33,7 @@ import com.histmersion.api.research.ReviewGoal
   */
 object ArticleCli:
   type Exported = Exported.T
-  object Exported extends RefinedType[Int, Pure]
+  object Exported extends Newtype[Int, Pure]
 
   // ── host-side wiki layout ────────────────────────────────────────────────────────────────────
 

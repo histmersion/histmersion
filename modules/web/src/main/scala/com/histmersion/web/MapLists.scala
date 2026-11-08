@@ -9,7 +9,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.UiLabels
@@ -27,21 +26,21 @@ import com.histmersion.api.library.Title
   */
 object MapLists:
   type Asked = Asked.T
-  object Asked extends RefinedType[String, Pure]
+  object Asked extends Newtype[String, Pure]
   type CountLine = CountLine.T
-  object CountLine extends RefinedType[String, Pure]
+  object CountLine extends Newtype[String, Pure]
   type ListedCount = ListedCount.T
-  object ListedCount extends RefinedType[Int, Pure]
+  object ListedCount extends Newtype[Int, Pure]
   type OnMap = OnMap.T
-  object OnMap extends RefinedType[Boolean, Pure]
+  object OnMap extends Newtype[Boolean, Pure]
   type SiteNote = SiteNote.T
-  object SiteNote extends RefinedType[String, Pure]
+  object SiteNote extends Newtype[String, Pure]
   type TotalCount = TotalCount.T
-  object TotalCount extends RefinedType[Int, Pure]
+  object TotalCount extends Newtype[Int, Pure]
 
   /** Pure: the count line — `12 places on the map`, `40 listed of 312 (zoom in to list the rest)`. */
   type PaneName = PaneName.T
-  object PaneName extends RefinedType[String, Pure]
+  object PaneName extends Newtype[String, Pure]
 
   def countLine(listed: ListedCount, total: TotalCount, one: Plural.Noun.Singular, many: Plural.Noun.Plural, onMap: OnMap): CountLine =
     val where = if onMap.value then " on the map" else ""

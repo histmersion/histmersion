@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.domain.research.articles.ArticleTools
@@ -35,17 +34,17 @@ final case class SourcePage(
 
 object SourcePage:
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type PeriodStart = PeriodStart.T
-  object PeriodStart extends RefinedType[Long, Pure]
+  object PeriodStart extends Newtype[Long, Pure]
   type PeriodEnd = PeriodEnd.T
-  object PeriodEnd extends RefinedType[Long, Pure]
+  object PeriodEnd extends Newtype[Long, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Summary = com.histmersion.domain.library.Source.Summary
   val Summary: com.histmersion.domain.library.Source.Summary.type = com.histmersion.domain.library.Source.Summary
   type Notes = SourceNote.Text

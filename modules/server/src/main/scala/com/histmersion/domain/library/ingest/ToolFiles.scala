@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.ingest
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The files the server itself can see, as the MCP `ingest` tool names one (a path a MODEL chose): confined to
@@ -13,6 +12,6 @@ trait ToolFiles:
 
 object ToolFiles:
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

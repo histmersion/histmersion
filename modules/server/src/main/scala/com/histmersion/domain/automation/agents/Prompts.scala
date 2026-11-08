@@ -4,7 +4,6 @@ package domain.automation.agents
 import com.histmersion.util.storage.{Location, Resources, Store, Stores}
 import java.nio.file.Path
 import com.histmersion.util.storage.SafePath
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, resources: Resources):
@@ -27,9 +26,9 @@ final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, reso
 
 object Prompts:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type OverrideDir = OverrideDir.T
-  object OverrideDir extends RefinedType[String, Pure]
+  object OverrideDir extends Newtype[String, Pure]
 
 
   def bundled(using Stores, Resources): List[AgentDefinitions.ResourcePath] = AgentDefinitions(Prompts(OverrideDir("")), AgentRoster.none).index

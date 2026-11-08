@@ -40,7 +40,6 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.config.MediaPluginCollectionsConfig
 import com.histmersion.domain.Attribution
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.pluginhost.HostAiHttp
 import com.histmersion.config.AcquireConfig
@@ -368,11 +367,11 @@ final class PluginHarness private (
 object PluginHarness:
   /** Why a harness could not be built or a lookup could not be made. */
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** One request made through the harness: `GET <url>`, with secrets shown as `{secret}`. */
   type Request = Request.T
-  object Request extends RefinedType[String, Pure]
+  object Request extends Newtype[String, Pure]
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
   val TestVaultsId: Plugin.Info.Id = Plugin.Info.Id("testkit-vaults")

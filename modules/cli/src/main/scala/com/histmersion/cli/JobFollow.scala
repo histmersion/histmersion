@@ -5,7 +5,6 @@ import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 
@@ -18,9 +17,9 @@ object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
   type PollMs = PollMs.T
-  object PollMs extends RefinedType[Long, Pure]
+  object PollMs extends Newtype[Long, Pure]
   type BackupPollMs = BackupPollMs.T
-  object BackupPollMs extends RefinedType[Long, Pure]
+  object BackupPollMs extends Newtype[Long, Pure]
 
   val Poll: PollMs = PollMs(1000)
 

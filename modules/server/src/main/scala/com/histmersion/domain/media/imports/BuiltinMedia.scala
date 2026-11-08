@@ -4,7 +4,6 @@ package domain.media.imports
 import com.histmersion.api.media.MediaProvider
 import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
 import com.histmersion.pluginhost.Registries
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.config.MediaPluginCollectionsConfig
@@ -15,9 +14,9 @@ import com.histmersion.config.MediaPluginCollectionsConfig
   */
 object BuiltinMedia:
   type Alias = Alias.T
-  object Alias extends RefinedType[String, Pure]
+  object Alias extends Newtype[String, Pure]
   type CheckName = CheckName.T
-  object CheckName extends RefinedType[String, Pure]
+  object CheckName extends Newtype[String, Pure]
   type EntryKey = Entry.Name
   val EntryKey: Entry.Name.type = Entry.Name
   type Licences = MediaCollectionConfig.Licences
@@ -32,13 +31,13 @@ object BuiltinMedia:
     * judged by (its own `media.<provider>.licences`).
     */
   type KeyedNeed = KeyedNeed.T
-  object KeyedNeed extends RefinedType[String, Pure]
+  object KeyedNeed extends Newtype[String, Pure]
   type EntryName = Entry.Name
   val EntryName: Entry.Name.type = Entry.Name
   type CanonicalResult = CanonicalResult.T
-  object CanonicalResult extends RefinedType[String, Pure]
+  object CanonicalResult extends Newtype[String, Pure]
   type CanonicalAsked = CanonicalAsked.T
-  object CanonicalAsked extends RefinedType[String, Pure]
+  object CanonicalAsked extends Newtype[String, Pure]
   type CheckOfName = EntryName
   val CheckOfName: EntryName.type = EntryName
   type ProviderOfName = EntryName
@@ -62,9 +61,9 @@ object BuiltinMedia:
     type Name = Registries.MediaCollectionsKey
     val Name: Registries.MediaCollectionsKey.type = Registries.MediaCollectionsKey
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Check = Check.T
-    object Check extends RefinedType[String, Pure]
+    object Check extends Newtype[String, Pure]
     type Provider = ImportService.Provider
     val Provider: ImportService.Provider.type = ImportService.Provider
 

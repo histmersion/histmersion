@@ -3,7 +3,6 @@ package domain.automation.managers
 
 import java.time.Instant
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager's event as [[ManagerService.InMemory]] holds it. */
@@ -19,12 +18,12 @@ final case class ManagerEventRecord(
 
 object ManagerEventRecord:
   type Id = Id.T
-  object Id extends RefinedType[Long, Pure]
+  object Id extends Newtype[Long, Pure]
   type ManagerId = ManagerId.T
-  object ManagerId extends RefinedType[String, Pure]
+  object ManagerId extends Newtype[String, Pure]
   type ItemId = ItemId.T
-  object ItemId extends RefinedType[Long, Pure]
+  object ItemId extends Newtype[Long, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]

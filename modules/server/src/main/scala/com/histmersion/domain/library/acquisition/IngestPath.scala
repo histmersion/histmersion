@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Who ingests by identifier: which fetchers it asks (`legalChain`: never one the config marks unauthorised), and
@@ -19,6 +18,6 @@ enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath
 
 object IngestPath:
   type LegalChain = LegalChain.T
-  object LegalChain extends RefinedType[Boolean, Pure]
+  object LegalChain extends Newtype[Boolean, Pure]
   type NeedsFile = NeedsFile.T
-  object NeedsFile extends RefinedType[Boolean, Pure]
+  object NeedsFile extends Newtype[Boolean, Pure]

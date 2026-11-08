@@ -18,16 +18,15 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.backup.Backup
 
 object Codex:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SchemaJson = SchemaJson.T
-  object SchemaJson extends RefinedType[String, Pure]
+  object SchemaJson extends Newtype[String, Pure]
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
 
@@ -156,11 +155,11 @@ object Codex:
     */
   object Home:
     type Argument = Argument.T
-    object Argument extends RefinedType[String, Pure]
+    object Argument extends Newtype[String, Pure]
     type ExitCode = ExitCode.T
-    object ExitCode extends RefinedType[Int, Pure]
+    object ExitCode extends Newtype[Int, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
 
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
@@ -197,18 +196,18 @@ object Codex:
 
     object Report:
       type Problem = Problem.T
-      object Problem extends RefinedType[String, Pure]
+      object Problem extends Newtype[String, Pure]
       type SkipReason = SkipReason.T
-      object SkipReason extends RefinedType[String, Pure]
+      object SkipReason extends Newtype[String, Pure]
       type Summary = Summary.T
-      object Summary extends RefinedType[String, Pure]
+      object Summary extends Newtype[String, Pure]
       type VacuumedFile = VacuumedFile.T
-      object VacuumedFile extends RefinedType[String, Pure]
+      object VacuumedFile extends Newtype[String, Pure]
 
       type Skipped = SkipReason
       val Skipped: SkipReason.type = SkipReason
       type Deleted = Deleted.T
-      object Deleted extends RefinedType[Int, Pure]
+      object Deleted extends Newtype[Int, Pure]
 
     /** Every regular file under `dir` (none when it is missing), relative to `home`. */
     private def filesUnder(home: Path, dir: Path): List[FileInfo] =

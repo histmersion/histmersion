@@ -4,7 +4,6 @@ package web.ui
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Icon
 
@@ -19,7 +18,7 @@ object ContextMenu:
 
   export Open.{Title as ShowTitle, Title as OnTitle, Title as ButtonTitle}
   type ButtonExtraCls = ButtonExtraCls.T
-  object ButtonExtraCls extends RefinedType[String, Pure]
+  object ButtonExtraCls extends Newtype[String, Pure]
 
   final case class Entry(
       label: Entry.Label,
@@ -31,13 +30,13 @@ object ContextMenu:
 
   object Entry:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Disabled = Disabled.T
-    object Disabled extends RefinedType[Boolean, Pure]
+    object Disabled extends Newtype[Boolean, Pure]
     type Hint = Hint.T
-    object Hint extends RefinedType[String, Pure]
+    object Hint extends Newtype[String, Pure]
     type Pressed = Pressed.T
-    object Pressed extends RefinedType[Boolean, Pure]
+    object Pressed extends Newtype[Boolean, Pure]
 
   /** A line between groups of actions. */
   val Separator: Entry = Entry(Entry.Label(""), () => ())
@@ -52,7 +51,7 @@ object ContextMenu:
 
   object Open:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
 
   private val open = Var(Option.empty[Open])
 

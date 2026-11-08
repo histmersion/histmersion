@@ -20,7 +20,6 @@ import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.Acquire
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A work list as `GET /api/queue/{list}` shows it: its items (open, all, a goal's or a job's) as the automation keeps
@@ -91,4 +90,4 @@ final class WorkListView(
 
 object WorkListView:
   type IncludeAll = IncludeAll.T
-  object IncludeAll extends RefinedType[Boolean, Pure]
+  object IncludeAll extends Newtype[Boolean, Pure]

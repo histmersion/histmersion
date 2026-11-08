@@ -7,7 +7,6 @@ import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 
@@ -17,9 +16,9 @@ import com.histmersion.api.library.Title
   */
 object MyItems:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Loaded = Loaded.T
-  object Loaded extends RefinedType[Boolean, Pure]
+  object Loaded extends Newtype[Boolean, Pure]
 
   val bookmarks: Var[List[Bookmark]] = Var(Nil)
   val notes: Var[List[Note]] = Var(Nil)

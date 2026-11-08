@@ -5,7 +5,6 @@ import com.histmersion.api.automation.Managers.{Hold, ItemState}
 
 import java.time.Instant
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager's work item as [[ManagerService.InMemory]] holds it. */
@@ -31,24 +30,24 @@ final case class ManagerItemRecord(
 
 object ManagerItemRecord:
   type Id = Id.T
-  object Id extends RefinedType[Long, Pure]
+  object Id extends Newtype[Long, Pure]
   type ManagerId = ManagerId.T
-  object ManagerId extends RefinedType[String, Pure]
+  object ManagerId extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Priority = Priority.T
-  object Priority extends RefinedType[Int, Pure]
+  object Priority extends Newtype[Int, Pure]
   type Attempts = Attempts.T
-  object Attempts extends RefinedType[Int, Pure]
+  object Attempts extends Newtype[Int, Pure]
   type Failures = Failures.T
-  object Failures extends RefinedType[Int, Pure]
+  object Failures extends Newtype[Int, Pure]
   type EvaluatedRun = EvaluatedRun.T
-  object EvaluatedRun extends RefinedType[String, Pure]
+  object EvaluatedRun extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Origin = Origin.T
-  object Origin extends RefinedType[String, Pure]
+  object Origin extends Newtype[String, Pure]

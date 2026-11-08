@@ -2,7 +2,6 @@ package com.histmersion
 package util.storage
 
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Resources:
@@ -10,9 +9,9 @@ trait Resources:
 
 object Resources:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ResourceName = ResourceName.T
-  object ResourceName extends RefinedType[String, Pure]
+  object ResourceName extends Newtype[String, Pure]
 
 
   def classpath(loader: ClassLoader): Resources = new Resources:

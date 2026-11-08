@@ -37,7 +37,6 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.PlanGoal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
@@ -329,19 +328,19 @@ object PlanGoalPipeline:
 
   object Loaded:
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Regions = Regions.T
-    object Regions extends RefinedType[String, Pure]
+    object Regions extends Newtype[String, Pure]
     type Children = Children.T
-    object Children extends RefinedType[String, Pure]
+    object Children extends Newtype[String, Pure]
     type Linked = Linked.T
-    object Linked extends RefinedType[String, Pure]
+    object Linked extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
     type Tags0 = Tags0.T
-    object Tags0 extends RefinedType[String, Pure]
+    object Tags0 extends Newtype[String, Pure]
 
   /** What applying the plan did. */
   final case class Applied(

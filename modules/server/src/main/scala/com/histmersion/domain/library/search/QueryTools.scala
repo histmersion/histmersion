@@ -8,7 +8,6 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The read-only query's MCP tools: `query` (its description generated from the live schema) and `schema`. */
@@ -18,7 +17,7 @@ object QueryTools:
   final case class QueryInput(sql: QueryInput.Sql) derives KindlingsCodecAsObject
   object QueryInput:
     type Sql = Sql.T
-    object Sql extends RefinedType[String, Pure]
+    object Sql extends Newtype[String, Pure]
 
     given Schema[QueryInput] = KindlingsSchema
       .derived[QueryInput]

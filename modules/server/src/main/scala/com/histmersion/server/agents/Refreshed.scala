@@ -5,7 +5,6 @@ import com.histmersion.api.automation.PlanQuota.*
 import io.circe.{parser, Json}
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
@@ -14,11 +13,11 @@ final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refre
 
 object Refreshed:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   type Mode = Mode.T
-  object Mode extends RefinedType[String, Pure]
+  object Mode extends Newtype[String, Pure]
   type Ok = Ok.T
-  object Ok extends RefinedType[Boolean, Pure]
+  object Ok extends Newtype[Boolean, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]

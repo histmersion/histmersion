@@ -10,8 +10,8 @@ final case class RowRun(firstRow: RowRun.FirstRow, rows: RowRun.Rows, offset: By
 
 object RowRun:
   type FirstRow = FirstRow.T
-  object FirstRow extends RefinedType[Int, Pure]
+  object FirstRow extends Newtype[Int, Pure]
   type Rows = Rows.T
-  object Rows extends RefinedType[Int, Pure]
+  object Rows extends Newtype[Int, Pure]
   type Length = Length.T
-  object Length extends RefinedType[Long, Pure]
+  object Length extends Newtype[Long, Pure]

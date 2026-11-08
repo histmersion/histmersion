@@ -8,7 +8,6 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"). `Readable` and `Physical` are the two vector
@@ -34,11 +33,11 @@ enum BaseMap(
 object BaseMap:
   /** A kept choice; `terrain` is what a browser kept for the local map before the two styles: Readable. */
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
 
   def fromWire(s: Wire): Option[BaseMap] =

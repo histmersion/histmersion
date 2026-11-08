@@ -10,7 +10,6 @@ import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import hearth.kindlings.optics.syntax.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
@@ -26,7 +25,7 @@ import com.histmersion.plugin.UpstreamQuota
   */
 object Plugins:
   type CoreKey = CoreKey.T
-  object CoreKey extends RefinedType[String, Pure]
+  object CoreKey extends Newtype[String, Pure]
 
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).

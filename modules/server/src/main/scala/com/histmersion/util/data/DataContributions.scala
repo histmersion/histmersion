@@ -7,7 +7,6 @@ import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
 import com.histmersion.util.storage.Location
 import com.histmersion.util.data.mirror.Mirror
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The registry: every owner's contribution, in the order they were registered, which is the order every operation runs
@@ -33,7 +32,7 @@ final class DataContributions private (val all: List[DataContribution]):
 
 object DataContributions:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The registry, or what makes it inconsistent: an owner registered twice, a table claimed by two owners. */
 
   def of(contributions: List[DataContribution]): Either[List[Problem], DataContributions] =

@@ -6,7 +6,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.Years
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** ONE layer of points of one kind (docs/map-layers.md): its points in the map's one cluster layer, diffed by key on
@@ -112,7 +111,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
 
 object PointLayer:
   type FadeIn = FadeIn.T
-  object FadeIn extends RefinedType[Boolean, Pure]
+  object FadeIn extends Newtype[Boolean, Pure]
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
 
   private[web] def same[A](d: Dot, a: A, span: (Years.Astronomical, Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && d.item == a

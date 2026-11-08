@@ -11,7 +11,6 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the contours (Physical),
@@ -40,21 +39,21 @@ final case class MapPrefs(
 
 object MapPrefs:
   type SeaDepth = SeaDepth.T
-  object SeaDepth extends RefinedType[Boolean, Pure]
+  object SeaDepth extends Newtype[Boolean, Pure]
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless
     * the viewer asks for the depth.
     */
 
   type Names = Names.T
-  object Names extends RefinedType[Boolean, Pure]
+  object Names extends Newtype[Boolean, Pure]
   type Language = Language.T
-  object Language extends RefinedType[String, Pure]
+  object Language extends Newtype[String, Pure]
   type Contours = Contours.T
-  object Contours extends RefinedType[Boolean, Pure]
+  object Contours extends Newtype[Boolean, Pure]
   type DepthPhysical = DepthPhysical.T
-  object DepthPhysical extends RefinedType[Boolean, Pure]
+  object DepthPhysical extends Newtype[Boolean, Pure]
   type DepthReadable = DepthReadable.T
-  object DepthReadable extends RefinedType[Boolean, Pure]
+  object DepthReadable extends Newtype[Boolean, Pure]
 
   def depthByDefault(style: VectorStyle): Boolean = style == VectorStyle.Physical
 

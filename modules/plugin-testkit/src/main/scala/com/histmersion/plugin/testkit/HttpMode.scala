@@ -5,7 +5,6 @@ import com.histmersion.plugin.testkit.internal.ProjectPaths
 import com.histmersion.pluginhost.HttpTransport
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the server's own HTTP
@@ -47,7 +46,7 @@ enum HttpMode:
 
 object HttpMode:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 

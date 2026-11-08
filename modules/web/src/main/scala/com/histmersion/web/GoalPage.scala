@@ -10,7 +10,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import com.histmersion.api.automation.{Agents, Managers, ManagersApi, Queue}
 import com.histmersion.api.instance.UiConfig
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.RowCount
@@ -27,22 +26,22 @@ import com.histmersion.api.research.Article
   */
 object GoalPage:
   type DaysText = DaysText.T
-  object DaysText extends RefinedType[String, Pure]
+  object DaysText extends Newtype[String, Pure]
   type LastCheck = LastCheck.T
-  object LastCheck extends RefinedType[String, Pure]
+  object LastCheck extends Newtype[String, Pure]
   type LinkTarget = LinkTarget.T
-  object LinkTarget extends RefinedType[String, Pure]
+  object LinkTarget extends Newtype[String, Pure]
   type Millis = Millis.T
-  object Millis extends RefinedType[Double, Pure]
+  object Millis extends Newtype[Double, Pure]
   type ScheduleText = ScheduleText.T
-  object ScheduleText extends RefinedType[String, Pure]
+  object ScheduleText extends Newtype[String, Pure]
 
   /** How many of the goal's steps the plan lists, and how many entries its history. */
 
   type ScheduleNowMs = Millis
   val ScheduleNowMs: Millis.type = Millis
   type HeaderNote = HeaderNote.T
-  object HeaderNote extends RefinedType[String, Pure]
+  object HeaderNote extends Newtype[String, Pure]
 
   val StepLimit = 12
   val HistoryLimit = 8

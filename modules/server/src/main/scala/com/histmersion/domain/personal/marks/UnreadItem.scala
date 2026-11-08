@@ -20,4 +20,4 @@ final case class UnreadItem(
 object UnreadItem:
 
   type Status = Status.T
-  object Status extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
+  object Status extends Newtype[String, io.github.iltotore.iron.Pure]

@@ -12,7 +12,6 @@ import scala.scalajs.js
 import com.histmersion.api.automation.{AgentMode, Autopilot, ListFilters, Managers, PlanQuota}
 import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.histmersion.api.views.AutopilotStatus
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
@@ -26,9 +25,9 @@ import com.histmersion.api.Paging
   */
 object ResearchOverview:
   type EpochMillis = EpochMillis.T
-  object EpochMillis extends RefinedType[Double, Pure]
+  object EpochMillis extends Newtype[Double, Pure]
   type Percent = Percent.T
-  object Percent extends RefinedType[Int, Pure]
+  object Percent extends Newtype[Int, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -40,9 +39,9 @@ object ResearchOverview:
   object Progress:
 
     type Done = Done.T
-    object Done extends RefinedType[Int, Pure]
+    object Done extends Newtype[Int, Pure]
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
 
   def progressOf(goal: Goal.Slug, managers: List[Managers.ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))

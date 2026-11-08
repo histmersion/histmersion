@@ -18,7 +18,6 @@ import sttp.shared.Identity
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left above its reserve
@@ -43,6 +42,6 @@ final private[automation] class AllowanceGuard(
 
 private[automation] object AllowanceGuard:
   type HeadroomTokens = HeadroomTokens.T
-  object HeadroomTokens extends RefinedType[Long, Pure]
+  object HeadroomTokens extends Newtype[Long, Pure]
 
   val Reason = "allowance"

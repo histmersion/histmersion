@@ -10,7 +10,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{Filter, Label, SearchHit}
 import com.histmersion.api.library.Acquire
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Api
@@ -32,15 +31,15 @@ import com.histmersion.api.jobs.JobInfo
   */
 object QueueView:
   type Done = Done.T
-  object Done extends RefinedType[Boolean, Pure]
+  object Done extends Newtype[Boolean, Pure]
   type GroupCount = GroupCount.T
-  object GroupCount extends RefinedType[Int, Pure]
+  object GroupCount extends Newtype[Int, Pure]
   type ItemIsTarget = ItemIsTarget.T
-  object ItemIsTarget extends RefinedType[Boolean, Pure]
+  object ItemIsTarget extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Writes = Writes.T
-  object Writes extends RefinedType[Boolean, Pure]
+  object Writes extends Newtype[Boolean, Pure]
 
   /** A run of an item's text: the queue items are short Markdown lines. */
 
@@ -113,15 +112,15 @@ object QueueView:
   object Spec:
 
     type Empty = Empty.T
-    object Empty extends RefinedType[String, Pure]
+    object Empty extends Newtype[String, Pure]
     type Untitled = Untitled.T
-    object Untitled extends RefinedType[String, Pure]
+    object Untitled extends Newtype[String, Pure]
     type OpenNoun = OpenNoun.T
-    object OpenNoun extends RefinedType[String, Pure]
+    object OpenNoun extends Newtype[String, Pure]
     type TickDone = TickDone.T
-    object TickDone extends RefinedType[String, Pure]
+    object TickDone extends Newtype[String, Pure]
     type TickReopen = TickReopen.T
-    object TickReopen extends RefinedType[String, Pure]
+    object TickReopen extends Newtype[String, Pure]
 
   def spec(kind: Queue.Kind): Spec = kind match
     case Queue.Kind.Acquire =>
@@ -244,11 +243,11 @@ object QueueView:
 
   object AddDraft:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Topic = Topic.T
-    object Topic extends RefinedType[String, Pure]
+    object Topic extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
   private val EmptyText = "Write the item's text first."
 

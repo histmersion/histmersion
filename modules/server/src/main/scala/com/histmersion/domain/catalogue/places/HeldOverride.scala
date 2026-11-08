@@ -3,7 +3,6 @@ package domain.catalogue.places
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A person's kind and period for a place as the in-memory catalogue holds it, with what the place's source said
@@ -21,14 +20,14 @@ final case class HeldOverride(
 
 object HeldOverride:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type PeriodPart1 = PeriodPart1.T
-  object PeriodPart1 extends RefinedType[Long, Pure]
+  object PeriodPart1 extends Newtype[Long, Pure]
   type PeriodPart2 = PeriodPart2.T
-  object PeriodPart2 extends RefinedType[Long, Pure]
+  object PeriodPart2 extends Newtype[Long, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type SourceKind = SourceKind.T
-  object SourceKind extends RefinedType[String, Pure]
+  object SourceKind extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

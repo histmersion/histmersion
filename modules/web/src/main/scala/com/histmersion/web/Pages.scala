@@ -10,7 +10,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.histmersion.api.jobs.JobInfo
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.web.setup.SetupPage
@@ -29,13 +28,13 @@ import com.histmersion.web.settings.SettingsPages
   */
 object Pages:
   type EventId = EventId.T
-  object EventId extends RefinedType[String, Pure]
+  object EventId extends Newtype[String, Pure]
   type JobId = JobId.T
-  object JobId extends RefinedType[String, Pure]
+  object JobId extends Newtype[String, Pure]
   type PlaceId = PlaceId.T
-  object PlaceId extends RefinedType[String, Pure]
+  object PlaceId extends Newtype[String, Pure]
   type UrlQuery = UrlQuery.T
-  object UrlQuery extends RefinedType[String, Pure]
+  object UrlQuery extends Newtype[String, Pure]
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 

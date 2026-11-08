@@ -1,33 +1,32 @@
 package com.histmersion
 package web.ui
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The graph's force layout and label sizes (its colours are `--graph-*` tokens). */
 object GraphLayout:
   type Repulsion = Repulsion.T
-  object Repulsion extends RefinedType[Double, Pure]
+  object Repulsion extends Newtype[Double, Pure]
   type SpringK = SpringK.T
-  object SpringK extends RefinedType[Double, Pure]
+  object SpringK extends Newtype[Double, Pure]
   type RestLen = RestLen.T
-  object RestLen extends RefinedType[Double, Pure]
+  object RestLen extends Newtype[Double, Pure]
   type Damping = Damping.T
-  object Damping extends RefinedType[Double, Pure]
+  object Damping extends Newtype[Double, Pure]
   type Centering = Centering.T
-  object Centering extends RefinedType[Double, Pure]
+  object Centering extends Newtype[Double, Pure]
   type MaxTicks = MaxTicks.T
-  object MaxTicks extends RefinedType[Int, Pure]
+  object MaxTicks extends Newtype[Int, Pure]
   type RootRadius = RootRadius.T
-  object RootRadius extends RefinedType[Double, Pure]
+  object RootRadius extends Newtype[Double, Pure]
   type Depth1Radius = Depth1Radius.T
-  object Depth1Radius extends RefinedType[Double, Pure]
+  object Depth1Radius extends Newtype[Double, Pure]
   type LeafRadius = LeafRadius.T
-  object LeafRadius extends RefinedType[Double, Pure]
+  object LeafRadius extends Newtype[Double, Pure]
   type LabelMaxLen = LabelMaxLen.T
-  object LabelMaxLen extends RefinedType[Int, Pure]
+  object LabelMaxLen extends Newtype[Int, Pure]
   type LabelTruncLen = LabelTruncLen.T
-  object LabelTruncLen extends RefinedType[Int, Pure]
+  object LabelTruncLen extends Newtype[Int, Pure]
 
   val repulsion: Repulsion = Repulsion(3000.0)
   val springK: SpringK = SpringK(0.008)

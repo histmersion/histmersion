@@ -6,7 +6,6 @@ import com.histmersion.api.library.Label
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 import com.histmersion.api.library.Confidence
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Wcag
@@ -15,9 +14,9 @@ import com.histmersion.api.Markdown
 
 object Fmt:
   type PeriodText = PeriodText.T
-  object PeriodText extends RefinedType[String, Pure]
+  object PeriodText extends Newtype[String, Pure]
   type RampPosition = RampPosition.T
-  object RampPosition extends RefinedType[Double, Pure]
+  object RampPosition extends Newtype[Double, Pure]
 
   /** Aliases of the ONE year formatter ([[YearFmt]]), kept for the many views that call them. */
 

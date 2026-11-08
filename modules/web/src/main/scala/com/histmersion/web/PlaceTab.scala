@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The four places of the top bar. Every page belongs to one of them, and its tab is the one marked. */
@@ -14,4 +13,4 @@ enum PlaceTab(val label: PlaceTab.Label):
 
 object PlaceTab:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]

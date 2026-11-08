@@ -1,7 +1,6 @@
 package com.histmersion
 package web
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The boundaries of a playback, drawn from every state fetched so far and faded in and out by the playhead at each
@@ -10,15 +9,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PlaybackAreas:
   type AreaKey = AreaKey.T
-  object AreaKey extends RefinedType[String, Pure]
+  object AreaKey extends Newtype[String, Pure]
   type FadeYears = FadeYears.T
-  object FadeYears extends RefinedType[Double, Pure]
+  object FadeYears extends Newtype[Double, Pure]
   type FractionalYear = FractionalYear.T
-  object FractionalYear extends RefinedType[Double, Pure]
+  object FractionalYear extends Newtype[Double, Pure]
   type Opacity = Opacity.T
-  object Opacity extends RefinedType[Double, Pure]
+  object Opacity extends Newtype[Double, Pure]
   type StepCount = StepCount.T
-  object StepCount extends RefinedType[Int, Pure]
+  object StepCount extends Newtype[Int, Pure]
 
   /** Pure: how visible a state of years [`start`, `end`] is at playhead `ph` (0…1): wholly inside its years, fading
     * over `fade` years before it begins and after it ends, gone beyond.

@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.collection.mutable
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
@@ -84,4 +83,4 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
 
 object NoMapSurface:
   type Why = Why.T
-  object Why extends RefinedType[String, Pure]
+  object Why extends Newtype[String, Pure]

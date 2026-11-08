@@ -2,7 +2,6 @@ package com.histmersion
 package domain.media
 
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What media needs of the sources its figures and covers belong to (the library's, which implements it): the citekey a
@@ -16,14 +15,14 @@ trait MediaSources:
 
 object MediaSources:
   type Current = Current.T
-  object Current extends RefinedType[String, Pure]
+  object Current extends Newtype[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Key = Key.T
-  object Key extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
+  object Key extends Newtype[String, io.github.iltotore.iron.Pure]
 
   enum Error:
     case Invalid(message: Error.Invalid.Message)

@@ -7,7 +7,6 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.basemap.Basemap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.MapArea
@@ -17,9 +16,9 @@ import com.histmersion.api.catalogue.MapArea
   */
 object MapRegions:
   type SizesText = SizesText.T
-  object SizesText extends RefinedType[String, Pure]
+  object SizesText extends Newtype[String, Pure]
   type ZoomText = ZoomText.T
-  object ZoomText extends RefinedType[String, Pure]
+  object ZoomText extends Newtype[String, Pure]
 
   /** What a region's download holds. */
 
@@ -32,9 +31,9 @@ object MapRegions:
 
   object Content:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
     def parse(s: Name): Content = values.find(_.toString == s.value).getOrElse(Map)
@@ -44,9 +43,9 @@ object MapRegions:
 
   object RegionChoice:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
   val OwnBox = "own"
 
@@ -105,9 +104,9 @@ object MapRegions:
 
   object LayerSizes:
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]
     type Zooms = Zooms.T
-    object Zooms extends RefinedType[String, Pure]
+    object Zooms extends Newtype[String, Pure]
 
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).

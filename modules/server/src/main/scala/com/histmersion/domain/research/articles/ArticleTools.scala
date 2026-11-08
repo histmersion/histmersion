@@ -18,7 +18,6 @@ import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.api.research.{Article, Articles}
 import com.histmersion.api.Write
 import com.histmersion.domain.research.Slug
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.LibraryTools
 
@@ -260,9 +259,9 @@ object ArticleTools:
     type Kind = com.histmersion.domain.research.Article.Kind
     val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
     type Tag = Tag.T
-    object Tag extends RefinedType[String, Pure]
+    object Tag extends Newtype[String, Pure]
     type Title = com.histmersion.domain.Title
     val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
     type Limit = PageSize
@@ -283,7 +282,7 @@ object ArticleTools:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
     type Parts = Parts.T
-    object Parts extends RefinedType[String, Pure]
+    object Parts extends Newtype[String, Pure]
 
     given Schema[GetArticleInput] = KindlingsSchema
       .derived[GetArticleInput]
@@ -441,7 +440,7 @@ object ArticleTools:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
     type VersionId = VersionId.T
-    object VersionId extends RefinedType[Long, Pure]
+    object VersionId extends Newtype[Long, Pure]
 
     given Schema[ArticleVersionInput] = KindlingsSchema
       .derived[ArticleVersionInput]

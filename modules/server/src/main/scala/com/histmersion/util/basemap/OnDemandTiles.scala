@@ -11,7 +11,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 import com.histmersion.api.basemap.Basemap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
@@ -301,11 +300,11 @@ final class OnDemandTiles(
 
 object OnDemandTiles:
   type Instant = Instant.T
-  object Instant extends RefinedType[Long, Pure]
+  object Instant extends Newtype[Long, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type UrlTemplate = UrlTemplate.T
-  object UrlTemplate extends RefinedType[String, Pure]
+  object UrlTemplate extends Newtype[String, Pure]
 
   private val Tiles = Store.Key.applyUnsafe("tiles")
   private val Remote = Store.Key.applyUnsafe("remote")

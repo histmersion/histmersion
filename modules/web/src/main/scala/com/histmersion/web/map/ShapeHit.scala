@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A shape under the pointer: its set and its id. */
@@ -12,6 +11,6 @@ final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id)
 
 object ShapeHit:
   type Set = Set.T
-  object Set extends RefinedType[String, Pure]
+  object Set extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package domain.automation.goals
 
 import java.time.Instant
 import com.histmersion.domain.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One link of a goal as [[GoalService.InMemory]] holds it. */
@@ -17,8 +16,8 @@ final case class GoalLinkRecord(
 
 object GoalLinkRecord:
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type Ref = Ref.T
-  object Ref extends RefinedType[String, Pure]
+  object Ref extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

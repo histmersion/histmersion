@@ -4,7 +4,6 @@ package domain.library.acquisition
 import com.histmersion.config.LoadedConfig
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.util.plugins.Plugins
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
 
@@ -15,9 +14,9 @@ import com.histmersion.util.plugins.Plugin
   */
 object OaFetch:
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Md5 = Md5.T
-  object Md5 extends RefinedType[String, Pure]
+  object Md5 extends Newtype[String, Pure]
 
   def apply(loaded: LoadedConfig, http: Http, core: CoreBudget): FetchChain =
     val g = Plugins.fetchers(

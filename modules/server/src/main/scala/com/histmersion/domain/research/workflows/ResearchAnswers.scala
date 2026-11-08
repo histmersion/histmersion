@@ -4,7 +4,6 @@ package domain.research.workflows
 import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, ReviewArticle}
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The typed answers of research's LLM steps (compile, review, infer-filter, propose), one value each, beside its
@@ -12,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ResearchAnswers:
   type AnswerKind = AnswerKind.T
-  object AnswerKind extends RefinedType[String, Pure]
+  object AnswerKind extends Newtype[String, Pure]
 
   val extract: ResponseSchema[CompileArticle.ExtractAnswer] = ResponseSchema.derived[CompileArticle.ExtractAnswer]()
   val draft: ResponseSchema[CompileArticle.DraftAnswer] = ResponseSchema.derived[CompileArticle.DraftAnswer]()

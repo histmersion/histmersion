@@ -12,7 +12,6 @@ import scala.scalajs.js
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.instance.{EventsUiConfig, UiConfig}
 import com.histmersion.api.library.{Filter, GeoHit}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 import com.histmersion.api.UiLabels
@@ -22,7 +21,7 @@ import com.histmersion.api.Paging
 object TimelinePlayback:
 
   type Speed = Speed.T
-  object Speed extends RefinedType[Double, Pure]
+  object Speed extends Newtype[Double, Pure]
 
   private val playing = Var(false)
   private val playhead = Var(Years.Astronomical(0L))

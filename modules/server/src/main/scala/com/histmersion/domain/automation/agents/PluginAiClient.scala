@@ -11,7 +11,6 @@ import sttp.ai.core.model.{AIModel, Capability}
 import sttp.apispec.circe.*
 import sttp.client4.Backend
 import sttp.shared.Identity
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
@@ -30,9 +29,9 @@ final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHt
 
 object PluginAiClient:
   type Loopback = Loopback.T
-  object Loopback extends RefinedType[Boolean, Pure]
+  object Loopback extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
   private[automation] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub

@@ -7,7 +7,6 @@ import com.histmersion.web.{Preview, Route}
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.LibrarySection
 import com.histmersion.api.library.Title
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
@@ -26,7 +25,7 @@ final case class ItemRef(target: Target, title: Title):
 
 object ItemRef:
   type Href = Href.T
-  object Href extends RefinedType[String, Pure]
+  object Href extends Newtype[String, Pure]
 
   def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)
   def article(slug: Article.Slug, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)

@@ -20,7 +20,6 @@ import scala.util.Using
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Plural
 
@@ -40,25 +39,25 @@ import com.histmersion.api.Plural
   */
 object BasemapFetch:
   type Attribution = Attribution.T
-  object Attribution extends RefinedType[String, Pure]
+  object Attribution extends Newtype[String, Pure]
   type ChunkCount = ChunkCount.T
-  object ChunkCount extends RefinedType[Int, Pure]
+  object ChunkCount extends Newtype[Int, Pure]
   type Dropped = Basemap.LayerInfo.Dropped
   val Dropped: Basemap.LayerInfo.Dropped.type = Basemap.LayerInfo.Dropped
   type FetchedAt = FetchedAt.T
-  object FetchedAt extends RefinedType[String, Pure]
+  object FetchedAt extends Newtype[String, Pure]
   type FilterSpec = FilterSpec.T
-  object FilterSpec extends RefinedType[String, Pure]
+  object FilterSpec extends Newtype[String, Pure]
   type Filtered = Filtered.T
-  object Filtered extends RefinedType[Boolean, Pure]
+  object Filtered extends Newtype[Boolean, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileCount = TileCount.T
-  object TileCount extends RefinedType[Long, Pure]
+  object TileCount extends Newtype[Long, Pure]
   type ZoomSummary = ZoomSummary.T
-  object ZoomSummary extends RefinedType[String, Pure]
+  object ZoomSummary extends Newtype[String, Pure]
 
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
@@ -69,9 +68,9 @@ object BasemapFetch:
     type Url = RangeHttp.Url
     val Url: RangeHttp.Url.type = RangeHttp.Url
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type ExpectedSize = ExpectedSize.T
-    object ExpectedSize extends RefinedType[Long, Pure]
+    object ExpectedSize extends Newtype[Long, Pure]
 
   /** One stored tile of the remote archive that the region needs. */
   final case class Wanted(id: Wanted.Id, offset: Wanted.Offset, length: Wanted.Length)
@@ -106,11 +105,11 @@ object BasemapFetch:
 
   object Plan:
     type DirectoryRequests = DirectoryRequests.T
-    object DirectoryRequests extends RefinedType[Int, Pure]
+    object DirectoryRequests extends Newtype[Int, Pure]
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends RefinedType[Int, Pure]
+    object MaxZoom extends Newtype[Int, Pure]
     type MinZoom = MinZoom.T
-    object MinZoom extends RefinedType[Int, Pure]
+    object MinZoom extends Newtype[Int, Pure]
 
   /** The politeness of the requests: the pause between two, the largest, and how much of a gap is read through rather
     * than split.
@@ -124,9 +123,9 @@ object BasemapFetch:
 
   object Pace:
     type GapMs = GapMs.T
-    object GapMs extends RefinedType[Long, Pure]
+    object GapMs extends Newtype[Long, Pure]
     type Overfetch = Overfetch.T
-    object Overfetch extends RefinedType[Double, Pure]
+    object Overfetch extends Newtype[Double, Pure]
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
 

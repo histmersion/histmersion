@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
@@ -81,9 +80,9 @@ final class DomMarker(
 
 object DomMarker:
   type BoxSize = BoxSize.T
-  object BoxSize extends RefinedType[Int, Pure]
+  object BoxSize extends Newtype[Int, Pure]
   type ZIndex = ZIndex.T
-  object ZIndex extends RefinedType[Int, Pure]
+  object ZIndex extends Newtype[Int, Pure]
   /** A marker element of class `cls` holding `html`. */
   def element(cls: String, html: String): dom.HTMLElement =
     val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]

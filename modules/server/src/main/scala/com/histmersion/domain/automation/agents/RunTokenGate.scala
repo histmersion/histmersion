@@ -7,7 +7,6 @@ import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
 
 import java.nio.charset.StandardCharsets
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The netty gate in front of the agent MCP endpoint, on every request whatever the method: no live run token → 401; a
@@ -56,4 +55,4 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
 
 object RunTokenGate:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

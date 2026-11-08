@@ -18,7 +18,6 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.catalogue.places.GazetteerImports.Problem
 import com.histmersion.server.{GazetteerPaths, HttpDownload}
 import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.catalogue.Year
@@ -48,7 +47,7 @@ object GazetteerLoad:
     */
 
   type LoadApply = LoadApply.T
-  object LoadApply extends RefinedType[Boolean, Pure]
+  object LoadApply extends Newtype[Boolean, Pure]
 
   final case class Stores(
       extracts: Store,
@@ -60,7 +59,7 @@ object GazetteerLoad:
 
   object Stores:
     type ManifestAt = ManifestAt.T
-    object ManifestAt extends RefinedType[String, Pure]
+    object ManifestAt extends Newtype[String, Pure]
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
   def locate(p: Stores, file: Gazetteer.SourceInfo.File): Option[(Store, Store.Key)] =
@@ -248,13 +247,13 @@ object GazetteerLoad:
 
   object Settings:
     type Batch = Batch.T
-    object Batch extends RefinedType[Int, Pure]
+    object Batch extends Newtype[Int, Pure]
     type MaxLpfBytes = MaxLpfBytes.T
-    object MaxLpfBytes extends RefinedType[Long, Pure]
+    object MaxLpfBytes extends Newtype[Long, Pure]
     type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
-    object DownloadTimeoutSeconds extends RefinedType[Int, Pure]
+    object DownloadTimeoutSeconds extends Newtype[Int, Pure]
     type Rebuild = Rebuild.T
-    object Rebuild extends RefinedType[Boolean, Pure]
+    object Rebuild extends Newtype[Boolean, Pure]
 
   def settings(cfg: AppConfig, stores: Stores): Settings =
     Settings(

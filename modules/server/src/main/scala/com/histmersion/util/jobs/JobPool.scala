@@ -8,7 +8,6 @@ import com.histmersion.util.jobs.JobRepo
 
 import javax.sql.DataSource
 import java.util.concurrent.LinkedBlockingQueue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The bounded OCR worker pool (plan §1.8).
@@ -141,6 +140,6 @@ final class JobPool(
 
 object JobPool:
   type QueueDepth = QueueDepth.T
-  object QueueDepth extends RefinedType[Int, Pure]
+  object QueueDepth extends Newtype[Int, Pure]
   type Parallelism = Parallelism.T
-  object Parallelism extends RefinedType[Int, Pure]
+  object Parallelism extends Newtype[Int, Pure]

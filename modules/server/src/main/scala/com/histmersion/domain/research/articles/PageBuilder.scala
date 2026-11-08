@@ -15,7 +15,6 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Edge
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
@@ -123,4 +122,4 @@ final class PageBuilder(
 
 object PageBuilder:
   type SourceFull = SourceFull.T
-  object SourceFull extends RefinedType[Boolean, Pure]
+  object SourceFull extends Newtype[Boolean, Pure]

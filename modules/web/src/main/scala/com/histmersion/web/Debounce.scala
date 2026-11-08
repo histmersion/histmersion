@@ -4,7 +4,6 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Runs `f` once the calls have stopped for `quietMs`, with the latest arguments — for work too heavy to repeat while a
@@ -33,9 +32,9 @@ final class Debounce[A](
 
 object Debounce:
   type QuietMs = QuietMs.T
-  object QuietMs extends RefinedType[Int, Pure]
+  object QuietMs extends Newtype[Int, Pure]
   type Delay = Delay.T
-  object Delay extends RefinedType[Double, Pure]
+  object Delay extends Newtype[Double, Pure]
   type TimerId = TimerId.T
-  object TimerId extends RefinedType[Int, Pure]
+  object TimerId extends Newtype[Int, Pure]
 

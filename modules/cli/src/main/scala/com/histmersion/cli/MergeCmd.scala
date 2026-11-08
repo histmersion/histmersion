@@ -26,7 +26,6 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
@@ -43,9 +42,9 @@ object MergeCmd:
   object ResolutionFlags:
 
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Editions = Editions.T
-    object Editions extends RefinedType[String, Pure]
+    object Editions extends Newtype[String, Pure]
 
   val resolutionOpts: Opts[ResolutionFlags] =
     (

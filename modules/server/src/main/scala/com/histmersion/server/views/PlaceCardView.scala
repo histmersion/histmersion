@@ -8,7 +8,6 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Api
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place's page as the gazetteer, the corpus and the pictures show it together (the web UI's map hover card): the
@@ -37,4 +36,4 @@ object PlaceCardView:
   val PlaceId: com.histmersion.domain.catalogue.Place.Id.type = com.histmersion.domain.catalogue.Place.Id
 
   type WithCounts = WithCounts.T
-  object WithCounts extends RefinedType[Boolean, Pure]
+  object WithCounts extends Newtype[Boolean, Pure]

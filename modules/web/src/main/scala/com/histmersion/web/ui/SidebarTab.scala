@@ -1,7 +1,6 @@
 package com.histmersion
 package web.ui
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
@@ -14,9 +13,9 @@ enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
 object SidebarTab:
   /** The tab a kept key names; an old link's `bytime`/`byregion` (tabs no longer shown) is the sources'. */
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   def of(key: Option[Key]): SidebarTab = key.flatMap(k => values.find(_.key == k)).getOrElse(Sources)

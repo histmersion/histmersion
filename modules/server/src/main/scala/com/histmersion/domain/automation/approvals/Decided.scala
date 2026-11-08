@@ -11,7 +11,6 @@ import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a person decided on a blocking approval step — the step's checkpoint. */
@@ -20,8 +19,8 @@ final case class Decided(approved: Decided.Approved, approval: Decided.Approval,
 
 object Decided:
   type Approved = Approved.T
-  object Approved extends RefinedType[Boolean, Pure]
+  object Approved extends Newtype[Boolean, Pure]
   type Approval = Approval.T
-  object Approval extends RefinedType[Long, Pure]
+  object Approval extends Newtype[Long, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

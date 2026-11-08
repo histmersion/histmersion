@@ -17,7 +17,6 @@ import com.histmersion.api.library.{
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
@@ -35,7 +34,7 @@ object CitationService:
   type Depth = Source.Graph.Depth
   val Depth: Source.Graph.DepthCount.type = Source.Graph.DepthCount
   type Since = Since.T
-  object Since extends RefinedType[Long, Pure]
+  object Since extends Newtype[Long, Pure]
 
   /** The edge kinds that disagree. */
   val Disagreeing: Set[com.histmersion.api.library.Edge.Kind] =

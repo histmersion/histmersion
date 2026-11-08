@@ -9,7 +9,6 @@ import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.{EventPrecision, EventSummary, EventTaxonomy, EventTier}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.Year
@@ -25,7 +24,7 @@ import com.histmersion.api.Markdown
 
 object EventsTab:
   type When = When.T
-  object When extends RefinedType[String, Pure]
+  object When extends Newtype[String, Pure]
 
   /** The tab ([[FilterTab]]): the GLOBAL filter (title included), as the Sources tab sends it — the server relates it
     * to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past the first.

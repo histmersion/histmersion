@@ -14,7 +14,6 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Stores
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.storage.Location
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
 import com.histmersion.util.system.JvmHome
@@ -89,7 +88,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
 
 object AgentTrees:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** No environment: the trees only where the settings put them (a test's). */
   type SettingsVersion = GenSettings.Version

@@ -11,7 +11,6 @@ import hearth.kindlings.optics.syntax.*
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
@@ -49,9 +48,9 @@ trait PeriodService:
 
 object PeriodService:
   type SeedName = SeedName.T
-  object SeedName extends RefinedType[String, Pure]
+  object SeedName extends Newtype[String, Pure]
   type SeedVersion = SeedVersion.T
-  object SeedVersion extends RefinedType[Int, Pure]
+  object SeedVersion extends Newtype[Int, Pure]
 
   def apply(db: Transactor): PeriodService = Implementation(db)
 

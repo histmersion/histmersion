@@ -5,7 +5,6 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 
@@ -20,7 +19,7 @@ enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val i
 object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = UiLabels.Text
   val Label: UiLabels.Text.type = UiLabels.Text
 

@@ -7,7 +7,6 @@ import com.histmersion.domain.*
 import java.time.LocalDate
 import com.histmersion.api.library.WorkRef
 import com.histmersion.domain.library.search.Search
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One scholarly index a goal's saved queries are read from (#3761): the works matching a query that are newer than
@@ -24,8 +23,8 @@ trait ScholarlyIndex:
 
 object ScholarlyIndex:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
@@ -30,7 +29,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object BackgroundJob:
   type Work = Work.T
-  object Work extends RefinedType[String, Pure]
+  object Work extends Newtype[String, Pure]
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
 
@@ -40,9 +39,9 @@ object BackgroundJob:
   object Outcome:
 
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
 
     def done(summary: Summary): Outcome = Outcome(Some(summary))
     def failed(why: Error): Outcome = Outcome(None, Some(why))

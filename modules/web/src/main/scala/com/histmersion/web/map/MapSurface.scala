@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait MapSurface:
@@ -106,40 +105,40 @@ trait MapSurface:
 
 object MapSurface:
   type Dimension = Dimension.T
-  object Dimension extends RefinedType[Double, Pure]
+  object Dimension extends Newtype[Double, Pure]
   type DrawnCount = DrawnCount.T
-  object DrawnCount extends RefinedType[Int, Pure]
+  object DrawnCount extends Newtype[Int, Pure]
   type LabelText = LabelText.T
-  object LabelText extends RefinedType[String, Pure]
+  object LabelText extends Newtype[String, Pure]
   type LayerId = LayerId.T
-  object LayerId extends RefinedType[String, Pure]
+  object LayerId extends Newtype[String, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Double, Pure]
+  object MaxZoom extends Newtype[Double, Pure]
   type ResizeCount = ResizeCount.T
-  object ResizeCount extends RefinedType[Int, Pure]
+  object ResizeCount extends Newtype[Int, Pure]
   type Zoom = Zoom.T
-  object Zoom extends RefinedType[Double, Pure]
+  object Zoom extends Newtype[Double, Pure]
   type SetViewAnimate = SetViewAnimate.T
-  object SetViewAnimate extends RefinedType[Boolean, Pure]
+  object SetViewAnimate extends Newtype[Boolean, Pure]
   type FitBoundsPadding = FitBoundsPadding.T
-  object FitBoundsPadding extends RefinedType[Int, Pure]
+  object FitBoundsPadding extends Newtype[Int, Pure]
   type FitBoundsAnimate = FitBoundsAnimate.T
-  object FitBoundsAnimate extends RefinedType[Boolean, Pure]
+  object FitBoundsAnimate extends Newtype[Boolean, Pure]
   type PanByDx = PanByDx.T
-  object PanByDx extends RefinedType[Double, Pure]
+  object PanByDx extends Newtype[Double, Pure]
   type PanByDy = PanByDy.T
-  object PanByDy extends RefinedType[Double, Pure]
+  object PanByDy extends Newtype[Double, Pure]
   type PanByAnimate = PanByAnimate.T
-  object PanByAnimate extends RefinedType[Boolean, Pure]
+  object PanByAnimate extends Newtype[Boolean, Pure]
   type Locked = Locked.T
-  object Locked extends RefinedType[Boolean, Pure]
+  object Locked extends Newtype[Boolean, Pure]
   type ShapesId = ShapesId.T
-  object ShapesId extends RefinedType[String, Pure]
+  object ShapesId extends Newtype[String, Pure]
   type ShapeSetId = ShapeSetId.T
-  object ShapeSetId extends RefinedType[String, Pure]
+  object ShapeSetId extends Newtype[String, Pure]
   type PointTilesMaxZoom = PointTilesMaxZoom.T
-  object PointTilesMaxZoom extends RefinedType[Int, Pure]
+  object PointTilesMaxZoom extends Newtype[Int, Pure]
   type PopupHtml = PopupHtml.T
-  object PopupHtml extends RefinedType[String, Pure]
+  object PopupHtml extends Newtype[String, Pure]
   type PopupCls = PopupCls.T
-  object PopupCls extends RefinedType[String, Pure]
+  object PopupCls extends Newtype[String, Pure]

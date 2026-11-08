@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.personal.reading
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
@@ -12,11 +11,11 @@ enum ReadingShow(val wire: ReadingShow.Wire):
 
 object ReadingShow:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   def parse(s: Option[Wire]): Either[Problem, ReadingShow] =
     s.map(_.value.trim.toLowerCase)

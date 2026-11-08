@@ -4,7 +4,6 @@ package domain.library.acquisition
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait WikiClient:
@@ -12,6 +11,6 @@ trait WikiClient:
 
 object WikiClient:
   type ArticleUrl = ArticleUrl.T
-  object ArticleUrl extends RefinedType[String, Pure]
+  object ArticleUrl extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

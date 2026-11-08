@@ -2,7 +2,6 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.config.edit.{FileVersion, SettingReading}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The settings as the settings file and the environment have them now: where the file is (as messages name it), every
@@ -20,10 +19,10 @@ final case class SettingsSnapshot(
 
 object SettingsSnapshot:
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]
   type Exists = Exists.T
-  object Exists extends RefinedType[Boolean, Pure]
+  object Exists extends Newtype[Boolean, Pure]
   type Problems = Problems.T
-  object Problems extends RefinedType[String, Pure]
+  object Problems extends Newtype[String, Pure]
   type SetupDue = SetupDue.T
-  object SetupDue extends RefinedType[Boolean, Pure]
+  object SetupDue extends Newtype[Boolean, Pure]

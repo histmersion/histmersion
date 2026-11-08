@@ -10,11 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type PluginId = PluginId.T
 
-object PluginId extends RefinedType[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
+object PluginId extends Newtype[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
   type PackageName = PackageName.T
-  object PackageName extends RefinedType[String, Pure]
+  object PackageName extends Newtype[String, Pure]
   type TypeName = TypeName.T
-  object TypeName extends RefinedType[String, Pure]
+  object TypeName extends Newtype[String, Pure]
 
   def parse(raw: String): Either[String, PluginId] =
     either(raw).left.map(_ =>

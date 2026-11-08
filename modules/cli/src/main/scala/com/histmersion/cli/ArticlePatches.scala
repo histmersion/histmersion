@@ -15,7 +15,6 @@ import com.histmersion.api.research.CritiqueReason
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.library.Citekey
@@ -27,13 +26,13 @@ import com.histmersion.api.catalogue.Year
   */
 object ArticlePatches:
   type CsvText = CsvText.T
-  object CsvText extends RefinedType[String, Pure]
+  object CsvText extends Newtype[String, Pure]
   type PatchJson = PatchJson.T
-  object PatchJson extends RefinedType[String, Pure]
+  object PatchJson extends Newtype[String, Pure]
   type ReasonText = ReasonText.T
-  object ReasonText extends RefinedType[String, Pure]
+  object ReasonText extends Newtype[String, Pure]
   type TextFile = TextFile.T
-  object TextFile extends RefinedType[String, Pure]
+  object TextFile extends Newtype[String, Pure]
 
   def build(
       json: Option[PatchJson],
@@ -88,11 +87,11 @@ object ArticlePatches:
     type Query = Api.ArticleQuery.Text
     val Query: Api.ArticleQuery.Text.type = Api.ArticleQuery.Text
     type Period = Period.T
-    object Period extends RefinedType[String, Pure]
+    object Period extends Newtype[String, Pure]
     type ExtraQueries = ExtraQueries.T
-    object ExtraQueries extends RefinedType[String, Pure]
+    object ExtraQueries extends Newtype[String, Pure]
     type Clear = Clear.T
-    object Clear extends RefinedType[Boolean, Pure]
+    object Clear extends Newtype[Boolean, Pure]
 
   /** The coverage flags (#958) over a built patch: any `--filter-*` flag REPLACES the filter with the one the flags
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`

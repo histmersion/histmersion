@@ -8,7 +8,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.instance.UiConfig
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
@@ -21,7 +20,7 @@ import com.histmersion.api.RowCount
   */
 object ResultsPanel:
   type KeepWidth = KeepWidth.T
-  object KeepWidth extends RefinedType[Boolean, Pure]
+  object KeepWidth extends Newtype[Boolean, Pure]
 
   /** The width, px: the one this browser kept, else the default. */
 

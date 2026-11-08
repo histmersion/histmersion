@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.{RefRow, UpdateNotice, WorkRef}
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** OpenAlex + Crossref: search, metadata, deposited reference lists and amendment notices. */
@@ -24,13 +23,13 @@ trait DiscoveryClient:
 
 object DiscoveryClient:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SearchSort = SearchSort.T
-  object SearchSort extends RefinedType[String, Pure]
+  object SearchSort extends Newtype[String, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends RefinedType[Int, Pure]
+  object SearchLimit extends Newtype[Int, Pure]
   type Backend = Backend.T
-  object Backend extends RefinedType[String, Pure]
+  object Backend extends Newtype[String, Pure]
 
   /** Crossref's notices as the wire shows them. */
   def notices(found: List[com.histmersion.domain.library.acquisition.UpdateNotice]): List[UpdateNotice] =

@@ -9,7 +9,6 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
@@ -74,7 +73,7 @@ trait JobRuns:
 
 object JobRuns:
   type Prefix = Prefix.T
-  object Prefix extends RefinedType[String, Pure]
+  object Prefix extends Newtype[String, Pure]
 
   def apply(db: Transactor): JobRuns = Implementation(db)
 

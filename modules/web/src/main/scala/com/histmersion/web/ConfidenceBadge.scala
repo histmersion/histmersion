@@ -6,7 +6,6 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.library.Confidence
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The confidence mark: the shared icon plus the colour the map's dots use for that level ([[ConfidenceStyle]]),
@@ -14,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ConfidenceBadge:
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
 
   def apply(c: Confidence): HtmlElement =
     span(

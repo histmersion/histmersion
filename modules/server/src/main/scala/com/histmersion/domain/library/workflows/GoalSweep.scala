@@ -20,7 +20,6 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.automation.worklists.WorkListControllers
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
@@ -86,4 +85,4 @@ private[workflows] trait GoalSweep:
 
 object GoalSweep:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]

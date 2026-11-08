@@ -1,14 +1,13 @@
 package com.histmersion
 package cli
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 type ExitCode = ExitCode.T
 
 /** The CLI's exit codes (AGENTS.md), spelled once: `main` turns a `Left(CliError)` into one of these. Success is 0.
   */
-object ExitCode extends RefinedType[Int, Pure]:
+object ExitCode extends Newtype[Int, Pure]:
   /** The command line itself is wrong (a missing file, a bad flag value, "aborted"). */
   val Usage: ExitCode = ExitCode(1)
 

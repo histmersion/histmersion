@@ -19,7 +19,6 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.{Basemap, BasemapApi, BaseStyles}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.basemap.BasemapJobKinds
@@ -1064,15 +1063,15 @@ final class BasemapService(
 
 object BasemapService:
   type BuildName = BuildName.T
-  object BuildName extends RefinedType[String, Pure]
+  object BuildName extends Newtype[String, Pure]
   type JsonText = JsonText.T
-  object JsonText extends RefinedType[String, Pure]
+  object JsonText extends Newtype[String, Pure]
   type NameCount = NameCount.T
-  object NameCount extends RefinedType[Int, Pure]
+  object NameCount extends Newtype[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileKeys = TileKeys.T
-  object TileKeys extends RefinedType[String, Pure]
+  object TileKeys extends Newtype[String, Pure]
 
   private def invalid(message: String): Api.Error =
     Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeInvalid)))

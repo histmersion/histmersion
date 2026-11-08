@@ -11,7 +11,6 @@ import com.histmersion.api.{Api, Paging}
 import com.histmersion.api.automation.{Activity, ActivityMarkdown, Agents, Approval, Goal, Queue}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobActions, JobKinds}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Article
 
@@ -21,9 +20,9 @@ import com.histmersion.api.research.Article
   */
 object ActivityView:
   type ParamName = ParamName.T
-  object ParamName extends RefinedType[String, Pure]
+  object ParamName extends Newtype[String, Pure]
   type ParamText = ParamText.T
-  object ParamText extends RefinedType[String, Pure]
+  object ParamText extends Newtype[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 

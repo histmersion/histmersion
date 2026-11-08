@@ -5,7 +5,6 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Wording
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
@@ -135,7 +134,7 @@ enum WindowKey:
 
 object WindowKey:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   object Source:
     type Citekey = com.histmersion.api.library.Citekey
     val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey

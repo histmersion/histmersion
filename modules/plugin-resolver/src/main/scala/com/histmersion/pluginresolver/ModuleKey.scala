@@ -3,7 +3,6 @@ package pluginresolver
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A module whatever its version: what the server and a plugin can both have, once each. */
@@ -12,7 +11,7 @@ final case class ModuleKey(group: GroupId, artifact: ArtifactId):
 
 object ModuleKey:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   /** `group:artifact`. */
   type ParseResultPart1 = Resolver.Problem
   val ParseResultPart1: Resolver.Problem.type = Resolver.Problem

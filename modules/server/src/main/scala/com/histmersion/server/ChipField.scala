@@ -4,7 +4,6 @@ package server
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A metadata dimension a chip filters the web UI by. `hashKey` is the web UI's URL-hash key, so a chip is a link that
@@ -18,4 +17,4 @@ enum ChipField(val hashKey: ChipField.HashKey):
 
 object ChipField:
   type HashKey = HashKey.T
-  object HashKey extends RefinedType[String, Pure]
+  object HashKey extends Newtype[String, Pure]

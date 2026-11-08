@@ -39,7 +39,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
@@ -333,4 +332,4 @@ final class IngestQueue(
 object IngestQueue:
   /** A line of a job's progress report: what happened to the source after its text was stored. */
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

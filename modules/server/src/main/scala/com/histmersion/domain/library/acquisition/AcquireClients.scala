@@ -5,7 +5,6 @@ import com.histmersion.pluginhost.OaFetcher
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition clients of one config and one plugin generation (the server's `acquisition` hot node): rebuilt
@@ -26,4 +25,4 @@ final case class AcquireClients(
 
 object AcquireClients:
   type Generation = Generation.T
-  object Generation extends RefinedType[String, Pure]
+  object Generation extends Newtype[String, Pure]

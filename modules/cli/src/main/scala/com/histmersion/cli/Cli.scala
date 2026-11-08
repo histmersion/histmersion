@@ -26,7 +26,6 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import sttp.client4.*
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Paging
@@ -38,21 +37,21 @@ import com.histmersion.api.library.Filter
   */
 object Cli:
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type JsonOutput = JsonOutput.T
-  object JsonOutput extends RefinedType[Boolean, Pure]
+  object JsonOutput extends Newtype[Boolean, Pure]
   type Message = Message.T
-  object Message extends RefinedType[String, Pure]
+  object Message extends Newtype[String, Pure]
   type NoWait = NoWait.T
-  object NoWait extends RefinedType[Boolean, Pure]
+  object NoWait extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Question = Question.T
-  object Question extends RefinedType[String, Pure]
+  object Question extends Newtype[String, Pure]
   type QuietOutput = QuietOutput.T
-  object QuietOutput extends RefinedType[Boolean, Pure]
+  object QuietOutput extends Newtype[Boolean, Pure]
   type Strict = Strict.T
-  object Strict extends RefinedType[Boolean, Pure]
+  object Strict extends Newtype[Boolean, Pure]
 
 
 
@@ -775,6 +774,6 @@ object Cli:
 
   object Error:
     type Message = Message.T
-    object Message extends RefinedType[String, Pure]
+    object Message extends Newtype[String, Pure]
     type ExitCode = com.histmersion.cli.ExitCode
     val ExitCode: com.histmersion.cli.ExitCode.type = com.histmersion.cli.ExitCode

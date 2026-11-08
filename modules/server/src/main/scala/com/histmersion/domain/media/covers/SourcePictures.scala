@@ -31,7 +31,6 @@ import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.ocr.Pixels
 import com.histmersion.domain.library.Isbn
 import com.histmersion.plugin.WorkKey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
@@ -315,13 +314,13 @@ final class SourcePictures(
 
 object SourcePictures:
   type AfterIngestText = AfterIngestText.T
-  object AfterIngestText extends RefinedType[String, Pure]
+  object AfterIngestText extends Newtype[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type IllustrateText = IllustrateText.T
-  object IllustrateText extends RefinedType[String, Pure]
+  object IllustrateText extends Newtype[String, Pure]
   type OpenLibraryText = OpenLibraryText.T
-  object OpenLibraryText extends RefinedType[String, Pure]
+  object OpenLibraryText extends Newtype[String, Pure]
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
 
 

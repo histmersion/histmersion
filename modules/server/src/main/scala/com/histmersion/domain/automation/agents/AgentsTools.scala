@@ -36,7 +36,6 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Approval
@@ -51,7 +50,7 @@ import com.histmersion.domain.automation.managers.ManagersControllers
   */
 object AgentsTools:
   type RepairAcquire = RepairAcquire.T
-  object RepairAcquire extends RefinedType[Boolean, Pure]
+  object RepairAcquire extends Newtype[Boolean, Pure]
 
 
   import com.histmersion.util.mcp.ToolInputs.given
