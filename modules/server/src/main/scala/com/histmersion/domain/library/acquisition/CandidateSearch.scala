@@ -80,7 +80,7 @@ final class CandidateSearch(
   ): Either[Api.Error, CandidateSweep] =
     goals
       .get(goal)
-      .toRight(Api.Error(Api.Error.Message(s"no goal '$goal'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"no goal '$goal'"), Some(Api.Error.Code(Write.CodeNotFound))))
       .map { g =>
         val c = cfg
         val now = today()

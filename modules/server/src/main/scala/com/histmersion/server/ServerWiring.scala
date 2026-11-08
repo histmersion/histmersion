@@ -234,7 +234,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       Run.Id
         .either(id.value)
         .left
-        .map(_ => Api.Error(Api.Error.Message(s"'${id.value}' is not an agent run")))
+        .map(_ => Api.Error(Problem(s"'${id.value}' is not an agent run")))
         .flatMap(run =>
           (a match
             case JobAction.Pause  => agents.engine.pause(run)

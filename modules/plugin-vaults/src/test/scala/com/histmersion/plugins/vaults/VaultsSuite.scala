@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -44,8 +45,8 @@ class VaultsSuite extends munit.FunSuite:
         Left(Problem("no network in tests"))
     }
     val log = new Plugin.Log {
-      def info(m: Plugin.Log.InfoMessage) = infos = infos :+ m.value
-      def warn(m: Plugin.Log.WarnMessage) = ()
+      def info(m: Plugin.Log.Line) = infos = infos :+ m.value
+      def warn(m: Plugin.Log.Line) = ()
     }
     def env(name: EnvVar.Name) = envVars.get(name.value).map(EnvVar.Value(_))
     def secret(s: Secret) =
@@ -131,8 +132,8 @@ class VaultsSuite extends munit.FunSuite:
     assert((System.nanoTime - t0).nanos < 10.seconds)
 
   test("pure helpers: the problem line, the value without its line break, arguments that look like options"):
-    assertEquals(Subprocess.problem(Subprocess.Problem("\n  Error: locked \nmore")), "Error: locked")
-    assertEquals(Subprocess.problem(Subprocess.Problem("")), "no message")
+    assertEquals(Subprocess.problem(Problem("\n  Error: locked \nmore")), "Error: locked")
+    assertEquals(Subprocess.problem(Problem("")), "no message")
     assertEquals(Subprocess.value(Subprocess.ValueOut(" v \n")), " v ")
     assertEquals(Subprocess.value(Subprocess.ValueOut("v\r\n")), "v")
     assertEquals(Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("--help")), Left("x may not start with '-'"))
@@ -326,7 +327,7 @@ class VaultsSuite extends munit.FunSuite:
   test("yubikey: KeePassXC's messages — absent or failed is the next key; credentials, entry, touch stop"):
     import YubiKey.Failure.*
     def f(m: String) =
-      YubiKey.failure(YubiKey.Problem(m.toLowerCase(java.util.Locale.ROOT)), YubiKey.Setting.Entries("E"))
+      YubiKey.failure(Problem(m.toLowerCase(java.util.Locale.ROOT)), YubiKey.Setting.Entries("E"))
     assert(f("Could not find hardware key with serial number 1. Please plug it in to continue.").isInstanceOf[Next])
     assert(f("Failed to complete a challenge-response, the specific error was: x").isInstanceOf[Next])
     assert(f("Hardware key slot is not configured.").isInstanceOf[Next])
@@ -337,12 +338,12 @@ class VaultsSuite extends munit.FunSuite:
     )
     assertEquals(
       f("Hardware key timed out waiting for user interaction."),
-      Stop(Stop.Why("the YubiKey was not touched in time"))
+      Stop(Problem("the YubiKey was not touched in time"))
     )
-    assertEquals(f("Could not find entry with path E."), Stop(YubiKey.Failure.Stop.Why("no entry 'E'")))
+    assertEquals(f("Could not find entry with path E."), Stop(Problem("no entry 'E'")))
     assert(f("Segmentation fault").isInstanceOf[Stop])
     assertEquals(
-      YubiKey.problem(YubiKey.Problem("Please present or touch your YubiKey to continue.\n\nError: no key\n")),
+      YubiKey.problem(Problem("Please present or touch your YubiKey to continue.\n\nError: no key\n")),
       "Error: no key"
     )
 

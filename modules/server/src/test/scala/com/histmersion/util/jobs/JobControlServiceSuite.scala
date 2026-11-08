@@ -133,7 +133,7 @@ class JobControlServiceSuite extends DbSuite:
       BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary("6/6 parts"))
 
   private def service(stops: JobStops) =
-    JobControlService(ds, stops, (_, _) => Left(Api.Error(Api.Error.Message("no agent runs here"))))
+    JobControlService(ds, stops, (_, _) => Left(Api.Error(Problem("no agent runs here"))))
 
   dbTest("a paused job stops at a part boundary, keeps its progress, and resumed does only the parts it had not done"):
     val stops = JobStops()

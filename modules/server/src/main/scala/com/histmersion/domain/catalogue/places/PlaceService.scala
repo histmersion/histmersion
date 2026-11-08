@@ -200,9 +200,9 @@ object PlaceService:
     private def parentIs(r: Place.Relation, id: Place.Id): Boolean = r.parentId.value == id.value
     private def parentOf(r: Place.Relation): Place.Id = Place.Id(r.parentId.value)
     private def notFound(id: String): Api.Error =
-      Api.Error(Api.Error.Message(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(Problem(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
     private def invalid(message: String): Api.Error =
-      Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeInvalid)))
+      Api.Error(Problem(message), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def count(): RowCount = RowCount(places.size)
 
@@ -525,7 +525,7 @@ object PlaceService:
           val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"'${p.place.label}' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
               ),
               Some(Api.Error.Code(Write.CodeNotFound))
@@ -587,7 +587,7 @@ object PlaceService:
         )
       else
         val _ = importPlaces(List(in), Dataset.Local)
-        find(id).map(_.summary).toRight(Api.Error(Api.Error.Message(s"place '$id' was not stored")))
+        find(id).map(_.summary).toRight(Api.Error(Problem(s"place '$id' was not stored")))
 
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       state.get.placeOverrides
@@ -627,7 +627,7 @@ object PlaceService:
             had
               .toRight(
                 Api.Error(
-                  Api.Error.Message(s"'${before.place.label}' [$id] has no kind, period or point set by hand"),
+                  Problem(s"'${before.place.label}' [$id] has no kind, period or point set by hand"),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )

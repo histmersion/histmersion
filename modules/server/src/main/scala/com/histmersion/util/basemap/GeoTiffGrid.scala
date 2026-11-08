@@ -74,8 +74,6 @@ object GeoTiffGrid:
   object PixelX extends Newtype[Double, Pure]
   type PixelY = PixelY.T
   object PixelY extends Newtype[Double, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type NoData = NoData.T
   object NoData extends Newtype[Short, Pure]
 

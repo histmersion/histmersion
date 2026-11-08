@@ -78,7 +78,7 @@ object BackupService:
 
   private def guards(registry: DataContributions): List[GuardedTable] = registry.backups.flatMap(_._2.guarded)
 
-  private def problem(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+  private def problem(message: String): Api.Error = Api.Error(Problem(message))
 
   private def command(parts: String*): List[ProcessLaunch.Command] = parts.toList.map(ProcessLaunch.Command(_))
 

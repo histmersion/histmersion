@@ -20,11 +20,11 @@ object ConfigCmd:
         val located = UserPaths.configFile(Environment.of(org.ekrich.config.ConfigFactory.systemEnvironment()).lookup)
         located match
           case None =>
-            Left(Cli.Error(Cli.Error.Message(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})")))
+            Left(Cli.Error(Problem(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})")))
           case Some(p) =>
             Cli.out.println(p)
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
-              case Left(err) => Left(Cli.Error(Cli.Error.Message(err.value)))
+              case Left(err) => Left(Cli.Error(Problem(err.value)))
               case Right(l)  =>
                 if !Files.exists(p) then Cli.err.println("(not there yet: the defaults and the environment apply)")
                 else
@@ -45,7 +45,7 @@ object ConfigCmd:
       c.configReload.flatMap { r =>
         Output.emit(json, r)(ReloadMarkdown.report)
         if r.errors.isEmpty then Right(())
-        else Left(Cli.Error(Cli.Error.Message("the config was not reloaded"), exitCode = ExitCode.Refused))
+        else Left(Cli.Error(Problem("the config was not reloaded"), exitCode = ExitCode.Refused))
       }
     }
   }

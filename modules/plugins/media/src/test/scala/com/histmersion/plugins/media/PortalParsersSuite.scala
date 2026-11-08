@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -302,7 +303,7 @@ class PortalParsersSuite extends munit.FunSuite:
     )
     assertEquals(
       classify(Plugin.Http.Url("=https://elexikon.ch/RE/X,2_2449.png")),
-      Some(Left(PleiadesLinks.Problem("a picture on elexikon.ch (no documented keyless licence API)")))
+      Some(Left(Problem("a picture on elexikon.ch (no documented keyless licence API)")))
     )
     assertEquals(classify(Plugin.Http.Url("https://en.wikipedia.org/wiki/Mycenae")), None)
     assertEquals(classify(Plugin.Http.Url("http://www.worldcat.org/oclc/43970336")), None)
@@ -312,11 +313,11 @@ class PortalParsersSuite extends munit.FunSuite:
     val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(e => fail(e.value), identity)
     assertEquals(
       ls.map(l => (l.citation, l.file)),
-      List[(String, Either[PleiadesLinks.Problem, String])](
+      List[(String, Either[Problem, String])](
         ("citesAsRelated", Right("File:Zygouries-General plan of the excavations.jpg")),
         ("citesAsRelated", Left(PleiadesLinks.OnFlickr)),
         ("citesAsRelated", Left(PleiadesLinks.Category)),
-        ("seeFurther", Left(PleiadesLinks.Problem("a picture on elexikon.ch (no documented keyless licence API)")))
+        ("seeFurther", Left(Problem("a picture on elexikon.ch (no documented keyless licence API)")))
       )
     )
     assert(PleiadesLinks.links(parse("""{"message":"not found"}""").toOption.get).isLeft)

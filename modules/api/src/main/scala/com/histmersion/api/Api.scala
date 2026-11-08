@@ -2693,7 +2693,7 @@ object Api:
         (((refactorEncoded212)._1).value, ((refactorEncoded212)._2).value)
       )
 
-  final case class Error(message: Error.Message, code: Option[Error.Code] = None)
+  final case class Error(message: Problem, code: Option[Error.Code] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema

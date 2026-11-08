@@ -23,7 +23,7 @@ class MirrorSuite extends munit.FunSuite:
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
     def note(slug: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
-      if slug == MirrorPlacement.RecordId("gone") then Left(Api.Error(Api.Error.Message("no such article")))
+      if slug == MirrorPlacement.RecordId("gone") then Left(Api.Error(Problem("no such article")))
       else Right(Frontmatter.NoteBody(s"article $slug"))
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))

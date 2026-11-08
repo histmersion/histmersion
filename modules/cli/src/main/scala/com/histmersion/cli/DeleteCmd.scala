@@ -51,7 +51,7 @@ object DeleteCmd:
       calibreId: Source.CalibreId,
       libraryExists: => Boolean,
       library: CalibreCliConfig.LibraryDir,
-      byId: Calibre.Book.Id => Either[Calibre.Problem, Option[Calibre.Book]]
+      byId: Calibre.Book.Id => Either[Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
       case None => CalibreEntryCheck.Unchecked(Problem(s"'$calibreId' is not a Calibre id"))
@@ -77,12 +77,12 @@ object DeleteCmd:
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
       if d.refused then
         Left(
-          Cli.Error(Cli.Error.Message(Source.Delete.refusal(d.citekey, d.blockers).value), exitCode = ExitCode.Refused)
+          Cli.Error(Problem(Source.Delete.refusal(d.citekey, d.blockers).value), exitCode = ExitCode.Refused)
         )
       else if d.filesFailed.nonEmpty then
         Left(
           Cli.Error(
-            Cli.Error.Message(
+            Problem(
               s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
             ),
             exitCode = ExitCode.Refused

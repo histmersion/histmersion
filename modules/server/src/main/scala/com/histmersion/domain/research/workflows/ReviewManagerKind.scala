@@ -481,7 +481,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .map(_ => Articles.notFound(Article.Slug(raw.value.trim)))
           .flatMap(site.articles.get(_))
           .map(v => ManagerContext.ItemTarget(v.article.slug.value))
-      case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).

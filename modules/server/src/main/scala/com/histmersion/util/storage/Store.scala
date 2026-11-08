@@ -176,13 +176,13 @@ object Store:
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
-  enum Error(val message: Error.Message) derives CanEqual:
-    case NotFound(where: Error.NotFound.Where) extends Error(Error.Message(s"$where: no such file"))
-    case NotAFile(where: Error.NotAFile.Where) extends Error(Error.Message(s"$where is not a file"))
-    case Failed(reason: Error.Failed.Reason) extends Error(Error.Message(reason.value))
+  enum Error(val message: Problem) derives CanEqual:
+    case NotFound(where: Error.NotFound.Where) extends Error(Problem(s"$where: no such file"))
+    case NotAFile(where: Error.NotAFile.Where) extends Error(Problem(s"$where is not a file"))
+    case Failed(reason: Problem) extends Error(Problem(reason.value))
 
     /** An in-memory store has no file to hand to another program. */
-    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(Error.Message(s"$where is not on disk"))
+    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(Problem(s"$where is not on disk"))
 
   object Error:
     type Reason = Reason.T
@@ -195,9 +195,6 @@ object Store:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location
 
-    object Failed:
-      type Reason = Error.Reason
-      val Reason: Error.Reason.type = Error.Reason
 
     object NotOnDisk:
       type Where = Blob.Location

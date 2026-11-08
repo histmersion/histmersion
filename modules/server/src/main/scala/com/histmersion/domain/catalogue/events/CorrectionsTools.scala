@@ -61,7 +61,7 @@ object CorrectionsTools:
                 Event.Id
                   .either(i)
                   .left
-                  .map(e => Api.Error(Api.Error.Message(e)))
+                  .map(e => Api.Error(Problem(e)))
                   .map(Some(_))
           ToolResult.text(
             event

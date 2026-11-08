@@ -178,7 +178,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
 
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
   private def passNow(a: AgentsControllers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
-    a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Api.Error.Message("a pass is running")))
+    a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Problem("a pass is running")))
   private def status(h: ServerWiring, id: Queue.QueueItem.Id): String =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
@@ -444,7 +444,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
               FetchedFile.Extension("pdf")
             )
           )
-        else Fetch.Miss(Fetch.Miss.Why("no open-access location"))
+        else Fetch.Miss(Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -899,7 +899,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("no open-access location"))
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)

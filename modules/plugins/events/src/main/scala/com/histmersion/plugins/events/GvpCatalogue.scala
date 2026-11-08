@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.events
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.Json
@@ -76,8 +77,6 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
 object GvpCatalogue:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Year = Year.T
   object Year extends Newtype[Long, Pure]
 

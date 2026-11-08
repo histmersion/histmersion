@@ -138,6 +138,6 @@ object TestRuns:
         h.library.sources
           .patch(p.citekey, p.patch)
           .left
-          .map(e => SourceProposals.Outcome.Failed.Why(e.message.value))
+          .map(e => Problem(e.message.value))
           .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
     )

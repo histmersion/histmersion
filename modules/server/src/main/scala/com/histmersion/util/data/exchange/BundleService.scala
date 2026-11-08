@@ -108,23 +108,23 @@ object BundleService:
         _ <- usable(store)
         _ = pruneStale(store)
         key = Store.Key.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
-        part <- store.reserve(key).left.map(e => Api.Error(Api.Error.Message(s"bundle export failed: ${e.message}")))
+        part <- store.reserve(key).left.map(e => Api.Error(Problem(s"bundle export failed: ${e.message}")))
         m <- write(part, since)
         _ <- part
           .commit()
           .left
-          .map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
+          .map(e => Api.Error(Problem(s"could not finish ${store.where(key)}: ${e.message}")))
         file <- store
           .onDiskFile(key)
           .left
-          .map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
+          .map(e => Api.Error(Problem(s"could not finish ${store.where(key)}: ${e.message}")))
       yield file -> m
 
     private def usable(store: Store): Either[Api.Error, Unit] =
       store
         .makeDirectory()
         .left
-        .map(e => Api.Error(Api.Error.Message(s"bundles directory ${store.where()} is not usable: ${e.message}")))
+        .map(e => Api.Error(Problem(s"bundles directory ${store.where()} is not usable: ${e.message}")))
 
     private def write(part: Reservation, since: Option[BundleScope.Since.At]) =
       val written =
@@ -135,7 +135,7 @@ object BundleService:
         catch case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
       written.left.map { e =>
         part.discard()
-        Api.Error(Api.Error.Message(s"bundle export failed: $e"))
+        Api.Error(Problem(s"bundle export failed: $e"))
       }
 
     /** Finished exports past their download window, uploads nobody planned or imported for as long, and parts a crash
@@ -165,7 +165,7 @@ object BundleService:
       Sha256
         .either(upload.read(BundleReader.sha256Of).value)
         .left
-        .map(e => Api.Error(Api.Error.Message(s"the upload's sha256 is unusable: $e")))
+        .map(e => Api.Error(Problem(s"the upload's sha256 is unusable: $e")))
 
     private def importFrom(
         bundle: ByteSource,
@@ -186,7 +186,7 @@ object BundleService:
           w.rules
         )
         .left
-        .map(e => Api.Error(Api.Error.Message(s"bundle import failed: $e")))
+        .map(e => Api.Error(Problem(s"bundle import failed: $e")))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
@@ -198,7 +198,7 @@ object BundleService:
         case None =>
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"no uploaded bundle $sha — upload it first (POST /api/bundle/upload; " +
                   "`histmersion merge plan <file>` does), or it was cleared after bundles.stale-minutes"
               ),
@@ -217,11 +217,11 @@ object BundleService:
         _ <- usable(store)
         _ = pruneStale(store)
         _ <- copyIn(store, key, upload).left.map(e =>
-          Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: $e"))
+          Api.Error(Problem(s"could not keep the bundle in ${store.where()}: $e"))
         )
         blob <- store
           .get(key)
-          .toRight(Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: it is gone")))
+          .toRight(Api.Error(Problem(s"could not keep the bundle in ${store.where()}: it is gone")))
       yield
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(
@@ -261,7 +261,7 @@ object BundleService:
             w.rules
           )
           .left
-          .map(e => Api.Error(Api.Error.Message(s"merge plan failed: $e")))
+          .map(e => Api.Error(Problem(s"merge plan failed: $e")))
       }
 
     def importKept(

@@ -37,7 +37,7 @@ final class OnDemandTiles(
     now: () => OnDemandTiles.Instant = () => OnDemandTiles.Instant(System.currentTimeMillis()),
     sleep: BasemapFetch.Pace.GapMs => Unit = ms => Thread.sleep(ms.value),
     ext: DiskLru.Ext = DiskLru.Ext("webp"),
-    transform: PmTiles.TileBytes => Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] = b => Right(Some(b))
+    transform: PmTiles.TileBytes => Either[Problem, Option[PmTiles.TileBytes]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
   private def planetUrl(): RangeHttp.Url = source match
@@ -67,7 +67,7 @@ final class OnDemandTiles(
   private var nextStart = 0L
   private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
   private val inflight =
-    ConcurrentHashMap[String, CompletableFuture[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]]]()
+    ConcurrentHashMap[String, CompletableFuture[Either[Problem, Option[PmTiles.TileBytes]]]]()
   private lazy val gate = Semaphore(cfg().concurrency.value.max(1), true)
 
   def status: Basemap.OnDemand =
@@ -92,8 +92,8 @@ final class OnDemandTiles(
   def servesAt(z: PmTiles.Zoom): Boolean = cfg().enabled.value && z.value >= 0 && z.value <= cfg().maxZoom.value
 
   /** One request to the provider: within the concurrency and the rate. */
-  private def request[A](f: => Either[OnDemandTiles.Problem, A]): Either[OnDemandTiles.Problem, A] =
-    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(OnDemandTiles.Problem("too many tile requests waiting"))
+  private def request[A](f: => Either[Problem, A]): Either[Problem, A] =
+    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(Problem("too many tile requests waiting"))
     else
       try
         val wait = synchronized {
@@ -113,7 +113,7 @@ final class OnDemandTiles(
   )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
-  private def described(): Either[OnDemandTiles.Problem, Remote] =
+  private def described(): Either[Problem, Remote] =
     val u = planetUrl()
     remote
       .filter(_.url == u)
@@ -134,7 +134,7 @@ final class OnDemandTiles(
             }
             .toOption
             .filter(_._1 == u.value)
-          val head: Either[OnDemandTiles.Problem, (Array[Byte], RemoteFile)] = fromDisk match
+          val head: Either[Problem, (Array[Byte], RemoteFile)] = fromDisk match
             case Some((_, size, etag, h)) => Right((h, RemoteFile(RemoteFile.Size(size), etag.map(RemoteFile.Etag(_)))))
             case None                     =>
               val _ = remoteFiles.deleteTree(Store.Key.Root)
@@ -151,7 +151,7 @@ final class OnDemandTiles(
             _ <- Either.cond(
               h.rootOffset.value + h.rootLength.value <= b.length,
               (),
-              OnDemandTiles.Problem("root directory outside the first 16 KiB")
+              Problem("root directory outside the first 16 KiB")
             )
             root <- PmTiles
               .decompress(
@@ -182,10 +182,10 @@ final class OnDemandTiles(
     val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
-  private def leaf(r: Remote, e: PmTiles.Entry): Either[OnDemandTiles.Problem, Vector[PmTiles.Entry]] =
+  private def leaf(r: Remote, e: PmTiles.Entry): Either[Problem, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset.value)).map(Right(_)).getOrElse {
       val f = Store.Key.applyUnsafe(s"leaf-${e.offset.value}-${e.length.value}.bin")
-      val raw: Either[OnDemandTiles.Problem, Array[Byte]] =
+      val raw: Either[Problem, Array[Byte]] =
         remoteFiles.get(f).filter(_.size.value == e.length.value) match
           case Some(kept) => Right(kept.bytes().value)
           case None       =>
@@ -213,13 +213,13 @@ final class OnDemandTiles(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
       y: PmTiles.TileRow
-  ): Either[OnDemandTiles.Problem, Option[PmTiles.Entry]] =
+  ): Either[Problem, Option[PmTiles.Entry]] =
     val id = PmTiles.tileId(z, x, y)
-    def walk(d: Vector[PmTiles.Entry], depth: Int): Either[OnDemandTiles.Problem, Option[PmTiles.Entry]] =
+    def walk(d: Vector[PmTiles.Entry], depth: Int): Either[Problem, Option[PmTiles.Entry]] =
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
-        case Some(_) if depth >= 3 => Left(OnDemandTiles.Problem("PMTiles directories nested too deep"))
+        case Some(_) if depth >= 3 => Left(Problem("PMTiles directories nested too deep"))
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
@@ -227,8 +227,8 @@ final class OnDemandTiles(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
       y: PmTiles.TileRow
-  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
-    val raw: Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] = source match
+  ): Either[Problem, Option[PmTiles.TileBytes]] =
+    val raw: Either[Problem, Option[PmTiles.TileBytes]] = source match
       case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
       case OnDemandTiles.Source.Template(u) =>
         request(
@@ -241,18 +241,18 @@ final class OnDemandTiles(
             )
           )
         ).map(_.map(b => PmTiles.TileBytes(b.value)))
-    raw.flatMap(_.fold[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]](Right(None))(transform))
+    raw.flatMap(_.fold[Either[Problem, Option[PmTiles.TileBytes]]](Right(None))(transform))
 
   private def readPlanet(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
       y: PmTiles.TileRow
-  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
-    def once(): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
+  ): Either[Problem, Option[PmTiles.TileBytes]] =
+    def once(): Either[Problem, Option[PmTiles.TileBytes]] =
       for
         r <- described()
         e <- entry(r, z, x, y)
-        b <- e.fold[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]](Right(None)) { e =>
+        b <- e.fold[Either[Problem, Option[PmTiles.TileBytes]]](Right(None)) { e =>
           PmTiles.range(r.header.dataOffset, e).flatMap { (at, n) =>
             request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
               if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
@@ -272,7 +272,7 @@ final class OnDemandTiles(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
       y: PmTiles.TileRow
-  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
+  ): Either[Problem, Option[PmTiles.TileBytes]] =
     val c = cfg()
     val zoom: Int = z.value
     if !c.enabled.value || zoom > c.maxZoom.value || x.value < 0 || y.value < 0 || x.value >= (1L << zoom) || y.value >= (1L << zoom)
@@ -282,16 +282,16 @@ final class OnDemandTiles(
       cache.get(key) match
         case Some(hit)                          => Right(hit.map(b => PmTiles.TileBytes(b.value)))
         case None if offlineUntil > now().value =>
-          Left(OnDemandTiles.Problem("the provider was unreachable a moment ago; not asked again yet"))
+          Left(Problem("the provider was unreachable a moment ago; not asked again yet"))
         case None =>
-          val mine = CompletableFuture[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]]()
+          val mine = CompletableFuture[Either[Problem, Option[PmTiles.TileBytes]]]()
           Option(inflight.putIfAbsent(key.value, mine)) match
             case Some(other) =>
               scala.util
                 .Try(other.get(120, TimeUnit.SECONDS))
                 .toEither
                 .left
-                .map(e => OnDemandTiles.Problem(s"tile ${key.value}: ${e.getMessage}"))
+                .map(e => Problem(s"tile ${key.value}: ${e.getMessage}"))
                 .flatten
             case None =>
               try
@@ -305,15 +305,13 @@ final class OnDemandTiles(
                 r
               catch
                 case e: Throwable =>
-                  mine.complete(Left(OnDemandTiles.Problem(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
+                  mine.complete(Left(Problem(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
                   throw e
               finally { val _ = inflight.remove(key.value, mine) }
 
 object OnDemandTiles:
   type Instant = Instant.T
   object Instant extends Newtype[Long, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type UrlTemplate = UrlTemplate.T
   object UrlTemplate extends Newtype[String, Pure]
 

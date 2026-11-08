@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.helloai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -47,7 +48,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then
       Left(
         AiFailure.LimitReached(
-          _root_.com.histmersion.plugin.AiFailure.LimitReached.Message("hello-ai: usage limit reached")
+          Problem("hello-ai: usage limit reached")
         )
       )
     else

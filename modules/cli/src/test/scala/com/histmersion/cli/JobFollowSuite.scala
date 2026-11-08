@@ -65,7 +65,7 @@ class JobFollowSuite extends munit.FunSuite:
   test("an unreachable server keeps its own exit code"):
     val r =
       JobFollow.job(
-        _ => Left(Cli.Error(Cli.Error.Message("cannot reach"))),
+        _ => Left(Cli.Error(Problem("cannot reach"))),
         SpatialHierarchyResult.Job.Id("j1"),
         sleep = _ => (),
         progress = quiet,

@@ -178,9 +178,9 @@ object CollectionsService:
       archiveRows: Limit
   ) extends CollectionsService:
 
-    private def fail(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+    private def fail(message: String): Api.Error = Api.Error(Problem(message))
     private def usage(message: String): Api.Error =
-      Api.Error(Api.Error.Message(message), Some(Api.Error.Code(CollectionsApi.Usage)))
+      Api.Error(Problem(message), Some(Api.Error.Code(CollectionsApi.Usage)))
     private def failed(problem: HostCollection.Problem): Api.Error = fail(problem.value)
 
     private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
@@ -198,7 +198,7 @@ object CollectionsService:
         .map(HostCollection(HostCollection.Name(name.value), _))
         .toRight(
           Api.Error(
-            Api.Error.Message(
+            Problem(
               s"no source collection '$name' is registered on this server — its plugin is off or not installed"
             ),
             Some(Api.Error.Code(CollectionsApi.NoCollection))
@@ -496,7 +496,7 @@ object CollectionsService:
         o <- library
           .original(ck)
           .left
-          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Api.Error.Message(e.message.value + hint)))
+          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Problem(e.message.value + hint)))
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(o.disposition.value))
           .toRight(fail(s"the server did not say what format '$ck' is"))

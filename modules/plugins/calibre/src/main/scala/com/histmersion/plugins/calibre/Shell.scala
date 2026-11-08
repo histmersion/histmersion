@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.Problem
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Processes
 import io.github.iltotore.iron.constraint.any.Pure
@@ -9,12 +10,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * installation.
   */
 trait Shell:
-  def run(cmd: List[Processes.RunArgv]): Either[Shell.Problem, Processes.Result.Out]
+  def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out]
   def isRunning(processMatch: Shell.ProcessMatch): Boolean
 
 object Shell:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ProcessMatch = ProcessMatch.T
   object ProcessMatch extends Newtype[String, Pure]
 

@@ -13,8 +13,8 @@ trait HostLog:
   def plugin: Plugin.Log =
     val self = this
     new Plugin.Log:
-      def info(message: Plugin.Log.InfoMessage): Unit = self.info(HostLog.Line(message.value))
-      def warn(message: Plugin.Log.WarnMessage): Unit = self.warn(HostLog.Line(message.value))
+      def info(message: Plugin.Log.Line): Unit = self.info(HostLog.Line(message.value))
+      def warn(message: Plugin.Log.Line): Unit = self.warn(HostLog.Line(message.value))
 
 object HostLog:
   type Line = Line.T

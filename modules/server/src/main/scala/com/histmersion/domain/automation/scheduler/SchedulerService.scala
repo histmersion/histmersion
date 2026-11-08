@@ -454,7 +454,7 @@ final class SchedulerService(
     item
       .toRight(
         Api.Error(
-          Api.Error.Message(s"no manager item '$r' (an item id, or the target of an open item)"),
+          Problem(s"no manager item '$r' (an item id, or the target of an open item)"),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )
@@ -636,7 +636,7 @@ final class SchedulerService(
           case None =>
             Left(
               Api.Error(
-                Api.Error.Message(
+                Problem(
                   s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"
                 )
               )

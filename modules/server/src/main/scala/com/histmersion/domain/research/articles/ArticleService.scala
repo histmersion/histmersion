@@ -291,7 +291,7 @@ object ArticleService:
       attempt()
 
     private def refused(message: String, code: String): Api.Error =
-      Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
+      Api.Error(Problem(message), Some(Api.Error.Code(code)))
 
     /** A reason names its two sources by citekey; with no source stored, the first reason is refused as the database
       * refuses it (its text checked first).

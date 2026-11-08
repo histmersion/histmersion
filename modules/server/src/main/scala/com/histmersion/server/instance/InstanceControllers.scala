@@ -201,7 +201,7 @@ final class InstanceControllers(
           .parse(board)
           .toRight(
             Api.Error(
-              Api.Error.Message(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}")
+              Problem(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}")
             )
           )
         at <- mark.at.map(_.value.trim).filter(_.nonEmpty) match
@@ -209,7 +209,7 @@ final class InstanceControllers(
           case Some(s) =>
             Try(Instant.parse(s)).toOption
               .map(Some(_))
-              .toRight(Api.Error(Api.Error.Message(s"'at' is not an ISO-8601 instant: $s")))
+              .toRight(Api.Error(Problem(s"'at' is not an ISO-8601 instant: $s")))
       yield
         val _ = seen.mark(UserId.Local, SeenBoard(b.wire.value), at)
         uiCounters

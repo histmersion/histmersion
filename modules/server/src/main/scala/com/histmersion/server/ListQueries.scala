@@ -17,7 +17,7 @@ import com.histmersion.domain.automation.agents.RunQuery
   */
 object ListQueries:
 
-  private def bad(m: String): Api.Error = Api.Error(Api.Error.Message(m))
+  private def bad(m: String): Api.Error = Api.Error(Problem(m))
 
   private def known(what: String, vs: List[String], allowed: Seq[String]): Either[Api.Error, List[String]] =
     ListFilters

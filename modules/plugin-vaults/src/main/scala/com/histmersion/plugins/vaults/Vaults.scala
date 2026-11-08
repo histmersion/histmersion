@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -70,7 +71,7 @@ object Vaults:
         Left(
           Problem(
             classify(low).getOrElse(
-              s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Subprocess.Problem(res.err.value))})"
+              s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Problem(res.err.value))})"
             )
           )
         )

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.EnvVar
 
 import java.io.{InputStream, IOException}
@@ -22,8 +23,6 @@ import com.histmersion.plugin.LocalFiles
 object Subprocess:
   type Plain = Plain.T
   object Plain extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
   type Tool = Tool.T

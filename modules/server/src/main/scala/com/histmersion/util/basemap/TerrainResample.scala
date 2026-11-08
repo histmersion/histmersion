@@ -16,8 +16,8 @@ object TerrainResample:
   object Metres extends Newtype[Double, Pure]
   type Pixel = Pixel.T
   object Pixel extends Newtype[Int, Pure]
-  type Problem = Vp8l.Problem
-  val Problem: Vp8l.Problem.type = Vp8l.Problem
+  type Problem = Problem
+  val Problem: Problem.type = Problem
   type ZoomDelta = ZoomDelta.T
   object ZoomDelta extends Newtype[Int, Pure]
 

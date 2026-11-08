@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.AiMessage
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
@@ -18,8 +19,6 @@ final case class AnthropicRequest(json: Json):
   def body: AiHttp.PostBody = AiHttp.PostBody(json.noSpaces)
 
 object AnthropicRequest:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Role = Role.T
   object Role extends Newtype[String, Pure]
 

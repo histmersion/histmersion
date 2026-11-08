@@ -113,13 +113,13 @@ private[sources] object SourceRepo:
       case None           => Left(Write.notFound(apiCitekey(citekey)))
       case Some(existing) =>
         Source.Write.precondition(existing, p) match
-          case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
+          case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
             Source.Write.applyPatch(
               existing,
               Source.Write.srcAliased(p, apiCitekey(requested), apiCitekey(citekey))
             ) match
-              case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+              case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(Source.UpdatedAt(token(citekey).getOrElse("")))
 
@@ -489,14 +489,14 @@ private[sources] object SourceRepo:
       Left(aliasTarget(oldCk) match
         case Some(now) =>
           Api.Error(
-            Api.Error.Message(s"'${oldCk.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead"),
+            Problem(s"'${oldCk.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         case None => Write.notFound(apiCitekey(oldCk)))
     else if taken(newCk) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${newCk.value}' is already the citekey of another source"),
+          Problem(s"'${newCk.value}' is already the citekey of another source"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -505,7 +505,7 @@ private[sources] object SourceRepo:
         case Some(other) if other != oldCk =>
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"'${newCk.value}' is an old citekey of '${other.value}' and still resolves to it — pick another"
               ),
               Some(Api.Error.Code(Write.CodeInvalid))
@@ -516,7 +516,7 @@ private[sources] object SourceRepo:
             case Some(id) =>
               Left(
                 Api.Error(
-                  Api.Error.Message(s"finding id '$id' already exists — '${newCk.value}' would collide with it"),
+                  Problem(s"finding id '$id' already exists — '${newCk.value}' would collide with it"),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

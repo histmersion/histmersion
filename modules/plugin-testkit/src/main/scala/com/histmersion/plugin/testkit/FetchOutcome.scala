@@ -15,10 +15,10 @@ enum FetchOutcome derives CanEqual:
   case Found(fetcher: FetchChain.Outcome.FoundBy, file: FetchedFile, savedTo: Option[Path])
 
   /** No fetcher had a copy; each one's reason, as the ingest report lists them. */
-  case Miss(why: FetchOutcome.Miss.Why)
+  case Miss(why: Problem)
 
   /** A fetcher knows of a copy it may not take (a lending-only item, a bot challenge, no open licence). */
-  case Refused(why: FetchOutcome.Refused.Why)
+  case Refused(why: Problem)
 
 object FetchOutcome:
   object Miss:

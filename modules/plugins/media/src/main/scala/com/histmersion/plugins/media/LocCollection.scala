@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 
@@ -54,8 +55,6 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
 object LocCollection:
   type Date = Date.T
   object Date extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type ThumbPx = MediaSettings.ThumbPx
   val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx

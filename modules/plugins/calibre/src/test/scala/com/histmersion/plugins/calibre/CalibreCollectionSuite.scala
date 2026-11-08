@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -245,11 +246,11 @@ class CalibreCollectionSuite extends munit.FunSuite:
         def get(u: Plugin.Http.Url, hs: Map[Header.Name, Header.Value]) =
           Left(Problem("offline"))
       }
-      def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = () }
+      def log = new Plugin.Log { def info(m: Plugin.Log.Line) = (); def warn(m: Plugin.Log.Line) = () }
       def env(name: EnvVar.Name) =
         Option.when(name.value == "HOME")(EnvVar.Value("/home/someone"))
       def secret(s: Secret) = Left(Problem("none"))
-      def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+      def secretVaults = Registry.refusing(Problem("no vaults"))
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)
     val settings = Calibre.Settings(

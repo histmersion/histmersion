@@ -94,7 +94,7 @@ final class GazetteerControllers(
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
-  private def refused(problem: GazetteerImports.Problem): Api.Error = Api.Error(Api.Error.Message(problem.value))
+  private def refused(problem: GazetteerImports.Problem): Api.Error = Api.Error(Problem(problem.value))
 
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(

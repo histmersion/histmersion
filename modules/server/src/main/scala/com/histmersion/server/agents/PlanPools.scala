@@ -68,12 +68,12 @@ final class PlanPools(
   /** The floors of a pool and where they come from: saved, else config (a config string that does not parse floors
     * nothing it could not read, and says so).
     */
-  def floors(p: PoolId): (Floors, PoolStatus.FloorsSource, Option[PlanPools.Problem]) =
+  def floors(p: PoolId): (Floors, PoolStatus.FloorsSource, Option[Problem]) =
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(f => Floors.parse(Floors.Wire(f.value))) match
       case Some(Right(f)) => (f, PoolStatus.FloorsSource("saved"), None)
       case Some(Left(m))  =>
-        (Floors.Empty, PoolStatus.FloorsSource("saved"), Some(PlanPools.Problem(s"saved floors do not parse: $m")))
+        (Floors.Empty, PoolStatus.FloorsSource("saved"), Some(Problem(s"saved floors do not parse: $m")))
       case None =>
         Floors.parse(poolCfg(p)._1) match
           case Right(f) => (f, PoolStatus.FloorsSource("config"), None)
@@ -81,7 +81,7 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(PlanPools.Problem(s"agents.quota.${p.wire}.floors: $m"))
+              Some(Problem(s"agents.quota.${p.wire}.floors: $m"))
             )
 
   def rules(p: PoolId): Rules =
@@ -208,11 +208,11 @@ final class PlanPools(
 
   // ── fresh readings ─────────────────────────────────────────────────────────────────────────────
 
-  private def claudeMode: Either[PlanPools.Problem, RefreshMode] =
+  private def claudeMode: Either[Problem, RefreshMode] =
     RefreshMode
       .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
       .toRight(
-        PlanPools.Problem(
+        Problem(
           s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off"
         )
       )
@@ -247,7 +247,7 @@ final class PlanPools(
       autopilotOn: PlanReadSchedule.AutopilotOn,
       wanted: PlanReadSchedule.Wanted,
       now: java.time.Instant
-  ): Either[PlanPools.Problem, Refreshed] =
+  ): Either[Problem, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(o => java.time.Instant.ofEpochMilli(o.value))
@@ -259,7 +259,7 @@ final class PlanPools(
         last.map(l => java.time.Instant.ofEpochMilli(l.value)),
         now
       ) match
-        case ScheduledRead.NotDue(why) => Left(PlanPools.Problem(s"$why"))
+        case ScheduledRead.NotDue(why) => Left(Problem(s"$why"))
         case ScheduledRead.Due         =>
           PlanQuota
             .refreshDecision(
@@ -272,7 +272,7 @@ final class PlanPools(
               force = true
             )
             .left
-            .map(e => PlanPools.Problem(e.value))
+            .map(e => Problem(e.value))
             .map(_ =>
               takeAndLog(
                 p,
@@ -293,7 +293,7 @@ final class PlanPools(
       model: Option[ChainEntry.Model] = None,
       force: PlanPools.Force = PlanPools.Force(false),
       now: PlanQuota.Now = now0
-  ): Either[PlanPools.Problem, Refreshed] =
+  ): Either[Problem, Refreshed] =
     gate.exclusive(p, now.value) { last =>
       // asked again inside the gate: a caller that waited sees the reading the one before it took
       val needNow = need(p, model, now)
@@ -308,7 +308,7 @@ final class PlanPools(
           force.value
         )
         .left
-        .map(e => PlanPools.Problem(e.value))
+        .map(e => Problem(e.value))
         .map(n =>
           takeAndLog(p, trigger, PlanPools.Reason(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now)
         )
@@ -479,8 +479,6 @@ final class PlanPools(
 object PlanPools:
   type Force = Force.T
   object Force extends Newtype[Boolean, Pure]
-  type Problem = RefreshGate.Problem
-  val Problem: RefreshGate.Problem.type = RefreshGate.Problem
   type Reason = Reason.T
   object Reason extends Newtype[String, Pure]
   type ScheduleText = ScheduleText.T

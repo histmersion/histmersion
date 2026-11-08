@@ -114,7 +114,7 @@ final class AcquisitionControllers(
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
   private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
-  private def err(msg: String): Api.Error = Api.Error(Api.Error.Message(msg))
+  private def err(msg: String): Api.Error = Api.Error(Problem(msg))
 
   private def step(name: String, ok: Boolean, detail: String): Ingest.Step =
     Ingest.Step(Ingest.Step.Value(name), Ingest.Step.Ok(ok), Ingest.Step.Detail(detail))
@@ -125,7 +125,7 @@ final class AcquisitionControllers(
     Goal.Slug
       .either(raw)
       .left
-      .map(_ => Write.invalid(Api.Error.Message(s"invalid goal '$raw'")))
+      .map(_ => Write.invalid(Problem(s"invalid goal '$raw'")))
 
   // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ final class AcquisitionControllers(
         .parse(Candidates.State.Wire(st))
         .toRight(
           Api.Error(
-            Api.Error.Message(s"unknown state '$st' (${Candidates.State.values.map(_.wire.value).mkString(", ")})"),
+            Problem(s"unknown state '$st' (${Candidates.State.values.map(_.wire.value).mkString(", ")})"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
@@ -200,7 +200,7 @@ final class AcquisitionControllers(
         .parse(Candidates.State.Wire(m.state.value))
         .toRight(
           Api.Error(
-            Api.Error.Message(
+            Problem(
               s"unknown state '${m.state.value}' (${Candidates.State.values.map(_.wire.value).mkString(", ")})"
             ),
             Some(Api.Error.Code(Write.CodeInvalid))
@@ -610,7 +610,7 @@ final class AcquisitionControllers(
         Citekey
           .parse(citekey.get)
           .left
-          .map(p => Write.invalid(Api.Error.Message(p.value)))
+          .map(p => Write.invalid(Problem(p.value)))
           .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.value, path))
     }
 
@@ -874,7 +874,7 @@ final class AcquisitionControllers(
       .getOrElse(
         stored(Acquire.citekey(authors, item.year, title), authors, item.year, title).value
       )
-    Citekey.parse(rawCitekey).left.map(p => Write.invalid(Api.Error.Message(p.value))).flatMap { citekey =>
+    Citekey.parse(rawCitekey).left.map(p => Write.invalid(Problem(p.value))).flatMap { citekey =>
       steps += step(
         "metadata",
         true,

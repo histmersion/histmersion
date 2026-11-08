@@ -88,12 +88,12 @@ class ProviderSpiSuite extends munit.FunSuite:
     val ctx = new Plugin.Context:
       def http = offline
       def log = new Plugin.Log {
-        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+        def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
         Left(Problem("none"))
-      def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+      def secretVaults = Registry.refusing(Problem("no vaults"))
     assert(
       ctx.mediaCollections.add(Registry.AddId("portal"), Portal).left.exists((_).value.contains("no media import"))
     )

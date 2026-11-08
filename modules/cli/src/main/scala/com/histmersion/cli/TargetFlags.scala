@@ -46,7 +46,7 @@ object TargetFlags:
 
   /** The target the flags name, or why they name none. Pure. */
   def target(r: Raw): Either[Cli.Error, Target] =
-    def usage(why: String) = Cli.Error(Cli.Error.Message(why), exitCode = ExitCode.Usage)
+    def usage(why: String) = Cli.Error(Problem(why), exitCode = ExitCode.Usage)
     for
       kind <- ItemKind
         .parse(ItemKind.Wire(r.kind))

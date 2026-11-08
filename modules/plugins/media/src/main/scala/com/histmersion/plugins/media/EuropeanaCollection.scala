@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `europeana`: Europeana's Search API (a user's personal key, sent as a header): one search by the place's name,
@@ -43,7 +44,7 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).left.map(_.value))
       .left
-      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))
+      .map(e => Problem(explain(Problem(e)).value))
       .map(_.map(_.left.map(e => Problem(e.value))))
 
   override def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] =
@@ -51,4 +52,4 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       .askJson(Europeana.recordUrl(conf.apiUrl, item.key), headers)
       .flatMap(j => Europeana.item(j, item, licences, exclusions).left.map(_.value))
       .left
-      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))
+      .map(e => Problem(explain(Problem(e)).value))

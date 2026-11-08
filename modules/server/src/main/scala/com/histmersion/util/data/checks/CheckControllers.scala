@@ -35,7 +35,7 @@ final class CheckControllers(
     checks
       .select(rules)
       .left
-      .map(m => Api.Error(Api.Error.Message(m.value)))
+      .map(m => Api.Error(Problem(m.value)))
       .map(rs => checks.report(rs, context, CheckRule.MaxItems(config().lint.maxItems.value)))
 
   /** `POST /api/lint/fix` — the repairs that are safe to make without a person, each owner's, in their ranks: the ones

@@ -131,12 +131,12 @@ final class PluginHarness private (
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))
       .left
-      .map(e => WorkLookup.Problem(e.value))
+      .map(e => Problem(e.value))
       .flatMap(b =>
         io.circe.parser
           .parse(new String(b.value, UTF_8))
           .left
-          .map(e => WorkLookup.Problem(s"${url.value} returned unparseable JSON: ${e.getMessage}"))
+          .map(e => Problem(s"${url.value} returned unparseable JSON: ${e.getMessage}"))
       )
     run(
       WorkLookup
@@ -180,12 +180,12 @@ final class PluginHarness private (
       case Left(noCopy) =>
         val refused = answers.filter(_.refused)
         if refused.nonEmpty then
-          FetchOutcome.Refused(FetchOutcome.Refused.Why(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+          FetchOutcome.Refused(Problem(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
         else if answers.nonEmpty then
-          FetchOutcome.Miss(FetchOutcome.Miss.Why(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+          FetchOutcome.Miss(Problem(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
         else
           FetchOutcome.Miss(
-            FetchOutcome.Miss.Why(
+            Problem(
               if registries.sourceFetchers.isEmpty then "the plugin registered no source fetcher"
               else noCopy.value
             )

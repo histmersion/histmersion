@@ -14,7 +14,7 @@ final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
     exports
       .find(_.records == records)
       .flatMap(_ => notes.find(_.records == records))
-      .toRight(Api.Error(Api.Error.Message(s"no mirror notes of ${records.value} are registered")))
+      .toRight(Api.Error(Problem(s"no mirror notes of ${records.value} are registered")))
       .flatMap(_.note(id))
 
 object Mirror:

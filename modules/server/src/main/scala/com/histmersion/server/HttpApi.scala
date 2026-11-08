@@ -347,7 +347,7 @@ final class HttpApi(
       .in("api" / paths)
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[Api.Error])
-      .serverLogic[Identity](p => Left(Api.Error(Api.Error.Message(s"no such endpoint: /api/${p.mkString("/")}"))))
+      .serverLogic[Identity](p => Left(Api.Error(Problem(s"no such endpoint: /api/${p.mkString("/")}"))))
 
   /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
     * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page.
@@ -401,7 +401,7 @@ object HttpApi:
   /** A request value the domain refuses is the caller's mistake: a 400 that says which value and why. */
   private def refused[A](what: String, checked: Either[String, A]): Either[Api.Error, A] =
     checked.left.map(why =>
-      Api.Error(Api.Error.Message(s"invalid $what: $why"), Some(Api.Error.Code(Write.CodeInvalid)))
+      Api.Error(Problem(s"invalid $what: $why"), Some(Api.Error.Code(Write.CodeInvalid)))
     )
 
   private def citekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
@@ -411,7 +411,7 @@ object HttpApi:
     Job.Id
       .either(id)
       .left
-      .map(_ => Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ => Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   private def goalSlug(slug: String): Either[Api.Error, Goal.Slug] =
     refused("goal", Goal.Slug.either(slug))

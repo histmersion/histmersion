@@ -121,12 +121,12 @@ object EventsCmd:
               lon.map(Longitude(_))
             )
             .left
-            .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
+            .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
           _ <- scale
             .filter(v => EventScale.parse(EventSummary.Scale(v)).isEmpty)
             .fold(Right(()))(v =>
               Left(
-                Cli.Error(Cli.Error.Message(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage)
+                Cli.Error(Problem(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage)
               )
             )
           p = EventPatch(
@@ -144,7 +144,7 @@ object EventsCmd:
           _ <- Either.cond(
             p != EventPatch(),
             (),
-            Cli.Error(Cli.Error.Message("nothing to change: give at least one field"), exitCode = ExitCode.Usage)
+            Cli.Error(Problem("nothing to change: give at least one field"), exitCode = ExitCode.Usage)
           )
         yield p
         (id, patch)

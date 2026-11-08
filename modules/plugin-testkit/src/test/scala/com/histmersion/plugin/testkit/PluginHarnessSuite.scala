@@ -160,7 +160,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     assertEquals(found.requests, List("GET https://books.example/10.1/ok.pdf"))
     assertEquals(
       h.fetch(WorkKey(doi = Some(Doi("10.1/tiny")))).outcome,
-      FetchOutcome.Miss(FetchOutcome.Miss.Why("kit-fetcher: not a PDF"))
+      FetchOutcome.Miss(Problem("kit-fetcher: not a PDF"))
     )
     h.fetch(WorkKey(doi = Some(Doi("10.1/cf")))).outcome match
       case FetchOutcome.Refused(why) => assert(why.value.contains("bot-protection challenge"), why)
@@ -309,7 +309,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     val keyed = loaded(KitAi, "api-key = \"value:k-0000\"")
     assert(keyed.warnings.exists(_.value.contains("value:***")), keyed.warnings.toString)
     val down = keyed.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ScriptedAiHttp())
-    assertEquals(down.turn, Some(Left(AiFailure.Error(AiFailure.Error.Message("no scripted answer")))))
+    assertEquals(down.turn, Some(Left(AiFailure.Error(Problem("no scripted answer")))))
 
   test("a secret vault resolves as the server asks it"):
     val h = loaded(KitVault, "entries = [\"portal=s3cret\"]")

@@ -25,11 +25,11 @@ object BasemapFixtures:
     PmTilesWriter(store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
 
   /** The archive at `p`, opened. */
-  def open(p: Path): Either[PmTiles.Problem, PmTiles.File] =
+  def open(p: Path): Either[Problem, PmTiles.File] =
     val a = p.toAbsolutePath
     store(a.getParent)
       .get(Store.Key.applyUnsafe(a.getFileName.toString))
-      .toRight(PmTiles.Problem(s"$p: no such file"))
+      .toRight(Problem(s"$p: no such file"))
       .flatMap(PmTiles.File.open(_))
 
   private def commands(cs: Int*): Vector[Mvt.GeometryCommand] = cs.map(Mvt.GeometryCommand(_)).toVector

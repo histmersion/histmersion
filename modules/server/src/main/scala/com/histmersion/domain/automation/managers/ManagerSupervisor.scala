@@ -937,7 +937,7 @@ final class ManagerSupervisor(
         itemKind: ManagerContext.ItemKind,
         raw: ManagerItem.Target
     ): Either[Api.Error, ManagerContext.ItemTarget] =
-      Left(Api.Error(Api.Error.Message(s"unknown item kind '$itemKind'")))
+      Left(Api.Error(Problem(s"unknown item kind '$itemKind'")))
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 

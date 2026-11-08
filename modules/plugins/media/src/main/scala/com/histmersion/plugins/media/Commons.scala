@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.upstreams.media.MediaText
 import io.circe.Json
 import com.histmersion.plugin.*
@@ -14,8 +15,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Pure.
   */
 object Commons:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The `extmetadata` fields read — and asked for, so the answer stays small. */
 
@@ -265,8 +264,6 @@ object Commons:
     * event's own item (a work whose own image, P18, is the picture). URL building and parsing. Pure.
     */
   object Depicts:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
 
     val Depicts = "P180"
     val DepictedBy = "P1299"

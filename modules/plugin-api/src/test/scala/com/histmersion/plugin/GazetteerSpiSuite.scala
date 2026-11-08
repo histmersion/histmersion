@@ -15,13 +15,13 @@ class GazetteerSpiSuite extends munit.FunSuite:
       ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
     }
     def log = new Plugin.Log {
-      def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+      def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
     }
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
       Problem("none")
     )
-    def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+    def secretVaults = Registry.refusing(Problem("no vaults"))
 
   private object Nowhere extends GazetteerSource:
     def title = GazetteerSource.Title("Nowhere")

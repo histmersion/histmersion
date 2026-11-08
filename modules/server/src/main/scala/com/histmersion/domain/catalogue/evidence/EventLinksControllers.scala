@@ -75,7 +75,7 @@ final class EventLinksControllers(
 ):
   private def ec = settings().events
 
-  private def notFound(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** The id of an event read from the store. */
   private def idOf(d: EventEntry): Event.Id = Event.Id.assume(d.event.id.value)

@@ -36,7 +36,7 @@ final class PlacesControllers(
   private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
   private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
   private def page(raw: Int): PageSize = PageSize.applyUnsafe(math.max(1, raw))
-  private def notFound(id: String): Api.Error = Api.Error(Api.Error.Message(s"No place '$id'"))
+  private def notFound(id: String): Api.Error = Api.Error(Problem(s"No place '$id'"))
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
     * resolves to the place it names, as an old citekey does.
@@ -61,7 +61,7 @@ final class PlacesControllers(
   def shapes(q: Api.PlacesGeoQuery): Either[Api.Error, Api.PlacesGeo.Json] =
     q.pick.map(p => GeoPick.Wire(p.value.trim)).filter(_.value.nonEmpty) match
       case Some(p) if GeoPick.parse(p).isEmpty =>
-        Left(Api.Error(Api.Error.Message(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}")))
+        Left(Api.Error(Problem(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}")))
       case p =>
         val time = GeoPick.resolve(
           q.asOf.map(y => Year(y.value)),
@@ -129,11 +129,11 @@ final class PlacesControllers(
     maintenance.guard(WriteGate.OperationName("places/import")):
       val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(Place.Kind.Wire(k)) then
-        Left(Api.Error(Api.Error.Message(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
+        Left(Api.Error(Problem(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
       else
         for
           set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(Api.Error.Message(e.value)))
+          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(Problem(e.value)))
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */
@@ -246,7 +246,7 @@ final class PlacesControllers(
               .left
               .map(why =>
                 Api.Error(
-                  Api.Error.Message(s"'${to.value}' is not a place id: $why"),
+                  Problem(s"'${to.value}' is not a place id: $why"),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

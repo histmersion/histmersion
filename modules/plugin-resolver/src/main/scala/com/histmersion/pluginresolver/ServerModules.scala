@@ -20,7 +20,7 @@ object ServerModules:
   type ParseExcludes = Resolver.ManifestLine
   val ParseExcludes: Resolver.ManifestLine.type = Resolver.ManifestLine
 
-  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[Resolver.Problem, ServerModules] =
+  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[Problem, ServerModules] =
     def entries(lines: List[ParseEntriesLines]) =
       lines.map((_).value.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     for

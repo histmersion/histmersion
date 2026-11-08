@@ -43,7 +43,7 @@ object OaRecords:
     ) match
       case Right(j) => RepositoryLanding.handleUrl(j).map(u => Plugin.Http.Url(u.value))
       case Left(e)  =>
-        log.info(Plugin.Log.InfoMessage(s"doi handles: no URL for ${doi.value} ($e)")); None
+        log.info(Plugin.Log.Line(s"doi handles: no URL for ${doi.value} ($e)")); None
 
   def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.Url] =
     http.json(
@@ -51,4 +51,4 @@ object OaRecords:
     ) match
       case Right(j) => RepositoryLanding.dataciteUrl(j).map(u => Plugin.Http.Url(u.value))
       case Left(e)  =>
-        log.info(Plugin.Log.InfoMessage(s"datacite: no record for ${doi.value} ($e)")); None
+        log.info(Plugin.Log.Line(s"datacite: no record for ${doi.value} ($e)")); None

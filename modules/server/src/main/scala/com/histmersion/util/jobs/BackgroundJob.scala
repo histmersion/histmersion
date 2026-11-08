@@ -62,7 +62,7 @@ object BackgroundJob:
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
   def busy(what: Work, current: Option[Work], code: Option[Api.Error.Code] = None): Api.Error =
     Api.Error(
-      Api.Error.Message(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"),
+      Problem(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"),
       code
     )
 

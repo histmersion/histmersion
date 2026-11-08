@@ -440,8 +440,8 @@ class SourceDeleteSuite extends DbSuite:
   test("the delete is a write: refused while a restore holds the maintenance lock; the dry run is not"):
     seed()
     var out: Either[Api.Error, Source.Deletion] =
-      Left(Api.Error(Api.Error.Message("never ran"))) // set inside the lock, read after it
-    var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(Api.Error.Message("never ran")))
+      Left(Api.Error(Problem("never ran"))) // set inside the lock, read after it
+    var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(Problem("never ran")))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) {
       out = h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
       dry = h.library.sources.delete(DelCk, Source.DeleteRequest())

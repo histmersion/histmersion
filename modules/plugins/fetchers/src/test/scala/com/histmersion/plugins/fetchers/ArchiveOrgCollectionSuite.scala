@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*

@@ -165,7 +165,7 @@ object ArticleCli:
       else
         Left(
           Cli.Error(
-            Cli.Error.Message(s"${failed.size} of $total article(s) could not be exported"),
+            Problem(s"${failed.size} of $total article(s) could not be exported"),
             exitCode = ExitCode.Refused
           )
         )
@@ -249,7 +249,7 @@ object ArticleCli:
         .mapN { (file, kind, strict) => (c: Client) =>
           val p = Path.of(file)
           if !Files.isRegularFile(p) then
-            Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+            Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -313,7 +313,7 @@ object ArticleCli:
       def read(f: String) =
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Files.readString(p))
-        else Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
+        else Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
       val req = (editsFile, bodyFile) match
         case (Some(e), None) =>
           read(e)
@@ -323,7 +323,7 @@ object ArticleCli:
                 .left
                 .map(err =>
                   Cli.Error(
-                    Cli.Error.Message(s"$e: not a JSON list of edits (${err.getMessage})"),
+                    Problem(s"$e: not a JSON list of edits (${err.getMessage})"),
                     exitCode = ExitCode.Usage
                   )
                 )
@@ -338,7 +338,7 @@ object ArticleCli:
           )
         case _ =>
           Left(
-            Cli.Error(Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage)
+            Cli.Error(Problem("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage)
           )
       req
         .flatMap(c.checkArticle(ReviewGoal.Slug(slug), _))
@@ -369,7 +369,7 @@ object ArticleCli:
         .mapN { (dir, force) => (c: Client) =>
           val p = Path.of(dir)
           if !Files.isDirectory(p) then
-            Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+            Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
           else Right(report(importAll(c, p, Api.Overwrite(force), Set(WikiLayout.SourcesDir))))
         }
     }

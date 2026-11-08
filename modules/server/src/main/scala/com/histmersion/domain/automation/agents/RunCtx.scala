@@ -314,7 +314,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
     llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses. `maxTokens` overrides
@@ -330,7 +330,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
     llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
 
   /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's and the earlier
@@ -346,7 +346,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
         engine.beat(runId, Some(Engine.BeatSeq(seq.value)))
@@ -405,7 +405,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: RunCtx.MaxTokens,
       turns: AgentDef.MaxTurns,
-      validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[RunCtx.Problem], Checked[O]],
+      validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]],
       capKey: Engine.CapKey
   ): Either[Halt, O] =
     val role = agent.role
@@ -420,7 +420,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     def go(
         attempt: Int,
         tries: Int,
-        problems: List[RunCtx.Problem],
+        problems: List[Problem],
         previous: Option[String],
         seen: List[ToolUse]
     ): Either[Halt, O] =
@@ -562,7 +562,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 case _ =>
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
-                    case Left(f)  => Left(List(RunCtx.Problem(Engine.answerProblem(f, res.finishReason).value)))
+                    case Left(f)  => Left(List(Problem(Engine.answerProblem(f, res.finishReason).value)))
                     case Right(a) => validate(a, RunCtx.LastAttempt(last), calls)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
@@ -668,7 +668,5 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
 object RunCtx:
   type MaxTokens = LlmCall.MaxTokens
   val MaxTokens: LlmCall.MaxTokens.type = LlmCall.MaxTokens
-  type Problem = Prompt.Problem
-  val Problem: Prompt.Problem.type = Prompt.Problem
   type LastAttempt = LastAttempt.T
   object LastAttempt extends Newtype[Boolean, Pure]

@@ -139,7 +139,7 @@ object Patches:
   private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
     decode[A](s).left.map(e =>
       Cli.Error(
-        Cli.Error.Message(s"$flag: not valid JSON for this option (${e.getMessage})"),
+        Problem(s"$flag: not valid JSON for this option (${e.getMessage})"),
         exitCode = ExitCode.Usage
       )
     )
@@ -155,14 +155,14 @@ object Patches:
           .map(Edge.Input(Citekey(dst), _))
           .toRight(
             Cli.Error(
-              Cli.Error.Message(s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})"),
+              Problem(s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})"),
               exitCode = ExitCode.Usage
             )
           )
       case _ =>
         Left(
           Cli.Error(
-            Cli.Error.Message(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'"),
+            Problem(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'"),
             exitCode = ExitCode.Usage
           )
         )
@@ -173,7 +173,7 @@ object Patches:
       case _                      =>
         Left(
           Cli.Error(
-            Cli.Error.Message(s"--period: expected 'start,end' as signed years, got '$s'"),
+            Problem(s"--period: expected 'start,end' as signed years, got '$s'"),
             exitCode = ExitCode.Usage
           )
         )
@@ -182,7 +182,7 @@ object Patches:
   private def readFile(flag: String, file: String): Either[Cli.Error, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
-    else Left(Cli.Error(Cli.Error.Message(s"$flag: no such file: $file"), exitCode = ExitCode.Usage))
+    else Left(Cli.Error(Problem(s"$flag: no such file: $file"), exitCode = ExitCode.Usage))
 
   private def traverse[A, B](as: List[A])(f: A => Either[Cli.Error, B]): Either[Cli.Error, List[B]] =
     as.foldLeft[Either[Cli.Error, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

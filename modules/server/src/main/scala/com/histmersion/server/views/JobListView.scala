@@ -39,11 +39,11 @@ object JobListView:
       st <- ListFilters
         .known(ListFilters.FacetName("status"), n.status.map(s => ListFilters.Term(s.value)), JobStatuses)
         .left
-        .map(p => Api.Error(Api.Error.Message(p.value)))
+        .map(p => Api.Error(Problem(p.value)))
       tr <- ListFilters
         .range(n.since.map(s => ListFilters.TimeBound(s.value)), n.until.map(u => ListFilters.TimeBound(u.value)), now)
         .left
-        .map(p => Api.Error(Api.Error.Message(p.value)))
+        .map(p => Api.Error(Problem(p.value)))
     yield JobQuery(
       st.map(t => JobQuery.Status(t.value)),
       n.kind.map(k => JobQuery.Kinds(k.value)),

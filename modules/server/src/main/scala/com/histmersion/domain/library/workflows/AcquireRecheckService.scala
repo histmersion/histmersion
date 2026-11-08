@@ -105,7 +105,7 @@ final class AcquireRecheckService(
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
 
-  private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+  private def error(message: String): Api.Error = Api.Error(Problem(message))
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -211,14 +211,14 @@ final class AcquireRecheckService(
         .exists(i => i.list == Queue.Kind.Acquire.label && i.status.value == Queue.Open)
     ) match
       case Some(id) =>
-        Left(Api.Error(Api.Error.Message(s"no open acquisition item #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case None if in.limit.exists(_.value < 0)    => Left(Write.invalid(Api.Error.Message("--limit is 0 or more")))
+        Left(Api.Error(Problem(s"no open acquisition item #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case None if in.limit.exists(_.value < 0)    => Left(Write.invalid(Problem("--limit is 0 or more")))
       case None if in.all.value && in.id.isDefined =>
-        Left(Write.invalid(Api.Error.Message("--all re-checks every open item; --id one of them — not both")))
+        Left(Write.invalid(Problem("--all re-checks every open item; --id one of them — not both")))
       case None if in.all.value && in.limit.isDefined =>
         Left(
           Write.invalid(
-            Api.Error.Message("--all re-checks every open item, past every cap; --limit caps a pass — not both")
+            Problem("--all re-checks every open item, past every cap; --limit caps a pass — not both")
           )
         )
       case None if !in.dryRun.value && jobSlot.isRunning => Left(busy)

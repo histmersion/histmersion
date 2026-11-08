@@ -67,7 +67,7 @@ object EventLinksTools:
               val r =
                 Event.Id
                   .option(raw)
-                  .toRight(Api.Error(Api.Error.Message(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                  .toRight(Api.Error(Problem(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
                   .flatMap { id =>
                     if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
                       links

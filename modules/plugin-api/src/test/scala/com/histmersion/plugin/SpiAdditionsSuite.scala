@@ -74,13 +74,13 @@ class SpiAdditionsSuite extends munit.FunSuite:
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
     def log = new Plugin.Log {
-      def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+      def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
     }
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
       Problem("none")
     )
-    def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+    def secretVaults = Registry.refusing(Problem("no vaults"))
 
   test("a context written before budgets existed lends the unlimited quota for any upstream"):
     assertEquals(EarlyContext.quota(Plugin.Context.QuotaUpstream("core")), UpstreamQuota.Unlimited)
@@ -93,7 +93,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val ctx = new Fetch.Context:
       def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = compute
       val log = new Plugin.Log {
-        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+        def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
     assert(!ctx.registered(Fetch.Context.RegisteredPluginId("oa-unpaywall")))
 
@@ -135,7 +135,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     )
     val early = new AiProvider:
       def title = AiProvider.Title("Early")
-      def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(AiFailure.Error.Message("none")))
+      def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(Problem("none")))
     assertEquals(
       early.capabilities,
       AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))

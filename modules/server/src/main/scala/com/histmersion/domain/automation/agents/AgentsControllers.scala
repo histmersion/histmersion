@@ -272,7 +272,7 @@ final class AgentsControllers(
         case (bad, _)  =>
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
               )
             )
@@ -280,7 +280,7 @@ final class AgentsControllers(
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
         .left
-        .map(e => Api.Error(Api.Error.Message(e.value)))
+        .map(e => Api.Error(Problem(e.value)))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -320,7 +320,7 @@ final class AgentsControllers(
       .parse(raw)
       .toRight(
         Api.Error(
-          Api.Error.Message(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})")
+          Problem(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})")
         )
       )
 
@@ -334,7 +334,7 @@ final class AgentsControllers(
           PlanQuota.Floors
             .parse(PlanQuota.Floors.Wire(t))
             .left
-            .map(e => Api.Error(Api.Error.Message(e.value)))
+            .map(e => Api.Error(Problem(e.value)))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
@@ -342,7 +342,7 @@ final class AgentsControllers(
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
-        .toRight(Api.Error(Api.Error.Message(s"no pool ${p.wire}")))
+        .toRight(Api.Error(Problem(s"no pool ${p.wire}")))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
@@ -425,7 +425,7 @@ final class AgentsControllers(
     else
       Left(
         Api.Error(
-          Api.Error.Message("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them")
+          Problem("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them")
         )
       )
 
@@ -436,10 +436,10 @@ final class AgentsControllers(
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[ModelPicker.Problem, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[Problem, (LlmClient, Billing)] =
     for
-      ps <- prices.left.map(p => ModelPicker.Problem(p.value))
-      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => ModelPicker.Problem(p.value))
+      ps <- prices.left.map(p => Problem(p.value))
+      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => Problem(p.value))
       c <- clientFor(cfg, m)
     yield (c, b)
 
@@ -460,13 +460,13 @@ final class AgentsControllers(
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
-  def runnable(role: Role, overrideRef: Option[ModelName]): Either[ModelPicker.Problem, Unit] =
+  def runnable(role: Role, overrideRef: Option[ModelName]): Either[Problem, Unit] =
     picker.chainFor(role, overrideRef).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
       else
         Left(
-          ModelPicker.Problem(
+          Problem(
             s"no model of the ${role.wire} chain can run: " + tried
               .collect { case (m, Left(w)) => s"${m.wire}: $w" }
               .mkString("; ")
@@ -528,14 +528,14 @@ final class AgentsControllers(
     Role
       .parse(raw)
       .toRight(
-        Api.Error(Api.Error.Message(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+        Api.Error(Problem(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
       )
 
   private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
       .find(_.role.value == role.wire.value)
-      .toRight(Api.Error(Api.Error.Message(s"no role ${role.wire}")))
+      .toRight(Api.Error(Problem(s"no role ${role.wire}")))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
@@ -547,12 +547,12 @@ final class AgentsControllers(
       ms <- ModelChains
         .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
         .left
-        .map(e => Api.Error(Api.Error.Message(e.value)))
+        .map(e => Api.Error(Problem(e.value)))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
         Api.Error(
-          Api.Error.Message("a chain needs at least one provider:model (reset the role to go back to config)")
+          Problem("a chain needs at least one provider:model (reset the role to go back to config)")
         )
       )
       _ = Transactor(ds).transact(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
@@ -573,11 +573,11 @@ final class AgentsControllers(
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
         .left
-        .map(e => Api.Error(Api.Error.Message(e.value)))
+        .map(e => Api.Error(Problem(e.value)))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Api.Error(Api.Error.Message(errs.mkString("; "))))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(Api.Error.Message(e.value)))
+        case (errs, _) => Left(Api.Error(Problem(errs.mkString("; "))))
+      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(Problem(e.value)))
       _ = Transactor(ds).transact(
         ModelSettingsRepo.setAllowance(
           ModelSettingsRepo.Saved.Target(t.wire.value),
@@ -588,7 +588,7 @@ final class AgentsControllers(
       st <- picker
         .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
         .find(_.target.value == t.wire.value)
-        .toRight(Api.Error(Api.Error.Message(s"the allowance of ${t.wire} was not recorded")))
+        .toRight(Api.Error(Problem(s"the allowance of ${t.wire} was not recorded")))
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
@@ -596,7 +596,7 @@ final class AgentsControllers(
     ModelChains.Target
       .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
       .left
-      .map(e => Api.Error(Api.Error.Message(e.value)))
+      .map(e => Api.Error(Problem(e.value)))
       .map(t =>
         Goal.Plans.Removed(
           Goal.Plans.Removed.Value(
@@ -713,7 +713,7 @@ final class AgentsControllers(
         .parse(Pipeline.Wire(req.pipeline.value))
         .toRight(
           Api.Error(
-            Api.Error.Message(
+            Problem(
               s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"
             )
           )
@@ -725,14 +725,14 @@ final class AgentsControllers(
       _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
         acc.flatMap(_ =>
           runnable(role, over.get(role).orElse(req.model.map(m => ModelName(m.value)))).left
-            .map(e => Api.Error(Api.Error.Message(e.value)))
+            .map(e => Api.Error(Problem(e.value)))
         )
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
       // review) is checked the same way
       _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[Api.Error, Unit]](Right(())) {
         case (acc, (role, ref)) =>
-          acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Api.Error.Message(e.value))))
+          acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Problem(e.value))))
       }
       _ <- host.runOptions(
         p,
@@ -796,7 +796,7 @@ final class AgentsControllers(
             .parse(o.role)
             .toRight(
               Api.Error(
-                Api.Error.Message(
+                Problem(
                   s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})"
                 )
               )
@@ -805,7 +805,7 @@ final class AgentsControllers(
             roles.contains(r),
             (),
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"--model-for: ${p.wire} uses no ${r.wire} role " +
                   s"(its roles: ${
                       if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")
@@ -816,12 +816,12 @@ final class AgentsControllers(
           _ <- Either.cond(
             !m.contains(r),
             (),
-            Api.Error(Api.Error.Message(s"--model-for: the ${r.wire} role is given twice"))
+            Api.Error(Problem(s"--model-for: the ${r.wire} role is given twice"))
           )
           _ <- ModelChains
             .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
             .left
-            .map(e => Api.Error(Api.Error.Message(s"--model-for ${r.wire}: $e")))
+            .map(e => Api.Error(Problem(s"--model-for ${r.wire}: $e")))
         yield m + (r -> ModelName(o.model.value.trim))
       }
     }
@@ -835,7 +835,7 @@ final class AgentsControllers(
         managerStore
           .get(Managers.ManagerInfo.Id(raw.value.trim))
           .map(m => AgentsControllers.Target(m.id.value))
-          .toRight(Api.Error(Api.Error.Message(s"No manager '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+          .toRight(Api.Error(Problem(s"No manager '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
       )
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
@@ -849,7 +849,7 @@ final class AgentsControllers(
       DomainGoal.Slug
         .either(raw)
         .left
-        .map(_ => Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .map(_ => Api.Error(Problem(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
     if p.targetKind == TargetKind.Goal then slug(target.value).map(Some(_))
     else
       named.map(_.trim).filter(_.nonEmpty) match
@@ -862,10 +862,10 @@ final class AgentsControllers(
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
   private def positive(v: PositiveAmount, what: String): Either[Api.Error, PositiveAmount] =
     if v.value >= 0.000001 then Right(v)
-    else Left(Api.Error(Api.Error.Message(s"$what must be at least 0.000001")))
+    else Left(Api.Error(Problem(s"$what must be at least 0.000001")))
 
   private def notFound(message: String): Api.Error =
-    Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(message), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def searchPage: PageSize = PageSize.applyUnsafe(math.max(1, site.config.limits.search.value))
 
@@ -878,7 +878,7 @@ final class AgentsControllers(
       case Some(st) if RunState.parse(RunState.Wire(st.value)).isEmpty =>
         Left(
           Api.Error(
-            Api.Error.Message(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})")
+            Problem(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})")
           )
         )
       case st => Right(runs.list(st, RunQuery.Limit(site.config.limits.page(limit, searchPage).value), goal).toList)
@@ -922,7 +922,7 @@ final class AgentsControllers(
           cursor(upTo).map(c => RunQuery.UpTo(c.value))
         )
         .left
-        .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
+        .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
     yield
       val (rows, more) = page
       val (counts, facets) = runs.runFacets(q)
@@ -976,7 +976,7 @@ final class AgentsControllers(
       outputs = compared.headOption
         .flatMap(r => workflows.parse(r.run.pipeline.value))
         .fold(OutputComparison.none)(_.outputs)
-      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(Api.Error.Message(p.value)))
+      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(Problem(p.value)))
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
@@ -1000,7 +1000,7 @@ final class AgentsControllers(
       case other    =>
         Left(
           Api.Error(
-            Api.Error.Message(s"unknown action '$other' (one of: ${List("pause", "resume", "cancel").mkString(", ")})")
+            Problem(s"unknown action '$other' (one of: ${List("pause", "resume", "cancel").mkString(", ")})")
           )
         )
 
@@ -1101,7 +1101,7 @@ final class AgentsControllers(
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars.value,
             GoalLink.Ref(ref),
-            Api.Error(Api.Error.Message(s"a query is 1 to ${cfg.plan.queryChars} characters"))
+            Api.Error(Problem(s"a query is 1 to ${cfg.plan.queryChars} characters"))
           )
       _ = goals.link(
         slug,
@@ -1112,7 +1112,7 @@ final class AgentsControllers(
       l <- goals
         .links(slug)
         .find(l => l.kind == in.kind && l.ref == r)
-        .toRight(Api.Error(Api.Error.Message(s"the link to $r was not recorded")))
+        .toRight(Api.Error(Problem(s"the link to $r was not recorded")))
     yield l
 
   def removeGoalLink(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref): Either[Api.Error, Removed] =
@@ -1122,7 +1122,7 @@ final class AgentsControllers(
         .parse(kind)
         .toRight(
           Api.Error(
-            Api.Error.Message(
+            Problem(
               s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"
             )
           )
@@ -1136,7 +1136,7 @@ final class AgentsControllers(
       .parse(kind)
       .toRight(
         Api.Error(
-          Api.Error.Message(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})")
+          Problem(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})")
         )
       )
 
@@ -1182,16 +1182,16 @@ final class AgentsControllers(
         .map(_ => notFound(s"No source '${req.citekey}'"))
       src <- host.probeSubject(ck)
       picked <- picker.pick(Role.Probe, req.model.map(m => ModelName(m.value))).left.map {
-        case PickFailure.Unavailable(m)     => Api.Error(Api.Error.Message(m.value))
-        case PickFailure.Exhausted(m, _, _) => Api.Error(Api.Error.Message(m.value))
+        case PickFailure.Unavailable(m)     => Api.Error(Problem(m.value))
+        case PickFailure.Exhausted(m, _, _) => Api.Error(Problem(m.value))
       }
       result <- probeWith(picked.client, picked.billing, src)
     yield result
 
   private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[Api.Error, ProbeResult] =
     for
-      d <- definitions.agent(StepAgent.Probe).left.map(m => Api.Error(Api.Error.Message(m)))
-      sys <- definitions.system(d, ToolStyle.Bare).left.map(m => Api.Error(Api.Error.Message(m)))
+      d <- definitions.agent(StepAgent.Probe).left.map(m => Api.Error(Problem(m)))
+      sys <- definitions.system(d, ToolStyle.Bare).left.map(m => Api.Error(Problem(m)))
       r <- probeCall(client, billing, src, d, sys)
     yield r
 
@@ -1290,7 +1290,7 @@ object AgentsControllers:
     DomainRun.Id
       .either(raw)
       .left
-      .map(_ => Api.Error(Api.Error.Message(s"No agent run '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ => Api.Error(Problem(s"No agent run '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   /** The run ids a request names (comma-separated ones too). */
   def runIds(raw: List[String]): Either[Api.Error, List[DomainRun.Id]] =
@@ -1307,7 +1307,7 @@ object AgentsControllers:
     DomainGoal.Slug
       .either(raw)
       .left
-      .map(_ => Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ => Api.Error(Problem(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   /** The server's providers over one [[CliRuntime]]. */
 
@@ -1341,5 +1341,5 @@ object AgentsControllers:
           case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
         scribe.warn(s"agent call to ${model.wire} failed: $logged")
         Left(
-          Api.Error(Api.Error.Message(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))
+          Api.Error(Problem(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))
         )

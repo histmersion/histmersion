@@ -71,7 +71,7 @@ object AgentCmd:
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
           if limits.nonEmpty then
-            Left(Cli.Error(Cli.Error.Message("--remove takes no --limit"), exitCode = ExitCode.Usage))
+            Left(Cli.Error(Problem("--remove takes no --limit"), exitCode = ExitCode.Usage))
           else
             c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
               .map(r =>
@@ -82,7 +82,7 @@ object AgentCmd:
           limits
             .traverse(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l)))
             .left
-            .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
+            .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
             .flatMap { ls =>
               c.call(AgentsApi.setAllowance)(
                 ModelChains.AllowanceSet(
@@ -147,9 +147,9 @@ object AgentCmd:
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
             case (None, false) =>
-              Left(Cli.Error(Cli.Error.Message("give the floors, or --reset"), exitCode = ExitCode.Usage))
+              Left(Cli.Error(Problem("give the floors, or --reset"), exitCode = ExitCode.Usage))
             case (Some(_), true) =>
-              Left(Cli.Error(Cli.Error.Message("--reset takes no floors"), exitCode = ExitCode.Usage))
+              Left(Cli.Error(Problem("--reset takes no floors"), exitCode = ExitCode.Usage))
             case _ =>
               c.call(AgentsApi.setPool)(
                 (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(floors = Some(PlanQuota.PoolSet.Floors(f.getOrElse("")))))
@@ -169,7 +169,7 @@ object AgentCmd:
                 PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(v.trim.equalsIgnoreCase("on")))
               )
             ).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
-          case other => Left(Cli.Error(Cli.Error.Message(s"'$other' is neither on nor off"), exitCode = ExitCode.Usage))
+          case other => Left(Cli.Error(Problem(s"'$other' is neither on nor off"), exitCode = ExitCode.Usage))
       }
     }
     val refresh = Opts.subcommand(
@@ -235,7 +235,7 @@ object AgentCmd:
             Cli.out.println(AgentsMarkdown.run(d, withMessages = false))
             Left(
               Cli.Error(
-                Cli.Error.Message(s"agent run $id ${d.run.status}: ${d.run.error.map(_.value).getOrElse("")}"),
+                Problem(s"agent run $id ${d.run.status}: ${d.run.error.map(_.value).getOrElse("")}"),
                 exitCode = ExitCode.Refused
               )
             )
@@ -305,7 +305,7 @@ object AgentCmd:
         ev._2
           .traverse(m => ModelOverride.parse(ModelOverride.Wire(m)))
           .left
-          .map(m => Cli.Error(Cli.Error.Message(s"--model-for $m"), exitCode = ExitCode.Usage))
+          .map(m => Cli.Error(Problem(s"--model-for $m"), exitCode = ExitCode.Usage))
           .flatMap { over =>
             c.call(AgentsApi.startRun)(
               RunRequest(
@@ -383,7 +383,7 @@ object AgentCmd:
             Left(
               first
                 .modify(_.message)
-                .setTo(Cli.Error.Message(s"${failed.size} of ${ids.size} not decided — ${first.message}"))
+                .setTo(Problem(s"${failed.size} of ${ids.size} not decided — ${first.message}"))
             )
       }
   }

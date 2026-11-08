@@ -53,7 +53,7 @@ final class AcquisitionRoutes(
       Citekey
         .parse(ck.value)
         .left
-        .map(p => Write.invalid(Api.Error.Message(p.value)))
+        .map(p => Write.invalid(Problem(p.value)))
         .flatMap(gaps.pushMeta)
     ),
     AcquireApi.calibrePushed.serverLogic[Identity](req => gaps.pushed(req)),

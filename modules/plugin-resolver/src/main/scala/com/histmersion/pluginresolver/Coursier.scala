@@ -20,7 +20,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
   def resolve(
       roots: List[ModuleCoordinates],
       excluded: Set[ModuleKey]
-  ): Either[Resolver.Problem, List[(ModuleCoordinates, Option[Path])]] =
+  ): Either[Problem, List[(ModuleCoordinates, Option[Path])]] =
     val params = excluded.foldLeft(ResolutionParams.create())((p, k) => p.addExclusion(k.group.value, k.artifact.value))
     val fetch = Fetch
       .create()
@@ -29,7 +29,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
       .withResolutionParams(params)
       .withCache(cache.foldLeft(Cache.create().withLogger(Logger.nop()))((c, dir) => c.withLocation(dir.toFile)))
     Try(fetch.fetchResult()).toEither.left
-      .map(e => Resolver.Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+      .map(e => Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
       .flatMap { result =>
         val jars = result.getArtifacts.asScala.toList.map(e => e.getKey.getUrl -> e.getValue.toPath)
         traverse(result.getDependencies.asScala.toList) { d =>
@@ -65,9 +65,9 @@ object Coursier:
   def pluginRepository(
       dir: Path,
       plugins: List[PluginArtifact]
-  ): Either[Resolver.Problem, List[(PluginArtifact, ModuleCoordinates)]] =
+  ): Either[Problem, List[(PluginArtifact, ModuleCoordinates)]] =
     traverse(plugins.flatMap(p => p.pom.map(p -> _))) { (plugin, pom) =>
-      Pom.coordinates(pom).left.map(e => Resolver.Problem(s"${plugin.fileName}: its POM: $e")).map { c =>
+      Pom.coordinates(pom).left.map(e => Problem(s"${plugin.fileName}: its POM: $e")).map { c =>
         val jar = dir.resolve((jarPath(c)).value.drop(1))
         Files.createDirectories(jar.getParent)
         Files.copy(plugin.jar, jar, StandardCopyOption.REPLACE_EXISTING)

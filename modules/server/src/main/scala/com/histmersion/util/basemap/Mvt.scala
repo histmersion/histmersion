@@ -29,8 +29,6 @@ object Mvt:
   object PointX extends Newtype[Int, Pure]
   type PointY = PointY.T
   object PointY extends Newtype[Int, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type PropKey = PropKey.T
   object PropKey extends Newtype[String, Pure]
   type PropText = PropText.T

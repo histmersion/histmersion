@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
@@ -17,23 +18,21 @@ import com.histmersion.plugin.AiMessage
 final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[ChatAnswer.Problem, AiTurn] =
+  def turn: Either[Problem, AiTurn] =
     if (status).value / 100 != 2 then
       Left(
-        ChatAnswer.Problem(
+        Problem(
           (ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))).value
         )
       )
     else
       decode((body).value)(using ChatAnswer.response).left.map(
-        (refactorCallback => ChatAnswer.Problem(refactorCallback.getMessage))
+        (refactorCallback => Problem(refactorCallback.getMessage))
       )
 
 object ChatAnswer:
   type FinishReason = FinishReason.T
   object FinishReason extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The most of an unreadable error answer's body its description keeps. */
 

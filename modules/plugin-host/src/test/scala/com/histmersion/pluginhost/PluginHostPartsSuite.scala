@@ -122,11 +122,11 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(PluginAi.check(throwing, PluginAi.ModelName("m")), Left("its check threw IllegalStateException"))
     assertEquals(
       PluginAi.turn(throwing, request, AiHttp.Offline),
-      Left(AiFailure.Error(AiFailure.Error.Message("IllegalStateException: boom")))
+      Left(AiFailure.Error(Problem("IllegalStateException: boom")))
     )
     assertEquals(
       PluginAi.turn(nulls, request, AiHttp.Offline),
-      Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null")))
+      Left(AiFailure.Error(Problem("the provider answered null")))
     )
 
   /** Answers in turn, recording each request's headers. */

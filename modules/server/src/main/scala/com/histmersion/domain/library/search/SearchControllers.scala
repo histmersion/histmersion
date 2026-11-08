@@ -68,7 +68,7 @@ final class SearchControllers(
         else aggregateOn(axes, unit, q)
       }
 
-  private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+  private def error(message: String): Api.Error = Api.Error(Problem(message))
 
   /** The aggregation itself, once `by`/`unit` have been validated.
     *

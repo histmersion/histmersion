@@ -61,7 +61,7 @@ class OutputSuite extends munit.FunSuite:
       UpdateEntry(
         UpdateEntry.CalibreId(3),
         List(UpdateEntry.Citekeys("ck")),
-        UpdateOutcome.Failed(List(ch), UpdateOutcome.Failed.Reason("locked"))
+        UpdateOutcome.Failed(List(ch), Problem("locked"))
       )
     )
     assertEquals(

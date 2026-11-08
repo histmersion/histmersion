@@ -29,17 +29,17 @@ object Pom:
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
 
-  def coordinates(xml: Pom.CoordinatesXml): Either[Resolver.Problem, ModuleCoordinates] =
+  def coordinates(xml: Pom.CoordinatesXml): Either[Problem, ModuleCoordinates] =
     for
       project <- parse(xml)
       parent = child(project, ElementName("parent"))
       group <- text(project, ElementName("groupId"))
         .orElse(parent.flatMap(text(_, ElementName("groupId"))))
-        .toRight(Resolver.Problem("the POM names no groupId"))
-      artifact <- text(project, ElementName("artifactId")).toRight(Resolver.Problem("the POM names no artifactId"))
+        .toRight(Problem("the POM names no groupId"))
+      artifact <- text(project, ElementName("artifactId")).toRight(Problem("the POM names no artifactId"))
       version <- text(project, ElementName("version"))
         .orElse(parent.flatMap(text(_, ElementName("version"))))
-        .toRight(Resolver.Problem("the POM names no version"))
+        .toRight(Problem("the POM names no version"))
       coords <- ModuleCoordinates.parse(ModuleCoordinates.Text(s"$group:$artifact:$version"))
     yield coords
 
@@ -67,7 +67,7 @@ object Pom:
       finally zip.close()
     }.toOption.flatten[String]).map(refactorValue => PluginArtifact.Pom(refactorValue))
 
-  private def parse(xml: Pom.ParseXml): Either[Resolver.Problem, Element] =
+  private def parse(xml: Pom.ParseXml): Either[Problem, Element] =
     Try {
       val factory = DocumentBuilderFactory.newInstance()
       // a POM is data from the network: no DOCTYPE, so no external entity is ever resolved
@@ -79,8 +79,8 @@ object Pom:
       builder.setErrorHandler(new DefaultHandler)
       builder.parse(ByteArrayInputStream((xml).value.getBytes(UTF_8))).getDocumentElement
     }.toEither.left
-      .map(e => Resolver.Problem(s"not a POM: ${e.getMessage}"))
-      .filterOrElse(_.getLocalName == "project", Resolver.Problem("not a POM: no <project>"))
+      .map(e => Problem(s"not a POM: ${e.getMessage}"))
+      .filterOrElse(_.getLocalName == "project", Problem("not a POM: no <project>"))
 
   private def child(e: Element, name: ElementName): Option[Element] =
     val nodes = e.getChildNodes

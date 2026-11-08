@@ -52,8 +52,6 @@ object BasemapFetch:
   object Filtered extends Newtype[Boolean, Pure]
   type Note = Note.T
   object Note extends Newtype[String, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileCount = TileCount.T
   object TileCount extends Newtype[Long, Pure]
   type ZoomSummary = ZoomSummary.T

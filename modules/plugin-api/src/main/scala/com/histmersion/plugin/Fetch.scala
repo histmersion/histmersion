@@ -9,23 +9,17 @@ enum Fetch derives CanEqual:
   case Found(file: FetchedFile)
 
   /** No copy here (no identifier this fetcher reads, nothing found, the upstream did not answer). */
-  case Miss(why: Fetch.Miss.Why)
+  case Miss(why: Problem)
 
   /** A copy exists but may not be taken (a lending-only item, a bot challenge, no entitlement). The host logs it and
     * moves on; it never asks the same fetcher again for this work.
     */
-  case Refused(why: Fetch.Refused.Why)
+  case Refused(why: Problem)
 
 object Fetch:
 
   /** What the host lends a fetcher for ONE fetch of one work. */
-  object Miss:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
-  object Refused:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   trait Context:
     /** A value computed at most once per fetch of this work and shared by every fetcher of the chain — an index record

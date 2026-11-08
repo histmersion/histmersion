@@ -132,7 +132,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       case scala.util.Failure(e) =>
         Left(
           Cli.Error(
-            Cli.Error.Message(
+            Problem(
               s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"
             )
           )
@@ -145,11 +145,11 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
             val code =
               if e.code.contains(CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
-            Left(Cli.Error(Cli.Error.Message(e.message.value), exitCode = code))
+            Left(Cli.Error(Problem(e.message.value), exitCode = code))
           case _ =>
             Left(
               Cli.Error(
-                Cli.Error.Message(
+                Problem(
                   Client
                     .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method)))
                     .value

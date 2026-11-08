@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Doi, WorkKey, Year}
 import io.circe.Json
 import com.histmersion.upstreams.http.Url
@@ -15,8 +16,6 @@ import com.histmersion.upstreams.ArxivId
   * acquisition client's GET of a JSON document.
   */
 object WorkLookup:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
   type WorkFields = WorkFieldsValue
@@ -45,7 +44,7 @@ object WorkLookup:
       .left
       .flatMap { why =>
         // a miss (404) and a refusal (429/503) both land here; the reason says which
-        log.info(Plugin.Log.InfoMessage(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref"))
+        log.info(Plugin.Log.Line(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref"))
         json(crossrefUrl(cfg, doi)).map(AcquireParse.crossrefWork).map(withUnpaywall(cfg, json, doi, _))
       }
 

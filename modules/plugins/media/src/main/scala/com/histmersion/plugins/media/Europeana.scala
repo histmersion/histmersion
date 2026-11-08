@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -26,8 +27,6 @@ object Europeana:
   object Field extends Newtype[String, Pure]
   type Preview = Preview.T
   object Preview extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Source = Source.T
   object Source extends Newtype[String, Pure]
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
@@ -16,19 +17,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[AnthropicAnswer.Problem, AiTurn] =
-    if (status).value / 100 != 2 then Left(AnthropicAnswer.Problem((body).value))
+  def turn: Either[Problem, AiTurn] =
+    if (status).value / 100 != 2 then Left(Problem((body).value))
     else
       parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
-            case Right(message) => Left(AnthropicAnswer.Problem((message).value))
-            case Left(e)        => Left(AnthropicAnswer.Problem(e.getMessage))
+            case Right(message) => Left(Problem((message).value))
+            case Left(e)        => Left(Problem(e.getMessage))
 
 object AnthropicAnswer:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Status = Status.T
   object Status extends Newtype[Int, Pure]

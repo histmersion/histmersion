@@ -33,7 +33,7 @@ object AgentStateCmd:
             c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr)))
               .map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
-            Left(Cli.Error(Cli.Error.Message(s"Invalid JSON: ${err.getMessage}"), exitCode = ExitCode.Usage))
+            Left(Cli.Error(Problem(s"Invalid JSON: ${err.getMessage}"), exitCode = ExitCode.Usage))
       }
   }
 

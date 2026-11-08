@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -20,8 +21,6 @@ object OpenContext:
   object Cite extends Newtype[String, Pure]
   type ContextLabel = ContextLabel.T
   object ContextLabel extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Project = Project.T
   object Project extends Newtype[String, Pure]
   type Segment = Segment.T

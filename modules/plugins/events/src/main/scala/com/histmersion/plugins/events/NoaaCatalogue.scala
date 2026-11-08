@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.events
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.{ACursor, Json}
@@ -65,8 +66,6 @@ object NoaaCatalogue:
   object Name extends Newtype[String, Pure]
   type Path = Path.T
   object Path extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type PageNumber = PageNumber.T

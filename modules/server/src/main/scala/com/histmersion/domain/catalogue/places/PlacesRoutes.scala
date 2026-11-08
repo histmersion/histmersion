@@ -18,7 +18,7 @@ import com.histmersion.api.catalogue.Gazetteer
   */
 object PlacesRoutes:
   private def missing(id: ApiPlace.Id): Api.Error =
-    Api.Error(Api.Error.Message(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def exact(id: ApiPlace.Id): Either[Api.Error, Place.Id] = Place.Id.either(id.value).left.map(_ => missing(id))
 

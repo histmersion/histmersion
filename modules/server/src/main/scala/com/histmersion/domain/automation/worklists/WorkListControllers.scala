@@ -85,8 +85,8 @@ object WorkListControllers:
   type KindOfList = KindOfList.T
   object KindOfList extends Newtype[String, Pure]
 
-  private def bad(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+  private def bad(message: String): Api.Error = Api.Error(Problem(message))
 
   def error(e: QueueError): Api.Error = e match
     case QueueError.NotFound(_) =>
-      Api.Error(Api.Error.Message(s"${e.message}"), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(Problem(s"${e.message}"), Some(Api.Error.Code(Write.CodeNotFound)))

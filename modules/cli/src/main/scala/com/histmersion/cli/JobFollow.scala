@@ -35,7 +35,7 @@ object JobFollow:
 
   private def failed(what: String, why: Option[String]): Cli.Error =
     Cli.Error(
-      Cli.Error.Message(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"),
+      Problem(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"),
       ExitCode.Refused
     )
 
@@ -85,6 +85,6 @@ object JobFollow:
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
         s.result.toRight(
-          Cli.Error(Cli.Error.Message(s"backup ${s.file} finished without a checksum"), ExitCode.Refused)
+          Cli.Error(Problem(s"backup ${s.file} finished without a checksum"), ExitCode.Refused)
         )
       case _ => Left(failed(s"backup ${s.file}", s.error.map(_.value)))

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,7 +15,6 @@ object YubiKey:
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  export Subprocess.Problem
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
@@ -34,23 +34,23 @@ object YubiKey:
     object Serial extends Newtype[Long, Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
-  def parse(text: Text): Either[YubiKey.Problem, Slot] =
+  def parse(text: Text): Either[Problem, Slot] =
     val t = (text).value.trim
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s) => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(YubiKey.Problem(bad))
+      case List(s) => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(Problem(bad))
       case List(s, n) =>
         (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
         yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).left.map(refactorError2 =>
-          YubiKey.Problem(refactorError2)
+          Problem(refactorError2)
         )
-      case _ => Left(YubiKey.Problem(bad))
+      case _ => Left(Problem(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
-  def parseAll(entries: List[Setting.Entries]): Either[YubiKey.Problem, List[Slot]] =
+  def parseAll(entries: List[Setting.Entries]): Either[Problem, List[Slot]] =
     (entries
       .map((_).value.trim)
       .filter(_.nonEmpty)
@@ -63,7 +63,7 @@ object YubiKey:
         )
       })
       .left
-      .map(refactorError3 => YubiKey.Problem(refactorError3))
+      .map(refactorError3 => Problem(refactorError3))
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
   def serials(out: SerialsOut): Set[Slot.Serial] =
@@ -92,30 +92,23 @@ object YubiKey:
   /** What one failed attempt means. */
   enum Failure derives CanEqual:
     /** This key is not there or did not answer: the next one may. */
-    case Next(why: Failure.Next.Why)
+    case Next(why: Problem)
 
     /** No other key would change it (wrong credentials, no such entry, nobody touched the key). */
-    case Stop(why: Failure.Stop.Why)
+    case Stop(why: Problem)
 
-  object Failure:
-    object Next:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
-    object Stop:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
 
   /** Pure: KeePassXC's message for a failed attempt (lower-cased stderr) → next or stop. Wrong credentials stop at
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong
     * key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
-  def failure(err: YubiKey.Problem, entry: Setting.Entries): Failure =
+  def failure(err: Problem, entry: Setting.Entries): Failure =
     def has(s: String*) = s.exists((err).value.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
-      Failure.Stop(Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
-    else if has("could not find entry") then Failure.Stop(Failure.Stop.Why(s"no entry '$entry'"))
+      Failure.Stop(Problem("invalid credentials (the password, key file or YubiKey is wrong)"))
+    else if has("could not find entry") then Failure.Stop(Problem(s"no entry '$entry'"))
     else if has("timed out waiting", "user interaction") then
-      Failure.Stop(Failure.Stop.Why("the YubiKey was not touched in time"))
+      Failure.Stop(Problem("the YubiKey was not touched in time"))
     else if has(
         "could not find hardware key",
         "could not find interface",
@@ -126,7 +119,7 @@ object YubiKey:
         "no hardware key",
         "no challenge-response key"
       )
-    then Failure.Next(Failure.Next.Why("not connected"))
+    then Failure.Next(Problem("not connected"))
     else if has(
         "challenge-response",
         "challenge response",
@@ -135,15 +128,15 @@ object YubiKey:
         "locked or timed out",
         "hardware key"
       )
-    then Failure.Next(Failure.Next.Why("challenge-response failed"))
-    else Failure.Stop(Failure.Stop.Why("an error KeePassXC gave"))
+    then Failure.Next(Problem("challenge-response failed"))
+    else Failure.Stop(Problem("an error KeePassXC gave"))
 
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
     */
-  def problem(err: YubiKey.Problem): YubiKey.Problem =
+  def problem(err: Problem): Problem =
     Subprocess.problem(
-      Subprocess.Problem(
+      Problem(
         (err).value.linesIterator
           .filterNot { l =>
             val low = l.toLowerCase(java.util.Locale.ROOT)

@@ -92,7 +92,7 @@ object GoalRepo:
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
       if !exists then
-        Left(Api.Error(Api.Error.Message(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        Left(Api.Error(Problem(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       else
         p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
@@ -148,18 +148,18 @@ object GoalRepo:
       .headOption
       .map(com.histmersion.domain.automation.Goal.Slug.assume(_))
     if !exists(oldSlug) then
-      Left(Api.Error(Api.Error.Message(s"No goal '${oldSlug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      Left(Api.Error(Problem(s"No goal '${oldSlug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newSlug) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${newSlug.value}' is already the slug of another goal"),
+          Problem(s"'${newSlug.value}' is already the slug of another goal"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          Api.Error.Message(
+          Problem(
             s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
           ),
           Some(Api.Error.Code(Write.CodeInvalid))

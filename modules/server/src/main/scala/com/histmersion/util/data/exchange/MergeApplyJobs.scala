@@ -29,7 +29,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
       if runs.running then
         Left(
           Api.Error(
-            Api.Error.Message(
+            Problem(
               "a merge apply is still running — follow it with " +
                 "`GET /api/merge/apply/{job}` and apply again when it is done"
             ),

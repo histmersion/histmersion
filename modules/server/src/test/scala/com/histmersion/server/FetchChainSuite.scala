@@ -36,7 +36,7 @@ class FetchChainSuite extends munit.FunSuite:
       Access.Open,
       (_, _) => Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(s"https://$source.example/f")), bytes, ext))
     )
-  private def miss(access: Access = Access.Open) = Fake(access, (_, _) => Fetch.Miss(Fetch.Miss.Why("none")))
+  private def miss(access: Access = Access.Open) = Fake(access, (_, _) => Fetch.Miss(Problem("none")))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────
 
@@ -166,19 +166,19 @@ class FetchChainSuite extends munit.FunSuite:
     )
 
   test("a refusal is asked once, the chain goes on, and a failed fetch says who refused and why"):
-    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Fetch.Refused.Why("lending-only")))
+    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Problem("lending-only")))
     val r = FetchChain(List(FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("a") -> miss()))
       .fetchLegal(Some(FetchedDoi), None)
     assertEquals(r, Left(s"${FetchChain.NoCopy} (no: lending-only)"))
     assertEquals(no.calls.get, 1)
 
   test("no copy: each fetcher that ran gives its answer, in chain order; a copy needs none"):
-    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Fetch.Refused.Why("bot challenge")))
+    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Problem("bot challenge")))
     val boom = Fake(Access.Open, (_, _) => throw new IllegalStateException("bang"))
-    val off = Fake(Access.Unauthorised, (_, _) => Fetch.Miss(Fetch.Miss.Why("never asked")))
+    val off = Fake(Access.Unauthorised, (_, _) => Fetch.Miss(Problem("never asked")))
     val got = FetchChain(
       List(
-        FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(Fetch.Miss.Why("no record"))),
+        FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(Problem("no record"))),
         FetchChain.Step.Id("no") -> no,
         FetchChain.Step.Id("boom") -> boom,
         FetchChain.Step.Id("u") -> off
@@ -230,7 +230,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   test("fetchWork hands every identifier to the fetchers; fetch/fetchLegal pass the DOI and the arXiv id"):
     val seen = scala.collection.mutable.ListBuffer.empty[WorkKey] // a test double's record of calls
-    val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(Fetch.Miss.Why("none")) })
+    val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(Problem("none")) })
     val chain = FetchChain(List(FetchChain.Step.Id("spy") -> spy))
     val _ = chain.fetch(Some(com.histmersion.domain.library.Doi("10.1/x")), Some(ArxivId("2101.00001")))
     val _ = chain.fetchWork(
@@ -248,9 +248,9 @@ class FetchChainSuite extends munit.FunSuite:
   test("the memo is shared by the fetchers of ONE fetch and computed once; the next fetch starts afresh"):
     val computed = java.util.concurrent.atomic.AtomicInteger(0)
     def record(ctx: Fetch.Context) = ctx.memo(Fetch.Context.MemoKey("test:record:10.1234/x")) {
-      computed.incrementAndGet(); Fetch.Miss.Why("rec")
+      computed.incrementAndGet(); Problem("rec")
     }
-    val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss(Fetch.Miss.Why("a")) })
+    val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss(Problem("a")) })
     val b = Fake(Access.Open, (_, ctx) => Fetch.Miss(record(ctx)))
     val chain = FetchChain(List(FetchChain.Step.Id("a") -> a, FetchChain.Step.Id("b") -> b))
     val _ = chain.fetch(Some(FetchedDoi), None)

@@ -203,12 +203,12 @@ final class ProposeArticlesPipeline(
       l: Loaded,
       a: ArticlesAnswer,
       last: Boolean
-  ): Either[List[RunCtx.Problem], ArticlePlan] =
+  ): Either[List[Problem], ArticlePlan] =
     val lim = limits(ctx)
     PlanArticles
       .check(a, lim.maxArticles, PlanArticles.LastRound(last))
       .left
-      .map(_.map(p => RunCtx.Problem(p.value)))
+      .map(_.map(p => Problem(p.value)))
       .flatMap { (cs, dropped) =>
         val taken = l.articles.map(_.slug).toSet
         val existing = l.articles.map(e => (Article.Slug(e.slug.value), sourcesOf(e)))
@@ -233,8 +233,8 @@ final class ProposeArticlesPipeline(
         )
         if plan.isEmpty && !last then
           Left(
-            plan.dropped.take(12).map(d => RunCtx.Problem(d.value)) :+
-              RunCtx.Problem("no proposed article passed the checks: fix the ones above or propose others")
+            plan.dropped.take(12).map(d => Problem(d.value)) :+
+              Problem("no proposed article passed the checks: fix the ones above or propose others")
           )
         else Right(plan)
       }

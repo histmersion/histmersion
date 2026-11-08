@@ -19,7 +19,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 object OpsRoutes:
 
   private def refused(what: String, raw: String): Api.Error =
-    Api.Error(Api.Error.Message(s"invalid $what '$raw'"), Some(Api.Error.Code(Write.CodeInvalid)))
+    Api.Error(Problem(s"invalid $what '$raw'"), Some(Api.Error.Code(Write.CodeInvalid)))
 
   private def scoped[A](raw: Option[Queue.Wire], what: String)(
       either: String => Either[String, A]

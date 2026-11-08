@@ -22,7 +22,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
   def job(id: Job.Id): Either[Api.Error, JobInfo] =
     Transactor(ds)
       .read(JobRepo.get(id))
-      .toRight(Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   def jobs(status: Option[JobState.Wire], limit: Option[PageSize]): List[JobInfo] =
     val c = cfg()
@@ -42,7 +42,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
     Transactor(ds)
       .read(JobRepo.page(q, c.limits.page(limit, searchPage(c)), clean(before), clean(upTo)))
       .left
-      .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
       .map { (rows, more) =>
         val (counts, facets) = Transactor(ds).read(JobRepo.facets(q, facetMax))
         (

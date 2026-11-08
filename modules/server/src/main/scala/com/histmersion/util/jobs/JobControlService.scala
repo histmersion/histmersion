@@ -23,9 +23,9 @@ trait JobControlService:
 
 object JobControlService:
   private def notFound(id: Job.Id) =
-    Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
   private def conflict(why: String) =
-    Api.Error(Api.Error.Message(why), Some(Api.Error.Code(JobActions.CodeConflict)))
+    Api.Error(Problem(why), Some(Api.Error.Code(JobActions.CodeConflict)))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
   def apply(ds: DataSource, stops: JobStops, runs: (Job.Id, JobAction) => Either[Api.Error, Unit]): JobControlService =

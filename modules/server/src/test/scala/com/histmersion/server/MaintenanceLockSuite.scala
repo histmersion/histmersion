@@ -72,7 +72,7 @@ class MaintenanceLockSuite extends DbSuite:
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */
   private def underLock[A](f: => Either[Api.Error, A]): Either[Api.Error, A] =
-    var out: Either[Api.Error, A] = Left(Api.Error(Api.Error.Message("never ran")))
+    var out: Either[Api.Error, A] = Left(Api.Error(Problem("never ran")))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) { out = f; Right(()) }
     out
 

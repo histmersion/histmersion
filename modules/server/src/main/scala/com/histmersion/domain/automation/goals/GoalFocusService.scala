@@ -410,12 +410,12 @@ final class GoalFocusService(
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
-    def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+    def error(message: String): Api.Error = Api.Error(Problem(message))
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     def goal: Either[Api.Error, String] =
       in.goal.map(_.value.trim).filter(_.nonEmpty).toRight(error(s"`${in.action.value}` needs `goal`"))
     def missing(g: String) =
-      Api.Error(Api.Error.Message(s"no goal '$g'"), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(Problem(s"no goal '$g'"), Some(Api.Error.Code(Write.CodeNotFound)))
     def known(g: String): Either[Api.Error, Goal.Slug] = Goal.Slug.either(g).left.map(_ => missing(g))
     val done: Either[Api.Error, String] = in.action.value.trim.toLowerCase match
       case "pin" | "unpin" =>

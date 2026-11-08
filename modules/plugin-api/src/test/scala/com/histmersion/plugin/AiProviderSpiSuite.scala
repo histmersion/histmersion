@@ -9,7 +9,7 @@ class AiProviderSpiSuite extends munit.FunSuite:
     def turn(r: AiTurn.Request, http: AiHttp) =
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
-        .toRight(AiFailure.Error(AiFailure.Error.Message("no user message")))
+        .toRight(AiFailure.Error(Problem("no user message")))
         .map(t =>
           AiTurn(AiTurn.Text((t).value), usage = Some(AiUsage(AiUsage.Input((10).toLong), AiUsage.Output((2).toLong))))
         )
@@ -62,11 +62,11 @@ class AiProviderSpiSuite extends munit.FunSuite:
     )
     assertEquals(
       Echo.turn(req.copy(messages = Nil), AiHttp.Offline),
-      Left(AiFailure.Error(AiFailure.Error.Message("no user message")))
+      Left(AiFailure.Error(Problem("no user message")))
     )
     assertEquals(
-      AiFailure.LimitReached(AiFailure.LimitReached.Message("limit")),
-      AiFailure.LimitReached(AiFailure.LimitReached.Message("limit"), None)
+      AiFailure.LimitReached(Problem("limit")),
+      AiFailure.LimitReached(Problem("limit"), None)
     )
 
   test("the offline client sends nothing"):
@@ -94,11 +94,11 @@ class AiProviderSpiSuite extends munit.FunSuite:
         ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
       }
       def log = new Plugin.Log {
-        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+        def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
         Left(Problem("none"))
-      def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+      def secretVaults = Registry.refusing(Problem("no vaults"))
     assert(ctx.aiProviders.add(Registry.AddId("echo"), Echo).left.exists((_).value.contains("no AI providers")))
     assertEquals(Spi.Version, 2)

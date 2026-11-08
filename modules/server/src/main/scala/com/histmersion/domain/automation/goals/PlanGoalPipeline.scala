@@ -85,7 +85,7 @@ final class PlanGoalPipeline(
         PlanGoal
           .check(a, slug, taken, loaded.queries.toSet, caps(ctx), PlanGoal.LastRound(last.value))
           .left
-          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map(_.map(p => Problem(p.value)))
           .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.value))))
       )
       plan <- ctx.code[Plan](AgentRepo.StepRecord.Name("verify"))(Right(verify(ctx, proposed, slug)))
