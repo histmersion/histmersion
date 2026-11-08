@@ -206,7 +206,8 @@ where the data must be checked. Extend `Newtype` (module `newtype`, an opaque Ir
 `CanEqual` and an `Ordering` lifted from the base), not `RefinedSubtype`: a `Citekey` is not silently a `String`.
 The raw value (`.value`, or building a newtype from a runtime primitive) appears only inside the newtype's own
 companion and at a boundary listed in `architecture/boundaries.tsv` (SQL, HTTP bodies, JSON, CLI arguments, the DOM,
-config, processes, the plugin SPI), and there preferably through a lifted type class, not by hand. Controllers convert
+config, processes, the plugin SPI), and there preferably through a lifted type class, not by hand. A file is a boundary only
+if translating to or from the outside is its job (an adapter); a service that also does I/O moves the I/O behind one. Controllers convert
 API values to domain values; renderers work on concepts and hand only the final text out. A missing operation goes on
 the type's companion. Building a newtype from a literal (`Citekey("x")`) is fine anywhere.
 
