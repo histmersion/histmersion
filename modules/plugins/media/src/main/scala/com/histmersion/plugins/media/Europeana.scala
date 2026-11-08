@@ -1,10 +1,13 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Europeana APIs (Search, Record and Thumbnail), with a user's personal key sent as the `X-Api-Key` header
   * (Europeana's preferred form; the `wskey` parameter is deprecated). Search:
@@ -19,15 +22,15 @@ import java.util.Locale
   */
 object Europeana:
   type Clause = Clause.T
-  object Clause extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Clause extends RefinedType[String, Pure]
   type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Field extends RefinedType[String, Pure]
   type Preview = Preview.T
-  object Preview extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Preview extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Source = Source.T
-  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Source extends RefinedType[String, Pure]
 
   val KeyHeader = "X-Api-Key"
   val Spatial = "dcterms:spatial"
@@ -41,11 +44,11 @@ object Europeana:
   final case class Exclusions(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], types: List[Exclusions.Types])
   object Exclusions:
     type Providers = Providers.T
-    object Providers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Providers extends RefinedType[String, Pure]
     type DataProviders = DataProviders.T
-    object DataProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DataProviders extends RefinedType[String, Pure]
     type Types = Types.T
-    object Types extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Types extends RefinedType[String, Pure]
 
     val none: Exclusions = Exclusions(Nil, Nil, Nil)
 
@@ -57,13 +60,13 @@ object Europeana:
   /** Pure: the query — the place as Europeana's aggregated `where` field, without the excluded aggregators (`PROVIDER`)
     * and types (`proxy_dc_type`).
     */
-  def query(name: com.histmersion.plugin.MediaPlace.Label, ex: Exclusions = Exclusions.none): com.histmersion.plugin.CollectionQuery.Text =
-    com.histmersion.plugin.CollectionQuery.Text(
+  def query(name: MediaPlace.Label, ex: Exclusions = Exclusions.none): CollectionQuery.Text =
+    CollectionQuery.Text(
       s"where:(${phrase(name.value)})" + anyOf("PROVIDER", ex.providers.map(_.value)) + anyOf("proxy_dc_type", ex.types.map(_.value))
     )
 
-  def searchUrl(api: com.histmersion.plugins.media.CollectionSettings.ApiUrl, name: com.histmersion.plugin.MediaPlace.Label, rows: com.histmersion.plugins.media.CollectionSettings.Candidates, ex: Exclusions = Exclusions.none): com.histmersion.plugin.Plugin.Http.GetUrl =
-    com.histmersion.plugin.Plugin.Http.GetUrl(
+  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates, ex: Exclusions = Exclusions.none): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/record/v2/search.json?query=${query(name, ex).value.enc}&reusability=open&media=true" +
         s"&thumbnail=true&qf=${"TYPE:IMAGE".enc}&profile=rich&rows=${rows.value.max(1).min(100)}"
     )
@@ -71,7 +74,7 @@ object Europeana:
   private def letters(s: String) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
 
   /** Pure: why a record's aggregator or institution excludes it, or `None`. */
-  def excludedBy(providers: List[com.histmersion.plugins.media.Europeana.Exclusions.Providers], dataProviders: List[com.histmersion.plugins.media.Europeana.Exclusions.DataProviders], ex: Exclusions): Option[com.histmersion.plugins.media.Europeana.Clause] =
+  def excludedBy(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], ex: Exclusions): Option[Clause] =
     providers
       .find(p => ex.providers.exists(_.value.trim.equalsIgnoreCase(p.value)))
       .map(p => Clause(s"an excluded provider (${p.value})"))
@@ -85,25 +88,25 @@ object Europeana:
       )
 
   /** Pure: the first of a record's `dc:type` values that is excluded, or `None`. */
-  def excludedType(types: List[com.histmersion.plugins.media.Europeana.Exclusions.Types], ex: Exclusions): Option[com.histmersion.plugins.media.Europeana.Exclusions.Types] =
+  def excludedType(types: List[Exclusions.Types], ex: Exclusions): Option[Exclusions.Types] =
     val banned = ex.types.map(t => letters(t.value)).filter(_.nonEmpty).toSet
     types.find(t => banned(letters(t.value)))
 
   /** Pure: the Record API URL of a Europeana id (`/2058611/_kimbl_3_1`), each segment encoded. */
-  def recordUrl(api: com.histmersion.plugins.media.CollectionSettings.ApiUrl, id: com.histmersion.plugin.MediaItem.Key): com.histmersion.plugin.Plugin.Http.GetUrl =
+  def recordUrl(api: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl =
     val path = id.value.split("/").toList.filter(_.nonEmpty).map(s => s.enc.replace("+", "%20")).mkString("/")
-    com.histmersion.plugin.Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/record/v2/$path.json")
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/record/v2/$path.json")
 
   /** Pure: the Thumbnail API v3 URL of a media file at `width` (200 or 400). */
-  def thumbnailUrl(api: com.histmersion.plugins.media.CollectionSettings.ApiUrl, media: com.histmersion.plugins.media.Europeana.Source, width: com.histmersion.plugin.MediaRendition.Width): com.histmersion.plugin.Plugin.Http.GetUrl =
+  def thumbnailUrl(api: CollectionSettings.ApiUrl, media: Source, width: MediaRendition.Width): Plugin.Http.GetUrl =
     val md5 =
       java.security.MessageDigest.getInstance("MD5").digest(media.value.getBytes(UTF_8)).map(b => f"${b & 0xff}%02x").mkString
-    com.histmersion.plugin.Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/thumbnail/v3/${width.value}/$md5.jpg")
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/thumbnail/v3/${width.value}/$md5.jpg")
 
   /** Pure: the media URL a search's `edmPreview` (a Thumbnail API v2 URL) was made from — its `uri` parameter — or
     * `None` when it is not one.
     */
-  def previewSource(preview: com.histmersion.plugins.media.Europeana.Preview): Option[com.histmersion.plugins.media.Europeana.Source] =
+  def previewSource(preview: Preview): Option[Source] =
     scala.util
       .Try(java.net.URI.create(preview.value.trim))
       .toOption
@@ -118,13 +121,13 @@ object Europeana:
       .map(Source(_))
 
   /** Pure: a licence's short name for the credit line (`CC-BY-SA-4.0` → `CC BY-SA 4.0`). */
-  def shortName(l: Licence.Read): com.histmersion.plugin.Licence = l.family.value match
-    case Licence.Read.Cc0          => com.histmersion.plugin.Licence("CC0")
-    case Licence.Read.PublicDomain => com.histmersion.plugin.Licence("Public Domain Mark")
+  def shortName(l: Licence.Read): Licence = l.family.value match
+    case Licence.Read.Cc0          => Licence("CC0")
+    case Licence.Read.PublicDomain => Licence("Public Domain Mark")
     case _                         =>
       val parts = l.id.value.split("-").toList
       val (name, rest) = parts.span(p => !p.headOption.exists(_.isDigit))
-      com.histmersion.plugin.Licence((name match
+      Licence((name match
         case "CC" :: kinds => ("CC " + kinds.mkString("-")) :: rest
         case other         => other ++ rest
       ).mkString(" "))
@@ -132,7 +135,7 @@ object Europeana:
   /** Pure: the values of a field that may be a string, an array of strings, a LangMap (`{"en": [..]}`) or an array of
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
-  private def values(c: ACursor, field: com.histmersion.plugins.media.Europeana.Field): List[String] =
+  private def values(c: ACursor, field: Field): List[String] =
     def ofJson(j: Json): List[String] =
       j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
         val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
@@ -145,38 +148,38 @@ object Europeana:
   /** Pure: the items of a search answer; `success: false` is a `Left` with Europeana's message. */
   def records(
       json: Json,
-      api: com.histmersion.plugins.media.CollectionSettings.ApiUrl,
+      api: CollectionSettings.ApiUrl,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[com.histmersion.plugins.media.Europeana.Problem, List[Either[com.histmersion.plugins.media.Europeana.Problem, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
-        case "" => com.histmersion.plugins.media.Europeana.Problem("the search failed")
-        case e  => com.histmersion.plugins.media.Europeana.Problem(e))
+        case "" => Problem("the search failed")
+        case e  => Problem(e))
     else
       c.downField("items").focus.flatMap(_.asArray) match
         case Some(items)                              => Right(items.toList.map(record(_, api, licences, ex)))
         case None if c.long("totalResults").isDefined => Right(Nil)
-        case None                                     => Left(com.histmersion.plugins.media.Europeana.Problem("no items in the answer"))
+        case None                                     => Left(Problem("no items in the answer"))
 
   /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld with that reason.
     */
   def record(
       json: Json,
-      api: com.histmersion.plugins.media.CollectionSettings.ApiUrl,
+      api: CollectionSettings.ApiUrl,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[com.histmersion.plugins.media.Europeana.Problem, MediaItem] =
+  ): Either[Problem, MediaItem] =
     val c = json.hcursor
     c.str("id").filter(_.startsWith("/")).toRight(Problem("no Europeana id")).map { id =>
-      val title = values(c, com.histmersion.plugins.media.Europeana.Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
-      val creator = values(c, com.histmersion.plugins.media.Europeana.Field("dcCreator")).filterNot(isUri).headOption
-      val provider = values(c, com.histmersion.plugins.media.Europeana.Field("dataProvider")).headOption
-      val shownBy = values(c, com.histmersion.plugins.media.Europeana.Field("edmIsShownBy")).headOption
-      val media = values(c, com.histmersion.plugins.media.Europeana.Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
-      val rights: Either[com.histmersion.plugins.media.Europeana.Problem, MediaRights] = values(c, com.histmersion.plugins.media.Europeana.Field("rights")).headOption match
-        case None    => Left(com.histmersion.plugins.media.Europeana.Problem("no rights statement on the record"))
+      val title = values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
+      val creator = values(c, Field("dcCreator")).filterNot(isUri).headOption
+      val provider = values(c, Field("dataProvider")).headOption
+      val shownBy = values(c, Field("edmIsShownBy")).headOption
+      val media = values(c, Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
+      val rights: Either[Problem, MediaRights] = values(c, Field("rights")).headOption match
+        case None    => Left(Problem("no rights statement on the record"))
         case Some(u) =>
           val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
           if lic.family.value == Licence.Read.Unknown then Left(Problem(s"not an open licence ($u)"))
@@ -189,7 +192,7 @@ object Europeana:
                 MediaRights.Credit((List(Some(title), creator, provider).flatten ++ List("via Europeana", shortName(lic).value)).mkString(", "))
               )
             )
-      val spatial = values(c, com.histmersion.plugins.media.Europeana.Field("dctermsSpatial"))
+      val spatial = values(c, Field("dctermsSpatial"))
       val geo = (spatial.filterNot(isUri).map(Spatial -> _) ++
         (values(c, Field("edmPlaceLabel")) ++ values(c, Field("edmPlaceLabelLangAware"))).distinct.map(Place -> _))
         .map((k, v) => (MediaItem.GeographyPart1(k), MediaItem.GeographyPart2(v)))
@@ -197,7 +200,7 @@ object Europeana:
         .flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u)))
         .distinct
         .map((k, v) => (MediaItem.IdsPart1(k.value), MediaItem.IdsPart2(v.value)))
-      val years = values(c, com.histmersion.plugins.media.Europeana.Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
+      val years = values(c, Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => Period.span(years.min, years.max))
       MediaItem(
         MediaItem.Key(id.stripPrefix("/")),
@@ -211,8 +214,8 @@ object Europeana:
         period = period,
         ids = ids,
         withheld = excludedBy(
-          values(c, com.histmersion.plugins.media.Europeana.Field("provider")).map(Exclusions.Providers(_)),
-          values(c, com.histmersion.plugins.media.Europeana.Field("dataProvider")).map(Exclusions.DataProviders(_)),
+          values(c, Field("provider")).map(Exclusions.Providers(_)),
+          values(c, Field("dataProvider")).map(Exclusions.DataProviders(_)),
           ex
         ).map(w => MediaItem.Withheld(w.value))
       )
@@ -227,7 +230,7 @@ object Europeana:
       rec: MediaItem,
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
-  ): Either[com.histmersion.plugins.media.Europeana.Problem, MediaItem] =
+  ): Either[Problem, MediaItem] =
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(Problem(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ")))
@@ -235,8 +238,8 @@ object Europeana:
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
       val types =
-        obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, com.histmersion.plugins.media.Europeana.Field("dcType"))).map(Exclusions.Types(_))
-      val firstAggregation: Either[com.histmersion.plugins.media.Europeana.Problem, ACursor] = excludedType(types, ex) match
+        obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, Field("dcType"))).map(Exclusions.Types(_))
+      val firstAggregation: Either[Problem, ACursor] = excludedType(types, ex) match
         case Some(t) => Left(Problem(s"an excluded type (${t.value})"))
         case None    => aggs.headOption.toRight(Problem("no aggregation on the record"))
       firstAggregation.flatMap { agg =>

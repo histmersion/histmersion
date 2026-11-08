@@ -1,4 +1,5 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.plugin.{FetchedFile, SourceFetcher}
 import com.histmersion.upstreams.http.{json, text}
@@ -11,6 +12,7 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.Fetch
 import com.histmersion.plugin.Plugin
+import com.histmersion.plugin.Doi
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
   * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it
@@ -36,12 +38,12 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders
     *      it to Markdown instead of OCR.
     */
-  final private class PmcLookup(doi: com.histmersion.plugin.Doi, ctx: Fetch.Context):
+  final private class PmcLookup(doi: Doi, ctx: Fetch.Context):
     lazy val hit: Option[EuropePmcHit] =
       http.json(
         Url(
           RepositoryLanding.Candidate.Url(cfg.europepmc.url.value),
-          com.histmersion.upstreams.http.Url.UrlPath("/search"),
+          Url.UrlPath("/search"),
           "query" -> s"""DOI:"$doi"""",
           "resultType" -> "core",
           "format" -> "json",
@@ -57,7 +59,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     lazy val record: Option[PmcRecord] =
       hit.flatMap(_.pmcid).flatMap { id =>
         http
-          .text(Url(RepositoryLanding.Candidate.Url(cfg.pmcDataset.url.value), com.histmersion.upstreams.http.Url.UrlPath("/"), "list-type" -> "2", "prefix" -> s"metadata/$id.").value, pmcHeaders)
+          .text(Url(RepositoryLanding.Candidate.Url(cfg.pmcDataset.url.value), Url.UrlPath("/"), "list-type" -> "2", "prefix" -> s"metadata/$id.").value, pmcHeaders)
           .left
           .map(e => ctx.log.info(Plugin.Log.InfoMessage(s"pmc dataset listing failed ($e)")))
           .toOption
@@ -76,14 +78,14 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       hit.toList
         .flatMap(_.pdfUrls)
         .iterator
-        .map(u => Downloads(http).pdf(ctx.log, com.histmersion.plugin.FetchedFile.Source("europepmc"), Plugin.Http.GetUrl(u.value), pmcGetHeaders))
+        .map(u => Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.GetUrl(u.value), pmcGetHeaders))
         .collectFirst { case Some(f) => f }
-        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, com.histmersion.plugin.FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
+        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
 
     def fullText: Option[FetchedFile] =
-      record.flatMap(_.xml).flatMap(o => dataset(o, com.histmersion.plugin.FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
+      record.flatMap(_.xml).flatMap(o => dataset(o, FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
 
-    private def dataset(o: PmcObject, ext: com.histmersion.plugin.FetchedFile.Extension)(ok: com.histmersion.plugin.FetchedFile.Bytes => Boolean): Option[FetchedFile] =
+    private def dataset(o: PmcObject, ext: FetchedFile.Extension)(ok: FetchedFile.Bytes => Boolean): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(Plugin.Http.GetUrl(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
         case Left(e) =>
@@ -92,10 +94,10 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           ctx.log.info(Plugin.Log.InfoMessage(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")); None
         case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_.value != m.value)) =>
           ctx.log.warn(Plugin.Log.WarnMessage(s"pmc: $url does not match the MD5 its record gives — skipping")); None
-        case Right(b) => Some(FetchedFile(com.histmersion.plugin.FetchedFile.Source("pmc"), Some(com.histmersion.plugin.FetchedFile.Url(url)), b, ext))
+        case Right(b) => Some(FetchedFile(FetchedFile.Source("pmc"), Some(FetchedFile.Url(url)), b, ext))
 
-  private def lookup(ctx: Fetch.Context, doi: com.histmersion.plugin.Doi): PmcLookup =
+  private def lookup(ctx: Fetch.Context, doi: Doi): PmcLookup =
     ctx.memo(Fetch.Context.MemoKey(s"pmc:lookup:$doi"))(PmcLookup(doi, ctx))
 
-  val pdfStep: SourceFetcher = ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("pmc"), (ctx, d) => lookup(ctx, d).pdf)
-  val textStep: SourceFetcher = ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("pmc-text"), (ctx, d) => lookup(ctx, d).fullText)
+  val pdfStep: SourceFetcher = ByDoi(ByDoi.Step("pmc"), (ctx, d) => lookup(ctx, d).pdf)
+  val textStep: SourceFetcher = ByDoi(ByDoi.Step("pmc-text"), (ctx, d) => lookup(ctx, d).fullText)

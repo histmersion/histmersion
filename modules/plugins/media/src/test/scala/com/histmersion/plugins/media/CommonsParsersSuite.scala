@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -22,21 +23,21 @@ class CommonsParsersSuite extends munit.FunSuite:
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
     val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.value), identity)
-    val supplied = FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("media-wikidata"), loaded.merged)
+    val supplied = FirstPartySettings.fallback(Plugin.Info.Id("media-wikidata"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
   // ── titles and URLs ──────────────────────────────────────────────────────────────────────────
 
   test("a Wikidata file name becomes its Commons title"):
-    assertEquals(Commons.fileTitle(com.histmersion.plugins.media.Commons.File.Title("lions_Gate.jpg")), "File:Lions Gate.jpg")
-    assertEquals(Commons.fileTitle(com.histmersion.plugins.media.Commons.File.Title("File:Mycenae  ruins.jpg")), "File:Mycenae ruins.jpg")
-    assertEquals(Commons.fileTitle(com.histmersion.plugins.media.Commons.File.Title("  ")), "")
+    assertEquals(Commons.fileTitle(Commons.File.Title("lions_Gate.jpg")), "File:Lions Gate.jpg")
+    assertEquals(Commons.fileTitle(Commons.File.Title("File:Mycenae  ruins.jpg")), "File:Mycenae ruins.jpg")
+    assertEquals(Commons.fileTitle(Commons.File.Title("  ")), "")
 
   test("the imageinfo URL asks for the rendition width and, with meta, only the licence fields"):
-    val u = Commons.imageInfoUrl(com.histmersion.plugins.media.Commons.Settings.ApiUrl("https://c/w/api.php"), List(com.histmersion.plugins.media.Commons.File.Title("File:A b.jpg")), com.histmersion.plugins.media.Commons.File.Width(1280), com.histmersion.plugins.media.Commons.Settings.Maxlag(5), meta = com.histmersion.plugins.media.Commons.ImageInfoUrlMeta(true))
+    val u = Commons.imageInfoUrl(Commons.Settings.ApiUrl("https://c/w/api.php"), List(Commons.File.Title("File:A b.jpg")), Commons.File.Width(1280), Commons.Settings.Maxlag(5), meta = Commons.ImageInfoUrlMeta(true))
     assert(u.value.contains("iiurlwidth=1280") && u.value.contains("iiextmetadatafilter=LicenseShortName%7CLicense%7C"), u)
     assert(u.value.contains("titles=File%3AA+b.jpg") && u.value.endsWith("&maxlag=5"), u)
-    val t = Commons.imageInfoUrl(com.histmersion.plugins.media.Commons.Settings.ApiUrl("https://c/w/api.php"), List(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")), com.histmersion.plugins.media.Commons.File.Width(330), com.histmersion.plugins.media.Commons.Settings.Maxlag(0), meta = com.histmersion.plugins.media.Commons.ImageInfoUrlMeta(false))
+    val t = Commons.imageInfoUrl(Commons.Settings.ApiUrl("https://c/w/api.php"), List(Commons.File.Title("File:A.jpg")), Commons.File.Width(330), Commons.Settings.Maxlag(0), meta = Commons.ImageInfoUrlMeta(false))
     assert(!t.value.contains("extmetadata") && !t.value.contains("maxlag"), t)
 
   private val imageinfo = json(
@@ -52,14 +53,14 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
-    assertEquals(m(com.histmersion.plugins.media.Commons.File.Title("File:Gone.jpg")), Left("missing on Commons"))
-    val a = m(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")).toOption.get
-    assertEquals(m(com.histmersion.plugins.media.Commons.File.Title("File:a.jpg")), m(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")), "the asked title maps to the canonical one")
+    assertEquals(m(Commons.File.Title("File:Gone.jpg")), Left("missing on Commons"))
+    val a = m(Commons.File.Title("File:A.jpg")).toOption.get
+    assertEquals(m(Commons.File.Title("File:a.jpg")), m(Commons.File.Title("File:A.jpg")), "the asked title maps to the canonical one")
     assertEquals(a.originalUrl, "https://up/A.jpg")
     assertEquals(a.renditionUrl, Some("https://up/t/1280px-A.jpg"))
     assertEquals((a.renditionWidth, a.renditionHeight, a.width), (Some(1280), Some(853), Some(3000)))
-    assertEquals(a.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("License")), Some("cc-by-sa-4.0"))
-    assertEquals(a.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("Flag")), Some("true"))
+    assertEquals(a.meta.get(Commons.File.MetaKey("License")), Some("cc-by-sa-4.0"))
+    assertEquals(a.meta.get(Commons.File.MetaKey("Flag")), Some("true"))
 
   test("imageinfo: an API error is a Left for the whole answer"):
     val err = json("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
@@ -82,10 +83,10 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   private def file(meta: (String, String)*): MediaItem =
     val http = OneFile(meta.toMap)
-    val (items, failed) = Commons.Files(http, media, HostLicences).items(List(com.histmersion.plugins.media.Commons.File.Title("File:X.jpg")))
+    val (items, failed) = Commons.Files(http, media, HostLicences).items(List(Commons.File.Title("File:X.jpg")))
     assertEquals(failed, Nil)
     assertEquals(http.asked.size, 1, "one imageinfo call for the batch")
-    items(com.histmersion.plugins.media.Commons.File.Title("File:X.jpg"))
+    items(Commons.File.Title("File:X.jpg"))
 
   private def refusal(meta: (String, String)*): Option[MediaItem.Withheld] = file(meta*).withheld
 
@@ -108,7 +109,7 @@ class CommonsParsersSuite extends munit.FunSuite:
       (it.pageUrl, it.imageUrl, it.originalUrl),
       ("https://commons/wiki/File:X.jpg", Some("https://up/t/1280px-X.jpg"), Some("https://up/X.jpg"))
     )
-    assertEquals(it.rendition, Some(MediaRendition(com.histmersion.plugin.MediaRendition.Mime("image/jpeg"), Some(com.histmersion.plugin.MediaRendition.Width(1280)), Some(com.histmersion.plugin.MediaRendition.Height(640)))))
+    assertEquals(it.rendition, Some(MediaRendition(MediaRendition.Mime("image/jpeg"), Some(MediaRendition.Width(1280)), Some(MediaRendition.Height(640)))))
 
   test("rights: a custom Attribution wins over Artist"):
     val it = file("License" -> "cc-by-4.0", "Artist" -> "user42", "Attribution" -> "Photo: Jane Roe")
@@ -138,21 +139,21 @@ class CommonsParsersSuite extends munit.FunSuite:
     val http = new Plugin.Http:
       def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
         Right(Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8)))
-    val (items, failed) = Commons.Files(http, media, HostLicences).items(List(com.histmersion.plugins.media.Commons.File.Title("File:Gone.jpg"), com.histmersion.plugins.media.Commons.File.Title("File:Other.jpg")))
+    val (items, failed) = Commons.Files(http, media, HostLicences).items(List(Commons.File.Title("File:Gone.jpg"), Commons.File.Title("File:Other.jpg")))
     assertEquals(failed, Nil)
-    assertEquals(items(com.histmersion.plugins.media.Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
-    assertEquals(items(com.histmersion.plugins.media.Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
+    assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
+    assertEquals(items(Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
     val down = new Plugin.Http { def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("HTTP 503")) }
-    val (none, lines) = Commons.Files(down, media, HostLicences).items(List(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")))
-    assertEquals(none(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))
+    val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
+    assertEquals(none(Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))
     assertEquals(lines, List("Commons File:A.jpg…: HTTP 503"))
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 
   test("the statement → role map parses, dropping malformed and repeated entries"):
     assertEquals(
-      WikidataSettings.roles(com.histmersion.plugins.media.WikidataSettings.Spec("P18:image, P242:locator-map,bogus,P1:nope,P18:plan,P3311:plan")),
+      WikidataSettings.roles(WikidataSettings.Spec("P18:image, P242:locator-map,bogus,P1:nope,P18:plan,P3311:plan")),
       List("P18" -> "image", "P242" -> "locator-map", "P3311" -> "plan")
     )
-    assertEquals(WikidataSettings.roles(com.histmersion.plugins.media.WikidataSettings.Spec("")), Nil)
+    assertEquals(WikidataSettings.roles(WikidataSettings.Spec("")), Nil)
     assert(WikidataSettings.PictureRoles.forall(MediaCollection.Roles), "every picture role is one the host stores")

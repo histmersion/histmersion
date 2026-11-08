@@ -1,11 +1,12 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.{Licence, MediaRights}
 
 extension (r: MediaRights.type)
   /** A record its provider releases under CC0, as the provider's terms state it. */
   def cc0(author: Option[MediaRights.Author], credit: MediaRights.Credit): MediaRights =
-    MediaRights(Licence("CC0-1.0"), Some(com.histmersion.plugin.MediaRights.LicenceUrl("https://creativecommons.org/publicdomain/zero/1.0/")), author, credit)
+    MediaRights(Licence("CC0-1.0"), Some(MediaRights.LicenceUrl("https://creativecommons.org/publicdomain/zero/1.0/")), author, credit)
 
   /** A record its provider states is in the public domain; `url` names the statement. */
   def publicDomain(

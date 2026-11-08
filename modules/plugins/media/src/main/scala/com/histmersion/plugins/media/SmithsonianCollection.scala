@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 
@@ -8,8 +9,8 @@ import com.histmersion.plugin.*
   * made after `max-year` is refused.
   */
 final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key])
-    extends KeyedCollection(conf, com.histmersion.plugins.media.KeyedCollection.Plugin("media-smithsonian"), key, com.histmersion.plugins.media.KeyedCollection.Needs("an api.data.gov key"), com.histmersion.plugins.media.KeyedCollection.Settings("media.smithsonian")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Smithsonian Open Access objects")
+    extends KeyedCollection(conf, KeyedCollection.Plugin("media-smithsonian"), key, KeyedCollection.Needs("an api.data.gov key"), KeyedCollection.Settings("media.smithsonian")):
+  val title = MediaCollection.TitleResult("Smithsonian Open Access objects")
   override val description = described(
     "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map " +
       "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +

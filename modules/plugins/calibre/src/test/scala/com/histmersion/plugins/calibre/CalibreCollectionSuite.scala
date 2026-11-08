@@ -1,4 +1,5 @@
-package com.histmersion.plugins.calibre
+package com.histmersion
+package plugins.calibre
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,6 +8,8 @@ import com.histmersion.plugin.testkit.{HttpMode, PluginHarness}
 import com.histmersion.pluginhost.HostCollection
 
 import java.nio.file.{Files, Path}
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.pluginhost.SystemProcesses
 
 /** The `calibre` plugin over a fixture library (a fake `calibredb` over the fixture's books, the system's `sqlite3`
   * over its `metadata.db`): what it reads, what it writes and with which commands, the GUI's lock, write-back off, and
@@ -15,17 +18,17 @@ import java.nio.file.{Files, Path}
   */
 class CalibreCollectionSuite extends munit.FunSuite:
 
-  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
-  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
+  private given LocalFiles = new DiskLocalFiles
+  private given Processes = new SystemProcesses
   private def scratch(): Path =
     Files.createTempDirectory(Files.createDirectories(Path.of("target/calibre-plugin").toAbsolutePath), "lib-")
 
   private def library(f: CalibreFixture) =
-    Calibre.Library(Calibre.Library.Value(f.dir.toString), Calibre.Settings.ExecutablePath(f.calibredb.toString), Calibre.Settings.Sqlite(f.sqlite3.toString), com.histmersion.plugins.calibre.Shell.ProcessMatch("/no/such/calibre-gui-process"))
+    Calibre.Library(Calibre.Library.Value(f.dir.toString), Calibre.Settings.ExecutablePath(f.calibredb.toString), Calibre.Settings.Sqlite(f.sqlite3.toString), Shell.ProcessMatch("/no/such/calibre-gui-process"))
 
   private def collection(f: CalibreFixture, writeBack: CalibreCollection.WriteBack = CalibreCollection.WriteBack(true)) =
     CalibreFixture.refuseRealLibrary(f.dir)
-    HostCollection(com.histmersion.pluginhost.HostCollection.Name("calibre"), CalibreCollection(library(f), writeBack, Shell.system))
+    HostCollection(HostCollection.Name("calibre"), CalibreCollection(library(f), writeBack, Shell.system))
 
   private lazy val master = CalibreFixture.create(scratch().resolve("master"))
 
@@ -75,9 +78,9 @@ class CalibreCollectionSuite extends munit.FunSuite:
   test("writes: add, replace, update, set — the commands run on a copy of the library"):
     val f = master.copyTo(scratch().resolve("writes"))
     val c = collection(f)
-    val pdf = FetchedFile(com.histmersion.plugin.FetchedFile.Source("original"), None, com.histmersion.plugin.FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("UTF-8")), com.histmersion.plugin.FetchedFile.Extension("pdf"))
+    val pdf = FetchedFile(FetchedFile.Source("original"), None, FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("UTF-8")), FetchedFile.Extension("pdf"))
     val meta =
-      CollectionMetadata(com.histmersion.plugin.CollectionMetadata.Key("zz_new"), com.histmersion.plugin.CollectionMetadata.Title("A new book"), List(com.histmersion.plugin.CollectionMetadata.Authors("Author New")), doi = Some(com.histmersion.plugin.CollectionMetadata.Doi("10.1/new")), year = Some(Year(2001)))
+      CollectionMetadata(CollectionMetadata.Key("zz_new"), CollectionMetadata.Title("A new book"), List(CollectionMetadata.Authors("Author New")), doi = Some(CollectionMetadata.Doi("10.1/new")), year = Some(Year(2001)))
     val id = c.add(meta, pdf).fold(e => fail(e.value), identity)
     assertEquals(id.value, "9")
     assertEquals(c.replace(CollectionId("1"), SourceCollection.ReplaceKey("zz_linked"), pdf), Right("pdf"))
@@ -103,7 +106,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val f = master.copyTo(scratch().resolve("readonly"))
     val c = collection(f, writeBack = CalibreCollection.WriteBack(false))
     assertEquals(c.capabilities, Set(CollectionCapability.Read))
-    val pdf = FetchedFile(com.histmersion.plugin.FetchedFile.Source("original"), None, com.histmersion.plugin.FetchedFile.Bytes(Array[Byte](1, 2, 3)), com.histmersion.plugin.FetchedFile.Extension("pdf"))
+    val pdf = FetchedFile(FetchedFile.Source("original"), None, FetchedFile.Bytes(Array[Byte](1, 2, 3)), FetchedFile.Extension("pdf"))
     val refusals = List(
       c.add(CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A"))), pdf),
       c.replace(CollectionId("1"), SourceCollection.ReplaceKey("k"), pdf),
@@ -118,13 +121,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
   test("audit and update-all read the library once"):
     val c = collection(master)
     val recs = List(
-      CollectionRecord(com.histmersion.plugin.CollectionRecord.Key("zz_tin"), CollectionId("1"), com.histmersion.plugin.CollectionRecord.Title("Bronze Age tin and its trade"), List(com.histmersion.plugin.CollectionRecord.Authors("Stocker, Sharon R.")), None),
-      CollectionRecord(com.histmersion.plugin.CollectionRecord.Key("zz_lost"), CollectionId("99"), com.histmersion.plugin.CollectionRecord.Title("Lost"), List(com.histmersion.plugin.CollectionRecord.Authors("Nobody")), None)
+      CollectionRecord(CollectionRecord.Key("zz_tin"), CollectionId("1"), CollectionRecord.Title("Bronze Age tin and its trade"), List(CollectionRecord.Authors("Stocker, Sharon R.")), None),
+      CollectionRecord(CollectionRecord.Key("zz_lost"), CollectionId("99"), CollectionRecord.Title("Lost"), List(CollectionRecord.Authors("Nobody")), None)
     )
     val found = c.audit(recs).fold(e => fail(e.value), identity)
     assertEquals(found.map(f => f.id.value -> f.issues.map(_.code)), List("99" -> List("Missing")))
     master.takeLog(): Unit
-    val links = List(CollectionLink(CollectionId("1"), CollectionMetadata(com.histmersion.plugin.CollectionMetadata.Key("zz_tin"), com.histmersion.plugin.CollectionMetadata.Title("Bronze Age tin"), List(com.histmersion.plugin.CollectionMetadata.Authors("S")))))
+    val links = List(CollectionLink(CollectionId("1"), CollectionMetadata(CollectionMetadata.Key("zz_tin"), CollectionMetadata.Title("Bronze Age tin"), List(CollectionMetadata.Authors("S")))))
     val plan = c.updateAll(links, apply = SourceCollection.UpdateAllApply(false)).fold(e => fail(e.value), identity)
     assert(plan.head.outcome.isInstanceOf[CollectionUpdateOutcome.Change], plan)
     assertEquals(master.takeLog().size, 1)
@@ -147,21 +150,21 @@ class CalibreCollectionSuite extends munit.FunSuite:
 
   test("the plugin loads with its defaults — on, writing back — and registers the calibre collection"):
     val h = PluginHarness
-      .load(com.histmersion.plugin.Plugin.Info.Id("calibre"), s"""library-path = "${master.dir}"""", http = HttpMode.Stub(Map.empty), env = Map.empty)
+      .load(Plugin.Info.Id("calibre"), s"""library-path = "${master.dir}"""", http = HttpMode.Stub(Map.empty), env = Map.empty)
       .fold(e => fail(e.value), identity)
     assert(h.log.forall(!_.toString.contains("unknown")), h.log)
     val added = List.newBuilder[(String, SourceCollection)]
     val ctx = new Plugin.Context:
-      override def files: com.histmersion.plugin.LocalFiles = summon[com.histmersion.plugin.LocalFiles]
-      override def processes: com.histmersion.plugin.Processes = summon[com.histmersion.plugin.Processes]
+      override def files: LocalFiles = summon[LocalFiles]
+      override def processes: Processes = summon[Processes]
       def http = new Plugin.Http { def get(u: Plugin.Http.GetUrl, hs: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) }
       def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = () }
       def env(name: Plugin.Context.EnvName) = Option.when(name.value == "HOME")(Plugin.Context.EnvResult("/home/someone"))
-      def secret(s: Secret) = Left(com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
-      def secretVaults = Registry.refusing(com.histmersion.plugin.Registry.RefusingWhy("no vaults"))
+      def secret(s: Secret) = Left(Plugin.Context.SecretResultPart1("none"))
+      def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)
-    val settings = Calibre.Settings(com.histmersion.plugins.calibre.Calibre.Settings.LibraryPath("~/Calibre Library"), com.histmersion.plugins.calibre.Calibre.Settings.Calibredb("calibredb"), com.histmersion.plugins.calibre.Calibre.Settings.Sqlite("sqlite3"), writeBack = com.histmersion.plugins.calibre.Calibre.Settings.WriteBack(true), com.histmersion.plugins.calibre.Calibre.Settings.GuiProcess("gui"))
+    val settings = Calibre.Settings(Calibre.Settings.LibraryPath("~/Calibre Library"), Calibre.Settings.Calibredb("calibredb"), Calibre.Settings.Sqlite("sqlite3"), writeBack = Calibre.Settings.WriteBack(true), Calibre.Settings.GuiProcess("gui"))
     assertEquals(CalibrePlugin().register(settings, ctx), Right(()))
     val (id, c) = added.result().headOption.getOrElse(fail("nothing registered"))
     assertEquals((id, c.title, c.capabilities.size), ("calibre", "Calibre", 3))

@@ -1,4 +1,5 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 

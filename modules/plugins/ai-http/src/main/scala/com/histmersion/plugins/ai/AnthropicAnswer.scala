@@ -1,10 +1,13 @@
-package com.histmersion.plugins.ai
+package com.histmersion
+package plugins.ai
 
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
 import io.circe.parser.parse
 import com.histmersion.plugin.AiTool
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the Anthropic Messages API answered, read as these providers have always read it: a message (its first text
   * block the answer's text, its `tool_use` blocks the tool calls, its usage with the cache reads and writes counted in
@@ -14,42 +17,42 @@ import com.histmersion.plugin.AiTool
 final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.Problem, AiTurn] =
-    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((body).value))
+  def turn: Either[AnthropicAnswer.Problem, AiTurn] =
+    if (status).value / 100 != 2 then Left(AnthropicAnswer.Problem((body).value))
     else
       parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
-            case Right(message) => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((message).value))
-            case Left(e)        => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem(e.getMessage))
+            case Right(message) => Left(AnthropicAnswer.Problem((message).value))
+            case Left(e)        => Left(AnthropicAnswer.Problem(e.getMessage))
 
 object AnthropicAnswer:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[Int, Pure]
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
     if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))
 
   /** An error answer's message: `{"error": {"type": …, "message": …}}`. */
-  val error: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Problem] = Decoder.instance { c =>
+  val error: Decoder[Problem] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       m <- c.downField("error").as(using errorDetail)
-    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((m).value)
+    yield Problem((m).value)
   }
 
-  private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Problem] = Decoder.instance { c =>
+  private val errorDetail: Decoder[Problem] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
-    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem(m)
+    yield Problem(m)
   }
 
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown
@@ -73,7 +76,7 @@ object AnthropicAnswer:
           name <- c.downField("name").as[String]
           input <- c.downField("input").as[Map[String, Json]]
         yield
-          if t == "tool_use" then Block.ToolUse(AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id(id), _root_.com.histmersion.plugin.AiTool.Call.Tool(name), _root_.com.histmersion.plugin.AiTool.Call.Input(Json.fromFields(input).noSpaces))) else Block.Other
+          if t == "tool_use" then Block.ToolUse(AiTool.Call(AiTool.Call.Id(id), AiTool.Call.Tool(name), AiTool.Call.Input(Json.fromFields(input).noSpaces))) else Block.Other
       case Some(t) if Known(t) => Right(Block.Other)
       case other               => Left(DecodingFailure(s"no content block of type $other", c.history))
     }
@@ -115,6 +118,6 @@ object AnthropicAnswer:
         case Some(_)                 => AiStop.Other
       ,
       Some(u),
-      Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(model))
+      Some(AiTurn.ServedBy(model))
     )
   }

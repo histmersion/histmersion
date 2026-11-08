@@ -1,4 +1,5 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.plugin.{Doi, Plugin, Secret, WorkKey}
 import com.histmersion.plugin.testkit.{FetchOutcome, HttpMode, PluginHarness, StubAnswer}
@@ -6,6 +7,7 @@ import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.domain.CoreQuota
 
 /** Histmersion's own acquisition plugins run as any plugin author runs theirs: through the plugin testkit, which loads
   * a plugin from the class path as the server does (the host's own `histmersion.acquire` settings supplied to a
@@ -25,7 +27,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
       .fold(e => fail(e.value), identity)
 
-  private def json(s: HttpAnswer.Text) = StubAnswer.text(s, com.histmersion.domain.CoreQuota.HeaderValue("application/json"))
+  private def json(s: HttpAnswer.Text) = StubAnswer.text(s, CoreQuota.HeaderValue("application/json"))
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its steps"):
     val steps = Map(
@@ -46,7 +48,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
 
   test("a fetcher plugin has no setting the host owns: an endpoint in its block is refused"):
     val refused = PluginHarness.load(
-      com.histmersion.plugin.Plugin.Info.Id("arxiv"),
+      Plugin.Info.Id("arxiv"),
       "url = \"https://elsewhere.example\"",
       http = HttpMode.Offline,
       env = Map.empty
@@ -72,8 +74,8 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Plugin.Info.Id("archive-org"),
       Map(
         metadata -> json(HttpAnswer.Text(item)),
-        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.epub") -> StubAnswer.ok(HttpAnswer.Body(book), com.histmersion.domain.CoreQuota.HeaderValue("application/epub+zip")),
-        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf ++ book), com.histmersion.domain.CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.epub") -> StubAnswer.ok(HttpAnswer.Body(book), CoreQuota.HeaderValue("application/epub+zip")),
+        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf ++ book), CoreQuota.HeaderValue("application/pdf"))
       )
     )
     assertEquals(h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")))).file.map(_.extension), Some("epub"))
@@ -101,7 +103,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Map(
         HttpTransport.Url("https://api.unpaywall.org/v2/10.1/up?email=plugin@example.org") ->
           json(HttpAnswer.Text("""{"best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf"}}""")),
-        HttpTransport.Url("https://repo.example.org/up.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), com.histmersion.domain.CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://repo.example.org/up.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       ),
       "contact-email = \"plugin@example.org\""
     )
@@ -119,7 +121,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Map(
         HttpTransport.Url("https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/core%22&limit=1") ->
           json(HttpAnswer.Text("""{"results":[{"downloadUrl":"https://core.example.org/core.pdf"}]}""")),
-        HttpTransport.Url("https://core.example.org/core.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), com.histmersion.domain.CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://core.example.org/core.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       ),
       "api-key = \"env:ZQ_CORE_KEY\"",
       Map(Secret.Ref.ParseText("env:ZQ_CORE_KEY") -> Secret.Vault.ResolveResultPart2("k-secret"))
@@ -142,9 +144,9 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
         ),
         HttpTransport.Url("https://repo.example.ac.uk/item/1") -> StubAnswer.text(
           HttpAnswer.Text("""<html><head><meta name="citation_pdf_url" content="https://repo.example.ac.uk/item/1.pdf"></head></html>"""),
-          com.histmersion.domain.CoreQuota.HeaderValue("text/html")
+          CoreQuota.HeaderValue("text/html")
         ),
-        HttpTransport.Url("https://repo.example.ac.uk/item/1.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), com.histmersion.domain.CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://repo.example.ac.uk/item/1.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       )
     )
     val r = h.fetch(WorkKey(doi = Some(Doi.applyUnsafe("10.9999/zq"))))
@@ -152,5 +154,5 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assert(!r.requests.exists(u => u.value.contains("unpaywall") || u.value.contains("openalex")), r.requests.toString)
 
   test("arxiv: the preprint's PDF by its id"):
-    val h = load(Plugin.Info.Id("arxiv"), Map(HttpTransport.Url("https://arxiv.org/pdf/2101.00001") -> StubAnswer.ok(HttpAnswer.Body(Pdf), com.histmersion.domain.CoreQuota.HeaderValue("application/pdf"))))
+    val h = load(Plugin.Info.Id("arxiv"), Map(HttpTransport.Url("https://arxiv.org/pdf/2101.00001") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))))
     assertEquals(h.fetch(WorkKey(arxiv = Some(WorkKey.Arxiv("2101.00001")))).file.map(_.source), Some("arxiv"))

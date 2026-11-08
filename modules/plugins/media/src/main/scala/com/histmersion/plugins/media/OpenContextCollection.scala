@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 
@@ -7,8 +8,8 @@ import com.histmersion.plugin.*
   * ([[OpenContext]]). A record is tied by a shared gazetteer id first, else by its context path's names.
   */
 final class OpenContextCollection(conf: CollectionSettings, licences: LicenceReader)
-    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("Open Context"), com.histmersion.plugins.media.MuseumCollection.Key("media.open-context")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Open Context media")
+    extends MuseumCollection(conf, MuseumCollection.Provider("Open Context"), MuseumCollection.Key("media.open-context")):
+  val title = MediaCollection.TitleResult("Open Context media")
   override val description = MediaCollection.DescriptionResult(
     "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence " +
       "(read from the search record and again from the media item); tied to a place on the map by a shared " +
@@ -17,7 +18,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
   val role = MediaCollection.RoleResult(MediaCollection.Object)
   override def matchRule = MediaMatchRule.PlaceIds(Set(MediaMatchRule.PlaceIds.Deeper(OpenContext.Context.value)))
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugin.MediaCollection.SearchResultPart1, List[Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .left
@@ -30,7 +31,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
           .map(_.map(_.left.map(p => MediaCollection.SearchResultPart2Part1(p.value))))
       )
 
-  override def complete(item: MediaItem, http: Plugin.Http): Either[com.histmersion.plugin.MediaCollection.CompleteResultPart1, MediaItem] =
+  override def complete(item: MediaItem, http: Plugin.Http): Either[MediaCollection.CompleteResultPart1, MediaItem] =
     http
       .askJson(OpenContext.itemUrl(conf.apiUrl, OpenContext.Uuid(item.key.value)))
       .left

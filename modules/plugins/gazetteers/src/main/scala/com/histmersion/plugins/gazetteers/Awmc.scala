@@ -1,7 +1,10 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *
@@ -14,20 +17,20 @@ import io.circe.{Json, JsonObject}
   */
 object Awmc extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
-  object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ordinal extends RefinedType[Int, Pure]
 
-  val title = com.histmersion.plugin.GazetteerSource.TitleResult("AWMC classical-world regional names and features")
-  override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
-  val url = com.histmersion.plugin.Plugin.Http.GetUrl(
+  val title = GazetteerSource.TitleResult("AWMC classical-world regional names and features")
+  override val description = GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
+  val url = Plugin.Http.GetUrl(
     "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
   )
   val rights: GazetteerRights = GazetteerRights(
     Licence("ODbL"),
-    com.histmersion.plugin.GazetteerRights.Credit("Ancient World Mapping Center (UNC), ODbL"),
-    Some(com.histmersion.plugin.GazetteerRights.LicenceUrl("https://opendatacommons.org/licenses/odbl/1-0/"))
+    GazetteerRights.Credit("Ancient World Mapping Center (UNC), ODbL"),
+    Some(GazetteerRights.LicenceUrl("https://opendatacommons.org/licenses/odbl/1-0/"))
   )
 
-  def read(text: com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
     io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
@@ -38,7 +41,7 @@ object Awmc extends DownloadedGazetteer:
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
     }
 
-  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Awmc.Ordinal): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, GazetteerPlace] =
+  def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
     j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       def text(keys: String*): Option[String] = str(props, keys*).map(_.value)
@@ -72,9 +75,9 @@ object Awmc extends DownloadedGazetteer:
   /** The map's kind of an AWMC type: a mountain, plain, island or labelled feature is a `feature`, anything else a
     * `region`.
     */
-  def kindOf(pType: com.histmersion.plugin.GazetteerPlace.Kind): com.histmersion.plugin.GazetteerPlace.Kind = pType.value.toLowerCase match
-    case "region"                        => com.histmersion.plugin.GazetteerPlace.Kind("region")
-    case "people, tribe" | "people"      => com.histmersion.plugin.GazetteerPlace.Kind("region")
-    case "mountain" | "plain" | "island" => com.histmersion.plugin.GazetteerPlace.Kind("feature")
-    case "labeled feature"               => com.histmersion.plugin.GazetteerPlace.Kind("feature")
-    case _                               => com.histmersion.plugin.GazetteerPlace.Kind("region")
+  def kindOf(pType: GazetteerPlace.Kind): GazetteerPlace.Kind = pType.value.toLowerCase match
+    case "region"                        => GazetteerPlace.Kind("region")
+    case "people, tribe" | "people"      => GazetteerPlace.Kind("region")
+    case "mountain" | "plain" | "island" => GazetteerPlace.Kind("feature")
+    case "labeled feature"               => GazetteerPlace.Kind("feature")
+    case _                               => GazetteerPlace.Kind("region")

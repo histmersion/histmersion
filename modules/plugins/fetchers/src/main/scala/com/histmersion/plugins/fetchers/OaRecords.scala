@@ -1,4 +1,5 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
@@ -21,18 +22,18 @@ final class OaRecords(
   lazy val openalex: Option[Json] = openalexClient.raw(doi).toOption
 
   /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
-  lazy val datacite: Option[com.histmersion.plugin.Plugin.Http.GetUrl] = OaRecords.dataciteUrl(cfg, http, log, doi)
+  lazy val datacite: Option[Plugin.Http.GetUrl] = OaRecords.dataciteUrl(cfg, http, log, doi)
 
   /** Where the DOI handle API says it resolves (any registration agency) — asked only for an open location on an OA
     * publisher.
     */
-  lazy val handle: Option[com.histmersion.plugin.Plugin.Http.GetUrl] = OaRecords.handleUrl(cfg, http, log, doi)
+  lazy val handle: Option[Plugin.Http.GetUrl] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
   type Doi = com.histmersion.plugin.Doi
   val Doi: com.histmersion.plugin.Doi.type = com.histmersion.plugin.Doi
 
-  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.Doi): Option[com.histmersion.plugin.Plugin.Http.GetUrl] =
+  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.GetUrl] =
     http.json(
       Url(RepositoryLanding.Candidate.Url(cfg.doiHandles.url.value), Url.UrlPath(s"/${doi.value}"), "type" -> "URL").value
     ) match
@@ -40,7 +41,7 @@ object OaRecords:
       case Left(e)  =>
         log.info(Plugin.Log.InfoMessage(s"doi handles: no URL for ${doi.value} ($e)")); None
 
-  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.Doi): Option[com.histmersion.plugin.Plugin.Http.GetUrl] =
+  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.GetUrl] =
     http.json(
       Url(RepositoryLanding.Candidate.Url(cfg.datacite.url.value), Url.UrlPath(s"/dois/${doi.value}")).value
     ) match

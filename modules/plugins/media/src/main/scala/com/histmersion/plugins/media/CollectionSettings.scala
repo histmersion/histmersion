@@ -1,9 +1,13 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.annotation.targetName
+import com.histmersion.plugin.MediaCollection
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One collection's `histmersion.media.<collection>` block: its switch, its API, how many records it reads and keeps
   * per place, its pace and its patience with a refusal, the rendition width, the last year an object or map may be made
@@ -18,47 +22,47 @@ final case class CollectionSettings(
     requestIntervalMs: CollectionSettings.RequestIntervalMs,
     displayPx: CollectionSettings.DisplayPx,
     maxYear: CollectionSettings.MaxYear,
-    refusalBackoffSeconds: CollectionSettings.RefusalBackoffSeconds = com.histmersion.plugins.media.CollectionSettings.RefusalBackoffSeconds(""),
-    excludeProviders: CollectionSettings.ExcludeProviders = com.histmersion.plugins.media.CollectionSettings.ExcludeProviders(""),
-    excludeDataProviders: CollectionSettings.ExcludeDataProviders = com.histmersion.plugins.media.CollectionSettings.ExcludeDataProviders(""),
-    excludeTypes: CollectionSettings.ExcludeTypes = com.histmersion.plugins.media.CollectionSettings.ExcludeTypes("")
+    refusalBackoffSeconds: CollectionSettings.RefusalBackoffSeconds = CollectionSettings.RefusalBackoffSeconds(""),
+    excludeProviders: CollectionSettings.ExcludeProviders = CollectionSettings.ExcludeProviders(""),
+    excludeDataProviders: CollectionSettings.ExcludeDataProviders = CollectionSettings.ExcludeDataProviders(""),
+    excludeTypes: CollectionSettings.ExcludeTypes = CollectionSettings.ExcludeTypes("")
 ) derives ConfigReader:
 
   /** `refusal-backoff-seconds` as milliseconds, the blank and non-positive steps dropped. */
-  def refusalBackoffMs: List[com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult] =
-    CollectionSettings.items(refusalBackoffSeconds).flatMap(_.value.toLongOption).filter(_ > 0).map(s => com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult(s * 1000))
+  def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
+    CollectionSettings.items(refusalBackoffSeconds).flatMap(_.value.toLongOption).filter(_ > 0).map(s => MediaCollection.RefusalBackoffMsResult(s * 1000))
 
   /** `max-year` as the last year an object may be made in; 0 sets none. */
-  def latestYear: Option[com.histmersion.plugins.media.CollectionSettings.MaxYear] = Option.when(maxYear.value != 0)(maxYear)
+  def latestYear: Option[CollectionSettings.MaxYear] = Option.when(maxYear.value != 0)(maxYear)
 
 object CollectionSettings:
   type Item = Item.T
-  object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Item extends RefinedType[String, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiUrl extends RefinedType[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImageUrl extends RefinedType[String, Pure]
   type Candidates = Candidates.T
-  object Candidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Candidates extends RefinedType[Int, Pure]
   type PerPlace = PerPlace.T
-  object PerPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerPlace extends RefinedType[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestIntervalMs extends RefinedType[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DisplayPx extends RefinedType[Int, Pure]
   type MaxYear = MaxYear.T
-  object MaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxYear extends RefinedType[Int, Pure]
   type RefusalBackoffSeconds = RefusalBackoffSeconds.T
-  object RefusalBackoffSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusalBackoffSeconds extends RefinedType[String, Pure]
   type ExcludeProviders = ExcludeProviders.T
-  object ExcludeProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeProviders extends RefinedType[String, Pure]
   type ExcludeDataProviders = ExcludeDataProviders.T
-  object ExcludeDataProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeDataProviders extends RefinedType[String, Pure]
   type ExcludeTypes = ExcludeTypes.T
-  object ExcludeTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeTypes extends RefinedType[String, Pure]
 
   private def split(setting: String): List[Item] = setting.split(",").toList.map(_.trim).filter(_.nonEmpty).map(Item(_))
 

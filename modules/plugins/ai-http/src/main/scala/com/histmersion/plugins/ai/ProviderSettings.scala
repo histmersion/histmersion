@@ -1,7 +1,10 @@
-package com.histmersion.plugins.ai
+package com.histmersion
+package plugins.ai
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One HTTP provider's settings, Histmersion's own `agents.providers.<name>`: where it listens, its key (from the
   * server's environment: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`), whether tool schemas are sent in OpenAI's strict form,
@@ -15,10 +18,10 @@ final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: Pro
 
 object ProviderSettings:
   type BaseUrl = BaseUrl.T
-  object BaseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BaseUrl extends RefinedType[String, Pure]
   type ApiKey = ApiKey.T
-  object ApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiKey extends RefinedType[String, Pure]
   type StrictTools = StrictTools.T
-  object StrictTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StrictTools extends RefinedType[Boolean, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]

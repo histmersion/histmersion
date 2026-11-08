@@ -1,7 +1,10 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.media` as the collections read it: the pace, the widths of the stored rendition and of the card's
   * thumbnail, the pictures kept per Wikidata statement kind, Wikidata's and Commons' APIs, the depictions' limits, and
@@ -27,10 +30,10 @@ final case class MediaSettings(
 
 object MediaSettings:
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestIntervalMs extends RefinedType[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DisplayPx extends RefinedType[Int, Pure]
   type ThumbPx = ThumbPx.T
-  object ThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbPx extends RefinedType[Int, Pure]
   type PerProperty = PerProperty.T
-  object PerProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerProperty extends RefinedType[Int, Pure]

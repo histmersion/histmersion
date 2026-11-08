@@ -1,9 +1,12 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Open Context (https://opencontext.org/about/services), no key: its search API's JSON answer
   * (`/query/.json?type=media&cat=oc-gen-image&q=`) with the `attributes` it is asked for — each record's licence
@@ -15,26 +18,26 @@ import java.util.Locale
   */
 object OpenContext:
   type Cite = Cite.T
-  object Cite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cite extends RefinedType[String, Pure]
   type ContextLabel = ContextLabel.T
-  object ContextLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContextLabel extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Project = Project.T
-  object Project extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Project extends RefinedType[String, Pure]
   type Segment = Segment.T
-  object Segment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Segment extends RefinedType[String, Pure]
   type Uuid = Uuid.T
-  object Uuid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uuid extends RefinedType[String, Pure]
   type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Year extends RefinedType[String, Pure]
 
 
   type Attributes = AttributesValue
   type AttributesValue = AttributesValue.T
-  object AttributesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AttributesValue extends RefinedType[String, Pure]
 
-  val Attributes: com.histmersion.plugins.media.OpenContext.Attributes =
+  val Attributes: Attributes =
     AttributesValue(List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(","))
 
   /** The record fields finer than a country: the context path below its first two levels. */
@@ -204,14 +207,14 @@ object OpenContext:
     * and the licence's short name.
     */
   def credit(
-      title: com.histmersion.plugin.MediaItem.Title,
+      title: MediaItem.Title,
       context: ContextLabel,
-      creators: List[com.histmersion.plugin.MediaRights.Author],
-      year: Option[com.histmersion.plugins.media.OpenContext.Year],
-      project: Option[com.histmersion.plugins.media.OpenContext.Project],
-      cite: Option[com.histmersion.plugins.media.OpenContext.Cite],
-      licence: com.histmersion.plugin.Licence
-  ): com.histmersion.plugin.MediaRights.Credit =
+      creators: List[MediaRights.Author],
+      year: Option[Year],
+      project: Option[Project],
+      cite: Option[Cite],
+      licence: Licence
+  ): MediaRights.Credit =
     val who = if creators.isEmpty then "" else creators.mkString(", ") + year.fold("")(y => s" ($y)") + ". "
     val what = s"\"$title${if context.value.nonEmpty then s" from $context" else ""}\"."
     MediaRights.Credit(

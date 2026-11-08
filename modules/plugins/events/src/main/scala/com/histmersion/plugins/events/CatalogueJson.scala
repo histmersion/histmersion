@@ -1,13 +1,16 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import io.circe.Json
 import com.histmersion.plugin.Plugin
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One catalogue request answered as JSON, through the host's polite client: an answer that is no JSON says so, by the
   * catalogue's host, as the host's own client words it.
   */
 final class CatalogueJson(http: Plugin.Http):
-  def apply(url: com.histmersion.plugin.Plugin.Http.GetUrl): Either[com.histmersion.plugins.events.CatalogueJson.Problem, Json] =
+  def apply(url: Plugin.Http.GetUrl): Either[CatalogueJson.Problem, Json] =
     http
       .get(url)
       .left
@@ -21,9 +24,9 @@ final class CatalogueJson(http: Plugin.Http):
 
 object CatalogueJson:
   type Host = Host.T
-  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Host extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
-  def host(url: com.histmersion.plugin.Plugin.Http.GetUrl): com.histmersion.plugins.events.CatalogueJson.Host =
+  def host(url: Plugin.Http.GetUrl): Host =
     Host(scala.util.Try(java.net.URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value))

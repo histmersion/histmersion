@@ -1,4 +1,5 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 

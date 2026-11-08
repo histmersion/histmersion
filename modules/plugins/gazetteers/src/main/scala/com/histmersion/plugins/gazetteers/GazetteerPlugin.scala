@@ -1,6 +1,8 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.plugin.{Plugin, Spi}
+import com.histmersion.plugin.Registry
 
 /** One of Histmersion's own network gazetteers: on by default (its defaults resource), switched off by
   * `histmersion.plugins.gazetteer-<source>.enabled = false`. It has no settings of its own: the host lends its download
@@ -10,7 +12,7 @@ trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) ext
   type Config = GazetteerSettings
   val info: Plugin.Info = Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
   def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
-    ctx.gazetteerSources.add(com.histmersion.plugin.Registry.AddId(name), source).left.map(e => Plugin.RegisterResultPart1(e.value))
+    ctx.gazetteerSources.add(Registry.AddId(name), source).left.map(e => Plugin.RegisterResultPart1(e.value))
 
 object GazetteerPlugin:
   val Version = "0.1.0"

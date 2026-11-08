@@ -1,9 +1,11 @@
-package com.histmersion.plugins.ai
+package com.histmersion
+package plugins.ai
 
 import com.histmersion.plugin.AiMessage
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
 import com.histmersion.plugin.AiTurn
+import com.histmersion.plugin.AiHttp
 
 /** One call to an OpenAI-compatible chat-completions API (`POST chat/completions`), its body as the API takes it: the
   * system prompt as the first message, the conversation (tool calls on the assistant's messages, their results as
@@ -12,7 +14,7 @@ import com.histmersion.plugin.AiTurn
   * `max_completion_tokens`. Unset fields and empty lists are left out; the schemas are sent exactly as given.
   */
 final case class ChatRequest(json: Json):
-  def body: com.histmersion.plugin.AiHttp.PostBody = _root_.com.histmersion.plugin.AiHttp.PostBody(json.noSpaces)
+  def body: AiHttp.PostBody = AiHttp.PostBody(json.noSpaces)
 
 object ChatRequest:
 

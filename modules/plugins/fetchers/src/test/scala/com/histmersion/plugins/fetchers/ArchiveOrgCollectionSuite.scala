@@ -1,4 +1,5 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -38,10 +39,10 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
           .map(a => Plugin.HttpResponse.Body(a.getBytes(UTF_8)))
           .toRight(Plugin.Http.GetResultPart1(s"${url.value}: HTTP 404 not found"))
 
-  private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(com.histmersion.domain.library.acquisition.Endpoint.Url("https://archive.org")), Canned))
+  private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(Endpoint.Url("https://archive.org")), Canned))
 
   test("search: each hit's own metadata, the lending-only one marked restricted"):
-    val hits = collection.search(CollectionQuery(Some(com.histmersion.plugin.CollectionQuery.Text("bronze")), Some(com.histmersion.plugin.CollectionQuery.Limit(2)))).fold(e => fail(e.value), identity)
+    val hits = collection.search(CollectionQuery(Some(CollectionQuery.Text("bronze")), Some(CollectionQuery.Limit(2)))).fold(e => fail(e.value), identity)
     assertEquals(
       hits.map(h => (h.id.value: String, h.title, h.restricted)),
       List(("zqbook", Option("A Book"), false), ("zqlent", Option("Lent"), true))
@@ -52,17 +53,17 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
     val book = collection.item(CollectionId("zqbook")).fold(e => fail(e.value), identity).getOrElse(fail("no item"))
     assertEquals((book.authors, book.year.map(y => y.value: Int)), (List("An Author"), Option(1901)))
     assertEquals(collection.file(book, None).map(_.name), Right("zqbook.epub"))
-    assertEquals(collection.file(book, Some(com.histmersion.plugin.SourceCollection.FileFormat("pdf"))).map(_.name), Right("zqbook.pdf"))
+    assertEquals(collection.file(book, Some(SourceCollection.FileFormat("pdf"))).map(_.name), Right("zqbook.pdf"))
     val epub = collection.file(book, None).fold(e => fail(e.value), identity)
     assertEquals(collection.original(book, epub).map(_.extension), Right("epub"))
     val lent = collection.item(CollectionId("zqlent")).fold(e => fail(e.value), identity).getOrElse(fail("no item"))
     asked.clear()
-    assert(collection.original(lent, CollectionFile(com.histmersion.plugin.CollectionFile.Name("zqlent.pdf"))).left.exists(_.value.contains("lending-only")))
+    assert(collection.original(lent, CollectionFile(CollectionFile.Name("zqlent.pdf"))).left.exists(_.value.contains("lending-only")))
     assertEquals(asked.toList, Nil)
     assert(collection.item(CollectionId("zqgone")).left.exists(_.value.contains("404")))
 
   test("read-only: it declares reading alone and refuses every write"):
     assertEquals(collection.capabilities, Set(CollectionCapability.Read))
     assert(
-      collection.add(CollectionMetadata(com.histmersion.plugin.CollectionMetadata.Key("k"), com.histmersion.plugin.CollectionMetadata.Title("T"), List(com.histmersion.plugin.CollectionMetadata.Authors("A"))), FetchedFile(com.histmersion.plugin.FetchedFile.Source("x"), None, FetchedFile.Bytes(Array[Byte](1)),com.histmersion.plugin.FetchedFile.Extension("pdf"))).isLeft
+      collection.add(CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A"))), FetchedFile(FetchedFile.Source("x"), None, FetchedFile.Bytes(Array[Byte](1)),FetchedFile.Extension("pdf"))).isLeft
     )

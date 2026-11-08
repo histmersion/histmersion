@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 
@@ -9,8 +10,8 @@ import com.histmersion.plugin.*
   * (natural-history specimens) are refused, and so is an object made after `max-year`.
   */
 final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key], licences: LicenceReader)
-    extends KeyedCollection(conf, com.histmersion.plugins.media.KeyedCollection.Plugin("media-europeana"), key, com.histmersion.plugins.media.KeyedCollection.Needs("a Europeana personal API key"), com.histmersion.plugins.media.KeyedCollection.Settings("media.europeana")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Europeana images")
+    extends KeyedCollection(conf, KeyedCollection.Plugin("media-europeana"), key, KeyedCollection.Needs("a Europeana personal API key"), KeyedCollection.Settings("media.europeana")):
+  val title = MediaCollection.TitleResult("Europeana images")
   override val description = described(
     "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own " +
       "edm:rights read from the search and again from the Record API; tied to a place on the map by its " +

@@ -1,6 +1,9 @@
-package com.histmersion.plugins.ai
+package com.histmersion
+package plugins.ai
 
 import com.histmersion.plugin.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An OpenAI-compatible chat-completions API (`openai:<model>`, `local:<model>`) over the host's [[AiHttp]]: one call
   * per turn, keyed by `Authorization: Bearer`. Its failures read as they always have (`RuntimeException: OpenAI API
@@ -14,27 +17,27 @@ import com.histmersion.plugin.*
   */
 final class ChatCompletionsProvider(
     name: ChatCompletionsProvider.Name,
-    val title: com.histmersion.plugin.AiProvider.TitleResult,
+    val title: AiProvider.TitleResult,
     settings: ProviderSettings,
     keyed: Option[(ChatCompletionsProvider.KeyLabel, ChatCompletionsProvider.KeyVariable)]
 ) extends AiProvider:
 
   override def capabilities: AiCapabilities =
-    AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), iterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(true), verbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(true))
+    AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(true), iterationMarkers = AiCapabilities.IterationMarkers(true), verbatimFailures = AiCapabilities.VerbatimFailures(true))
 
-  private def base: Either[com.histmersion.plugins.ai.BaseUrl.Problem, BaseUrl] = BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
+  private def base: Either[BaseUrl.Problem, BaseUrl] = BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
-  override def check(model: com.histmersion.plugin.AiProvider.CheckModel): Either[com.histmersion.plugin.AiProvider.CheckResultPart1, Unit] =
+  override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
     base.left
-      .map(p => com.histmersion.plugin.AiProvider.CheckResultPart1(p.value))
+      .map(p => AiProvider.CheckResultPart1(p.value))
       .flatMap(_ =>
         keyed match
           case Some((label, variable)) if settings.apiKey.value.isEmpty =>
-            Left(com.histmersion.plugin.AiProvider.CheckResultPart1(s"no ${label.value} API key — set ${variable.value} in the server's environment"))
+            Left(AiProvider.CheckResultPart1(s"no ${label.value} API key — set ${variable.value} in the server's environment"))
           case _ => Right(())
       )
 
-  private def key: com.histmersion.plugins.ai.ProviderSettings.ApiKey = if settings.apiKey.value.isEmpty then _root_.com.histmersion.plugins.ai.ProviderSettings.ApiKey("none") else settings.apiKey
+  private def key: ProviderSettings.ApiKey = if settings.apiKey.value.isEmpty then ProviderSettings.ApiKey("none") else settings.apiKey
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent: Either[String, AiTurn] = for
@@ -56,13 +59,13 @@ final class ChatCompletionsProvider(
 
 object ChatCompletionsProvider:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type KeyLabel = KeyLabel.T
-  object KeyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeyLabel extends RefinedType[String, Pure]
   type KeyVariable = KeyVariable.T
-  object KeyVariable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeyVariable extends RefinedType[String, Pure]
 
-  def headers(key: com.histmersion.plugins.ai.ProviderSettings.ApiKey): Map[com.histmersion.plugin.AiHttp.PostHeadersPart1, com.histmersion.plugin.AiHttp.PostHeadersPart2] =
+  def headers(key: ProviderSettings.ApiKey): Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2] =
     Map(
       AiHttp.PostHeadersPart1("Authorization") -> AiHttp.PostHeadersPart2(s"Bearer ${key.value}"),
       AiHttp.PostHeadersPart1("Content-Type") -> AiHttp.PostHeadersPart2("application/json")

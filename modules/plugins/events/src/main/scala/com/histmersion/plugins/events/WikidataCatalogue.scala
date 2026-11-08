@@ -1,4 +1,5 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
@@ -8,30 +9,32 @@ import io.circe.{ACursor, Json}
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Wikidata's events of the configured classes (battles, sieges, wars, treaties …): the query service, one SPARQL query
   * per class. A part is a class, `class:<qid>`.
   */
 final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
-  def title = com.histmersion.plugin.EventCatalogue.TitleResult("Wikidata")
+  def title = EventCatalogue.TitleResult("Wikidata")
   def licence = Licence("CC0-1.0")
-  def citation = com.histmersion.plugin.EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
-  def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://www.wikidata.org")
-  override def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult = com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
+  def citation = EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
+  def home = EventCatalogue.HomeResult("https://www.wikidata.org")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult = EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
 
   private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] = WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult] = classes.map((qid, _) => com.histmersion.plugin.EventCatalogue.PartsResult(s"class:$qid"))
+  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] = classes.map((qid, _) => EventCatalogue.PartsResult(s"class:$qid"))
 
-  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     classes.find((qid, _) => part.value == s"class:$qid") match
-      case None              => Left(com.histmersion.plugin.EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
+      case None              => Left(EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
       case Some((qid, kind)) =>
         val q = WikidataCatalogue.sparql(qid, query.from.map(y => CatalogDating.HistoricalYear(y.value.toLong)), CatalogDating.HistoricalYear(query.to.value.toLong), cfg.labelLanguages)
         CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q))
           .left
-          .map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j => WikidataCatalogue.parse(j, CatalogueEvent.Kind(kind.value)).left.map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value)))
+          .map(e => EventCatalogue.ReadResultPart1(e.value))
+          .flatMap(j => WikidataCatalogue.parse(j, CatalogueEvent.Kind(kind.value)).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
           .map(CataloguePage(_))
 
   /** The item read again from its `raw` (its rows of the query's answer), in the kind it is stored with. */
@@ -48,11 +51,11 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
 
 object WikidataCatalogue:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type Wkt = Wkt.T
-  object Wkt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wkt extends RefinedType[String, Pure]
 
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).
@@ -64,7 +67,7 @@ object WikidataCatalogue:
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
-  def sparql(qid: com.histmersion.upstreams.wikidata.WikidataItem.Id, from: Option[com.histmersion.upstreams.dating.CatalogDating.HistoricalYear], to: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear, lang: com.histmersion.plugins.events.WikidataSettings.LabelLanguage): com.histmersion.plugins.events.WikidataCatalogue.Query =
+  def sparql(qid: WikidataItem.Id, from: Option[CatalogDating.HistoricalYear], to: CatalogDating.HistoricalYear, lang: WikidataSettings.LabelLanguage): Query =
     // the query service compares astronomical years; `to`/`from` are historical
     val toA = CatalogDating.toAstronomical(to)
     val fromF = from.fold("")(f => s" && YEAR(?t) >= ${CatalogDating.toAstronomical(f)}")
@@ -84,14 +87,14 @@ object WikidataCatalogue:
        |  SERVICE wikibase:label { bd:serviceParam wikibase:language "$lang". }
        |}""".stripMargin)
 
-  def sparqlUrl(endpoint: com.histmersion.plugins.events.WikidataSettings.SparqlUrl, query: com.histmersion.plugins.events.WikidataCatalogue.Query): com.histmersion.plugin.Plugin.Http.GetUrl =
-    com.histmersion.plugin.Plugin.Http.GetUrl(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
+  def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
 
   private def binding(b: ACursor, k: String): Option[String] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
-  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.Wkt): Option[(com.histmersion.plugins.events.JsonFields.Decimal, com.histmersion.plugins.events.JsonFields.Decimal)] =
+  def point(wkt: Wkt): Option[(JsonFields.Decimal, JsonFields.Decimal)] =
     "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt.value).flatMap { m =>
       for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (JsonFields.Decimal(lat), JsonFields.Decimal(lon))
     }
@@ -100,9 +103,9 @@ object WikidataCatalogue:
     * location's; the most precise dating; the most deaths). Items with no label of their own (the label service then
     * answers the id) keep it.
     */
-  def parse(json: Json, kind: com.histmersion.plugin.CatalogueEvent.Kind): Either[com.histmersion.plugins.events.WikidataCatalogue.Problem, List[CatalogueEvent]] =
+  def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
     json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
-      case None       => Left(com.histmersion.plugins.events.WikidataCatalogue.Problem("no results in the answer"))
+      case None       => Left(Problem("no results in the answer"))
       case Some(rows) =>
         val bs = rows.toList.map(_.hcursor)
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
