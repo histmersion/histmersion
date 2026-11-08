@@ -58,11 +58,17 @@ class ArchitectureSuite extends munit.FunSuite:
   test("no violation but the listed exceptions, and every listed exception still exists"):
     val file = Resources.resolve("exceptions.tsv")
     val actual = violations.map(_.row).distinct.sorted
+    val listed =
+      if Files.isRegularFile(file) then Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
+      else Nil
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
-      val header = "# rule\tfile\tdetail\tcount — the known violations; a slice removes rows and adds none"
-      val _ = Files.write(file, (header :: actual).asJava, UTF_8)
+      val risen = Ratchet.risenRules(listed, actual)
+      assert(
+        risen.isEmpty || !Files.isRegularFile(file),
+        s"not rewritten: these rules' totals rose (fix the new violations first): ${risen.mkString(", ")}"
+      )
+      val _ = Files.write(file, Ratchet.exceptionsFile(actual).asJava, UTF_8)
     else
-      val listed = Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
       val added = actual.filterNot(listed.toSet)
       val gone = listed.filterNot(actual.toSet)
       val where = violations.groupBy(_.row).view.mapValues(_.head.at).toMap
@@ -71,6 +77,14 @@ class ArchitectureSuite extends munit.FunSuite:
         (added.map(r => s"new violation at ${where(r)}: $r") ++
           gone.map(r => s"no longer violated — remove it from architecture/exceptions.tsv: $r")).mkString("\n")
       )
+
+  test("a rewrite of a violation list may move rows but never raise a rule's total"):
+    val listed = List("direction\ta:x.scala\tutil -> library: Source\t1", "filesystem\ta:y.scala\tFiles.*\t3")
+    val moved = List("direction\ta:z.scala\tutil -> library: Source\t1", "filesystem\ta:y.scala\tFiles.*\t2")
+    val grown = List("direction\ta:x.scala\tutil -> library: Source\t1", "filesystem\ta:y.scala\tFiles.*\t4")
+    assertEquals(Ratchet.risenRules(listed, moved), Nil)
+    assertEquals(Ratchet.risenRules(listed, grown), List("filesystem 3 -> 4"))
+    assertEquals(Ratchet.exceptionsFile(listed.reverse), Ratchet.Header :: Ratchet.DirectionNote :: listed)
 
 object ArchitectureSuite:
 
@@ -206,6 +220,33 @@ object ArchitectureSuite:
 
   final case class Violation(rule: String, file: String, detail: String, count: Int, at: String):
     def row: String = s"$rule\t$file\t$detail\t$count"
+
+  /** The listed violations of ArchitectureSuite and ContractsSuite as ratchets: a rewrite of the list may move a row (a
+    * file that moves renames its rows) but never raise a rule's total.
+    */
+  object Ratchet:
+    /** Each rule's total over rows `rule, file, detail, count`. */
+    def totals(rows: List[String]): Map[String, Int] =
+      rows
+        .map(_.split('\t'))
+        .collect { case cols if cols.length >= 4 => cols(0) -> cols(3).toInt }
+        .groupMapReduce(_._1)(_._2)(_ + _)
+
+    /** The rules whose total in `actual` is above the one in `listed`. */
+    def risenRules(listed: List[String], actual: List[String]): List[String] =
+      val before = totals(listed)
+      totals(actual).toList.collect {
+        case (rule, n) if n > before.getOrElse(rule, 0) => s"$rule ${before.getOrElse(rule, 0)} -> $n"
+      }.sorted
+
+    val Header = "# rule\tfile\tdetail\tcount — the known violations; a slice removes rows and adds none"
+    val DirectionNote =
+      "# direction: G11/G12 work (package by feature, step 3) — the ratchet's baseline, not permanent exceptions; each move removes rows"
+
+    /** The exceptions file: the header, then each rule's rows, the direction rule's under its G11/G12 note. */
+    def exceptionsFile(rows: List[String]): List[String] =
+      val (direction, rest) = rows.sorted.partition(_.startsWith("direction\t"))
+      Header :: (if direction.isEmpty then Nil else DirectionNote :: direction) ++ rest
 
   object Rules:
     /** Names too general to say where they belong, defined in several places or meaning different things. */
