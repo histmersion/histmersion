@@ -10,8 +10,7 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 object YubiKey:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = com.histmersion.plugins.vaults.Subprocess.Problem
-  val Problem: com.histmersion.plugins.vaults.Subprocess.Problem.type = com.histmersion.plugins.vaults.Subprocess.Problem
+  export com.histmersion.plugins.vaults.Subprocess.Problem
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

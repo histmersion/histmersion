@@ -22,12 +22,7 @@ object Subprocess:
   type Tool = Tool.T
   object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunResultPart1 = com.histmersion.plugin.Processes.RunResultPart1
-  val RunResultPart1: com.histmersion.plugin.Processes.RunResultPart1.type = com.histmersion.plugin.Processes.RunResultPart1
-  type RunEnvPart1 = com.histmersion.plugin.Processes.RunEnvPart1
-  val RunEnvPart1: com.histmersion.plugin.Processes.RunEnvPart1.type = com.histmersion.plugin.Processes.RunEnvPart1
-  type RunEnvPart2 = com.histmersion.plugin.Processes.RunEnvPart2
-  val RunEnvPart2: com.histmersion.plugin.Processes.RunEnvPart2.type = com.histmersion.plugin.Processes.RunEnvPart2
+  export com.histmersion.plugin.Processes.{RunResultPart1, RunEnvPart1, RunEnvPart2}
   type ValueResult = ValueResult.T
   object ValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValueOut = ValueOut.T
@@ -75,12 +70,7 @@ object Subprocess:
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
-    type StartResultPart1 = com.histmersion.plugin.Processes.StartResultPart1
-    val StartResultPart1: com.histmersion.plugin.Processes.StartResultPart1.type = com.histmersion.plugin.Processes.StartResultPart1
-    type StartEnvPart1 = com.histmersion.plugin.Processes.StartEnvPart1
-    val StartEnvPart1: com.histmersion.plugin.Processes.StartEnvPart1.type = com.histmersion.plugin.Processes.StartEnvPart1
-    type StartEnvPart2 = com.histmersion.plugin.Processes.StartEnvPart2
-    val StartEnvPart2: com.histmersion.plugin.Processes.StartEnvPart2.type = com.histmersion.plugin.Processes.StartEnvPart2
+    export com.histmersion.plugin.Processes.{StartResultPart1, StartEnvPart1, StartEnvPart2}
 
     def start(argv: List[com.histmersion.plugin.Processes.StartArgv], env: Map[com.histmersion.plugins.vaults.Subprocess.Session.StartEnvPart1, com.histmersion.plugins.vaults.Subprocess.Session.StartEnvPart2])(using processes: com.histmersion.plugin.Processes): Either[com.histmersion.plugins.vaults.Subprocess.Session.StartResultPart1, Session] =
       processes.start(argv, env)
