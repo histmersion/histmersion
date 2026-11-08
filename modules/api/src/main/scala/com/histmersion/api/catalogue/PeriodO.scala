@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.circe.ACursor
@@ -20,8 +21,6 @@ object PeriodO:
   object MinSiblingsCount extends Newtype[Int, Pure]
   type MinYearNumber = MinYearNumber.T
   object MinYearNumber extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SpanFactorNumber = SpanFactorNumber.T
   object SpanFactorNumber extends Newtype[Long, Pure]
   type Wire = Wire.T

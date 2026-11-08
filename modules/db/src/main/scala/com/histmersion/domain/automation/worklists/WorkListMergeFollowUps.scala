@@ -30,7 +30,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
         Queue.QueueAdd(
           Queue.QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
           topic = Some(Queue.QueueItem.Topic("merge")),
-          reason = Some(Queue.QueueItem.Reason(s"`merge apply` changed the article; a merged text is not reviewed"))
+          reason = Some(Problem(s"`merge apply` changed the article; a merged text is not reviewed"))
         )
       )
       slug

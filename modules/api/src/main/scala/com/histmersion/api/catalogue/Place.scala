@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.Problem
 import com.histmersion.api.{Ascii, WireEnumValues}
 
 import com.histmersion.api.OpenSide
@@ -629,10 +630,8 @@ object Place:
     type Native = Native.T
     object Native extends Newtype[Boolean, Pure]
 
-  final case class MergeIn(into: Id, reason: Option[MergeIn.Reason] = None)
+  final case class MergeIn(into: Id, reason: Option[Problem] = None)
   object MergeIn:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     given Schema[MergeIn] = KindlingsSchema
       .derived[MergeIn]
@@ -708,7 +707,7 @@ object Place:
       periodStart: Option[Year],
       periodEnd: Option[Year],
       periodSet: Override.PeriodSet,
-      reason: Option[Override.Reason],
+      reason: Option[Problem],
       sourceKind: Override.SourceKind,
       sourcePeriodStart: Option[Year],
       sourcePeriodEnd: Option[Year],
@@ -727,8 +726,6 @@ object Place:
     object Kind extends Newtype[String, Pure]
     type PeriodSet = PeriodSet.T
     object PeriodSet extends Newtype[Boolean, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type SourceKind = SourceKind.T
     object SourceKind extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
@@ -778,7 +775,7 @@ object Place:
     case Put(
         kind: Option[Put.Kind],
         period: Option[(Option[Year], Option[Year])],
-        reason: Option[Put.Reason],
+        reason: Option[Problem],
         point: Option[GeoPoint] = None
     )
 
@@ -786,14 +783,12 @@ object Place:
     object Put:
       type Kind = Kind.T
       object Kind extends Newtype[String, Pure]
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
 
   final case class OverrideSet(
       kind: Option[OverrideSet.Kind] = None,
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
-      reason: Option[OverrideSet.Reason] = None,
+      reason: Option[Problem] = None,
       reset: OverrideSet.Reset = OverrideSet.Reset(false),
       pointLat: Option[Latitude] = None,
       pointLon: Option[Longitude] = None
@@ -801,8 +796,6 @@ object Place:
   object OverrideSet:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type Reset = Reset.T
     object Reset extends Newtype[Boolean, Pure]
 
@@ -822,8 +815,6 @@ object Place:
   object Overrides:
     type PointText = PointText.T
     object PointText extends Newtype[String, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type PointTextResult = PointText
     val PointTextResult: PointText.type = PointText
 
@@ -882,15 +873,15 @@ object Place:
         yield OverrideEdit.Put(
           kind.map(OverrideEdit.Put.Kind(_)),
           period,
-          reason.map(OverrideEdit.Put.Reason(_)),
+          reason.map(Problem(_)),
           point
         )
 
-    def reason(raw: Option[Override.Reason]): Either[Api.Error, Option[Override.Reason]] =
+    def reason(raw: Option[Problem]): Either[Api.Error, Option[Problem]] =
       val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       Either.cond(
         r.forall(_.length <= MaxReason),
-        (r).map(refactorValue10 => Override.Reason(refactorValue10)),
+        (r).map(refactorValue10 => Problem(refactorValue10)),
         invalid(s"a reason is at most $MaxReason characters")
       )
 
@@ -1046,13 +1037,11 @@ object Place:
       )
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
-  final case class RemoveIn(reason: Option[RemoveIn.Reason] = None)
+  final case class RemoveIn(reason: Option[Problem] = None)
       derives KindlingsSchema,
         com.histmersion.api.json.Schema
   object RemoveIn:
 
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
 

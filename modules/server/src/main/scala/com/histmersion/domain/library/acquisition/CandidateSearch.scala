@@ -197,13 +197,13 @@ final class CandidateSearch(
             candidates.recordWatch(
               w,
               mark,
-              got.left.toOption.map(e => CandidateWatch.LastError(e.take(500))),
+              got.left.toOption.map(e => Problem(e.take(500))),
               lastFound
             )
           w.modify(_.watermark)
             .setTo(if dryRun.value then w.watermark else mark.orElse(w.watermark))
             .modify(_.lastError)
-            .setTo(got.left.toOption.map(CandidateWatch.LastError(_)))
+            .setTo(got.left.toOption.map(Problem(_)))
             .modify(_.lastFound)
             .setTo(lastFound)
         }

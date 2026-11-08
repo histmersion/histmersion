@@ -95,11 +95,11 @@ private[articles] object ArticleRepo:
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
     json.flatMap(j => Jsonb.read[Article.Filter](Jsonb.JsonText(j)))
-  private[articles] def reasonsOf(json: String): Map[Citekey, Article.ReasonsValue] =
+  private[articles] def reasonsOf(json: String): Map[Citekey, Problem] =
     Jsonb
       .read[Map[String, String]](Jsonb.JsonText(json))
       .getOrElse(Map.empty)
-      .map((ck, reason) => Citekey(ck) -> Article.ReasonsValue(reason))
+      .map((ck, reason) => Citekey(ck) -> Problem(reason))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */

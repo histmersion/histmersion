@@ -23,13 +23,13 @@ object BundleCmd:
     else Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
-  private[cli] def manifestOf(p: Path): Either[BundleTar.Problem, Bundle.Manifest] =
+  private[cli] def manifestOf(p: Path): Either[Problem, Bundle.Manifest] =
     val in = Files.newInputStream(p)
     try
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))
       r.next().flatMap {
         case Some(e) if e.name.value == Bundle.ManifestPath => BundleFormat.parseManifest(r.readAll())
-        case _ => Left(BundleTar.Problem(s"$p does not start with ${Bundle.ManifestPath}"))
+        case _ => Left(Problem(s"$p does not start with ${Bundle.ManifestPath}"))
       }
     finally in.close()
 

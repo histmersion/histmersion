@@ -56,7 +56,7 @@ object MapRegionsView:
   private def namedOf(id: RegionChoice.Id): Option[Basemap.Focus.Name] =
     status.now().flatMap(_.regions.find(_.name.value == id.value)).map(_.name)
 
-  private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Basemap.Problem, Basemap.FetchQuery] =
+  private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Problem, Basemap.FetchQuery] =
     request(MapArea.Bbox(box.now().value), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
   private def choose(id: RegionChoice.Id): Unit =

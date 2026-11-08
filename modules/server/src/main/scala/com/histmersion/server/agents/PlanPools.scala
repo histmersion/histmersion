@@ -103,7 +103,7 @@ final class PlanPools(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
       pool.refusal.map(r =>
-        Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+        Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
       rules(p),
       now,
@@ -117,7 +117,7 @@ final class PlanPools(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
       pool.refusal.map(r =>
-        Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+        Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
       rules(p),
       now,
@@ -193,7 +193,7 @@ final class PlanPools(
       PlanPools.claudeEnv(cc),
       AgentsConfig.DoctorTimeoutSeconds(math.max(1, cfg.doctorTimeoutSeconds.value))
     ) match
-      case Left(why)       => Login.Unknown(Login.Unknown.Why(s"'claude auth status' failed: $why"))
+      case Left(why)       => Login.Unknown(Problem(s"'claude auth status' failed: $why"))
       case Right((_, out)) => PlanPools.claudeLogin(out, cc.useApiKey)
 
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
@@ -402,7 +402,7 @@ final class PlanPools(
       case Verdict.Blocked(why, until) =>
         GuardAnswer(
           allow = GuardAnswer.Allow(false),
-          Some(GuardAnswer.Reason(why.value)),
+          Some(Problem(why.value)),
           until.map(u => GuardAnswer.ResetsAt(java.time.Instant.ofEpochMilli(u.value).toString))
         )
 
@@ -433,7 +433,7 @@ final class PlanPools(
           WindowStatus.ObservedAt(iso(s.reading.observedAt.value)),
           WindowStatus.AgeSeconds(math.max(0L, (now.value - s.reading.observedAt.value) / 1000)),
           WindowStatus.Source(s.reading.source.wire.value),
-          s.why.map(w => WindowStatus.Why(w.value))
+          s.why.map(w => Problem(w.value))
         )
       }
       val lg = login(p, now)
@@ -455,7 +455,7 @@ final class PlanPools(
         src,
         PoolStatus.Held(pool.held.value),
         PoolStatus.Usable(ok),
-        why.map(PoolStatus.Reason(_)),
+        why.map(Problem(_)),
         until.map(PoolStatus.Until(_)),
         PoolStatus.MaxCallsInFlight(math.max(1, poolCfg(p)._2)),
         ws,
@@ -587,22 +587,22 @@ object PlanPools:
     */
   def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
     if parser.parse(out.value.trim).isLeft then
-      Login.Unknown(Login.Unknown.Why(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
+      Login.Unknown(Problem(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
     else
       AgentDoctor
         .login(out, useApiKey)
-        .fold(p => Login.Missing(Login.Missing.Why(p.value)), d => Login.Present(Login.Present.Detail(d.value)))
+        .fold(p => Login.Missing(Problem(p.value)), d => Login.Present(Login.Present.Detail(d.value)))
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
     case None =>
       Login.Missing(
-        PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
+        Problem("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
       )
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
         Login.Present(Login.Present.Detail(s"$h has a login"))
-      else Login.Missing(Login.Missing.Why(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
+      else Login.Missing(Problem(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about

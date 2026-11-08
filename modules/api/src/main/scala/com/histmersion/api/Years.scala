@@ -17,8 +17,6 @@ object Years:
     object Wire extends Newtype[String, Pure]
   type Astronomical = Astronomical.T
   object Astronomical extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Shift = Shift.T
   object Shift extends Newtype[Long, Pure]
   type Text = Text.T

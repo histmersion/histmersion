@@ -275,7 +275,7 @@ object PlacesTools:
                         places.merge(
                           me,
                           found,
-                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason.map(q => ApiPlace.MergeIn.Reason(q.value)))
+                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason.map(q => Problem(q.value)))
                         )
                       )
                       .map(PlacesMarkdown.placeGone)
@@ -285,7 +285,7 @@ object PlacesTools:
                     placeId(pid)
                       .flatMap(found =>
                         places
-                          .remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => ApiPlace.RemoveIn.Reason(q.value))))
+                          .remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => Problem(q.value))))
                       )
                       .map(PlacesMarkdown.placeGone)
                   )
@@ -300,7 +300,7 @@ object PlacesTools:
                             in.kind.map(k => ApiPlace.OverrideSet.Kind(k.value)),
                             in.periodStart.map(year),
                             in.periodEnd.map(year),
-                            in.reason.map(q => ApiPlace.OverrideSet.Reason(q.value)),
+                            in.reason.map(q => Problem(q.value)),
                             ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
                             in.pointLat.map(l => Latitude(l.value)),
                             in.pointLon.map(l => Longitude(l.value))

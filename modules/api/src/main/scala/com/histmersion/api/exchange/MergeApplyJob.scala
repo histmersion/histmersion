@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -20,36 +21,32 @@ final case class MergeApplyJob(
     planHash: MergeApplyJob.PlanHash,
     elapsedMs: MergeApplyJob.ElapsedMs,
     result: Option[MergeApplyResult] = None,
-    error: Option[MergeApplyJob.Error] = None
+    error: Option[Problem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object MergeApplyJob:
-  type InterruptedMessage = InterruptedMessage.T
-  object InterruptedMessage extends Newtype[String, Pure]
 
   type InterruptedText = InterruptedTextValue
-  type InterruptedTextValue = InterruptedMessage
-  val InterruptedTextValue: InterruptedMessage.type = InterruptedMessage
+  type InterruptedTextValue = Problem
+  val InterruptedTextValue: Problem.type = Problem
   export com.histmersion.api.exchange.Bundle.Name as OfBundle
   export MergePlan.PlanHash as OfPlanHash
   type OfElapsedMs = ElapsedMs
   val OfElapsedMs: ElapsedMs.type = ElapsedMs
-  type OfError = Error
-  val OfError: Error.type = Error
+  type OfError = Problem
+  val OfError: Problem.type = Problem
 
   export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
   export com.histmersion.api.exchange.Bundle.Name as Bundle
   export MergePlan.PlanHash
   type ElapsedMs = ElapsedMs.T
   object ElapsedMs extends Newtype[Long, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
 
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 
   val InterruptedText: InterruptedText =
-    InterruptedMessage(
+    Problem(
       "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
         "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
         "shows what is left"
@@ -76,7 +73,7 @@ object MergeApplyJob:
             planHash,
             elapsedMs,
             error = Some(
-              Error(
+              Problem(
                 "the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied"
               )
             )
@@ -98,7 +95,7 @@ object MergeApplyJob:
           bundle,
           planHash,
           elapsedMs,
-          error = Some(Error((InterruptedText).value))
+          error = Some(Problem((InterruptedText).value))
         )
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
         MergeApplyJob(

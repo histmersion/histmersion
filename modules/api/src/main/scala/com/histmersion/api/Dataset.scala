@@ -18,5 +18,5 @@ object Dataset:
       case None    => Right(Local)
       case Some(s) =>
         parse(Wire(s)).toRight(
-          Api.Error(Api.Error.Problem(s"dataset '$s' is not seed or local"), Some(Api.Error.Code(Write.CodeInvalid)))
+          Api.Error(Problem(s"dataset '$s' is not seed or local"), Some(Api.Error.Code(Write.CodeInvalid)))
         )

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -72,7 +73,7 @@ object Activity:
       state: Entry.State = Entry.State(""),
       what: Entry.What = Entry.What(""),
       text: Entry.Text = Entry.Text(""),
-      error: Option[Entry.Error] = None,
+      error: Option[Problem] = None,
       endedAt: Option[Entry.EndedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[Entry.Job] = None,
@@ -103,8 +104,6 @@ object Activity:
     object What extends Newtype[String, Pure]
     type Text = Text.T
     object Text extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
     type EndedAt = EndedAt.T
     object EndedAt extends Newtype[String, Pure]
     export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job

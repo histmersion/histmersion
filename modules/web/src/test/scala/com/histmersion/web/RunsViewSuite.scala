@@ -25,7 +25,7 @@ class RunsViewSuite extends munit.FunSuite:
     UiState.store = Store.Memory()
     UiState.loadHash(UiState.UrlHash(""))
 
-  private def run(status: RunInfo.Status, error: Option[RunInfo.Error] = None) =
+  private def run(status: RunInfo.Status, error: Option[Problem] = None) =
     RunInfo(
       Agents.RunInfo.Id("r1"),
       Agents.RunInfo.Pipeline("enrich-source"),
@@ -72,11 +72,11 @@ class RunsViewSuite extends munit.FunSuite:
 
   test("why a run paused, the filter, and a typed budget"):
     assertEquals(
-      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("budget: the run spent 2 of its 2 USD")))),
+      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(Problem("budget: the run spent 2 of its 2 USD")))),
       Some("budget")
     )
     assertEquals(
-      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("interrupted")))),
+      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(Problem("interrupted")))),
       Some("interrupted")
     )
     assertEquals(RunsView.pausedFor(run(RunInfo.Status("done"))), None)
@@ -221,7 +221,7 @@ class RunsViewSuite extends munit.FunSuite:
       model = Some(Agents.StepInfo.Model("anthropic:claude")),
       usage = Usage(Agents.Usage.Input(120), Agents.Usage.Output(45)),
       costUsd = Agents.StepInfo.CostUsd(0.25),
-      error = Some(Agents.StepInfo.Error("provider: overloaded"))
+      error = Some(Problem("provider: overloaded"))
     )
     val cells = RunsView.stepCells(s)
     assertEquals(cells.map(_._1), RunsView.StepColumns)

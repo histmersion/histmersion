@@ -478,7 +478,7 @@ final class AcquisitionControllers(
       RetractionsUpdate.Rows(assessments.retractionCount.value),
       RetractionsUpdate.Source(acq.retractionWatch.csvUrl.value),
       running = RetractionsUpdate.Running(rwRunning.get),
-      error = rwError.get.map(RetractionsUpdate.Error(_))
+      error = rwError.get.map(Problem(_))
     )
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
@@ -772,7 +772,7 @@ final class AcquisitionControllers(
               com.histmersion.api.library.Citekey(citekey.value),
               chain.answers
                 .filter(_.kind == FetchChain.Answer.Kind.Refused)
-                .map(a => Acquire.Refusal(s"${a.fetcher}: ${a.why}"))
+                .map(a => Problem(s"${a.fetcher}: ${a.why}"))
             )
           do
             // an item already naming the DOI was reported just above

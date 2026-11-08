@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -28,7 +29,7 @@ object AgentScheduler:
       jobType: Started.JobType,
       target: Started.Target,
       goal: Option[Goal.Slug] = None,
-      why: Started.Why = Started.Why("")
+      why: Problem = Problem("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -44,8 +45,6 @@ object AgentScheduler:
     val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   final case class Waiting(
       item: Waiting.Item,
@@ -57,7 +56,7 @@ object AgentScheduler:
       priority: Waiting.Priority = Waiting.Priority(0),
       waitedMinutes: Waiting.WaitedMinutes = Waiting.WaitedMinutes((0).toLong),
       code: Waiting.Code = Waiting.Code(""),
-      why: Waiting.Why = Waiting.Why(""),
+      why: Problem = Problem(""),
       behind: List[Waiting.Behind] = Nil,
       position: Waiting.Position = Waiting.Position(0)
   ) derives KindlingsCodecAsObject,
@@ -81,8 +80,6 @@ object AgentScheduler:
     object WaitedMinutes extends Newtype[Long, Pure]
     type Code = Code.T
     object Code extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Behind = Behind.T
     object Behind extends Newtype[String, Pure]
     type Position = Position.T
@@ -189,7 +186,7 @@ object AgentScheduler:
       target: WhyInfo.Target = WhyInfo.Target(""),
       status: WhyInfo.Status = WhyInfo.Status(""),
       code: WhyInfo.Code = WhyInfo.Code(""),
-      why: WhyInfo.Why = WhyInfo.Why(""),
+      why: Problem = Problem(""),
       behind: List[WhyInfo.Behind] = Nil,
       position: WhyInfo.Position = WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,
@@ -211,8 +208,6 @@ object AgentScheduler:
     object Status extends Newtype[String, Pure]
     type Code = Code.T
     object Code extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Behind = Behind.T
     object Behind extends Newtype[String, Pure]
     type Position = Position.T

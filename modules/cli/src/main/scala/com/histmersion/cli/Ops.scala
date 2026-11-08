@@ -36,7 +36,7 @@ object Ops:
         list: Queue.Kind.Label,
         text: Queue.QueueItem.Text,
         topic: Option[Queue.QueueItem.Topic],
-        reason: Option[Queue.QueueItem.Reason]
+        reason: Option[Problem]
     )
     case Done(id: Queue.Id)
     case Edit(id: Queue.Id, text: Queue.QueueItem.Text)
@@ -98,7 +98,7 @@ object Ops:
                   Queue.Kind.Label(list),
                   Queue.QueueItem.Text(text),
                   topic.map(Queue.QueueItem.Topic(_)),
-                  reason.map(Queue.QueueItem.Reason(_))
+                  reason.map(Problem(_))
                 )
               )
             case "add" :: Nil => Left(s"add needs the item text — $usage")

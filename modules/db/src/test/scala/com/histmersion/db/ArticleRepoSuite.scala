@@ -411,7 +411,7 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(f))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_cov2001_egypt") -> Article.ReasonsValue("about Egypt")))
+        .setTo(Map(Citekey("zz_cov2001_egypt") -> Problem("about Egypt")))
     )
     val a = ArticleFixtures.load(ds, slug).get
     assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
@@ -420,8 +420,8 @@ class ArticleRepoSuite extends DbSuite:
       slug,
       Article.Patch(reasons =
         List(
-          Coverage.Reason(Citekey("zz_cov2002_hatti"), Coverage.Entry.Reason("about Hatti")),
-          Coverage.Reason(Citekey("zz_cov2001_egypt"), Coverage.Entry.Reason(""))
+          Coverage.Reason(Citekey("zz_cov2002_hatti"), Problem("about Hatti")),
+          Coverage.Reason(Citekey("zz_cov2001_egypt"), Problem(""))
         )
       )
     )
@@ -450,7 +450,7 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x")))))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_covren2001_old") -> Article.ReasonsValue("about Egypt")))
+        .setTo(Map(Citekey("zz_covren2001_old") -> Problem("about Egypt")))
     )
     assert(
       SourceFixtures

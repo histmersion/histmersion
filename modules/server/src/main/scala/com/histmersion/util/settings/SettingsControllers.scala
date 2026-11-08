@@ -21,7 +21,7 @@ final class SettingsControllers(
       p <- prefix
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold[Either[SettingKey.Problem, Option[SettingKey]]](Right(None))(raw =>
+        .fold[Either[Problem, Option[SettingKey]]](Right(None))(raw =>
           SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
         )
         .left
@@ -66,7 +66,7 @@ final class SettingsControllers(
       .fold(
         why => Left(Api.Error(Api.Error.Message(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
         msg =>
-          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), ConfigEdit.Restart.Message(msg.value)))
+          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), Problem(msg.value)))
       )
 
   def setupDue: Boolean = settings.setupDue

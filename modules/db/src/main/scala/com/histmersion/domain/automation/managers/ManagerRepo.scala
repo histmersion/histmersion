@@ -496,7 +496,7 @@ object ManagerRepo:
     */
   def toEvaluate(managerId: ManagerRow.Id)(using
       DbCon
-  ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Agents.RunInfo.Error])])] =
+  ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Problem])])] =
     val rows =
       (itemSelect ++ of(" WHERE manager_id = ? AND status = 'active' ORDER BY id", str(managerId.value))).frag
         .query[ItemRow]
@@ -507,7 +507,7 @@ object ManagerRepo:
       val run = i.runId.flatMap(r =>
         (
           sql"SELECT status, error FROM jobs WHERE id = $r"
-            .query[(Agents.RunInfo.Status, Option[Agents.RunInfo.Error])]
+            .query[(Agents.RunInfo.Status, Option[Problem])]
             .run()
             .headOption
         )

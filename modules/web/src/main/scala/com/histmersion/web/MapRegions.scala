@@ -80,7 +80,7 @@ object MapRegions:
       named: Option[Basemap.Focus.Name],
       maxZoom: ZoomText,
       dryRun: Basemap.FetchQuery.DryRun
-  ): Either[Basemap.Problem, Basemap.FetchQuery] =
+  ): Either[Problem, Basemap.FetchQuery] =
     val typed = box.value.trim
     for
       b <- Basemap.validBBox(Basemap.Focus.Bbox(typed))
@@ -90,7 +90,7 @@ object MapRegions:
           t.toIntOption
             .filter(z => z >= 0 && z <= Basemap.MaxZoomCap)
             .map(Some(_))
-            .toRight(Basemap.Problem(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}"))
+            .toRight(Problem(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}"))
     yield content match
       case Content.Map =>
         Basemap.FetchQuery(

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -16,8 +17,6 @@ object PlanQuota:
   object Now extends Newtype[Long, Pure]
   type PoolIdText = PoolIdText.T
   object PoolIdText extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type WindowStateNow = Now
   val WindowStateNow: Now.type = Now
   type VerdictNow = Now
@@ -176,7 +175,7 @@ object PlanQuota:
       leftPct: WindowState.LeftPct,
       stale: WindowState.Stale,
       usable: WindowState.Usable,
-      why: Option[WindowState.Why]
+      why: Option[Problem]
   )
 
   object WindowState:
@@ -186,13 +185,11 @@ object PlanQuota:
     object Stale extends Newtype[Boolean, Pure]
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   enum Verdict derives CanEqual:
     case Usable(note: Option[Usable.Note])
 
-    case Blocked(reason: Blocked.Reason, until: Option[Blocked.Until])
+    case Blocked(reason: Problem, until: Option[Blocked.Until])
 
     def usable: Boolean = (this.isInstanceOf[Usable])
 
@@ -202,8 +199,6 @@ object PlanQuota:
       object Note extends Newtype[String, Pure]
 
     object Blocked:
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
       export Reading.ResetsAt as Until
 
   def current(readings: List[Reading], now: Now, model: Option[ModelChains.ChainEntry.Model] = None): List[Reading] =
@@ -236,13 +231,13 @@ object PlanQuota:
       WindowStatus.LeftPct(left),
       WindowState.Stale(stale),
       WindowState.Usable(why.isEmpty),
-      (why).map(refactorValue4 => WindowState.Why(refactorValue4))
+      (why).map(refactorValue4 => Problem(refactorValue4))
     )
 
   def verdict(
       readings: List[Reading],
       held: PoolStatus.Held,
-      refusal: Option[(Verdict.Blocked.Reason, Option[Verdict.Blocked.Until])],
+      refusal: Option[(Problem, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: VerdictNow,
       model: Option[PlanQuota.VerdictModel] = None
@@ -252,12 +247,12 @@ object PlanQuota:
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
       if (held).value then
-        Verdict.Blocked(Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
+        Verdict.Blocked(Problem("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))        => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty =>
-            Verdict.Blocked(Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
+            Verdict.Blocked(Problem(blocking.flatMap(_.why).mkString("; ")), earliest)
           case None if states.isEmpty =>
             Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
           case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) =>
@@ -279,19 +274,13 @@ object PlanQuota:
 
   enum Login derives CanEqual:
     case Present(detail: Present.Detail)
-    case Missing(why: Missing.Why)
-    case Unknown(why: Unknown.Why)
+    case Missing(why: Problem)
+    case Unknown(why: Problem)
 
   object Login:
     object Present:
       type Detail = Detail.T
       object Detail extends Newtype[String, Pure]
-    object Missing:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
-    object Unknown:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
 
   enum RefreshNeed(val text: RefreshNeed.Text) derives CanEqual:
     case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
@@ -318,7 +307,7 @@ object PlanQuota:
   def refreshNeed(
       readings: List[Reading],
       held: PoolStatus.Held,
-      refusal: Option[(Verdict.Blocked.Reason, Option[Verdict.Blocked.Until])],
+      refusal: Option[(Problem, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: RefreshNeedNow,
       model: Option[PlanQuota.RefreshNeedModel] = None
@@ -372,7 +361,7 @@ object PlanQuota:
       observedAt: WindowStatus.ObservedAt,
       ageSeconds: WindowStatus.AgeSeconds,
       source: WindowStatus.Source,
-      why: Option[WindowStatus.Why] = None
+      why: Option[Problem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -397,8 +386,6 @@ object PlanQuota:
     object AgeSeconds extends Newtype[Long, Pure]
     type Source = Source.T
     object Source extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   final case class PoolStatus(
       pool: PoolStatus.Pool,
@@ -409,7 +396,7 @@ object PlanQuota:
       floorsSource: PoolStatus.FloorsSource,
       held: PoolStatus.Held,
       usable: PoolStatus.Usable,
-      reason: Option[PoolStatus.Reason],
+      reason: Option[Problem],
       until: Option[PoolStatus.Until],
       maxCallsInFlight: PoolStatus.MaxCallsInFlight,
       windows: List[WindowStatus],
@@ -438,8 +425,6 @@ object PlanQuota:
     object Held extends Newtype[Boolean, Pure]
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type Until = Until.T
     object Until extends Newtype[String, Pure]
     type MaxCallsInFlight = MaxCallsInFlight.T
@@ -528,7 +513,7 @@ object PlanQuota:
     type Now = Now.T
     object Now extends Newtype[String, Pure]
 
-  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Cooldown.Reason)
+  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Problem)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -537,8 +522,6 @@ object PlanQuota:
     export ModelChains.ChainEntry.Model
     type Until = Until.T
     object Until extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
       derives KindlingsCodecAsObject,
@@ -586,7 +569,7 @@ object PlanQuota:
 
   final case class GuardAnswer(
       allow: GuardAnswer.Allow,
-      reason: Option[GuardAnswer.Reason] = None,
+      reason: Option[Problem] = None,
       resetsAt: Option[GuardAnswer.ResetsAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -595,7 +578,5 @@ object PlanQuota:
   object GuardAnswer:
     type Allow = Allow.T
     object Allow extends Newtype[Boolean, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type ResetsAt = ResetsAt.T
     object ResetsAt extends Newtype[String, Pure]

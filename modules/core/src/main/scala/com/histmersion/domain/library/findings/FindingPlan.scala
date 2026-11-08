@@ -101,7 +101,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
                 List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value)))
               )
             ),
-            List(MergeIssue.Why("by default both are kept; merge makes them one finding")),
+            List(Problem("by default both are kept; merge makes them one finding")),
             List(km.Both, km.Merge),
             Some(MergeDecision.of(km.Both)),
             cond,

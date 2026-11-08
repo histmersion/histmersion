@@ -357,7 +357,7 @@ class AcquireSuite extends munit.FunSuite:
       isOa = WorkRef.IsOa(true),
       oaStatus = Some(WorkRef.OaStatus("gold"))
     )
-    val refusal = Acquire.Refusal(
+    val refusal = Problem(
       "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
         "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
     )
@@ -366,7 +366,7 @@ class AcquireSuite extends munit.FunSuite:
         w,
         com.histmersion.api.library.Doi("10.1515/zz"),
         Citekey("k"),
-        List(refusal, refusal, Acquire.Refusal(" "))
+        List(refusal, refusal, Problem(" "))
       )
       .getOrElse(fail("an item"))
       .value

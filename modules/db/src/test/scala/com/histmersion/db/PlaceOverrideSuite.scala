@@ -152,7 +152,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       kind: Option[Place.OverrideEdit.Put.Kind] = None,
       from: Option[Year] = None,
       to: Option[Year] = None,
-      reason: Option[Place.OverrideEdit.Put.Reason] = None
+      reason: Option[Problem] = None
   ) =
     PlaceFixtures.setOverride(
       ds,
@@ -166,7 +166,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(0), Set(Regio, City), "as a site, Regio XII takes the city's findings by distance")
     val r = put(
       kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)),
-      reason = Some(Place.OverrideEdit.Put.Reason("one of the 14 regiones"))
+      reason = Some(Problem("one of the 14 regiones"))
     ).toOption.get
     assertEquals(
       (r.kindBefore, r.kindAfter, r.findingsBefore, r.findingsAfter, r.unlocated),
@@ -252,7 +252,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       ds,
       Tribe,
       Place.OverrideEdit
-        .Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Place.OverrideEdit.Put.Reason("kept a region"))),
+        .Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Problem("kept a region"))),
       tol
     )
     assertEquals(listed, Set.empty[String])
@@ -378,7 +378,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id: DPlace.Id,
       lon: Longitude,
       lat: Latitude,
-      reason: Place.OverrideEdit.Put.Reason = Place.OverrideEdit.Put.Reason("Pleiades representative point")
+      reason: Problem = Problem("Pleiades representative point")
   ) =
     PlaceFixtures.setOverride(ds, id, Place.OverrideEdit.Put(None, None, Some(reason), Some(GeoPoint(lon, lat))), tol)
 
@@ -477,7 +477,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id,
       Longitude(152.5),
       Latitude(-32.5),
-      Place.OverrideEdit.Put.Reason("Pleiades reprPoint; the Wikidata coordinate is the capital")
+      Problem("Pleiades reprPoint; the Wikidata coordinate is the capital")
     )
     assertEquals(geom(id), "POINT(152.5 -32.5)")
     assertEquals(listed, Nil)

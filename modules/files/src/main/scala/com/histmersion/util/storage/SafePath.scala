@@ -1,5 +1,6 @@
 package com.histmersion
 package util.storage
+import com.histmersion.api.Problem
 import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}
@@ -18,8 +19,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * existing deployment.
   */
 object SafePath:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** `Right(resolved)` when `candidate` is inside `base`, or when `base` is not configured. Relative candidates are
     * resolved against `base` when there is one.

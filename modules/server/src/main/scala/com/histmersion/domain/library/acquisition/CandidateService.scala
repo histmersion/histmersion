@@ -26,7 +26,7 @@ trait CandidateService:
   def recordWatch(
       watch: CandidateWatch,
       watermark: Option[CandidateWatch.Watermark],
-      error: Option[CandidateWatch.LastError],
+      error: Option[Problem],
       found: CandidateWatch.LastFound
   ): Unit
 
@@ -64,7 +64,7 @@ object CandidateService:
     def recordWatch(
         watch: CandidateWatch,
         watermark: Option[CandidateWatch.Watermark],
-        error: Option[CandidateWatch.LastError],
+        error: Option[Problem],
         found: CandidateWatch.LastFound
     ): Unit =
       db.transact(CandidateRepo.recordWatch(watch, watermark, error, found))
@@ -100,7 +100,7 @@ object CandidateService:
     def recordWatch(
         watch: CandidateWatch,
         watermark: Option[CandidateWatch.Watermark],
-        error: Option[CandidateWatch.LastError],
+        error: Option[Problem],
         found: CandidateWatch.LastFound
     ): Unit =
       val key = (watch.goal, watch.kind, watch.subject, watch.index)

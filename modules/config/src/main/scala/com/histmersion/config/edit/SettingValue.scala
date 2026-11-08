@@ -42,8 +42,6 @@ enum SettingValue derives CanEqual:
 object SettingValue:
   type Hocon = Hocon.T
   object Hocon extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   object Text:
     type Value = Value.T

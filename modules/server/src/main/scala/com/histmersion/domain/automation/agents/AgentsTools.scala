@@ -472,7 +472,7 @@ object AgentsTools:
                       Managers.ItemPatch.Action("hold"),
                       until = in.until.map(Managers.ItemPatch.Until(_)),
                       untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
-                      reason = in.text.map(Managers.ItemPatch.Reason(_))
+                      reason = in.text.map(Problem(_))
                     )
                   )
                 )

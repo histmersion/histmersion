@@ -69,7 +69,7 @@ final class AssetsControllers(
       Citekey
         .parse(citekey.value)
         .left
-        .map(p => Write.invalid(Write.InvalidMessage(p.value)))
+        .map(p => Write.invalid(Problem(p.value)))
         .flatMap(storeFigures(_, citekey, in))
     )
 
@@ -88,7 +88,7 @@ final class AssetsControllers(
       .lookup(citekey)
       .left
       .map {
-        case MediaSources.Error.Invalid(message) => Write.invalid(Write.InvalidMessage(message.value))
+        case MediaSources.Error.Invalid(message) => Write.invalid(Problem(message.value))
         case MediaSources.Error.NotFound         => Write.notFound(asked)
       }
       .flatMap { _ =>

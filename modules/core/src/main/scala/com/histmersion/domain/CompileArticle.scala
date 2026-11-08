@@ -111,7 +111,7 @@ object CompileArticle:
   ) derives KindlingsCodecAsObject
 
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Coverage.Entry.Reason])
+  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Problem])
       derives KindlingsCodecAsObject
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
@@ -165,7 +165,7 @@ object CompileArticle:
     else
       val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
       val notUsed =
-        Option.when(kept.isEmpty)(Coverage.Entry.Reason(reason.getOrElse("no claim could be verified in its record")))
+        Option.when(kept.isEmpty)(Problem(reason.getOrElse("no claim could be verified in its record")))
       Right((Extracted(citekey, kept, notUsed), problems.map(p => Problem(s"extract $citekey: dropped — $p"))))
 
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
@@ -183,7 +183,7 @@ object CompileArticle:
     * for the `_Method_` note.
     */
   /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: Citekey, reason: Coverage.Entry.Reason) derives KindlingsCodecAsObject
+  final case class NotUsed(citekey: Citekey, reason: Problem) derives KindlingsCodecAsObject
 
   final case class Evidence(
       filter: ArticleDraft.Filter,
@@ -227,12 +227,12 @@ object CompileArticle:
       .filter(f => f.status != Source.Status.Current && f.status != Source.Status.Foundational)
       .map(_.citekey)
     val notUsed = extracted.collect {
-      case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse(Coverage.Entry.Reason("no claim")))
+      case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse(Problem("no claim")))
     } ++
       facts.collect {
         case f
             if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
-          NotUsed(f.citekey, Coverage.Entry.Reason("retracted: may be cited only to note the retraction"))
+          NotUsed(f.citekey, Problem("retracted: may be cited only to note the retraction"))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
@@ -334,7 +334,7 @@ object CompileArticle:
       current: Article.Body,
       text: Article.Body,
       section: Option[Article.Section]
-  ): Either[Articles.Problem, Article.Body] =
+  ): Either[Problem, Article.Body] =
     mode match
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
@@ -423,7 +423,7 @@ object CompileArticle:
             )
           )
           .modify(_.reason)
-          .setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
+          .setTo(Problem(Option(r.reason).map(_.value.trim).getOrElse("")))
       )
     val reasonProblems = stated.flatMap { r =>
       if !inFilterKeys(r.citekey.value) then
@@ -436,7 +436,7 @@ object CompileArticle:
     val writerReasons = stated
       .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty)
       .map(r =>
-        r.citekey -> Coverage.Entry.Reason(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
+        r.citekey -> Problem(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
       )
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one

@@ -54,7 +54,7 @@ class PluginsReportSuite extends munit.FunSuite:
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
     error =
-      Some(PluginDescription.Error("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
+      Some(Problem("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
   )
   private val alien = PluginStatus(
     PluginStatus.Id("old"),
@@ -62,7 +62,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.SpiVersion(0),
     enabled = PluginStatus.Enabled(false),
     PluginStatus.State(PluginState.Refused.wire.value),
-    error = Some(PluginDescription.Error("old: built for SPI 0, this host speaks 1"))
+    error = Some(Problem("old: built for SPI 0, this host speaks 1"))
   )
 
   test("states have wire names and parse back"):

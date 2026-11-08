@@ -1,6 +1,8 @@
 package com.histmersion
 package api.personal
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
@@ -33,8 +35,6 @@ object Target:
 
   type Identity = Identity.T
   object Identity extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Where = Where.T
   object Where extends Newtype[String, Pure]
 

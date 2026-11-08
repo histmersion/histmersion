@@ -544,7 +544,7 @@ final class ManagersControllers(
           val h = Hold(
             in.until.map(_.value.trim).filter(_.nonEmpty).map(Hold.Until(_)),
             in.untilSource.map(_.value.trim).filter(_.nonEmpty).map(Hold.UntilSource(_)),
-            Hold.Reason(in.reason.fold("held by a person")(_.value))
+            Problem(in.reason.fold("held by a person")(_.value))
           )
           for
             _ <- h.until.fold[Either[Api.Error, Unit]](Right(()))(u =>
@@ -842,7 +842,7 @@ final class ManagersControllers(
         val hold = Hold(
           e.until.map(u => Hold.Until(u.value)),
           e.untilSource.map(u => Hold.UntilSource(u.value)),
-          Hold.Reason(s"hint #$hintId: ${text.value.take(200)}"),
+          Problem(s"hint #$hintId: ${text.value.take(200)}"),
           Some(Hold.Hint(hintId.value))
         )
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>

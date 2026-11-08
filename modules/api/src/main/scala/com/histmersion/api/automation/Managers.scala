@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -159,14 +160,11 @@ object Managers:
       title: Article.Title,
       kind: Article.Kind.Wire,
       filter: Article.Filter,
-      why: ArticleSpec.Why = ArticleSpec.Why("")
+      why: Problem = Problem("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  object ArticleSpec:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   final case class ManagerConfig(
       maxRuns: Option[ManagerConfig.MaxRuns] = None,
@@ -223,8 +221,6 @@ object Managers:
       other.extendMinNew.orElse(extendMinNew)
     )
   object ManagerConfig:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
 
@@ -521,7 +517,7 @@ object Managers:
   final case class Hold(
       until: Option[Hold.Until] = None,
       untilSource: Option[Hold.UntilSource] = None,
-      reason: Hold.Reason = Hold.Reason(""),
+      reason: Problem = Problem(""),
       hint: Option[Hold.Hint] = None,
       untilApproval: Option[Hold.UntilApproval] = None,
       focus: Option[Hold.Focus] = None
@@ -534,8 +530,6 @@ object Managers:
     object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
     object UntilSource extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type Hint = Hint.T
     object Hint extends Newtype[Long, Pure]
     type UntilApproval = UntilApproval.T
@@ -601,7 +595,7 @@ object Managers:
       authors: List[AuthorName] = Nil,
       venue: Option[Source.Venue] = None,
       goals: List[Goal.Slug] = Nil,
-      why: OaWork.Why = OaWork.Why(""),
+      why: Problem = Problem(""),
       foundBy: Option[OaWork.FoundBy] = None,
       acquireText: Option[OaWork.AcquireText] = None
   ) derives KindlingsCodecAsObject,
@@ -609,8 +603,6 @@ object Managers:
         com.histmersion.api.json.Schema
 
   object OaWork:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type FoundBy = FoundBy.T
     object FoundBy extends Newtype[String, Pure]
     type AcquireText = AcquireText.T
@@ -712,7 +704,7 @@ object Managers:
       text: HintProposal.Text,
       effect: HintEffect,
       by: HintProposal.By = HintProposal.By(""),
-      why: HintProposal.Why = HintProposal.Why("")
+      why: Problem = Problem("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -724,8 +716,6 @@ object Managers:
     object Text extends Newtype[String, Pure]
     type By = By.T
     object By extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   final case class ManagerHint(
       id: ManagerHint.Id,
@@ -859,7 +849,7 @@ object Managers:
       priority: Option[ItemPatch.Priority] = None,
       until: Option[ItemPatch.Until] = None,
       untilSource: Option[ItemPatch.UntilSource] = None,
-      reason: Option[ItemPatch.Reason] = None
+      reason: Option[Problem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -873,8 +863,6 @@ object Managers:
     object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
     object UntilSource extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 

@@ -1,6 +1,8 @@
 package com.histmersion
 package api.library
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.{Ascii, WireEnumValues}
 import com.histmersion.api.catalogue.Period
@@ -164,8 +166,6 @@ object Source:
     object LogText extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Markdown = Markdown.T
     object Markdown extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     export com.histmersion.api.library.Source.CalibreId as CalibreLineCalibreId
 
@@ -198,11 +198,11 @@ object Source:
     def refusal(
         ck: com.histmersion.api.library.Citekey,
         blockers: List[DeleteBlocker]
-    ): com.histmersion.api.library.Source.Delete.Problem =
+    ): Problem =
       val groups = blockers.groupBy(_.kind).toList.sortBy(_._1.ordinal).map { (k, bs) =>
         s"${k.label} ${bs.map(b => b.id.value + b.title.fold("")(t => s" ($t)")).mkString(", ")}"
       }
-      _root_.com.histmersion.api.library.Source.Delete.Problem(
+      Problem(
         s"'$ck' cannot be deleted — ${groups.mkString("; ")}. Fix those first (remove the citation from " +
           "each article, re-source the events, let the job finish); there is no override"
       )
@@ -458,7 +458,7 @@ object Source:
       method: MatchMethod,
       outcome: MatchOutcome,
       score: Option[Match.Score] = None,
-      why: List[Match.Why] = Nil,
+      why: List[Problem] = Nil,
       issue: Option[Match.Issue] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -470,8 +470,6 @@ object Source:
 
     type Score = Score.T
     object Score extends Newtype[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Why = Why.T
-    object Why extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Issue = Issue.T
     object Issue extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -655,8 +653,6 @@ object Source:
     * metadata checked, an old citekey in a patch followed to the current one.
     */
   object Write:
-    type Problem = Problem.T
-    object Problem extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def findingId(citekey: Citekey, n: Finding.Ordinal): Finding.Id = Finding.Id(s"$citekey#$n")
 
@@ -664,7 +660,7 @@ object Source:
         citekey: com.histmersion.api.library.Citekey,
         p: Put,
         aliases: Set[com.histmersion.api.library.Citekey] = Set.empty
-    ): Either[com.histmersion.api.library.Source.Write.Problem, Source] =
+    ): Either[Problem, Source] =
       for
         period <- periodOf(p.periodStart, p.periodEnd, "source")
         fs <- numbered(citekey, p.findings)
@@ -702,7 +698,7 @@ object Source:
         updatedAt = None
       )
 
-    def precondition(existing: Source, patch: Patch): Either[com.histmersion.api.library.Source.Write.Problem, Unit] =
+    def precondition(existing: Source, patch: Patch): Either[Problem, Unit] =
       patch.ifUpdatedAt match
         case None       => Right(())
         case Some(want) =>
@@ -770,7 +766,7 @@ object Source:
         citekey: com.histmersion.api.library.Citekey,
         current: List[Edge],
         p: EdgesPatch
-    ): Either[com.histmersion.api.library.Source.Write.Problem, List[Edge]] =
+    ): Either[Problem, List[Edge]] =
       for
         removed <- traverse(p.remove)(
           edgeOf(citekey, Set.empty, EdgePart("edges.remove"), EdgeRole("patched source"), _)
@@ -888,7 +884,7 @@ object Source:
         what: String,
         field: String,
         v: Year
-    ): com.histmersion.api.library.Source.Write.Problem =
+    ): Problem =
       Problem(
         s"$what: $field ($v) is outside the representable range " +
           s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"

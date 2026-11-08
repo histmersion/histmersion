@@ -384,7 +384,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(true),
           PluginStatus.State("failed"),
-          error = Some(PluginDescription.Error("histmersion.plugins.broken.x: bad"))
+          error = Some(Problem("histmersion.plugins.broken.x: bad"))
         )
       ),
       List(PluginsReport.Warnings("histmersion.plugins.helo configures no plugin in this binary — ignored"))

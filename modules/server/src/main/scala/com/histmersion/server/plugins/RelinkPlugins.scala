@@ -205,7 +205,7 @@ object RelinkPlugins:
       PluginDescription.Id(""),
       PluginDescription.Version(""),
       PluginDescription.SpiVersion(0),
-      error = Some(PluginDescription.Error(error))
+      error = Some(Problem(error))
     )
 
   private def fromJar(c: Class[?], jar: Path): Boolean =
@@ -269,12 +269,12 @@ object RelinkPlugins:
   /** Pure: the classes each plugin jar shares with the kit or with an earlier plugin jar. The image has one class
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
-  def duplicates(kit: Set[ClassName], plugins: List[(PluginJar.File, Set[ClassName])]): List[PluginKit.Problem] =
+  def duplicates(kit: Set[ClassName], plugins: List[(PluginJar.File, Set[ClassName])]): List[Problem] =
     @tailrec def loop(
         rest: List[(PluginJar.File, Set[ClassName])],
         seen: Set[(ClassName, String)],
-        acc: List[PluginKit.Problem]
-    ): List[PluginKit.Problem] =
+        acc: List[Problem]
+    ): List[Problem] =
       rest match
         case Nil                     => acc
         case (name, classes) :: tail =>
@@ -287,7 +287,7 @@ object RelinkPlugins:
                 (if cs.size > 3 then ", …)" else ")")
             }
             List(
-              PluginKit.Problem(
+              Problem(
                 s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
                   "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar"
               )
@@ -298,15 +298,15 @@ object RelinkPlugins:
   /** Everything that refuses linking these plugin jars, with their dependency jars `deps`, into this kit, and a line
     * per plugin found.
     */
-  def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[Note], List[PluginKit.Problem]) =
+  def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[Note], List[Problem]) =
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
     @tailrec def idRefusals(
         rest: List[PluginJar],
         t: Map[PluginDescription.Id, String],
-        acc: List[PluginKit.Problem]
-    ): List[PluginKit.Problem] =
+        acc: List[Problem]
+    ): List[Problem] =
       rest match
         case Nil       => acc
         case j :: tail =>

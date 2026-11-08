@@ -57,7 +57,7 @@ object ConfigTextEdit:
       // a key changed twice in one write: the last change wins, the first is not written at all
       val last = edits.reverse.distinctBy(_.key.value).reverse
       loop(last, doc, Nil, Nil)
-    catch case e: ConfigException => Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
+    catch case e: ConfigException => Left(SettingError.Unreadable(Problem(e.getMessage)))
 
   private val AddedBlock = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : \{\s*$""".r
   private val AddedValue = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : (.*)$""".r
@@ -146,7 +146,7 @@ object ConfigTextEdit:
           case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(())
           case (Written.Nowhere, None)                                                                  => Right(())
           case _                                                                                        =>
-            Left(SettingError.Invalid(SettingError.Invalid.Why(s"${key.relative} did not read back as it was written")))
+            Left(SettingError.Invalid(Problem(s"${key.relative} did not read back as it was written")))
       }
       .find(_.isLeft)
       .getOrElse(Right(()))

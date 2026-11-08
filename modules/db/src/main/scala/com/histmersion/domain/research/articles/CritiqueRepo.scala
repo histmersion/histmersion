@@ -35,7 +35,7 @@ private[articles] object CritiqueRepo:
         CritiqueReason(
           Citekey(s),
           Citekey(d),
-          CritiqueReason.Reason(r),
+          Problem(r),
           Some(CritiqueReason.By(b))
         )
       )

@@ -468,7 +468,7 @@ object PlacesCmd:
               kind.map(Place.OverrideSet.Kind(_)),
               from.map(Year(_)),
               to.map(Year(_)),
-              reason.map(Place.OverrideSet.Reason(_)),
+              reason.map(Problem(_)),
               Place.OverrideSet.Reset(reset),
               point.map(_._1),
               point.map(_._2)
@@ -487,7 +487,7 @@ object PlacesCmd:
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone
     )
       .mapN { (id, into, reason) => (c: Client) =>
-        c.mergePlace(Place.Id(id), Place.MergeIn(Place.Id(into), reason.map(Place.MergeIn.Reason(_))))
+        c.mergePlace(Place.Id(id), Place.MergeIn(Place.Id(into), reason.map(Problem(_))))
           .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }
@@ -498,7 +498,7 @@ object PlacesCmd:
   ) {
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
-        c.removePlace(Place.Id(id), Place.RemoveIn(reason.map(Place.RemoveIn.Reason(_))))
+        c.removePlace(Place.Id(id), Place.RemoveIn(reason.map(Problem(_))))
           .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }

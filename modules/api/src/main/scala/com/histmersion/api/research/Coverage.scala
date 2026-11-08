@@ -1,5 +1,6 @@
 package com.histmersion
 package api.research
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -57,16 +58,13 @@ object Coverage:
   object Edge:
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
-  final case class Entry(source: Source, reason: Option[Entry.Reason])
+  final case class Entry(source: Source, reason: Option[Problem])
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  object Entry:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
-  final case class Reason(citekey: Citekey, reason: Entry.Reason) derives KindlingsCodecAsObject
+  final case class Reason(citekey: Citekey, reason: Problem) derives KindlingsCodecAsObject
   object Reason:
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
@@ -81,8 +79,8 @@ object Coverage:
 
     val MaxChars = 500
 
-    def merge(current: Map[Citekey, Entry.Reason], stated: List[Reason]): Either[String, Map[Citekey, Entry.Reason]] =
-      stated.foldLeft[Either[String, Map[Citekey, Entry.Reason]]](Right(current)) { (acc, r) =>
+    def merge(current: Map[Citekey, Problem], stated: List[Reason]): Either[String, Map[Citekey, Problem]] =
+      stated.foldLeft[Either[String, Map[Citekey, Problem]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
           val ck =
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
@@ -91,11 +89,11 @@ object Coverage:
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
           else if text.isEmpty then Right(m - Citekey(ck))
-          else Right(m.updated(Citekey(ck), Entry.Reason(text)))
+          else Right(m.updated(Citekey(ck), Problem(text)))
         }
       }
 
-    def list(m: Map[Citekey, Entry.Reason]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
+    def list(m: Map[Citekey, Problem]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
 
   final case class Source(
       citekey: Citekey,

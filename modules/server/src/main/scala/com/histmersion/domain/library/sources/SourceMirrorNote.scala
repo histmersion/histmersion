@@ -16,5 +16,5 @@ final class SourceMirrorNote(sources: SourcesControllers) extends Mirror.Note:
     Citekey
       .parse(id.value)
       .left
-      .map(p => Write.invalid(Write.InvalidMessage(p.value)))
+      .map(p => Write.invalid(Problem(p.value)))
       .flatMap(ck => sources.note(ck).map(t => Frontmatter.NoteBody(t.value)))

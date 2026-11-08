@@ -20,8 +20,6 @@ object ArchiveFile:
   object Name extends Newtype[String, Pure]
   type Format = Format.T
   object Format extends Newtype[String, Pure]:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
   type Megabytes = Megabytes.T

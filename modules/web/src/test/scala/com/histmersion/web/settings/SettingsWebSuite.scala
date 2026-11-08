@@ -169,7 +169,7 @@ class SettingsWebSuite extends munit.FunSuite:
             PluginStatus.SpiVersion(2),
             enabled = PluginStatus.Enabled(true),
             state = PluginStatus.State("failed"),
-            error = Some(PluginDescription.Error("no key"))
+            error = Some(Problem("no key"))
           )
         )
         .value

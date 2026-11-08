@@ -110,7 +110,7 @@ class MarkdownSuite extends munit.FunSuite:
       matchedHeading = Some(SearchHit.MatchedHeading("CHAPTER 3"))
     )
     val md = SearchMarkdown.searchResults(
-      SearchResult(RowCount(1), List(Hit(hit, Nil, List(Hit.Why("full text matches 'x'")))))
+      SearchResult(RowCount(1), List(Hit(hit, Nil, List(Problem("full text matches 'x'")))))
     )
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 

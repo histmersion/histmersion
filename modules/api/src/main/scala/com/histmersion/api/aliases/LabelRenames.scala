@@ -1,5 +1,6 @@
 package com.histmersion
 package api.aliases
+import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
@@ -22,10 +23,10 @@ object LabelRenames:
     if !Shape.matches(to) then
       Left(
         Api.Error(
-          Api.Error.Problem(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')"),
+          Problem(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if to == (from).value.trim then
-      Left(Api.Error(Api.Error.Problem(s"'$to' is already that $what"), Some(Api.Error.Code(Write.CodeInvalid))))
+      Left(Api.Error(Problem(s"'$to' is already that $what"), Some(Api.Error.Code(Write.CodeInvalid))))
     else Right(Label(to))

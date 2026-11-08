@@ -1842,7 +1842,7 @@ object ReviewArticle:
             Left(
               s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
             )
-          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, CritiqueReason.Reason(reason)))
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Problem(reason)))
       }
     }
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
@@ -2190,7 +2190,7 @@ object ReviewArticle:
           a =>
             a.text
               .flatMap(t => links(t.value).headOption)
-              .map(p => Article.Edits.EditResult.Problem(s"its text is refused: $p"))
+              .map(p => Problem(s"its text is refused: $p"))
         )
       case Article.Edits.Draft.Body(t) => Article.Edits.Applied(Fix.Body(t.value.trim), Nil)
     val body = applied.body
@@ -2474,7 +2474,7 @@ object ReviewArticle:
           case Some(Left(e))  => Left(s"set aside: $e")
           case Some(Right(r)) =>
             held(s"set aside ${r.wire}", r, reason).map(p =>
-              Right(CritiqueReason(p.ref.src, p.ref.dst, CritiqueReason.Reason(reason)))
+              Right(CritiqueReason(p.ref.src, p.ref.dst, Problem(reason)))
             )
       else
         byId.get(id) match

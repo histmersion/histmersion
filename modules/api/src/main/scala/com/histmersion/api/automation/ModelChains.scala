@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -11,8 +12,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object ModelChains:
   object Chain:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
 
@@ -24,26 +23,26 @@ object ModelChains:
   def parseChain(
       s: Chain.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Chain.Problem, List[ModelRef]] =
+  ): Either[Problem, List[ModelRef]] =
     val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
     else
       (parseModels((parts).map(refactorValue => ModelRef.Model.Spec(refactorValue)), known)).left.map(refactorError =>
-        Chain.Problem((refactorError).value)
+        Problem((refactorError).value)
       )
 
   def parseModels(
       refs: List[ModelRef.Model.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[ModelRef.Model.Problem, List[ModelRef]] =
+  ): Either[Problem, List[ModelRef]] =
     val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(r => ModelRef.parse(ModelRef.Wire(r), known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then Left(ModelRef.Model.Problem(s"a chain names a model twice: ${dup.mkString(", ")}"))
+        if dup.nonEmpty then Left(Problem(s"a chain names a model twice: ${dup.mkString(", ")}"))
         else Right(ms)
-      case errs => Left(ModelRef.Model.Problem(errs.mkString("; ")))
+      case errs => Left(Problem(errs.mkString("; ")))
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
 
@@ -85,16 +84,16 @@ object ModelChains:
 
     val MaxSeconds: MaxSeconds = MaxSecondsNumber(90L * 86400L)
 
-    def parse(s: LimitSpec.Window): Either[Limit.Problem, Window] =
+    def parse(s: LimitSpec.Window): Either[Problem, Window] =
       val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       val secs = Names.get(t).orElse {
         Option.when(t.length >= 2)(t.last).flatMap(Unit.get).flatMap(u => t.init.toLongOption.filter(_ > 0).map(_ * u))
       }
       secs match
         case None =>
-          Left(Limit.Problem(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
+          Left(Problem(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
         case Some(x) if x < 60 || x > MaxSeconds.value =>
-          Left(Limit.Problem(s"window '$s' must be between 1 minute and 90 days"))
+          Left(Problem(s"window '$s' must be between 1 minute and 90 days"))
         case Some(x) => Right(Window(Seconds(x)))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
@@ -104,8 +103,6 @@ object ModelChains:
     def spec: LimitSpec = LimitSpec(LimitSpec.Amount(amount.toDouble), measure, LimitSpec.Window(window.text))
 
   object Limit:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
 
@@ -184,8 +181,6 @@ object ModelChains:
       case Provider(k) => (m.provider == k)
 
   object Target:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
     type Wire = Wire.T
@@ -206,8 +201,6 @@ object ModelChains:
       ((limits.map(_.text) ++ Option.when((reservePct).value > 0)(s"reserve $reservePct%")).mkString(", "))
 
   object Allowance:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type ReserveSpec = ReserveSpec.T
     object ReserveSpec extends Newtype[String, Pure]
     type Spec = Spec.T
@@ -235,11 +228,11 @@ object ModelChains:
   def parseAllowances(
       s: Allowance.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Allowance.Problem, List[Allowance]] =
+  ): Either[Problem, List[Allowance]] =
     val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
-        case -1 => Left(Allowance.Problem(s"'$e' is not <provider:model or provider:*> = <limits>"))
+        case -1 => Left(Problem(s"'$e' is not <provider:model or provider:*> = <limits>"))
         case i  =>
           parseAllowance(
             Target.Spec(e.substring(0, i)),
@@ -251,30 +244,30 @@ object ModelChains:
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        if dup.nonEmpty then Left(Allowance.Problem(s"an allowance is given twice for ${dup.mkString(", ")}"))
+        if dup.nonEmpty then Left(Problem(s"an allowance is given twice for ${dup.mkString(", ")}"))
         else Right(as)
-      case errs => Left(Allowance.Problem(errs.mkString("; ")))
+      case errs => Left(Problem(errs.mkString("; ")))
 
   def parseAllowance(
       target: Target.Spec,
       items: List[Limit.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Allowance.Problem, Allowance] =
+  ): Either[Problem, Allowance] =
     val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
-      t <- Target.parse(target, known).left.map(e => Allowance.Problem(e.value))
+      t <- Target.parse(target, known).left.map(e => Problem(e.value))
       rs <- reserves match
         case Nil      => Right(Allowance.ReservePct(0))
         case r :: Nil => parseReserve(Allowance.ReserveSpec(r.drop("reserve".length)))
-        case _        => Left(Allowance.Problem(s"${t.wire}: more than one reserve"))
+        case _        => Left(Problem(s"${t.wire}: more than one reserve"))
       ls <- limits.map(l => Limit.parse(Limit.Spec(l))).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Allowance.Problem(s"${t.wire}: ${errs.mkString("; ")}"))
+        case (errs, _) => Left(Problem(s"${t.wire}: ${errs.mkString("; ")}"))
       a <- Allowance.of(t, ls, rs)
     yield a
 
-  def parseReserve(s: Allowance.ReserveSpec): Either[Allowance.Problem, Allowance.ReservePct] =
+  def parseReserve(s: Allowance.ReserveSpec): Either[Problem, Allowance.ReservePct] =
     (((s).value.trim
       .stripPrefix("=")
       .trim
@@ -283,7 +276,7 @@ object ModelChains:
       .toIntOption
       .toRight(s"'${(s).value.trim}' is not a reserve percentage"))
       .left
-      .map(refactorError4 => Allowance.Problem(refactorError4)))
+      .map(refactorError4 => Problem(refactorError4)))
       .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)
@@ -453,7 +446,7 @@ object ModelChains:
       model: ChainEntry.Model,
       ready: ChainEntry.Ready,
       usable: ChainEntry.Usable,
-      problem: Option[ChainEntry.Problem] = None,
+      problem: Option[Problem] = None,
       freesAt: Option[ChainEntry.FreesAt] = None,
       billing: Option[ChainEntry.Billing] = None,
       cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
@@ -468,8 +461,6 @@ object ModelChains:
     object Ready extends Newtype[Boolean, Pure]
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     export LimitStatus.FreesAt
     type Billing = Billing.T
     object Billing extends Newtype[String, Pure]
@@ -481,7 +472,7 @@ object ModelChains:
       source: RoleChain.Source,
       models: List[ChainEntry],
       active: Option[RoleChain.Active] = None,
-      problem: Option[RoleChain.Problem] = None
+      problem: Option[Problem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -493,5 +484,3 @@ object ModelChains:
     object Source extends Newtype[String, Pure]
     type Active = Active.T
     object Active extends Newtype[String, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]

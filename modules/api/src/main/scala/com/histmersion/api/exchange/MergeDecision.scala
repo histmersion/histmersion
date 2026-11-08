@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.Problem
 import com.histmersion.api.WireEnumValues
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
@@ -12,8 +13,6 @@ final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeD
     MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
 
 object MergeDecision:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 

@@ -114,11 +114,11 @@ class PlanQuotaSuite extends munit.FunSuite:
       verdict(
         List(r(FiveHour, Reading.UsedPct(1))),
         held = PlanQuota.PoolStatus.Held(false),
-        Some((PlanQuota.Verdict.Blocked.Reason("ordinary usage not allowed"), None)),
+        Some((Problem("ordinary usage not allowed"), None)),
         Rules0,
         NowAt
       )
-    assertEquals(v1, Verdict.Blocked(PlanQuota.Verdict.Blocked.Reason("ordinary usage not allowed"), None))
+    assertEquals(v1, Verdict.Blocked(Problem("ordinary usage not allowed"), None))
     val (v2, _) = verdict(
       List(r(Window10080, Reading.UsedPct(3), rejected = Reading.Rejected(true), limit = Reading.Limit("codex"))),
       held = PlanQuota.PoolStatus.Held(false),
@@ -130,7 +130,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     val (v3, _) = verdict(
       Nil,
       held = PlanQuota.PoolStatus.Held(false),
-      Some((PlanQuota.Verdict.Blocked.Reason("gone"), Some(Verdict.Blocked.Until(Now - 1)))),
+      Some((Problem("gone"), Some(Verdict.Blocked.Until(Now - 1)))),
       Rules0,
       NowAt
     )
@@ -321,7 +321,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       refreshNeed(
         stale,
         held = PlanQuota.PoolStatus.Held(false),
-        Some((PlanQuota.Verdict.Blocked.Reason("no"), None)),
+        Some((Problem("no"), None)),
         Rules0,
         NowAt
       ),
@@ -331,7 +331,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       refreshNeed(
         stale,
         held = PlanQuota.PoolStatus.Held(false),
-        Some((PlanQuota.Verdict.Blocked.Reason("no"), Some(Verdict.Blocked.Until(Now - 1)))),
+        Some((Problem("no"), Some(Verdict.Blocked.Until(Now - 1)))),
         Rules0,
         NowAt
       ),
@@ -388,17 +388,17 @@ class PlanQuotaSuite extends munit.FunSuite:
       "forced: no need, no throttle"
     )
     assert(
-      decide(None, login = Login.Missing(PlanQuota.Login.Missing.Why("not logged in")), force = true).left
+      decide(None, login = Login.Missing(Problem("not logged in")), force = true).left
         .exists(_.value.startsWith("no login"))
     )
 
   test("#989: no login means no refresh; an unknown login does not stop one; refresh off is off"):
     assert(
-      decide(Some(RefreshNeed.NoReading), login = Login.Missing(PlanQuota.Login.Missing.Why("x"))).left
+      decide(Some(RefreshNeed.NoReading), login = Login.Missing(Problem("x"))).left
         .exists(_.value.contains("no login: x"))
     )
     assertEquals(
-      decide(Some(RefreshNeed.NoReading), login = Login.Unknown(PlanQuota.Login.Unknown.Why("timeout"))),
+      decide(Some(RefreshNeed.NoReading), login = Login.Unknown(Problem("timeout"))),
       Right(Some(RefreshNeed.NoReading))
     )
     assert(decide(Some(RefreshNeed.StaleOnly), enabled = false).left.exists(_.value.contains("off")))

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -29,8 +30,6 @@ object Acquire:
   object Outcome extends Newtype[String, Pure]
   type Recommendation = Recommendation.T
   object Recommendation extends Newtype[String, Pure]
-  type Refusal = Refusal.T
-  object Refusal extends Newtype[String, Pure]
   type YearGap = YearGap.T
   object YearGap extends Newtype[Int, Pure]
 
@@ -126,7 +125,7 @@ object Acquire:
     */
   val BrowserDownloadTopic = "browser download"
 
-  def browserDownloadText(work: WorkRef, doi: Doi, citekey: Citekey, refusals: List[Refusal] = Nil): Option[Outcome] =
+  def browserDownloadText(work: WorkRef, doi: Doi, citekey: Citekey, refusals: List[Problem] = Nil): Option[Outcome] =
     Option.when(((work.isOa) == Source.Candidate.IsOa(true))) {
       val who =
         work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
@@ -268,13 +267,13 @@ object Acquire:
 
   final case class RetractionRow(
       doi: Doi,
-      reason: Option[RetractionRow.Reason],
+      reason: Option[Problem],
       date: Option[RetractionRow.Date],
       nature: Option[RetractionRow.Nature]
   )
 
   object RetractionRow:
-    export RetractionNotice.{Date, Nature, Reason}
+    export RetractionNotice.{Date, Nature}
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
@@ -316,7 +315,7 @@ object Acquire:
           col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
             RetractionRow(
               Doi(doi),
-              col(r, "Reason").map(x => RetractionRow.Reason(x)),
+              col(r, "Reason").map(x => Problem(x)),
               col(r, "RetractionDate").map(x => RetractionRow.Date(x)),
               col(r, "RetractionNature").map(x => RetractionRow.Nature(x))
             )
@@ -340,7 +339,7 @@ object Acquire:
         item: Queue.QueueItem.Id,
         checkedAt: AcquireCheck.CheckedAt,
         outcome: AcquireCheck.Outcome,
-        reason: Queue.QueueItem.Reason,
+        reason: Problem,
         checks: AcquireCheck.Checks = AcquireCheck.Checks(1)
     ) derives KindlingsCodecAsObject,
           KindlingsSchema,

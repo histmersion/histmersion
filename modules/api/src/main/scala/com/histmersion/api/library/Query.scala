@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -20,8 +21,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Query:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SchemaMarkdown = SchemaMarkdown.T
   object SchemaMarkdown extends Newtype[String, Pure]
   type Statement = Statement.T

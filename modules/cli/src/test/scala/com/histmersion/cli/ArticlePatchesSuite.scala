@@ -154,8 +154,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.reasons,
       List(
-        Coverage.Reason(Citekey("graves2017_greek"), Coverage.Entry.Reason("retells the myths")),
-        Coverage.Reason(Citekey("nilsson1927_minoan"), Coverage.Entry.Reason(""))
+        Coverage.Reason(Citekey("graves2017_greek"), Problem("retells the myths")),
+        Coverage.Reason(Citekey("nilsson1927_minoan"), Problem(""))
       )
     )
     // no flag: the --json filter stands
@@ -204,8 +204,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
       .withCritiques(
         base,
         List(
-          CritiqueReason.Reason("smith1987_dying>frazer1922_golden=cited for the calendar only"),
-          CritiqueReason.Reason("[[jones2001_myth]] -> lee1990_ritual=")
+          Problem("smith1987_dying>frazer1922_golden=cited for the calendar only"),
+          Problem("[[jones2001_myth]] -> lee1990_ritual=")
         )
       )
       .toOption
@@ -213,15 +213,15 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.critiqueReasons,
       List(
-        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), CritiqueReason.Reason("from json")),
+        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem("from json")),
         CritiqueReason(
           Citekey("smith1987_dying"),
           Citekey("frazer1922_golden"),
-          CritiqueReason.Reason("cited for the calendar only")
+          Problem("cited for the calendar only")
         ),
-        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), CritiqueReason.Reason(""))
+        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Problem(""))
       )
     )
     assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
-    val bad = ArticlePatches.withCritiques(Article.Patch(), List(CritiqueReason.Reason("smith1987_dying=no pair")))
+    val bad = ArticlePatches.withCritiques(Article.Patch(), List(Problem("smith1987_dying=no pair")))
     assert(bad.left.exists(e => e.message.value.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage), bad)

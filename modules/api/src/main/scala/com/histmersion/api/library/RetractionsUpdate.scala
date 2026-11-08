@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -14,7 +15,7 @@ final case class RetractionsUpdate(
     rows: RetractionsUpdate.Rows,
     source: RetractionsUpdate.Source,
     running: RetractionsUpdate.Running = RetractionsUpdate.Running(false),
-    error: Option[RetractionsUpdate.Error] = None
+    error: Option[Problem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -26,5 +27,3 @@ object RetractionsUpdate:
   object Source extends Newtype[String, Pure]
   type Running = Running.T
   object Running extends Newtype[Boolean, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]

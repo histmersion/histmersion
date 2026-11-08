@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -96,7 +97,7 @@ object ApprovalDigest:
     type By = By.T
     object By extends Newtype[String, Pure]
 
-  final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error)
+  final case class BulkFailed(id: BulkFailed.Id, error: Problem)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -104,8 +105,6 @@ object ApprovalDigest:
   object BulkFailed:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
 
   final case class BulkResult(
       decision: BulkResult.Decision,

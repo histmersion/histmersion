@@ -68,7 +68,7 @@ object SourceEditor:
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
-  def year(raw: Years.Text): Either[Years.Problem, Option[com.histmersion.api.catalogue.Year]] =
+  def year(raw: Years.Text): Either[Problem, Option[com.histmersion.api.catalogue.Year]] =
     if raw.value.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
 

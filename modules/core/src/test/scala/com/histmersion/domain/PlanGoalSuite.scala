@@ -172,7 +172,7 @@ class PlanGoalSuite extends munit.FunSuite:
           Nil,
           Some(com.histmersion.api.library.Citekey("a2020_x")),
           inCorpus = PlannedWork.InCorpus(true),
-          why = PlannedWork.Why("a")
+          why = Problem("a")
         )
       )
     )
@@ -186,7 +186,7 @@ class PlanGoalSuite extends munit.FunSuite:
         Some(com.histmersion.api.library.Title("Tin isotopes")),
         Some(com.histmersion.api.catalogue.Year(2024)),
         List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")),
-        why = PlannedWork.Why("dates the tin")
+        why = Problem("dates the tin")
       )
     val t = acquireText(w, Goal.Slug("bronze-age"))
     assertEquals(

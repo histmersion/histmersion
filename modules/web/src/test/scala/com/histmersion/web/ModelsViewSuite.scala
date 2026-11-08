@@ -101,7 +101,7 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Pipeline("enrich-source"),
       Agents.RunInfo.Target("a2020_b"),
       Agents.RunInfo.Status("paused"),
-      error = Some(Agents.RunInfo.Error("allowance: all models …")),
+      error = Some(Problem("allowance: all models …")),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("allowance"))
@@ -139,7 +139,7 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Pipeline("review-article"),
       Agents.RunInfo.Target("x"),
       Agents.RunInfo.Status("paused"),
-      error = Some(Agents.RunInfo.Error("plan-quota: …")),
+      error = Some(Problem("plan-quota: …")),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("plan-quota"))

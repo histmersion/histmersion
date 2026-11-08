@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.api.Problem
 import com.histmersion.api.given
 
 import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
@@ -120,7 +121,7 @@ object ArticleNote:
             r.asScala.toList
               .flatMap((k, v) => Option(v).map(x => k.toString.trim.toLowerCase -> x.toString.trim))
               .filter((k, v) => k.nonEmpty && v.nonEmpty)
-              .map((k, v) => Citekey(k) -> Article.ReasonsValue(v))
+              .map((k, v) => Citekey(k) -> Problem(v))
               .toMap
           }
           .getOrElse(Map.empty)

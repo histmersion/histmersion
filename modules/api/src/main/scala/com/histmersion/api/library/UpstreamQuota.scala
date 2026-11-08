@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -16,7 +17,7 @@ final case class UpstreamQuota(
     searchDailyTokens: UpstreamQuota.SearchDailyTokens,
     perMinute: UpstreamQuota.PerMinute,
     blockedUntil: Option[UpstreamQuota.BlockedUntil] = None,
-    blockedWhy: Option[UpstreamQuota.BlockedWhy] = None,
+    blockedWhy: Option[Problem] = None,
     rateLimit: Option[UpstreamQuota.RateLimit] = None,
     rateRemaining: Option[UpstreamQuota.RateRemaining] = None,
     observedAt: Option[UpstreamQuota.ObservedAt] = None
@@ -41,8 +42,6 @@ object UpstreamQuota:
   object PerMinute extends Newtype[Int, Pure]
   type BlockedUntil = BlockedUntil.T
   object BlockedUntil extends Newtype[String, Pure]
-  type BlockedWhy = BlockedWhy.T
-  object BlockedWhy extends Newtype[String, Pure]
   type RateLimit = RateLimit.T
   object RateLimit extends Newtype[Int, Pure]
   type RateRemaining = RateRemaining.T

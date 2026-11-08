@@ -1,6 +1,8 @@
 package com.histmersion
 package api.basemap
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.BBox
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -20,8 +22,6 @@ object Basemap:
   object Subset:
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Zoom = Zoom.T
   object Zoom extends Newtype[Int, Pure]
 
@@ -316,8 +316,6 @@ object Basemap:
     def file: LayerInfo.File = LayerInfo.File(s"$wire.pmtiles")
 
   object Layer:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wires = Wires.T
     object Wires extends Newtype[String, Pure]
     type Wire = Wire.T
@@ -352,7 +350,7 @@ object Basemap:
       attribution: LayerInfo.Attribution = LayerInfo.Attribution(""),
       kept: Option[LayerInfo.Kept] = None,
       dropped: List[LayerInfo.Dropped] = Nil,
-      error: Option[LayerInfo.Error] = None,
+      error: Option[Problem] = None,
       onDemand: Option[OnDemand] = None,
       focus: List[Focus] = Nil
   ) derives KindlingsCodecAsObject,
@@ -389,8 +387,6 @@ object Basemap:
     object Kept extends Newtype[String, Pure]
     type Dropped = Dropped.T
     object Dropped extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
 
   final case class OnDemand(
       enabled: OnDemand.Enabled,

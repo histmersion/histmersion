@@ -151,7 +151,7 @@ final class ModelPicker(
     */
   final case class Effective(
       target: Target.Wire,
-      allowance: Either[Allowance.Problem, Allowance],
+      allowance: Either[Problem, Allowance],
       source: SettingSource
   )
 
@@ -164,11 +164,11 @@ final class ModelPicker(
       case Left(m)   => (Nil, List(s"agents.allowances: $m"))
     val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
       val a = for
-        t <- Target.parse(Target.Spec(s.target.value), known()).left.map(e => Allowance.Problem(e.value))
-        ss <- s.limits.left.map(e => Allowance.Problem(e.value))
+        t <- Target.parse(Target.Spec(s.target.value), known()).left.map(e => Problem(e.value))
+        ss <- s.limits.left.map(e => Problem(e.value))
         ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
-          case (errs, _) => Left(Allowance.Problem(errs.mkString("; ")))
+          case (errs, _) => Left(Problem(errs.mkString("; ")))
         a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value))
       yield a
       Effective(Target.Wire(s.target.value), a, SettingSource.Saved)
@@ -183,7 +183,7 @@ final class ModelPicker(
       m: ModelRef,
       effective: List[Effective],
       now: PlanQuotaRepo.EpochMillis
-  ): List[(Effective, Either[Allowance.Problem, List[LimitState]])] =
+  ): List[(Effective, Either[Problem, List[LimitState]])] =
     effective
       .filter(e =>
         e.allowance.fold(
@@ -284,7 +284,7 @@ final class ModelPicker(
       val (p, v, _) = plan.get
       val (why, until) = v match
         case PlanQuota.Verdict.Blocked(w, u) => (w, u)
-        case _                               => (PlanQuota.Verdict.Blocked.Reason(""), None)
+        case _                               => (Problem(""), None)
       ModelState(
         ModelState.Usable(false),
         Some(ModelState.Why(s"the ${p.title} is below its floor: $why")),
@@ -420,7 +420,7 @@ final class ModelPicker(
             RoleChain.Source(SettingSource.Config.wire.value),
             Nil,
             None,
-            Some(RoleChain.Problem(m.value))
+            Some(Problem(m.value))
           )
         case Right((ms, src)) =>
           val entries = ms.map { m =>
@@ -430,7 +430,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(false),
                   usable = ModelChains.ChainEntry.Usable(false),
-                  Some(ChainEntry.Problem(why.value))
+                  Some(Problem(why.value))
                 )
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
@@ -438,7 +438,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(true),
                   ChainEntry.Usable(st.usable.value),
-                  st.why.map(w => ChainEntry.Problem(w.value)),
+                  st.why.map(w => Problem(w.value)),
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
                   Some(ChainEntry.Billing(billing.describe)),
                   cooling = ChainEntry.Cooling(st.cooling.value)
@@ -450,7 +450,7 @@ final class ModelPicker(
             entries,
             entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
             Option.when(ms.isEmpty)(
-              RoleChain.Problem(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
+              Problem(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
             )
           )
     }

@@ -94,7 +94,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
             BulkResult.DryRun(false),
             BulkResult.Matched(3),
             List(BulkResult.Decided(1), BulkResult.Decided(2)),
-            List(BulkFailed(BulkFailed.Id(3), BulkFailed.Error("decided already"))),
+            List(BulkFailed(BulkFailed.Id(3), Problem("decided already"))),
             BulkResult.Left(2)
           )
         )

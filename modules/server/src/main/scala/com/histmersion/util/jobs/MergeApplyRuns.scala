@@ -82,7 +82,7 @@ object MergeApplyRuns:
               bundle,
               plan,
               MergeApplyJob.ElapsedMs(0L),
-              Some(MergeApplyJob.Error(e.value)),
+              Some(Problem(e.value)),
               None
             )
       }

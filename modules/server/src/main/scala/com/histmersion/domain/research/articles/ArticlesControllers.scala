@@ -351,7 +351,7 @@ final class ArticlesControllers(
           hits,
           inFilter.map(apiCitekey),
           cited.map(apiCitekey),
-          a.reasons.map((k, v) => k -> Coverage.Entry.Reason(v.value)),
+          a.reasons.map((k, v) => k -> Problem(v.value)),
           edges,
           searches
         )

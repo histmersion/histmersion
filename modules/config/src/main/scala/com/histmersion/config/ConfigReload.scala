@@ -17,8 +17,6 @@ object ConfigReload:
   object ChangedKey extends Newtype[String, Pure]
   type Key = Key.T
   object Key extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
 
   type Rendered = Rendered.T
   object Rendered extends Newtype[String, Pure]
@@ -34,18 +32,18 @@ object ConfigReload:
   /** The settings a running server cannot change in place, and why. The running value is kept until a restart (see
     * [[effective]]), and the reload report lists them.
     */
-  val RestartOnly: List[(Key, Reason)] = List(
-    Key("histmersion.server.host") -> Reason("the listener is bound once"),
-    Key("histmersion.server.port") -> Reason("the listener is bound once"),
-    Key("histmersion.server.request-timeout-seconds") -> Reason(
+  val RestartOnly: List[(Key, Problem)] = List(
+    Key("histmersion.server.host") -> Problem("the listener is bound once"),
+    Key("histmersion.server.port") -> Problem("the listener is bound once"),
+    Key("histmersion.server.request-timeout-seconds") -> Problem(
       "the listener's request timeout is set when it is bound"
     ),
-    Key("histmersion.server.shutdown-grace-seconds") -> Reason("the listener's shutdown grace is set when it is bound"),
-    Key("histmersion.runtime") -> Reason("the bundled PostgreSQL and converter are started once"),
-    Key("histmersion.agents.enabled") -> Reason("the agent pool is started (or not) at startup"),
-    Key("histmersion.agents.max-concurrent-runs") -> Reason("the size of the agent pool, started once"),
-    Key("histmersion.agents.max-llm-calls-in-flight") -> Reason("the LLM-call semaphore, sized once"),
-    Key("histmersion.converter.parallelism") -> Reason("the size of the OCR worker pool, started once")
+    Key("histmersion.server.shutdown-grace-seconds") -> Problem("the listener's shutdown grace is set when it is bound"),
+    Key("histmersion.runtime") -> Problem("the bundled PostgreSQL and converter are started once"),
+    Key("histmersion.agents.enabled") -> Problem("the agent pool is started (or not) at startup"),
+    Key("histmersion.agents.max-concurrent-runs") -> Problem("the size of the agent pool, started once"),
+    Key("histmersion.agents.max-llm-calls-in-flight") -> Problem("the LLM-call semaphore, sized once"),
+    Key("histmersion.converter.parallelism") -> Problem("the size of the OCR worker pool, started once")
   )
 
   def restartOnly(key: ChangedKey): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))

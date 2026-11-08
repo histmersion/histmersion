@@ -223,7 +223,7 @@ object GazetteerLoad:
       Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
-    def add(r: Either[Gazetteer.Problem, GazRecord]): Unit = r match
+    def add(r: Either[Problem, GazRecord]): Unit = r match
       case Left(e)    => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.value)).take(20))
       case Right(rec) =>
         span = Span(
@@ -333,12 +333,12 @@ object GazetteerLoad:
       n: Int,
       dataset: Gazetteer.DatasetName,
       source: Option[Gazetteer.SourceInfo.Key]
-  ): Either[Gazetteer.Problem, GazRecord] =
+  ): Either[Problem, GazRecord] =
     io.circe.parser
       .parse(line)
       .left
-      .map(e => Gazetteer.Problem(s"line $n: ${e.getMessage}"))
-      .flatMap(Gazetteer.fromFeature(_, dataset, n, source).left.map(e => Gazetteer.Problem(s"line $n: $e")))
+      .map(e => Problem(s"line $n: ${e.getMessage}"))
+      .flatMap(Gazetteer.fromFeature(_, dataset, n, source).left.map(e => Problem(s"line $n: $e")))
 
   /** One source through one session: batches, then (when every line was read) the sweep. */
   private def run(

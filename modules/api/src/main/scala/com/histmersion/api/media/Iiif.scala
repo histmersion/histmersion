@@ -1,5 +1,6 @@
 package com.histmersion
 package api.media
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -39,8 +40,6 @@ object Iiif:
     case Pixels(x: Pixels.X, y: Pixels.Y, w: Pixels.W, h: Pixels.H)
 
   object Region:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     object Pixels:
@@ -76,8 +75,6 @@ object Iiif:
     case BestFit(w: BestFit.W, h: BestFit.H) // !w,h
 
   object Size:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     object Width:
@@ -132,11 +129,11 @@ object Iiif:
                 .toRight(Problem(s"invalid exact size: '$s'"))
             case _ => Left(Problem(s"invalid size: '$s'"))
 
-  def parseFormat(s: ArchiveFile.Format.Wire): Either[ArchiveFile.Format.Problem, Format] =
+  def parseFormat(s: ArchiveFile.Format.Wire): Either[Problem, Format] =
     (s).value.trim.toLowerCase match
       case "jpg" | "jpeg" => Right(Format("jpg"))
       case "png"          => Right(Format("png"))
-      case other          => Left(ArchiveFile.Format.Problem(s"unsupported format: '$other' (use jpg or png)"))
+      case other          => Left(Problem(s"unsupported format: '$other' (use jpg or png)"))
 
   def contentType(format: Format): Api.ContentType = format.value match
     case "png" => Api.ContentType("image/png")

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -27,8 +28,6 @@ object MergeResolutions:
   object Text:
     type Flag = Flag.T
     object Flag extends Newtype[String, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Template = Template.T
     object Template extends Newtype[String, Pure]
 

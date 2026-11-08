@@ -21,7 +21,7 @@ final private[activity] case class ActivityRow(
     state: Entry.State,
     what: Entry.What,
     text: Entry.Text,
-    error: Option[Entry.Error],
+    error: Option[Problem],
     endedAt: Option[Entry.EndedAt],
     goal: Option[Goal.Slug],
     job: Option[Entry.Job],

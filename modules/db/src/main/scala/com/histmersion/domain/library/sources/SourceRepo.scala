@@ -469,7 +469,7 @@ private[sources] object SourceRepo:
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
-      .map(problem => Write.invalid(Write.InvalidMessage(problem.value)))
+      .map(problem => Write.invalid(Problem(problem.value)))
       .flatMap(validated => renameIn(oldCk, validated, referrers))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a

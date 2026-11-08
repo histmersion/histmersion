@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -24,8 +25,6 @@ object Queue:
   object InstantKey extends Newtype[Long, Pure]
   type Preamble = Preamble.T
   object Preamble extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
@@ -40,7 +39,7 @@ object Queue:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic],
       status: QueueItem.Status,
-      reason: Option[QueueItem.Reason] = None,
+      reason: Option[Problem] = None,
       createdAt: Option[QueueItem.CreatedAt] = None,
       doneAt: Option[QueueItem.DoneAt] = None,
       goal: Option[Goal.Slug] = None,
@@ -60,8 +59,6 @@ object Queue:
     object Topic extends Newtype[String, Pure]
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type DoneAt = DoneAt.T
@@ -85,7 +82,7 @@ object Queue:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic] = None,
       status: Option[QueueItem.Status] = None,
-      reason: Option[QueueItem.Reason] = None,
+      reason: Option[Problem] = None,
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[SpatialHierarchyResult.Job.Id] = None
@@ -101,7 +98,7 @@ object Queue:
       status: Option[QueueItem.Status] = None,
       text: Option[QueueItem.Text] = None,
       topic: Option[QueueItem.Topic] = None,
-      reason: Option[QueueItem.Reason] = None,
+      reason: Option[Problem] = None,
       goal: Option[Goal.Slug] = None,
       closedBy: Option[QueuePatch.ClosedBy] = None
   ) derives KindlingsSchema,
@@ -175,12 +172,12 @@ object Queue:
       case Some(t) if (t).value.trim.isEmpty => Left(Problem("queue item text is empty"))
       case other                             => Right(other)
 
-  def fulfilledReason(prev: Option[QueueItem.Reason], citekey: Citekey): QueueItem.Reason =
+  def fulfilledReason(prev: Option[Problem], citekey: Citekey): Problem =
     val tag = s"ingested as [[$citekey]]"
     prev.map((_).value.trim).filter(_.nonEmpty) match
-      case Some(p) if p.contains(tag) => QueueItem.Reason(p)
-      case Some(p)                    => QueueItem.Reason(s"$p · $tag")
-      case None                       => QueueItem.Reason(tag)
+      case Some(p) if p.contains(tag) => Problem(p)
+      case Some(p)                    => Problem(s"$p · $tag")
+      case None                       => Problem(tag)
 
   def fulfil(item: QueueItem, citekey: Citekey, by: Option[QueueItem.ClosedBy] = None): QueuePatch =
     QueuePatch(
@@ -222,7 +219,7 @@ object Queue:
       .modify(_.topic)
       .setTo(clearable(p.topic, cur.topic)(t => (t).value, x => QueueItem.Topic(x)))
       .modify(_.reason)
-      .setTo(clearable(p.reason, cur.reason)(t => (t).value, x => QueueItem.Reason(x)))
+      .setTo(clearable(p.reason, cur.reason)(t => (t).value, x => Problem(x)))
       .modify(_.goal)
       .setTo(clearable(p.goal, cur.goal)(t => (t).value, x => Goal.Slug(x)))
       .modify(_.closedBy)
@@ -420,7 +417,7 @@ object Queue:
   def markdown(
       kind: Kind,
       items: List[QueueItem],
-      notes: Map[QueueItem.Id, QueueItem.Reason] = Map.empty
+      notes: Map[QueueItem.Id, Problem] = Map.empty
   ): MarkdownResult =
     val shown = items.filterNot(_.status == QueueItem.Status(Note))
     if shown.isEmpty then MarkdownResult(s"_${kind.label}: nothing queued._")

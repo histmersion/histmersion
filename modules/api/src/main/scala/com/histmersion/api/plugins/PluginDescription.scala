@@ -1,5 +1,6 @@
 package com.histmersion
 package api.plugins
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -13,7 +14,7 @@ final case class PluginDescription(
     spiVersion: PluginDescription.SpiVersion,
     provides: List[PluginDescription.Provides] = Nil,
     access: List[PluginDescription.Access] = Nil,
-    error: Option[PluginDescription.Error] = None
+    error: Option[Problem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -29,5 +30,3 @@ object PluginDescription:
   object Provides extends Newtype[String, Pure]
   type Access = Access.T
   object Access extends Newtype[String, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]

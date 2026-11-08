@@ -2,7 +2,7 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.config.AppConfig
-import com.histmersion.config.ConfigProblem
+import com.histmersion.config.Problem
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}
 import org.ekrich.config.{Config, ConfigFactory}
@@ -29,7 +29,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
       )
     else
       store.get(key) match
-        case None       => Left(SettingError.NoFile(SettingError.NoFile.Why(s"$shown is not a file")))
+        case None       => Left(SettingError.NoFile(Problem(s"$shown is not a file")))
         case Some(blob) =>
           try
             val text = ConfigFileState.Text(blob.text().value)
@@ -37,7 +37,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
               file <- store.onDisk(key).left.map(io)
               parsed <- parsed(AppConfig.parseUserFile(file), file.toString)
             yield ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(file))
-          catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
+          catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
 
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
@@ -56,7 +56,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
                   AppConfig
                     .loadWithUserFile(env, Some(temp))
                     .left
-                    .map(p => SettingError.Problem(p.value.replace(temp.toString, shown.value)))
+                    .map(p => Problem(p.value.replace(temp.toString, shown.value)))
               )
             )
             bak <- backup(existed)
@@ -64,7 +64,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
           yield bak
         }
       }
-    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
+    catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
 
   private def backup(existed: SettingsFile.Existed): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed.value then Right(None)
@@ -76,9 +76,9 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
         .map(_ => Some(WriteOutcome.Backup(s"$shown.bak")))
 
   /** A parse of the file at `where`, its messages naming the settings file. */
-  private def parsed(parse: Either[ConfigProblem, Option[Config]], where: String): Either[SettingError, Config] =
+  private def parsed(parse: Either[Problem, Option[Config]], where: String): Either[SettingError, Config] =
     parse.left
-      .map(m => SettingError.Unreadable(SettingError.Unreadable.Why(m.value.replace(where, shown.value))))
-      .flatMap(_.toRight(SettingError.Unreadable(SettingError.Unreadable.Why(s"$shown: no such file"))))
+      .map(m => SettingError.Unreadable(Problem(m.value.replace(where, shown.value))))
+      .flatMap(_.toRight(SettingError.Unreadable(Problem(s"$shown: no such file"))))
 
-  private def io(e: Store.Error): SettingError = SettingError.Io(SettingError.Io.Why(e.message.value))
+  private def io(e: Store.Error): SettingError = SettingError.Io(Problem(e.message.value))

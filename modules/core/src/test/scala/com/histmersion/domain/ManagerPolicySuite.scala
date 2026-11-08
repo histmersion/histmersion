@@ -180,7 +180,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(released(Hold(until = Some(Managers.Hold.Until("2026-10-15"))), now, _ => false))
     assert(!released(Hold(until = Some(Managers.Hold.Until("2026-10-16T00:00:00Z"))), now, _ => false))
     assert(released(Hold(untilSource = Some(Managers.Hold.UntilSource("10.1/x"))), now, _.value == "10.1/x"))
-    assert(!released(Hold(reason = Managers.Hold.Reason("person")), now, _ => true))
+    assert(!released(Hold(reason = Problem("person")), now, _ => true))
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
     val e = HintEffect(HintEffect.Action(HintEffect.Prioritise), tag = Some(HintEffect.Tag("Tin Trade")))

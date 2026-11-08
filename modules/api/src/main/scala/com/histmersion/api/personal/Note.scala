@@ -1,6 +1,8 @@
 package com.histmersion
 package api.personal
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -24,8 +26,6 @@ final case class Note(
       com.histmersion.api.json.Schema
 
 object Note:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]

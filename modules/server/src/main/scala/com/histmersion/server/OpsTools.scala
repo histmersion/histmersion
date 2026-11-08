@@ -147,7 +147,7 @@ object OpsTools:
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
-                reason = in.reason.map(Queue.QueueItem.Reason(_))
+                reason = in.reason.map(Problem(_))
               )
             )
             added match

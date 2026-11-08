@@ -95,7 +95,7 @@ trait PlaceService:
   def merge(from: DPlace.Id, into: DPlace.Id, toleranceKm: GeocodeSettings.ToleranceKm): Either[Api.Error, Place.Gone]
 
   /** A place nothing refers to, removed for good. */
-  def remove(id: DPlace.Id, reason: Option[Place.Override.Reason]): Either[Api.Error, Place.Gone]
+  def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone]
 
 object PlaceService:
   type DepthLimit = DepthLimit.T
@@ -182,7 +182,7 @@ object PlaceService:
         toleranceKm: GeocodeSettings.ToleranceKm
     ): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), toleranceKm))
-    def remove(id: DPlace.Id, reason: Option[Place.Override.Reason]): Either[Api.Error, Place.Gone] =
+    def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
       db.transact(
         PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason.map(r => PlaceOverrideRepo.RemovalReason(r.value)))
       )
@@ -604,7 +604,7 @@ object PlaceService:
               period.map(_.start),
               period.map(_.end),
               Place.Override.PeriodSet(o.period.isDefined),
-              o.reason.map(r => Place.Override.Reason(r.value)),
+              o.reason.map(r => Problem(r.value)),
               Place.Override.SourceKind(o.sourceKind.value),
               o.sourcePeriod.map(_.start),
               o.sourcePeriod.map(_.end),
@@ -762,7 +762,7 @@ object PlaceService:
             )
           )
 
-    def remove(id: DPlace.Id, reason: Option[Place.Override.Reason]): Either[Api.Error, Place.Gone] =
+    def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { p =>
         val s = state.get
         val refs = List(

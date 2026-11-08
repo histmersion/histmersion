@@ -279,7 +279,7 @@ object QueueView:
         Queue.QueueAdd(
           text = Queue.QueueItem.Text(d.text.value.strip),
           topic = Some(d.topic.value.trim).filter(_.nonEmpty).map(Queue.QueueItem.Topic(_)),
-          reason = Some(d.reason.value.trim).filter(_ => sp.reasons).filter(_.nonEmpty).map(Queue.QueueItem.Reason(_))
+          reason = Some(d.reason.value.trim).filter(_ => sp.reasons).filter(_.nonEmpty).map(Problem(_))
         )
       )
 

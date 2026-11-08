@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
@@ -91,15 +92,13 @@ object Finding:
       periodEnd: Option[Year],
       periodName: Option[PeriodName],
       tags: List[Tags],
-      why: List[Match.Why],
+      why: List[Problem],
       places: List[Match.Places] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   object Match:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Places = Places.T
     object Places extends Newtype[String, Pure]
 

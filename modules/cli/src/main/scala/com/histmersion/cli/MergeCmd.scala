@@ -71,24 +71,24 @@ object MergeCmd:
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
   def resolutions(f: ResolutionFlags): Either[Cli.Error, MergeResolutions] =
-    val fromFile: Either[List[MergeResolutions.Text.Problem], MergeResolutions] = f.file match
+    val fromFile: Either[List[Problem], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
       case Some(p) =>
         val path = Path.of(p.value)
-        if !Files.isRegularFile(path) then Left(List(MergeResolutions.Text.Problem(s"no such file: $p")))
+        if !Files.isRegularFile(path) then Left(List(Problem(s"no such file: $p")))
         else
           MergeResolutionsFile
             .parse(MergeResolutionsFile.Text(Files.readString(path)))
             .left
-            .map(_.map(e => MergeResolutions.Text.Problem(s"$p: $e")))
+            .map(_.map(e => Problem(s"$p: $e")))
     val flags = f.resolve.map(MergeResolutionsFile.flag)
-    val editions: Either[MergeResolutions.Text.Problem, Option[EditionsPolicy]] = f.editions match
+    val editions: Either[Problem, Option[EditionsPolicy]] = f.editions match
       case None    => Right(None)
       case Some(e) =>
         EditionsPolicy.values
           .find(_.toString.equalsIgnoreCase(e.value.trim))
           .map(Some(_))
-          .toRight(MergeResolutions.Text.Problem(s"--editions $e: expected merge or separate"))
+          .toRight(Problem(s"--editions $e: expected merge or separate"))
     val errors =
       fromFile.left.toOption.getOrElse(Nil) ++ flags.flatMap(_.left.toOption) ++ editions.left.toOption.toList
     if errors.nonEmpty then Left(Cli.Error(Cli.Error.Message(errors.mkString("\n")), exitCode = ExitCode.Usage))

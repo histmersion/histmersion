@@ -30,7 +30,7 @@ private[worklists] object QueueBundleRepo:
           Bundle.QueueItem.Text(r.text.value),
           r.topic.map(t => Bundle.QueueItem.Topic(t.value)),
           Bundle.QueueItem.Status(r.status.value),
-          r.reason.map(x => Bundle.QueueItem.Reason(x.value)),
+          r.reason.map(x => Problem(x.value)),
           Bundle.QueueItem.CreatedAt(r.createdAt.value),
           r.doneAt.map(d => Bundle.QueueItem.DoneAt(d.value)),
           Bundle.QueueItem.UpdatedAt(r.updatedAt.value)

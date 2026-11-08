@@ -65,7 +65,7 @@ final class WorkListView(
                 Queue.QueueItem.Id(r.item.value),
                 Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
                 Acquire.Checks.AcquireCheck.Outcome(r.outcome.value),
-                Queue.QueueItem.Reason(r.reason.value),
+                Problem(r.reason.value),
                 Acquire.Checks.AcquireCheck.Checks(r.checks.value)
               )
             )

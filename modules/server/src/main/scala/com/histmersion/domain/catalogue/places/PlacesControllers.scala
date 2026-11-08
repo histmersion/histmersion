@@ -186,7 +186,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/merge")):
       for
-        _ <- ApiPlace.Overrides.reason(in.reason.map(r => ApiPlace.Override.Reason(r.value)))
+        _ <- ApiPlace.Overrides.reason(in.reason.map(r => Problem(r.value)))
         into <- Place.Id.either(in.into.value.trim).left.map(_ => notFound(in.into.value))
         gone <- places.merge(placeId(id), placeId(into), tolKm)
       yield gone
@@ -199,7 +199,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/remove")):
       ApiPlace.Overrides
-        .reason(in.reason.map(r => ApiPlace.Override.Reason(r.value)))
+        .reason(in.reason.map(r => Problem(r.value)))
         .flatMap(r => places.remove(placeId(id), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */

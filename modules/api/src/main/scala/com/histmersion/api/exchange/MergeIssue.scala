@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.Problem
 import com.histmersion.api.{Ascii, WireEnumValues}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -21,7 +22,7 @@ final case class MergeIssue(
     title: MergeIssue.Title,
     left: Option[IssueSide] = None,
     right: Option[IssueSide] = None,
-    why: List[MergeIssue.Why] = Nil,
+    why: List[Problem] = Nil,
     options: List[MergeDecision.Kind] = Nil,
     suggested: Option[MergeDecision] = None,
     condition: Option[IssueCondition] = None,
@@ -40,8 +41,6 @@ object MergeIssue:
   object Id extends Newtype[String, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
-  type Why = Why.T
-  object Why extends Newtype[String, Pure]
 
   enum Kind derives CanEqual:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years

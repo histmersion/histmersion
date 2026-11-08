@@ -94,7 +94,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         CalibreCliConfig.LibraryDir("/lib"),
         _ => fail("not read without a library")
       ),
-      CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("no Calibre library at /lib"))
+      CalibreEntryCheck.Unchecked(Problem("no Calibre library at /lib"))
     )
     assertEquals(
       DeleteCmd.calibreCheck(
@@ -103,7 +103,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         CalibreCliConfig.LibraryDir("/lib"),
         _ => Left(Shell.Problem("sqlite3: locked\nmore"))
       ),
-      CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("sqlite3: locked"))
+      CalibreEntryCheck.Unchecked(Problem("sqlite3: locked"))
     )
     assert(
       DeleteCmd

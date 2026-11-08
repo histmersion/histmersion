@@ -372,7 +372,7 @@ final class AcquisitionSweepPipeline(
         c.authors,
         c.venue,
         List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-        Managers.OaWork.Why(p.why.value),
+        Problem(p.why.value),
         Some(Managers.OaWork.FoundBy(ctx.run.id.value))
       )
       ctx.write(

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -32,15 +33,11 @@ object Agents:
     def wire: ModelRef.Wire = ModelRef.Wire(s"${provider.wire}:$model")
 
   object ModelRef:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
     type Model = Model.T
     object Model extends Newtype[String, Pure]:
-      type Problem = Problem.T
-      object Problem extends Newtype[String, Pure]
       type Spec = Spec.T
       object Spec extends Newtype[String, Pure]
 
@@ -134,8 +131,6 @@ object Agents:
       case Metered(p) => (s"price: ${p.text} USD per million tokens")
 
   object Prices:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     export ModelRef.Model as CostModel
@@ -246,23 +241,21 @@ object Agents:
       derives KindlingsCodecAsObject,
         KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
-    def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[ProbeAnswer.Problem] = List(
+    def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
       Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
-        ProbeAnswer.Problem("the citekey is empty — give the source's citekey")
+        Problem("the citekey is empty — give the source's citekey")
       ),
       Option.when(Option(title).forall(_.value.trim.isEmpty))(
-        ProbeAnswer.Problem("the title is empty — copy the source's exact title from get_source")
+        Problem("the title is empty — copy the source's exact title from get_source")
       ),
       Option.when(year.isEmpty && recordYear.isDefined)(
-        ProbeAnswer.Problem("the year is missing — give the source's publication year from get_source")
+        Problem("the year is missing — give the source's publication year from get_source")
       )
     ).flatten
 
   object ProbeAnswer:
     /** The year asked of a model stays the 32-bit integer its schema has always said. */
     given Schema[ProbeAnswer] = com.histmersion.api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type RecordYear = RecordYear.T
     object RecordYear extends Newtype[Int, Pure]
 
@@ -361,8 +354,6 @@ object Agents:
         com.histmersion.api.json.Schema:
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
   object ModelOverride:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
@@ -433,7 +424,7 @@ object Agents:
       target: RunInfo.Target,
       status: RunInfo.Status,
       progress: Option[RunInfo.Progress] = None,
-      error: Option[RunInfo.Error] = None,
+      error: Option[Problem] = None,
       model: Option[RunInfo.Model] = None,
       usage: Usage = Usage.Zero,
       costUsd: RunInfo.CostUsd = RunInfo.CostUsd(0.0),
@@ -474,8 +465,6 @@ object Agents:
     object Status extends Newtype[String, Pure]
     type Progress = Progress.T
     object Progress extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
@@ -521,7 +510,7 @@ object Agents:
       promptHash: Option[StepInfo.PromptHash] = None,
       usage: Usage = Usage.Zero,
       costUsd: StepInfo.CostUsd = StepInfo.CostUsd(0.0),
-      error: Option[StepInfo.Error] = None,
+      error: Option[Problem] = None,
       output: Option[StepInfo.Output] = None,
       startedAt: StepInfo.StartedAt = StepInfo.StartedAt(""),
       finishedAt: StepInfo.FinishedAt = StepInfo.FinishedAt(""),
@@ -556,8 +545,6 @@ object Agents:
     object PromptHash extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
     object CostUsd extends Newtype[Double, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
     type Output = Output.T
     object Output extends Newtype[String, Pure]
     type StartedAt = StartedAt.T
@@ -612,7 +599,7 @@ object Agents:
       role: RoleModel.Role,
       model: Option[RoleModel.Model],
       ready: RoleModel.Ready,
-      problem: Option[RoleModel.Problem]
+      problem: Option[Problem]
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -623,8 +610,6 @@ object Agents:
     object Model extends Newtype[String, Pure]
     type Ready = Ready.T
     object Ready extends Newtype[Boolean, Pure]
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
 
   final case class ModelsInfo(
       enabled: ModelsInfo.Enabled,

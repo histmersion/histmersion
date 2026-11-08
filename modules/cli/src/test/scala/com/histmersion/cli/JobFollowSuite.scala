@@ -16,7 +16,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private def job(status: JobInfo.Status, error: Option[JobInfo.Error] = None) =
+  private def job(status: JobInfo.Status, error: Option[Problem] = None) =
     JobInfo(id = SpatialHierarchyResult.Job.Id("j1"), kind = JobKinds.Wire("ingest"), status = status, error = error)
 
   /** A fake server answering `answers` in order (the last one repeats). */
@@ -43,7 +43,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("a job that fails exits 2 with its error"):
     val r = JobFollow.job(
-      _ => Right(job(JobInfo.Status("failed"), Some(JobInfo.Error("pdf is encrypted")))),
+      _ => Right(job(JobInfo.Status("failed"), Some(Problem("pdf is encrypted")))),
       SpatialHierarchyResult.Job.Id("j1"),
       sleep = _ => (),
       progress = quiet,
@@ -75,7 +75,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   private def backup(
       state: Backup.State.Wire,
-      error: Option[Backup.Status.Error] = None,
+      error: Option[Problem] = None,
       sha: Option[Sha256] = None
   ) =
     Backup.Status(
@@ -88,7 +88,7 @@ class JobFollowSuite extends munit.FunSuite:
     )
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
-    val next = server(backup(Backup.State.Wire("failed"), Some(Backup.Status.Error("pg_dump: permission denied"))))
+    val next = server(backup(Backup.State.Wire("failed"), Some(Problem("pg_dump: permission denied"))))
     val r = JobFollow.backup(
       () => Right(next()),
       backup(Backup.State.Wire("running")),

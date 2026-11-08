@@ -126,7 +126,7 @@ final class ApprovalDigestService(
         )
         val ok = done.collect { case (id, Right(_)) => id }
         val bad = done.collect { case (id, Left(e)) =>
-          BulkFailed(BulkFailed.Id(id.value), BulkFailed.Error(e.message.value.take(300)))
+          BulkFailed(BulkFailed.Id(id.value), Problem(e.message.value.take(300)))
         }
         val left = agents.approvalStore.openLight().size
         if ok.nonEmpty then

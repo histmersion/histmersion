@@ -310,7 +310,7 @@ final class AgentsControllers(
           PlanQuota.Cooldown(
             PlanQuota.Cooldown.Model(m.value),
             PlanQuota.Cooldown.Until(u.toString),
-            PlanQuota.Cooldown.Reason(ModelPicker.CoolingWhy)
+            Problem(ModelPicker.CoolingWhy)
           )
         )
     )
@@ -430,8 +430,8 @@ final class AgentsControllers(
       )
 
   /** The price table, parsed once per call (config is immutable; parsing is microseconds). */
-  private def prices: Either[Agents.Prices.Problem, Map[ModelRef.Model, Price]] =
-    Agents.Prices.parse(Agents.Prices.Wire(cfg.prices.value)).left.map(m => Agents.Prices.Problem(s"agents.prices: $m"))
+  private def prices: Either[Problem, Map[ModelRef.Model, Price]] =
+    Agents.Prices.parse(Agents.Prices.Wire(cfg.prices.value)).left.map(m => Problem(s"agents.prices: $m"))
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
@@ -497,7 +497,7 @@ final class AgentsControllers(
                 c.models.flatMap(e => e.problem.map(p => s"${e.model}: $p")).mkString("; ")
               )
             )
-            .map(RoleModel.Problem(_))
+            .map(Problem(_))
       )
     }
     val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {

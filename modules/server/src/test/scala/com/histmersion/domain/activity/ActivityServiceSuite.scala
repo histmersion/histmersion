@@ -60,7 +60,7 @@ class ActivityServiceSuite extends DbSuite:
         at(ago(2)),
         state = Entry.State("failed"),
         what = Entry.What("media-import"),
-        error = Some(Entry.Error("HTTP 500")),
+        error = Some(Problem("HTTP 500")),
         job = Some(Entry.Job("j1"))
       ),
       Entry(

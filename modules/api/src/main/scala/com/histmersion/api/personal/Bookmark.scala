@@ -1,6 +1,8 @@
 package com.histmersion
 package api.personal
 
+import com.histmersion.api.Problem
+
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -28,8 +30,6 @@ final case class Bookmark(
 object Bookmark:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]

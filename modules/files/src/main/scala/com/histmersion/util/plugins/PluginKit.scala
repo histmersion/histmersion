@@ -1,5 +1,6 @@
 package com.histmersion
 package util.plugins
+import com.histmersion.api.Problem
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
@@ -20,8 +21,6 @@ import com.histmersion.api.automation.ProviderKind
   * and list, and hand the results in.
   */
 object PluginKit:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   extension (id: PluginDescription.Id)
     private def isEmpty: Boolean = id.value.isEmpty

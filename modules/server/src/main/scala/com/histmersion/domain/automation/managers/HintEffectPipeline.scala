@@ -153,7 +153,7 @@ final class HintEffectPipeline(
           HintProposal.Text(l.text.value),
           e,
           HintProposal.By(by),
-          HintProposal.Why(p.why.value)
+          Problem(p.why.value)
         )
         val what = ManagersMarkdown.effect(e)
         ctx.write(

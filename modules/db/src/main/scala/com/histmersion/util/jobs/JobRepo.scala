@@ -62,7 +62,7 @@ object JobRepo:
       JobInfo.Status(r.status.value),
       r.citekey.map(c => Citekey(c.value)),
       r.progress.map(p => JobInfo.Progress(p.value)),
-      r.error.map(e => JobInfo.Error(e.value)),
+      r.error.map(e => Problem(e.value)),
       r.sha256.map(h => Sha256(h.value)),
       JobInfo.CreatedAt(r.createdAt.value),
       JobInfo.UpdatedAt(r.updatedAt.value),

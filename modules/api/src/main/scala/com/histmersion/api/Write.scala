@@ -15,7 +15,6 @@ object Write:
   type ListItem = ListItem.T
   object ListItem extends Newtype[String, Pure]
 
-  export Api.Error.Problem as InvalidMessage
 
   private[api] def blankToNone(v: Option[String]): Option[String] =
     (v.map((_).trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
@@ -25,10 +24,10 @@ object Write:
   val CodeInvalid = "invalid"
 
   /** A request the server refuses for a value it does not accept, with the reason. */
-  def invalid(message: Write.InvalidMessage): Api.Error = Api.Error(message, Some(Api.Error.Code(CodeInvalid)))
+  def invalid(message: Problem): Api.Error = Api.Error(message, Some(Api.Error.Code(CodeInvalid)))
 
   def notFound(citekey: Citekey): Api.Error =
-    Api.Error(Api.Error.Problem(s"No source '$citekey'"), Some(Api.Error.Code(CodeNotFound)))
+    Api.Error(Problem(s"No source '$citekey'"), Some(Api.Error.Code(CodeNotFound)))
 
   def applyList(current: List[ListItem], p: ListPatch): List[ListItem] =
     val base = p.replace.getOrElse(current)

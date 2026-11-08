@@ -1,6 +1,7 @@
 package com.histmersion
 package files
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -296,7 +297,7 @@ class PluginKitSuite extends munit.FunSuite:
               PluginDescription.Id(""),
               PluginDescription.Version(""),
               PluginDescription.SpiVersion(0),
-              error = Some(PluginDescription.Error("boom"))
+              error = Some(Problem("boom"))
             )
           )
         ),
@@ -320,7 +321,7 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(PluginDescription.Error(foreign))
+          error = Some(Problem(foreign))
         )
       )
     )
@@ -336,7 +337,7 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(PluginDescription.Error("class x.Y is missing"))
+          error = Some(Problem("class x.Y is missing"))
         )
       )
     )

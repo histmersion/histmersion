@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -20,7 +21,7 @@ final case class CollectionImported(
     source: Source.WithFindings,
     cover: Option[CollectionCover],
     job: Option[Ingest.Accepted],
-    jobError: Option[CollectionImported.JobError] = None,
+    jobError: Option[Problem] = None,
     jobErrorCode: Option[CollectionImported.JobErrorCode] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
@@ -33,7 +34,5 @@ object CollectionImported:
   object RelinkedFrom extends Newtype[String, Pure]
   type File = File.T
   object File extends Newtype[String, Pure]
-  type JobError = JobError.T
-  object JobError extends Newtype[String, Pure]
   type JobErrorCode = JobErrorCode.T
   object JobErrorCode extends Newtype[String, Pure]

@@ -14,7 +14,7 @@ object Settings:
   type Prefix = Prefix.T
   object Prefix extends Newtype[String, Pure]
 
-  lazy val loaded: Either[ConfigProblem, LoadedConfig] = AppConfig.loadWithUserFile()
+  lazy val loaded: Either[Problem, LoadedConfig] = AppConfig.loadWithUserFile()
 
   lazy val app: AppConfig = loaded match
     case Right(l)  => l.config

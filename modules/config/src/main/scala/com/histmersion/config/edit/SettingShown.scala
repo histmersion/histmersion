@@ -22,7 +22,7 @@ final case class SettingShown(
     credentialRule: Option[SettingShown.CredentialRule],
     credentialForm: Option[SettingShown.CredentialForm],
     credentialShown: Option[SettingReading.Shown],
-    locked: Option[SettingError.Problem]
+    locked: Option[Problem]
 )
 
 object SettingShown:

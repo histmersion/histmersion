@@ -1,5 +1,7 @@
 package com.histmersion.api.research
 
+import com.histmersion.api.Problem
+
 import com.histmersion.Newtype
 import hearth.kindlings.optics.syntax.*
 
@@ -37,7 +39,7 @@ final case class Article(
     period: Option[Period] = None,
     updatedAt: Option[Article.UpdatedAt] = None,
     filter: Option[Article.Filter] = None,
-    reasons: Map[com.histmersion.api.library.Citekey, Article.ReasonsValue] = Map.empty
+    reasons: Map[com.histmersion.api.library.Citekey, Problem] = Map.empty
 )
 
 object Article:
@@ -75,7 +77,6 @@ object Article:
   object Regions extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.research.Coverage.Entry.Reason as ReasonsValue
 
   object Coverage:
     type DisagreementKind = DisagreementKind.T
@@ -132,7 +133,7 @@ object Article:
         hits: scala.List[com.histmersion.api.research.Coverage.Source],
         citedInFilter: Set[com.histmersion.api.library.Citekey],
         cited: scala.List[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, com.histmersion.api.research.Coverage.Entry.Reason],
+        reasons: Map[com.histmersion.api.library.Citekey, Problem],
         edges: scala.List[com.histmersion.api.research.Coverage.Edge],
         searches: scala.List[CoverageSearch]
     ): Coverage =
@@ -184,7 +185,7 @@ object Article:
     def unplacedAfter(
         c: Coverage,
         cited: Set[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, com.histmersion.api.research.Coverage.Entry.Reason]
+        reasons: Map[com.histmersion.api.library.Citekey, Problem]
     ): scala.List[com.histmersion.api.library.Citekey] =
       c.notUsed.map(_.source.citekey).filterNot(ck => cited(ck) || reasons.contains(ck))
 
@@ -240,7 +241,7 @@ object Article:
 
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
-    private def endSentence(s: com.histmersion.api.research.Coverage.Entry.Reason): String =
+    private def endSentence(s: Problem): String =
       val t = s.value
       if t.endsWith(".") || t.endsWith("?") || t.endsWith("!") then t else s"$t."
 
@@ -423,18 +424,18 @@ object Article:
     /** A replace whose text is empty or null is not read as a delete: a strict-schema provider sends `null` (or `""`)
       * for a field it left out.
       */
-    def parse(a: EditAnswer): Either[EditResult.Problem, Edit] =
+    def parse(a: EditAnswer): Either[Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
       if anchor.value.trim.isEmpty then
-        Left(EditResult.Problem("no anchor — copy the passage the edit is about from the body"))
+        Left(Problem("no anchor — copy the passage the edit is about from the body"))
       else
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
           case Op.Replace if text.value.trim.isEmpty =>
-            Left(EditResult.Problem("a replace with no new text — give the text, or use delete to remove the passage"))
+            Left(Problem("a replace with no new text — give the text, or use delete to remove the passage"))
           case Op.Replace                   => Right(Edit.Replace(anchor, text))
-          case _ if text.value.trim.isEmpty => Left(EditResult.Problem("no text to insert"))
+          case _ if text.value.trim.isEmpty => Left(Problem("no text to insert"))
           case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
           case Op.InsertBefore              => Right(Edit.InsertBefore(anchor, text))
 
@@ -443,7 +444,7 @@ object Article:
         op: Op,
         anchor: EditResult.Anchor,
         text: EditResult.Text,
-        problem: Option[EditResult.Problem] = None
+        problem: Option[Problem] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
@@ -455,8 +456,6 @@ object Article:
       type Index = Index.T
       object Index extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       export Edits.{Anchor, NewText as Text}
-      type Problem = Problem.T
-      object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
       def problems: scala.List[Applied.ProblemsResult] =
@@ -494,13 +493,13 @@ object Article:
         .toList)
         .map(refactorValue14 => Offset(refactorValue14))
 
-    def locate(text: Edits.LocateText, anchor: Anchor): Either[EditResult.Problem, (Offset, Offset)] =
+    def locate(text: Edits.LocateText, anchor: Anchor): Either[Problem, (Offset, Offset)] =
       val a = (anchor).value.trim
       occurrences(text, (a)) match
         case scala.List(i) => Right((i, Offset((i).value + a.length)))
         case _ :: _ :: _   =>
           Left(
-            EditResult.Problem(
+            Problem(
               s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"
             )
           )
@@ -513,13 +512,13 @@ object Article:
               Right((Offset(pos((i).value)), Offset(pos(last) + 1)))
             case Nil =>
               Left(
-                EditResult.Problem(
+                Problem(
                   "the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
                 )
               )
             case more =>
               Left(
-                EditResult.Problem(
+                Problem(
                   s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"
                 )
               )
@@ -540,7 +539,7 @@ object Article:
         else ""
       Body(head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else ""))
 
-    def applyOne(text: Edits.ApplyOneText, e: Edit): Either[EditResult.Problem, Body] =
+    def applyOne(text: Edits.ApplyOneText, e: Edit): Either[Problem, Body] =
       locate(text, e.anchor).map { (s, end) =>
         e match
           case Edit.Replace(_, t) => Body(text.value.substring(0, s.value) + t.value + text.value.substring(end.value))
@@ -554,7 +553,7 @@ object Article:
     def applyAll(
         body: Body,
         edits: scala.List[EditAnswer],
-        refuse: EditAnswer => Option[EditResult.Problem] = _ => None
+        refuse: EditAnswer => Option[Problem] = _ => None
     ): Applied =
       @tailrec def loop(rest: scala.List[EditAnswer], number: Int, cur: Body, acc: Vector[EditResult]): Applied =
         rest match
@@ -584,11 +583,11 @@ object Article:
         body: Option[Body] = None,
         kind: Option[Kind.Wire] = None
     ) derives KindlingsCodecAsObject:
-      def draft: Either[ArticleCheck.Problem, Draft] =
+      def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
-            Left(ArticleCheck.Problem("give `edits` (against the stored body) or `body` (a whole draft)"))
-          case (_ :: _, Some(_)) => Left(ArticleCheck.Problem("give `edits` or `body`, not both"))
+            Left(Problem("give `edits` (against the stored body) or `body` (a whole draft)"))
+          case (_ :: _, Some(_)) => Left(Problem("give `edits` or `body`, not both"))
           case (es, None)        => Right(Draft.Edits(es))
           case (Nil, Some(b))    => Right(Draft.Body(b))
     object ArticleCheckRequest:
@@ -616,8 +615,6 @@ object Article:
       def clean: Boolean = (problems.isEmpty)
 
     object ArticleCheck:
-      type Problem = Problem.T
-      object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       type Problems = Problem
       val Problems: Problem.type = Problem
@@ -681,8 +678,6 @@ object Article:
       s"search {${parts.mkString(", ")}}"
 
   object Filter:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     export com.histmersion.api.library.Filter.{Authors, Places, Q as Query, Status, Tags, Topics}
     export com.histmersion.api.catalogue.{Year as From, Year as To}
@@ -1089,7 +1084,7 @@ object Article:
         title: Title,
         kind: Kind.Wire,
         filter: Filter,
-        why: ProposedArticle.Why = ProposedArticle.Why(""),
+        why: Problem = Problem(""),
         hits: ProposedArticle.Hits = ProposedArticle.Hits(0),
         overlap: ProposedArticle.Overlap = ProposedArticle.Overlap(0.0),
         overlapWith: Option[ProposedArticle.OverlapWith] = None
@@ -1098,8 +1093,6 @@ object Article:
           com.histmersion.api.json.Schema
 
     object ProposedArticle:
-      type Why = Why.T
-      object Why extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Hits = Hits.T
       object Hits extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Overlap = Overlap.T
