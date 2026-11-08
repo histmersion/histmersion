@@ -98,7 +98,7 @@ object Lpf:
       val s = o("start").flatMap(bound(_, Bound.Wire("earliest"), Bound.Wire("latest")))
       val e = o("end").flatMap(bound(_, Bound.Wire("latest"), Bound.Wire("earliest")))
       (s, e) match
-        case (Some(a), Some(b)) => Some(if a.value <= b.value then Span(s, e) else Span(e, s))
+        case (Some(a), Some(b)) => Some(if a <= b then Span(s, e) else Span(e, s))
         case (None, None)       => None
         case _                  => Some(Span(s, e))
     j.asObject match
@@ -143,7 +143,7 @@ object Lpf:
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
     def fromPair(a: Option[Year], b: Option[Year]): Option[Span] = (a, b) match
-      case (Some(x), Some(y)) => Some(if x.value <= y.value then Span(a, b) else Span(b, a))
+      case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
       case (None, None)       => None
       case _                  => Some(Span(a, b))
     o("period")

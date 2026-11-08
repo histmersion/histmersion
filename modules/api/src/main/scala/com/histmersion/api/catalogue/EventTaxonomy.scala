@@ -138,10 +138,10 @@ object EventTaxonomy:
   def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == Kind.Group(Natural)).map(_.kind) ++
-        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Kind.Group(Natural)) => a }).distinct.sortBy(_.value)
+        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Kind.Group(Natural)) => a }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = KindCondition.Negate(false))
       else if f == Human then KindCondition(natural, negate = KindCondition.Negate(true))
       else
         val c = canonical(EventSummary.Kind(f))
-        KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sortBy(_.value), negate = KindCondition.Negate(false))
+        KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted, negate = KindCondition.Negate(false))
     }

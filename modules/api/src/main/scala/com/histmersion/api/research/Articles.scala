@@ -165,7 +165,7 @@ object Articles:
 
   private def periodOf(start: Option[Year], end: Option[Year]): Either[Problem, Option[Period]] =
     (start, end) match
-      case (Some(a), Some(b)) if a.value <= b.value => Right(Some(Period(a, b)))
+      case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
       case (Some(a), Some(b))           => Left(Problem(s"period_start ($a) must not be after period_end ($b)"))
       case (None, None)                 => Right(None)
       case _                            => Left(Problem("give both periodStart and periodEnd, or neither"))

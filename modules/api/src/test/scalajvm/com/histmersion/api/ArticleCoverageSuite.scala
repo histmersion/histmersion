@@ -105,7 +105,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     assertEquals(c.unplaced, List("nilsson1927_minoan"))
     // the reasons travel whole, drifted ones included
-    assertEquals(c.reasons.map(_.citekey), reasons.keys.toList.sortBy(_.value))
+    assertEquals(c.reasons.map(_.citekey), reasons.keys.toList.sorted)
 
   test("compute: a capped read says nothing about reasons outside what it read"):
     val c = cov(total = Article.Coverage.ComputeTotal(812))

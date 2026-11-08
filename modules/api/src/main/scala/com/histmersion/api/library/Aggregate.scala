@@ -79,13 +79,13 @@ object Aggregate:
     counting match
       case Counting.Overlap =>
         buckets(from, to, size).map { (bStart, bEnd) =>
-          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(spans.count((s, e) => s.value <= bEnd.value && e.value >= bStart.value)))
+          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(spans.count((s, e) => s <= bEnd && e >= bStart)))
         }
       case Counting.Starts =>
         val (lo, hi) = order(from, to)
         val byBucket = spans.iterator
           .map(_._1)
-          .filter(y => y.value >= lo.value && y.value <= hi.value)
+          .filter(y => y >= lo && y <= hi)
           .map(y => Math.floorDiv(y.value, size.value) * size.value)
           .toList
           .groupBy(identity)

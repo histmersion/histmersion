@@ -115,7 +115,7 @@ object Acquire:
       citedByCount match
         case None                                                      => Verdicts.Unassessed
         case Some(c) if (c).value >= (wellCitedAt).value               => Verdicts.Current
-        case Some(c) if (c).value < (lowCitedAt).value && year.exists(y => (y).value < (staleBefore).value) => Verdicts.LowImpact
+        case Some(c) if (c).value < (lowCitedAt).value && year.exists(y => (y) < (staleBefore)) => Verdicts.LowImpact
         case Some(_)                                                   => Verdicts.Current
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is

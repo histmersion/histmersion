@@ -226,14 +226,14 @@ object Geocode:
     def undated: Boolean = (from.isEmpty && to.isEmpty)
 
     def span: Candidate.Span = Candidate.Span((for a <- from; b <- to yield (b).value - (a).value).getOrElse((Candidate.Span(Long.MaxValue / 4)).value))
-    def overlaps(p: Period): Boolean = from.forall(_.value <= p.end.value) && to.forall(_.value >= p.start.value)
+    def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): Candidate.Gap =
       if (overlaps(p)) then Candidate.Gap(0L)
       else
-        to.filter(_.value < p.start.value)
+        to.filter(_ < p.start)
           .map(t => Candidate.Gap(p.start.value - t.value))
-          .orElse(from.filter(_.value > p.end.value).map(f => Candidate.Gap(f.value - p.end.value)))
+          .orElse(from.filter(_ > p.end).map(f => Candidate.Gap(f.value - p.end.value)))
           .getOrElse(Candidate.Gap(0L))
 
   object Candidate:

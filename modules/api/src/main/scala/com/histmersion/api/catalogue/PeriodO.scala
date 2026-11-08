@@ -183,7 +183,7 @@ object PeriodO:
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, SkippedPeriod.Detail(s"$s → $e lies outside $MinYear..$MaxYear"))
-      case (Some(s), Some(e)) if s.value <= e.value =>
+      case (Some(s), Some(e)) if s <= e =>
         Right(Definition(id, HistoricalPeriod.Label(label), Period(s, e), region.map(HistoricalPeriod.Region(_)), str(c, Wire("broader")).map(HistoricalPeriod.Id(_))))
       case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, SkippedPeriod.Detail(s"starts after it ends ($s > $e)"))
       case _                  => skip(Period.Skip.NoSpan, SkippedPeriod.Detail("no readable start or stop year"))

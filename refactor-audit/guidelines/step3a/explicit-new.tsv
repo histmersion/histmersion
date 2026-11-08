@@ -8,3 +8,7 @@ modules/server/src/main/scala/com/histmersion/server/agents/CodexExecClient.scal
 modules/server/src/main/scala/com/histmersion/server/agents/OpencodeRunClient.scala	61	ModelLimitReached
 modules/server/src/main/scala/com/histmersion/domain/automation/agents/PluginTree.scala	17	Prompts
 modules/server/src/main/scala/com/histmersion/server/agents/CliRuntime.scala	57	Prompts
+modules/server/src/main/scala/com/histmersion/server/IngestWiring.scala	28	IngestQueue
+modules/server/src/main/scala/com/histmersion/domain/library/workflows/LibraryWorkflows.scala	35	SourceProposals
+modules/server/src/main/scala/com/histmersion/server/CatalogueWiring.scala	132	PlacesControllers
+modules/server/src/main/scala/com/histmersion/server/LibraryWiring.scala	48	SourcesControllers
