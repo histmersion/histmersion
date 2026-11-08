@@ -91,14 +91,11 @@ object AutopilotPolicy:
 
   object Verdict:
     object Approve:
-      type Reason = com.histmersion.domain.AutopilotPolicy.Reason
-      val Reason: _root_.com.histmersion.domain.AutopilotPolicy.Reason.type = _root_.com.histmersion.domain.AutopilotPolicy.Reason
+      export com.histmersion.domain.AutopilotPolicy.Reason
     object Reject:
-      type Reason = com.histmersion.domain.AutopilotPolicy.Reason
-      val Reason: _root_.com.histmersion.domain.AutopilotPolicy.Reason.type = _root_.com.histmersion.domain.AutopilotPolicy.Reason
+      export com.histmersion.domain.AutopilotPolicy.Reason
     object Leave:
-      type Why = com.histmersion.domain.AutopilotPolicy.Reason
-      val Why: _root_.com.histmersion.domain.AutopilotPolicy.Reason.type = _root_.com.histmersion.domain.AutopilotPolicy.Reason
+      export com.histmersion.domain.AutopilotPolicy.{Reason as Why}
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
   final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
@@ -511,42 +508,27 @@ object AutopilotPolicy:
 
   object Step:
     object CreateSeed:
-      type Goal = com.histmersion.domain.automation.Goal.Slug
-      val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-      type Cron = com.histmersion.domain.AutopilotPolicy.Cron
-      val Cron: _root_.com.histmersion.domain.AutopilotPolicy.Cron.type = _root_.com.histmersion.domain.AutopilotPolicy.Cron
-      type PlanFirst = com.histmersion.domain.AutopilotPolicy.GoalRow.NeedsPlan
-      val PlanFirst: _root_.com.histmersion.domain.AutopilotPolicy.GoalRow.NeedsPlan.type = _root_.com.histmersion.domain.AutopilotPolicy.GoalRow.NeedsPlan
+      export com.histmersion.domain.automation.Goal.{Slug as Goal}
+      export com.histmersion.domain.AutopilotPolicy.Cron
+      export com.histmersion.domain.AutopilotPolicy.GoalRow.{NeedsPlan as PlanFirst}
     object CreateWatch:
-      type Goal = com.histmersion.domain.automation.Goal.Slug
-      val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-      type Cron = com.histmersion.domain.AutopilotPolicy.Cron
-      val Cron: _root_.com.histmersion.domain.AutopilotPolicy.Cron.type = _root_.com.histmersion.domain.AutopilotPolicy.Cron
-      type PerDay = com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay
-      val PerDay: _root_.com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay.type = _root_.com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay
+      export com.histmersion.domain.automation.Goal.{Slug as Goal}
+      export com.histmersion.domain.AutopilotPolicy.Cron
+      export com.histmersion.domain.AutopilotPolicy.Settings.{WatchIngestPerDay as PerDay}
     object Resume:
-      type Id = com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      val Id: _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id.type = _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
     object SetCron:
-      type Id = com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      val Id: _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id.type = _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      type Cron = com.histmersion.domain.AutopilotPolicy.Cron
-      val Cron: _root_.com.histmersion.domain.AutopilotPolicy.Cron.type = _root_.com.histmersion.domain.AutopilotPolicy.Cron
+      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export com.histmersion.domain.AutopilotPolicy.Cron
     object AutoIngestOn:
-      type Id = com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      val Id: _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id.type = _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      type PerDay = com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay
-      val PerDay: _root_.com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay.type = _root_.com.histmersion.domain.AutopilotPolicy.Settings.WatchIngestPerDay
+      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export com.histmersion.domain.AutopilotPolicy.Settings.{WatchIngestPerDay as PerDay}
     object AddPlanItem:
-      type Id = com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      val Id: _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id.type = _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      type Goal = com.histmersion.domain.automation.Goal.Slug
-      val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
+      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export com.histmersion.domain.automation.Goal.{Slug as Goal}
     object ExtendMinNew:
-      type Id = com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      val Id: _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id.type = _root_.com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      type N = com.histmersion.domain.AutopilotPolicy.Settings.ExtendMinNew
-      val N: _root_.com.histmersion.domain.AutopilotPolicy.Settings.ExtendMinNew.type = _root_.com.histmersion.domain.AutopilotPolicy.Settings.ExtendMinNew
+      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export com.histmersion.domain.AutopilotPolicy.Settings.{ExtendMinNew as N}
 
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.

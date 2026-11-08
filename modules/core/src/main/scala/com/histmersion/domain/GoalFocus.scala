@@ -174,10 +174,7 @@ object GoalFocus:
 
   object Fit:
     object Waits:
-      type Code = com.histmersion.domain.GoalFocus.WaitCode
-      val Code: _root_.com.histmersion.domain.GoalFocus.WaitCode.type = _root_.com.histmersion.domain.GoalFocus.WaitCode
-      type Why = com.histmersion.domain.GoalFocus.Reason
-      val Why: _root_.com.histmersion.domain.GoalFocus.Reason.type = _root_.com.histmersion.domain.GoalFocus.Reason
+      export com.histmersion.domain.GoalFocus.{WaitCode as Code, Reason as Why}
 
   /** The codes of [[Fit.Waits]]. */
   object Code:

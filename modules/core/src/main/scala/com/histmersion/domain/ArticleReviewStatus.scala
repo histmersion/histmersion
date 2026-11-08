@@ -14,8 +14,7 @@ object ArticleReviewStatus:
   object OutcomeSuffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Progress = Progress.T
   object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunStart = com.histmersion.api.research.ReviewRound.StartedAt
-  val RunStart: com.histmersion.api.research.ReviewRound.StartedAt.type = com.histmersion.api.research.ReviewRound.StartedAt
+  export com.histmersion.api.research.ReviewRound.{StartedAt as RunStart}
   type StatusLine = StatusLine.T
   object StatusLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

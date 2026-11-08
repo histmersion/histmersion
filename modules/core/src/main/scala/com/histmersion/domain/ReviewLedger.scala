@@ -38,30 +38,18 @@ object ReviewLedger:
   object TaskTextLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type ApplyChecksRun = _root_.com.histmersion.domain.automation.Run.Id
-  val ApplyChecksRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type ApplyChecksRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val ApplyChecksRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type RecheckMechanicalRun = _root_.com.histmersion.domain.automation.Run.Id
-  val RecheckMechanicalRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type RecheckMechanicalRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val RecheckMechanicalRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type RecheckTermCountRun = _root_.com.histmersion.domain.automation.Run.Id
-  val RecheckTermCountRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type RecheckTermCountRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val RecheckTermCountRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type ApplyFixRun = _root_.com.histmersion.domain.automation.Run.Id
-  val ApplyFixRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type ApplyFixRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val ApplyFixRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type LearnRun = _root_.com.histmersion.domain.automation.Run.Id
-  val LearnRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type LearnRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val LearnRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type ApplyRecheckRun = _root_.com.histmersion.domain.automation.Run.Id
-  val ApplyRecheckRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-  type ApplyRecheckRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  val ApplyRecheckRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  export com.histmersion.domain.automation.Run.{Id as ApplyChecksRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyChecksRound}
+  export com.histmersion.domain.automation.Run.{Id as RecheckMechanicalRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as RecheckMechanicalRound}
+  export com.histmersion.domain.automation.Run.{Id as RecheckTermCountRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as RecheckTermCountRound}
+  export com.histmersion.domain.automation.Run.{Id as ApplyFixRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyFixRound}
+  export com.histmersion.domain.automation.Run.{Id as LearnRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as LearnRound}
+  export com.histmersion.domain.automation.Run.{Id as ApplyRecheckRun}
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyRecheckRound}
   type ArticleTaskSlug = _root_.com.histmersion.domain.research.Slug
   val ArticleTaskSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 

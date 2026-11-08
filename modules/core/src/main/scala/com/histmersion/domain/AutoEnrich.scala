@@ -36,8 +36,7 @@ object AutoEnrich:
 
   object Skip:
     object Enriched:
-      type Why = com.histmersion.domain.AutoEnrich.Reason
-      val Why: _root_.com.histmersion.domain.AutoEnrich.Reason.type = _root_.com.histmersion.domain.AutoEnrich.Reason
+      export com.histmersion.domain.AutoEnrich.{Reason as Why}
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)

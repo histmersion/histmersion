@@ -151,18 +151,13 @@ object CoreQuota:
 
   object Refusal:
     object Blocked:
-      type Why = com.histmersion.domain.CoreQuota.Block.Why
-      val Why: _root_.com.histmersion.domain.CoreQuota.Block.Why.type = _root_.com.histmersion.domain.CoreQuota.Block.Why
+      export com.histmersion.domain.CoreQuota.Block.Why
 
     object OverBudget:
-      type Spent = com.histmersion.domain.CoreQuota.Spent
-      val Spent: _root_.com.histmersion.domain.CoreQuota.Spent.type = _root_.com.histmersion.domain.CoreQuota.Spent
-      type Cap = com.histmersion.domain.CoreQuota.Cap
-      val Cap: _root_.com.histmersion.domain.CoreQuota.Cap.type = _root_.com.histmersion.domain.CoreQuota.Cap
+      export com.histmersion.domain.CoreQuota.{Spent, Cap}
 
     object Paced:
-      type WaitMs = com.histmersion.domain.CoreQuota.Grant.WaitMs
-      val WaitMs: _root_.com.histmersion.domain.CoreQuota.Grant.WaitMs.type = _root_.com.histmersion.domain.CoreQuota.Grant.WaitMs
+      export com.histmersion.domain.CoreQuota.Grant.WaitMs
 
 
   /** A call may go out after `waitMs`; `state` already counts it. */

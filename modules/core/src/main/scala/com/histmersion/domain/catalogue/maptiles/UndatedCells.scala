@@ -14,8 +14,7 @@ object UndatedCells:
     * one site is that site, any other its count, with how many of it have no known date.
     */
 
-  type MergeZ = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
-  val MergeZ: _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z.type = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
+  export com.histmersion.domain.catalogue.maptiles.TileCoord.{Z as MergeZ}
 
   def merge(z: com.histmersion.domain.catalogue.maptiles.UndatedCells.MergeZ, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
     val byUndated = undated.iterator.map(u => (u.gx, u.gy) -> u).toMap

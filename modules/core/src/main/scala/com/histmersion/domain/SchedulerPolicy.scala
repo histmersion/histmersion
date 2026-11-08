@@ -33,8 +33,7 @@ import java.time.{Duration, Instant}
 object SchedulerPolicy:
   type StartedNote = StartedNote.T
   object StartedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrategyName = SchedulerDefaults.Strategy
-  val StrategyName: SchedulerDefaults.Strategy.type = SchedulerDefaults.Strategy
+  export SchedulerDefaults.{Strategy as StrategyName}
 
   /** A pin is worth this many priority levels. */
   val PinBoost = 1000

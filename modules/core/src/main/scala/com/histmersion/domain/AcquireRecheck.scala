@@ -36,18 +36,10 @@ object AcquireRecheck:
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
-  type IsDueGeneration = _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation
-  val IsDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation.type = _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation
-  type IsDueEveryDays = _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays
-  val IsDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays
-  type IsDueRetryHours = _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours
-  val IsDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours
-  type NextDueGeneration = _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation
-  val NextDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation.type = _root_.com.histmersion.domain.AcquireRecheck.LastCheck.Generation
-  type NextDueEveryDays = _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays
-  val NextDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.Settings.EveryDays
-  type NextDueRetryHours = _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours
-  val NextDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.Settings.RetryHours
+  export com.histmersion.domain.AcquireRecheck.LastCheck.{Generation as IsDueGeneration}
+  export com.histmersion.domain.AcquireRecheck.Settings.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
+  export com.histmersion.domain.AcquireRecheck.LastCheck.{Generation as NextDueGeneration}
+  export com.histmersion.domain.AcquireRecheck.Settings.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
 
   final case class Settings(
       enabled: Settings.Enabled,

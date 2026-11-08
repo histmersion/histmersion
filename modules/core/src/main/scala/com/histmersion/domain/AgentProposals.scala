@@ -19,8 +19,7 @@ import com.histmersion.api.library.Source
 object AgentProposals:
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = com.histmersion.domain.AgentVerify.Problem
-  val Problem: _root_.com.histmersion.domain.AgentVerify.Problem.type = _root_.com.histmersion.domain.AgentVerify.Problem
+  export com.histmersion.domain.AgentVerify.Problem
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
