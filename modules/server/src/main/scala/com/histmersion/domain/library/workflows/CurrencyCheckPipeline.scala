@@ -26,7 +26,6 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
@@ -125,15 +124,15 @@ object CurrencyCheckPipeline:
 
   object Assessed:
     type Checked = Checked.T
-    object Checked extends RefinedType[Int, Pure]
+    object Checked extends Newtype[Int, Pure]
     type Retracted = Citekey
     val Retracted: Citekey.type = Citekey
   final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued) derives KindlingsCodecAsObject
 
   object Followed:
     type Citing = Citing.T
-    object Citing extends RefinedType[Int, Pure]
+    object Citing extends Newtype[Int, Pure]
     type Proposed = Proposed.T
-    object Proposed extends RefinedType[Int, Pure]
+    object Proposed extends Newtype[Int, Pure]
     type Queued = Queued.T
-    object Queued extends RefinedType[Int, Pure]
+    object Queued extends Newtype[Int, Pure]

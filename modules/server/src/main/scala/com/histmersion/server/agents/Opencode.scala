@@ -12,14 +12,13 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Opencode:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SchemaNote = SchemaNote.T
-  object SchemaNote extends RefinedType[String, Pure]
+  object SchemaNote extends Newtype[String, Pure]
 
 
 

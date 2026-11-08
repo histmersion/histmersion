@@ -12,7 +12,6 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.UiLabels
@@ -45,19 +44,19 @@ object UploadView:
     type FileName = Api.FileName
     val FileName: Api.FileName.type = Api.FileName
     type Citekey = Citekey.T
-    object Citekey extends RefinedType[String, Pure]
+    object Citekey extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Authors = Authors.T
-    object Authors extends RefinedType[String, Pure]
+    object Authors extends Newtype[String, Pure]
     type Year = Year.T
-    object Year extends RefinedType[String, Pure]
+    object Year extends Newtype[String, Pure]
     type Doi = Doi.T
-    object Doi extends RefinedType[String, Pure]
+    object Doi extends Newtype[String, Pure]
     type Quality = Quality.T
-    object Quality extends RefinedType[Boolean, Pure]
+    object Quality extends Newtype[Boolean, Pure]
     type Force = Force.T
-    object Force extends RefinedType[Boolean, Pure]
+    object Force extends Newtype[Boolean, Pure]
 
   /** A form field a message belongs next to. */
   enum Field:

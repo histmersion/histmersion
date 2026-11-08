@@ -11,7 +11,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What an assessment rests on and what it leaves: the local Retraction Watch mirror, and the verdict recorded against
@@ -33,7 +32,7 @@ trait AssessmentService:
 
 object AssessmentService:
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends RefinedType[String, Pure]
+  object CheckedAt extends Newtype[String, Pure]
 
   def apply(db: Transactor): AssessmentService = Implementation(db)
 

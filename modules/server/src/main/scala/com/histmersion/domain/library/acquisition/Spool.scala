@@ -5,7 +5,6 @@ import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}
 import com.histmersion.util.storage.Blob
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a fetched file waits for the converter (`acquire.spool-dir`; empty is the JVM temp directory's
@@ -37,8 +36,8 @@ final class Spool(store: Store):
 
 object Spool:
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Extension = Extension.T
-  object Extension extends RefinedType[String, Pure]
+  object Extension extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

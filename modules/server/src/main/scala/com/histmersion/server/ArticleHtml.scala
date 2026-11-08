@@ -10,7 +10,6 @@ import sttp.tapir.json.circe.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
@@ -18,10 +17,10 @@ import com.histmersion.domain.Title
 /** Pure helpers for the article pages. */
 object ArticleHtml:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   /** HTML-escape a value destined for an attribute or text node. */
   type MatchNavMatches = MatchNavMatches.T
-  object MatchNavMatches extends RefinedType[Int, Pure]
+  object MatchNavMatches extends Newtype[Int, Pure]
 
   def esc(s: HtmlRender.Text): HtmlRender.Html = HtmlRender.esc(s)
 

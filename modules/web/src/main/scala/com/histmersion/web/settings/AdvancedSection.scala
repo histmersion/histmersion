@@ -4,7 +4,6 @@ package web.settings
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 
@@ -14,9 +13,9 @@ import com.histmersion.web.ErrorLine
   */
 object AdvancedSection:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type SectionName = SectionName.T
-  object SectionName extends RefinedType[String, Pure]
+  object SectionName extends Newtype[String, Pure]
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
   def matches(f: ConfigEdit.Field, q: Query): Boolean =

@@ -8,7 +8,6 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventScale, EventTaxonomy}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventSummary
@@ -17,23 +16,23 @@ import com.histmersion.api.UiLabels
 /** The pure half of the events in playback (#1440): when an event shows and how strongly. */
 object EventPlayback:
   type Alpha = Alpha.T
-  object Alpha extends RefinedType[Double, Pure]
+  object Alpha extends Newtype[Double, Pure]
   type AnchorKey = AnchorKey.T
-  object AnchorKey extends RefinedType[String, Pure]
+  object AnchorKey extends Newtype[String, Pure]
   type FadeYears = FadeYears.T
-  object FadeYears extends RefinedType[Double, Pure]
+  object FadeYears extends Newtype[Double, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Rank = Rank.T
-  object Rank extends RefinedType[Double, Pure]
+  object Rank extends Newtype[Double, Pure]
   type Seconds = Seconds.T
-  object Seconds extends RefinedType[Double, Pure]
+  object Seconds extends Newtype[Double, Pure]
   type Slot = Slot.T
-  object Slot extends RefinedType[Int, Pure]
+  object Slot extends Newtype[Int, Pure]
   type YearsPerSecond = YearsPerSecond.T
-  object YearsPerSecond extends RefinedType[Double, Pure]
+  object YearsPerSecond extends Newtype[Double, Pure]
 
   /** Pure: how visible an event is with the playhead at `playhead` — 0 before its span, 1 inside it, then falling
     * linearly to 0 over `fadeYears` after it ends (a battle of one year stays on screen for the fade, not for one

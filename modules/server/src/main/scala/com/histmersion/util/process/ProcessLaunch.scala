@@ -2,7 +2,6 @@ package com.histmersion
 package util.process
 
 import com.histmersion.util.storage.Store
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A child process to start: its command line, the store it runs in (its working directory), the variables added to the
@@ -18,10 +17,10 @@ final case class ProcessLaunch(
 
 object ProcessLaunch:
   type Command = Command.T
-  object Command extends RefinedType[String, Pure]
+  object Command extends Newtype[String, Pure]
   type EnvironmentKey = EnvironmentKey.T
-  object EnvironmentKey extends RefinedType[String, Pure]
+  object EnvironmentKey extends Newtype[String, Pure]
   type EnvironmentValue = EnvironmentValue.T
-  object EnvironmentValue extends RefinedType[String, Pure]
+  object EnvironmentValue extends Newtype[String, Pure]
   type MergeErrors = MergeErrors.T
-  object MergeErrors extends RefinedType[Boolean, Pure]
+  object MergeErrors extends Newtype[Boolean, Pure]

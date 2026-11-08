@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.AssetService
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.media.imports.Target
@@ -39,7 +38,7 @@ trait AssetLinkService:
 
 object AssetLinkService:
   type LinkId = LinkId.T
-  object LinkId extends RefinedType[Long, Pure]
+  object LinkId extends Newtype[Long, Pure]
 
   def apply(db: Transactor): AssetLinkService = Implementation(db)
 

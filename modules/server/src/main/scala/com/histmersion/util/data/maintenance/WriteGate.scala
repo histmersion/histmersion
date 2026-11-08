@@ -5,7 +5,6 @@ import com.histmersion.api.backup.Backup
 
 import java.util.concurrent.atomic.AtomicBoolean
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The maintenance lock. A restore drops and recreates every table, so no other write may run while it does:
@@ -33,4 +32,4 @@ final class WriteGate:
 
 object WriteGate:
   type OperationName = OperationName.T
-  object OperationName extends RefinedType[String, Pure]
+  object OperationName extends Newtype[String, Pure]

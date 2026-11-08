@@ -6,7 +6,6 @@ import com.histmersion.util.storage.{ByteSource, Store}
 
 import java.io.IOException
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A store of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a file
@@ -89,11 +88,11 @@ object DiskLru:
   type Bytes = ByteSource.Content
   val Bytes: ByteSource.Content.type = ByteSource.Content
   type MaxBytes = MaxBytes.T
-  object MaxBytes extends RefinedType[Long, Pure]
+  object MaxBytes extends Newtype[Long, Pure]
   type EntryCount = EntryCount.T
-  object EntryCount extends RefinedType[Long, Pure]
+  object EntryCount extends Newtype[Long, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Ext = Ext.T
-  object Ext extends RefinedType[String, Pure]
+  object Ext extends Newtype[String, Pure]
 

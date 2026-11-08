@@ -25,7 +25,6 @@ import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
@@ -184,6 +183,6 @@ object HintEffectPipeline:
 
   object Loaded:
     type Items = Items.T
-    object Items extends RefinedType[String, Pure]
+    object Items extends Newtype[String, Pure]
     type Settings = Settings.T
-    object Settings extends RefinedType[String, Pure]
+    object Settings extends Newtype[String, Pure]

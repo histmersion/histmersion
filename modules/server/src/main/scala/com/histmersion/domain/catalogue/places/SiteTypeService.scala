@@ -10,7 +10,6 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The refined types of the Wikidata sites on the map (those a finding or a picture is placed at): which are still to
@@ -29,7 +28,7 @@ trait SiteTypeService:
 
 object SiteTypeService:
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]
 
   def apply(db: Transactor): SiteTypeService = Implementation(db)
 

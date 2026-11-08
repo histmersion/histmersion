@@ -10,7 +10,6 @@ import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The work lists' operations as REST, MCP and the CLI reach them: the list named by its word, the inputs checked, a
@@ -70,9 +69,9 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
 
 object WorkListControllers:
   type ListName = ListName.T
-  object ListName extends RefinedType[String, Pure]
+  object ListName extends Newtype[String, Pure]
   type KindOfList = KindOfList.T
-  object KindOfList extends RefinedType[String, Pure]
+  object KindOfList extends Newtype[String, Pure]
 
   private def bad(message: String): Api.Error = Api.Error(Api.Error.Message(message))
 

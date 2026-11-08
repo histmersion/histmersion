@@ -22,7 +22,6 @@ import com.histmersion.util.storage.{ByteSource, HandedFile}
 import java.time.OffsetDateTime
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
@@ -115,7 +114,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
 object BundleControllers:
   type Disposition = Disposition.T
-  object Disposition extends RefinedType[String, Pure]
+  object Disposition extends Newtype[String, Pure]
   /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
 
   val ListLimit: PageSize = PageSize(50)

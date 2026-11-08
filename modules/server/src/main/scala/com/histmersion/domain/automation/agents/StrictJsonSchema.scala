@@ -5,7 +5,6 @@ import com.histmersion.server.agents.{CliOutcomes, Codex}
 
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.VocabularyCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's `--output-schema`
@@ -35,10 +34,10 @@ object StrictJsonSchema:
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */
   type Keywords = KeywordsValue
   type KeywordsValue = KeywordsValue.T
-  object KeywordsValue extends RefinedType[String, Pure]
+  object KeywordsValue extends Newtype[String, Pure]
   type StringFormats = StringFormatsValue
   type StringFormatsValue = StringFormatsValue.T
-  object StringFormatsValue extends RefinedType[String, Pure]
+  object StringFormatsValue extends Newtype[String, Pure]
 
   val Keywords: Set[Keywords] = Set(
     KeywordsValue("type"),

@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Who a marked part of a definition is for (`<!-- only:<audience> -->` … `<!-- /only:<audience> -->`): the person's
@@ -21,4 +20,4 @@ enum Audience(val wire: Audience.Wire):
 
 object Audience:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

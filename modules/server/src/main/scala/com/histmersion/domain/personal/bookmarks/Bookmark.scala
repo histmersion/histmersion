@@ -12,7 +12,6 @@ import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{Latitude, Longitude, UserId, Year}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
 
@@ -33,7 +32,7 @@ final case class Bookmark(
 
 object Bookmark:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
 
   def idOf(raw: WireBookmark.Id): Either[Problem, WireBookmark.Id] =

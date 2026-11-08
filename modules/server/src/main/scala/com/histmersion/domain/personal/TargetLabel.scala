@@ -7,9 +7,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What an item was called when the person marked it, kept for an item the collection no longer (or never) holds. */
 type TargetLabel = TargetLabel.T
 
-object TargetLabel extends RefinedType[String, Pure]:
+object TargetLabel extends Newtype[String, Pure]:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   /** The most characters a name keeps. */
 
   val MaxChars = 300

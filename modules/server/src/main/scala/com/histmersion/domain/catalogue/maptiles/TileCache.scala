@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The tiles a server keeps, by key, the least recently asked for going first once they hold more than `maxBytes`. A
@@ -33,4 +32,4 @@ final class TileCache(maxBytes: () => ByteCount):
 
 object TileCache:
   type EntryCount = EntryCount.T
-  object EntryCount extends RefinedType[Int, Pure]
+  object EntryCount extends Newtype[Int, Pure]

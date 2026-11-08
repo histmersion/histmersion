@@ -19,35 +19,34 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Year}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Filter, Sort}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.instance.DebounceConfig
 import com.histmersion.web.ui.Layout
 
 object UiState:
   type ChangeSeq = ChangeSeq.T
-  object ChangeSeq extends RefinedType[Int, Pure]
+  object ChangeSeq extends Newtype[Int, Pure]
   type FilterTerm = FilterTerm.T
-  object FilterTerm extends RefinedType[String, Pure]
+  object FilterTerm extends Newtype[String, Pure]
   type ReloadDelay = ReloadDelay.T
-  object ReloadDelay extends RefinedType[Int, Pure]
+  object ReloadDelay extends Newtype[Int, Pure]
   type UrlHash = UrlHash.T
-  object UrlHash extends RefinedType[String, Pure]
+  object UrlHash extends Newtype[String, Pure]
 
   type ReloadDelayNormalMs = ReloadDelayNormalMs.T
-  object ReloadDelayNormalMs extends RefinedType[Int, Pure]
+  object ReloadDelayNormalMs extends Newtype[Int, Pure]
   type ToggledPlaceId = ToggledPlaceId.T
-  object ToggledPlaceId extends RefinedType[String, Pure]
+  object ToggledPlaceId extends Newtype[String, Pure]
   type TogglePlaceId = ToggledPlaceId
   val TogglePlaceId: ToggledPlaceId.type = ToggledPlaceId
   type ToFilterExcept = ToFilterExcept.T
-  object ToFilterExcept extends RefinedType[String, Pure]
+  object ToFilterExcept extends Newtype[String, Pure]
   type RemoveChipKey = RemoveChipKey.T
-  object RemoveChipKey extends RefinedType[String, Pure]
+  object RemoveChipKey extends Newtype[String, Pure]
   type NavigatePathAndSearch = NavigatePathAndSearch.T
-  object NavigatePathAndSearch extends RefinedType[String, Pure]
+  object NavigatePathAndSearch extends Newtype[String, Pure]
   type NavigatePush = NavigatePush.T
-  object NavigatePush extends RefinedType[Boolean, Pure]
+  object NavigatePush extends Newtype[Boolean, Pure]
   type SetPush = NavigatePush
   val SetPush: NavigatePush.type = NavigatePush
 
@@ -261,7 +260,7 @@ object UiState:
 
   object Preview:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     type Value = FilterTerm
     val Value: FilterTerm.type = FilterTerm
   val preview: Var[Option[Preview]] = Var(None)
@@ -404,13 +403,13 @@ object UiState:
 
   object ActiveChip:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Value = FilterTerm
     val Value: FilterTerm.type = FilterTerm
     type Shown = Shown.T
-    object Shown extends RefinedType[String, Pure]
+    object Shown extends Newtype[String, Pure]
 
   def activeChips(): List[ActiveChip] =
     fields

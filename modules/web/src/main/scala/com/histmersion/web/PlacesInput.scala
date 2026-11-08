@@ -21,7 +21,6 @@ import com.histmersion.api.library.Label
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Year
@@ -48,7 +47,7 @@ object PlacesInput:
 
   object KnownPlace:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
   private def knownOf(label: String, kind: String, contested: Boolean): KnownPlace =
     KnownPlace(UiLabels.Text(label), KnownPlace.Kind(kind), contested)

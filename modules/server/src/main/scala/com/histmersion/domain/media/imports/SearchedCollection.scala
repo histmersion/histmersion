@@ -7,7 +7,6 @@ import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.MediaRole
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to a place
@@ -48,11 +47,11 @@ trait SearchedCollection:
 
 object SearchedCollection:
   type DistanceKm = DistanceKm.T
-  object DistanceKm extends RefinedType[Double, Pure]
+  object DistanceKm extends Newtype[Double, Pure]
   type LicenceKey = LicenceKey.T
-  object LicenceKey extends RefinedType[String, Pure]
+  object LicenceKey extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   private def infoId(p: PlaceFacts): MediaMatch.PlaceInfo.Id = MediaMatch.PlaceInfo.Id(p.id.value)
 

@@ -8,7 +8,6 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A metered upstream's budget as it is kept across restarts (CORE's), one per upstream. */
@@ -18,7 +17,7 @@ trait UpstreamQuotaService:
 
 object UpstreamQuotaService:
   type Upstream = Upstream.T
-  object Upstream extends RefinedType[String, Pure]
+  object Upstream extends Newtype[String, Pure]
 
   def apply(db: Transactor): UpstreamQuotaService = Implementation(db)
 

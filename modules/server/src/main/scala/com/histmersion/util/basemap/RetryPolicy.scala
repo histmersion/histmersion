@@ -2,7 +2,6 @@ package com.histmersion
 package util.basemap
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** When the base map's client asks a provider again: the product's outbound-HTTP policy, which the composition root
@@ -26,8 +25,8 @@ trait RetryPolicy:
 
 object RetryPolicy:
   type MaxRetries = MaxRetries.T
-  object MaxRetries extends RefinedType[Int, Pure]
+  object MaxRetries extends Newtype[Int, Pure]
   type RetryAfterCap = RetryAfterCap.T
-  object RetryAfterCap extends RefinedType[Int, Pure]
+  object RetryAfterCap extends Newtype[Int, Pure]
   type RetryAfterHeader = RetryAfterHeader.T
-  object RetryAfterHeader extends RefinedType[String, Pure]
+  object RetryAfterHeader extends Newtype[String, Pure]

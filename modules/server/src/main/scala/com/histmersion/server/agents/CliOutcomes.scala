@@ -7,7 +7,6 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
@@ -18,7 +17,7 @@ object CliOutcomes:
     * absent one.
     */
   type TextProblemText = TextProblemText.T
-  object TextProblemText extends RefinedType[String, Pure]
+  object TextProblemText extends Newtype[String, Pure]
 
   def result[Out](
       o: CliOutcome,

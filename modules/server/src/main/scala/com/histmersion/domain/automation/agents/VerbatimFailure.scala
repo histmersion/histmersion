@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation.agents
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A provider's failure that is already a whole description (`RuntimeException: Claude API error: Overloaded`): a run's
@@ -11,7 +10,7 @@ final class VerbatimFailure(val description: VerbatimFailure.Description) extend
 
 object VerbatimFailure:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** How a failed provider call is described: a verbatim failure as it is, any other exception by class and message. */
   type Description = Problem
   val Description: Problem.type = Problem

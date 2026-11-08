@@ -6,7 +6,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventTier}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.Api
@@ -15,15 +14,15 @@ import com.histmersion.api.catalogue.Year
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:
   type Color = Color.T
-  object Color extends RefinedType[String, Pure]
+  object Color extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type Ramp = Ramp.T
-  object Ramp extends RefinedType[Double, Pure]
+  object Ramp extends Newtype[Double, Pure]
   type TierClass = TierClass.T
-  object TierClass extends RefinedType[String, Pure]
+  object TierClass extends Newtype[String, Pure]
 
   /** Pure: the marker's markup ([[PointKinds.Events]]): its kind's icon on a square whose fill is the event's date on
     * the period ramp (`--c`), as every point's. The TIER is the badge's style: `hd-ev--attested` filled;

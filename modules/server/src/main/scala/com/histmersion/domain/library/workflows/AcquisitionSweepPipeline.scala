@@ -30,7 +30,6 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.managers.ManagerContext
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
@@ -410,7 +409,7 @@ object AcquisitionSweepPipeline:
 
   object Failed:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** What the ingest step of a run with a backlog did. */
   final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject
@@ -422,6 +421,6 @@ object AcquisitionSweepPipeline:
 
   object Parked:
     type Waiting = Waiting.T
-    object Waiting extends RefinedType[Int, Pure]
+    object Waiting extends Newtype[Int, Pure]
     type Known = Known.T
-    object Known extends RefinedType[Int, Pure]
+    object Known extends Newtype[Int, Pure]

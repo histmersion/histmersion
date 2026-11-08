@@ -5,7 +5,6 @@ import com.histmersion.api.TableSize
 import com.histmersion.util.data.{DataContributions, DataOwner, TableName}
 import com.histmersion.util.database.Transactor
 import com.histmersion.ByteCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The figures of the 360° view, read from the registry: each owner's counts, the database's size, its largest
@@ -26,9 +25,9 @@ trait DiagnosticsService:
 
 object DiagnosticsService:
   type DatabaseName = DatabaseName.T
-  object DatabaseName extends RefinedType[String, Pure]
+  object DatabaseName extends Newtype[String, Pure]
   type TableLimit = TableLimit.T
-  object TableLimit extends RefinedType[Int, Pure]
+  object TableLimit extends Newtype[Int, Pure]
 
 
   def apply(registry: DataContributions, transactor: Transactor): DiagnosticsService =

@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The two vector styles drawn from the server's own extracts (docs/research-map-styles.md). */
@@ -14,9 +13,9 @@ enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label):
 
 object VectorStyle:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   def parse(s: Id): Option[VectorStyle] = values.find(_.id.value == s.value.trim.toLowerCase)

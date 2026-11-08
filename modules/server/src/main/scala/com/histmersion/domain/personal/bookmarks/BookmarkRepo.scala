@@ -11,13 +11,12 @@ import com.histmersion.{PageSize, UserId}
 import com.augustnagro.magnum.*
 
 import scala.util.chaining.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `bookmarks` table. Takes the connection it runs on; a removed bookmark stays as its tombstone. */
 private[bookmarks] object BookmarkRepo:
   type RowsChanged = RowsChanged.T
-  object RowsChanged extends RefinedType[Int, Pure]
+  object RowsChanged extends Newtype[Int, Pure]
 
 
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""

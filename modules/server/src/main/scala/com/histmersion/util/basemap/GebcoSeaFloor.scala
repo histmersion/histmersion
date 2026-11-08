@@ -11,7 +11,6 @@ import com.histmersion.util.storage.Store
 import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sea floor from the GEBCO grid (15 arc-seconds, ~460 m; public domain), made into Terrarium tiles here: GEBCO
@@ -151,25 +150,25 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
 
 object GebcoSeaFloor:
   type Column = Column.T
-  object Column extends RefinedType[Int, Pure]
+  object Column extends Newtype[Int, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Elevation = Elevation.T
-  object Elevation extends RefinedType[Short, Pure]
+  object Elevation extends Newtype[Short, Pure]
   type GridSize = GridSize.T
-  object GridSize extends RefinedType[Int, Pure]
+  object GridSize extends Newtype[Int, Pure]
   type Note = BasemapFetch.Note
   val Note: BasemapFetch.Note.type = BasemapFetch.Note
   type PixelX = PixelX.T
-  object PixelX extends RefinedType[Int, Pure]
+  object PixelX extends Newtype[Int, Pure]
   type PixelY = PixelY.T
-  object PixelY extends RefinedType[Int, Pure]
+  object PixelY extends Newtype[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Row = Row.T
-  object Row extends RefinedType[Int, Pure]
+  object Row extends Newtype[Int, Pure]
   type SampledElevation = SampledElevation.T
-  object SampledElevation extends RefinedType[Float, Pure]
+  object SampledElevation extends Newtype[Float, Pure]
   type TileKey = GebcoPlan.TileKey
   val TileKey: GebcoPlan.TileKey.type = GebcoPlan.TileKey
   type TileX = GebcoPlan.TileX
@@ -177,7 +176,7 @@ object GebcoSeaFloor:
   type TileY = GebcoPlan.TileY
   val TileY: GebcoPlan.TileY.type = GebcoPlan.TileY
   type WholeDegrees = WholeDegrees.T
-  object WholeDegrees extends RefinedType[Int, Pure]
+  object WholeDegrees extends Newtype[Int, Pure]
   type Zoom = GebcoPlan.Zoom
   val Zoom: GebcoPlan.Zoom.type = GebcoPlan.Zoom
 

@@ -41,7 +41,6 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.managers.ManagerContext
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
@@ -446,8 +445,8 @@ object CompileArticlePipeline:
 
   object Written:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type PreviousVersion = PreviousVersion.T
-    object PreviousVersion extends RefinedType[Long, Pure]
+    object PreviousVersion extends Newtype[Long, Pure]

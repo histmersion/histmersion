@@ -4,7 +4,6 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Runs `f` at most once per `intervalMs`: the first call runs at once, calls inside the window collapse into one
@@ -46,9 +45,9 @@ final class Throttle[A](
 
 object Throttle:
   type IntervalMs = IntervalMs.T
-  object IntervalMs extends RefinedType[Int, Pure]
+  object IntervalMs extends Newtype[Int, Pure]
   type DelayMs = DelayMs.T
-  object DelayMs extends RefinedType[Double, Pure]
+  object DelayMs extends Newtype[Double, Pure]
   type TimerId = TimerId.T
-  object TimerId extends RefinedType[Int, Pure]
+  object TimerId extends Newtype[Int, Pure]
 

@@ -15,7 +15,6 @@ import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the library's workflows are given by the composition: the work lists, the write gate, the library's own
@@ -51,4 +50,4 @@ trait LibrarySite:
 
 object LibrarySite:
   type PlaceName = PlaceName.T
-  object PlaceName extends RefinedType[String, Pure]
+  object PlaceName extends Newtype[String, Pure]

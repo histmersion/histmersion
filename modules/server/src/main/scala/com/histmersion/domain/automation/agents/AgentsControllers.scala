@@ -54,7 +54,6 @@ import com.histmersion.api.library.Facet
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
@@ -1211,21 +1210,21 @@ final class AgentsControllers(
 
 object AgentsControllers:
   type BudgetTokens = BudgetTokens.T
-  object BudgetTokens extends RefinedType[Long, Pure]
+  object BudgetTokens extends Newtype[Long, Pure]
   type BudgetUsd = BudgetUsd.T
-  object BudgetUsd extends RefinedType[Double, Pure]
+  object BudgetUsd extends Newtype[Double, Pure]
   type ModelName = ModelName.T
-  object ModelName extends RefinedType[String, Pure]
+  object ModelName extends Newtype[String, Pure]
   type Offline = Offline.T
-  object Offline extends RefinedType[Boolean, Pure]
+  object Offline extends Newtype[Boolean, Pure]
   type PositiveAmount = PositiveAmount.T
-  object PositiveAmount extends RefinedType[Double, Pure]
+  object PositiveAmount extends Newtype[Double, Pure]
   type RoundsCap = RoundsCap.T
-  object RoundsCap extends RefinedType[Int, Pure]
+  object RoundsCap extends Newtype[Int, Pure]
   type SourcesCount = SourcesCount.T
-  object SourcesCount extends RefinedType[Int, Pure]
+  object SourcesCount extends Newtype[Int, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   /** A run id a request names: one that is not a run id names no run. */
   def runId(raw: String): Either[Api.Error, DomainRun.Id] =
     DomainRun.Id

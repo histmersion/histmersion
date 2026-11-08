@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.checks
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A fix's write of one record's text through the record's own patch, guarded by the version token it was read with:
@@ -12,8 +11,8 @@ trait GuardedWrite:
 
 object GuardedWrite:
   type ConcurrencyToken = ConcurrencyToken.T
-  object ConcurrencyToken extends RefinedType[String, Pure]
+  object ConcurrencyToken extends Newtype[String, Pure]
   type FileText = FileText.T
-  object FileText extends RefinedType[String, Pure]
+  object FileText extends Newtype[String, Pure]
   type RecordRef = RecordRef.T
-  object RecordRef extends RefinedType[String, Pure]
+  object RecordRef extends Newtype[String, Pure]

@@ -62,7 +62,6 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.media.{MediaCoversRequest, MediaItem, MediaProvider, SourceCoverParams}
 import com.histmersion.api.{Api, Write}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Isbn
@@ -101,14 +100,14 @@ trait CollectionsService:
 
 object CollectionsService:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   /** A source collection, by the name the registry knows it under. */
   type CollectionName = CollectionName.T
-  object CollectionName extends RefinedType[String, Pure]
+  object CollectionName extends Newtype[String, Pure]
   type SearchUnlinked = SearchUnlinked.T
-  object SearchUnlinked extends RefinedType[Boolean, Pure]
+  object SearchUnlinked extends Newtype[Boolean, Pure]
   type UpdateAllApply = UpdateAllApply.T
-  object UpdateAllApply extends RefinedType[Boolean, Pure]
+  object UpdateAllApply extends Newtype[Boolean, Pure]
 
   /** The collection the library links its sources to (`sources.calibre_id`). */
   val Calibre: CollectionName = CollectionName("calibre")

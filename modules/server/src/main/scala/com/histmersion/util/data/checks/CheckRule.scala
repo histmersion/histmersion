@@ -4,7 +4,6 @@ package util.data.checks
 import com.histmersion.api.checks.Lint.{LintRuleReport, Rule}
 import com.histmersion.util.data.DataOwner
 import com.augustnagro.magnum.DbCon
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One lint rule or health check of an owner's data: what it is called and checks, how it reports on one run's
@@ -18,6 +17,6 @@ trait CheckRule:
 
 object CheckRule:
   type MaxItems = MaxItems.T
-  object MaxItems extends RefinedType[Int, Pure]
+  object MaxItems extends Newtype[Int, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]

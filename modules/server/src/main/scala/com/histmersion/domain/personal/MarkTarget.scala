@@ -14,7 +14,6 @@ import com.histmersion.domain.ItemRef
 import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.domain.Title
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
@@ -94,7 +93,7 @@ enum MarkTarget:
 
 object MarkTarget:
   type ZoomProblem = ZoomProblem.T
-  object ZoomProblem extends RefinedType[String, Pure]
+  object ZoomProblem extends Newtype[String, Pure]
 
   /** The deepest zoom the map has; a target's zoom is between 0 and this. */
 

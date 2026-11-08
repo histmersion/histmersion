@@ -5,7 +5,6 @@ import com.histmersion.config.{AppConfig, LoadedConfig}
 import ox.{forkDiscard, useInScope}
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a reload reads the config again and how it fits it to this process.
@@ -26,7 +25,7 @@ final case class ConfigSource(
 
 object ConfigSource:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ReadResultPart1 = Problem
   val ReadResultPart1: Problem.type = Problem
   type PrepareResultPart1 = Problem

@@ -19,7 +19,6 @@ import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.research.Article
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.LpfDataset
 import com.histmersion.api.Years
@@ -41,19 +40,19 @@ import com.histmersion.api.media.ImageSize
   */
 object Preview:
   type CacheKey = CacheKey.T
-  object CacheKey extends RefinedType[String, Pure]
+  object CacheKey extends Newtype[String, Pure]
   type ElementSize = ElementSize.T
-  object ElementSize extends RefinedType[Double, Pure]
+  object ElementSize extends Newtype[Double, Pure]
   type KeyboardDriven = KeyboardDriven.T
-  object KeyboardDriven extends RefinedType[Boolean, Pure]
+  object KeyboardDriven extends Newtype[Boolean, Pure]
   type RestoreFocus = RestoreFocus.T
-  object RestoreFocus extends RefinedType[Boolean, Pure]
+  object RestoreFocus extends Newtype[Boolean, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends RefinedType[Double, Pure]
+  object ScreenPixels extends Newtype[Double, Pure]
   type ViewportHeight = ViewportHeight.T
-  object ViewportHeight extends RefinedType[Double, Pure]
+  object ViewportHeight extends Newtype[Double, Pure]
   type ViewportWidth = ViewportWidth.T
-  object ViewportWidth extends RefinedType[Double, Pure]
+  object ViewportWidth extends Newtype[Double, Pure]
 
   /** What an element asks to preview. */
 
@@ -165,34 +164,34 @@ object Preview:
 
   object Card:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Byline = Byline.T
-    object Byline extends RefinedType[String, Pure]
+    object Byline extends Newtype[String, Pure]
     type Identifier = Identifier.T
-    object Identifier extends RefinedType[String, Pure]
+    object Identifier extends Newtype[String, Pure]
     type ChipKind = ChipKind.T
-    object ChipKind extends RefinedType[String, Pure]
+    object ChipKind extends Newtype[String, Pure]
     type Where = Where.T
-    object Where extends RefinedType[String, Pure]
+    object Where extends Newtype[String, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Facts = Facts.T
-    object Facts extends RefinedType[String, Pure]
+    object Facts extends Newtype[String, Pure]
     type LinkLabel = LinkLabel.T
-    object LinkLabel extends RefinedType[String, Pure]
+    object LinkLabel extends Newtype[String, Pure]
     type LinkHref = LinkHref.T
-    object LinkHref extends RefinedType[String, Pure]
+    object LinkHref extends Newtype[String, Pure]
 
   /** One titled list on a card. */
   final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = Section.Kind(""))
 
   object Section:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
   /** One line: text, optionally a source (`citekey` → a source link with its own card), an article (`slug`), a page
     * elsewhere (`href`), a command to copy, a literature query to run.
@@ -208,17 +207,17 @@ object Preview:
 
   object Item:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Citekey = Target.Source.Citekey
     val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
     type Href = Href.T
-    object Href extends RefinedType[String, Pure]
+    object Href extends Newtype[String, Pure]
     type Command = Command.T
-    object Command extends RefinedType[String, Pure]
+    object Command extends Newtype[String, Pure]
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
 
   private val SummaryChars = 300
 

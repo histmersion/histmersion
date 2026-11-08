@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Shapes drawn by the map itself (areas, outlines). Updates are DIFFS: a shape whose geometry is the same keeps its
@@ -32,4 +31,4 @@ trait ShapeSet:
 
 object ShapeSet:
   type UploadCount = UploadCount.T
-  object UploadCount extends RefinedType[Int, Pure]
+  object UploadCount extends Newtype[Int, Pure]

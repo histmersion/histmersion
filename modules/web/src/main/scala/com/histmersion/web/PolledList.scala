@@ -8,7 +8,6 @@ import org.scalajs.dom
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import com.histmersion.api.UiLabels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** ONE controller for the newest-first list windows — jobs, agent runs, approvals (#1798 item 6): the rows
@@ -135,22 +134,22 @@ final class PolledList[A](
 
 object PolledList:
   type ItemId = ItemId.T
-  object ItemId extends RefinedType[String, Pure]
+  object ItemId extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type TimerId = TimerId.T
-  object TimerId extends RefinedType[Int, Pure]
+  object TimerId extends Newtype[Int, Pure]
 
   /** ONE polled item — an agent run's window (#1946): a one-row [[PolledList]], so it shares the schedule, the
     * `mounted` guard, the stale-answer guard and the error line with the list windows; it has no pages, so it never
     * shows older rows. `after` gets the item before and after each poll (not the first load).
     */
   type Loaded = Loaded.T
-  object Loaded extends RefinedType[Boolean, Pure]
+  object Loaded extends Newtype[Boolean, Pure]
   type Older = Older.T
-  object Older extends RefinedType[Boolean, Pure]
+  object Older extends Newtype[Boolean, Pure]
   type Restarting = Restarting.T
-  object Restarting extends RefinedType[Boolean, Pure]
+  object Restarting extends Newtype[Boolean, Pure]
 
   def single[A](
       fetch: () => Future[A],

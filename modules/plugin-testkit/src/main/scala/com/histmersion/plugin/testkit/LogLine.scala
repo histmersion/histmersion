@@ -2,7 +2,6 @@ package com.histmersion
 package plugin.testkit
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One line the server would have logged.
@@ -18,6 +17,6 @@ final case class LogLine(source: LogLine.Source, warn: Boolean, message: LogLine
 
 object LogLine:
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Message = Message.T
-  object Message extends RefinedType[String, Pure]
+  object Message extends Newtype[String, Pure]

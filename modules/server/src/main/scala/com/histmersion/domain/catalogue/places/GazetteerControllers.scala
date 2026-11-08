@@ -11,7 +11,6 @@ import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.PlacesJobKinds
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
@@ -118,4 +117,4 @@ final class GazetteerControllers(
 
 object GazetteerControllers:
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]

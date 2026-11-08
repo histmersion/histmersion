@@ -7,7 +7,6 @@ import com.histmersion.domain.automation.workflows.ToolName
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One canonical agent definition, `agents/<name>.md`: a runtime-neutral manifest in the YAML header and the prompt
@@ -49,23 +48,23 @@ final case class AgentDef(
 
 object AgentDef:
   type Fingerprint = Fingerprint.T
-  object Fingerprint extends RefinedType[String, Pure]
+  object Fingerprint extends Newtype[String, Pure]
   /** `get_source` as `GetSource`. */
 
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Skills = Skills.T
-  object Skills extends RefinedType[String, Pure]
+  object Skills extends Newtype[String, Pure]
   type Include = Include.T
-  object Include extends RefinedType[String, Pure]
+  object Include extends Newtype[String, Pure]
   type MaxTurns = MaxTurns.T
-  object MaxTurns extends RefinedType[Int, Pure]
+  object MaxTurns extends Newtype[Int, Pure]
   type Answer = Answer.T
-  object Answer extends RefinedType[String, Pure]
+  object Answer extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
 
   def enumerated(t: ToolName): String = t.value.split('_').map(_.capitalize).mkString
 

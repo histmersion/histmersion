@@ -5,7 +5,6 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.library.Label
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The one chip: a readable label (never an underscore — [[Label.display]]), an optional prefix, and an optional remove
@@ -13,15 +12,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Chip:
   type Choice = Choice.T
-  object Choice extends RefinedType[String, Pure]
+  object Choice extends Newtype[String, Pure]
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends RefinedType[String, Pure]
+  object ExtraClass extends Newtype[String, Pure]
   type Prefix = Prefix.T
-  object Prefix extends RefinedType[String, Pure]
+  object Prefix extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Tip = Tip.T
-  object Tip extends RefinedType[String, Pure]
+  object Tip extends Newtype[String, Pure]
 
   def apply(
       text: Text,

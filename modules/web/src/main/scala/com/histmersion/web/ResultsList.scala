@@ -10,7 +10,6 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.{Filter, GeoHit, Hit, SearchResult}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.UiLabels
@@ -24,11 +23,11 @@ import com.histmersion.api.library.Title
 
 object ResultsList:
   type Busy = Busy.T
-  object Busy extends RefinedType[Boolean, Pure]
+  object Busy extends Newtype[Boolean, Pure]
   type InPanel = InPanel.T
-  object InPanel extends RefinedType[Boolean, Pure]
+  object InPanel extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type HitRowInPanel = InPanel
   val HitRowInPanel: InPanel.type = InPanel
@@ -42,11 +41,11 @@ object ResultsList:
 
   object SourceRenderOpts:
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
     type InView = InView.T
-    object InView extends RefinedType[Boolean, Pure]
+    object InView extends Newtype[Boolean, Pure]
 
   sealed private trait LastRender
   private case class LastSources(result: SearchResult, opts: SourceRenderOpts) extends LastRender
@@ -356,7 +355,7 @@ object ResultsList:
           cls := "empty-chips",
           chips.map { c =>
             // a chosen place is named by its label and kind, never by its id (#places-fix)
-            if c.key == UiState.placeIds.key then
+            if c.key.value == UiState.placeIds.key.value then
               li(
                 child <-- PlacesInput
                   .chipTextSignal(Pages.PlaceId(c.value.value))

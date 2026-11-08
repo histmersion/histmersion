@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import scala.collection.mutable
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their summed weight, the
@@ -93,25 +92,25 @@ final class BoundedCache[K, V](
 object BoundedCache:
   /** The figures a diagnostics read reports for one cache. */
   type MaxEntries = MaxEntries.T
-  object MaxEntries extends RefinedType[Int, Pure]
+  object MaxEntries extends Newtype[Int, Pure]
   type MaxWeight = MaxWeight.T
-  object MaxWeight extends RefinedType[Long, Pure]
+  object MaxWeight extends Newtype[Long, Pure]
   type WeighResult = WeighResult.T
-  object WeighResult extends RefinedType[Long, Pure]
+  object WeighResult extends Newtype[Long, Pure]
 
   type ReweighW = ReweighW.T
-  object ReweighW extends RefinedType[Long, Pure]
+  object ReweighW extends Newtype[Long, Pure]
 
   final case class Stats(entries: Stats.Entries, maxEntries: Stats.MaxEntries, weight: Stats.Weight, maxWeight: Stats.MaxWeight)
 
   object Stats:
     type Entries = Entries.T
-    object Entries extends RefinedType[Int, Pure]
+    object Entries extends Newtype[Int, Pure]
     type MaxEntries = MaxEntries.T
-    object MaxEntries extends RefinedType[Int, Pure]
+    object MaxEntries extends Newtype[Int, Pure]
     type Weight = Weight.T
-    object Weight extends RefinedType[Long, Pure]
+    object Weight extends Newtype[Long, Pure]
     type MaxWeight = MaxWeight.T
-    object MaxWeight extends RefinedType[Long, Pure]
+    object MaxWeight extends Newtype[Long, Pure]
 
   def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))

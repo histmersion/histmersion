@@ -7,7 +7,6 @@ import scala.scalajs.js
 import com.histmersion.api.Api
 import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.UiLabels
@@ -18,7 +17,7 @@ import com.histmersion.api.UiLabels
   */
 object IdentLink:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
   enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)

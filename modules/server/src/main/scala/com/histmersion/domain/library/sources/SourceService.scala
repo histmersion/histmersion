@@ -23,7 +23,6 @@ import com.histmersion.api.library.{CalibreGap, Citekey as ApiCitekey, DeleteCou
 import com.histmersion.api.Api
 import com.histmersion.api.library.Finding
 import com.histmersion.domain.library.Doi
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.catalogue.Place
@@ -135,7 +134,7 @@ trait SourceService:
 
 object SourceService:
   type Heading = Heading.T
-  object Heading extends RefinedType[String, Pure]
+  object Heading extends Newtype[String, Pure]
 
   def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings): SourceService =
     Implementation(db, referrers, settings)

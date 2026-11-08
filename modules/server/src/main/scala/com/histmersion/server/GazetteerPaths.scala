@@ -4,7 +4,6 @@ package server
 import com.histmersion.config.{AppConfig, UserPaths}
 
 import java.nio.file.{Files, Path}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.AgentTrees
 
@@ -21,17 +20,17 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
 
 object GazetteerPaths:
   type ConfiguredPath = ConfiguredPath.T
-  object ConfiguredPath extends RefinedType[String, Pure]
+  object ConfiguredPath extends Newtype[String, Pure]
   type EnvName = EnvName.T
-  object EnvName extends RefinedType[String, Pure]
+  object EnvName extends Newtype[String, Pure]
   type EnvText = EnvText.T
-  object EnvText extends RefinedType[String, Pure]
+  object EnvText extends Newtype[String, Pure]
   type OsName = OsName.T
-  object OsName extends RefinedType[String, Pure]
+  object OsName extends Newtype[String, Pure]
   type ManifestText = ManifestText.T
-  object ManifestText extends RefinedType[String, Pure]
+  object ManifestText extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
 

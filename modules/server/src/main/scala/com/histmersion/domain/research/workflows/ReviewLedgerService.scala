@@ -8,7 +8,6 @@ import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The articles' review ledgers: every finding the review panel raised on an article, with what became of it, read at
@@ -27,7 +26,7 @@ trait ReviewLedgerService:
 
 object ReviewLedgerService:
   type ReviewId = ReviewId.T
-  object ReviewId extends RefinedType[String, Pure]
+  object ReviewId extends Newtype[String, Pure]
 
   def apply(db: Transactor): ReviewLedgerService = Implementation(db)
 

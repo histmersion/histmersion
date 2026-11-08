@@ -4,7 +4,6 @@ package web.settings
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.{AboutView, Auth, CreditsView, Route, SettingsSection}
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings' pages: one per section of its side navigation, each over the settings file as the server reads it now
@@ -12,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object SettingsPages:
   type Lead = Lead.T
-  object Lead extends RefinedType[String, Pure]
+  object Lead extends Newtype[String, Pure]
 
   /** What a section's page says under its title. Pure. */
 

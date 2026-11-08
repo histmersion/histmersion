@@ -1,7 +1,6 @@
 package com.histmersion
 package util.basemap
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The grid the sea floor's extract is made from, as the settings choose it. */
@@ -14,4 +13,4 @@ enum SeaFloorGrid(val wire: SeaFloorGrid.Wire):
 
 object SeaFloorGrid:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

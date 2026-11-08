@@ -8,7 +8,6 @@ import scala.scalajs.js
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
@@ -32,17 +31,17 @@ final case class SitePoint(
 object SitePoint:
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends RefinedType[String, Pure]
+  object SiteType extends Newtype[String, Pure]
   type Basis = Basis.T
-  object Basis extends RefinedType[String, Pure]
+  object Basis extends Newtype[String, Pure]
   type Undated = Undated.T
-  object Undated extends RefinedType[Boolean, Pure]
+  object Undated extends Newtype[Boolean, Pure]
 
   private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
 

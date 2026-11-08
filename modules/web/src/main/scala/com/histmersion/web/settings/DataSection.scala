@@ -16,7 +16,6 @@ import com.histmersion.api.plugins.PluginState
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.media.{MediaItem, MediaProvider}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
@@ -28,11 +27,11 @@ import com.histmersion.web.ErrorLine
   */
 object DataSection:
   type ActionLabel = ActionLabel.T
-  object ActionLabel extends RefinedType[String, Pure]
+  object ActionLabel extends Newtype[String, Pure]
   type ActionWhat = ActionWhat.T
-  object ActionWhat extends RefinedType[String, Pure]
+  object ActionWhat extends Newtype[String, Pure]
   type SharePercent = SharePercent.T
-  object SharePercent extends RefinedType[Int, Pure]
+  object SharePercent extends Newtype[Int, Pure]
 
   /** What Histmersion's files take, as a share of the free space left on the disk, 0–100. Pure. */
 

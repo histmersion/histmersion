@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.periods
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a period search asks for: a label substring (any case, `%` and `_` literal), an exact region (any case), and an
@@ -16,10 +15,10 @@ final case class PeriodSearch(
 
 object PeriodSearch:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type From = From.T
-  object From extends RefinedType[Long, Pure]
+  object From extends Newtype[Long, Pure]
   type To = To.T
-  object To extends RefinedType[Long, Pure]
+  object To extends Newtype[Long, Pure]

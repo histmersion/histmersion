@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A map event: the map, and for a pointer event where it happened. */
@@ -18,4 +17,4 @@ trait GlEvent extends js.Object:
 
 object GlEvent:
   type Type = Type.T
-  object Type extends RefinedType[String, Pure]
+  object Type extends Newtype[String, Pure]

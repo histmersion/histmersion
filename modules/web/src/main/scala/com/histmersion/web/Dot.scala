@@ -5,7 +5,6 @@ import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One point on the map, of any kind: what the map's ONE cluster layer ([[MapView.dots]]) holds. Its item and span
@@ -16,8 +15,8 @@ final class Dot(val key: Dot.Key, val layer: PointLayer[?], var item: Any, var s
 
 object Dot:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type SpanPart1 = SpanPart1.T
-  object SpanPart1 extends RefinedType[Long, Pure]
+  object SpanPart1 extends Newtype[Long, Pure]
   type SpanPart2 = SpanPart2.T
-  object SpanPart2 extends RefinedType[Long, Pure]
+  object SpanPart2 extends Newtype[Long, Pure]

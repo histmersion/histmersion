@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Offset
 import com.histmersion.api.Paging
@@ -13,9 +12,9 @@ import com.histmersion.api.Paging
   */
 object Pager:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type RangeText = RangeText.T
-  object RangeText extends RefinedType[String, Pure]
+  object RangeText extends Newtype[String, Pure]
 
   /** The line a page shows: `a–b of n`, or `none` for an empty one. Pure. */
 

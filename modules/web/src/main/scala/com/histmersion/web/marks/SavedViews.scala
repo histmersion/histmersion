@@ -9,7 +9,6 @@ import com.histmersion.web.map.TheMap
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.web.ui.Flash
@@ -19,7 +18,7 @@ import com.histmersion.web.ui.Flash
   */
 object SavedViews:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
   /** The view on screen, as a bookmark's target. */
   def current(): Target =

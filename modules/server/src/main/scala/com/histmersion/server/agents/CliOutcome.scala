@@ -5,7 +5,6 @@ import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a CLI run printed, read into sttp-ai's result types: the conversation (text, tool calls and their results, in
@@ -22,8 +21,8 @@ final case class CliOutcome(
 
 object CliOutcome:
   type FinalText = FinalText.T
-  object FinalText extends RefinedType[String, Pure]
+  object FinalText extends Newtype[String, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
   type Turns = Turns.T
-  object Turns extends RefinedType[Int, Pure]
+  object Turns extends Newtype[Int, Pure]

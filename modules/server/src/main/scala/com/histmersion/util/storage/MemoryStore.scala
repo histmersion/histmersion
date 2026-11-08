@@ -11,7 +11,6 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 
 import hearth.kindlings.optics.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.basemap.PmTiles
 
@@ -151,7 +150,7 @@ object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
 
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
 
   private val ticks = java.util.concurrent.atomic.AtomicLong()

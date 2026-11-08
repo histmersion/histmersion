@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.system.JvmHome
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
@@ -436,13 +435,13 @@ final class PlanPools(
 
 object PlanPools:
   type Force = Force.T
-  object Force extends RefinedType[Boolean, Pure]
+  object Force extends Newtype[Boolean, Pure]
   type Problem = RefreshGate.Problem
   val Problem: RefreshGate.Problem.type = RefreshGate.Problem
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type ScheduleText = ScheduleText.T
-  object ScheduleText extends RefinedType[String, Pure]
+  object ScheduleText extends Newtype[String, Pure]
 
   /** The schedule as `agent quota` names it after a pool's refresh mode. */
   def scheduleText(schedule: ScheduledRefresh): ScheduleText = schedule match
@@ -462,7 +461,7 @@ object PlanPools:
 
   object Seams:
     type Refreshes = Refreshes.T
-    object Refreshes extends RefinedType[Boolean, Pure]
+    object Refreshes extends Newtype[Boolean, Pure]
 
     val Real: Seams = Seams(readCodex, runProbe, AgentDoctor.runCommand)
 

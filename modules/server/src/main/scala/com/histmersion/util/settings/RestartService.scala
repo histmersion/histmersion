@@ -2,7 +2,6 @@ package com.histmersion
 package util.settings
 
 import java.util.concurrent.atomic.AtomicInteger
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Restarting the server for the settings only a restart applies: the process ends, and the service it runs under (the
@@ -17,11 +16,11 @@ trait RestartService:
 
 object RestartService:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type RestartCount = RestartCount.T
-  object RestartCount extends RefinedType[Int, Pure]
+  object RestartCount extends Newtype[Int, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
 
 
   val Started: Summary = Summary("The server is restarting. It is back in a few seconds; this page reconnects by itself.")

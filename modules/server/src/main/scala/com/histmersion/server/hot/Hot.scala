@@ -15,7 +15,6 @@ import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}
 import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.util.control.NonFatal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A stable handle on a component a config reload may rebuild (docs/research-plugins.md §3.6). Its holder never
@@ -388,9 +387,9 @@ object Hot:
 
   object Graph:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Generation = Generation.T
-    object Generation extends RefinedType[Long, Pure]
+    object Generation extends Newtype[Long, Pure]
 
     /** How often a drain looks at its components' users. */
 
@@ -401,7 +400,7 @@ object Hot:
       def warn(m: Log.Message): Unit
     object Log:
       type Message = Message.T
-      object Message extends RefinedType[String, Pure]
+      object Message extends Newtype[String, Pure]
 
       val scribe: Log = new Log:
         def info(m: Message) = _root_.scribe.info(m.value)
@@ -414,7 +413,7 @@ object Hot:
 
     object Outcome:
       type Warnings = Warnings.T
-      object Warnings extends RefinedType[String, Pure]
+      object Warnings extends Newtype[String, Pure]
 
     final private[hot] case class Def[C](
         name: Def.Name,
@@ -460,9 +459,9 @@ object Hot:
 
     object Instance:
       type Description = Description.T
-      object Description extends RefinedType[String, Pure]
+      object Description extends Newtype[String, Pure]
       type PinCount = PinCount.T
-      object PinCount extends RefinedType[Int, Pure]
+      object PinCount extends Newtype[Int, Pure]
 
     private val CloseWaitSeconds = 60L
 

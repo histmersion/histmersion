@@ -26,7 +26,6 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.Title
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.automation.Approval
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
@@ -261,15 +260,15 @@ object InferFilterPipeline:
 
   object Loaded:
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type CitedLines = CitedLines.T
-    object CitedLines extends RefinedType[String, Pure]
+    object CitedLines extends Newtype[String, Pure]
     type Excerpt = Excerpt.T
-    object Excerpt extends RefinedType[String, Pure]
+    object Excerpt extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
 
   /** What the record step did: the approval it opened (or recorded approved), whether the filter is on the article now,
     * and the line for the log.
@@ -279,7 +278,7 @@ object InferFilterPipeline:
 
   object Recorded:
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]
 
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.

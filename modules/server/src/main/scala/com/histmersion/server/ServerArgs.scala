@@ -1,16 +1,15 @@
 package com.histmersion
 package server
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ServerArgs:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Usage = UsageValue
   type UsageValue = UsageValue.T
-  object UsageValue extends RefinedType[String, Pure]
+  object UsageValue extends Newtype[String, Pure]
 
   val Usage: Usage =
     UsageValue("""usage: histmersion-server [--self-check | --help]

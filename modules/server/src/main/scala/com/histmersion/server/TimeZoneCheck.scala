@@ -4,7 +4,6 @@ package server
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.zone.ZoneRulesProvider
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The binary's time zones come from the JDK's own tzdb (`lib/tzdb.dat`, which native-image embeds). The build excludes
@@ -16,19 +15,19 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object TimeZoneCheck:
   type Report = Report.T
-  object Report extends RefinedType[String, Pure]
+  object Report extends Newtype[String, Pure]
 
   /** Why a zone could not be resolved. */
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** How many region ids the JDK knows. */
   type ZoneCount = ZoneCount.T
-  object ZoneCount extends RefinedType[Int, Pure]
+  object ZoneCount extends Newtype[Int, Pure]
 
   /** The tzdb version the JDK carries. */
   type TzdbVersion = TzdbVersion.T
-  object TzdbVersion extends RefinedType[String, Pure]
+  object TzdbVersion extends Newtype[String, Pure]
 
   /** A zone, an instant, and the offset the zone has then (tzdb rules in force since 2008 or earlier). */
 
@@ -36,7 +35,7 @@ object TimeZoneCheck:
 
   object Probe:
     type Zone = Zone.T
-    object Zone extends RefinedType[String, Pure]
+    object Zone extends Newtype[String, Pure]
 
   private val Winter = Instant.parse("2026-01-15T12:00:00Z")
   private val Summer = Instant.parse("2026-07-15T12:00:00Z")

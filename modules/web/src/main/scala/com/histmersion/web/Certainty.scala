@@ -3,7 +3,6 @@ package web
 
 import com.histmersion.api.ConfidenceStyle
 import com.histmersion.api.library.Confidence
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How sure the map's dots for some findings are (#1946): a STATED confidence, or [[Certainty.Unstated]] — a finding
@@ -17,9 +16,9 @@ enum Certainty:
 
 object Certainty:
   type MarkerClass = MarkerClass.T
-  object MarkerClass extends RefinedType[String, Pure]
+  object MarkerClass extends Newtype[String, Pure]
   type Rank = Rank.T
-  object Rank extends RefinedType[Int, Pure]
+  object Rank extends Newtype[Int, Pure]
 
   /** What a dot that is not a finding (a site, an event, a picture) says about certainty: nothing — the full colour,
     * which never outweighs a finding's own.

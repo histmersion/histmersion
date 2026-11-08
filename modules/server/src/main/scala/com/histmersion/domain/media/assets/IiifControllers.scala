@@ -10,7 +10,6 @@ import com.histmersion.api.media.{AssetLinks, Iiif, ImageSize}
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.ArchiveFile
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
@@ -182,6 +181,6 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
 
 object IiifControllers:
   type BaseUrl = BaseUrl.T
-  object BaseUrl extends RefinedType[String, Pure]
+  object BaseUrl extends Newtype[String, Pure]
   type Filename = Filename.T
-  object Filename extends RefinedType[String, Pure]
+  object Filename extends Newtype[String, Pure]

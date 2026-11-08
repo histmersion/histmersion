@@ -4,7 +4,6 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and colours, and the row
@@ -22,12 +21,12 @@ final case class DotEntry(
 
 object DotEntry:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Icon = Icon.T
-  object Icon extends RefinedType[String, Pure]
+  object Icon extends Newtype[String, Pure]
   type Mid = Mid.T
-  object Mid extends RefinedType[Double, Pure]
+  object Mid extends Newtype[Double, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

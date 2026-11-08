@@ -19,7 +19,6 @@ import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
 import com.histmersion.api.Api
 import com.histmersion.api.media.MediaProvider
 import com.histmersion.api.media.MediaItem
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.ImportJobKinds
 
@@ -222,11 +221,11 @@ final class ImportsControllers(
 
 object ImportsControllers:
   type ImportLimit = ImportLimit.T
-  object ImportLimit extends RefinedType[Int, Pure]
+  object ImportLimit extends Newtype[Int, Pure]
   type SeenKey = SeenKey.T
-  object SeenKey extends RefinedType[String, Pure]
+  object SeenKey extends Newtype[String, Pure]
   type TotalCount = TotalCount.T
-  object TotalCount extends RefinedType[Int, Pure]
+  object TotalCount extends Newtype[Int, Pure]
 
   val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value)
 

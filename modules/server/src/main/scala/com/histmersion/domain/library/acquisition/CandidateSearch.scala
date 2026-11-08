@@ -21,7 +21,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.search.Search
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
@@ -191,4 +190,4 @@ final class CandidateSearch(
 
 object CandidateSearch:
   type SweepDryRun = SweepDryRun.T
-  object SweepDryRun extends RefinedType[Boolean, Pure]
+  object SweepDryRun extends Newtype[Boolean, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package web.setup
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the setup downloads when it is finished — nothing before. */
@@ -17,4 +16,4 @@ object SetupDownload:
     export SetupChoices.Area
 
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]

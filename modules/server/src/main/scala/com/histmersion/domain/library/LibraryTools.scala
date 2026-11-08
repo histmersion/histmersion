@@ -32,7 +32,6 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Sort
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
@@ -401,7 +400,7 @@ object LibraryTools:
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
     type Verbose = Verbose.T
-    object Verbose extends RefinedType[Boolean, Pure]
+    object Verbose extends Newtype[Boolean, Pure]
 
     given Schema[SearchInput] = Filter.Docs
       .describe(KindlingsSchema.derived[SearchInput].schema)
@@ -471,7 +470,7 @@ object LibraryTools:
   ) derives KindlingsCodecAsObject
   object GetSourceInput:
     type FullText = FullText.T
-    object FullText extends RefinedType[Boolean, Pure]
+    object FullText extends Newtype[Boolean, Pure]
     type Offset = com.histmersion.Offset
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
 
@@ -638,7 +637,7 @@ object LibraryTools:
   )
   object PutSourceInput:
     type Strict = Strict.T
-    object Strict extends RefinedType[Boolean, Pure]
+    object Strict extends Newtype[Boolean, Pure]
 
     given Schema[PutSourceInput] = KindlingsSchema
       .derived[PutSourceInput]
@@ -653,7 +652,7 @@ object LibraryTools:
   )
   object PatchSourceInput:
     type Strict = Strict.T
-    object Strict extends RefinedType[Boolean, Pure]
+    object Strict extends Newtype[Boolean, Pure]
 
     given Schema[PatchSourceInput] = KindlingsSchema
       .derived[PatchSourceInput]

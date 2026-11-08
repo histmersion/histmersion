@@ -4,7 +4,6 @@ package web.map
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Store
 
@@ -13,7 +12,7 @@ import com.histmersion.web.Store
   */
 object MapStart:
   type Encoded = Encoded.T
-  object Encoded extends RefinedType[String, Pure]
+  object Encoded extends Newtype[String, Pure]
 
   val StorageKey = "histmersion.mapView"
 

@@ -5,7 +5,6 @@ import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One LLM step's request, provider-neutral: a system prompt, ONE user message (untrusted data goes here, delimited,
@@ -31,10 +30,10 @@ final case class LlmCall[Out](
 
 object LlmCall:
   type System = System.T
-  object System extends RefinedType[String, Pure]
+  object System extends Newtype[String, Pure]
   type User = User.T
-  object User extends RefinedType[String, Pure]
+  object User extends Newtype[String, Pure]
   type MaxIterations = MaxIterations.T
-  object MaxIterations extends RefinedType[Int, Pure]
+  object MaxIterations extends Newtype[Int, Pure]
   type MaxTokens = MaxTokens.T
-  object MaxTokens extends RefinedType[Int, Pure]
+  object MaxTokens extends Newtype[Int, Pure]

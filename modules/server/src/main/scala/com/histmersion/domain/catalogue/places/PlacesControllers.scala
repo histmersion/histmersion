@@ -16,7 +16,6 @@ import com.histmersion.domain.{Caller, DeepTime}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
@@ -247,6 +246,6 @@ final class PlacesControllers(
 
 object PlacesControllers:
   type Alias = Alias.T
-  object Alias extends RefinedType[String, Pure]
+  object Alias extends Newtype[String, Pure]
   type DatasetBody = DatasetBody.T
-  object DatasetBody extends RefinedType[String, Pure]
+  object DatasetBody extends Newtype[String, Pure]

@@ -28,7 +28,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.automation.worklists.WorkListControllers
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
@@ -622,8 +621,8 @@ final class AcquireRecheckService(
 
 object AcquireRecheckService:
   type By = By.T
-  object By extends RefinedType[String, Pure]
+  object By extends Newtype[String, Pure]
 
   /** One worklog line a pass wrote. */
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]

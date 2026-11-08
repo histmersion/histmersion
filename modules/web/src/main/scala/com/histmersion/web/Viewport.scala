@@ -6,7 +6,6 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which layout the page is in. At or below `ui.narrow-max-width-px` it is NARROW — the phone layout: the map first,
@@ -18,12 +17,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Viewport:
   type MediaQuery = MediaQuery.T
-  object MediaQuery extends RefinedType[String, Pure]
+  object MediaQuery extends Newtype[String, Pure]
 
   type ModeWidth = ModeWidth.T
-  object ModeWidth extends RefinedType[Double, Pure]
+  object ModeWidth extends Newtype[Double, Pure]
   type ModeHeight = ModeHeight.T
-  object ModeHeight extends RefinedType[Double, Pure]
+  object ModeHeight extends Newtype[Double, Pure]
 
   enum Mode(val wire: Mode.Wire):
     case Narrow extends Mode(Mode.Wire("narrow"))
@@ -32,7 +31,7 @@ object Viewport:
 
   object Mode:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
   /** Pure: the mode a viewport of `width` × `height` (CSS px) is in. Narrow when it is thin, or when it is short and
     * driven by touch — a phone held sideways, which is wide but has no room; else a tablet up to `tabletMaxWidth`.

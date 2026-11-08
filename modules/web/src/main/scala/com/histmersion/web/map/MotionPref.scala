@@ -6,7 +6,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE answer to "should the map animate now?" (#4718). Every motion of the map reads it: the clusters' regroup on a
@@ -18,11 +17,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MotionPref:
   type SystemReduced = SystemReduced.T
-  object SystemReduced extends RefinedType[Boolean, Pure]
+  object SystemReduced extends Newtype[Boolean, Pure]
   type Animates = Animates.T
-  object Animates extends RefinedType[Boolean, Pure]
+  object Animates extends Newtype[Boolean, Pure]
   type HeldBySystem = HeldBySystem.T
-  object HeldBySystem extends RefinedType[Boolean, Pure]
+  object HeldBySystem extends Newtype[Boolean, Pure]
 
   val Query = "(prefers-reduced-motion: reduce)"
 

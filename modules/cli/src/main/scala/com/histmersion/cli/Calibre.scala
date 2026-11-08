@@ -20,7 +20,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.Paging
 import com.histmersion.api.library.CollectionSync
 import com.histmersion.api.library.CollectionFieldValue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
@@ -211,7 +210,7 @@ object Calibre:
   type Problem = Shell.Problem
   val Problem: Shell.Problem.type = Shell.Problem
   type VolumeNumber = VolumeNumber.T
-  object VolumeNumber extends RefinedType[Int, Pure]
+  object VolumeNumber extends Newtype[Int, Pure]
 
   /** Values that mean "nobody filled this in". Pushing one of these into Calibre creates an entry nobody will ever find
     * again, so both `import` and `push` refuse.
@@ -693,7 +692,7 @@ object Calibre:
 
   object GapOriginal:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
   /** One source the server lists as not in Calibre, with where its original is and whether it COUNTS as a gap — the
     * `calibre gaps --quiet` reminder and `calibre sync` count only these.
@@ -702,7 +701,7 @@ object Calibre:
 
   object GapEntry:
     type Counted = Counted.T
-    object Counted extends RefinedType[Boolean, Pure]
+    object Counted extends Newtype[Boolean, Pure]
 
   /** Pure: a gap counts when there is an original to push (on this host, or stored on the server) and the source is not
     * already canonical in Calibre (provenance `calibre`, or a Calibre id — the server leaves both out; an older or
@@ -924,32 +923,32 @@ object Calibre:
 
   object Book:
     type Format = Format.T
-    object Format extends RefinedType[String, Pure]
+    object Format extends Newtype[String, Pure]
     type Year = com.histmersion.api.catalogue.Year
     val Year: com.histmersion.api.catalogue.Year.type = com.histmersion.api.catalogue.Year
 
     type Id = Id.T
-    object Id extends RefinedType[Int, Pure]
+    object Id extends Newtype[Int, Pure]
     type Title = com.histmersion.api.library.Title
     val Title: com.histmersion.api.library.Title.type = com.histmersion.api.library.Title
     type Authors = AuthorName
     val Authors: AuthorName.type = AuthorName
     type Pubdate = Pubdate.T
-    object Pubdate extends RefinedType[String, Pure]
+    object Pubdate extends Newtype[String, Pure]
     type Publisher = CollectionEntry.Publisher
     val Publisher: CollectionEntry.Publisher.type = CollectionEntry.Publisher
     type Tags = CollectionEntry.Tags
     val Tags: CollectionEntry.Tags.type = CollectionEntry.Tags
     type Comments = Comments.T
-    object Comments extends RefinedType[String, Pure]
+    object Comments extends Newtype[String, Pure]
     type IdentifiersKey = CollectionEntry.IdentifiersKey
     val IdentifiersKey: CollectionEntry.IdentifiersKey.type = CollectionEntry.IdentifiersKey
     type IdentifiersValue = IdentifiersValue.T
-    object IdentifiersValue extends RefinedType[String, Pure]
+    object IdentifiersValue extends Newtype[String, Pure]
     type Formats = CollectionEntry.Formats
     val Formats: CollectionEntry.Formats.type = CollectionEntry.Formats
     type Cover = Cover.T
-    object Cover extends RefinedType[String, Pure]
+    object Cover extends Newtype[String, Pure]
 
   /** One field `calibre update` changes: what Calibre has now and what it writes. */
   final case class Change(field: Field, from: Change.From, to: Change.To)
@@ -1039,7 +1038,7 @@ object Calibre:
       type CalibreId = Calibre.Book.Id
       val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
       type Value = Value.T
-      object Value extends RefinedType[String, Pure]
+      object Value extends Newtype[String, Pure]
 
     /** `calibre update <citekey> --json`: the fields written. */
     final case class Updated(citekey: com.histmersion.api.library.Citekey, calibreId: Updated.CalibreId, changed: List[Updated.Changed]) derives KindlingsCodecAsObject
@@ -1240,7 +1239,7 @@ object Calibre:
 
   object Push:
     type Replace = Replace.T
-    object Replace extends RefinedType[Boolean, Pure]
+    object Replace extends Newtype[Boolean, Pure]
     type Title = com.histmersion.api.library.Title
     val Title: com.histmersion.api.library.Title.type = com.histmersion.api.library.Title
     type Authors = AuthorName

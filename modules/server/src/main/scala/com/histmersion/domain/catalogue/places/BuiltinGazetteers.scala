@@ -8,7 +8,6 @@ import com.histmersion.domain.catalogue.periods.PeriodOFetch
 
 import scala.collection.immutable.ListMap
 import com.histmersion.api.catalogue.Gazetteer
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Histmersion's own network gazetteers — first-party plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
@@ -23,9 +22,9 @@ object BuiltinGazetteers:
 
   object Entry:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
 
   val entries: List[Entry] = List(
     Entry(Plugin.Id("gazetteer-cliopatria"), Entry.Name("cliopatria"), Entry.Title("Seshat Cliopatria polity polygons")),

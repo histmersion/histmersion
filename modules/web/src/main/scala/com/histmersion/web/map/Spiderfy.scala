@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a spiral
@@ -13,16 +12,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Spiderfy:
   type OffsetCoordinate = OffsetCoordinate.T
-  object OffsetCoordinate extends RefinedType[Double, Pure]
+  object OffsetCoordinate extends Newtype[Double, Pure]
   type Svg = Svg.T
-  object Svg extends RefinedType[String, Pure]
+  object Svg extends Newtype[String, Pure]
   /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Separation = Separation.T
-  object Separation extends RefinedType[Double, Pure]
+  object Separation extends Newtype[Double, Pure]
   type Side = Side.T
-  object Side extends RefinedType[Int, Pure]
+  object Side extends Newtype[Int, Pure]
 
   val Member = "hd-spider"
   val Fanned = "hd-spidered"

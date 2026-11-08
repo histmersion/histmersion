@@ -7,7 +7,6 @@ import io.circe.{parser, Json}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One refresh at a time per pool, and the time of its last attempt: a second caller WAITS for the one in flight and
@@ -33,6 +32,6 @@ final class RefreshGate:
 
 object RefreshGate:
   type Instant = Instant.T
-  object Instant extends RefinedType[Long, Pure]
+  object Instant extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

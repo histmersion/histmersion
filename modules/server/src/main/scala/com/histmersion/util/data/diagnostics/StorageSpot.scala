@@ -2,7 +2,6 @@ package com.histmersion
 package util.data.diagnostics
 
 import com.histmersion.util.storage.{Blob, Store}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One entry of About › Storage before it is measured: the stores it sums (several only for the rest of the data
@@ -22,4 +21,4 @@ final case class StorageSpot(
 
 object StorageSpot:
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]

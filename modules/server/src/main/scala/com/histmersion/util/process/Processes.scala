@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Store
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Launching child processes (the bundled database's tools, the converter, dumps): the one place a process is started.
@@ -23,11 +22,11 @@ trait Processes:
 
 object Processes:
   type Pid = Pid.T
-  object Pid extends RefinedType[Long, Pure]
+  object Pid extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type WaitTimeout = WaitTimeout.T
-  object WaitTimeout extends RefinedType[Long, Pure]
+  object WaitTimeout extends Newtype[Long, Pure]
 
   def apply(): Processes = Implementation()
 

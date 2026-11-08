@@ -5,7 +5,6 @@ import com.histmersion.api.automation.Managers.ManagerConfig
 
 import java.time.Instant
 import com.histmersion.domain.automation.Manager
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager as [[ManagerService.InMemory]] holds it. */
@@ -25,12 +24,12 @@ final case class ManagerRecord(
 
 object ManagerRecord:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type PauseRuns = PauseRuns.T
-  object PauseRuns extends RefinedType[Boolean, Pure]
+  object PauseRuns extends Newtype[Boolean, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends RefinedType[String, Pure]
+  object StatusNote extends Newtype[String, Pure]
   type Cron = Cron.T
-  object Cron extends RefinedType[String, Pure]
+  object Cron extends Newtype[String, Pure]

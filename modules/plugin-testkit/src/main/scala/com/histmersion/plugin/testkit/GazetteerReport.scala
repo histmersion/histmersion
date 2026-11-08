@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin.testkit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One import of a gazetteer source, read as the server reads it: the download through the server's gazetteer client,
@@ -24,6 +23,6 @@ final case class GazetteerReport(
 
 object GazetteerReport:
   type Refused = Refused.T
-  object Refused extends RefinedType[String, Pure]
+  object Refused extends Newtype[String, Pure]
   type Failure = Failure.T
-  object Failure extends RefinedType[String, Pure]
+  object Failure extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package domain.library.sources
 
 import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a source's agent-written Markdown (its summary and notes) will display: what will not display as meant, its
@@ -21,4 +20,4 @@ trait SourceFormatting:
 
 object SourceFormatting:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

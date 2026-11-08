@@ -4,7 +4,6 @@ package web.marks
 import com.histmersion.web.{Auth, Icon, WindowKey, WindowManager}
 import com.histmersion.web.ui.ContextMenu
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.ReadMark
 import com.histmersion.api.personal.Target
@@ -16,7 +15,7 @@ import com.histmersion.api.personal.Target
 object ItemActions:
 
   type BookmarkButtonCompact = BookmarkButtonCompact.T
-  object BookmarkButtonCompact extends RefinedType[Boolean, Pure]
+  object BookmarkButtonCompact extends Newtype[Boolean, Pure]
 
   private def writing(act: => Unit): Unit =
     if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)

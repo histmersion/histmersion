@@ -4,7 +4,6 @@ package domain.library.workflows
 import com.histmersion.domain.EnrichSource
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The typed answers of the library's LLM steps (enrich-source, the acquisition sweep's ranking), one value each,
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object LibraryAnswers:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
   val classification: ResponseSchema[EnrichSource.Classification] =
     ResponseSchema.derived[EnrichSource.Classification]()

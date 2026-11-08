@@ -2,7 +2,6 @@ package com.histmersion
 package web.setup
 
 import com.histmersion.api.instance.MapStartConfig
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a person chose in the setup. `area`: the background map's box to download (`None`: none); `finders`: each
@@ -23,22 +22,22 @@ final case class SetupChoices(
 
 object SetupChoices:
   type Email = Email.T
-  object Email extends RefinedType[String, Pure]
+  object Email extends Newtype[String, Pure]
   type FindersKey = FindersKey.T
-  object FindersKey extends RefinedType[String, Pure]
+  object FindersKey extends Newtype[String, Pure]
   type FindersValue = FindersValue.T
-  object FindersValue extends RefinedType[Boolean, Pure]
+  object FindersValue extends Newtype[Boolean, Pure]
   type Area = Area.T
-  object Area extends RefinedType[String, Pure]
+  object Area extends Newtype[String, Pure]
   type Boundaries = Boundaries.T
-  object Boundaries extends RefinedType[Boolean, Pure]
+  object Boundaries extends Newtype[Boolean, Pure]
   type Events = Events.T
-  object Events extends RefinedType[Boolean, Pure]
+  object Events extends Newtype[Boolean, Pure]
   type Pictures = Pictures.T
-  object Pictures extends RefinedType[Boolean, Pure]
+  object Pictures extends Newtype[Boolean, Pure]
   type MorePlaces = MorePlaces.T
-  object MorePlaces extends RefinedType[Boolean, Pure]
+  object MorePlaces extends Newtype[Boolean, Pure]
   type Agents = Agents.T
-  object Agents extends RefinedType[Boolean, Pure]
+  object Agents extends Newtype[Boolean, Pure]
   type Calibre = Calibre.T
-  object Calibre extends RefinedType[String, Pure]
+  object Calibre extends Newtype[String, Pure]

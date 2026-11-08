@@ -11,7 +11,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, MetadataPatch}
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
@@ -24,7 +23,7 @@ import com.histmersion.api.UiLabels
   */
 object SourceEditor:
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
 

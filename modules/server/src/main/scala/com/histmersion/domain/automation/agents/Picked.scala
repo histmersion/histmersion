@@ -5,7 +5,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.ModelChains.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A model chosen for one LLM call: the client, how it is paid for (a plan pool or a price), what it may spend before
@@ -22,6 +21,6 @@ final case class Picked(
 
 object Picked:
   type HeadroomTokens = HeadroomTokens.T
-  object HeadroomTokens extends RefinedType[Long, Pure]
+  object HeadroomTokens extends Newtype[Long, Pure]
   type Skipped = Skipped.T
-  object Skipped extends RefinedType[String, Pure]
+  object Skipped extends Newtype[String, Pure]

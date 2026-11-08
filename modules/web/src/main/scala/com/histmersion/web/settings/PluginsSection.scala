@@ -5,7 +5,6 @@ import com.histmersion.api.Wording
 import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings › Plugins: every plugin in this server — what it adds, whether it works — each turned on or off in the
@@ -13,9 +12,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PluginsSection:
   type Capability = Capability.T
-  object Capability extends RefinedType[String, Pure]
+  object Capability extends Newtype[String, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
 
   /** What became of a plugin, in words. Pure. */
 

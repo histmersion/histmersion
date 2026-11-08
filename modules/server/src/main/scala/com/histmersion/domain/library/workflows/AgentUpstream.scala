@@ -24,7 +24,6 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 
@@ -90,18 +89,18 @@ trait AgentUpstream:
 
 object AgentUpstream:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type RefsApply = RefsApply.T
-  object RefsApply extends RefinedType[Boolean, Pure]
+  object RefsApply extends Newtype[Boolean, Pure]
   type AssessApply = AssessApply.T
-  object AssessApply extends RefinedType[Boolean, Pure]
+  object AssessApply extends Newtype[Boolean, Pure]
   type FollowupsId = FollowupsId.T
-  object FollowupsId extends RefinedType[String, Pure]
+  object FollowupsId extends Newtype[String, Pure]
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
-  object SweepCandidatesDryRun extends RefinedType[Boolean, Pure]
+  object SweepCandidatesDryRun extends Newtype[Boolean, Pure]
 
   private def problem(e: Api.Error): Problem = Problem(e.message.value)
 

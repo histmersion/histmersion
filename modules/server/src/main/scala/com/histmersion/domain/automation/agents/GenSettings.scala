@@ -4,7 +4,6 @@ package domain.automation.agents
 import com.histmersion.server.agents.Codex
 
 import io.circe.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional
@@ -38,18 +37,18 @@ final case class GenSettings(
 
 object GenSettings:
   type AgentMcpUrl = AgentMcpUrl.T
-  object AgentMcpUrl extends RefinedType[String, Pure]
+  object AgentMcpUrl extends Newtype[String, Pure]
   type McpUrl = McpUrl.T
-  object McpUrl extends RefinedType[String, Pure]
+  object McpUrl extends Newtype[String, Pure]
   type QuotaUrl = QuotaUrl.T
-  object QuotaUrl extends RefinedType[String, Pure]
+  object QuotaUrl extends Newtype[String, Pure]
   type ClaudeMod = ClaudeMod.T
-  object ClaudeMod extends RefinedType[Boolean, Pure]
+  object ClaudeMod extends Newtype[Boolean, Pure]
   type InteractiveMod = InteractiveMod.T
-  object InteractiveMod extends RefinedType[Boolean, Pure]
+  object InteractiveMod extends Newtype[Boolean, Pure]
   type Version = Version.T
-  object Version extends RefinedType[String, Pure]
+  object Version extends Newtype[String, Pure]
   type CodexToolOutputTokens = CodexToolOutputTokens.T
-  object CodexToolOutputTokens extends RefinedType[Int, Pure]
+  object CodexToolOutputTokens extends Newtype[Int, Pure]
   type CodexLeanBase = CodexLeanBase.T
-  object CodexLeanBase extends RefinedType[Boolean, Pure]
+  object CodexLeanBase extends Newtype[Boolean, Pure]

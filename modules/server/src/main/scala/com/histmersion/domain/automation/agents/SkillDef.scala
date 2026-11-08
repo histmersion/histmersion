@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One canonical skill, `skills/<name>/SKILL.md`: its YAML header as written (kept line by line, so the rendered file
@@ -18,8 +17,8 @@ final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], bo
 object SkillDef:
 
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Header = Header.T
-  object Header extends RefinedType[String, Pure]
+  object Header extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package web
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 
@@ -15,9 +14,9 @@ import com.histmersion.api.UiLabels
   */
 object RangeLabels:
   type ElementSize = ElementSize.T
-  object ElementSize extends RefinedType[Double, Pure]
+  object ElementSize extends Newtype[Double, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends RefinedType[Double, Pure]
+  object ScreenPixels extends Newtype[Double, Pure]
 
   /** The gap between a year and its handle, and the least gap between the two years. */
 

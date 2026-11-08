@@ -10,7 +10,6 @@ import java.net.{HttpURLConnection, URI}
 import java.util.zip.ZipInputStream
 import scala.annotation.tailrec
 import scala.util.Using
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The plain downloads the gazetteer, the land and PeriodO use: a generic User-Agent ([[HttpPolicy]]), never a personal
@@ -52,11 +51,11 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
 
 object HttpDownload:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   def apply(): HttpDownload = new HttpDownload(
     HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (gazetteer import)"))

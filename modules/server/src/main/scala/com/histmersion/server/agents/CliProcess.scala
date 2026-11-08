@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One CLI process per step attempt: in an empty temporary working directory (no project `AGENTS.md`, `.codex/`,
@@ -25,29 +24,29 @@ object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
   type CannotStartHint = CannotStartHint.T
-  object CannotStartHint extends RefinedType[String, Pure]
+  object CannotStartHint extends Newtype[String, Pure]
   type RunStdin = RunStdin.T
-  object RunStdin extends RefinedType[String, Pure]
+  object RunStdin extends Newtype[String, Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
-  object RunTimeoutSeconds extends RefinedType[Int, Pure]
+  object RunTimeoutSeconds extends Newtype[Int, Pure]
   type RunHint = CannotStartHint
   val RunHint: CannotStartHint.type = CannotStartHint
   type WithDirPrefix = WithDirPrefix.T
-  object WithDirPrefix extends RefinedType[String, Pure]
+  object WithDirPrefix extends Newtype[String, Pure]
   type PrivateFileText = PrivateFileText.T
-  object PrivateFileText extends RefinedType[String, Pure]
+  object PrivateFileText extends Newtype[String, Pure]
 
   final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
 
   object Run:
     type Lines = Lines.T
-    object Lines extends RefinedType[String, Pure]
+    object Lines extends Newtype[String, Pure]
     type Exit = Exit.T
-    object Exit extends RefinedType[Int, Pure]
+    object Exit extends Newtype[Int, Pure]
     type Stderr = Stderr.T
-    object Stderr extends RefinedType[String, Pure]
+    object Stderr extends Newtype[String, Pure]
     type Stopped = Stopped.T
-    object Stopped extends RefinedType[String, Pure]
+    object Stopped extends Newtype[String, Pure]
 
   /** Raised when the executable cannot be started at all. */
   def cannotStart(command: ClaudeCode.Argument, e: java.io.IOException, hint: CannotStartHint): java.io.IOException =

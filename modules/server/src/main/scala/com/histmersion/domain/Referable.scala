@@ -7,7 +7,6 @@ import com.histmersion.domain.Title
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Implemented by each domain whose records others point at — a person's bookmarks, notes and read marks, a goal's
@@ -28,7 +27,7 @@ trait Referable:
 
 object Referable:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The records of one kind held in memory (tests), resolved and described by the rules the tables keep: a uid that
     * survives a rename, an alias for the old key, a merge's uid redirect, a deletion's tombstone.

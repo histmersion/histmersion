@@ -3,7 +3,6 @@ package util.storage
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The server's files: a [[Store]] for each named [[Location]], and scratch stores that are removed when they close.
@@ -27,7 +26,7 @@ object Storage:
 
   /** Stores on disk: `roots` says where each location is now, `temp` where scratch stores are made. */
   type ScratchPurpose = ScratchPurpose.T
-  object ScratchPurpose extends RefinedType[String, Pure]
+  object ScratchPurpose extends Newtype[String, Pure]
 
   def apply(roots: Location => Option[Path], temp: () => Path): Storage = Implementation(roots, temp)
 

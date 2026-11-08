@@ -10,7 +10,6 @@ import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
@@ -67,7 +66,7 @@ final class SeedImport(
 
 object SeedImport:
   type RunForce = RunForce.T
-  object RunForce extends RefinedType[Boolean, Pure]
+  object RunForce extends Newtype[Boolean, Pure]
 
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
   def isStale(

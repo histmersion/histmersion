@@ -7,7 +7,6 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.circe.syntax.*
 import com.histmersion.api.automation.Queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.Goal
@@ -26,7 +25,7 @@ private[histmersion] object Pipelines:
   type EntryTopic = Queue.QueueItem.Topic
   val EntryTopic: Queue.QueueItem.Topic.type = Queue.QueueItem.Topic
   type LogLine = LogLine.T
-  object LogLine extends RefinedType[String, Pure]
+  object LogLine extends Newtype[String, Pure]
 
   /** The goal a run works for: its own, else the goal it targets (the run record is our own). */
   def goalOf(run: Agents.RunInfo): Option[Goal.Slug] =

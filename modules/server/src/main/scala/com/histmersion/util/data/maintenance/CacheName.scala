@@ -5,4 +5,4 @@ import io.github.iltotore.iron.*
 
 /** What a cache is called: unique among the registered ones. */
 type CacheName = CacheName.T
-object CacheName extends RefinedType[String, Pure]
+object CacheName extends Newtype[String, Pure]

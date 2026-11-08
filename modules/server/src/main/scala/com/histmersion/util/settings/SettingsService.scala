@@ -6,7 +6,6 @@ import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The settings file — read and changed. Settings live there and nowhere else (never in the database), so a person can
@@ -30,7 +29,7 @@ trait SettingsService:
 
 object SettingsService:
   type ConfigPath = ConfigPath.T
-  object ConfigPath extends RefinedType[String, Pure]
+  object ConfigPath extends Newtype[String, Pure]
 
   /** The settings file of `loaded` — the one the server read, `file` (`None`: it read none) — with the environment it
     * read it with.

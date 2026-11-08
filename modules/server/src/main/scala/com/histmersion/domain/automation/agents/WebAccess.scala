@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which of the runtime's own web tools a role may use: none, Histmersion's own `discover` (OpenAlex, Crossref,
@@ -19,4 +18,4 @@ enum WebAccess(val wire: WebAccess.Wire):
 
 object WebAccess:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

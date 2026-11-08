@@ -7,7 +7,6 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether the base map under the names is light or dark — what the map's label colours follow (`.map-tone-light` /
@@ -20,7 +19,7 @@ enum MapTone(val wire: MapTone.Wire):
 object MapTone:
   /** Pure: `ui.tiles-tone`'s value; anything but "dark" is the light default (OSM's own tiles). */
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): MapTone = if s.value.trim.equalsIgnoreCase("dark") then Dark else Light

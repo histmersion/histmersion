@@ -10,7 +10,6 @@ import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 
@@ -21,11 +20,11 @@ import com.histmersion.api.UiLabels
   */
 object MediaPopup:
   type Caption = Caption.T
-  object Caption extends RefinedType[String, Pure]
+  object Caption extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type PeriodText = PeriodText.T
-  object PeriodText extends RefinedType[String, Pure]
+  object PeriodText extends Newtype[String, Pure]
   /** Pure: what the picture's full-size view shows. */
 
 

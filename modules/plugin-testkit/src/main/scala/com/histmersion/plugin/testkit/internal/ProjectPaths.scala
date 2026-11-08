@@ -2,7 +2,6 @@ package com.histmersion
 package plugin.testkit.internal
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Paths a test names relative to its project. A build tool starts the test JVM in the directory it was itself started
@@ -11,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ProjectPaths:
   type ProjectDir = ProjectDir.T
-  object ProjectDir extends RefinedType[String, Pure]
+  object ProjectDir extends Newtype[String, Pure]
   /** `dir` as given when it is absolute; else under the project directory when the build names one, else under the
     * working directory.
     */

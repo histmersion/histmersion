@@ -6,7 +6,6 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.maintenance.Storage
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
@@ -73,9 +72,9 @@ final class StorageCache(
 
 object StorageCache:
   type TimeToLive = TimeToLive.T
-  object TimeToLive extends RefinedType[Long, Pure]
+  object TimeToLive extends Newtype[Long, Pure]
   type WaitMillis = WaitMillis.T
-  object WaitMillis extends RefinedType[Long, Pure]
+  object WaitMillis extends Newtype[Long, Pure]
   type Instant = Instant.T
-  object Instant extends RefinedType[Long, Pure]
+  object Instant extends Newtype[Long, Pure]
 

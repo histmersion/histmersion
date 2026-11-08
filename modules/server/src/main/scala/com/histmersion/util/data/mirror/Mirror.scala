@@ -38,4 +38,4 @@ object Mirror:
 
   /** The kind of record a mirror contribution writes notes of (`sources`, `articles`, …). */
   type Records = Records.T
-  object Records extends RefinedType[String, Pure]
+  object Records extends Newtype[String, Pure]

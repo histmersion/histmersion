@@ -2,7 +2,6 @@ package com.histmersion
 package plugin.testkit
 
 import com.histmersion.domain.CoreQuota
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One request an AI provider sent through a [[ScriptedAiHttp]]. Header values whose names suggest a credential
@@ -12,8 +11,8 @@ final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.
 
 object AiHttpRequest:
   type Method = Method.T
-  object Method extends RefinedType[String, Pure]
+  object Method extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]

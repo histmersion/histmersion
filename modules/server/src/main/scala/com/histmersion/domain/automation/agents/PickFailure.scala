@@ -7,7 +7,6 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.ModelChains.*
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why no model of a role's chain can take the next call. `Exhausted` pauses the run until `freesAt` (resumed by itself
@@ -20,7 +19,7 @@ enum PickFailure:
 
 object PickFailure:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   object Unavailable:
     type Message = Problem
     val Message: Problem.type = Problem

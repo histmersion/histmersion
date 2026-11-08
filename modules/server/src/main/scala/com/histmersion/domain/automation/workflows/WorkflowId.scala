@@ -7,4 +7,4 @@ import io.github.iltotore.iron.constraint.string.Match
 /** A workflow's identifier (`enrich-source`, `review-article`, …): what a run records as its pipeline. */
 type WorkflowId = WorkflowId.T
 
-object WorkflowId extends RefinedType[String, Match["[a-z][a-z0-9-]*"]]
+object WorkflowId extends Newtype[String, Match["[a-z][a-z0-9-]*"]]

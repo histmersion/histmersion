@@ -6,7 +6,6 @@ import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 private[places] object GazetteerImport:
@@ -53,5 +52,5 @@ private[places] object GazetteerImport:
 
   object Session:
     type Pruned = Pruned.T
-    object Pruned extends RefinedType[Long, Pure]
+    object Pruned extends Newtype[Long, Pure]
 

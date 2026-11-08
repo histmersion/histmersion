@@ -1,7 +1,6 @@
 package com.histmersion
 package util.storage
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A store's file as the supporting areas hand it to another program (a child process's directory or log), and a file
@@ -15,9 +14,9 @@ object HandedFile:
 
   object Snapshot:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Size = Size.T
-    object Size extends RefinedType[Long, Pure]
+    object Size extends Newtype[Long, Pure]
 
   def snapshot(file: HandedFile): Snapshot = Snapshot(Snapshot.Name(file.getName), Snapshot.Size(file.length()), source(file))
   def source(file: HandedFile): ByteSource = ByteSource.file(file.toPath)

@@ -27,7 +27,6 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.media.MediaCoversRequest
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.library.Query
@@ -60,7 +59,7 @@ object CalibreCmd:
 
 
   type Unlinked = Unlinked.T
-  object Unlinked extends RefinedType[Boolean, Pure]
+  object Unlinked extends Newtype[Boolean, Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
   private def fail(msg: String): Cli.Error = Cli.Error(Cli.Error.Message(msg), exitCode = ExitCode.Refused)

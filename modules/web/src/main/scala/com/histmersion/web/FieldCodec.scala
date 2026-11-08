@@ -11,7 +11,6 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobState
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Run
 
@@ -28,7 +27,7 @@ trait FieldCodec[A]:
 
 object FieldCodec:
   type Token = Token.T
-  object Token extends RefinedType[String, Pure]
+  object Token extends Newtype[String, Pure]
 
   private def clean(vs: List[Token]): List[String] = vs.map(_.value.trim).filter(_.nonEmpty)
 

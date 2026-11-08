@@ -3,7 +3,6 @@ package domain.library.collections
 
 import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionGapRow
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 
@@ -26,7 +25,7 @@ object GapOriginal:
     * a Calibre id). A record with no original anywhere is listed, never counted.
     */
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match

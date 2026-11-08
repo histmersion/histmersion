@@ -7,7 +7,6 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where an agent definition is run, which decides how it is rendered (docs/research-agent-runtimes.md §2): the three
@@ -29,7 +28,7 @@ enum AgentRuntime(val wire: AgentRuntime.Wire):
 
 object AgentRuntime:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def parse(s: Wire): Option[AgentRuntime] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 

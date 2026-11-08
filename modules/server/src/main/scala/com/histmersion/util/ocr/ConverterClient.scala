@@ -5,7 +5,6 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 
 import java.time.Duration
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The seam between the server and the Python OCR sidecar (plan §1.8).
@@ -31,15 +30,15 @@ trait ConverterClient:
 
 object ConverterClient:
   type DocumentBytes = DocumentBytes.T
-  object DocumentBytes extends RefinedType[Array[Byte], Pure]
+  object DocumentBytes extends Newtype[Array[Byte], Pure]
   type Filename = Filename.T
-  object Filename extends RefinedType[String, Pure]
+  object Filename extends Newtype[String, Pure]
   type HealthSummary = HealthSummary.T
-  object HealthSummary extends RefinedType[String, Pure]
+  object HealthSummary extends Newtype[String, Pure]
   type HighQuality = HighQuality.T
-  object HighQuality extends RefinedType[Boolean, Pure]
+  object HighQuality extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** A thumbnail the sidecar made. */
 
@@ -48,23 +47,23 @@ object ConverterClient:
 
   object Thumb:
     type Bytes = Bytes.T
-    object Bytes extends RefinedType[Array[Byte], Pure]
+    object Bytes extends Newtype[Array[Byte], Pure]
 
     type Mime = Mime.T
-    object Mime extends RefinedType[String, Pure]
+    object Mime extends Newtype[String, Pure]
     type Width = Width.T
-    object Width extends RefinedType[Int, Pure]
+    object Width extends Newtype[Int, Pure]
     type Height = Height.T
-    object Height extends RefinedType[Int, Pure]
+    object Height extends Newtype[Int, Pure]
 
   /** What `/inspect` reports: all pages, and how many of them have no text layer. */
   final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = PageCount.Scanned(0))
 
   object PageCount:
     type Pages = Pages.T
-    object Pages extends RefinedType[Int, Pure]
+    object Pages extends Newtype[Int, Pure]
     type Scanned = Scanned.T
-    object Scanned extends RefinedType[Int, Pure]
+    object Scanned extends Newtype[Int, Pure]
 
   /** How long one conversion may run: the configured timeout, or the pages' budget when the document is long enough for
     * that to be more — a scanned page at the scanned rate (the quality path OCRs everything at its own rate). Unknown

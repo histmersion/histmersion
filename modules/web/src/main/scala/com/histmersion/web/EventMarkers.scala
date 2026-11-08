@@ -9,7 +9,6 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
@@ -21,7 +20,7 @@ import com.histmersion.api.Years
   */
 object EventMarkers:
   type Undated = Undated.T
-  object Undated extends RefinedType[Boolean, Pure]
+  object Undated extends Newtype[Boolean, Pure]
 
   /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
     * ([[MapView]]).

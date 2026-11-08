@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.ingest
 
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The seam between an acquisition and the ingest's job queue.
@@ -20,4 +19,4 @@ trait IngestJobs:
 
 object IngestJobs:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

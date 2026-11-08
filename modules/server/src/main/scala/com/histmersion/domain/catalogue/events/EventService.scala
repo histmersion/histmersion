@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Period
@@ -85,7 +84,7 @@ trait EventService:
 
 object EventService:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 

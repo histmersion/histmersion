@@ -4,7 +4,6 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.TheMap
 
@@ -15,7 +14,7 @@ import com.histmersion.web.map.TheMap
   */
 object Diagnostics:
   type CacheName = CacheName.T
-  object CacheName extends RefinedType[String, Pure]
+  object CacheName extends Newtype[String, Pure]
 
   /** Every cache and its figures, by name. */
 

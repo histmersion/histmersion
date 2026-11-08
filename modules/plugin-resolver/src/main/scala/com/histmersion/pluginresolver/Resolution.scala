@@ -2,7 +2,6 @@ package com.histmersion
 package pluginresolver
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure decisions of a resolution: which of a plugin's modules conflict with the server's, which go into the
@@ -10,11 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Resolution:
   type ClasspathFile = ClasspathFile.T
-  object ClasspathFile extends RefinedType[String, Pure]
+  object ClasspathFile extends Newtype[String, Pure]
   type InputsFile = InputsFile.T
-  object InputsFile extends RefinedType[String, Pure]
+  object InputsFile extends Newtype[String, Pure]
   type ReportLine = ReportLine.T
-  object ReportLine extends RefinedType[String, Pure]
+  object ReportLine extends Newtype[String, Pure]
 
   /** Orders two versions as Maven does: negative when the first is older. */
   export Resolver.{FileName as ConflictsPlugin, FileName as NeededByResultPart2, FileName as NeededByPerPluginPart1, FileName as DependenciesNeededPart2, FileName as InputsFileFilesPart1, Sha256 as InputsFileFilesPart2}

@@ -3,7 +3,6 @@ package cli
 
 import com.monovore.decline.*
 import com.histmersion.config.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The configuration as the CLI reads it: reference.conf < the user config file < the environment, the same layers as
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Settings:
   type Prefix = Prefix.T
-  object Prefix extends RefinedType[String, Pure]
+  object Prefix extends Newtype[String, Pure]
 
   lazy val loaded: Either[ConfigProblem, LoadedConfig] = AppConfig.loadWithUserFile()
 

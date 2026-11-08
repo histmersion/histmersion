@@ -16,7 +16,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the collections' operations read and write of the library, lent by the composition: the records (as their
@@ -39,8 +38,8 @@ trait CollectionLibrary:
 
 object CollectionLibrary:
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type QueueItemId = QueueItemId.T
-  object QueueItemId extends RefinedType[Int, Pure]
+  object QueueItemId extends Newtype[Int, Pure]

@@ -4,7 +4,6 @@ package domain.automation.agents
 import java.time.Instant
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An approval as [[ApprovalService.InMemory]] holds it: its columns, the payload as written, and its times. */
@@ -29,26 +28,26 @@ final case class ApprovalRecord(
 
 object ApprovalRecord:
   type Id = Id.T
-  object Id extends RefinedType[Long, Pure]
+  object Id extends Newtype[Long, Pure]
   type Seq = Seq.T
-  object Seq extends RefinedType[Int, Pure]
+  object Seq extends Newtype[Int, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Current = Current.T
-  object Current extends RefinedType[String, Pure]
+  object Current extends Newtype[String, Pure]
   type EdgeKind = EdgeKind.T
-  object EdgeKind extends RefinedType[String, Pure]
+  object EdgeKind extends Newtype[String, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   type Subject = Subject.T
-  object Subject extends RefinedType[String, Pure]
+  object Subject extends Newtype[String, Pure]
   type Proposal = Proposal.T
-  object Proposal extends RefinedType[String, Pure]
+  object Proposal extends Newtype[String, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Result = Result.T
-  object Result extends RefinedType[String, Pure]
+  object Result extends Newtype[String, Pure]

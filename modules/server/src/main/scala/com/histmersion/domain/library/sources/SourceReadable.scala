@@ -12,7 +12,6 @@ import com.histmersion.{Offset, PageSize, WireEnumValues, Year}
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
 
@@ -55,9 +54,9 @@ final class SourceReadable(db: Transactor) extends Readable:
 
 object SourceReadable:
   type RowStart = RowStart.T
-  object RowStart extends RefinedType[Long, Pure]
+  object RowStart extends Newtype[Long, Pure]
   type RowEnd = RowEnd.T
-  object RowEnd extends RefinedType[Long, Pure]
+  object RowEnd extends Newtype[Long, Pure]
 
   private[sources] def row(
       ck: Citekey,

@@ -19,7 +19,6 @@ import com.histmersion.domain.library.Edge
 import com.histmersion.domain.automation.Run
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.Jsonb
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentsMarkdown
 
@@ -84,11 +83,11 @@ final class SourceProposals(
 
 object SourceProposals:
   type ApprovalRecordId = ApprovalRecordId.T
-  object ApprovalRecordId extends RefinedType[Long, Pure]
+  object ApprovalRecordId extends Newtype[Long, Pure]
   type OutcomeWhat = OutcomeWhat.T
-  object OutcomeWhat extends RefinedType[String, Pure]
+  object OutcomeWhat extends Newtype[String, Pure]
   type OutcomeWhy = OutcomeWhy.T
-  object OutcomeWhy extends RefinedType[String, Pure]
+  object OutcomeWhy extends Newtype[String, Pure]
 
   /** What became of one proposal, for the run's log and warnings. */
   enum Outcome:

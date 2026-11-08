@@ -5,7 +5,6 @@ import com.histmersion.api.Palette
 import org.scalajs.dom
 
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Wcag
 
@@ -16,9 +15,9 @@ import com.histmersion.api.Wcag
   */
 object ThemeTokens:
   type CssText = CssText.T
-  object CssText extends RefinedType[String, Pure]
+  object CssText extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
   /** Where a token's value comes from: the page's `:root`. A `var` so the tests, which run in Node with no stylesheet,
     * can supply the values instead.

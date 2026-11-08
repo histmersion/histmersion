@@ -9,7 +9,6 @@ import org.scalajs.dom
 
 import sttp.client4.*
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
@@ -22,7 +21,7 @@ final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends
 
 object ApiFailure:
   type Status = Status.T
-  object Status extends RefinedType[Int, Pure]
+  object Status extends Newtype[Int, Pure]
 
   /** Pure: what a failed response means, from its status and whatever body could be decoded. */
   def of(status: Status, decoded: Option[Api.Error]): ApiFailure =

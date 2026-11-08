@@ -125,13 +125,13 @@ trait Store:
 
 object Store:
   type EntryName = EntryName.T
-  object EntryName extends RefinedType[String, Pure]
+  object EntryName extends Newtype[String, Pure]
   type KeepPermissions = KeepPermissions.T
-  object KeepPermissions extends RefinedType[Boolean, Pure]
+  object KeepPermissions extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ThroughLink = ThroughLink.T
-  object ThroughLink extends RefinedType[Boolean, Pure]
+  object ThroughLink extends Newtype[Boolean, Pure]
 
   /** A [[ContentStore]] over a store: `<sha256>.<ext>` at its top. */
 
@@ -188,7 +188,7 @@ object Store:
 
   object Error:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     object NotFound:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location
@@ -215,11 +215,11 @@ object Store:
 
   type Key = Key.T
 
-  object Key extends RefinedType[String, StoreKeyRule]:
+  object Key extends Newtype[String, StoreKeyRule]:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Segment = Segment.T
-    object Segment extends RefinedType[String, Pure]
+    object Segment extends Newtype[String, Pure]
 
     val Root: Key = applyUnsafe("")
 
@@ -266,13 +266,13 @@ object Store:
 
   object Measure:
     type Files = Files.T
-    object Files extends RefinedType[Long, Pure]
+    object Files extends Newtype[Long, Pure]
     type Exists = Exists.T
-    object Exists extends RefinedType[Boolean, Pure]
+    object Exists extends Newtype[Boolean, Pure]
     type Partial = Partial.T
-    object Partial extends RefinedType[Boolean, Pure]
+    object Partial extends Newtype[Boolean, Pure]
     type Unreadable = Unreadable.T
-    object Unreadable extends RefinedType[Int, Pure]
+    object Unreadable extends Newtype[Int, Pure]
 
     val absent: Measure = Measure(ByteCount.zero, Files(0L), exists = Exists(false))
 
@@ -281,4 +281,4 @@ object Store:
 
   object Volume:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]

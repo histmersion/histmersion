@@ -17,7 +17,6 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend recorded before this
@@ -45,7 +44,7 @@ final private[automation] class RunBudget(
 
 object RunBudget:
   type SpentTokens = SpentTokens.T
-  object SpentTokens extends RefinedType[Long, Pure]
+  object SpentTokens extends Newtype[Long, Pure]
   type CapTokens = AgentsControllers.BudgetTokens
   val CapTokens: AgentsControllers.BudgetTokens.type = AgentsControllers.BudgetTokens
 

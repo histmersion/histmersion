@@ -5,7 +5,6 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The reader's "Map motion" setting (#4718), kept per device: follow the system's reduced-motion setting (the
@@ -18,9 +17,9 @@ enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
 
 object MapMotion:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
   def fromWire(s: Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
 

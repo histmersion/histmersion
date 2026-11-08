@@ -4,7 +4,6 @@ package web
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.instance.UiNotices
@@ -22,9 +21,9 @@ import com.histmersion.api.catalogue.Year
   */
 object MobileChrome:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type SpanLabel = SpanLabel.T
-  object SpanLabel extends RefinedType[String, Pure]
+  object SpanLabel extends Newtype[String, Pure]
 
   /** A drawer: which edge it comes from. */
 
@@ -57,7 +56,7 @@ object MobileChrome:
     math.abs(dx) >= SwipeMinPx && math.abs(dx) > SwipeRatio * math.abs(dy)
 
   /** The filters that are set but not visible in the bar (the search is): the ☰ badge. */
-  def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key != UiState.q.key)
+  def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key.value != UiState.q.key.value)
 
   /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most of the screen
     * with it open; on a phone it waits for ⏱.

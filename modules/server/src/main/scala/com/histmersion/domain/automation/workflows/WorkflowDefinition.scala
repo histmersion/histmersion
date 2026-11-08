@@ -4,7 +4,6 @@ package domain.automation.workflows
 import com.histmersion.domain.automation.agents.{Halt, OutputComparison, RunCtx}
 import com.histmersion.domain.automation.{AgentRole, TargetKind}
 import com.histmersion.domain.automation.Pipeline
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of workflow a domain defines and the engine runs: what it is called and works on, the roles its agents take,
@@ -31,6 +30,6 @@ trait WorkflowDefinition:
 
 object WorkflowDefinition:
   type DescribeResult = DescribeResult.T
-  object DescribeResult extends RefinedType[String, Pure]
+  object DescribeResult extends Newtype[String, Pure]
   type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends RefinedType[String, Pure]
+  object RunResultPart2 extends Newtype[String, Pure]

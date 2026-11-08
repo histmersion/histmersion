@@ -2,7 +2,6 @@ package com.histmersion
 package plugin.testkit
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One search of a media collection for one place, as the server's import runs it: through the collection's polite
@@ -21,4 +20,4 @@ final case class MediaReport(
 
 object MediaReport:
   type Failure = Failure.T
-  object Failure extends RefinedType[String, Pure]
+  object Failure extends Newtype[String, Pure]

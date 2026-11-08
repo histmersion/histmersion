@@ -32,7 +32,6 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.collections.CollectionsService
 import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.CandidateList
@@ -217,7 +216,7 @@ object AcquisitionTools:
 
   object DiscoverInput:
     type NotInDb = NotInDb.T
-    object NotInDb extends RefinedType[Boolean, Pure]
+    object NotInDb extends Newtype[Boolean, Pure]
 
 
   final case class CandidatesInput(
@@ -234,9 +233,9 @@ object AcquisitionTools:
 
   object CandidatesInput:
     type Sweep = Sweep.T
-    object Sweep extends RefinedType[Boolean, Pure]
+    object Sweep extends Newtype[Boolean, Pure]
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
 
 
   final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -254,9 +253,9 @@ object AcquisitionTools:
 
   object AssessInput:
     type UpdateRetractions = UpdateRetractions.T
-    object UpdateRetractions extends RefinedType[Boolean, Pure]
+    object UpdateRetractions extends Newtype[Boolean, Pure]
     type RetractionsStatus = RetractionsStatus.T
-    object RetractionsStatus extends RefinedType[Boolean, Pure]
+    object RetractionsStatus extends Newtype[Boolean, Pure]
 
 
   final case class FollowupsInput(
@@ -278,7 +277,7 @@ object AcquisitionTools:
   ) derives KindlingsCodecAsObject
   object IngestInput:
     type LegalOnly = LegalOnly.T
-    object LegalOnly extends RefinedType[Boolean, Pure]
+    object LegalOnly extends Newtype[Boolean, Pure]
 
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
@@ -299,4 +298,4 @@ object AcquisitionTools:
 
   object ArchiveInput:
     type Import = Import.T
-    object Import extends RefinedType[Boolean, Pure]
+    object Import extends Newtype[Boolean, Pure]

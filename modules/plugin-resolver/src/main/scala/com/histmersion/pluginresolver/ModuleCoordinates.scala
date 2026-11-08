@@ -3,7 +3,6 @@ package pluginresolver
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
@@ -11,7 +10,7 @@ final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
 
 object ModuleCoordinates:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   /** `group:artifact:version`. */
   type ParseResultPart1 = Resolver.Problem
   val ParseResultPart1: Resolver.Problem.type = Resolver.Problem

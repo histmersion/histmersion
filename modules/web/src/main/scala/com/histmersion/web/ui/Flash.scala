@@ -3,7 +3,6 @@ package web.ui
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A short line saying that something happened ("Copied the link"), read out by screen readers, gone after a few
@@ -11,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Flash:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
   private val line = Var(Option.empty[String])

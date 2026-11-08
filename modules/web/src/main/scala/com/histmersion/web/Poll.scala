@@ -3,7 +3,6 @@ package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The polling schedule of every polled window (jobs, agent runs, a manager): a quick first look, then slower while
@@ -11,11 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Poll:
   type DataChanged = DataChanged.T
-  object DataChanged extends RefinedType[Boolean, Pure]
+  object DataChanged extends Newtype[Boolean, Pure]
   type LiveMode = LiveMode.T
-  object LiveMode extends RefinedType[Boolean, Pure]
+  object LiveMode extends Newtype[Boolean, Pure]
   type Revision = Revision.T
-  object Revision extends RefinedType[Int, Pure]
+  object Revision extends Newtype[Int, Pure]
 
   val FirstMs = 1000
   val MaxMs = 15000

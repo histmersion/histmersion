@@ -4,7 +4,6 @@ package web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import com.histmersion.api.RowCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One page of a tab's answer: its rows, the server's total, and the count line's extras for it (`200 concepts`, the
@@ -14,4 +13,4 @@ final case class TabPage[Row](rows: List[Row], total: RowCount, extras: List[Tab
 
 object TabPage:
   type Extras = Extras.T
-  object Extras extends RefinedType[String, Pure]
+  object Extras extends Newtype[String, Pure]

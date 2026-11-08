@@ -15,7 +15,6 @@ import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.jobs.Job
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.automation.Run
@@ -112,13 +111,13 @@ trait ApprovalService:
 
 object ApprovalService:
   type Payload = Payload.T
-  object Payload extends RefinedType[String, Pure]
+  object Payload extends Newtype[String, Pure]
   type StepSeq = StepSeq.T
-  object StepSeq extends RefinedType[Int, Pure]
+  object StepSeq extends Newtype[Int, Pure]
   type OpenForStepResult = OpenForStepResult.T
-  object OpenForStepResult extends RefinedType[String, Pure]
+  object OpenForStepResult extends Newtype[String, Pure]
   type OpenSubjectResult = OpenSubjectResult.T
-  object OpenSubjectResult extends RefinedType[String, Pure]
+  object OpenSubjectResult extends Newtype[String, Pure]
 
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 

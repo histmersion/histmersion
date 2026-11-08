@@ -7,7 +7,6 @@ import com.histmersion.api.automation.PlanQuota.*
 import io.circe.{parser, Json}
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a CLI client reports its readings to and asks mid-step: the plan pools ([[PlanPools]]), or a test's stand-in.
@@ -23,4 +22,4 @@ trait PoolSink:
 
 object PoolSink:
   type BlockedReason = BlockedReason.T
-  object BlockedReason extends RefinedType[String, Pure]
+  object BlockedReason extends Newtype[String, Pure]

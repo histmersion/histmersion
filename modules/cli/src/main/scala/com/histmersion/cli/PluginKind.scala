@@ -16,11 +16,11 @@ enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuff
 
 object PluginKind:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type ClassSuffix = ClassSuffix.T
-  object ClassSuffix extends RefinedType[String, Pure]
+  object ClassSuffix extends Newtype[String, Pure]
   type Provides = Provides.T
-  object Provides extends RefinedType[String, Pure]
+  object Provides extends Newtype[String, Pure]
 
 
   val names: String = values.map(_.name).mkString(", ")

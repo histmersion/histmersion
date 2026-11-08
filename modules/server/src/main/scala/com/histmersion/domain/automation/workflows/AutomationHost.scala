@@ -12,7 +12,6 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
@@ -78,18 +77,18 @@ trait AutomationHost:
 
 object AutomationHost:
   type RunTargetResultPart2 = RunTargetResultPart2.T
-  object RunTargetResultPart2 extends RefinedType[String, Pure]
+  object RunTargetResultPart2 extends Newtype[String, Pure]
   type RunTargetRaw = RunTargetRaw.T
-  object RunTargetRaw extends RefinedType[String, Pure]
+  object RunTargetRaw extends Newtype[String, Pure]
   type RunOptionsRoundsCap = RunOptionsRoundsCap.T
-  object RunOptionsRoundsCap extends RefinedType[Int, Pure]
+  object RunOptionsRoundsCap extends Newtype[Int, Pure]
   type LinkRefResultPart2 = LinkRefResultPart2.T
-  object LinkRefResultPart2 extends RefinedType[String, Pure]
+  object LinkRefResultPart2 extends Newtype[String, Pure]
   type LinkRefRaw = LinkRefRaw.T
-  object LinkRefRaw extends RefinedType[String, Pure]
+  object LinkRefRaw extends Newtype[String, Pure]
   type VocabularyResult = VocabularyResult.T
-  object VocabularyResult extends RefinedType[String, Pure]
+  object VocabularyResult extends Newtype[String, Pure]
   type VocabularyField = VocabularyField.T
-  object VocabularyField extends RefinedType[String, Pure]
+  object VocabularyField extends Newtype[String, Pure]
   type HousekeepingBlockResult = HousekeepingBlockResult.T
-  object HousekeepingBlockResult extends RefinedType[String, Pure]
+  object HousekeepingBlockResult extends Newtype[String, Pure]

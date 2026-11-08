@@ -10,7 +10,6 @@ import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Blob, RandomReader}
 import io.circe.Json
 import java.util.concurrent.ConcurrentHashMap
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The PMTiles v3 archive format (https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md): one file holding a
@@ -22,23 +21,23 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PmTiles:
   type ByteLength = ByteLength.T
-  object ByteLength extends RefinedType[Int, Pure]
+  object ByteLength extends Newtype[Int, Pure]
   type CompressedBytes = CompressedBytes.T
-  object CompressedBytes extends RefinedType[Array[Byte], Pure]
+  object CompressedBytes extends Newtype[Array[Byte], Pure]
   type HeaderBytes = HeaderBytes.T
-  object HeaderBytes extends RefinedType[Array[Byte], Pure]
+  object HeaderBytes extends Newtype[Array[Byte], Pure]
   type PlainBytes = PlainBytes.T
-  object PlainBytes extends RefinedType[Array[Byte], Pure]
+  object PlainBytes extends Newtype[Array[Byte], Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileBytes = TileBytes.T
-  object TileBytes extends RefinedType[Array[Byte], Pure]
+  object TileBytes extends Newtype[Array[Byte], Pure]
   type TileColumn = TileColumn.T
-  object TileColumn extends RefinedType[Long, Pure]
+  object TileColumn extends Newtype[Long, Pure]
   type TileRow = TileRow.T
-  object TileRow extends RefinedType[Long, Pure]
+  object TileRow extends Newtype[Long, Pure]
   type Zoom = Zoom.T
-  object Zoom extends RefinedType[Int, Pure]
+  object Zoom extends Newtype[Int, Pure]
 
   /** A header's length in bytes. */
   val HeaderLength = 127
@@ -55,7 +54,7 @@ object PmTiles:
 
   object Compression:
     type Code = Code.T
-    object Code extends RefinedType[Int, Pure]
+    object Code extends Newtype[Int, Pure]
 
 
     def of(code: Code): Compression = values.find(_.code == code).getOrElse(Unknown)
@@ -70,9 +69,9 @@ object PmTiles:
 
   object TileType:
     type Code = Code.T
-    object Code extends RefinedType[Int, Pure]
+    object Code extends Newtype[Int, Pure]
     type Mime = Mime.T
-    object Mime extends RefinedType[String, Pure]
+    object Mime extends Newtype[String, Pure]
 
 
     def of(code: Code): TileType = values.find(_.code == code).getOrElse(Unknown)
@@ -122,31 +121,31 @@ object PmTiles:
     type DataLength = ByteCount
     val DataLength: ByteCount.type = ByteCount
     type AddressedTiles = AddressedTiles.T
-    object AddressedTiles extends RefinedType[Long, Pure]
+    object AddressedTiles extends Newtype[Long, Pure]
     type TileEntries = TileEntries.T
-    object TileEntries extends RefinedType[Long, Pure]
+    object TileEntries extends Newtype[Long, Pure]
     type TileContents = TileContents.T
-    object TileContents extends RefinedType[Long, Pure]
+    object TileContents extends Newtype[Long, Pure]
     type Clustered = Clustered.T
-    object Clustered extends RefinedType[Boolean, Pure]
+    object Clustered extends Newtype[Boolean, Pure]
     type MinZoom = Zoom
     val MinZoom: Zoom.type = Zoom
     type MaxZoom = Zoom
     val MaxZoom: Zoom.type = Zoom
     type MinLon = MinLon.T
-    object MinLon extends RefinedType[Double, Pure]
+    object MinLon extends Newtype[Double, Pure]
     type MinLat = MinLat.T
-    object MinLat extends RefinedType[Double, Pure]
+    object MinLat extends Newtype[Double, Pure]
     type MaxLon = MaxLon.T
-    object MaxLon extends RefinedType[Double, Pure]
+    object MaxLon extends Newtype[Double, Pure]
     type MaxLat = MaxLat.T
-    object MaxLat extends RefinedType[Double, Pure]
+    object MaxLat extends Newtype[Double, Pure]
     type CenterZoom = Zoom
     val CenterZoom: Zoom.type = Zoom
     type CenterLon = CenterLon.T
-    object CenterLon extends RefinedType[Double, Pure]
+    object CenterLon extends Newtype[Double, Pure]
     type CenterLat = CenterLat.T
-    object CenterLat extends RefinedType[Double, Pure]
+    object CenterLat extends Newtype[Double, Pure]
 
   /** One directory entry: `runLength` consecutive tile ids share the content at `offset`/`length` (relative to the tile
     * data section); `runLength == 0` points to a LEAF directory instead (relative to the leaf section).
@@ -157,13 +156,13 @@ object PmTiles:
   object Entry:
 
     type TileId = TileId.T
-    object TileId extends RefinedType[Long, Pure]
+    object TileId extends Newtype[Long, Pure]
     type Offset = ByteOffset
     val Offset: ByteOffset.type = ByteOffset
     type Length = Length.T
-    object Length extends RefinedType[Int, Pure]
+    object Length extends Newtype[Int, Pure]
     type RunLength = RunLength.T
-    object RunLength extends RefinedType[Int, Pure]
+    object RunLength extends Newtype[Int, Pure]
 
   private val Magic = "PMTiles".getBytes(StandardCharsets.US_ASCII)
 
@@ -498,7 +497,7 @@ object PmTiles:
     type Where = Blob.Location
     val Where: Blob.Location.type = Blob.Location
     type MaxLeaves = MaxLeaves.T
-    object MaxLeaves extends RefinedType[Int, Pure]
+    object MaxLeaves extends Newtype[Int, Pure]
 
     def open(blob: Blob, maxLeaves: MaxLeaves = MaxLeaves(256)): Either[Problem, File] =
       val where = blob.where

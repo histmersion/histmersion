@@ -32,7 +32,6 @@ import com.histmersion.api.media.{
 }
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
@@ -139,24 +138,24 @@ object AssetService:
   type TargetId = Target.Id
   val TargetId: Target.Id.type = Target.Id
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
 
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type LinkProperty = LinkProperty.T
-  object LinkProperty extends RefinedType[String, Pure]
+  object LinkProperty extends Newtype[String, Pure]
   type LinkRole = MediaRole.Wire
   val LinkRole: MediaRole.Wire.type = MediaRole.Wire
   type LinkBasis = MediaMatch.Basis
   val LinkBasis: MediaMatch.Basis.type = MediaMatch.Basis
   type LinkItem = LinkItem.T
-  object LinkItem extends RefinedType[String, Pure]
+  object LinkItem extends Newtype[String, Pure]
   type LinkRank = LinkRank.T
-  object LinkRank extends RefinedType[Int, Pure]
+  object LinkRank extends Newtype[Int, Pure]
   type PictureKey = PictureKey.T
-  object PictureKey extends RefinedType[String, Pure]
+  object PictureKey extends Newtype[String, Pure]
 
   def apply(db: Transactor): AssetService = Implementation(db)
 

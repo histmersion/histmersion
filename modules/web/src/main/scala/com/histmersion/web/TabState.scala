@@ -7,7 +7,6 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Plural
 import com.histmersion.api.Paging
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a filter-driven list tab shows: the rows loaded from the server (a page at a time), how many the list reveals,
@@ -42,15 +41,15 @@ final case class TabState[Row](
 
 object TabState:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
 
   type Loading = Loading.T
-  object Loading extends RefinedType[Boolean, Pure]
+  object Loading extends Newtype[Boolean, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
   type Loaded = Loaded.T
-  object Loaded extends RefinedType[Boolean, Pure]
+  object Loaded extends Newtype[Boolean, Pure]
   type Extras = TabPage.Extras
   val Extras: TabPage.Extras.type = TabPage.Extras
 

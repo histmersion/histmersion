@@ -22,7 +22,6 @@ import javax.sql.DataSource
 import scala.concurrent.duration.*
 import scala.util.control.NonFatal
 import com.histmersion.domain.library.acquisition.CoreBudget
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
@@ -173,7 +172,7 @@ final class ServerGraph private (
 
 object ServerGraph:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   val Pool = "pool"
   val Migrations = "migrations"

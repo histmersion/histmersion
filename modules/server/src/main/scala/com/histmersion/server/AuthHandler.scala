@@ -8,7 +8,6 @@ import io.netty.util.ReferenceCountUtil
 import java.nio.charset.StandardCharsets
 import com.histmersion.config.AuthConfig
 import com.histmersion.domain.automation.agents.RunTokens
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.instance.UiApi
 
@@ -69,7 +68,7 @@ final class AuthHandler(
 
 object AuthHandler:
   type RequestPath = RequestPath.T
-  object RequestPath extends RefinedType[String, Pure]
+  object RequestPath extends Newtype[String, Pure]
 
 
   def isWrite(m: HttpMethod): Boolean =

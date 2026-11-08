@@ -2,7 +2,6 @@ package com.histmersion
 package cli
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source linked to a Calibre entry, with what the corpus would send there. */
@@ -10,6 +9,6 @@ final case class LinkedRecord(citekey: LinkedRecord.Citekey, calibreId: LinkedRe
 
 object LinkedRecord:
   type Citekey = Citekey.T
-  object Citekey extends RefinedType[String, Pure]
+  object Citekey extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends RefinedType[Int, Pure]
+  object CalibreId extends Newtype[Int, Pure]

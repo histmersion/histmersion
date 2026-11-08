@@ -11,9 +11,9 @@ import java.time.{Instant, ZoneOffset}
 /** When a bookmark, a note or a read mark was made or changed: to the microsecond, as Postgres keeps it. */
 type MarkTime = MarkTime.T
 
-object MarkTime extends RefinedType[Instant, Pure]:
+object MarkTime extends Newtype[Instant, Pure]:
   type Iso = Iso.T
-  object Iso extends RefinedType[String, Pure]
+  object Iso extends Newtype[String, Pure]
 
   private val Format = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
 

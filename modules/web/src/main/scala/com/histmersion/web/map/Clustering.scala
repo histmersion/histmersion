@@ -5,22 +5,21 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The clustering of points on screen, pure: which points are drawn as one bubble at a zoom. */
 object Clustering:
   type GroupKey = GroupKey.T
-  object GroupKey extends RefinedType[String, Pure]
+  object GroupKey extends Newtype[String, Pure]
   type GroupLabel = GroupLabel.T
-  object GroupLabel extends RefinedType[String, Pure]
+  object GroupLabel extends Newtype[String, Pure]
   type ZoomLevel = ZoomLevel.T
-  object ZoomLevel extends RefinedType[Int, Pure]
+  object ZoomLevel extends Newtype[Int, Pure]
 
   type GroupRadius = GroupRadius.T
-  object GroupRadius extends RefinedType[Double, Pure]
+  object GroupRadius extends Newtype[Double, Pure]
   type InViewMargin = InViewMargin.T
-  object InViewMargin extends RefinedType[Double, Pure]
+  object InViewMargin extends Newtype[Double, Pure]
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
   def world(lat: LatLon.Lat, lon: LatLon.Lon, z: Double): (Double, Double) =

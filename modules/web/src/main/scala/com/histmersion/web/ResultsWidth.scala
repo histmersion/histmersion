@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.histmersion.web.ui.Layout
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The width of Explore's results column: wide enough by default for its five tabs and their counts, dragged or moved
@@ -11,13 +10,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ResultsWidth:
   type KeyName = KeyName.T
-  object KeyName extends RefinedType[String, Pure]
+  object KeyName extends Newtype[String, Pure]
   type ShiftHeld = ShiftHeld.T
-  object ShiftHeld extends RefinedType[Boolean, Pure]
+  object ShiftHeld extends Newtype[Boolean, Pure]
   type ViewportWidth = ViewportWidth.T
-  object ViewportWidth extends RefinedType[Double, Pure]
+  object ViewportWidth extends Newtype[Double, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
 
   type ClampViewport = ViewportWidth
   val ClampViewport: ViewportWidth.type = ViewportWidth

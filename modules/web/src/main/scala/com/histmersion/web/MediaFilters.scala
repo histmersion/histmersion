@@ -7,7 +7,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.media.MediaCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their options the
@@ -15,9 +14,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MediaFilters:
   type ChoiceLabel = ChoiceLabel.T
-  object ChoiceLabel extends RefinedType[String, Pure]
+  object ChoiceLabel extends Newtype[String, Pure]
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
 
   val providers: Var[List[MediaCount]] = Var(Nil)
   val licences: Var[List[MediaCount]] = Var(Nil)

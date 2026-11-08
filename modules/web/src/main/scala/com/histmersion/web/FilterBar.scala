@@ -12,7 +12,6 @@ import scala.scalajs.js
 import com.raquo.laminar.codecs.StringAsIsCodec
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.Label
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
@@ -26,18 +25,18 @@ import com.histmersion.api.Years
   */
 object FilterBar:
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
   type StorageKey = StorageKey.T
-  object StorageKey extends RefinedType[String, Pure]
+  object StorageKey extends Newtype[String, Pure]
   type StoredText = StoredText.T
-  object StoredText extends RefinedType[String, Pure]
+  object StoredText extends Newtype[String, Pure]
 
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
 
   type Folded = Folded.T
-  object Folded extends RefinedType[Boolean, Pure]
+  object Folded extends Newtype[Boolean, Pure]
 
   final private case class ChipField(state: Field[List[String]], facet: ChipInput.Config.Field, label: ChipInput.Config.Label, placeholder: ChipInput.Config.Placeholder)
 

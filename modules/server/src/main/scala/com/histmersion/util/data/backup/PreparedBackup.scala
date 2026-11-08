@@ -6,10 +6,9 @@ package util.data.backup
   */
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class PreparedBackup(file: PreparedBackup.File, run: () => Either[Api.Error, Backup.Result])
 
 object PreparedBackup:
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package domain.media.figures
 
 import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.util.database.Transactor
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's figures take the source's licence: the figures with no licence whose source records one, counted, and
@@ -14,7 +13,7 @@ trait FigureService:
 
 object FigureService:
   type Apply = Apply.T
-  object Apply extends RefinedType[Boolean, Pure]
+  object Apply extends Newtype[Boolean, Pure]
 
   def apply(db: Transactor): FigureService = Implementation(db)
 

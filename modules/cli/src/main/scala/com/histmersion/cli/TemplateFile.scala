@@ -9,6 +9,6 @@ final case class TemplateFile(path: TemplateFile.Path, content: TemplateFile.Con
 
 object TemplateFile:
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type Content = Content.T
-  object Content extends RefinedType[String, Pure]
+  object Content extends Newtype[String, Pure]

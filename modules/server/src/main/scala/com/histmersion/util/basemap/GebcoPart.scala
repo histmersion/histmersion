@@ -5,7 +5,6 @@ package util.basemap
   * that read that part.
   */
 import com.histmersion.util.storage.Store
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
   def bytes: ByteCount = ByteCount.applyUnsafe(runs.map(_.length.value).sum)
@@ -16,6 +15,6 @@ final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTi
 object GebcoPart:
 
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Url = RangeHttp.Url
   val Url: RangeHttp.Url.type = RangeHttp.Url

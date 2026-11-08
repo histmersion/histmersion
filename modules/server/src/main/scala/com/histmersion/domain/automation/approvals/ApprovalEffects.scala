@@ -3,7 +3,6 @@ package domain.automation.approvals
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What approving a proposal does, contributed by the domain the proposal is about: a source's status or edge (the
@@ -24,9 +23,9 @@ trait ApprovalEffects:
 
 object ApprovalEffects:
   type Payload = Payload.T
-  object Payload extends RefinedType[String, Pure]
+  object Payload extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
 
 

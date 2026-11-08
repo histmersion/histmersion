@@ -29,7 +29,6 @@ import com.histmersion.util.jobs.Carried
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.RunRow
 import com.histmersion.domain.automation.AgentRole
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.jobs.JobRow
@@ -112,15 +111,15 @@ final class Engine(
 
   object Control:
     type Pause = Pause.T
-    object Pause extends RefinedType[Boolean, Pure]
+    object Pause extends Newtype[Boolean, Pure]
     type Cancel = Cancel.T
-    object Cancel extends RefinedType[Boolean, Pure]
+    object Cancel extends Newtype[Boolean, Pure]
     type LastBeat = LastBeat.T
-    object LastBeat extends RefinedType[Long, Pure]
+    object LastBeat extends Newtype[Long, Pure]
     type Persisted = Persisted.T
-    object Persisted extends RefinedType[Long, Pure]
+    object Persisted extends Newtype[Long, Pure]
     type Seq = Seq.T
-    object Seq extends RefinedType[Int, Pure]
+    object Seq extends Newtype[Int, Pure]
   private val running = ConcurrentHashMap[Run.Id, Control]()
 
   /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. */
@@ -582,23 +581,23 @@ final class Engine(
   */
 object Engine:
   type CapKey = CapKey.T
-  object CapKey extends RefinedType[String, Pure]
+  object CapKey extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type OutputCapLimit = OutputCapLimit.T
-  object OutputCapLimit extends RefinedType[Int, Pure]
+  object OutputCapLimit extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Stall = Stall.T
-  object Stall extends RefinedType[String, Pure]
+  object Stall extends Newtype[String, Pure]
   /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
 
   type PruneTraceForce = PruneTraceForce.T
-  object PruneTraceForce extends RefinedType[Boolean, Pure]
+  object PruneTraceForce extends Newtype[Boolean, Pure]
   type BeatSeq = BeatSeq.T
-  object BeatSeq extends RefinedType[Int, Pure]
+  object BeatSeq extends Newtype[Int, Pure]
   type CapKeyOverridden = CapKeyOverridden.T
-  object CapKeyOverridden extends RefinedType[Boolean, Pure]
+  object CapKeyOverridden extends Newtype[Boolean, Pure]
 
   val BeatWhileWaitingSeconds = 30L
 

@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.AgentRole
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ModelChains
 
@@ -207,17 +206,17 @@ final class ModelPicker(
 
   object ModelState:
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type PlanBlocked = PlanBlocked.T
-    object PlanBlocked extends RefinedType[Boolean, Pure]
+    object PlanBlocked extends Newtype[Boolean, Pure]
     type Unavailable = Unavailable.T
-    object Unavailable extends RefinedType[Boolean, Pure]
+    object Unavailable extends Newtype[Boolean, Pure]
     type Refreshed = Refreshed.T
-    object Refreshed extends RefinedType[String, Pure]
+    object Refreshed extends Newtype[String, Pure]
     type Cooling = Cooling.T
-    object Cooling extends RefinedType[Boolean, Pure]
+    object Cooling extends Newtype[Boolean, Pure]
 
   /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading, or was never
     * read, takes a fresh one first ([[PlanPools.decide]]); None = just looking.
@@ -464,7 +463,7 @@ object ModelPicker:
 
   /** Whether the plan pool a model draws on is usable for it, as its newest verdict says. */
   type PoolUsable = PoolUsable.T
-  object PoolUsable extends RefinedType[Boolean, Pure]
+  object PoolUsable extends Newtype[Boolean, Pure]
 
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.

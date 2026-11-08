@@ -3,7 +3,6 @@ package plugin.testkit
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginEvents
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One import of an event catalogue, read as the server reads it: its parts, each part page by page.
@@ -31,10 +30,10 @@ final case class CatalogueReport(
 
 object CatalogueReport:
   type Events = Events.T
-  object Events extends RefinedType[Int, Pure]
+  object Events extends Newtype[Int, Pure]
   type Refused = Refused.T
-  object Refused extends RefinedType[String, Pure]
+  object Refused extends Newtype[String, Pure]
   type LeftOut = LeftOut.T
-  object LeftOut extends RefinedType[String, Pure]
+  object LeftOut extends Newtype[String, Pure]
   type Failure = Failure.T
-  object Failure extends RefinedType[String, Pure]
+  object Failure extends Newtype[String, Pure]

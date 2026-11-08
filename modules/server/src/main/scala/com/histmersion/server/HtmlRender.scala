@@ -10,7 +10,6 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -28,13 +27,13 @@ import com.histmersion.api.research.ReviewGoal
   */
 object HtmlRender:
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   private def escText(s: String): String = HtmlAtoms.esc(s)
 

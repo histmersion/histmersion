@@ -19,7 +19,6 @@ import com.histmersion.api.library.{
   CollectionUpdateOne
 }
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 
@@ -45,27 +44,27 @@ object CollectionsTools:
 
   object CollectionInput:
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Query = com.histmersion.domain.library.search.Search.Query
     val Query: com.histmersion.domain.library.search.Search.Query.type = com.histmersion.domain.library.search.Search.Query
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Format = Format.T
-    object Format extends RefinedType[String, Pure]
+    object Format extends Newtype[String, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Unlinked = Unlinked.T
-    object Unlinked extends RefinedType[Boolean, Pure]
+    object Unlinked extends Newtype[Boolean, Pure]
     type Convert = Convert.T
-    object Convert extends RefinedType[Boolean, Pure]
+    object Convert extends Newtype[Boolean, Pure]
     type Replace = Replace.T
-    object Replace extends RefinedType[Boolean, Pure]
+    object Replace extends Newtype[Boolean, Pure]
     type Apply = Apply.T
-    object Apply extends RefinedType[Boolean, Pure]
+    object Apply extends Newtype[Boolean, Pure]
     type Fields = Fields.T
-    object Fields extends RefinedType[String, Pure]
+    object Fields extends Newtype[String, Pure]
 
 
   def apply(c: CollectionsControllers) =

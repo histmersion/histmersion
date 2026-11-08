@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.sources
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a source's stored original files are (the uploads and the acquisition spool, the ingest's stores): those a
@@ -15,8 +14,8 @@ trait SourceOriginals:
 
 object SourceOriginals:
   type FindResult = FindResult.T
-  object FindResult extends RefinedType[String, Pure]
+  object FindResult extends Newtype[String, Pure]
   type RemoveResult = RemoveResult.T
-  object RemoveResult extends RefinedType[String, Pure]
+  object RemoveResult extends Newtype[String, Pure]
   type RemoveFiles = RemoveFiles.T
-  object RemoveFiles extends RefinedType[String, Pure]
+  object RemoveFiles extends Newtype[String, Pure]

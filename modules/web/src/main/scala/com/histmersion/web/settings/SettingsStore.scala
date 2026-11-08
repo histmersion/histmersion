@@ -7,7 +7,6 @@ import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 
@@ -16,10 +15,10 @@ import com.histmersion.web.ErrorLine
   */
 object SettingsStore:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type SaveLiteralConsent = SaveLiteralConsent.T
-  object SaveLiteralConsent extends RefinedType[Boolean, Pure]
+  object SaveLiteralConsent extends Newtype[Boolean, Pure]
 
   private val page = Var(Option.empty[Either[Problem, ConfigEdit.Page]])
   private val result = Var(Option.empty[Either[Problem, ConfigEdit.Written]])

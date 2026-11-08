@@ -22,7 +22,6 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
 import com.histmersion.util.console.Console
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Sha256
 import com.histmersion.pluginhost.DiskLocalFiles
@@ -55,13 +54,13 @@ import com.histmersion.pluginhost.SystemProcesses
 
 object RelinkPlugins:
   type Argument = Argument.T
-  object Argument extends RefinedType[String, Pure]
+  object Argument extends Newtype[String, Pure]
   type ClassName = ClassName.T
-  object ClassName extends RefinedType[String, Pure]
+  object ClassName extends Newtype[String, Pure]
   type ExitCode = ExitCode.T
-  object ExitCode extends RefinedType[Int, Pure]
+  object ExitCode extends Newtype[Int, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
 
   extension (id: PluginDescription.Id) private def nonEmpty: Boolean = id.value.nonEmpty
 

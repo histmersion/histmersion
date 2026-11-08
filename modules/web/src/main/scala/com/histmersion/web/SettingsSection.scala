@@ -3,7 +3,6 @@ package web
 
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings' sections, in the order of its side navigation; `rare`: under "Rarely needed". */
@@ -27,4 +26,4 @@ object SettingsSection:
   type Label = UiLabels.Text
   val Label: UiLabels.Text.type = UiLabels.Text
   type Rare = Rare.T
-  object Rare extends RefinedType[Boolean, Pure]
+  object Rare extends Newtype[Boolean, Pure]

@@ -3,7 +3,6 @@ package domain.media.covers
 
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sources a run of covers and illustrations looks at: those with figures and no illustration yet, those with an
@@ -15,9 +14,9 @@ trait CoverService:
 
 object CoverService:
   type CandidatesLimit = CandidatesLimit.T
-  object CandidatesLimit extends RefinedType[Int, Pure]
+  object CandidatesLimit extends Newtype[Int, Pure]
   type CandidatesRefresh = CandidatesRefresh.T
-  object CandidatesRefresh extends RefinedType[Boolean, Pure]
+  object CandidatesRefresh extends Newtype[Boolean, Pure]
 
   def apply(db: Transactor): CoverService = Implementation(db)
 

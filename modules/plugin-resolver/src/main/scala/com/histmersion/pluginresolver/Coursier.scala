@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Resolution with coursier against Maven repositories, in the order given. The modules resolve to jars in coursier's
@@ -43,7 +42,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
 
 object Coursier:
   type JarPath = JarPath.T
-  object JarPath extends RefinedType[String, Pure]
+  object JarPath extends Newtype[String, Pure]
 
   /** Maven's version order (`1.10` after `1.9`, `1.0-RC1` before `1.0`). */
   type ResolveResultPart1 = Resolver.Problem

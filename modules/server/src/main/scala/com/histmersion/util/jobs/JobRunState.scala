@@ -2,7 +2,6 @@ package com.histmersion
 package util.jobs
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A run's row as [[JobRuns.InMemory]] holds it: what it was created with, what changed since, the order it was made
@@ -24,14 +23,14 @@ final case class JobRunState(
 
 object JobRunState:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
   type Progress = Progress.T
-  object Progress extends RefinedType[String, Pure]
+  object Progress extends Newtype[String, Pure]
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]
   type Created = Created.T
-  object Created extends RefinedType[Long, Pure]
+  object Created extends Newtype[Long, Pure]
   type Updated = Updated.T
-  object Updated extends RefinedType[Long, Pure]
+  object Updated extends Newtype[Long, Pure]

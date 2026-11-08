@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.library.Finding
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
@@ -20,6 +19,6 @@ enum DotKind(val one: DotKind.One, val many: DotKind.Many):
 
 object DotKind:
   type One = One.T
-  object One extends RefinedType[String, Pure]
+  object One extends Newtype[String, Pure]
   type Many = Many.T
-  object Many extends RefinedType[String, Pure]
+  object Many extends Newtype[String, Pure]

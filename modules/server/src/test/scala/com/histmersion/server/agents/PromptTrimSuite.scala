@@ -28,7 +28,7 @@ class PromptTrimSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val d = Generated.defs()
-  private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
+  private def agent(s: StepAgent) = d.agents.find(_.name.value == s.wire.value).getOrElse(fail(s"no ${s.wire}"))
   private def headless(s: StepAgent) = d.system(agent(s), ToolStyle.Claude)
   private def interactive(s: StepAgent) =
     AgentGenerator.interactiveAgent(agent(s)).getOrElse(fail(s"${s.wire}: not interactive"))

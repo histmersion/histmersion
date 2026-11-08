@@ -11,7 +11,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.{GraphNode, Label}
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
@@ -60,7 +59,7 @@ object GraphPanel:
   private object Load:
     object Failed:
       type Message = Message.T
-      object Message extends RefinedType[String, Pure]
+      object Message extends Newtype[String, Pure]
 
   def element(citekey: Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)

@@ -25,7 +25,6 @@ import hearth.kindlings.optics.syntax.*
 import scala.collection.immutable.ListMap
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.upstreams.dating.CatalogDating
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
@@ -391,4 +390,4 @@ final class EventImports(
 
 object EventImports:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]

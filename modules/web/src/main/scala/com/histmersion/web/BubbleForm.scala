@@ -4,7 +4,6 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a cluster of events
@@ -22,4 +21,4 @@ enum BubbleForm(val cls: BubbleForm.Cls):
 
 object BubbleForm:
   type Cls = Cls.T
-  object Cls extends RefinedType[String, Pure]
+  object Cls extends Newtype[String, Pure]

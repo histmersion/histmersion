@@ -6,7 +6,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.library.GeoHit
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.catalogue.Period
@@ -14,31 +13,31 @@ import com.histmersion.api.catalogue.Period
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
   type BubbleHtml = BubbleHtml.T
-  object BubbleHtml extends RefinedType[String, Pure]
+  object BubbleHtml extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type EndLabel = EndLabel.T
-  object EndLabel extends RefinedType[String, Pure]
+  object EndLabel extends Newtype[String, Pure]
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends RefinedType[String, Pure]
+  object ExtraClass extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type KindCount = KindCount.T
-  object KindCount extends RefinedType[Int, Pure]
+  object KindCount extends Newtype[Int, Pure]
   type Mid = Mid.T
-  object Mid extends RefinedType[Double, Pure]
+  object Mid extends Newtype[Double, Pure]
   type Size = Size.T
-  object Size extends RefinedType[Int, Pure]
+  object Size extends Newtype[Int, Pure]
   type SpokenText = SpokenText.T
-  object SpokenText extends RefinedType[String, Pure]
+  object SpokenText extends Newtype[String, Pure]
   type StartLabel = StartLabel.T
-  object StartLabel extends RefinedType[String, Pure]
+  object StartLabel extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type Undated = Undated.T
-  object Undated extends RefinedType[Int, Pure]
+  object Undated extends Newtype[Int, Pure]
 
   /** A bubble's content: what its markers hold. */
 

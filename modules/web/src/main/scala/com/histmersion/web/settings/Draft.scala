@@ -3,7 +3,6 @@ package web.settings
 
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the setting out
@@ -32,9 +31,9 @@ final class Draft:
 
 object Draft:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   /** A value as HOCON writes it, as a person types it: a string without its quotes. Pure. */
 
   def plain(v: Option[Text]): Text =

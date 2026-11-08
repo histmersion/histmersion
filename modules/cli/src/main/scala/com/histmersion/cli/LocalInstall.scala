@@ -7,7 +7,6 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Histmersion installed on THIS machine, as the plugin commands see it: the bundle (`bin/`, `kit/`) and the data
@@ -42,9 +41,9 @@ final case class LocalInstall(home: Path, data: Path):
 
 object LocalInstall:
   type EnvSetting = EnvSetting.T
-  object EnvSetting extends RefinedType[String, Pure]
+  object EnvSetting extends Newtype[String, Pure]
   type EnvVariable = EnvVariable.T
-  object EnvVariable extends RefinedType[String, Pure]
+  object EnvVariable extends Newtype[String, Pure]
   /** The install: `cli.plugins.install-dir`, else the one this executable sits in (`<home>/bin/histmersion`, through
     * the `~/bin` symlink), else the platform default. It must hold the relink kit.
     */

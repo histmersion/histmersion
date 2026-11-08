@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Edge
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
@@ -29,6 +28,6 @@ object Citation:
     val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
   object Unresolved:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Kind = Edge.Kind.Wire
     val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire

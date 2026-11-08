@@ -2,7 +2,6 @@ package com.histmersion
 package web
 
 import com.histmersion.api.library.TimeBucket
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 
@@ -13,9 +12,9 @@ import com.histmersion.api.Years
   */
 object TimelineCurve:
   type ElementSize = ElementSize.T
-  object ElementSize extends RefinedType[Double, Pure]
+  object ElementSize extends Newtype[Double, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends RefinedType[Double, Pure]
+  object ScreenPixels extends Newtype[Double, Pure]
 
   /** How wide one bucket is drawn, px: coarse enough for a smooth line, fine enough for a peak. */
 

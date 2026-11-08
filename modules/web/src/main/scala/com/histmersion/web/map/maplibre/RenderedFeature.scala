@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A feature a query returned: its properties, its layer and source. */
@@ -18,4 +17,4 @@ trait RenderedFeature extends js.Object:
 
 object RenderedFeature:
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]

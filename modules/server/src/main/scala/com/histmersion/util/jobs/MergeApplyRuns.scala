@@ -12,7 +12,6 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.MergeJobState
 
@@ -36,7 +35,7 @@ trait MergeApplyRuns:
 object MergeApplyRuns:
   /** Why a merge apply failed, as the `jobs` row keeps it. */
   type Failure = Failure.T
-  object Failure extends RefinedType[String, Pure]
+  object Failure extends Newtype[String, Pure]
 
   def apply(ds: DataSource): MergeApplyRuns = Implementation(ds)
 

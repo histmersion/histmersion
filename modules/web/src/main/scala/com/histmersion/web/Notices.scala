@@ -11,7 +11,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The lists' notices ([[UiNotices]]), shown in Research's side navigation: each watched list's count (open approvals,
@@ -28,7 +27,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Notices:
   type Spoken = Spoken.T
-  object Spoken extends RefinedType[String, Pure]
+  object Spoken extends Newtype[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 

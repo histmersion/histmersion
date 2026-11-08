@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicLong
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.StorageConfig
 
@@ -45,7 +44,7 @@ object DirSize:
     type Partial = Storage.Entry.Partial
     val Partial: Storage.Entry.Partial.type = Storage.Entry.Partial
     type Unreadable = Unreadable.T
-    object Unreadable extends RefinedType[Int, Pure]
+    object Unreadable extends Newtype[Int, Pure]
 
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
@@ -60,9 +59,9 @@ object DirSize:
 
   object Budget:
     type MaxEntries = MaxEntries.T
-    object MaxEntries extends RefinedType[Long, Pure]
+    object MaxEntries extends Newtype[Long, Pure]
     type DeadlineNanos = DeadlineNanos.T
-    object DeadlineNanos extends RefinedType[Long, Pure]
+    object DeadlineNanos extends Newtype[Long, Pure]
 
 
     def of(maxEntries: StorageConfig.MaxEntries, maxMillis: StorageConfig.MaxMillis): Budget =

@@ -4,7 +4,6 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
@@ -24,13 +23,13 @@ object GeoBounds:
   /** The bounds of a GeoJSON geometry's coordinates (`None` for none). Pure over the parsed object. */
 
   type South = South.T
-  object South extends RefinedType[Double, Pure]
+  object South extends Newtype[Double, Pure]
   type West = West.T
-  object West extends RefinedType[Double, Pure]
+  object West extends Newtype[Double, Pure]
   type North = North.T
-  object North extends RefinedType[Double, Pure]
+  object North extends Newtype[Double, Pure]
   type East = East.T
-  object East extends RefinedType[Double, Pure]
+  object East extends Newtype[Double, Pure]
 
   def ofGeometry(g: js.Dynamic): Option[GeoBounds] =
     // `var`s: one pass over every coordinate of the geometry

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.catalogue.evidence.passages
 
 import com.histmersion.api.catalogue.MatchSpan
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
@@ -17,9 +16,9 @@ object Passage:
     * now (an old citekey resolves to it), and the passages of its text. The library implements it.
     */
   type Offset = Offset.T
-  object Offset extends RefinedType[Int, Pure]
+  object Offset extends Newtype[Int, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   trait Source:
     /** The citekey the source named `citekey` has now; `None` when no source has it. */

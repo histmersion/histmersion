@@ -19,7 +19,6 @@ import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.goals.BGoalLinkRow
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
@@ -167,26 +166,26 @@ object ManagerContext:
   type ItemTarget = ManagerPolicy.Candidate.Target
   val ItemTarget: ManagerPolicy.Candidate.Target.type = ManagerPolicy.Candidate.Target
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Priority = ManagerPolicy.Candidate.Priority
   val Priority: ManagerPolicy.Candidate.Priority.type = ManagerPolicy.Candidate.Priority
   type EventFeed = EventFeed.T
-  object EventFeed extends RefinedType[String, Pure]
+  object EventFeed extends Newtype[String, Pure]
   type EventText = EventText.T
-  object EventText extends RefinedType[String, Pure]
+  object EventText extends Newtype[String, Pure]
   type UpsertReopen = UpsertReopen.T
-  object UpsertReopen extends RefinedType[Boolean, Pure]
+  object UpsertReopen extends Newtype[Boolean, Pure]
   type EvaluatedOutcome = ManagerPolicy.ItemOutcome
   val EvaluatedOutcome: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
   type ChainReviewWhy = ChainReviewWhy.T
-  object ChainReviewWhy extends RefinedType[String, Pure]
+  object ChainReviewWhy extends Newtype[String, Pure]
   type SettleNowWhy = ManagerPolicy.ItemOutcome
   val SettleNowWhy: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
   type RetryNote = ManagerPolicy.ItemNote
   val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
   type StartWhat = StartWhat.T
-  object StartWhat extends RefinedType[String, Pure]
+  object StartWhat extends Newtype[String, Pure]
   type EvaluateStepError = ManagerPolicy.Problem
   val EvaluateStepError: ManagerPolicy.Problem.type = ManagerPolicy.Problem
   type TickLine = TickLine.T
-  object TickLine extends RefinedType[String, Pure]
+  object TickLine extends Newtype[String, Pure]

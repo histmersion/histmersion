@@ -5,7 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Copying text for a person: the browser's clipboard, else the older copy command; what happened is said ([[Flash]]).
@@ -17,9 +16,9 @@ object Clipboard:
   type CopyWhat = FallbackWhat
   val CopyWhat: FallbackWhat.type = FallbackWhat
   type FallbackText = FallbackText.T
-  object FallbackText extends RefinedType[String, Pure]
+  object FallbackText extends Newtype[String, Pure]
   type FallbackWhat = FallbackWhat.T
-  object FallbackWhat extends RefinedType[String, Pure]
+  object FallbackWhat extends Newtype[String, Pure]
 
   def copy(text: CopyText, what: CopyWhat): Unit =
     val clip = Try(dom.window.navigator.asInstanceOf[js.Dynamic].clipboard).toOption.filterNot(c =>

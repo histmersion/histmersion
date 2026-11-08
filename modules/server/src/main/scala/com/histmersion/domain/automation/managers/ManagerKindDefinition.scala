@@ -18,7 +18,6 @@ import scala.collection.mutable.Builder
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Manager
 import com.histmersion.domain.automation.Run
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
@@ -137,8 +136,8 @@ trait ManagerKindDefinition:
 
 object ManagerKindDefinition:
   type FirePhrase = FirePhrase.T
-  object FirePhrase extends RefinedType[String, Pure]
+  object FirePhrase extends Newtype[String, Pure]
   type RefillForce = RefillForce.T
-  object RefillForce extends RefinedType[Boolean, Pure]
+  object RefillForce extends Newtype[Boolean, Pure]
   type ExpandSkipped = ExpandSkipped.T
-  object ExpandSkipped extends RefinedType[String, Pure]
+  object ExpandSkipped extends Newtype[String, Pure]

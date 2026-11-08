@@ -40,7 +40,6 @@ import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.agents.RunService
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.ScheduleKind
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
@@ -933,6 +932,6 @@ object ManagersControllers:
 
   /** What a person does to a manager: `pause`, `resume` or `stop`. */
   type Action = Action.T
-  object Action extends RefinedType[String, Pure]
+  object Action extends Newtype[String, Pure]
 
   def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

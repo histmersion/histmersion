@@ -4,15 +4,14 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The "open in a new tab" action of a list row or a detail. */
 object NewTabLink:
   type Href = Href.T
-  object Href extends RefinedType[String, Pure]
+  object Href extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
   def apply(href0: Href, what: Label): HtmlElement =
     a(

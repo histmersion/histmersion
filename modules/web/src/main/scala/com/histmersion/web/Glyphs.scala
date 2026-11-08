@@ -1,7 +1,6 @@
 package com.histmersion
 package web
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker keeps the colour
@@ -15,11 +14,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Glyphs:
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends RefinedType[String, Pure]
+  object ExtraClass extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Svg = Svg.T
-  object Svg extends RefinedType[String, Pure]
+  object Svg extends Newtype[String, Pure]
 
   /** Name → the SVG elements of a 24×24 Lucide icon. */
   type BadgeName = Name

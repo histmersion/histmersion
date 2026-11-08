@@ -7,7 +7,6 @@ import org.scalajs.dom
 import scala.concurrent.{ExecutionContext, Future}
 import com.histmersion.api.Plural
 import com.histmersion.api.library.Filter
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One controller for the list tabs that follow the global filter (Articles, Events — #1798 item 5): on a UiState
@@ -92,7 +91,7 @@ final class FilterTab[Q, Row](
 
 object FilterTab:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Empty = Empty.T
-  object Empty extends RefinedType[String, Pure]
+  object Empty extends Newtype[String, Pure]
 

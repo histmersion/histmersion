@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.{Attestation, CatalogRecord, Correction, Ev
 import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
@@ -37,32 +36,32 @@ final case class CatalogueState(
 
 object CatalogueState:
   type SeedVersionsKey = SeedVersionsKey.T
-  object SeedVersionsKey extends RefinedType[String, Pure]
+  object SeedVersionsKey extends Newtype[String, Pure]
   type SeedVersionsValue = SeedVersionsValue.T
-  object SeedVersionsValue extends RefinedType[Int, Pure]
+  object SeedVersionsValue extends Newtype[Int, Pure]
   type LastAttestationId = LastAttestationId.T
-  object LastAttestationId extends RefinedType[Long, Pure]
+  object LastAttestationId extends Newtype[Long, Pure]
   type EventAliasesKey = EventAliasesKey.T
-  object EventAliasesKey extends RefinedType[String, Pure]
+  object EventAliasesKey extends Newtype[String, Pure]
   type EventAliasesValue = EventAliasesValue.T
-  object EventAliasesValue extends RefinedType[String, Pure]
+  object EventAliasesValue extends Newtype[String, Pure]
   type LastCorrectionId = LastCorrectionId.T
-  object LastCorrectionId extends RefinedType[Long, Pure]
+  object LastCorrectionId extends Newtype[Long, Pure]
   type CatalogueRecordsPart1 = CatalogueRecordsPart1.T
-  object CatalogueRecordsPart1 extends RefinedType[String, Pure]
+  object CatalogueRecordsPart1 extends Newtype[String, Pure]
   type ImportPartsKey = ImportPartsKey.T
-  object ImportPartsKey extends RefinedType[String, Pure]
+  object ImportPartsKey extends Newtype[String, Pure]
   type ImportPartsValueKey = ImportPartsValueKey.T
-  object ImportPartsValueKey extends RefinedType[String, Pure]
+  object ImportPartsValueKey extends Newtype[String, Pure]
   type ImportPartsValueValue = ImportPartsValueValue.T
-  object ImportPartsValueValue extends RefinedType[Int, Pure]
+  object ImportPartsValueValue extends Newtype[Int, Pure]
   type Checked = Checked.T
-  object Checked extends RefinedType[String, Pure]
+  object Checked extends Newtype[String, Pure]
   type PlaceAliasesKey = PlaceAliasesKey.T
-  object PlaceAliasesKey extends RefinedType[String, Pure]
+  object PlaceAliasesKey extends Newtype[String, Pure]
   type PlaceAliasesValue = PlaceAliasesValue.T
-  object PlaceAliasesValue extends RefinedType[String, Pure]
+  object PlaceAliasesValue extends Newtype[String, Pure]
   type PlaceRemovals = PlaceRemovals.T
-  object PlaceRemovals extends RefinedType[String, Pure]
+  object PlaceRemovals extends Newtype[String, Pure]
 
   val empty: CatalogueState = CatalogueState(Vector.empty, Map.empty, Vector.empty, LastAttestationId(0L))

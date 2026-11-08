@@ -4,7 +4,6 @@ package util.basemap
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Elevation tiles as Terrarium PNGs (the encoding MapLibre's `raster-dem` reads as `terrarium`): metres + 32768 spread
@@ -14,7 +13,7 @@ object TerrariumPng:
   type Problem = Vp8l.Problem
   val Problem: Vp8l.Problem.type = Vp8l.Problem
   type TileSize = TileSize.T
-  object TileSize extends RefinedType[Int, Pure]
+  object TileSize extends Newtype[Int, Pure]
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n')
   private val RgbColourType = 2

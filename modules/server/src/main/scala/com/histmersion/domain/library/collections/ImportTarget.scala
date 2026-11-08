@@ -3,7 +3,6 @@ package domain.library.collections
 
 import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Citekey
@@ -23,19 +22,19 @@ enum ImportTarget:
 
 object ImportTarget:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type RomanNumeral = RomanNumeral.T
-  object RomanNumeral extends RefinedType[String, Pure]
+  object RomanNumeral extends Newtype[String, Pure]
   type Volume = Volume.T
-  object Volume extends RefinedType[Int, Pure]
+  object Volume extends Newtype[Int, Pure]
   type Previous = Previous.T
-  object Previous extends RefinedType[String, Pure]
+  object Previous extends Newtype[String, Pure]
 
   /** Why an import may not go ahead. */
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type OfExplicit = OfExplicit.T
-  object OfExplicit extends RefinedType[Boolean, Pure]
+  object OfExplicit extends Newtype[Boolean, Pure]
 
   private val VolumeText = """(?i)\b(?:volume\s*|vol\.\s*|vol\s+)([0-9]+|[ivxlc]+)\b""".r
 

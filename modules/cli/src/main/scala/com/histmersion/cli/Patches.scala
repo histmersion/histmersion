@@ -16,7 +16,6 @@ import com.histmersion.api.library.Finding
 import com.histmersion.api.library.{Citekey, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
@@ -27,9 +26,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Patches:
   type BodyFile = BodyFile.T
-  object BodyFile extends RefinedType[String, Pure]
+  object BodyFile extends Newtype[String, Pure]
   type NotesFile = NotesFile.T
-  object NotesFile extends RefinedType[String, Pure]
+  object NotesFile extends Newtype[String, Pure]
 
   def build(
       json: Option[String],

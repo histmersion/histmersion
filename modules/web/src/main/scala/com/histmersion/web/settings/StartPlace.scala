@@ -13,7 +13,6 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.Paging
@@ -25,12 +24,12 @@ import com.histmersion.web.ErrorLine
   */
 object StartPlace:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
 
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
 
   type ChooserName = ChooserName.T
-  object ChooserName extends RefinedType[String, Pure]
+  object ChooserName extends Newtype[String, Pure]
 
   def zoomFor(b: GeoBounds): MapSurface.Zoom =
     val span = math.max(b.east.value - b.west.value, (b.north.value - b.south.value) * 1.4)

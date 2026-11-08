@@ -5,7 +5,6 @@ import com.histmersion.api.HtmlAtoms
 import com.histmersion.api.automation.Queue
 
 import scala.scalajs.js
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be bookmarked, shared,
@@ -71,9 +70,9 @@ enum Route:
 
 object Route:
   type ManagerId = ManagerId.T
-  object ManagerId extends RefinedType[String, Pure]
+  object ManagerId extends Newtype[String, Pure]
   type RunId = RunId.T
-  object RunId extends RefinedType[String, Pure]
+  object RunId extends Newtype[String, Pure]
 
   /** The front page of each place. */
   object Goal:

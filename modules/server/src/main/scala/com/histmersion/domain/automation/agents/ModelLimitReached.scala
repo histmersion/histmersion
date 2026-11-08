@@ -5,7 +5,6 @@ import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The model's PLAN said no (the `claude-code` CLI's "usage limit reached"): not a broken provider but an exhausted one
@@ -16,6 +15,6 @@ final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.I
 
 object ModelLimitReached:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Message = Problem
   val Message: Problem.type = Problem

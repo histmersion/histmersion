@@ -1,7 +1,6 @@
 package com.histmersion
 package web.setup
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The first-run setup's seven steps, in order. */
@@ -20,9 +19,9 @@ enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = Se
 
 object SetupStep:
   type Number = Number.T
-  object Number extends RefinedType[Int, Pure]
+  object Number extends Newtype[Int, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Optional = Optional.T
-  object Optional extends RefinedType[Boolean, Pure]
+  object Optional extends Newtype[Boolean, Pure]
 
