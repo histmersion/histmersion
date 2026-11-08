@@ -22,22 +22,22 @@ class PlanReadScheduleSuite extends munit.FunSuite:
     assertEquals(read(newest = minutesAgo(180)), ScheduledRead.Due, "exactly the interval: due")
     assertEquals(
       read(newest = minutesAgo(60)),
-      ScheduledRead.NotDue(ScheduledRead.NotDue.Why("read 60 min ago (every 180 min)"))
+      ScheduledRead.NotDue(Problem("read 60 min ago (every 180 min)"))
     )
     assertEquals(
       read(attempt = minutesAgo(5)),
-      ScheduledRead.NotDue(ScheduledRead.NotDue.Why("read 5 min ago (every 180 min)")),
+      ScheduledRead.NotDue(Problem("read 5 min ago (every 180 min)")),
       "a failed attempt counts like a reading: no retry before the interval"
     )
     assertEquals(
       read(schedule = ReadSchedule.Off),
-      ScheduledRead.NotDue(ScheduledRead.NotDue.Why("the schedule is off"))
+      ScheduledRead.NotDue(Problem("the schedule is off"))
     )
     assertEquals(
       read(autopilotOn = PlanReadSchedule.AutopilotOn(false)),
-      ScheduledRead.NotDue(ScheduledRead.NotDue.Why("the autopilot is off"))
+      ScheduledRead.NotDue(Problem("the autopilot is off"))
     )
     assertEquals(
       read(wanted = PlanReadSchedule.Wanted(false)),
-      ScheduledRead.NotDue(ScheduledRead.NotDue.Why("no queued work wants the pool"))
+      ScheduledRead.NotDue(Problem("no queued work wants the pool"))
     )

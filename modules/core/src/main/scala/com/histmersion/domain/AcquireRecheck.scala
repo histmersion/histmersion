@@ -27,12 +27,8 @@ object AcquireRecheck:
   object Detail extends Newtype[String, Pure]
   type GenerationPart = GenerationPart.T
   object GenerationPart extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ProgressLine = ProgressLine.T
   object ProgressLine extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type ReplyText = ReplyText.T
   object ReplyText extends Newtype[String, Pure]
 
@@ -161,13 +157,13 @@ object AcquireRecheck:
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
-  def failure(message: IngestBacklog.Problem): Outcome =
+  def failure(message: Problem): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
   /** What each fetcher answered, from the legal ingest's refusal (`no legal open-access copy of <doi>: <the chain's
     * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
     */
-  def answers(message: IngestBacklog.Problem): ReplyText =
+  def answers(message: Problem): ReplyText =
     val m = Option(message).fold("")(_.value.trim)
     val rest =
       if !IngestBacklog.isNoLegalCopy(message) then m
@@ -181,17 +177,17 @@ object AcquireRecheck:
     ReplyText(replies)
 
   /** The short reason an item carries: `checked 2026-10-27: no legal copy (unpaywall: no copy — none; …)`. */
-  def reason(at: Instant, outcome: Outcome, detail: Detail): Reason =
+  def reason(at: Instant, outcome: Outcome, detail: Detail): Problem =
     val day = LocalDate.ofInstant(at, ZoneOffset.UTC)
     val d = Option(detail).fold("")(_.value.trim)
     val text = outcome match
       case Outcome.Closed  => s"checked $day: in the corpus with its original as [[$d]] — closed"
       case Outcome.Fetched => s"checked $day: a legal copy found ($d) — converting; the item closes once it is stored"
       case Outcome.NoCopy  =>
-        val a = answers(IngestBacklog.Problem(d))
+        val a = answers(Problem(d))
         s"checked $day: no legal copy" + (if a.value.isEmpty then "" else s" ($a)")
       case Outcome.Failed => s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
-    Reason(text.take(500))
+    Problem(text.take(500))
 
   /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched

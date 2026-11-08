@@ -40,7 +40,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   final private case class Judged(
       target: Target,
       rec: MediaRecord,
-      decision: Either[MediaMatch.Refusal, MediaMatch.Basis]
+      decision: Either[Problem, MediaMatch.Basis]
   )
 
   /** The role a record's picture plays: its own, else the collection's. */
@@ -119,7 +119,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       recs.distinctBy(_.key).map { rec =>
         val d = PluginMedia
           .refusal(rec, allow, PluginMedia.Provider(col.provider.value))
-          .map(r => MediaMatch.Refusal(r.value))
+          .map(r => Problem(r.value))
           .toLeft(())
           .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)

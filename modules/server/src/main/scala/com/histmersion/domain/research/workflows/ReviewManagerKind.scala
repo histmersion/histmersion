@@ -413,7 +413,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       goal: Option[Goal.Slug],
       room: Int,
       now: Instant
-  ): List[(Slug, ReviewManagerPolicy.Pick.Why, Option[ManagerContext.ItemId])] =
+  ): List[(Slug, Problem, Option[ManagerContext.ItemId])] =
     val last = Option(lastStale.get(m.id.value)).map(_.longValue).getOrElse(Long.MinValue)
     val every = math.max(1, cfg.managers.review.staleScanMinutes.value).toLong * 60000L
     if s.staleAfterDays.value <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil

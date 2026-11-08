@@ -611,7 +611,7 @@ object MergePlanner:
                 ),
                 sourcesByUid.get(o).map(MergeIssue.Detail.side),
                 src.map(MergeIssue.Detail.side),
-                List(Problem("keep-left drops the bundle's old citekey; this collection's meaning stays")),
+                List(api.Problem("keep-left drops the bundle's old citekey; this collection's meaning stays")),
                 if asCitekey then List(km.KeepLeft) else lr,
                 Some(MergeDecision.of(km.KeepLeft)),
                 cond,
@@ -849,10 +849,10 @@ object MergePlanner:
                     MergeIssue.Title(s"here that $what belongs to a different record"),
                     Some(IssueSide(IssueSide.Label(l), o)),
                     Some(IssueSide(IssueSide.Label(l), f)),
-                    List(Problem("keep-left leaves the bundle's record out (and whatever needs it)")) ++
+                    List(api.Problem("keep-left leaves the bundle's record out (and whatever needs it)")) ++
                       Option
                         .when(options.contains(km.RenameRight))(
-                          Problem(
+                          api.Problem(
                             "keep-right makes them one, the bundle's fields winning; " +
                               "rename-right keeps both, the bundle's under a new id"
                           )
@@ -990,7 +990,7 @@ object MergePlanner:
                 List(IssueSide.Lines(s"\"${a.title}\" · ${a.body.value.length} characters"))
               )
             ),
-            List(Problem(s"both: the bundle's becomes ${bothSlug(f, a.slug)}")),
+            List(api.Problem(s"both: the bundle's becomes ${bothSlug(f, a.slug)}")),
             List(km.KeepLeft, km.KeepRight, km.Both, km.File),
             detail = mine.map(m => IssueDetail(text = Some(articleText(base, m.body, rawArticle(f).body))))
           )
@@ -1081,7 +1081,7 @@ object MergePlanner:
                   r.planApprovedAt.map(a => IssueSide.Lines(s"approved $a")).toList
                 )
               ),
-              List(Problem("the plan approved later wins when both say when; here they do not")),
+              List(api.Problem("the plan approved later wins when both say when; here they do not")),
               lr,
               detail = Some(
                 IssueDetail(fields =

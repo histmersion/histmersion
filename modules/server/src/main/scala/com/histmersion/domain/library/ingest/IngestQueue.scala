@@ -312,7 +312,7 @@ final class IngestQueue(
                   queues
                     .get(QueueItemId(id.value))
                     .filter(_.status == Queue.QueueItem.Status(Queue.Open))
-                    .toRight(AcquireMatch.Problem("it was no longer open"))
+                    .toRight(Problem("it was no longer open"))
                     .flatMap(item =>
                       queues
                         .patch(
@@ -324,7 +324,7 @@ final class IngestQueue(
                           )
                         )
                         .left
-                        .map(e => AcquireMatch.Problem(e.message))
+                        .map(e => Problem(e.message))
                     )
                     .map(_ => ())
               )

@@ -55,7 +55,7 @@ class CompileArticleSuite extends munit.FunSuite:
       )
     val sent =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), ExtractAnswer.Reason("tin trade"), List(good, made, conf)),
+        ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin trade"), List(good, made, conf)),
         Citekey("ck"),
         record,
         minRatio,
@@ -69,7 +69,7 @@ class CompileArticleSuite extends munit.FunSuite:
       sent
     )
     val (kept, warns) = checkExtract(
-      ExtractAnswer(ExtractAnswer.Relevant(true), ExtractAnswer.Reason("tin trade"), List(good, made, conf)),
+      ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin trade"), List(good, made, conf)),
       Citekey("ck"),
       record,
       minRatio,
@@ -83,7 +83,7 @@ class CompileArticleSuite extends munit.FunSuite:
   test("extraction: an irrelevant source must say why, and lands in Not used"):
     assert(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), ExtractAnswer.Reason(" "), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Problem(" "), Nil),
         Citekey("ck"),
         record,
         minRatio,
@@ -92,7 +92,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ).isLeft
     )
     val (e, _) = checkExtract(
-      ExtractAnswer(ExtractAnswer.Relevant(false), ExtractAnswer.Reason("about Egypt, not the Aegean"), Nil),
+      ExtractAnswer(ExtractAnswer.Relevant(false), Problem("about Egypt, not the Aegean"), Nil),
       Citekey("ck"),
       record,
       minRatio,

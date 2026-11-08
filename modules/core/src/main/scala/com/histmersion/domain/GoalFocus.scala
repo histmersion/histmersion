@@ -35,8 +35,6 @@ object GoalFocus:
   object Description extends Newtype[String, Pure]
   type Ratio = Ratio.T
   object Ratio extends Newtype[Int, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type Recent = Recent.T
   object Recent extends Newtype[Boolean, Pure]
   type WaitCode = WaitCode.T
@@ -176,11 +174,11 @@ object GoalFocus:
   enum Fit derives CanEqual:
     case Finished
     case Candidate(stage: Stage)
-    case Waits(code: Fit.Waits.Code, why: Fit.Waits.Why)
+    case Waits(code: Fit.Waits.Code, why: Problem)
 
   object Fit:
     object Waits:
-      export GoalFocus.{Reason as Why, WaitCode as Code}
+      export GoalFocus.WaitCode as Code
 
   /** The codes of [[Fit.Waits]]. */
   object Code:
@@ -195,7 +193,7 @@ object GoalFocus:
   final case class Pick(
       slug: Goal.Slug,
       stage: Stage,
-      why: Reason,
+      why: Problem,
       pinned: Facts.Pinned = Facts.Pinned(false),
       since: Option[Facts.Since] = None
   )
@@ -207,8 +205,8 @@ object GoalFocus:
       active: List[Pick] = Nil,
       queue: List[Pick] = Nil,
       joined: List[Goal.Slug] = Nil,
-      left: List[(Goal.Slug, Reason)] = Nil,
-      waiting: List[(Goal.Slug, Fit.Waits.Code, Fit.Waits.Why)] = Nil
+      left: List[(Goal.Slug, Problem)] = Nil,
+      waiting: List[(Goal.Slug, Fit.Waits.Code, Problem)] = Nil
   ):
     lazy val activeSet: Set[Goal.Slug] = active.map(_.slug).toSet
 
@@ -280,12 +278,12 @@ object GoalFocus:
     else Stage.Gathering
 
   /** The stage in words, with the numbers behind it. */
-  def stageWhy(f: Facts, st: Stage, minSources: Settings.MinSources): Reason = st match
-    case Stage.Reviewing => Reason(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
-    case Stage.Compiling => Reason(s"${counted(f.compileOpen.value, "approved article")} to compile")
+  def stageWhy(f: Facts, st: Stage, minSources: Settings.MinSources): Problem = st match
+    case Stage.Reviewing => Problem(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
+    case Stage.Compiling => Problem(s"${counted(f.compileOpen.value, "approved article")} to compile")
     case Stage.Ready     =>
-      Reason(s"${counted(f.sources.value, "source")} (at least ${math.max(1, minSources.value)}), no article yet")
-    case Stage.Gathering => Reason(s"${counted(f.sources.value, "source")}: still gathering its plan and sources")
+      Problem(s"${counted(f.sources.value, "source")} (at least ${math.max(1, minSources.value)}), no article yet")
+    case Stage.Gathering => Problem(s"${counted(f.sources.value, "source")}: still gathering its plan and sources")
 
   /** Where one goal stands now. A parent with unfinished sub-goals counts only its plan; a goal whose model-using items
     * all wait for a person (an approval only a person decides, or a person's hold), or that has none left (stopped:
@@ -302,28 +300,28 @@ object GoalFocus:
       if runnable.isEmpty && open.nonEmpty then
         Fit.Waits(
           Code.Children,
-          Reason(s"waits for its ${counted(open.size, "unfinished sub-goal")} before its own articles")
+          Problem(s"waits for its ${counted(open.size, "unfinished sub-goal")} before its own articles")
         )
       else if f.work.isEmpty then
         f.lastStop match
-          case Some(o) => Fit.Waits(Code.Stuck, Reason(s"stuck: its last item stopped — ${o.value.take(300)}"))
+          case Some(o) => Fit.Waits(Code.Stuck, Problem(s"stuck: its last item stopped — ${o.value.take(300)}"))
           case None    =>
             Fit.Waits(
               Code.Idle,
-              Fit.Waits.Why("idle: nothing for a model to do until its cron fires or new sources arrive")
+              Problem("idle: nothing for a model to do until its cron fires or new sources arrive")
             )
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
           .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson.value)).distinct.sorted
         if ids.nonEmpty then
-          Fit.Waits(Code.Person, Reason(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}"))
-        else Fit.Waits(Code.Held, Fit.Waits.Why("its items are held by a person"))
+          Fit.Waits(Code.Person, Problem(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}"))
+        else Fit.Waits(Code.Held, Problem("its items are held by a person"))
       else if !f.active.value && !f.pinned.value && s.plansByPerson.value && s.max.value > 0 && s.openPersonPlans.value >= s.max.value &&
         runnable.forall(w => w.kind.value == PlanGoalItem && w.status == ItemStatus.Pending.wire)
       then
         Fit.Waits(
           Code.Plans,
-          Reason(
+          Problem(
             s"its next step is a goal plan, and ${counted(s.openPersonPlans.value, "goal plan")} already wait for a person"
           )
         )
@@ -361,13 +359,13 @@ object GoalFocus:
   private def key(f: Facts, st: Stage, k: Int): Key =
     (st.rank.value, k, -f.priority.value, -f.sources.value, f.createdAt.value, f.slug.value)
 
-  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Reason =
+  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Problem =
     val near = k match
       case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
       case (0, Some(s)) => List(s"a sibling of $s (active): one parent's sub-goals are finished before another's")
       case (1, Some(s)) => List(s"in the same tree as $s (active)")
       case _            => Nil
-    Reason(
+    Problem(
       (List(s"${st.wire}: ${stageWhy(f, st, minSources)}") ++ near ++
         Option.when(f.priority.value != 0)(s"priority ${f.priority}").toList ++
         Option.when(f.createdAt.value.nonEmpty)(s"created ${f.createdAt.value.take(10)}").toList).mkString("; ")
@@ -396,7 +394,7 @@ object GoalFocus:
     val (kept, displaced) = (kept0.take(room0), kept0.drop(room0))
     // free slots, greedily: each pick changes who is near
     @annotation.tailrec
-    def fill(chosen: List[Facts], pool: List[Facts], acc: List[(Facts, Reason)]): (List[Facts], List[(Facts, Reason)]) =
+    def fill(chosen: List[Facts], pool: List[Facts], acc: List[(Facts, Problem)]): (List[Facts], List[(Facts, Problem)]) =
       if chosen.size >= cap || pool.isEmpty then (chosen, acc)
       else
         val best = pool.minBy(g => key(g, stageOf(g.slug), kin(g, chosen, rootOf)._1))
@@ -414,9 +412,9 @@ object GoalFocus:
     @annotation.tailrec
     def preempt(
         chosen: List[Facts],
-        fresh: List[(Facts, Reason)],
-        swaps: List[(Goal.Slug, Reason)]
-    ): (List[Facts], List[(Facts, Reason)], List[(Goal.Slug, Reason)]) =
+        fresh: List[(Facts, Problem)],
+        swaps: List[(Goal.Slug, Problem)]
+    ): (List[Facts], List[(Facts, Problem)], List[(Goal.Slug, Problem)]) =
       val pool = cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug))
       val urgent = pool.filter(g => stageOf(g.slug).rank <= Stage.Compiling.rank)
       val victims = chosen.filter(g => !g.pinned.value && stageOf(g.slug) == Stage.Gathering)
@@ -426,7 +424,7 @@ object GoalFocus:
         val in = urgent.minBy(g => key(g, stageOf(g.slug), kin(g, rest, rootOf)._1))
         val out = victims.maxBy(staticKey)
         val left = chosen.filterNot(_.slug == out.slug)
-        val why = Reason(s"${pickWhy(
+        val why = Problem(s"${pickWhy(
             in,
             stageOf(in.slug),
             kin(in, left, rootOf),
@@ -435,7 +433,7 @@ object GoalFocus:
         preempt(
           left :+ in,
           fresh.filterNot(_._1.slug == out.slug) :+ (in -> why),
-          swaps :+ (out.slug -> Reason(s"gave its slot to ${in.slug}, which has articles to ${
+          swaps :+ (out.slug -> Problem(s"gave its slot to ${in.slug}, which has articles to ${
               if stageOf(in.slug) == Stage.Reviewing then "review" else "compile"
             }"))
         )
@@ -444,11 +442,11 @@ object GoalFocus:
     val active = chosen.map { g =>
       val st = stageOf(g.slug)
       val why =
-        if g.pinned.value then Reason(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
+        if g.pinned.value then Problem(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
         else
           freshWhy.getOrElse(
             g.slug,
-            Reason(
+            Problem(
               s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources)}"
             )
           )
@@ -475,14 +473,14 @@ object GoalFocus:
     val swapped = swaps.toMap
     val left = goals.filter(g => g.active.value && !chosen.exists(_.slug == g.slug)).map { g =>
       val why = fits.find(_._1.slug == g.slug).map(_._2) match
-        case Some(Fit.Finished)    => Reason(s"it is ${g.status}")
+        case Some(Fit.Finished)    => Problem(s"it is ${g.status}")
         case Some(Fit.Waits(_, w)) => w
         case _                     =>
           swapped.getOrElse(
             g.slug,
             if displaced.exists(_.slug == g.slug) then
-              Reason(s"the cap of $cap active goals is full (lowered, or a pin took the slot)")
-            else Reason("back in the queue")
+              Problem(s"the cap of $cap active goals is full (lowered, or a pin took the slot)")
+            else Problem("back in the queue")
           )
       g.slug -> why
     }
@@ -503,7 +501,7 @@ object GoalFocus:
   )
 
   /** What the holds change: items to hold (id, goal, reason) and focus holds to release. */
-  final case class Holds(hold: List[(Work.ItemId, Goal.Slug, Reason)] = Nil, release: List[Work.ItemId] = Nil)
+  final case class Holds(hold: List[(Work.ItemId, Goal.Slug, Problem)] = Nil, release: List[Work.ItemId] = Nil)
 
   /** The reason a focus hold carries (it starts with `focus:`; the items window and the status show it). */
   val HoldPrefix = "focus:"
@@ -519,19 +517,19 @@ object GoalFocus:
     val decided = items.map { i =>
       val unfinished = i.goals.filter(g => bySlug.get(g).exists(f => !finished(f.status)))
       val actives = unfinished.filter(plan.activeSet)
-      val wait: Option[(Goal.Slug, Reason)] =
+      val wait: Option[(Goal.Slug, Problem)] =
         if !usesModel(i.kind) || unfinished.isEmpty || i.person.value then None
         else if actives.nonEmpty then
           if actives.exists(g => !openKids.contains(g) || i.kind.value == PlanGoalItem) then None
           else
             Some(
-              actives.head -> Reason(
+              actives.head -> Problem(
                 s"$HoldPrefix goal ${actives.head} waits for its sub-goals before its own ${i.kind}"
               )
             )
         else
           Some(
-            unfinished.head -> Reason(
+            unfinished.head -> Problem(
               s"$HoldPrefix waits until goal ${unfinished.head} is one of the active goals (agents.autopilot.max-active-goals)"
             )
           )

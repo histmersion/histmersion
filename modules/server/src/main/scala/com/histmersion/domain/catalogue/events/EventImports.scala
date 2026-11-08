@@ -148,9 +148,9 @@ final class EventImports(
           val judged = recs.map { r =>
             val span = r.timeSpan.outer
             val why =
-              if span.exists(_._1.value > to.value) then Left(EventProviders.Problem(s"after $to"))
+              if span.exists(_._1.value > to.value) then Left(Problem(s"after $to"))
               else if from.exists(f => span.exists(_._2.value < f.value)) then
-                Left(EventProviders.Problem(s"before ${from.get}"))
+                Left(Problem(s"before ${from.get}"))
               else EventProviders.keep(r, th)
             r -> why
           }
@@ -325,7 +325,7 @@ final class EventImports(
         val s =
           store.save(
             batch
-              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, CatalogMerge.Placement.Why("re-derived")))
+              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, Problem("re-derived")))
           )
         updated += s.updated.value
         counts = counts + s.corrections

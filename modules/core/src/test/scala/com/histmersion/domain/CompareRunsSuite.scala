@@ -35,7 +35,7 @@ class CompareRunsSuite extends munit.FunSuite:
       output: Option[Step.Output] = None,
       model: Option[Step.Model] = None,
       actual: Option[Step.ActualModel] = None,
-      error: Option[Step.Error] = None,
+      error: Option[Problem] = None,
       usage: Tokens = Tokens.Zero,
       cost: Step.CostUsd = Step.CostUsd(0.0),
       started: Step.StartedAt = Step.StartedAt("2026-10-08T10:00:00Z"),
@@ -118,7 +118,7 @@ class CompareRunsSuite extends munit.FunSuite:
           model = Some(Step.Model("claude-code:haiku")),
           actual = Some(Step.ActualModel("claude-haiku-5-5")),
           usage = Tokens(Tokens.Input(10), Tokens.Output(2)),
-          error = Some(Step.Error("bad"))
+          error = Some(Problem("bad"))
         ),
         step(
           3,
@@ -156,14 +156,14 @@ class CompareRunsSuite extends munit.FunSuite:
       Step.Name("classify"),
       Step.Status("failed"),
       model = Some(Step.Model("claude-code:haiku")),
-      error = Some(Step.Error("bad"))
+      error = Some(Problem("bad"))
     )
     val a1 = step(
       3,
       Step.Name("classify"),
       Step.Status("failed"),
       model = Some(Step.Model("claude-code:haiku")),
-      error = Some(Step.Error("bad")),
+      error = Some(Problem("bad")),
       attempt = 2
     )
       .modify(_.firstCallTokens)
@@ -228,7 +228,7 @@ class CompareRunsSuite extends munit.FunSuite:
         Step.Status("failed"),
         output = Some(Step.Output(rejected)),
         model = Some(Step.Model("m")),
-        error = Some(Step.Error("finding 2 (b): the quote is not in the text (best match 0.40) — copy it exactly"))
+        error = Some(Problem("finding 2 (b): the quote is not in the text (best match 0.40) — copy it exactly"))
       ),
       step(
         4,
@@ -279,7 +279,7 @@ class CompareRunsSuite extends munit.FunSuite:
         Step.Status("failed"),
         output = None,
         model = Some(Step.Model("m")),
-        error = Some(Step.Error("the answer is not the JSON"))
+        error = Some(Problem("the answer is not the JSON"))
       )
     )
     assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))

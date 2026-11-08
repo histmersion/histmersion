@@ -361,7 +361,7 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
     val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
-    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, GoalFocus.Reason(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, Problem(""))))
     val items = List(
       Item(
         GoalFocus.Work.ItemId(1),
@@ -425,7 +425,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("p"), active = Facts.Active(true)),
       g(Goal.Slug("k"), Some(Goal.Slug("p")))
     )
-    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, GoalFocus.Reason(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, Problem(""))))
     val items = List(
       Item(
         GoalFocus.Work.ItemId(1),

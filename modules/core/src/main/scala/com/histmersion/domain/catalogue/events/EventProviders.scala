@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
 
@@ -16,16 +17,12 @@ import com.histmersion.api.catalogue.EventSummary
   * the classes of the sites on the map. The catalogues themselves are plugins. Pure.
   */
 object EventProviders:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type WikidataProperty = WikidataProperty.T
   object WikidataProperty extends Newtype[String, Pure]
 
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   object WikidataEvents:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
 
     /** Pure: the kind an item read in two classes keeps — the one whose class comes first in `order` (the configured
       * classes, the most specific first: a naval battle is also a battle, and stays a naval battle whichever class is

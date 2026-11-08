@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.exchange.EditionsPolicy
 
 import com.histmersion.domain.{AuthorName, MergeSettings, Title}
@@ -72,21 +73,18 @@ object SourceMatcher:
       yearGap: Evidence.YearGap,
       titleDiffers: Evidence.TitleDiffers,
       authors: AuthorAgreement,
-      parts: List[(Evidence.Reason, Evidence.Weight)]
+      parts: List[(Problem, Evidence.Weight)]
   ):
     def score: Evidence.Score = Evidence.Score(parts.map(_._2.value).sum)
     def strongKey: Boolean = strong.nonEmpty
-    def why: List[Evidence.Why] =
-      strong.map(k => Evidence.Why(s"$k equal (strong key)")) ++ parts.map((l, w) => Evidence.Why(s"$l (${signed(w)})"))
+    def why: List[Problem] =
+      strong.map(k => Problem(s"$k equal (strong key)")) ++ parts.map((l, w) => Problem(s"$l (${signed(w)})"))
 
   object Evidence:
     /** The sum of the weights of the parts. */
     type Score = Score.T
     object Score extends Newtype[Double, Pure]
 
-    /** One line of the score's explanation. */
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
     /** The name of a strong key (`DOI`, `ISBN`). */
     type Strong = Strong.T
@@ -98,9 +96,6 @@ object SourceMatcher:
     type TitleDiffers = TitleDiffers.T
     object TitleDiffers extends Newtype[Boolean, Pure]
 
-    /** What a comparison found, in words. */
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     /** What a comparison adds to the score. */
     type Weight = Weight.T
@@ -166,8 +161,8 @@ object SourceMatcher:
       years(b).contains(y.value)
     ) || says(a) || says(b)
 
-  private def part(reason: String, weight: Double): (Evidence.Reason, Evidence.Weight) =
-    (Evidence.Reason(reason), Evidence.Weight(weight))
+  private def part(reason: String, weight: Double): (Problem, Evidence.Weight) =
+    (Problem(reason), Evidence.Weight(weight))
 
   private def venueFingerprint(s: Bundle.Source): Option[Fingerprint] =
     s.venue.map(v => MergeText.fingerprint(MergeText.Text(v.value))).filter(_.value.nonEmpty)
@@ -192,7 +187,7 @@ object SourceMatcher:
       )
     val jw = MergeText.jaroWinkler(MergeText.words(titleText(r)), MergeText.words(titleText(l)))
     val tj = MergeText.jaccard(MergeText.tokens(titleText(r)).toSet, MergeText.tokens(titleText(l)).toSet)
-    val title: (Evidence.Reason, Evidence.Weight) =
+    val title: (Problem, Evidence.Weight) =
       if fr.value.nonEmpty && fr == fl then part("title the same", w.titleFingerprint.value)
       else if mr.value.nonEmpty && (mr == ml || mr == fl || fr == ml) then
         part("main title the same, the subtitle differs", w.titleMain.value)
@@ -204,7 +199,7 @@ object SourceMatcher:
 
     // authors
     val ag = MergeText.authors(authorsOf(r), authorsOf(l))
-    val authors: Option[(Evidence.Reason, Evidence.Weight)] = ag match
+    val authors: Option[(Problem, Evidence.Weight)] = ag match
       case AuthorAgreement.Same        => Some(part("authors the same", w.authorsSame.value))
       case AuthorAgreement.FirstAuthor => Some(part("first author the same", w.authorsFirst.value))
       case AuthorAgreement.Overlap     => Some(part("authors overlap", w.authorsOverlap.value))
@@ -213,7 +208,7 @@ object SourceMatcher:
 
     // year
     val gap = r.year.zip(l.year).map((a, b) => math.abs(a.value - b.value))
-    val year: Option[(Evidence.Reason, Evidence.Weight)] = gap.map {
+    val year: Option[(Problem, Evidence.Weight)] = gap.map {
       case 0L                            => part("year the same", w.yearEqual.value)
       case 1L                            => part("years one apart", w.yearNear.value)
       case _ if reprintHint(right, left) =>
@@ -222,7 +217,7 @@ object SourceMatcher:
     }
 
     // venue
-    val venue: Option[(Evidence.Reason, Evidence.Weight)] =
+    val venue: Option[(Problem, Evidence.Weight)] =
       venueFingerprint(r)
         .zip(venueFingerprint(l))
         .map((a, b) =>
@@ -230,7 +225,7 @@ object SourceMatcher:
         )
 
     // body
-    val body: Option[(Evidence.Reason, Evidence.Weight)] =
+    val body: Option[(Problem, Evidence.Weight)] =
       (r.bodySha256, l.bodySha256) match
         case (Some(a), Some(b)) if a == b => Some(part("the same OCR body", w.bodySame.value))
         case (Some(a), Some(b))           =>
@@ -246,7 +241,7 @@ object SourceMatcher:
         case _ => None
 
     // a citekey of one side is an old citekey of the other
-    val alias: Option[(Evidence.Reason, Evidence.Weight)] =
+    val alias: Option[(Problem, Evidence.Weight)] =
       val shared = (right.aliasLabels.intersect(left.labels) ++ left.aliasLabels.intersect(right.labels)).toList.sorted
       shared.headOption.map(a => part(s"'$a' is an old citekey of the other", w.alias.value))
 

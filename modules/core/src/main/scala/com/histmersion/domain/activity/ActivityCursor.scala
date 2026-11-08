@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.domain.Problem
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -11,8 +12,6 @@ final case class ActivityCursor(at: Instant, key: ActivityCursor.Key):
   def wire: ActivityCursor.Wire = ActivityCursor.Wire(s"$at~$key")
 
 object ActivityCursor:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 

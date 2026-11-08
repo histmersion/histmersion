@@ -156,7 +156,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
     upstream()
       .meta(doi)
       .left
-      .map(p => PlanGoal.Problem(p.value))
+      .map(p => Problem(p.value))
       .map(w =>
         PlanGoal.Work(
           w.title.map(t => PlanGoal.Work.Title(t.value)),

@@ -31,16 +31,9 @@ object Scheduling:
 
   enum Decision derives CanEqual:
     case Start
-    case Skip(reason: Decision.Skip.Reason)
-    case Defer(reason: Decision.Defer.Reason)
+    case Skip(reason: Problem)
+    case Defer(reason: Problem)
 
-  object Decision:
-    object Skip:
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
-    object Defer:
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
 
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): Boolean = !s.isTerminal
@@ -59,23 +52,23 @@ object Scheduling:
       maxConcurrent: MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
-      case Some(s) => Decision.Skip(Decision.Skip.Reason(s"its previous run is still ${s.wire}"))
+      case Some(s) => Decision.Skip(Problem(s"its previous run is still ${s.wire}"))
       case None    =>
         if spentDay >= BigDecimal(dailyUsd.value) then
           Decision.Skip(
-            Decision.Skip.Reason(
+            Problem(
               s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
             )
           )
         else if spentMonth >= BigDecimal(monthlyUsd.value) then
           Decision.Skip(
-            Decision.Skip.Reason(
+            Problem(
               s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
             )
           )
         else if active.value >= math.max(1, maxConcurrent.value) then
           Decision.Defer(
-            Decision.Defer.Reason(s"$active run(s) already queued or running (agents.max-concurrent-runs)")
+            Problem(s"$active run(s) already queued or running (agents.max-concurrent-runs)")
           )
         else Decision.Start
 

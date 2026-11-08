@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.Problem
 import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -21,8 +22,6 @@ object Ident:
   /** An identifier as a person wrote it. */
   type Written = Written.T
   object Written extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r

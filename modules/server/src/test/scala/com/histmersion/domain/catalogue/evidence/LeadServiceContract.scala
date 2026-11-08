@@ -77,7 +77,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       s.eventImports.save(
         List(big, small).map(r =>
           r -> CatalogMerge.Placement
-            .New(Event.Id.assume(CatalogRecord.eventId(r).value), CatalogMerge.Placement.Why("new"))
+            .New(Event.Id.assume(CatalogRecord.eventId(r).value), Problem("new"))
         )
       )
     s.eventLinks.saveCandidates(

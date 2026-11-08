@@ -203,7 +203,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       a.approvalKind match
         case Some(ApprovalKind.ArticlePlan) =>
           a.articles match
-            case None       => Verdict.Leave(Verdict.Leave.Why("the approval carries no readable plan"))
+            case None       => Verdict.Leave(Problem("the approval carries no readable plan"))
             case Some(plan) =>
               val goal = a.subject.map(_.value).getOrElse(plan.goal.value)
               val min =
@@ -260,9 +260,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 ),
                 AutopilotPolicy.Cap(c.publishCap.value)
               )
-            case (None, _) => Verdict.Leave(Verdict.Leave.Why("the approval carries no readable draft"))
-            case (_, None) => Verdict.Leave(Verdict.Leave.Why("the run that drafted it is gone"))
-        case _ => Verdict.Leave(Verdict.Leave.Why("not a kind the autopilot decides"))
+            case (None, _) => Verdict.Leave(Problem("the approval carries no readable draft"))
+            case (_, None) => Verdict.Leave(Problem("the run that drafted it is gone"))
+        case _ => Verdict.Leave(Problem("not a kind the autopilot decides"))
     }
 
   def dispatch(

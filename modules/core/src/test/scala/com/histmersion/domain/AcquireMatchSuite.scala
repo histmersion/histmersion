@@ -209,7 +209,7 @@ class AcquireMatchSuite extends munit.FunSuite:
     assertEquals(AcquireMatch.describe(Decision.Close(Brill)), "ticked off acquisition item #1 (same DOI)")
     assert(
       AcquireMatch
-        .describe(Decision.Close(Brill), _ => Left(AcquireMatch.Problem("gone")))
+        .describe(Decision.Close(Brill), _ => Left(Problem("gone")))
         .value
         .contains("NOT ticked off: gone")
     )

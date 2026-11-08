@@ -196,7 +196,7 @@ final class ArticlesControllers(
                                                 else s" · `${i.excerpt.value.replace("`", "'")}`")
           }
           .distinct
-          .map(ReviewArticle.BodyCorpus.FormatError(_)),
+          .map(Problem(_)),
       generated
     )
 

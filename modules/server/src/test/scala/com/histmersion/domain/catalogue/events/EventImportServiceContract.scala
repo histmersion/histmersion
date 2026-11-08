@@ -39,7 +39,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
   private def placeNew(r: CatalogRecord) =
     r -> CatalogMerge.Placement.New(
       Event.Id.applyUnsafe(CatalogRecord.eventId(r).value),
-      CatalogMerge.Placement.Why("new")
+      Problem("new")
     )
 
   stest("a record makes its event, writing it again refreshes it, an event made by hand is only filled") { s =>
@@ -65,7 +65,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       im.save(
         List(
           record(CatalogRecord.ProviderId("2"), CatalogRecord.Label("Zz other name")) -> CatalogMerge.Placement
-            .Existing(Event.Id("zz_hand"), CatalogMerge.Placement.Why("matched"))
+            .Existing(Event.Id("zz_hand"), Problem("matched"))
         )
       )
     assertEquals((filled.created, filled.updated), (0, 0))

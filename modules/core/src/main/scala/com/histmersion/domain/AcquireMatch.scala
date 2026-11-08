@@ -31,8 +31,6 @@ object AcquireMatch:
   object DoiText extends Newtype[String, Pure]
   type MatchText = MatchText.T
   object MatchText extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ProposeThreshold = ProposeThreshold.T
   object ProposeThreshold extends Newtype[Double, Pure]
   type Surname = Surname.T

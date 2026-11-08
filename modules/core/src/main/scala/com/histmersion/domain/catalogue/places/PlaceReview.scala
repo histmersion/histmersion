@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.domain.Problem
 import com.histmersion.domain.*
 
 import com.histmersion.api.YearFmt
@@ -120,7 +121,7 @@ object PlaceReview:
         from: Place.Kind.Wire,
         to: Place.Kind.Wire,
         period: Option[Period],
-        reason: Proposal.Reason,
+        reason: Problem,
         evidence: List[Proposal.EvidenceLine]
     )
 
@@ -130,12 +131,12 @@ object PlaceReview:
         label: Evidence.Label,
         into: Evidence.Id,
         intoLabel: Evidence.Label,
-        reason: Proposal.Reason,
+        reason: Problem,
         evidence: List[Proposal.EvidenceLine]
     )
 
     /** Nothing automatic: a person decides. */
-    case Review(id: Evidence.Id, label: Evidence.Label, reason: Proposal.Reason, evidence: List[Proposal.EvidenceLine])
+    case Review(id: Evidence.Id, label: Evidence.Label, reason: Problem, evidence: List[Proposal.EvidenceLine])
 
     def id: Evidence.Id
 
@@ -161,8 +162,6 @@ object PlaceReview:
       case _         => true
 
   object Proposal:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type EvidenceLine = EvidenceLine.T
     object EvidenceLine extends Newtype[String, Pure]
     type Line = Line.T
@@ -204,7 +203,7 @@ object PlaceReview:
   def propose(e: Evidence, candidates: List[Candidate] = Nil): Option[Proposal] =
     val types = e.featureTypes.map(t => Evidence.FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
     val ev = evidenceOf(e)
-    def to(kind: Place.Kind.Wire, reason: Proposal.Reason, period: Option[Period] = None) =
+    def to(kind: Place.Kind.Wire, reason: Problem, period: Option[Period] = None) =
       Option.when(kind != e.kind || period.isDefined)(
         Proposal.Reclassify(e.id, e.label, e.kind, kind, period, reason, ev)
       )
@@ -218,7 +217,7 @@ object PlaceReview:
                 e.label,
                 c.id,
                 c.label,
-                Proposal.Reason(s"withdrawn by Pleiades as a duplicate of '$x'"),
+                Problem(s"withdrawn by Pleiades as a duplicate of '$x'"),
                 ev
               )
             )
@@ -227,7 +226,7 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Proposal.Reason(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name"),
+                Problem(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name"),
                 ev
               )
             )
@@ -236,14 +235,14 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Proposal.Reason(
+                Problem(
                   s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
                 ),
                 ev
               )
             )
       case None if Withdrawn.matches(e.label.value.trim) =>
-        Some(Proposal.Review(e.id, e.label, Proposal.Reason("withdrawn by Pleiades, with no replacement named"), ev))
+        Some(Proposal.Review(e.id, e.label, Problem("withdrawn by Pleiades, with no replacement named"), ev))
       case None if e.kind.value == Place.Kind.Feature => None
       case None                                       =>
         val settled = types.intersect(SiteTypes)
@@ -265,17 +264,17 @@ object PlaceReview:
           else
             Some(
               Proposal
-                .Reclassify(e.id, e.label, e.kind, Place.Kind.Wire(Place.Kind.Polity), write, Proposal.Reason(note), ev)
+                .Reclassify(e.id, e.label, e.kind, Place.Kind.Wire(Place.Kind.Polity), write, Problem(note), ev)
             )
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
           to(
             Place.Kind.Wire(Place.Kind.People),
-            Proposal.Reason("a people or civic tribe — a group of persons, not a territory")
+            Problem("a people or civic tribe — a group of persons, not a territory")
           )
         else if settled.nonEmpty && !RegionAside.matches(e.label.value) then
           to(
             Place.Kind.Wire(Place.Kind.Site),
-            Proposal.Reason(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
+            Problem(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
           )
         else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
           // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
@@ -283,7 +282,7 @@ object PlaceReview:
             Proposal.Review(
               e.id,
               e.label,
-              Proposal.Reason(
+              Problem(
                 "the linked Wikidata item is a historical country — a polity, or a region named after one"
               ),
               ev

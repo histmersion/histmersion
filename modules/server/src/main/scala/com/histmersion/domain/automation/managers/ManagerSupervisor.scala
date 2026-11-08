@@ -279,7 +279,7 @@ final class ManagerSupervisor(
           )
       case (item, Some((status, error))) =>
         val st = RunState.parse(Run.State.Wire(status.value)).getOrElse(RunState.Failed)
-        val problem = error.map(e => ManagerPolicy.Problem(e.value))
+        val problem = error.map(e => Problem(e.value))
         byItem.get(itemKindOf(item)) match
           case Some(k) => k.evaluate(this, m, s, item, st, problem, now, out)
           case None    => evaluateStep(m, s, item, st, problem, now, out, Unknown)
@@ -727,7 +727,7 @@ final class ManagerSupervisor(
         ManagerPolicy.PendingCount(pending),
         ManagerPolicy.DueCount(waits.size),
         ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value),
-        blocked.map(ManagerPolicy.BlockReason(_))
+        blocked.map(Problem(_))
       )
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
         case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.value.take(200)}"

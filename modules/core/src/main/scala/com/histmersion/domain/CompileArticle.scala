@@ -41,10 +41,6 @@ object CompileArticle:
   object LogLine extends Newtype[String, Pure]
   type MaxClaims = MaxClaims.T
   object MaxClaims extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type Written = Written.T
   object Written extends Newtype[Boolean, Pure]
 
@@ -81,14 +77,12 @@ object CompileArticle:
 
   final case class ExtractAnswer(
       relevant: ExtractAnswer.Relevant,
-      reason: ExtractAnswer.Reason,
+      reason: Problem,
       claims: List[ClaimAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object ExtractAnswer:
     type Relevant = Relevant.T
     object Relevant extends Newtype[Boolean, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     given Schema[ExtractAnswer] = KindlingsSchema
       .derived[ExtractAnswer]
@@ -339,7 +333,7 @@ object CompileArticle:
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
         section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
-          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim))
+          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(Problem.fromApi)
           case None    =>
             Right(Article.Body(if current.value.trim.isEmpty then text.value.trim
             else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
@@ -423,7 +417,7 @@ object CompileArticle:
             )
           )
           .modify(_.reason)
-          .setTo(Problem(Option(r.reason).map(_.value.trim).getOrElse("")))
+          .setTo(api.Problem(Option(r.reason).map(_.value.trim).getOrElse("")))
       )
     val reasonProblems = stated.flatMap { r =>
       if !inFilterKeys(r.citekey.value) then
@@ -490,7 +484,7 @@ object CompileArticle:
             notUsed.map(com.histmersion.api.library.Citekey(_)),
             soft.map(ArticleDraft.Problems(_)),
             filter,
-            Coverage.Reason.list(reasons)
+            Coverage.Reason.list(reasons.map((k, v) => k -> Problem.wire(v)))
           ),
           soft.map(p => Problem(s"self-check: $p"))
         )
@@ -520,7 +514,7 @@ object CompileArticle:
       )
 
   /** The log line of a compile run. */
-  def logLine(d: ArticleDraft, written: Written, why: Reason, review: Option[Run.Id], runId: Run.Id): LogLine =
+  def logLine(d: ArticleDraft, written: Written, why: Problem, review: Option[Run.Id], runId: Run.Id): LogLine =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>

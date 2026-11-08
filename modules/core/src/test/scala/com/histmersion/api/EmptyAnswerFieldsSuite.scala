@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -170,7 +171,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("extract: an empty claim, quote or confidence fails; an unused record must say why"):
     def problems(c: ClaimAnswer) =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), ExtractAnswer.Reason("tin"), List(c)),
+        ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin"), List(c)),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
@@ -202,7 +203,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assertEquals(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), ExtractAnswer.Reason(""), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Problem(""), Nil),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
@@ -687,7 +688,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         .contains("an empty query")
     )
     assert(
-      problems(PlanAnswer(PlanAnswer.Rationale("why"), Nil, Nil, List(WorkAnswer(noWorkDoi, WorkAnswer.Why("x")))))
+      problems(PlanAnswer(PlanAnswer.Rationale("why"), Nil, Nil, List(WorkAnswer(noWorkDoi, Problem("x")))))
         .exists(_.value.contains("is not a DOI"))
     )
 
@@ -706,12 +707,12 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       )
     )
     assert(
-      checkRanking(Ranking(List(Pick(Pick.DoiText(""), Pick.Why("fits")))), offered, last = LastAttempt(false)).left
+      checkRanking(Ranking(List(Pick(Pick.DoiText(""), Problem("fits")))), offered, last = LastAttempt(false)).left
         .exists(_.head.value.contains("is not one of the listed candidates"))
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.1000/a"), Pick.Why("")))),
+        Ranking(List(Pick(Pick.DoiText("10.1000/a"), Problem("")))),
         offered,
         last = LastAttempt(false)
       ).isRight

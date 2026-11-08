@@ -596,7 +596,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       isCk,
       isTarget,
       t =>
-        if t.value.contains("| a | b |") then List(ReviewArticle.BodyCorpus.FormatError("table-not-rendered — a table"))
+        if t.value.contains("| a | b |") then List(Problem("table-not-rendered — a table"))
         else Nil
     )
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
@@ -1528,7 +1528,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assertEquals(
       fix(ok, last = LastRound(false)).map(_._1.wontFix),
-      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), ReviewArticle.WontFix.Reason("wordy, but exact"))))
+      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), Problem("wordy, but exact"))))
     )
     val bad = ok
       .modify(_.wontFix)

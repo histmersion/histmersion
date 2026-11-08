@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -466,7 +467,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         List(
           WontFix(
             ReviewArticle.WontFix.Id("S1"),
-            ReviewArticle.WontFix.Reason(
+            Problem(
               "listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"
             )
           )
@@ -760,9 +761,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       List(
         WontFix(
           ReviewArticle.WontFix.Id("R1"),
-          ReviewArticle.WontFix.Reason("the fixer neither applied nor rejected it")
+          Problem("the fixer neither applied nor rejected it")
         ),
-        WontFix(ReviewArticle.WontFix.Id("C2"), ReviewArticle.WontFix.Reason("the fixer did not answer it"))
+        WontFix(ReviewArticle.WontFix.Id("C2"), Problem("the fixer did not answer it"))
       )
     )
     val l = applyFix(

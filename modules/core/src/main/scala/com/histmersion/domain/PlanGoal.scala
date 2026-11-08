@@ -35,8 +35,6 @@ object PlanGoal:
   object LinkedCount extends Newtype[Int, Pure]
   type LogLine = LogLine.T
   object LogLine extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
   type QueuedCount = QueuedCount.T
@@ -68,12 +66,10 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
-  final case class WorkAnswer(doi: WorkAnswer.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
+  final case class WorkAnswer(doi: WorkAnswer.Doi, why: Problem) derives KindlingsCodecAsObject
   object WorkAnswer:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
     given Schema[WorkAnswer] = KindlingsSchema
       .derived[WorkAnswer]
@@ -103,11 +99,8 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
-  final case class ProposedWork(doi: Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
+  final case class ProposedWork(doi: Doi, why: Problem) derives KindlingsCodecAsObject
 
-  object ProposedWork:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
@@ -193,7 +186,7 @@ object PlanGoal:
         Doi.normalize(Option(w.doi).fold("")(_.value)) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d) => acc :+ ProposedWork(d, ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
+          case Some(d) => acc :+ ProposedWork(d, Problem(Option(w.why).fold("")(_.value.trim)))
       }
       .toList
 
@@ -263,7 +256,7 @@ object PlanGoal:
           r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
           PlannedWork.InCorpus(r.inDb.value),
           PlannedWork.IsOa(r.isOa.value),
-          Problem(w.why.value)
+          api.Problem(w.why.value)
         )
     }
     val dropped = looked.collect {

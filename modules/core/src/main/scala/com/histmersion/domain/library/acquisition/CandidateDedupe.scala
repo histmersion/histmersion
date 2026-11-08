@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
@@ -11,8 +12,6 @@ object CandidateDedupe:
   /** The search that found a work. */
   type FoundBy = FoundBy.T
   object FoundBy extends Newtype[String, Pure]
-  type SkipReason = SkipReason.T
-  object SkipReason extends Newtype[String, Pure]
   type SkipCount = SkipCount.T
   object SkipCount extends Newtype[Int, Pure]
 
@@ -29,7 +28,7 @@ object CandidateDedupe:
   def dedupe(
       found: List[(FoundBy, WorkRef)],
       known: Set[Doi]
-  ): (List[(Doi, WorkRef, List[FoundBy])], Map[SkipReason, SkipCount]) =
+  ): (List[(Doi, WorkRef, List[FoundBy])], Map[Problem, SkipCount]) =
     val kept = scala.collection.mutable.LinkedHashMap.empty[Doi, (WorkRef, List[FoundBy])]
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (by, w) =>
@@ -45,5 +44,5 @@ object CandidateDedupe:
     }
     (
       kept.toList.map { case (k, (w, bys)) => (k, w, bys) },
-      skipped.toMap.map((reason, n) => SkipReason(reason) -> SkipCount(n))
+      skipped.toMap.map((reason, n) => Problem(reason) -> SkipCount(n))
     )

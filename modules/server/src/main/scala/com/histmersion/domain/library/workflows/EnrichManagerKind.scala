@@ -115,9 +115,9 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       }
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
-  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Reason] =
+  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[Problem] =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption match
-      case None      => Some(AutoEnrich.Reason("no such source"))
+      case None      => Some(Problem("no such source"))
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
         AutoEnrich.enrichedBy(
@@ -148,7 +148,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     try
       autoEnrichLock.synchronized {
         site.sources.get(citekey, body = SourcesControllers.GetBody(false)) match
-          case Left(e)    => Some(AutoEnrich.notQueued(AutoEnrich.Reason(e.message.value)))
+          case Left(e)    => Some(AutoEnrich.notQueued(Problem(e.message.value)))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
             // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
@@ -169,7 +169,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     Origin.FromIngest,
                     None
                   ).fold(
-                    e => AutoEnrich.notQueued(AutoEnrich.Reason(e.message.value)),
+                    e => AutoEnrich.notQueued(Problem(e.message.value)),
                     r => AutoEnrich.queued(Run.Id.assume(r.id.value))
                   )
                 )
@@ -180,7 +180,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
         Some(
           AutoEnrich.notQueued(
-            AutoEnrich.Reason(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+            Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
           )
         )
 

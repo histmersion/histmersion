@@ -42,8 +42,6 @@ object PassageFinder:
   object MaxMatches extends Newtype[Int, Pure]
   type Passage = Passage.T
   object Passage extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
   type Regex = Regex.T

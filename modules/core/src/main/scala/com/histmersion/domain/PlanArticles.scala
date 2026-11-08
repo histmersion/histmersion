@@ -32,8 +32,6 @@ object PlanArticles:
   object LogLine extends Newtype[String, Pure]
   type Outcome = Outcome.T
   object Outcome extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   final case class ArticleAnswer(
       slug: ArticleAnswer.Slug,
@@ -42,7 +40,7 @@ object PlanArticles:
       query: Option[ArticleAnswer.Query] = None,
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
-      why: ArticleAnswer.Why = ArticleAnswer.Why("")
+      why: Problem = Problem("")
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
     type Slug = Slug.T
@@ -57,8 +55,6 @@ object PlanArticles:
     object Topics extends Newtype[String, Pure]
     type Tags = Tags.T
     object Tags extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
     given Schema[ArticleAnswer] = KindlingsSchema
       .derived[ArticleAnswer]
@@ -224,7 +220,7 @@ object PlanArticles:
                         c.title,
                         c.kind,
                         c.filter,
-                        c.why,
+                        Problem.wire(c.why),
                         n,
                         w.fold(ProposedArticle.Overlap(0.0))(_._2),
                         w.filter(_._2.value > 0).map(x => ProposedArticle.OverlapWith(x._1.value))

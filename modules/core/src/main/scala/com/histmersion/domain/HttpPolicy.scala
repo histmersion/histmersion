@@ -50,18 +50,13 @@ object HttpPolicy:
   /** What to do with an answer. */
   enum Step derives CanEqual:
     case Accept
-    case Wait(ms: Step.Wait.Ms, why: Step.Wait.Why)
-    case GiveUp(why: Step.GiveUp.Why)
+    case Wait(ms: Step.Wait.Ms, why: Problem)
+    case GiveUp(why: Problem)
 
   object Step:
     object Wait:
       type Ms = Ms.T
       object Ms extends Newtype[Long, Pure]
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
-    object GiveUp:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
 
   /** The answers that mean "try again later". */
   val Throttled: Set[StatusCode] = Set(StatusCode(429), StatusCode(502), StatusCode(503), StatusCode(504))
@@ -114,11 +109,11 @@ object HttpPolicy:
     if Throttled(code) || slowDown.isDefined then
       val why = slowDown.fold(s"HTTP $code")(_.value)
       val wait = retryAfterMs(retryAfter, now).getOrElse(backoffMs(attempt)).value.max(0L)
-      if attempt.value >= maxRetries.value then Step.GiveUp(Step.GiveUp.Why(s"$why after $maxRetries retries"))
+      if attempt.value >= maxRetries.value then Step.GiveUp(Problem(s"$why after $maxRetries retries"))
       else if wait > maxRetryAfterSeconds.value.toLong * 1000L then
-        Step.GiveUp(Step.GiveUp.Why(s"$why: asked to wait ${wait / 1000} s"))
-      else Step.Wait(Step.Wait.Ms(wait), Step.Wait.Why(why))
-    else if code.value >= 400 then Step.GiveUp(Step.GiveUp.Why(s"HTTP $code"))
+        Step.GiveUp(Problem(s"$why: asked to wait ${wait / 1000} s"))
+      else Step.Wait(Step.Wait.Ms(wait), Problem(why))
+    else if code.value >= 400 then Step.GiveUp(Problem(s"HTTP $code"))
     else Step.Accept
 
   // ── trust (#1568) ────────────────────────────────────────────────────────────────────────────────

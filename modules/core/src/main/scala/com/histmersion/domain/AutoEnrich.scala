@@ -28,18 +28,13 @@ object AutoEnrich:
   object Note extends Newtype[String, Pure]
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
 
   /** Why no run is queued. `Off` is silent: nothing was asked for. */
 
   enum Skip derives CanEqual:
     case Off
-    case Enriched(why: Skip.Enriched.Why)
+    case Enriched(why: Problem)
 
-  object Skip:
-    object Enriched:
-      export AutoEnrich.Reason as Why
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
@@ -60,18 +55,18 @@ object AutoEnrich:
     else enrichedBy(findings, notes, runs).map(Skip.Enriched(_)).toLeft(())
 
   /** Why the source counts as already enriched, if it does. */
-  def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Reason] =
+  def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Problem] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings.value > 0 then
       Some(
-        Reason(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}")
+        Problem(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}")
       )
-    else if notes.exists(_.value.trim.nonEmpty) then Some(Reason("it already has notes"))
-    else live.map(r => Reason(s"enrich-source run ${r.id} is ${r.state.wire}"))
+    else if notes.exists(_.value.trim.nonEmpty) then Some(Problem("it already has notes"))
+    else live.map(r => Problem(s"enrich-source run ${r.id} is ${r.state.wire}"))
 
   /** The job's progress note for what happened. */
   def queued(runId: Run.Id): Note = Note(s"enrichment queued: run $runId")
-  def notQueued(why: Reason): Note = Note(s"enrichment not queued: $why")
+  def notQueued(why: Problem): Note = Note(s"enrichment not queued: $why")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.

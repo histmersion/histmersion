@@ -448,7 +448,7 @@ final class CompileArticlePipeline(
         .logLine(
           d,
           CompileArticle.Written(w.written.value),
-          CompileArticle.Reason(w.why.value),
+          Problem(w.why.value),
           review.map(Run.Id.assume(_)),
           ctx.runId
         )
