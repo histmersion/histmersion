@@ -51,11 +51,18 @@ class ContractsSuite extends munit.FunSuite:
     val file = ArchitectureSuite.Resources.resolve("contracts.tsv")
     val violations = Rules.all(sources)
     val actual = violations.map(_.row).distinct.sorted
+    val listed =
+      if Files.isRegularFile(file) then Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
+      else Nil
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
+      val risen = ArchitectureSuite.Ratchet.risenRules(listed, actual)
+      assert(
+        risen.isEmpty || !Files.isRegularFile(file),
+        s"not rewritten: these rules' totals rose (fix the new violations first): ${risen.mkString(", ")}"
+      )
       val header = "# rule\tfile\tdetail\tcount — the known violations of AGENTS.md's rules 1–14; shrink, never grow"
       val _ = Files.write(file, (header :: actual).asJava, UTF_8)
     else
-      val listed = Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
       val added = actual.filterNot(listed.toSet)
       val gone = listed.filterNot(actual.toSet)
       val where = violations.groupBy(_.row).view.mapValues(_.head.at).toMap
