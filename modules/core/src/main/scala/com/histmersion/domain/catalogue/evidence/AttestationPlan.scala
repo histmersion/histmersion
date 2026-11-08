@@ -23,6 +23,8 @@ import com.histmersion.api.exchange.Bundle
   * question (drop it, or keep it without a place). One already here (the same target and quote) is one.
   */
 final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
   import AttestationPlan.*
 
   private val km = MergeDecision.Kind

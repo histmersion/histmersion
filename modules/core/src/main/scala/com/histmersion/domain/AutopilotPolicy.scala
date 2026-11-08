@@ -86,7 +86,7 @@ object AutopilotPolicy:
   type NotePrefixValue = NotePrefixValue.T
   object NotePrefixValue extends Newtype[String, Pure]
 
-  enum Verdict:
+  enum Verdict derives CanEqual:
     case Approve(reason: Verdict.Approve.Reason)
     case Reject(reason: Verdict.Reject.Reason)
     case Leave(why: Verdict.Leave.Why)
@@ -484,7 +484,7 @@ object AutopilotPolicy:
     object ExtendMinNew extends Newtype[Int, Pure]
 
   /** One change `ensure` asks for. */
-  enum Step:
+  enum Step derives CanEqual:
     /** Create the goal's seeding manager, active, with its cron (and a plan-goal item before its first proposal when
       * the goal has no plan).
       */

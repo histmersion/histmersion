@@ -35,7 +35,7 @@ object PointAreas:
   type FixedSources = FixedSources.T
   object FixedSources extends Newtype[Int, Pure]
 
-  enum Dating:
+  enum Dating derives CanEqual:
     case Dated, EndOnly, Undated
 
     def wire: Dating.WireResult = this match

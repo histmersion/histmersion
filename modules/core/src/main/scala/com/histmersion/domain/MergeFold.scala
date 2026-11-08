@@ -13,6 +13,7 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
+import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
@@ -24,6 +25,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Left is this collection, right the bundle — as everywhere in the merge.
   */
 object MergeFold:
+  private given CanEqual[Json, Json] = CanEqual.derived
+
   type ArticleBody = ArticleBody.T
   object ArticleBody extends Newtype[String, Pure]
   type ConflictCount = ConflictCount.T
@@ -124,7 +127,7 @@ object MergeFold:
     )
 
   /** What two approved plans of one goal come to. */
-  enum PlanOutcome:
+  enum PlanOutcome derives CanEqual:
     /** The same plan, or only ours: ours stays. */
     case Ours
 
@@ -153,7 +156,7 @@ object MergeFold:
     * differences are reported by the plan. Absent when empty.
     */
   def keepLocalSchedules(l: Bundle.Goal, r: Bundle.Goal): Bundle.Goal =
-    def key(k: Bundle.GoalLink) = (k.kind, k.refUid.fold(k.ref)(_.toString))
+    def key(k: Bundle.GoalLink) = (k.kind, k.refUid.fold(k.ref.value)(_.toString))
     val ls = l.links.getOrElse(Nil)
     val links = (ls ++ r.links.getOrElse(Nil).filterNot(x => ls.exists(y => key(y) == key(x))))
       .sortBy(k => (k.kind.value, k.ref.value, k.refUid.fold("")(_.toString)))
@@ -190,7 +193,7 @@ object MergeFold:
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
 
   /** What two versions of one article come to, given what each side's history holds. */
-  enum ArticleOutcome:
+  enum ArticleOutcome derives CanEqual:
     /** The same text. */
     case Same
 

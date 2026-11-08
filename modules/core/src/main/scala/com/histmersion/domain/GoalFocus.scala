@@ -46,7 +46,7 @@ object GoalFocus:
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular)).value
 
   /** How close a goal is to done (lower = closer). */
-  enum Stage(val rank: Stage.Rank, val wire: Stage.Wire):
+  enum Stage(val rank: Stage.Rank, val wire: Stage.Wire) derives CanEqual:
     case Reviewing extends Stage(Stage.Rank(0), Stage.Wire("reviewing"))
     case Compiling extends Stage(Stage.Rank(1), Stage.Wire("compiling"))
     case Ready extends Stage(Stage.Rank(2), Stage.Wire("ready"))
@@ -168,7 +168,7 @@ object GoalFocus:
     object OpenPersonPlans extends Newtype[Int, Pure]
 
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
-  enum Fit:
+  enum Fit derives CanEqual:
     case Finished
     case Candidate(stage: Stage)
     case Waits(code: Fit.Waits.Code, why: Fit.Waits.Why)

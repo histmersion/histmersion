@@ -43,7 +43,7 @@ object SchedulerPolicy:
   // ── job types ──────────────────────────────────────────────────────────────────────────────────
 
   /** What kind of work an item is, for the priorities and the shares. */
-  enum JobType(val wire: JobType.Wire, val label: JobType.Label):
+  enum JobType(val wire: JobType.Wire, val label: JobType.Label) derives CanEqual:
     case GoalPlan extends JobType(JobType.Wire("goal-plan"), JobType.Label("goal plans"))
     case Propose extends JobType(JobType.Wire("propose"), JobType.Label("article proposals"))
     case Sweep extends JobType(JobType.Wire("sweep"), JobType.Label("candidate sweeps and their ranking"))

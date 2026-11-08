@@ -87,7 +87,7 @@ object IngestBacklog:
     * (or this one) holds for it (this goal added to it), nowhere when this watcher settled one for it before (a person
     * skipped it; an ingested one is in the corpus) — else a new entry.
     */
-  enum Placement:
+  enum Placement derives CanEqual:
     case InCorpus(citekey: Citekey)
     case JoinAcquire(item: Placement.JoinAcquire.Item)
     case JoinBacklog(item: Placement.JoinBacklog.Item)
@@ -121,7 +121,7 @@ object IngestBacklog:
   /** What a failed ingest of a backlog item leads to: the acquisition list (the legal chain has no file for it, or it
     * failed `maxFailures` times), or another try after the backoff.
     */
-  enum Failure:
+  enum Failure derives CanEqual:
     case ToAcquire(why: Failure.Why)
     case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Failure.Why)
 
@@ -230,7 +230,7 @@ object IngestBacklog:
     type WatcherAutoIngest = WatcherAutoIngest.T
     object WatcherAutoIngest extends Newtype[Boolean, Pure]
 
-  enum RepairAction:
+  enum RepairAction derives CanEqual:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
     case Move
 

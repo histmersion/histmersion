@@ -30,6 +30,8 @@ import com.histmersion.api.exchange.IssueSide
   * `db.MergeSuite`.
   */
 object MergeFixture:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   private def settings(c: MergeConfig): MergeSettings =
     MergeSettings(

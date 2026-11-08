@@ -48,7 +48,7 @@ object HttpPolicy:
   object Attempt extends Newtype[Int, Pure]
 
   /** What to do with an answer. */
-  enum Step:
+  enum Step derives CanEqual:
     case Accept
     case Wait(ms: Step.Wait.Ms, why: Step.Wait.Why)
     case GiveUp(why: Step.GiveUp.Why)
@@ -120,7 +120,7 @@ object HttpPolicy:
   // ── trust (#1568) ────────────────────────────────────────────────────────────────────────────────
 
   /** Where the roots an outbound TLS connection trusts come from. */
-  enum Trust:
+  enum Trust derives CanEqual:
     /** The JDK's own `cacerts` — always. */
     case Jdk
 

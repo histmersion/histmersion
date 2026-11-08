@@ -36,6 +36,8 @@ import com.histmersion.api.catalogue.Latitude
   * here arrives under the next free one.
   */
 final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
   import FindingPlan.*
 
   private val km = MergeDecision.Kind
@@ -210,7 +212,7 @@ object FindingPlan:
     extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
-  enum Match:
+  enum Match derives CanEqual:
     /** The same claim (and a compatible time and place): one finding. */
     case Same(right: Bundle.Finding, left: Bundle.Finding)
 

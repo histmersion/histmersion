@@ -12,6 +12,8 @@ import com.histmersion.api.Api
   * follows in SQL, and the in-memory list follows here. Pure.
   */
 object ActivityRules:
+  private given CanEqual[Instant, Instant] = CanEqual.derived
+
 
   /** The statuses of a run or job that is going now. */
   val RunningStates: Set[Entry.State] = Set(Entry.State("running"))

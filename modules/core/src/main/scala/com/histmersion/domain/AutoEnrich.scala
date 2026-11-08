@@ -33,7 +33,7 @@ object AutoEnrich:
 
   /** Why no run is queued. `Off` is silent: nothing was asked for. */
 
-  enum Skip:
+  enum Skip derives CanEqual:
     case Off
     case Enriched(why: Skip.Enriched.Why)
 

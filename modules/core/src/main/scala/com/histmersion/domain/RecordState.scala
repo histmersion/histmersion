@@ -4,7 +4,7 @@ package domain
 import java.time.Instant
 
 /** What became of a referenced record since the reference was stored. */
-enum RecordState:
+enum RecordState derives CanEqual:
   case Live
 
   /** The record is the same; its key is another now (the old one is an alias). */

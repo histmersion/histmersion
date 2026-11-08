@@ -5,7 +5,7 @@ import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An identifier a person gives for a work: a DOI, an arXiv id, or the citekey of a source in the corpus. */
-enum Ident:
+enum Ident derives CanEqual:
   case Doi(value: DoiValue)
 
   case Arxiv(value: ArxivId)

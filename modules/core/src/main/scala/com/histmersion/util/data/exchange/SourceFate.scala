@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What became of one of the bundle's sources in a plan: the same record as one here (by its uid, or by the ledger),
   * deleted here, one with a source here by itself, one with a source here if a person says so, or new.
   */
-enum SourceFate:
+enum SourceFate derives CanEqual:
   case Same(local: UUID, byLedger: SourceFate.Same.ByLedger)
   case Deleted
   case Auto(pair: SourcePair)

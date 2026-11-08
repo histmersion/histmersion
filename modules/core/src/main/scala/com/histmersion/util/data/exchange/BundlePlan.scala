@@ -34,7 +34,7 @@ object BundlePlan:
   type Rev = Rev.T
   object Rev extends Newtype[String, Pure]
 
-  enum Decision:
+  enum Decision derives CanEqual:
     case Insert, FastForward, Unchanged, KeepLocal, Conflict, SkipDeleted, Delete, RecordTombstone
 
     /** A conflict resolved `keep-left`: ours stays, and the ledger records that it was decided, so the same foreign

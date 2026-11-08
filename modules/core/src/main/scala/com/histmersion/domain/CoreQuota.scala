@@ -27,6 +27,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   *     leave the ingests without CORE.
   */
 object CoreQuota:
+  private given CanEqual[LocalDate, LocalDate] = CanEqual.derived
+
   type Cap = Cap.T
   object Cap extends Newtype[Int, Pure]
   type Cost = Cost.T
@@ -43,7 +45,7 @@ object CoreQuota:
   object StatusCode extends Newtype[Int, Pure]
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
-  enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
+  enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label) derives CanEqual:
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
     case Lookup extends Purpose(Purpose.Wire("lookup"), Purpose.Label("PDF lookups"))
 
@@ -133,7 +135,7 @@ object CoreQuota:
     def fresh(day: LocalDate): State = State(day, LookupTokens(0), SearchTokens(0), None, None)
 
   /** Why a call is not made. */
-  enum Refusal:
+  enum Refusal derives CanEqual:
     case Blocked(until: Instant, why: Refusal.Blocked.Why)
     case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
     case Paced(waitMs: Refusal.Paced.WaitMs)
