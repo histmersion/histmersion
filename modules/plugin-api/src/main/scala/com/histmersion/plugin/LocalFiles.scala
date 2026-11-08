@@ -44,29 +44,7 @@ object LocalFiles:
   object StagedUseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Unavailable extends LocalFiles:
-    type ReadResult = _root_.com.histmersion.plugin.LocalFiles.ReadResult
-    val ReadResult: _root_.com.histmersion.plugin.LocalFiles.ReadResult.type = _root_.com.histmersion.plugin.LocalFiles.ReadResult
-    type ReadPrefixResult = _root_.com.histmersion.plugin.LocalFiles.ReadPrefixResult
-    val ReadPrefixResult: _root_.com.histmersion.plugin.LocalFiles.ReadPrefixResult.type = _root_.com.histmersion.plugin.LocalFiles.ReadPrefixResult
-    type StagedBytes = _root_.com.histmersion.plugin.LocalFiles.StagedBytes
-    val StagedBytes: _root_.com.histmersion.plugin.LocalFiles.StagedBytes.type = _root_.com.histmersion.plugin.LocalFiles.StagedBytes
-
-    type IsFileResult = _root_.com.histmersion.plugin.LocalFiles.IsFileResult
-    val IsFileResult: _root_.com.histmersion.plugin.LocalFiles.IsFileResult.type = _root_.com.histmersion.plugin.LocalFiles.IsFileResult
-    type IsDirectoryResult = _root_.com.histmersion.plugin.LocalFiles.IsDirectoryResult
-    val IsDirectoryResult: _root_.com.histmersion.plugin.LocalFiles.IsDirectoryResult.type = _root_.com.histmersion.plugin.LocalFiles.IsDirectoryResult
-    type ExistsResult = _root_.com.histmersion.plugin.LocalFiles.ExistsResult
-    val ExistsResult: _root_.com.histmersion.plugin.LocalFiles.ExistsResult.type = _root_.com.histmersion.plugin.LocalFiles.ExistsResult
-    type IsExecutableResult = _root_.com.histmersion.plugin.LocalFiles.IsExecutableResult
-    val IsExecutableResult: _root_.com.histmersion.plugin.LocalFiles.IsExecutableResult.type = _root_.com.histmersion.plugin.LocalFiles.IsExecutableResult
-    type ReadPrefixLength = _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength
-    val ReadPrefixLength: _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength.type = _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength
-    type StagedResultPart1 = _root_.com.histmersion.plugin.LocalFiles.StagedResultPart1
-    val StagedResultPart1: _root_.com.histmersion.plugin.LocalFiles.StagedResultPart1.type = _root_.com.histmersion.plugin.LocalFiles.StagedResultPart1
-    type StagedName = _root_.com.histmersion.plugin.LocalFiles.StagedName
-    val StagedName: _root_.com.histmersion.plugin.LocalFiles.StagedName.type = _root_.com.histmersion.plugin.LocalFiles.StagedName
-    type StagedUseResultPart1 = _root_.com.histmersion.plugin.LocalFiles.StagedUseResultPart1
-    val StagedUseResultPart1: _root_.com.histmersion.plugin.LocalFiles.StagedUseResultPart1.type = _root_.com.histmersion.plugin.LocalFiles.StagedUseResultPart1
+    export com.histmersion.plugin.LocalFiles.{ReadResult, ReadPrefixResult, StagedBytes, IsFileResult, IsDirectoryResult, ExistsResult, IsExecutableResult, ReadPrefixLength, StagedResultPart1, StagedName, StagedUseResultPart1}
 
     private def unavailable: Nothing = throw UnsupportedOperationException("this host supplies no local files")
     def isFile(path: Path): com.histmersion.plugin.LocalFiles.Unavailable.IsFileResult = unavailable
