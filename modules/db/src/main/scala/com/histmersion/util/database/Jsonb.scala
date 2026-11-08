@@ -1,7 +1,10 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A `jsonb` column holding a wire DTO, crossing through that DTO's own circe codec (#1946) — the Vocab.codec rule for
   * JSON: select the column as `col::text`, bind the value as `$v::jsonb`, and a stored document this build cannot read
@@ -11,11 +14,11 @@ import io.circe.syntax.*
   */
 object Jsonb:
   type DropNulls = DropNulls.T
-  object DropNulls extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DropNulls extends RefinedType[Boolean, Pure]
   type JsonText = JsonText.T
-  object JsonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JsonText extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
     DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
@@ -8,6 +9,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
+import com.histmersion.api.media.AssetLink
 
 /** The figures of a source (they go with it) and the links of other figures to it or to one of its findings. */
 final class AssetLinkSourceReferrer extends SourceReferrer:
@@ -27,12 +29,12 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val ck = source.citekey
-    def n(q: Frag): com.histmersion.RowCount = com.histmersion.RowCount(q.query[Int].run().headOption.getOrElse(0))
+    def n(q: Frag): RowCount = RowCount(q.query[Int].run().headOption.getOrElse(0))
     DeleteReport(counts =
       List(
         DeletePart.Assets -> n(sql"SELECT count(*)::int FROM assets WHERE citekey = $ck"),
         DeletePart.AssetLinks -> n(sql"SELECT count(*)::int FROM asset_links WHERE citekey = $ck"),
-        DeletePart.AssetLinksTo -> com.histmersion.RowCount(linksTo(source).size)
+        DeletePart.AssetLinksTo -> RowCount(linksTo(source).size)
       ).collect { case (p, rows) if rows.value > 0 => DeleteCount(p, DeleteCount.Rows(rows.value)) }
     )
 
@@ -41,12 +43,12 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
     if links.nonEmpty then sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run()
 
   /** Other figures' links to the source or one of its findings. */
-  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.api.media.AssetLink.Id] =
+  private def linksTo(source: SourceKeys)(using DbCon): List[AssetLink.Id] =
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck
             AND ((target_type = 'source' AND target_id = ANY($keys::text[]))
               OR (target_type = 'finding' AND left(target_id, ${hash.value.length}) = $hash))"""
-      .query[com.histmersion.api.media.AssetLink.Id]
+      .query[AssetLink.Id]
       .run()
       .toList
 

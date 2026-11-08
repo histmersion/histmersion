@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -10,6 +11,10 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,
@@ -17,11 +22,11 @@ import com.histmersion.api.catalogue.Place
   */
 private[places] object FindingPlaceRepo:
   type PlaceholderAreaShare = PlaceholderAreaShare.T
-  object PlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceholderAreaShare extends RefinedType[Double, Pure]
 
   import PlaceRepo.*
 
-  def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Place.RebuildResult =
+  def rebuildFindingPlaces(toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Place.RebuildResult =
     // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
     // Without it the INSERT…SELECT can see (in its snapshot) a finding another transaction has
     // just deleted and then fail the foreign key; and two rebuilds, or a rebuild and a
@@ -53,26 +58,26 @@ private[places] object FindingPlaceRepo:
     * transaction, so the gazetteer assignment is never observable as missing. Same table order as
     * [[rebuildFindingPlaces]]: findings, then finding_places.
     */
-  def materialiseFor(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
+  def materialiseFor(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
     val _ = sql"""DELETE FROM finding_places fp
                   USING findings f
                   WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run()
     val (byGeometry, byName) = insertAssignments(Some(citekey), toleranceKm)
-    com.histmersion.RowCount(byGeometry.value + byName.value)
+    RowCount(byGeometry.value + byName.value)
 
   /** Re-materialise the `finding_places` rows of the given PLACES, inside the CALLER's transaction — after a place's
     * kind, point or identity changed (`lint --rule place-kind --fix`, `--rule place-grid-point --fix`): the same
     * inserts as a rebuild, restricted to those places, so a fix takes seconds instead of a whole rebuild's half minute
     * (live 2026-10-09). Same table order as [[rebuildFindingPlaces]]. Returns the rows written.
     */
-  def materialisePlaces(placeIds: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
+  def materialisePlaces(placeIds: List[BPlaceRow.Id], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
     val ids = placeIds.distinct
-    if ids.isEmpty then com.histmersion.RowCount(0)
+    if ids.isEmpty then RowCount(0)
     else
       val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
       val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
       val (byGeometry, byName) = insertAssignments(None, toleranceKm, Some(ids))
-      com.histmersion.RowCount(byGeometry.value + byName.value)
+      RowCount(byGeometry.value + byName.value)
 
   /** A seed place whose POINT stands for something larger than a point (2026-10-09), over a `places` row aliased
     * `alias`: a region, polity or people with no boundary (`hasBoundary` false — all 1 617 Pleiades and 75 curated
@@ -122,18 +127,18 @@ private[places] object FindingPlaceRepo:
   final private case class Placeholder(
       id: Placeholder.Id,
       name: Option[Geocode.Attempt.Name],
-      from: Option[com.histmersion.api.catalogue.Year],
-      to: Option[com.histmersion.api.catalogue.Year],
-      citekey: com.histmersion.domain.library.Citekey,
-      lon: com.histmersion.Longitude,
-      lat: com.histmersion.Latitude
+      from: Option[Year],
+      to: Option[Year],
+      citekey: Citekey,
+      lon: Longitude,
+      lat: Latitude
   ) derives DbCodec
 
   object Placeholder:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
   val placeholderFindingsSql: String =
@@ -143,9 +148,9 @@ private[places] object FindingPlaceRepo:
   /** The placeholder findings whose place name the geocoder does not resolve, or that have none — what
     * `lint --rule finding-placeholder` lists, as (citekey, line), by citekey and finding id.
     */
-  def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.library.Citekey, Placeholder.Detail)] =
+  def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, Placeholder.Detail)] =
     val ph =
-      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
+      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql.raw(Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
     ph.filterNot(p => resolved.contains(p.id)).map { p =>
       val at = String.format(java.util.Locale.ROOT, "%.4f N %.4f E", p.lat, p.lon)
@@ -159,7 +164,7 @@ private[places] object FindingPlaceRepo:
   /** Finding id → the place its name resolves to, for the placeholders that have a name the geocoder resolves (as a
     * region). One resolution per (name, period).
     */
-  private def resolve(ph: List[Placeholder])(using DbCon): List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Id, com.histmersion.domain.catalogue.places.BPlaceRow.Id)] =
+  private def resolve(ph: List[Placeholder])(using DbCon): List[(Placeholder.Id, BPlaceRow.Id)] =
     ph.flatMap(p => p.name.map(n => (n, p)))
       .groupBy((n, p) => (n, Geocode.periodOf(p.from, p.to)))
       .toList
@@ -174,9 +179,9 @@ private[places] object FindingPlaceRepo:
     * geocoder resolves ([[Geocoder.resolveIn]], as a region), the place it resolves to: (every placeholder id, finding
     * id → place id).
     */
-  private def placeholders(citekey: Option[com.histmersion.domain.library.Citekey])(using DbCon): (List[Placeholder.Id], List[(Placeholder.Id, com.histmersion.domain.catalogue.places.BPlaceRow.Id)]) =
+  private def placeholders(citekey: Option[Citekey])(using DbCon): (List[Placeholder.Id], List[(Placeholder.Id, BPlaceRow.Id)]) =
     val ph = (Sql.raw(Sql.Text(placeholderFindingsSql)) ++
-      citekey.fold(Sql.raw(com.histmersion.util.database.Sql.Text("")))(ck => Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
+      citekey.fold(Sql.raw(Sql.Text("")))(ck => Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
     (ph.map(_.id), resolve(ph))
 
   /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the per-citekey
@@ -195,9 +200,9 @@ private[places] object FindingPlaceRepo:
     *     not to the Peloponnese — and not to areas merely covering the point; when it does not resolve, areas still
     *     take it by containment (`lint --rule finding-placeholder` lists those for a person).
     */
-  private def insertAssignments(citekey: Option[com.histmersion.domain.library.Citekey], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm, places: Option[List[com.histmersion.domain.catalogue.places.BPlaceRow.Id]] = None)(using
+  private def insertAssignments(citekey: Option[Citekey], toleranceKm: FindingPlacement.Implementation.ToleranceKm, places: Option[List[BPlaceRow.Id]] = None)(using
       DbCon
-  ): (com.histmersion.RowCount, com.histmersion.RowCount) =
+  ): (RowCount, RowCount) =
     // `places`: only the links of these places (a reclassified, merged or moved place, [[materialisePlaces]])
     val anyPlace = places.isEmpty
     val pids = places.getOrElse(Nil)
@@ -269,8 +274,8 @@ private[places] object FindingPlaceRepo:
               AND (f.period IS NULL OR f.period && n.period)
             ON CONFLICT DO NOTHING""".update.run()
     (
-      com.histmersion.RowCount(byArea + byPoint + byGeocode + byPlaceholder(phNamed, anyPlace, pids).value),
-      com.histmersion.RowCount(byName + byResolution(citekey, anyPlace, pids).value)
+      RowCount(byArea + byPoint + byGeocode + byPlaceholder(phNamed, anyPlace, pids).value),
+      RowCount(byName + byResolution(citekey, anyPlace, pids).value)
     )
 
   /** The links of the placeholder findings whose name resolved (`named`: finding id → place id): the place itself
@@ -278,8 +283,8 @@ private[places] object FindingPlaceRepo:
     * least [[DefaultPlaceholderAreaShare]] of that place's shape, or, when the place has no shape, its point — when the
     * periods overlap. The shares are computed once per place. Returns the rows inserted.
     */
-  private def byPlaceholder(named: List[(Placeholder.Id, com.histmersion.domain.catalogue.places.BPlaceRow.Id)], anyPlace: Boolean, pids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
-    if named.isEmpty then com.histmersion.RowCount(0)
+  private def byPlaceholder(named: List[(Placeholder.Id, BPlaceRow.Id)], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using DbCon): RowCount =
+    if named.isEmpty then RowCount(0)
     else
       val fids = named.map(_._1)
       val rids = named.map(_._2)
@@ -288,7 +293,7 @@ private[places] object FindingPlaceRepo:
       // that place overlaps it in time, and is clipped to the place's box before the intersection — at
       // 3 200 candidate areas for "Italy", the overlay of whole Cliopatria empires was most of the cost.
       // (Nested CASEs: only a CASE fixes the order of evaluation.)
-      com.histmersion.RowCount(sql"""WITH r AS (SELECT * FROM unnest($fids::text[], $rids::text[]) AS r(fid, rid)),
+      RowCount(sql"""WITH r AS (SELECT * FROM unnest($fids::text[], $rids::text[]) AS r(fid, rid)),
                  rs AS MATERIALIZED (
                    SELECT rp.id AS rid, rp.geom,
                           CASE WHEN ST_Dimension(rp.geom) = 2 THEN ST_MakeValid(rp.geom) END AS g
@@ -317,8 +322,8 @@ private[places] object FindingPlaceRepo:
   final private case class Named(
       id: Placeholder.Id,
       name: Geocode.Attempt.Name,
-      from: Option[com.histmersion.api.catalogue.Year],
-      to: Option[com.histmersion.api.catalogue.Year]
+      from: Option[Year],
+      to: Option[Year]
   ) derives DbCodec
 
   /** The explicit NAME match for explicit-only points: a finding whose place name the geocoder ([[Geocoder.resolveIn]])
@@ -326,7 +331,7 @@ private[places] object FindingPlaceRepo:
     * readings ([[Geocode.attempts]]) is the name key of an explicit-only place are resolved at all, so a rebuild
     * resolves a few hundred names, not every finding's. Returns the rows inserted.
     */
-  private def byResolution(citekey: Option[com.histmersion.domain.library.Citekey], anyPlace: Boolean, pids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
+  private def byResolution(citekey: Option[Citekey], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using DbCon): RowCount =
     val named = sql"""SELECT f.id, btrim(f.region_name), ${SqlLiteral(RangeSql.cols("f.period"))}
                       FROM findings f
                       WHERE btrim(coalesce(f.region_name, '')) <> ''
@@ -334,7 +339,7 @@ private[places] object FindingPlaceRepo:
       .query[Named]
       .run()
       .toList
-    if named.isEmpty then com.histmersion.RowCount(0)
+    if named.isEmpty then RowCount(0)
     else
       val keysOf = named
         .map(_.name)
@@ -363,11 +368,11 @@ private[places] object FindingPlaceRepo:
             .toList
             .flatMap(r => fs.map(f => (f.id, r.placeId)))
         }
-      if resolved.isEmpty then com.histmersion.RowCount(0)
+      if resolved.isEmpty then RowCount(0)
       else
         val fids = resolved.map(_._1)
         val pids = resolved.map(_._2)
-        com.histmersion.RowCount(sql"""INSERT INTO finding_places (finding_id, place_id)
+        RowCount(sql"""INSERT INTO finding_places (finding_id, place_id)
               SELECT r.fid, r.pid FROM unnest($fids::text[], $pids::text[]) AS r(fid, pid)
               JOIN findings f ON f.id = r.fid JOIN places p ON p.id = r.pid
               WHERE NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))}

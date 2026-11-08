@@ -1,13 +1,16 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.io.{BufferedInputStream, ByteArrayInputStream, InputStream}
 import java.nio.file.{Files, Path}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Bytes that can be read from their start as often as needed, and their length: a bundle on disk, a file a store
   * keeps, an upload. The bundle code reads one through this, never a path.
   */
 trait ByteSource:
-  def size: com.histmersion.ByteCount
+  def size: ByteCount
   def open(): InputStream
 
   /** `use` over the bytes, opened and buffered for it and closed after. */
@@ -18,14 +21,14 @@ trait ByteSource:
 
 object ByteSource:
   type Content = Content.T
-  object Content extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Content extends RefinedType[Array[Byte], Pure]
 
 
 
   def file(path: Path): ByteSource = new ByteSource:
-    def size: com.histmersion.ByteCount = com.histmersion.ByteCount.assume(Files.size(path))
+    def size: ByteCount = ByteCount.assume(Files.size(path))
     def open(): InputStream = Files.newInputStream(path)
 
-  def bytes(data: com.histmersion.util.storage.ByteSource.Content): ByteSource = new ByteSource:
-    def size: com.histmersion.ByteCount = com.histmersion.ByteCount.assume(data.value.length.toLong)
+  def bytes(data: Content): ByteSource = new ByteSource:
+    def size: ByteCount = ByteCount.assume(data.value.length.toLong)
     def open(): InputStream = ByteArrayInputStream(data.value)

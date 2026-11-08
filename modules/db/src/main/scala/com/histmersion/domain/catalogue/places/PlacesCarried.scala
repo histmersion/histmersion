@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.exchange.Bundle
 
@@ -17,25 +18,25 @@ object PlacesCarried:
 
   private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
-  val places: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Place](
+  val places: CarriedKind = CarriedKind.records[Bundle.Place](
     Catalogue,
     Bundle.Kind.Place,
     TableName("places"),
     List(rows(ImportRank(30))(PlaceBundleRepo.placeRenames), rows(ImportRank(31))(PlaceBundleRepo.placesIn))
   )(scope => PlaceBundleRepo.places(scope).toList)(p => CarriedKind.RecordsClock(p.updatedAt.value), (es, ls) => es.modify(_.places).setTo(ls))
 
-  val placeAliases: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.PlaceAlias](
+  val placeAliases: CarriedKind = CarriedKind.owned[Bundle.PlaceAlias](
     Catalogue,
-    BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceAliases),
+    BundleEntry(Bundle.Files.PlaceAliases),
     List(rows(ImportRank(33))(PlaceBundleRepo.placeAliasesIn))
   )(scope => PlaceBundleRepo.placeAliases(scope).toList)(
     a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
     (es, ls) => es.modify(_.placeAliases).setTo(ls)
   )
 
-  val siteTypes: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.SiteType](
+  val siteTypes: CarriedKind = CarriedKind.owned[Bundle.SiteType](
     Catalogue,
-    BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceSiteTypes),
+    BundleEntry(Bundle.Files.PlaceSiteTypes),
     List(rows(ImportRank(64))(PlaceBundleRepo.siteTypesIn))
   )(scope => PlaceBundleRepo.siteTypes(scope).toList)(t => t.checkedAt.map(c => CarriedKind.OwnedClock(c.value)), (es, ls) => es.modify(_.siteTypes).setTo(ls))
 
@@ -45,4 +46,4 @@ object PlacesCarried:
   /** Where the bundle's place ids point here, for the lines of other kinds that name a place: a place the other side
     * renamed whose line is not written keeps its id here.
     */
-  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.BPlaceRow.Id => com.histmersion.domain.catalogue.places.BPlaceRow.Id = PlaceBundleRepo.placeHere(w)
+  def placeHere(w: BundleImport.Writer): BPlaceRow.Id => BPlaceRow.Id = PlaceBundleRepo.placeHere(w)

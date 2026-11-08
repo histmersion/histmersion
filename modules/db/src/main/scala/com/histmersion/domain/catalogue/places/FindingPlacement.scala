@@ -1,17 +1,19 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.Geocode
 import com.augustnagro.magnum.DbCon
+import com.histmersion.domain.library.Citekey
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again
   * inside the library's own transaction whenever it writes the source, so a moved or new finding is located the moment
   * the write commits. `toleranceKm` is how near a finding's point must be to a place's to be its.
   */
 trait FindingPlacement:
-  def toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm
+  def toleranceKm: FindingPlacement.Implementation.ToleranceKm
 
   /** The findings of `citekey` placed again; the links written. */
-  def placeSource(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount
+  def placeSource(citekey: Citekey)(using DbCon): RowCount
 
 object FindingPlacement:
 
@@ -21,7 +23,7 @@ object FindingPlacement:
     */
   val DefaultToleranceKm: Implementation.ToleranceKm = Implementation.ToleranceKm(10.0)
 
-  def apply(toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm = DefaultToleranceKm): FindingPlacement = Implementation(toleranceKm)
+  def apply(toleranceKm: Implementation.ToleranceKm = DefaultToleranceKm): FindingPlacement = Implementation(toleranceKm)
 
   /** Every finding on a placeholder point (one standing for a named place), as `lint --rule finding-placeholder` reads
     * them: id, place name, period, citekey and point.
@@ -31,7 +33,7 @@ object FindingPlacement:
   /** The findings on a placeholder point whose place name the geocoder does not resolve, or that have none: (citekey,
     * line), by citekey and finding id.
     */
-  def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Detail)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
+  def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, FindingPlaceRepo.Placeholder.Detail)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
 
   /** The findings whose stored point is the one the old geocoder chose for their place name, as
     * `lint --rule finding-geocode` reads them.
@@ -52,13 +54,13 @@ object FindingPlacement:
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Geocode.Placement] = Geocoder.placementsIn(s)
 
   /** The moves applied (compare-and-set), the touched sources' findings placed again; the findings moved. */
-  def move(ms: List[Geocode.Move], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount = Geocoder.apply(ms, toleranceKm)
+  def move(ms: List[Geocode.Move], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount = Geocoder.apply(ms, toleranceKm)
 
   /** The points given (compare-and-set), the touched sources' findings placed again; the findings placed. */
-  def place(ps: List[Geocode.Placement], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount = Geocoder.place(ps, toleranceKm)
+  def place(ps: List[Geocode.Placement], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount = Geocoder.place(ps, toleranceKm)
 
   final private class Implementation(val toleranceKm: Implementation.ToleranceKm) extends FindingPlacement:
-    def placeSource(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
+    def placeSource(citekey: Citekey)(using DbCon): RowCount = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
 
   object Implementation:
     type ToleranceKm = GeocodeSettings.ToleranceKm

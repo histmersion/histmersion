@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.api.exchange.Bundle
 
@@ -13,7 +14,7 @@ import hearth.kindlings.optics.syntax.*
   */
 object AssetLinksCarried:
 
-  val assetLinks: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.AssetLink](
+  val assetLinks: CarriedKind = CarriedKind.records[Bundle.AssetLink](
     DataOwner("media"),
     Bundle.Kind.AssetLink,
     TableName("asset_links"),

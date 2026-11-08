@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.domain.media.assets.{AssetMergeRules, AssetsCarried}
 import com.histmersion.domain.media.links.{AssetLinkMergeRules, AssetLinksCarried}

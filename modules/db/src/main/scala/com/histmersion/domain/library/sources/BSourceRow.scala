@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.domain.library.sources.SourceColumns.given
 
@@ -7,16 +8,20 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.domain.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.DeepTime
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(
     uid: UUID,
     origin: UUID,
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     title: BSourceRow.Title,
     authors: List[BSourceRow.Authors],
     doi: Option[BSourceRow.Doi],
-    year: Option[com.histmersion.Year],
+    year: Option[Year],
     venue: Option[BSourceRow.Venue],
     status: Source.Status,
     topics: List[BSourceRow.Topics],
@@ -40,44 +45,44 @@ final private[sources] case class BSourceRow(
 
 object BSourceRow:
   type Doi = Doi.T
-  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Doi extends RefinedType[String, Pure]
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Authors extends RefinedType[String, Pure]
   type Venue = Venue.T
-  object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends RefinedType[String, Pure]
   type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends RefinedType[String, Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type PNull = PNull.T
-  object PNull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PLo = com.histmersion.domain.DeepTime.SignedYear
-  val PLo: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type PHi = com.histmersion.domain.DeepTime.SignedYear
-  val PHi: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  object PNull extends RefinedType[Boolean, Pure]
+  type PLo = DeepTime.SignedYear
+  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
+  type PHi = DeepTime.SignedYear
+  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends RefinedType[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provenance extends RefinedType[String, Pure]
   type CitedBy = CitedBy.T
-  object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedBy extends RefinedType[Int, Pure]
   type Influential = Influential.T
-  object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Influential extends RefinedType[Int, Pure]
   type AddedDate = AddedDate.T
-  object AddedDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodySha = com.histmersion.Sha256
-  val BodySha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
-  type BodyBytes = com.histmersion.ByteCount
-  val BodyBytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
-  type OriginalSha = com.histmersion.Sha256
-  val OriginalSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+  object AddedDate extends RefinedType[String, Pure]
+  type BodySha = Sha256
+  val BodySha: Sha256.type = Sha256
+  type BodyBytes = ByteCount
+  val BodyBytes: ByteCount.type = ByteCount
+  type OriginalSha = Sha256
+  val OriginalSha: Sha256.type = Sha256
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]
   type Isbns = Isbns.T
-  object Isbns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Isbns extends RefinedType[String, Pure]

@@ -1,6 +1,9 @@
-package com.histmersion.domain.library.sources.referrers
+package com.histmersion
+package domain.library.sources.referrers
 
 import com.augustnagro.magnum.DbCon
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Every domain that names sources, in the order their rewrites are reported (a rename's columns follow it). */
 final class SourceReferrers(val all: List[SourceReferrer]):
@@ -23,14 +26,14 @@ final class SourceReferrers(val all: List[SourceReferrer]):
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = all.foreach(_.deleting(source, report))
 
   /** The first entry a referrer kept of the deletion. */
-  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrers.Line, day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day)(using DbCon): Option[com.histmersion.domain.library.sources.referrers.SourceReferrers.Entry] =
+  def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[SourceReferrers.Entry] =
     all.iterator.map(_.recorded(source, line, day)).collectFirst { case Some(id) => id }
 
 object SourceReferrers:
   /** The entry a referrer kept of a deletion: its number in the domain's own log. */
   type Entry = Entry.T
-  object Entry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Entry extends RefinedType[Int, Pure]
   type Day = Day.T
-  object Day extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Day extends RefinedType[String, Pure]
   type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Line extends RefinedType[String, Pure]

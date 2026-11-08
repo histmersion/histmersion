@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.library.{DeleteBlocker, DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*

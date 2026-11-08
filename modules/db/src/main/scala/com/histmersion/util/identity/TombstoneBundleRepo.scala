@@ -1,4 +1,5 @@
-package com.histmersion.util.identity
+package com.histmersion
+package util.identity
 
 import com.histmersion.api.exchange.Bundle
 
@@ -14,7 +15,7 @@ import com.augustnagro.magnum.*
   */
 object TombstoneBundleRepo:
 
-  def tombstones(scope: BundleScope)(using DbCon): Vector[com.histmersion.api.exchange.Bundle.Tombstone] =
+  def tombstones(scope: BundleScope)(using DbCon): Vector[Bundle.Tombstone] =
     (Sql.raw(Sql.Text(s"SELECT uid, kind, origin, ${ts("deleted_at")} FROM tombstones WHERE ")) ++
       where(scope, "uid", "deleted_at") ++ " ORDER BY uid").frag.query[BTombstoneRow].run().flatMap { r =>
       Bundle.Kind

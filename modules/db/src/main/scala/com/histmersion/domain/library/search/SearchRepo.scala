@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,6 +10,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.library.{Filter, Hit, SearchResult}
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.SearchHit
 
 /** The filter's queries over sources: the search with its matched findings and passages, and the counts of what a
   * filter selects.
@@ -18,19 +22,19 @@ private[search] object SearchRepo:
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
 
 
-  def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+  def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
+    RowCount(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
   /** How many findings matching `filter` landed in NO place at all — the "unlocated" bucket of the region tree (plan
     * §1.6a). Built from the SHARED [[FilterSql]] fragments, so it is narrowed by exactly the same criteria as the map
     * feed.
     */
-  def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
+  def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
     val q = Sql.raw(Sql.Text("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ")) ++
       FilterSql.sourceWhere(filter) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
       Sql.raw(Sql.Text(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"))
-    com.histmersion.RowCount(q.frag.query[Int].run().headOption.getOrElse(0))
+    RowCount(q.frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
   def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
@@ -49,15 +53,15 @@ private[search] object SearchRepo:
     * computes `ts_headline` only for the page's citekeys — typically 10–25 instead of every matching source in the
     * corpus.
     */
-  def sources(filter: Filter, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
+  def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
     val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
     val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
     if rows.isEmpty then
-      SearchResult.of(SearchResult.Total(total), Nil, com.histmersion.api.personal.UnreadPage.Offset(filter.offset.value.max(0)))
+      SearchResult.of(SearchResult.Total(total), Nil, UnreadPage.Offset(filter.offset.value.max(0)))
     else
       val citekeys = rows.map(_.citekey).toList
       // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
-      val snippets: Map[com.histmersion.domain.library.Citekey, FilterSql.SnippetRow] =
+      val snippets: Map[Citekey, FilterSql.SnippetRow] =
         FilterSql.text(filter) match
           case Some(q) =>
             FilterSql
@@ -78,7 +82,7 @@ private[search] object SearchRepo:
       val hits = rows.map { r =>
         // merge the snippet into the row before building the hit
         val withSnippet = snippets.get(r.citekey) match
-          case Some(sr) => r.modify(_.snippet).setTo(Some(com.histmersion.api.library.SearchHit.Snippet(sr.snippet.value))).modify(_.matchedHeading).setTo(sr.heading.map(h => com.histmersion.api.library.SearchHit.MatchedHeading(h.value)))
+          case Some(sr) => r.modify(_.snippet).setTo(Some(SearchHit.Snippet(sr.snippet.value))).modify(_.matchedHeading).setTo(sr.heading.map(h => SearchHit.MatchedHeading(h.value)))
           case None     => r
         val matched =
           if !filter.hasFindingCriteria then Nil
@@ -90,4 +94,4 @@ private[search] object SearchRepo:
             }
         Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
       }
-      SearchResult.of(SearchResult.Total(total), hits.toList, com.histmersion.api.personal.UnreadPage.Offset(filter.offset.value.max(0)))
+      SearchResult.of(SearchResult.Total(total), hits.toList, UnreadPage.Offset(filter.offset.value.max(0)))

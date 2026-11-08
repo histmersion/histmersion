@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,21 +13,24 @@ import com.histmersion.domain.CoreQuota
 
 import com.augustnagro.magnum.*
 import java.time.{Instant, LocalDate}
+import com.histmersion.db.DbSuite
+import com.histmersion.config.DbConfig
+import com.histmersion.domain.automation.ProviderKind
 
 /** A metered upstream's budget survives the database unchanged (HISTMERSION_TEST_DB_URL; skipped otherwise): the day,
   * both counts, the block and the last window — and a later save replaces it.
   */
-class UpstreamQuotaRepoSuite extends com.histmersion.db.DbSuite:
+class UpstreamQuotaRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Up = "zzquota-test"
-  private val UpKind = com.histmersion.domain.automation.ProviderKind.Wire(Up)
+  private val UpKind = ProviderKind.Wire(Up)
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
@@ -36,14 +40,14 @@ class UpstreamQuotaRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), None)
     val s = CoreQuota.State(
       LocalDate.of(2026, 10, 26),
-      com.histmersion.domain.CoreQuota.State.LookupTokens(12),
-      com.histmersion.domain.CoreQuota.State.SearchTokens(34),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), com.histmersion.domain.CoreQuota.Block.Why("HTTP 429"))),
-      Some(CoreQuota.Window(Some(com.histmersion.domain.CoreQuota.Window.Limit(25)), Some(com.histmersion.domain.CoreQuota.Window.Remaining(0)), Instant.parse("2026-10-26T18:50:00Z")))
+      CoreQuota.State.LookupTokens(12),
+      CoreQuota.State.SearchTokens(34),
+      Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), CoreQuota.Block.Why("HTTP 429"))),
+      Some(CoreQuota.Window(Some(CoreQuota.Window.Limit(25)), Some(CoreQuota.Window.Remaining(0)), Instant.parse("2026-10-26T18:50:00Z")))
     )
     transact(ds)(UpstreamQuotaRepo.save(UpKind, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))))
     // the recent call slots are not kept
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(s))
-    val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = com.histmersion.domain.CoreQuota.State.LookupTokens(1))
+    val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = CoreQuota.State.LookupTokens(1))
     transact(ds)(UpstreamQuotaRepo.save(UpKind, next))
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(next))

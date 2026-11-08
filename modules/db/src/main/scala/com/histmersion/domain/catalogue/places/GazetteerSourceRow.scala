@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 
@@ -8,6 +9,8 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One row of `gazetteer_sources` (V071). */
 final case class GazetteerSourceRow(
@@ -15,13 +18,13 @@ final case class GazetteerSourceRow(
     kind: GazetteerSourceRow.Kind,
     title: GazetteerSourceRow.Title,
     version: GazetteerSourceRow.Version,
-    sha256: com.histmersion.Sha256,
+    sha256: Sha256,
     file: GazetteerSourceRow.File,
     url: Option[GazetteerSourceRow.Url],
     licence: Option[GazetteerSourceRow.Licence],
     citation: Option[GazetteerSourceRow.Citation],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     places: GazetteerSourceRow.Places,
     names: GazetteerSourceRow.Names,
     links: GazetteerSourceRow.Links,
@@ -30,26 +33,26 @@ final case class GazetteerSourceRow(
 
 object GazetteerSourceRow:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[String, Pure]
   type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object File extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type Licence = Licence.T
-  object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licence extends RefinedType[String, Pure]
   type Citation = Citation.T
-  object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Citation extends RefinedType[String, Pure]
   type Places = Places.T
-  object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Places extends RefinedType[Int, Pure]
   type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Names extends RefinedType[Int, Pure]
   type Links = Links.T
-  object Links extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Links extends RefinedType[Int, Pure]
   type ImportedAt = ImportedAt.T
-  object ImportedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportedAt extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
@@ -12,6 +13,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.research.Slug
+import com.histmersion.util.data.exchange.PlanQuestions
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"
@@ -96,17 +99,17 @@ private[articles] object ArticleBundleRepo:
   /** The bundle's versions by uid, for their bodies as they arrive. */
   private val versionsByUid = BundleImport.Once(w => w.es.versions.map(v => v.uid -> v).toMap)
 
-  private def slugOf(u: UUID)(using DbCon): com.histmersion.domain.research.Slug =
-    sql"SELECT slug FROM articles WHERE uid = $u".query[com.histmersion.domain.research.Slug].run().head
+  private def slugOf(u: UUID)(using DbCon): Slug =
+    sql"SELECT slug FROM articles WHERE uid = $u".query[Slug].run().head
 
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("article"))(
+    w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, PlanQuestions.LabelTakenWhat("article"))(
       (old, now) =>
         ArticleRepo.renameIn(
-          com.histmersion.domain.research.Slug.assume(old.value),
-          com.histmersion.domain.research.Slug.assume(now.value)
+          Slug.assume(old.value),
+          Slug.assume(now.value)
         )
     )
 
@@ -184,13 +187,13 @@ private[articles] object ArticleBundleRepo:
     val relink =
       if w.insertedSources.nonEmpty || w.merged.renames.nonEmpty then
         sql"SELECT slug, body FROM articles ORDER BY slug"
-          .query[(com.histmersion.domain.research.Slug, BArticleRow.Body)]
+          .query[(Slug, BArticleRow.Body)]
           .run()
           .toList
       else
         (w.es.articles.filter(a => w.writes(a.uid)).map(_.uid) ++ w.once(copiedArticles)).flatMap(u =>
           sql"SELECT slug, body FROM articles WHERE uid = $u"
-            .query[(com.histmersion.domain.research.Slug, BArticleRow.Body)]
+            .query[(Slug, BArticleRow.Body)]
             .run()
             .headOption
         )

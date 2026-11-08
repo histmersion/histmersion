@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.covers
+package com.histmersion
+package domain.media.covers
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

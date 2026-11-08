@@ -1,25 +1,29 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A dated, placed finding near an event: how far, and the years between. */
 final private[evidence] case class NearFindingRow(
     id: NearFindingRow.Id,
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     claim: NearFindingRow.Claim,
     km: NearFindingRow.Km,
     yearGap: NearFindingRow.YearGap,
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year]
+    periodStart: Option[Year],
+    periodEnd: Option[Year]
 ) derives DbCodec
 
 object NearFindingRow:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Claim = Claim.T
-  object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Claim extends RefinedType[String, Pure]
   type Km = Km.T
-  object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Km extends RefinedType[Double, Pure]
   type YearGap = YearGap.T
-  object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearGap extends RefinedType[Long, Pure]

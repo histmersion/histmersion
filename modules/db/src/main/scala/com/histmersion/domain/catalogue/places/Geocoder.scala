@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 
@@ -13,6 +14,14 @@ import com.histmersion.util.database.NewtypeColumns.given
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, Period}
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Finding
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the
@@ -32,7 +41,7 @@ private[places] object Geocoder:
     * only 1935–1956), so the time rule of [[Geocode.rank]] reads the name's dates too. `tier` is who brought the place
     * in ([[Geocode.tierOf]]).
     */
-  def candidates(key: Geocode.Key, within: Option[com.histmersion.api.catalogue.Place.Id])(using DbCon): List[Candidate] =
+  def candidates(key: Geocode.Key, within: Option[Place.Id])(using DbCon): List[Candidate] =
     if key.value.isEmpty then Nil
     else
       sql"""WITH hit AS (
@@ -50,7 +59,7 @@ private[places] object Geocoder:
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))
                         ELSE 1 END,
                    ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom)),
-                   ${SqlLiteral(Geocoder.tierSql)},
+                   ${SqlLiteral(tierSql)},
                    coalesce(p.location_precision = 'grid-cell', false)
             FROM hit h JOIN places p ON p.id = h.id
             WHERE p.geom IS NOT NULL
@@ -71,16 +80,16 @@ private[places] object Geocoder:
       name: Attempt.Name,
       hint: KindHint,
       at: Option[Period],
-      placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin
+      placeholderMin: GeocodeSettings.PlaceholderMin
   )(using DbCon): Option[Resolution] =
     resolveIn(name, hint, at, placeholderMin)
 
-  def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
     Geocode.attempts(name).iterator.flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin)).nextOption()
 
-  private def attempt(asked: Resolution.Asked, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  private def attempt(asked: Resolution.Asked, a: Attempt, hint: KindHint, at: Option[Period], min: GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
@@ -106,9 +115,9 @@ private[places] object Geocoder:
           .query[(Double, Double)]
           .run()
           .headOption
-          .fold(r)((lon, lat) => r.copy(lon = com.histmersion.api.catalogue.Longitude(lon), lat = com.histmersion.api.catalogue.Latitude(lat)))
+          .fold(r)((lon, lat) => r.copy(lon = Longitude(lon), lat = Latitude(lat)))
 
-  private def chosen(asked: Resolution.Asked, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  private def chosen(asked: Resolution.Asked, a: Attempt, h: KindHint, at: Option[Period], min: GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
     val pm = Geocode.Placeholder.Min(min.value)
@@ -124,7 +133,7 @@ private[places] object Geocoder:
 
   final private case class Placed(
       id: Placed.Id,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       name: Placed.Name,
       region: Option[Placed.Region],
       lon: com.histmersion.Longitude,
@@ -135,15 +144,15 @@ private[places] object Geocoder:
 
   object Placed:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Region = Region.T
-    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Region extends RefinedType[String, Pure]
     type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object From extends RefinedType[Long, Pure]
     type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object To extends RefinedType[Long, Pure]
 
   /** The findings whose stored point is EXACTLY the one the pre-#981 geocoder chose for their place name — the only
     * points the repair may move, so a hand-placed coordinate is never touched.
@@ -201,12 +210,12 @@ private[places] object Geocoder:
         resolveIn(
           Attempt.Name(p.name.value),
           KindHint.Unknown,
-          Geocode.periodOf(p.from.map(f => com.histmersion.api.catalogue.Year(f.value)), p.to.map(t => com.histmersion.api.catalogue.Year(t.value))),
+          Geocode.periodOf(p.from.map(f => Year(f.value)), p.to.map(t => Year(t.value))),
           s.placeholderMin
         )
           .map(r =>
             Move(
-              com.histmersion.api.library.Finding.Id(p.id.value),
+              Finding.Id(p.id.value),
               com.histmersion.api.library.Citekey(p.citekey.value),
               Move.Asked(p.name.value),
               p.region.map(g => Move.Region(g.value)),
@@ -225,8 +234,8 @@ private[places] object Geocoder:
     * touched sources' `updated_at` moves and their `finding_places` are re-materialised, in the same transaction.
     * Returns the findings moved.
     */
-  def apply(ms: List[Move], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if ms.isEmpty then com.histmersion.RowCount(0)
+  def apply(ms: List[Move], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
+    if ms.isEmpty then RowCount(0)
     else
       val moved = ms.filter { m =>
         sql"""UPDATE findings SET geom = ST_SetSRID(ST_MakePoint(${m.to.lon}, ${m.to.lat}), 4326),
@@ -235,26 +244,26 @@ private[places] object Geocoder:
                 AND abs(ST_X(geom) - ${m.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${m.fromLat}) < 1e-7""".update
           .run() > 0
       }
-      moved.map(_.citekey).distinct.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)).foreach { ck =>
+      moved.map(_.citekey).distinct.flatMap(c => Citekey.option(c.value)).foreach { ck =>
         val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
         val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
       }
-      com.histmersion.RowCount(moved.size)
+      RowCount(moved.size)
 
   // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
 
-  final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unplaced.To])
+  final private case class Unplaced(id: Unplaced.Id, citekey: Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unplaced.To])
       derives DbCodec
 
   object Unplaced:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Region = Region.T
-    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Region extends RefinedType[String, Pure]
     type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object From extends RefinedType[Long, Pure]
     type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object To extends RefinedType[Long, Pure]
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =
@@ -272,12 +281,12 @@ private[places] object Geocoder:
       resolveIn(
         Attempt.Name(u.region.value),
         KindHint.Unknown,
-        Geocode.periodOf(u.from.map(f => com.histmersion.api.catalogue.Year(f.value)), u.to.map(t => com.histmersion.api.catalogue.Year(t.value))),
+        Geocode.periodOf(u.from.map(f => Year(f.value)), u.to.map(t => Year(t.value))),
         s.placeholderMin
       )
         .map(r =>
           Placement(
-            com.histmersion.api.library.Finding.Id(u.id.value),
+            Finding.Id(u.id.value),
             com.histmersion.api.library.Citekey(u.citekey.value),
             Placement.Region(u.region.value),
             r
@@ -291,16 +300,16 @@ private[places] object Geocoder:
     * left alone; its name is never touched). The touched sources' `updated_at` moves and their `finding_places` are
     * re-materialised, in the same transaction. Returns the findings placed.
     */
-  def place(ps: List[Placement], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if ps.isEmpty then com.histmersion.RowCount(0)
+  def place(ps: List[Placement], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
+    if ps.isEmpty then RowCount(0)
     else
       val placed = ps.filter { p =>
         sql"""UPDATE findings SET geom = ST_SetSRID(ST_MakePoint(${p.to.lon}, ${p.to.lat}), 4326)
               WHERE id = ${p.findingId} AND geom IS NULL AND btrim(coalesce(region_name, '')) = ${p.region}""".update
           .run() > 0
       }
-      placed.map(_.citekey).distinct.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)).foreach { ck =>
+      placed.map(_.citekey).distinct.flatMap(c => Citekey.option(c.value)).foreach { ck =>
         val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
         val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
       }
-      com.histmersion.RowCount(placed.size)
+      RowCount(placed.size)

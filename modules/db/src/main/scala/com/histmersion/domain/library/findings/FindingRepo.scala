@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 
 import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -20,5 +21,5 @@ private[findings] object FindingRepo:
   def findingsFor(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[GeoHit] =
     (FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoFeedRow].run().map(_.toHit))
 
-  def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+  def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
+    RowCount(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))

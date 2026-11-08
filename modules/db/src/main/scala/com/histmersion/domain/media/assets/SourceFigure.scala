@@ -1,16 +1,20 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One image figure of a source, as the illustration's choice weighs it: uid, name, size. */
 final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigure.HasThumb)
 
 object SourceFigure:
   type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uid extends RefinedType[String, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Int, Pure]
   type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Height extends RefinedType[Int, Pure]
   type HasThumb = HasThumb.T
-  object HasThumb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HasThumb extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
@@ -9,6 +10,6 @@ private[library] object SourceColumns:
   given given_DbCodec_SourceStatus: DbCodec[Source.Status] =
     Vocab.codec(
       s => Source.Status.values.find(_.wire.value.equalsIgnoreCase(s.value)),
-      e => com.histmersion.WireEnumValues.Wire(e.wire.value),
+      e => WireEnumValues.Wire(e.wire.value),
       Source.Status.Unassessed
     )

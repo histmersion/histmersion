@@ -1,5 +1,8 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import com.augustnagro.magnum.Frag
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A composable SQL fragment: text with `?` placeholders plus the parameters that fill them, in order.
   *
@@ -35,13 +38,13 @@ final case class Sql(text: Sql.Text, params: List[Param] = Nil):
     Frag(text.value, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
 
 object Sql:
-  type RawText = _root_.com.histmersion.util.database.Sql.Text
-  val RawText: _root_.com.histmersion.util.database.Sql.Text.type = _root_.com.histmersion.util.database.Sql.Text
-  type OfText = _root_.com.histmersion.util.database.Sql.Text
-  val OfText: _root_.com.histmersion.util.database.Sql.Text.type = _root_.com.histmersion.util.database.Sql.Text
+  type RawText = Text
+  val RawText: Text.type = Text
+  type OfText = Text
+  val OfText: Text.type = Text
 
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   val empty: Sql = Sql(Text(""), Nil)
   def raw(text: Text): Sql = Sql(text, Nil)

@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,13 +24,14 @@ import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.automation.Agents
 import com.histmersion.util.database.given
+import com.histmersion.api.jobs.JobState
 
 /** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
   * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same
   * time, so every fixture carries this run's tag in what the text filter (`subject`) matches, and every assertion is
   * made under that filter.
   */
-class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
+class ListFilterRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -104,7 +106,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     )
     val rej = approval("edge", "rejected", None, citekey = Some(s"${tag}_src2"), note = Some("not the critic"))
     def ids(q: ApprovalQuery) =
-      connect(ds)(AgentRepo.approvalPage(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+      connect(ds)(AgentRepo.approvalPage(q, PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
     val mine = ApprovalQuery(subject = Some(ApprovalQuery.Subject(tag)))
     assertEquals(ids(mine), Set(gp1, gp2, pub, edg, rej))
     assertEquals(ids(mine.modify(_.state).setTo(Some(ApprovalState.Open))), Set(gp1, pub))
@@ -163,7 +165,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     job(s"$tag-o1", "ingest", "done", "2026-10-01T10:00:00Z", citekey = Some(s"$t-four"))
     step(a, 1, "codex:gpt-a"); step(a, 2, "codex:gpt-b"); step(b, 1, "claude-code:opus")
     def ids(q: RunQuery) =
-      connect(ds)(AgentRepo.page(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+      connect(ds)(AgentRepo.page(q, PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
     val mine = RunQuery(q = Some(RunQuery.Q(t)))
     assertEquals(ids(mine), Set(a, b, c))
     assertEquals(ids(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))), Set(a, c))
@@ -203,7 +205,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
       target = Some(s"${t}_d")
     )
     def ids(q: JobQuery) =
-      Transactor(ds).read(JobRepo.page(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+      Transactor(ds).read(JobRepo.page(q, PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
     val mine = JobQuery(q = Some(JobQuery.Q(t)))
     assertEquals(ids(mine), Set(i1, i2, m1, r1))
     assertEquals(ids(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"), JobQuery.Kinds("media-import")))), Set(i1, i2, m1))
@@ -212,8 +214,8 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     // the start of an id finds that job
     assertEquals(ids(JobQuery(q = Some(JobQuery.Q(s"$tag-j3")))), Set(m1))
     val (states, facets) =
-      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"))).modify(_.status).setTo(List(JobQuery.Status("done"))), com.histmersion.PageSize(40)))
+      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"))).modify(_.status).setTo(List(JobQuery.Status("done"))), PageSize(40)))
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
-    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.api.jobs.JobState.Wire("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id.value == i2))
+    assert(Transactor(ds).read(JobRepo.page(Some(JobState.Wire("failed")), PageSize(500))).toOption.get._1.exists(_.id.value == i2))

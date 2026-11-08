@@ -1,15 +1,19 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source that possibly discusses an event, as its bundle line reads it. */
 final private[evidence] case class BCandidateRow(
     eventUid: UUID,
     sourceUid: UUID,
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     score: BCandidateRow.Score,
     status: BCandidateRow.Status,
     findings: List[BCandidateRow.Findings],
@@ -20,14 +24,14 @@ final private[evidence] case class BCandidateRow(
 
 object BCandidateRow:
   type Score = Score.T
-  object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Score extends RefinedType[Double, Pure]
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Findings = Findings.T
-  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Findings extends RefinedType[String, Pure]
   type Passages = Passages.T
-  object Passages extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Passages extends RefinedType[String, Pure]
   type Reasons = Reasons.T
-  object Reasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reasons extends RefinedType[String, Pure]
   type ComputedAt = ComputedAt.T
-  object ComputedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ComputedAt extends RefinedType[String, Pure]

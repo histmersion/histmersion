@@ -1,8 +1,12 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.DeepTime
 
 /** An asset as a bundle reads it: its line's fields, the size of its bytes, its period's inclusive bounds. */
 final private[assets] case class AssetBundleRow(
@@ -27,30 +31,30 @@ final private[assets] case class AssetBundleRow(
 
 object AssetBundleRow:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Mime = Mime.T
-  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha = com.histmersion.Sha256
-  val Sha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
-  type Bytes = com.histmersion.ByteCount
-  val Bytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+  object Mime extends RefinedType[String, Pure]
+  type Sha = Sha256
+  val Sha: Sha256.type = Sha256
+  type Bytes = ByteCount
+  val Bytes: ByteCount.type = ByteCount
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Int, Pure]
   type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Height extends RefinedType[Int, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Caption = Caption.T
-  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Caption extends RefinedType[String, Pure]
   type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object License extends RefinedType[String, Pure]
   type Geom = Geom.T
-  object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Geom extends RefinedType[String, Pure]
   type PNull = PNull.T
-  object PNull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PLo = com.histmersion.domain.DeepTime.SignedYear
-  val PLo: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type PHi = com.histmersion.domain.DeepTime.SignedYear
-  val PHi: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  object PNull extends RefinedType[Boolean, Pure]
+  type PLo = DeepTime.SignedYear
+  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
+  type PHi = DeepTime.SignedYear
+  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]

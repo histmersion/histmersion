@@ -1,9 +1,14 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.research.Article
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.DeepTime
 
 /** An article as a bundle reads it, its period in its three columns (Magnum maps a SELECT's columns positionally). */
 final private[articles] case class BArticleRow(
@@ -24,24 +29,24 @@ final private[articles] case class BArticleRow(
 
 object BArticleRow:
   type Slug = com.histmersion.domain.research.Slug
-  val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-  type Kind = com.histmersion.domain.research.Article.Kind
-  val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+  type Kind = Article.Kind
+  val Kind: Article.Kind.type = Article.Kind
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends RefinedType[String, Pure]
   type PNull = PNull.T
-  object PNull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PLo = com.histmersion.domain.DeepTime.SignedYear
-  val PLo: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type PHi = com.histmersion.domain.DeepTime.SignedYear
-  val PHi: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  object PNull extends RefinedType[Boolean, Pure]
+  type PLo = DeepTime.SignedYear
+  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
+  type PHi = DeepTime.SignedYear
+  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]

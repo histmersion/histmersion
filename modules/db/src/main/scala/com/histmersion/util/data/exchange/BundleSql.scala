@@ -1,8 +1,10 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.RangeSql
+import com.histmersion.api.catalogue.Year
 
 /** The SQL every carried kind's lines are read with: a clock as the wire carries it, a range as three columns, the rows
   * a scope selects, and the uid of whatever a label names.
@@ -17,11 +19,11 @@ object BundleSql:
   /** A range as the three columns [[range]] reads back. */
   def rangeCols(col: String): String = s"$col IS NULL, ${RangeSql.cols(col)}"
 
-  def range(isNull: com.histmersion.util.data.exchange.Bundle.RangeIsNull, lo: Option[com.histmersion.util.data.exchange.Bundle.RangeLower], hi: Option[com.histmersion.util.data.exchange.Bundle.RangeUpper]): Option[com.histmersion.api.exchange.Bundle.Range] =
+  def range(isNull: Bundle.RangeIsNull, lo: Option[Bundle.RangeLower], hi: Option[Bundle.RangeUpper]): Option[com.histmersion.api.exchange.Bundle.Range] =
     Option.when(!isNull.value)(
       com.histmersion.api.exchange.Bundle.Range(
-        lo.map(v => com.histmersion.api.catalogue.Year(v.value)),
-        hi.map(v => com.histmersion.api.catalogue.Year(v.value))
+        lo.map(v => Year(v.value)),
+        hi.map(v => Year(v.value))
       )
     )
 
@@ -35,7 +37,7 @@ object BundleSql:
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
   def where(scope: BundleScope, uid: String, clock: String): Sql = scope match
-    case BundleScope.All       => Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
+    case BundleScope.All       => Sql.raw(Sql.RawText("TRUE"))
     case BundleScope.Since(at) => Sql.of(Sql.OfText(s"$clock > ?::timestamptz"), Param.S(Param.S.V(at.value)))
     case BundleScope.Uids(us)  => Sql.of(Sql.OfText(s"$uid = ANY(?::uuid[])"), Param.A(us.map(u => Param.A.V(u.toString))))
 

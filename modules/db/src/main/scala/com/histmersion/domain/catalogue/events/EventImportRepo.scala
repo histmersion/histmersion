@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventCatalogueRef, EventEntry, EventFields, EventSummary, EventTaxonomy}
@@ -10,13 +11,15 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
   */
 private[events] object EventImportRepo:
   type PartName = PartName.T
-  object PartName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PartName extends RefinedType[String, Pure]
 
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
@@ -180,7 +183,7 @@ private[events] object EventImportRepo:
     * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
     * counted in the second value and left alone.
     */
-  def records(provider: Option[CatalogRecord.Provider])(using DbCon): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], com.histmersion.RowCount) =
+  def records(provider: Option[CatalogRecord.Provider])(using DbCon): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
     val rows =
       sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                      WHERE ${provider.isEmpty} OR c.provider = ${provider.fold("")(_.value)}
@@ -189,7 +192,7 @@ private[events] object EventImportRepo:
       rows.map((id, kind, j) =>
         Jsonb.read[CatalogRecord](Jsonb.JsonText(j)).map((Event.Id.assume(id), EventSummary.Kind(kind), _))
       )
-    (decoded.flatten, com.histmersion.RowCount(decoded.count(_.isEmpty)))
+    (decoded.flatten, RowCount(decoded.count(_.isEmpty)))
 
   /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
     * ([[EventProviders.WikidataEvents.moreSpecific]]).
@@ -220,7 +223,7 @@ private[events] object EventImportRepo:
   def partsDone(provider: CatalogRecord.Provider)(using DbCon): Set[PartName] =
     sql"SELECT part FROM event_import_parts WHERE provider = $provider".query[PartName].run().toSet
 
-  def markPart(provider: CatalogRecord.Provider, part: PartName, records: com.histmersion.RowCount)(using DbCon): Unit =
+  def markPart(provider: CatalogRecord.Provider, part: PartName, records: RowCount)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO event_import_parts (provider, part, records) VALUES ($provider, $part, $records)
             ON CONFLICT (provider, part) DO UPDATE SET records = EXCLUDED.records, done_at = now()""".update.run()

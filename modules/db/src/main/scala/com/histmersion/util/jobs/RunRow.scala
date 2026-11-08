@@ -1,4 +1,8 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
   * and `params` are the owner's words, stored as given; `citekey` is the source it works on, when it works on one.
@@ -26,36 +30,36 @@ final case class RunRow(
 
 object RunRow:
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Pipeline = Pipeline.T
-  object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pipeline extends RefinedType[String, Pure]
   type PipelineVersion = com.histmersion.domain.automation.Pipeline.Version
-  val PipelineVersion: _root_.com.histmersion.domain.automation.Pipeline.Version.type = _root_.com.histmersion.domain.automation.Pipeline.Version
+  val PipelineVersion: com.histmersion.domain.automation.Pipeline.Version.type = com.histmersion.domain.automation.Pipeline.Version
   type TargetKind = TargetKind.T
-  object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetKind extends RefinedType[String, Pure]
   type Target = Target.T
-  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Target extends RefinedType[String, Pure]
   type Citekey = com.histmersion.domain.library.Citekey
-  val Citekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+  val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
   type Model = Model.T
-  object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetTokens = com.histmersion.util.jobs.JobRepo.TokenBudget
-  val BudgetTokens: _root_.com.histmersion.util.jobs.JobRepo.TokenBudget.type = _root_.com.histmersion.util.jobs.JobRepo.TokenBudget
+  object Model extends RefinedType[String, Pure]
+  type BudgetTokens = JobRepo.TokenBudget
+  val BudgetTokens: JobRepo.TokenBudget.type = JobRepo.TokenBudget
   type Params = Params.T
-  object Params extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Params extends RefinedType[String, Pure]
   type AcquireItem = AcquireItem.T
-  object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcquireItem extends RefinedType[Int, Pure]
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
   type Parent = Parent.T
-  object Parent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Parent extends RefinedType[String, Pure]
   type Origin = Origin.T
-  object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Origin extends RefinedType[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type ManagerId = ManagerId.T
-  object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ManagerId extends RefinedType[String, Pure]
   type ManagerItem = ManagerItem.T
-  object ManagerItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ManagerItem extends RefinedType[Long, Pure]

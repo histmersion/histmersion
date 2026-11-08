@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -49,6 +50,28 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.media.AssetLink
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.domain.library.sources.Citekeys
+import com.histmersion.domain.library.acquisition.AcquisitionFixtures
+import com.histmersion.domain.library.acquisition.AssessmentRecord
+import com.histmersion.domain.media.assets.AssetInfoRow
+import com.histmersion.api.media.MediaItem
+import com.histmersion.api.media.AssetRelation
+import com.histmersion.api.media.MediaTarget
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.catalogue.EventPatch
+import com.histmersion.api.automation.Queue
+import com.histmersion.util.data.exchange.BundleScope
+import com.histmersion.util.storage.ContentDirectory
+import com.histmersion.util.data.exchange.BundleImporter
+import com.histmersion.util.storage.ByteSource
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —
@@ -58,7 +81,7 @@ import com.histmersion.util.database.given
   * afterwards), because an export reads the whole database and an "empty instance" must really be empty. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
+class BundleSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
@@ -82,7 +105,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // the reference data both sides share (an event points into it)
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(Place(com.histmersion.api.catalogue.Place.Id("zzb_place"), com.histmersion.api.catalogue.Place.Label("Hattusa"), com.histmersion.api.catalogue.Place.KindValue("site"), Some(com.histmersion.api.catalogue.Place.Geometry("""{"type":"Point","coordinates":[34.61,40.02]}""")))))
+      List(Place.Input(Place(Place.Id("zzb_place"), Place.Label("Hattusa"), Place.KindValue("site"), Some(Place.Geometry("""{"type":"Point","coordinates":[34.61,40.02]}""")))))
     )
     ds
 
@@ -96,10 +119,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
 
   // ── the crafted corpus ────────────────────────────────────────────────────────────────────
 
-  private val A1 = com.histmersion.domain.library.Citekey("zzb2001_alpha")
-  private val B0 = com.histmersion.domain.library.Citekey("zzb2025_beta") // renamed to B1 below: the alias case
-  private val B1 = com.histmersion.domain.library.Citekey("zzb1999_beta")
-  private val G1 = com.histmersion.domain.library.Citekey("zzb2003_gamma")
+  private val A1 = Citekey("zzb2001_alpha")
+  private val B0 = Citekey("zzb2025_beta") // renamed to B1 below: the alias case
+  private val B1 = Citekey("zzb1999_beta")
+  private val G1 = Citekey("zzb2003_gamma")
   private val Calibre = "zzcalibre4242"
   private val OriginalBytes = "%PDF-1.4 the stored original of alpha\n".getBytes(UTF_8)
   private val Png = Array[Byte](
@@ -138,7 +161,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   )
 
   private def source(
-      ck: com.histmersion.domain.library.Citekey,
+      ck: Citekey,
       body: Option[Source.OcrMarkdown],
       findings: Int,
       edges: List[Edge] = Nil,
@@ -147,18 +170,18 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     citekey = com.histmersion.api.library.Citekey(ck.value),
     title = com.histmersion.api.library.Title(s"Title of $ck — Ünïcödé"),
     authors = (List("Güterbock, Hans G.", "Jane Harrison")).map(com.histmersion.api.library.AuthorName.apply),
-    doi = (Some(s"10.1234/$ck")).map(com.histmersion.api.library.Doi.apply),
-    year = (Some(2001)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("JNES")).map(com.histmersion.api.library.Source.Venue.apply),
-    status = com.histmersion.api.library.Source.Status.Current,
-    topics = List(com.histmersion.api.library.Source.Topics("hittites")),
-    regions = List(com.histmersion.api.library.Source.Regions("Anatolia")),
-    tags = List(com.histmersion.api.library.Source.Tags("bronze-age"), com.histmersion.api.library.Source.Tags("z")),
-    period = Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))),
+    doi = (Some(s"10.1234/$ck")).map(Doi.apply),
+    year = (Some(2001)).map(Year.apply),
+    venue = (Some("JNES")).map(Source.Venue.apply),
+    status = Source.Status.Current,
+    topics = List(Source.Topics("hittites")),
+    regions = List(Source.Regions("Anatolia")),
+    tags = List(Source.Tags("bronze-age"), Source.Tags("z")),
+    period = Some(Period(Year(-1650), Year(-1180))),
     summary = Some(Source.Summary(s"summary of $ck")),
-    citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(12)),
+    citedByCount = Some(Source.CitedByCount(12)),
     influentialCitations = None,
-    provenance = Some(com.histmersion.api.library.Source.Provenance("oa")),
+    provenance = Some(Source.Provenance("oa")),
     calibreId = calibre,
     ocrMarkdown = body,
     findings = (0 until findings).toList.map(i =>
@@ -166,13 +189,13 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         Finding.Id(s"$ck#$i"),
         com.histmersion.api.library.Citekey(ck.value),
         Finding.Claim(s"claim $i of $ck"),
-        Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-        Option.when(i % 2 == 0)(GeoPoint(com.histmersion.api.catalogue.Longitude(34.615 + i * 0.000000000000123), com.histmersion.api.catalogue.Latitude(40.019))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1300 - i), com.histmersion.api.catalogue.Year(-1200))),
-        Some(com.histmersion.api.library.Finding.PeriodName("LBA")),
-        List(com.histmersion.api.library.Finding.Tags("t$i")),
+        Some(Finding.Region("Anatolia")),
+        Option.when(i % 2 == 0)(GeoPoint(Longitude(34.615 + i * 0.000000000000123), Latitude(40.019))),
+        Some(Period(Year(-1300 - i), Year(-1200))),
+        Some(Finding.PeriodName("LBA")),
+        List(Finding.Tags("t$i")),
         Some(Confidence.High),
-        Option.when(i == 0)(com.histmersion.api.library.Finding.Significance("primary_topic"))
+        Option.when(i == 0)(Finding.Significance("primary_topic"))
       )
     ),
     edges = edges,
@@ -194,114 +217,113 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         A1,
         Some(Source.OcrMarkdown("# Alpha\n\nThe body of alpha, with Ünïcödé and a NUL-free tail.\n\n" + ("x" * 9000))),
         4,
-        List(Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey(B0.value), com.histmersion.api.library.Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey("zzbmissing2020_x"), com.histmersion.api.library.Edge.Kind.Challenges)),
+        List(Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey(B0.value), Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey("zzbmissing2020_x"), Edge.Kind.Challenges)),
         Some(Source.CalibreId(Calibre))
       )
     )
-    put(ds, source(G1, Some(Source.OcrMarkdown("# Gamma\n\nshort")), 0, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Edge.Kind.SupersededBy))))
-    val _ = SourceFixtures.rename(ds, B0, com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw(B1.value))
+    put(ds, source(G1, Some(Source.OcrMarkdown("# Gamma\n\nshort")), 0, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(A1.value), Edge.Kind.SupersededBy))))
+    val _ = SourceFixtures.rename(ds, B0, Citekeys.RenameToNewRaw(B1.value))
     // a finding dropped by a later write leaves a tombstone
     SourceFixtures.load(ds, A1).foreach(s => put(ds, s.modify(_.findings).setTo(s.findings.filterNot(_.id.value == s"$A1#3"))))
     val _ =
-      com.histmersion.domain.library.acquisition.AcquisitionFixtures.putAssessment(
+      AcquisitionFixtures.putAssessment(
         ds,
-        com.histmersion.domain.library.acquisition
-          .AssessmentRecord(A1, com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict("current"), com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted(false), com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson("""{"notices":[{"kind":"x","n":1}]}"""), Some(com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy(12)), Some(com.histmersion.domain.library.acquisition.AssessmentRecord.Influential(3)))
+        AssessmentRecord(A1, AssessmentRecord.Verdict("current"), AssessmentRecord.Retracted(false), AssessmentRecord.NoticesJson("""{"notices":[{"kind":"x","n":1}]}"""), Some(AssessmentRecord.CitedBy(12)), Some(AssessmentRecord.Influential(3)))
       )
     val _ = AssetFixtures.add(
       ds,
       A1,
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), com.histmersion.domain.media.assets.NewFigure.Bytes(Png), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), com.histmersion.domain.media.assets.NewFigure.Bytes(Png :+ 7.toByte), Some(com.histmersion.domain.media.assets.NewFigure.Width(2)), Some(com.histmersion.domain.media.assets.NewFigure.Height(3)))
+        NewFigure(NewFigure.Name("fig1.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Png), None, None),
+        NewFigure(NewFigure.Name("fig2.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Png :+ 7.toByte), Some(NewFigure.Width(2)), Some(NewFigure.Height(3)))
       )
     )
     val _ = AssetFixtures.patch(
       ds,
       A1,
-      com.histmersion.domain.media.assets.AssetInfoRow.Name("fig1.png"),
+      AssetInfoRow.Name("fig1.png"),
       AssetPatch(
-        caption = Some(com.histmersion.api.media.MediaItem.Caption("a seal")),
-        lat = Some(com.histmersion.api.catalogue.Latitude(40.02)),
-        lon = Some(com.histmersion.api.catalogue.Longitude(34.61)),
-        periodStart = Some(com.histmersion.api.catalogue.Year(-1300)),
-        periodEnd = Some(com.histmersion.api.catalogue.Year(-1250))
+        caption = Some(MediaItem.Caption("a seal")),
+        lat = Some(Latitude(40.02)),
+        lon = Some(Longitude(34.61)),
+        periodStart = Some(Year(-1300)),
+        periodEnd = Some(Year(-1250))
       )
     )
     val _ =
       AssetLinkFixtures.create(
         ds,
-        AssetLink.Put(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig1.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("finding"), com.histmersion.api.media.MediaTarget.TargetId(s"$A1#0"), xywh = Some(com.histmersion.api.media.AssetLink.Xywh("0,0,1,1")))
+        AssetLink.Put(com.histmersion.api.library.Citekey(A1.value), Bundle.Asset.FileName("fig1.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("finding"), MediaTarget.TargetId(s"$A1#0"), xywh = Some(AssetLink.Xywh("0,0,1,1")))
       )
     val _ = AttestationRows.create(
       ds,
       Attestation.Put(
         com.histmersion.api.library.Citekey(A1.value),
-        com.histmersion.api.catalogue.Attestation.TargetType("finding"),
-        com.histmersion.api.catalogue.Attestation.TargetId(s"$A1#1"),
-        quote = Some(com.histmersion.api.catalogue.Attestation.Quote("The body")),
-        prefix = Some(com.histmersion.api.catalogue.Attestation.Prefix("# Alpha\n\n")),
-        suffix = Some(com.histmersion.api.catalogue.Attestation.Suffix(" of alpha")),
-        charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(9)),
-        charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(17)),
-        page = Some(com.histmersion.api.catalogue.Attestation.Page("42"))
+        Attestation.TargetType("finding"),
+        Attestation.TargetId(s"$A1#1"),
+        quote = Some(Attestation.Quote("The body")),
+        prefix = Some(Attestation.Prefix("# Alpha\n\n")),
+        suffix = Some(Attestation.Suffix(" of alpha")),
+        charStart = Some(Attestation.CharStart(9)),
+        charEnd = Some(Attestation.CharEnd(17)),
+        page = Some(Attestation.Page("42"))
       )
     )
     val sha = BundleFormat.sha256Hex(OriginalBytes)
-    SourceFixtures.setSha256(ds, A1, com.histmersion.Sha256.applyUnsafe(sha.value))
+    SourceFixtures.setSha256(ds, A1, Sha256.applyUnsafe(sha.value))
     Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
     val _ =
-      ArticleFixtures.put(ds, Article(com.histmersion.api.research.Article.Slug("zzb_topic"), com.histmersion.api.research.Article.Title("Topic"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body(s"First draft citing [[$A1]]."), Some(com.histmersion.api.research.Article.SummaryText("v1"))))
+      ArticleFixtures.put(ds, Article(Article.Slug("zzb_topic"), Article.Title("Topic"), Article.KindValue("concept"), Article.Body(s"First draft citing [[$A1]]."), Some(Article.SummaryText("v1"))))
     val _ = ArticleFixtures.put(
       ds,
       Article(
-        com.histmersion.api.research.Article.Slug("zzb_topic"),
-        com.histmersion.api.research.Article.Title("Topic"),
-        com.histmersion.api.research.Article.KindValue("concept"),
-        com.histmersion.api.research.Article.Body(s"Second draft citing [[$A1]] and [[$B1]]."),
-        Some(com.histmersion.api.research.Article.SummaryText("v2")),
-        List(com.histmersion.api.research.Article.Tags("t")),
-        List(com.histmersion.api.research.Article.Regions("Anatolia")),
-        Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1100)))
+        Article.Slug("zzb_topic"),
+        Article.Title("Topic"),
+        Article.KindValue("concept"),
+        Article.Body(s"Second draft citing [[$A1]] and [[$B1]]."),
+        Some(Article.SummaryText("v2")),
+        List(Article.Tags("t")),
+        List(Article.Regions("Anatolia")),
+        Some(Period(Year(-1500), Year(-1100)))
       )
     )
-    val _ = ArticleFixtures.put(ds, Article(com.histmersion.api.research.Article.Slug("zzb_gone"), com.histmersion.api.research.Article.Title("Gone"), com.histmersion.api.research.Article.KindValue("report"), com.histmersion.api.research.Article.Body("to be deleted")))
-    val _ = ArticleFixtures.put(ds, Article(com.histmersion.api.research.Article.Slug("zzb_gone"), com.histmersion.api.research.Article.Title("Gone"), com.histmersion.api.research.Article.KindValue("report"), com.histmersion.api.research.Article.Body("to be deleted, v2")))
-    val _ = ArticleFixtures.delete(ds, com.histmersion.domain.research.Slug("zzb_gone"))
+    val _ = ArticleFixtures.put(ds, Article(Article.Slug("zzb_gone"), Article.Title("Gone"), Article.KindValue("report"), Article.Body("to be deleted")))
+    val _ = ArticleFixtures.put(ds, Article(Article.Slug("zzb_gone"), Article.Title("Gone"), Article.KindValue("report"), Article.Body("to be deleted, v2")))
+    val _ = ArticleFixtures.delete(ds, Slug("zzb_gone"))
     EventFixtures.put(
       ds,
-      com.histmersion.domain.catalogue.events.BEventRow.Id("zzb_e1"),
+      BEventRow.Id("zzb_e1"),
       EventPut(
-        com.histmersion.api.catalogue.EventSummary.Label("Siege"),
-        com.histmersion.api.catalogue.EventSummary.Kind("battle"),
-        TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1195)), Some(com.histmersion.api.catalogue.Year(-1190)), None),
-        placeId = Some(com.histmersion.api.catalogue.Place.Id("zzb_place")),
+        EventSummary.Label("Siege"),
+        EventSummary.Kind("battle"),
+        TimeSpan(Some(Year(-1200)), Some(Year(-1195)), Some(Year(-1190)), None),
+        placeId = Some(Place.Id("zzb_place")),
         citekey = Some(com.histmersion.api.library.Citekey(A1.value)),
-        description = Some(com.histmersion.api.catalogue.EventSummary.Description("d")),
-        scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("regional")),
-        datings = List(EventDating(com.histmersion.api.catalogue.Event.Id("zzb_e1"), com.histmersion.api.library.Citekey(A1.value), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))), Some(com.histmersion.api.catalogue.EventDating.Method("textual")))),
-        participants = List(EventParticipant(com.histmersion.api.catalogue.Event.Id("zzb_e1"), com.histmersion.api.catalogue.EventParticipant.Actor("Hattusili"), com.histmersion.api.catalogue.EventParticipant.Role("ruler"), Some(com.histmersion.api.library.Citekey(A1.value))))
+        description = Some(EventSummary.Description("d")),
+        scale = Some(EventSummary.Scale("regional")),
+        datings = List(EventDating(Event.Id("zzb_e1"), com.histmersion.api.library.Citekey(A1.value), TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1180))), Some(EventDating.Method("textual")))),
+        participants = List(EventParticipant(Event.Id("zzb_e1"), EventParticipant.Actor("Hattusili"), EventParticipant.Role("ruler"), Some(com.histmersion.api.library.Citekey(A1.value))))
       )
     )
     EventFixtures.put(
       ds,
-      com.histmersion.domain.catalogue.events.BEventRow.Id("zzb_e2"),
+      BEventRow.Id("zzb_e2"),
       EventPut(
-        com.histmersion.api.catalogue.EventSummary.Label("Aftermath"),
-        geometry = Some(com.histmersion.api.catalogue.EventPatch.Geometry("""{"type":"Point","coordinates":[34.6,40.0]}""")),
-        parentId = Some(com.histmersion.api.catalogue.Event.Id("zzb_e1")),
-        edges = List(EventEdge(com.histmersion.api.catalogue.Event.Id("zzb_e2"), com.histmersion.api.catalogue.Event.Id("zzb_e1"), com.histmersion.api.catalogue.EventEdge.Kind("after"), com.histmersion.api.library.Citekey(A1.value), Some(com.histmersion.api.catalogue.EventEdge.Note("n"))))
+        EventSummary.Label("Aftermath"),
+        geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[34.6,40.0]}""")),
+        parentId = Some(Event.Id("zzb_e1")),
+        edges = List(EventEdge(Event.Id("zzb_e2"), Event.Id("zzb_e1"), EventEdge.Kind("after"), com.histmersion.api.library.Citekey(A1.value), Some(EventEdge.Note("n"))))
       )
     )
     eventSets(ds)
     transact(ds)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("Hittites"), com.histmersion.api.automation.Goal.StatusValue("seeding"), Some(com.histmersion.api.automation.Goal.Notes("notes")), List(com.histmersion.api.automation.Goal.Tags("t")), Nil, Some(com.histmersion.api.catalogue.Year(-1650)), Some(com.histmersion.api.catalogue.Year(-1180))))
+      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal"), Goal.Put(Goal.Title("Hittites"), Goal.StatusValue("seeding"), Some(Goal.Notes("notes")), List(Goal.Tags("t")), Nil, Some(Year(-1650)), Some(Year(-1180))))
     )
-    transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub"), Goal.Put(com.histmersion.api.automation.Goal.Title("Sub"), parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zzb_goal")))))
-    val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("read alpha"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Hittites")), reason = Some(com.histmersion.api.automation.Queue.QueueItem.Reason("why"))))
-    val _ = QueueRows.add(ds, Kind.Log, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("2026-10-03: did things"), createdAt = Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-10-03T09:00:00Z"))))
-    val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("buy a book")))
-    val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(com.histmersion.api.automation.Queue.QueueItem.Status("done"))))
+    transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub"), Goal.Put(Goal.Title("Sub"), parentSlug = Some(Goal.Slug("zzb_goal")))))
+    val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd(Queue.QueueItem.Text("read alpha"), Some(Queue.QueueItem.Topic("Hittites")), reason = Some(Queue.QueueItem.Reason("why"))))
+    val _ = QueueRows.add(ds, Kind.Log, QueueAdd(Queue.QueueItem.Text("2026-10-03: did things"), createdAt = Some(Queue.QueueItem.CreatedAt("2026-10-03T09:00:00Z"))))
+    val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd(Queue.QueueItem.Text("buy a book")))
+    val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(Queue.QueueItem.Status("done"))))
     val _ = QueueRows.delete(ds, q3.id)
 
   /** The event-catalogue sets (#1647): the catalogue's columns of an event, its catalogue record, a candidate decided
@@ -338,10 +360,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
 
   // ── bundle plumbing ───────────────────────────────────────────────────────────────────────
 
-  private def exportOf(ds: DataSource, originals: Path, since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At] = None): Array[Byte] =
+  private def exportOf(ds: DataSource, originals: Path, since: Option[BundleScope.Since.At] = None): Array[Byte] =
     val out = java.io.ByteArrayOutputStream()
     BundleExport
-      .write(ds, out, since, com.histmersion.util.storage.ContentDirectory(originals), TestExchange.kinds)
+      .write(ds, out, since, ContentDirectory(originals), TestExchange.kinds)
       .fold(e => fail(e), identity)
     out.toByteArray
 
@@ -366,17 +388,17 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   ): Bundle.ImportResult =
     val f = Files.createTempFile(tmp, "in-", ".hmx")
     Files.write(f, bundle)
-    com.histmersion.util.data.exchange.BundleImporter
+    BundleImporter
       .run(
         ds,
-        com.histmersion.util.storage.ByteSource.file(f),
-        com.histmersion.Sha256.applyUnsafe(BundleFormat.sha256Hex(bundle).value),
+        ByteSource.file(f),
+        Sha256.applyUnsafe(BundleFormat.sha256Hex(bundle).value),
         BundleImport.Options(
           BundleImport.Options.DryRun(dryRun),
           BundleImport.Options.ChunkChars(cfg.limits.chunkChars.value),
           BundleImport.Options.ToleranceKm(cfg.places.pointToleranceKm.value)
         ),
-        com.histmersion.util.storage.ContentDirectory(originals),
+        ContentDirectory(originals),
         resolutions,
         merge,
         TestExchange.kinds,
@@ -406,7 +428,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(detail.uid, Some(after))
     assertEquals(detail.origin, Some(instanceId(ds)))
     assert(fs.nonEmpty && fs.forall(_.uid.isDefined), fs.toString)
-    assert(ArticleFixtures.get(ds, com.histmersion.domain.research.Slug("zzb_topic")).flatMap(_.uid).isDefined)
+    assert(ArticleFixtures.get(ds, Slug("zzb_topic")).flatMap(_.uid).isDefined)
     val inst = instanceId(ds)
     List(
       "sources",
@@ -454,7 +476,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(kinds.get("queue-item"), Some(1))
     // V030: a change to an owned set moves its owner
     val t0 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
-    val _ = SourceFixtures.addEdges(ds, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(B1.value), com.histmersion.api.library.Edge.Kind.Challenges)))
+    val _ = SourceFixtures.addEdges(ds, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(B1.value), Edge.Kind.Challenges)))
     val t1 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
     assertNotEquals(t1, t0)
 
@@ -475,7 +497,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(m.instance.id, instanceId(ds))
     assertEquals(m.files.map(_.path), Bundle.Files.all)
     assertEquals(
-      m.files.find(_.path.value == com.histmersion.api.exchange.Bundle.Kind.Source.file).map(_.lines),
+      m.files.find(_.path.value == Bundle.Kind.Source.file).map(_.lines),
       Some(3)
     )
     // the blobs: two bodies, two figures, one version body, the original
@@ -497,18 +519,18 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val asOf = full.asOf.getOrElse(fail("no asOf"))
     Thread.sleep(5)
     exec(ds, "DELETE FROM asset_links")
-    val _ = SourceFixtures.patch(ds, G1, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("changed"))), cfg.limits.chunkChars)
-    val inc = exportOf(ds, sp, Some(com.histmersion.util.data.exchange.BundleScope.Since.At(asOf.value)))
+    val _ = SourceFixtures.patch(ds, G1, Source.Patch(summary = Some(Source.Summary("changed"))), cfg.limits.chunkChars)
+    val inc = exportOf(ds, sp, Some(BundleScope.Since.At(asOf.value)))
     val es = entries(inc)
     val m = manifestOf(inc)
     assertEquals(m.since, Some(asOf))
     assertEquals(
-      m.files.find(_.path.value == com.histmersion.api.exchange.Bundle.Kind.Source.file).map(_.lines),
+      m.files.find(_.path.value == Bundle.Kind.Source.file).map(_.lines),
       Some(1)
     )
-    assert(text(es, com.histmersion.api.exchange.Bundle.Kind.Source.file).contains(G1.value))
+    assert(text(es, Bundle.Kind.Source.file).contains(G1.value))
     assertEquals(
-      m.files.find(_.path.value == com.histmersion.api.exchange.Bundle.Kind.Finding.file).map(_.lines),
+      m.files.find(_.path.value == Bundle.Kind.Finding.file).map(_.lines),
       Some(0)
     )
     assert(text(es, Bundle.Files.Tombstones).contains("asset-link"))
@@ -517,7 +539,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(m.blobs.count, 1)
     assert(es.exists(_._1.startsWith("blobs/")))
     assertEquals(
-      m.files.find(_.path.value == com.histmersion.api.exchange.Bundle.Kind.Asset.file).map(_.lines),
+      m.files.find(_.path.value == Bundle.Kind.Asset.file).map(_.lines),
       Some(0)
     )
 
@@ -603,8 +625,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       Bundle.Files.PlaceSiteTypes -> 1
     ).foreach((f, n) => assertEquals(manifestOf(first).files.find(_.path.value == f).map(_.lines), Some(n), f))
     assert(
-      text(es, com.histmersion.api.exchange.Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
-      text(es, com.histmersion.api.exchange.Bundle.Kind.Event.file)
+      text(es, Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
+      text(es, Bundle.Kind.Event.file)
     )
     val r1 = importInto(b, first, sb)
     assert(r1.applied.value, r1.problems.mkString("\n"))
@@ -681,11 +703,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(a, "SELECT count(*)::int FROM merge_ledger"), 0)
     assert(java.util.Arrays.equals(exportOf(a, sa), before), "importing its own bundle changed the export")
     // …and after a local change, an OLD own bundle never wins over it
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("newer here"))), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("newer here"))), cfg.limits.chunkChars)
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
     assertEquals(
-      r2.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      r2.counts.find(_.kind == Bundle.Kind.Source).map(_.keptLocal),
       Some(1)
     )
     assertEquals(SourceFixtures.load(a, A1).flatMap(_.summary), Some("newer here"))
@@ -696,30 +718,30 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     populate(a, sa)
     val _ = importInto(b, exportOf(a, sa), sb)
     // changed over there only → fast-forward
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("work edit"))), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work edit"))), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r1.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.updated),
+      r1.counts.find(_.kind == Bundle.Kind.Source).map(_.updated),
       Some(1),
       r1.toString
     )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // changed here only → kept
-    val _ = SourceFixtures.patch(b, A1, Source.Patch(notes = Some(com.histmersion.api.library.Source.Notes("home edit"))), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(b, A1, Source.Patch(notes = Some(Source.Notes("home edit"))), cfg.limits.chunkChars)
     val r2 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r2.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      r2.counts.find(_.kind == Bundle.Kind.Source).map(_.keptLocal),
       Some(1),
       r2.toString
     )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // changed on both sides → an open issue: the import is refused, nothing written (M3)…
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("work again"))), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work again"))), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
     assert(!r3.applied.value)
     assertEquals(
-      r3.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.conflicts),
+      r3.counts.find(_.kind == Bundle.Kind.Source).map(_.conflicts),
       Some(1),
       r3.toString
     )
@@ -728,7 +750,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r3.problems.exists(_.value.startsWith(conflict.id.value)), r3.problems.toString)
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
-    val keep = MergeResolutions(List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue(conflict.id.value), com.histmersion.api.exchange.MergeResolution.Decision("keep-left"))))
+    val keep = MergeResolutions(List(MergeResolution(MergeResolution.Issue(conflict.id.value), MergeResolution.Decision("keep-left"))))
     val r3b = importInto(b, third, sb, resolutions = keep)
     assert(r3b.applied.value, r3b.problems.mkString("\n"))
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
@@ -741,13 +763,13 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = Transactor(a).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub")))
     val r4 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r4.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Goal).map(_.deleted),
+      r4.counts.find(_.kind == Bundle.Kind.Goal).map(_.deleted),
       Some(1),
       r4.toString
     )
     assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zzb_goal_sub'"), 0)
     // a rename over there is followed here: the citekey, its findings and an alias
-    val _ = SourceFixtures.rename(a, G1, com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("zzb2004_gamma"))
+    val _ = SourceFixtures.rename(a, G1, Citekeys.RenameToNewRaw("zzb2004_gamma"))
     val r5 = importInto(b, exportOf(a, sa), sb)
     assert(r5.applied.value, r5.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzb2004_gamma'"), 1)
@@ -761,7 +783,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = importInto(b, bundle, sb)
     assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"), 1)
     // here, the source goes back to its old key: the alias B0 is dropped
-    assert(SourceFixtures.rename(b, B1, com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw(B0.value)).isRight)
+    assert(SourceFixtures.rename(b, B1, Citekeys.RenameToNewRaw(B0.value)).isRight)
     assertEquals(count(b, s"SELECT count(*)::int FROM alias_tombstones WHERE alias = '$B0'"), 1)
     val r = importInto(b, bundle, sb)
     assert(r.applied.value, r.problems.mkString("\n"))
@@ -782,7 +804,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val r = importInto(b, bundle, sb)
     assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(
-      r.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Asset).map(_.skippedDeleted),
+      r.counts.find(_.kind == Bundle.Kind.Asset).map(_.skippedDeleted),
       Some(1),
       r.toString
     )
@@ -793,7 +815,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sa, sc) = (spool("cla"), spool("clc"))
     populate(a, sa)
     put(c, source(A1, None, 1))
-    val _ = ArticleFixtures.put(c, Article(com.histmersion.api.research.Article.Slug("zzb_topic"), com.histmersion.api.research.Article.Title("Other topic"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("other")))
+    val _ = ArticleFixtures.put(c, Article(Article.Slug("zzb_topic"), Article.Title("Other topic"), Article.KindValue("concept"), Article.Body("other")))
     val before = exportOf(c, sc)
     val r = importInto(c, exportOf(a, sa), sc)
     assert(!r.applied.value)
@@ -813,7 +835,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r.dryRun.value)
     assertEquals(r.problems, Nil)
     assertEquals(
-      r.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.inserted),
+      r.counts.find(_.kind == Bundle.Kind.Source).map(_.inserted),
       Some(3)
     )
     assert(java.util.Arrays.equals(exportOf(b, sb), empty), "a dry run wrote something")
@@ -829,16 +851,16 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       es.map(f).foreach((p, b) => w.bytes(BundleTar.Entry.Name(p), b).fold(e => fail(e.value), identity))
       w.finish()
       out.toByteArray
-    def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("999")))
+    def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some(Bundle.Manifest.SchemaVersion("999")))
     val edited = rebuild { case (p, b) =>
-      if p == com.histmersion.api.exchange.Bundle.Kind.Goal.file then
+      if p == Bundle.Kind.Goal.file then
         p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
       else p -> b
     }
     val v1 = verify(edited)
     assert(!v1.ok.value)
     assert(
-      v1.problems.exists(_.value.contains(s"${com.histmersion.api.exchange.Bundle.Kind.Goal.file}: sha256")),
+      v1.problems.exists(_.value.contains(s"${Bundle.Kind.Goal.file}: sha256")),
       v1.problems.mkString("\n")
     )
     assert(v1.problems.exists(_.value.contains("does not match its content")), v1.problems.mkString("\n"))
@@ -851,7 +873,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!v3.ok.value)
     assert(verify(whole).ok.value, verify(whole).problems.mkString("\n"))
     // and a server older than the bundle refuses it
-    assert(BundleReader.verify(java.io.ByteArrayInputStream(whole), Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("1"))).problems.exists(_.value.contains("newer")))
+    assert(BundleReader.verify(java.io.ByteArrayInputStream(whole), Some(Bundle.Manifest.SchemaVersion("1"))).problems.exists(_.value.contains("newer")))
 
   test("property: random corpora round-trip export → import → export, byte for byte"):
     val rnd = scala.util.Random(20261003L)
@@ -859,9 +881,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       val (a, b) = (fresh(s"pa$i"), fresh(s"pb$i"))
       val (sa, sb) = (spool(s"pa$i"), spool(s"pb$i"))
       val n = 2 + rnd.nextInt(6)
-      val cks = (0 until n).map(k => com.histmersion.domain.library.Citekey.applyUnsafe(f"zzp${1900 + rnd.nextInt(120)}%d_s$k%d")).toList
+      val cks = (0 until n).map(k => Citekey.applyUnsafe(f"zzp${1900 + rnd.nextInt(120)}%d_s$k%d")).toList
       cks.foreach { ck =>
-        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(dst => Edge(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Citekey(dst.value), com.histmersion.api.library.Edge.Kind.References))
+        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(dst => Edge(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Citekey(dst.value), Edge.Kind.References))
         put(
           a,
           source(
@@ -877,16 +899,16 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
           val _ = ArticleFixtures.put(
             a,
             Article(
-              com.histmersion.api.research.Article.Slug(s"zzp_art$k"),
-              com.histmersion.api.research.Article.Title(s"A$k"),
-              com.histmersion.api.research.Article.KindValue("concept"),
-              com.histmersion.api.research.Article.Body(s"v$v ${cks.filter(_ => rnd.nextBoolean()).map(c => s"[[$c]]").mkString(" ")}")
+              Article.Slug(s"zzp_art$k"),
+              Article.Title(s"A$k"),
+              Article.KindValue("concept"),
+              Article.Body(s"v$v ${cks.filter(_ => rnd.nextBoolean()).map(c => s"[[$c]]").mkString(" ")}")
             )
           )
         }
       }
       if rnd.nextBoolean() then
-        val _ = QueueRows.add(a, Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text(rnd.alphanumeric.take(20).mkString)))
+        val _ = QueueRows.add(a, Kind.Tasks, QueueAdd(Queue.QueueItem.Text(rnd.alphanumeric.take(20).mkString)))
       val first = exportOf(a, sa)
       val r = importInto(b, first, sb)
       assert(r.applied.value, s"iteration $i: ${r.problems.mkString("\n")}")

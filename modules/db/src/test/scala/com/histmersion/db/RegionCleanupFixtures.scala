@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,19 +18,22 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
   * Athens, provinces and a site on atlas grid squares' centres, a withdrawn duplicate and its replacement, a deme filed
   * as a region. Around 140–145°E 45–50°S, where no other suite has any; ids are `pleiades_99910…` and `zzrc…`, the
   * source `zzrc_src`.
   */
-trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
+trait RegionCleanupFixtures extends DbSuite with Bounded:
   protected val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   protected lazy val cfg = AppConfig.load()
   protected lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -63,67 +67,67 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val PeirId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100009")
 
   protected val places = List(
-    Place(com.histmersion.api.catalogue.Place.Id(City), com.histmersion.api.catalogue.Place.Label("Zzrc City"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.0), Latitude(-50.0))),
+    Place(Place.Id(City), Place.Label("Zzrc City"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.0), Latitude(-50.0))),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Regio1),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Regio I (Porta Capena)"),
+      Place.Id(Regio1),
+      Place.Label("Zzrc Regio I (Porta Capena)"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(140.02), Latitude(-50.01)),
       properties = types("region")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Regio2),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Regio II (Caelimontium)"),
+      Place.Id(Regio2),
+      Place.Label("Zzrc Regio II (Caelimontium)"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(140.03), Latitude(-49.99)),
       properties = types("region")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Aiantis),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Aiantis"),
+      Place.Id(Aiantis),
+      Place.Label("Zzrc Aiantis"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(140.2), Latitude(-50.0)),
       properties = types("people")
     ),
-    Place(com.histmersion.api.catalogue.Place.Id(Athens), com.histmersion.api.catalogue.Place.Label("Zzrc Athens"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.21), Latitude(-50.02))),
+    Place(Place.Id(Athens), Place.Label("Zzrc Athens"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.21), Latitude(-50.02))),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Thess),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Thessalia"),
+      Place.Id(Thess),
+      Place.Label("Zzrc Thessalia"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(142.5), Latitude(-47.5)),
       properties = types("province")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Achaia),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Achaia"),
+      Place.Id(Achaia),
+      Place.Label("Zzrc Achaia"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(141.25), Latitude(-47.75)),
       properties = types("region")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Grid),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Gridsite"),
+      Place.Id(Grid),
+      Place.Label("Zzrc Gridsite"),
       Place.KindValue(Place.Kind.Site),
       pt(Longitude(143.5), Latitude(-46.5)),
       properties = types("settlement")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Dup),
-      com.histmersion.api.catalogue.Place.Label("Withdrawn (duplicate): Zzrc Creta et Cyrene"),
+      Place.Id(Dup),
+      Place.Label("Withdrawn (duplicate): Zzrc Creta et Cyrene"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(144.0), Latitude(-45.0)),
       properties = types("province")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Into),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Creta et Cyrene (Roman province)"),
+      Place.Id(Into),
+      Place.Label("Zzrc Creta et Cyrene (Roman province)"),
       Place.KindValue(Place.Kind.Site),
       pt(Longitude(144.3), Latitude(-45.2)),
       properties = types("province-2")
     ),
     Place(
-      com.histmersion.api.catalogue.Place.Id(Peir),
-      com.histmersion.api.catalogue.Place.Label("Zzrc Peiraieus"),
+      Place.Id(Peir),
+      Place.Label("Zzrc Peiraieus"),
       Place.KindValue(Place.Kind.Region),
       pt(Longitude(140.25), Latitude(-50.05)),
       properties = types("region,settlement,deme-attic")
@@ -131,7 +135,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   )
 
   protected def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint]) =
-    Finding(Finding.Id(s"zzrc_src#$n"), com.histmersion.api.library.Citekey("zzrc_src"), Finding.Claim(s"claim $n"), region, at, None, None, Nil, None)
+    Finding(Finding.Id(s"zzrc_src#$n"), Citekey("zzrc_src"), Finding.Claim(s"claim $n"), region, at, None, None, Nil, None)
 
   protected val findings = List(
     f(0, Some(Finding.Region("Zzrc City")), Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))),
@@ -148,13 +152,13 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey("zzrc_src"),
+        citekey = Citekey("zzrc_src"),
         title = com.histmersion.api.library.Title("Region cleanup fixture"),
         authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2026)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,

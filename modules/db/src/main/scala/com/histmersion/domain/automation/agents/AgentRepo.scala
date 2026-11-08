@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.*
@@ -15,6 +16,16 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 
 import com.histmersion.api.automation.Goal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Managers
+import com.histmersion.domain.automation.Run
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.CodexRetention
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Agents
+import com.histmersion.domain.automation.Approval
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -23,21 +34,21 @@ import com.histmersion.api.automation.Goal
   */
 object AgentRepo:
   type ActiveOnly = ActiveOnly.T
-  object ActiveOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ActiveOnly extends RefinedType[Boolean, Pure]
   type CloseReason = CloseReason.T
-  object CloseReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CloseReason extends RefinedType[String, Pure]
   type OutputChars = OutputChars.T
-  object OutputChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OutputChars extends RefinedType[Int, Pure]
   type PageCursor = PageCursor.T
-  object PageCursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageCursor extends RefinedType[String, Pure]
   type CursorProblem = CursorProblem.T
-  object CursorProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CursorProblem extends RefinedType[String, Pure]
 
   /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
     * ([[Jsonb]]).
     */
 
-  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
+  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = Jsonb.DropNulls(true))
 
   final private case class RunRow(
       id: RunInfo.Id,
@@ -59,14 +70,14 @@ object AgentRepo:
       cost: BigDecimal,
       targetKind: Option[RunInfo.TargetKind],
       params: RunParams,
-      acquireItem: Option[com.histmersion.api.automation.Queue.QueueItem.Id],
+      acquireItem: Option[Queue.QueueItem.Id],
       goal: Option[Goal.Slug],
       parent: Option[RunInfo.Id],
       origin: Option[RunInfo.Origin],
       resumeAt: Option[RunInfo.ResumeAt],
       dryRun: RunInfo.DryRun,
-      managerId: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id],
-      managerItem: Option[com.histmersion.api.automation.Managers.ManagerItem.Id],
+      managerId: Option[Managers.ManagerInfo.Id],
+      managerItem: Option[Managers.ManagerItem.Id],
       heartbeatAt: Option[RunInfo.HeartbeatAt]
   ) derives DbCodec
 
@@ -153,7 +164,7 @@ object AgentRepo:
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =
     (runSelect ++ sqlOf(" AND j.id = ?", str(id.value))).frag.query[RunRow].run().headOption.map(toInfo)
 
-  def list(status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: com.histmersion.PageSize, goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): Vector[RunInfo] =
+  def list(status: Option[Run.State.Wire], limit: PageSize, goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): Vector[RunInfo] =
     (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ sqlOf(
       " LIMIT ?",
       int(limit.value)
@@ -163,12 +174,12 @@ object AgentRepo:
     * `upTo` are run ids. Left: a cursor that names no job.
     */
   def page(
-      status: Option[com.histmersion.domain.automation.Run.State.Wire],
-      limit: com.histmersion.PageSize,
+      status: Option[Run.State.Wire],
+      limit: PageSize,
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+      before: Option[PageCursor] = None,
+      upTo: Option[PageCursor] = None
+  )(using DbCon): Either[CursorProblem, (Vector[RunInfo], Boolean)] =
     page(
       RunQuery(
         status = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(RunQuery.Status(_)).toList,
@@ -214,10 +225,10 @@ object AgentRepo:
   /** One page of the runs that match `q`, newest first. Left: a cursor that names no job. */
   def page(
       q: RunQuery,
-      limit: com.histmersion.PageSize,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+      limit: PageSize,
+      before: Option[PageCursor],
+      upTo: Option[PageCursor]
+  )(using DbCon): Either[CursorProblem, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", str(c.value))) match
       case Some(c) => Left(CursorProblem(s"No agent run '${c.value}' to page from"))
       case None    =>
@@ -237,9 +248,9 @@ object AgentRepo:
     * facets — each under every filter but its own. A run's models are the one it was started with and every one its
     * steps reported; the provider is a model's `provider:` part.
     */
-  def runFacets(q: RunQuery)(using DbCon): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.RowCount)], List[(String, List[(String, com.histmersion.RowCount)])]) =
+  def runFacets(q: RunQuery)(using DbCon): (List[(Run.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = runConds(q)
-    val facetMax = com.histmersion.PageSize.applyUnsafe(ListFilters.FacetMax)
+    val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
     def from(except: String) = Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ c.except(except)
     def used(except: String): Sql =
       Sql.raw(
@@ -250,7 +261,7 @@ object AgentRepo:
       ) ++ runsOnlySql ++ c.except(except) ++
         Sql.raw(Sql.RawText(" AND x.m IS NOT NULL) u WHERE true"))
     (
-      Keyset.countsOn(from("status"), "j.status").map((s, n) => (com.histmersion.domain.automation.Run.State.Wire(s.value), n)),
+      Keyset.countsOn(from("status"), "j.status").map((s, n) => (Run.State.Wire(s.value), n)),
       List(
         "pipeline" -> ListSql.facetOn(from("pipeline"), "j.pipeline", facetMax),
         "origin" -> ListSql.facetOn(from("origin"), originExpr, facetMax),
@@ -261,12 +272,12 @@ object AgentRepo:
     )
 
   /** How many runs are in each state — of one goal, when given. */
-  def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.RowCount)] =
+  def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[(Run.State.Wire, RowCount)] =
     Keyset
       .countsOn(Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ runGoal(goal), "j.status")
-      .map((s, n) => (com.histmersion.domain.automation.Run.State.Wire(s.value), n))
+      .map((s, n) => (Run.State.Wire(s.value), n))
 
-  private def runStatus(status: Option[com.histmersion.domain.automation.Run.State.Wire]): Sql =
+  private def runStatus(status: Option[Run.State.Wire]): Sql =
     status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => sqlOf(" AND j.status = ?", str(s)))
 
   private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Sql =
@@ -283,7 +294,7 @@ object AgentRepo:
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
     */
-  def forManager(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id, active: com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly = com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly(false), limit: com.histmersion.PageSize = com.histmersion.PageSize(200))(using DbCon): Vector[RunInfo] =
+  def forManager(managerId: Managers.ManagerInfo.Id, active: ActiveOnly = ActiveOnly(false), limit: PageSize = PageSize(200))(using DbCon): Vector[RunInfo] =
     val open = if active.value then sqlOf(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
     (runSelect ++ sqlOf(" AND j.manager_id = ?", str(managerId.value)) ++ open ++
       sqlOf(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", int(limit.value))).frag
@@ -303,19 +314,19 @@ object AgentRepo:
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 
   /** The checkpoint of step `seq`: its name and recorded output, if an attempt finished. */
-  def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: StepInfo.Seq)(using DbCon): Option[(StepInfo.Name, Jsonb.JsonText)] =
+  def checkpoint(jobId: Job.Id, seq: StepInfo.Seq)(using DbCon): Option[(StepInfo.Name, Jsonb.JsonText)] =
     sql"""SELECT name, output::text FROM agent_steps
           WHERE job_id = $jobId AND seq = $seq AND status = ${StepStatus.Done.wire}
           ORDER BY attempt DESC LIMIT 1"""
       .query[(StepInfo.Name, Option[Jsonb.JsonText])]
       .run()
       .headOption
-      .map((n, o) => (n, o.getOrElse(com.histmersion.util.database.Jsonb.JsonText("null"))))
+      .map((n, o) => (n, o.getOrElse(Jsonb.JsonText("null"))))
 
   /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the count rather than
     * restarting it, so `max-retries` holds across a restart.
     */
-  def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: StepInfo.Seq)(using DbCon): StepInfo.Attempt =
+  def attempts(jobId: Job.Id, seq: StepInfo.Seq)(using DbCon): StepInfo.Attempt =
     StepInfo.Attempt(
       sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
         .query[Int]
@@ -348,25 +359,25 @@ object AgentRepo:
 
   object StepRecord:
     type Seq = Seq.T
-    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Seq extends RefinedType[Int, Pure]
     type Attempt = Attempt.T
-    object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Attempt extends RefinedType[Int, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Output = Output.T
-    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Output extends RefinedType[String, Pure]
     type PromptHash = PromptHash.T
-    object PromptHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PromptHash extends RefinedType[String, Pure]
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
     type Error = Error.T
-    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Error extends RefinedType[String, Pure]
     type ActualModel = ActualModel.T
-    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ActualModel extends RefinedType[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstCallTokens extends RefinedType[Long, Pure]
     type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Turns extends RefinedType[Int, Pure]
 
   final case class MessageRecord(
       n: MessageRecord.N,
@@ -380,23 +391,23 @@ object AgentRepo:
 
   object MessageRecord:
     type N = N.T
-    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object N extends RefinedType[Int, Pure]
     type Role = Role.T
-    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Role extends RefinedType[String, Pure]
     type Content = Content.T
-    object Content extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Content extends RefinedType[String, Pure]
     type ToolName = ToolName.T
-    object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ToolName extends RefinedType[String, Pure]
     type ToolInput = ToolInput.T
-    object ToolInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ToolInput extends RefinedType[String, Pure]
     type ToolResult = ToolResult.T
-    object ToolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ToolResult extends RefinedType[String, Pure]
     type LatencyMs = LatencyMs.T
-    object LatencyMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LatencyMs extends RefinedType[Int, Pure]
 
   /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse, is never visible).
     */
-  def record(jobId: com.histmersion.util.jobs.Job.Id, s: StepRecord, messages: List[MessageRecord])(using DbCon): Unit =
+  def record(jobId: Job.Id, s: StepRecord, messages: List[MessageRecord])(using DbCon): Unit =
     val started = s.startedAt.toString
     val would = Option.when(s.wouldWrite.nonEmpty)(Jsonb.write(s.wouldWrite))
     sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
@@ -414,7 +425,7 @@ object AgentRepo:
     }
     sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run()
 
-  def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars)(using DbCon): List[StepInfo] =
+  def steps(jobId: Job.Id, outputChars: OutputChars)(using DbCon): List[StepInfo] =
     sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
                  tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
                  to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
@@ -442,14 +453,14 @@ object AgentRepo:
       )
     }
 
-  def messages(jobId: com.histmersion.util.jobs.Job.Id)(using DbCon): List[MessageInfo] =
+  def messages(jobId: Job.Id)(using DbCon): List[MessageInfo] =
     sql"""SELECT seq, n, role, content, tool_name, tool_input, tool_result, latency_ms
           FROM agent_messages WHERE job_id = $jobId ORDER BY seq, attempt, n""".query[MessageInfo].run().toList
 
   // ── spend ──────────────────────────────────────────────────────────────────────────────────────
 
   /** What one run has spent (every attempt counts — a rejected answer was still paid for). */
-  def runSpend(jobId: com.histmersion.util.jobs.Job.Id)(using DbCon): (Usage, BigDecimal) =
+  def runSpend(jobId: Job.Id)(using DbCon): (Usage, BigDecimal) =
     sql"""SELECT coalesce(sum(tokens_in), 0)::bigint, coalesce(sum(tokens_out), 0)::bigint,
                  coalesce(sum(tokens_cache_read), 0)::bigint, coalesce(sum(tokens_cache_write), 0)::bigint,
                  coalesce(sum(cost_usd), 0)
@@ -471,23 +482,23 @@ object AgentRepo:
   /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints, tokens, cost —
     * are never pruned: a resume and the budget sums need them. Returns how many rows went.
     */
-  def pruneMessages(days: com.histmersion.domain.CodexRetention.KeepDays)(using DbCon): com.histmersion.RowCount =
-    if days.value <= 0 then com.histmersion.RowCount(0)
+  def pruneMessages(days: CodexRetention.KeepDays)(using DbCon): RowCount =
+    if days.value <= 0 then RowCount(0)
     else
-      com.histmersion.RowCount(
+      RowCount(
         sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
       )
 
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
   type ApprovalJobId = ApprovalJobId.T
-  object ApprovalJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApprovalJobId extends RefinedType[String, Pure]
 
   final case class ApprovalRow(
       id: ApprovalInfo.Id,
       jobId: Option[ApprovalJobId],
       kind: ApprovalInfo.Kind,
-      citekey: Option[com.histmersion.api.library.Citekey],
+      citekey: Option[Citekey],
       status: Option[ApprovalInfo.Status],
       current: Option[ApprovalInfo.Current],
       edgeKind: Option[ApprovalInfo.EdgeKind],
@@ -517,12 +528,12 @@ object AgentRepo:
       r.id,
       r.jobId.map(j => RunInfo.Id(j.value)),
       r.kind,
-      r.citekey.getOrElse(com.histmersion.api.library.Citekey("")),
+      r.citekey.getOrElse(Citekey("")),
       r.status,
       r.current,
       r.edgeKind,
       r.target,
-      com.histmersion.api.automation.Agents.ApprovalInfo.Evidence(""),
+      Agents.ApprovalInfo.Evidence(""),
       None,
       r.state,
       r.note,
@@ -539,7 +550,7 @@ object AgentRepo:
         val d = Jsonb.read[Goal.Plans.ArticleDraft](r.proposal)
         base.modify(_.article).setTo(d).modify(_.evidence).setTo(ApprovalInfo.Evidence(d.flatMap(_.summary).map(_.value).getOrElse("")))
       case Some(ApprovalKind.HintEffect) =>
-        val p = Jsonb.read[com.histmersion.api.automation.Managers.HintProposal](r.proposal)
+        val p = Jsonb.read[Managers.HintProposal](r.proposal)
         base.modify(
           _.hintEffect).setTo(p).modify(_.evidence).setTo(
           ApprovalInfo.Evidence(p.map(x => Option(x.why.value).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse(""))
@@ -573,7 +584,7 @@ object AgentRepo:
       .map(info)
 
   /** Newest first; `state` narrows (none = every state). */
-  def approvals(state: Option[ApprovalState], limit: com.histmersion.PageSize)(using DbCon): List[ApprovalInfo] =
+  def approvals(state: Option[ApprovalState], limit: PageSize)(using DbCon): List[ApprovalInfo] =
     val where = state.fold(Sql.empty)(s => sqlOf(" WHERE state = ?", str(s.wire.value)))
     (approvalSelect ++ where ++ sqlOf(
       " ORDER BY created_at DESC, id DESC LIMIT ?",
@@ -585,10 +596,10 @@ object AgentRepo:
     */
   def approvalPage(
       state: Option[ApprovalState],
-      limit: com.histmersion.PageSize,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+      limit: PageSize,
+      before: Option[PageCursor] = None,
+      upTo: Option[PageCursor] = None
+  )(using DbCon): Either[CursorProblem, (List[ApprovalInfo], Boolean)] =
     approvalPage(ApprovalQuery(state), limit, before, upTo)
 
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
@@ -625,11 +636,11 @@ object AgentRepo:
   /** One page of the approvals that match `q`, newest first ([[com.histmersion.api.Paging]]). */
   def approvalPage(
       q: ApprovalQuery,
-      limit: com.histmersion.PageSize,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
-    def cursor(c: com.histmersion.domain.automation.agents.AgentRepo.PageCursor): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, Param] =
+      limit: PageSize,
+      before: Option[PageCursor],
+      upTo: Option[PageCursor]
+  )(using DbCon): Either[CursorProblem, (List[ApprovalInfo], Boolean)] =
+    def cursor(c: PageCursor): Either[CursorProblem, Param] =
       c.value.trim.toLongOption
         .map(lng(_))
         .filter(Keyset.existsOn("approvals", _))
@@ -646,12 +657,12 @@ object AgentRepo:
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
     * `decidedBy` facets (each under every filter but its own).
     */
-  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)], List[(String, List[(String, com.histmersion.RowCount)])]) =
+  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = approvalConds(q)
-    val facetMax = com.histmersion.PageSize.applyUnsafe(ListFilters.FacetMax)
+    val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
     def from(except: String) = Sql.raw(Sql.RawText(" FROM approvals WHERE true")) ++ c.except(except)
     (
-      Keyset.countsOn(from("state"), "state").map((s, n) => (com.histmersion.domain.automation.Approval.State.Wire(s.value), n)),
+      Keyset.countsOn(from("state"), "state").map((s, n) => (Approval.State.Wire(s.value), n)),
       List(
         "kind" -> ListSql.facetOn(from("kind"), "kind", facetMax),
         "decidedBy" -> ListSql.facetOn(from("decidedBy"), ApprovalQuery.decidedByExpr, facetMax)
@@ -659,16 +670,16 @@ object AgentRepo:
     )
 
   /** How many approvals are in each state. */
-  def approvalCounts()(using DbCon): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)] =
+  def approvalCounts()(using DbCon): List[(Approval.State.Wire, RowCount)] =
     Keyset
       .countsOn(Sql.raw(Sql.RawText(" FROM approvals")), "state")
-      .map((s, n) => (com.histmersion.domain.automation.Approval.State.Wire(s.value), n))
+      .map((s, n) => (Approval.State.Wire(s.value), n))
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
     * opened before, never a second). `state` = approved with a `result` records one applied at once (an `auto` mode).
     */
   def openForStep(
-      jobId: com.histmersion.util.jobs.Job.Id,
+      jobId: Job.Id,
       seq: StepInfo.Seq,
       kind: ApprovalKind,
       subject: ApprovalInfo.Subject,
@@ -688,7 +699,7 @@ object AgentRepo:
     * mode).
     */
   def openSubject(
-      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      jobId: Option[Job.Id],
       kind: ApprovalKind,
       subject: ApprovalInfo.Subject,
       payload: Jsonb.JsonText,
@@ -704,7 +715,7 @@ object AgentRepo:
     approval(id).get
 
   /** The approvals run `jobId` opened (of `kind`, when given), oldest first. */
-  def approvalsOf(jobId: com.histmersion.util.jobs.Job.Id, kind: Option[ApprovalKind] = None)(using DbCon): List[ApprovalInfo] =
+  def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind] = None)(using DbCon): List[ApprovalInfo] =
     (approvalSelect ++ sqlOf(" WHERE job_id = ?", str(jobId.value)) ++
       kind.fold(Sql.empty)(k => sqlOf(" AND kind = ?", str(k.wire.value))) ++
       sqlOf(" ORDER BY id")).frag.query[ApprovalRow].run().toList.map(info)
@@ -721,7 +732,7 @@ object AgentRepo:
     )).frag.query[ApprovalRow].run().toList.map(info)
 
   /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
-  def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.PageSize)(using DbCon): List[ApprovalInfo] =
+  def openOfKinds(kinds: List[ApprovalKind], limit: PageSize)(using DbCon): List[ApprovalInfo] =
     (approvalSelect ++ sqlOf(
       " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
       Param.A(kinds.map(k => Param.A.V(k.wire.value))),
@@ -745,21 +756,21 @@ object AgentRepo:
       )
 
   /** How many approvals of `kind` are open (the backlog a scaled daily cap reads). */
-  def openCount(kind: ApprovalKind)(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(
+  def openCount(kind: ApprovalKind)(using DbCon): RowCount =
+    RowCount(
       sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head
     )
 
   /** Open approvals per subject (a goal or an article slug). */
-  def openBySubject()(using DbCon): Map[ApprovalInfo.Subject, com.histmersion.RowCount] =
+  def openBySubject()(using DbCon): Map[ApprovalInfo.Subject, RowCount] =
     sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
       .query[(String, Int)]
       .run()
-      .map((s, n) => ApprovalInfo.Subject(s) -> com.histmersion.RowCount(n))
+      .map((s, n) => ApprovalInfo.Subject(s) -> RowCount(n))
       .toMap
 
   /** The approval step `seq` of run `jobId` opened, if it did. */
-  def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: StepInfo.Seq)(using DbCon): Option[ApprovalInfo] =
+  def forStep(jobId: Job.Id, seq: StepInfo.Seq)(using DbCon): Option[ApprovalInfo] =
 
     (approvalSelect ++ sqlOf(" WHERE job_id = ? AND seq = ?", str(jobId.value), int(seq.value))).frag
       .query[ApprovalRow]
@@ -768,8 +779,8 @@ object AgentRepo:
       .map(info)
 
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
-  def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseReason)(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(
+  def closeForRun(jobId: Job.Id, why: CloseReason)(using DbCon): RowCount =
+    RowCount(
       sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
           WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
     )

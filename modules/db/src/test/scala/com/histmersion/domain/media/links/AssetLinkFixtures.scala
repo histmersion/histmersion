@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.api.Write
 
@@ -9,6 +10,8 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.{AssetInfoRow, MediaItemRow}
 import com.histmersion.domain.media.imports.Target
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
 
 /** The figures' links' repository as the db suites reach it from outside the feature. */
 object AssetLinkFixtures:
@@ -20,7 +23,7 @@ object AssetLinkFixtures:
       targetId: Option[Target.Id]
   ): AssetLink.List =
     val rows = connect(ds)(AssetLinkRepo.list(citekey, asset, targetType, targetId))
-    AssetLink.List.of(com.histmersion.api.RowCount(rows.size), rows, com.histmersion.api.personal.UnreadPage.Offset(0))
+    AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
   def create(ds: DataSource, in: AssetLink.Put): Either[Api.Error, AssetLink] =
     transact(ds):

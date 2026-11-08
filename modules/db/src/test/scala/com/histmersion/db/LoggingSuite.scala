@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 import com.histmersion.util.database.given
 
 /** Library logs (Flyway, HikariCP, pgjdbc) reach scribe through SLF4J (#824). slf4j-api 2.x finds its binding through

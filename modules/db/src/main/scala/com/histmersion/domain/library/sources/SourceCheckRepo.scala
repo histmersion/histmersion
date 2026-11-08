@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.library.CitationLint
 
@@ -14,6 +15,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.checks.{FormatField, Lint}
 import com.histmersion.api.library.Edge
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the
   * safe repairs.
@@ -163,21 +167,21 @@ private[sources] object SourceCheckRepo:
       .flatMap((src, dst, kind) =>
         Edge.Kind
           .fromWire(Edge.Kind.Wire(kind))
-          .map(k => Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), k))
+          .map(k => Edge(Citekey(src), Citekey(dst), k))
       )
       .toList
   )
   private val TagRows = CheckInput(
-    arrays(tagsSql).map((ck, tags) => (com.histmersion.api.library.Citekey(ck), tags.map(Lint.Tag(_))))
+    arrays(tagsSql).map((ck, tags) => (Citekey(ck), tags.map(Lint.Tag(_))))
   )
   private val YearRows = CheckInput(
     pairs(yearsSql).map((ck, y) =>
-      (com.histmersion.api.library.Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => com.histmersion.api.catalogue.Year(i.toLong)))
+      (Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => Year(i.toLong)))
     )
   ) // year is nullable
   private val AuthorRows = CheckInput(
     arrays(authorsSql).map((ck, authors) =>
-      (com.histmersion.api.library.Citekey(ck), authors.map(com.histmersion.api.library.AuthorName(_)))
+      (Citekey(ck), authors.map(AuthorName(_)))
     )
   )
 
@@ -188,20 +192,20 @@ private[sources] object SourceCheckRepo:
   def report(r: Rule, c: Context, maxItems: Lint.ItemLimit)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name.value match
       case DanglingEdges =>
-        CitationLint.danglingEdges(run(EdgeRows), run(StoredCitekeys).map(com.histmersion.api.library.Citekey(_)), c.suggestions)
+        CitationLint.danglingEdges(run(EdgeRows), run(StoredCitekeys).map(Citekey(_)), c.suggestions)
       case UnresolvedShortCitekeys =>
-        CitationLint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys).map(com.histmersion.api.library.Citekey(_)), c.suggestions)
+        CitationLint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys).map(Citekey(_)), c.suggestions)
       case DuplicateDoi =>
-        Lint.duplicates(pairs(doiSql).map((ck, k) => (com.histmersion.api.library.Citekey(ck), Lint.DuplicateKey(k))), "doi")
+        Lint.duplicates(pairs(doiSql).map((ck, k) => (Citekey(ck), Lint.DuplicateKey(k))), "doi")
       case DuplicateSha256 =>
-        Lint.duplicates(pairs(sha256Sql).map((ck, k) => (com.histmersion.api.library.Citekey(ck), Lint.DuplicateKey(k))), "sha256")
+        Lint.duplicates(pairs(sha256Sql).map((ck, k) => (Citekey(ck), Lint.DuplicateKey(k))), "sha256")
       case NonCanonicalTag     => Lint.nonCanonicalTags(run(TagRows))
       case YearCitekeyMismatch => Lint.yearCitekeyMismatch(run(YearRows))
       case AuthorPipe          => Lint.authorPipe(run(AuthorRows))
       case NoteFormat          =>
         Lint.formatItems(
           triples(noteTextsSql).flatMap((ck, summary, notes) =>
-            val key = com.histmersion.api.library.Citekey(ck)
+            val key = Citekey(ck)
             List(
               (key, FormatField.Summary, Lint.FormatItemDetail(summary)),
               (key, FormatField.Notes, Lint.FormatItemDetail(notes))
@@ -215,17 +219,17 @@ private[sources] object SourceCheckRepo:
       case FindingPlaceholder =>
         FindingPlacement
           .unresolvedPlaceholdersIn()
-          .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck.value), LintItem.Detail(detail.value)))
+          .map((ck, detail) => LintItem(Citekey(ck.value), LintItem.Detail(detail.value)))
       case name =>
         projections
           .get(name)
           .toList
           .flatMap(pairs)
-          .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck), LintItem.Detail(detail)))
+          .map((ck, detail) => LintItem(Citekey(ck), LintItem.Detail(detail)))
     Lint.report(r, items, maxItems)
 
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 
   /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
-  def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] =
-    Sql.raw(Sql.RawText(staleCitekeysSql)).frag.query[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)].run()
+  def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, RowCount)] =
+    Sql.raw(Sql.RawText(staleCitekeysSql)).frag.query[(com.histmersion.domain.library.Citekey, RowCount)].run()

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.db.*
 
@@ -11,6 +12,7 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Doi
 
 /** Work-list rows written and read straight through the repository, each call in a transaction of its own: how the
   * suites of other features seed and inspect the lists (the work lists' own behaviour is the server's
@@ -20,7 +22,7 @@ object QueueRows:
   def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem = transact(ds)(QueueRepo.insert(kind, in))
   def list(ds: DataSource, kind: Kind, all: Boolean): Vector[QueueItem] = connect(ds)(QueueRepo.list(kind, all))
   def get(ds: DataSource, id: QueueItem.Id): Option[QueueItem] = connect(ds)(QueueRepo.get(repoId(id)))
-  def acquireNaming(ds: DataSource, doi: com.histmersion.domain.library.Doi): Vector[QueueItem] =
+  def acquireNaming(ds: DataSource, doi: Doi): Vector[QueueItem] =
     connect(ds)(QueueRepo.naming(Kind.Acquire, doi))
 
   private def repoId(id: QueueItem.Id): QueueRepo.QueueItemId = QueueRepo.QueueItemId(id.value)

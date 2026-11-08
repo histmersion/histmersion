@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.Vocab
@@ -7,7 +8,7 @@ import com.histmersion.api.catalogue.Place
 /** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */
 given given_DbCodec_PlaceDating: DbCodec[Place.Dating] = Vocab.codec(
   s => Place.Dating.parse(Place.Dating.Wire(s.value)),
-  d => com.histmersion.WireEnumValues.Wire(d.wire.value),
+  d => WireEnumValues.Wire(d.wire.value),
   Place.Dating.Unknown
 )
 
@@ -17,6 +18,6 @@ given given_DbCodec_PlaceDating: DbCodec[Place.Dating] = Vocab.codec(
 given given_DbCodec_PlaceTimeBasis: DbCodec[Place.TimeBasis] =
   Vocab.codec(
     s => Place.TimeBasis.parse(Place.TimeBasis.Wire(s.value)),
-    b => com.histmersion.WireEnumValues.Wire(b.wire.value),
+    b => WireEnumValues.Wire(b.wire.value),
     Place.TimeBasis.Dated
   )

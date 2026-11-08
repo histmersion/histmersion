@@ -1,16 +1,20 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final private[assets] case class MediaGeoRow(
-    citekey: Option[com.histmersion.domain.library.Citekey],
+    citekey: Option[Citekey],
     name: MediaGeoRow.Name,
     kind: Option[MediaGeoRow.Kind],
-    lat: com.histmersion.Latitude,
-    lon: com.histmersion.Longitude,
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    lat: Latitude,
+    lon: Longitude,
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     caption: Option[MediaGeoRow.Caption],
     uid: MediaGeoRow.Uid,
     provider: Option[MediaGeoRow.Provider],
@@ -24,24 +28,24 @@ final private[assets] case class MediaGeoRow(
 
 object MediaGeoRow:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Caption = Caption.T
-  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Caption extends RefinedType[String, Pure]
   type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uid extends RefinedType[String, Pure]
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object License extends RefinedType[String, Pure]
   type Credit = Credit.T
-  object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Credit extends RefinedType[String, Pure]
   type HasThumb = HasThumb.T
-  object HasThumb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HasThumb extends RefinedType[Boolean, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceUrl extends RefinedType[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LicenseUrl extends RefinedType[String, Pure]
   type Author = Author.T
-  object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Author extends RefinedType[String, Pure]

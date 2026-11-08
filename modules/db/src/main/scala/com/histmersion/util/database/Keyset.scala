@@ -1,7 +1,10 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.Paging
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Keyset paging of a newest-first list (`core.Paging`): rows ordered by `created_at DESC, id DESC`, a cursor being the
   * id of a row of the same table. The cursor's `created_at` is looked up by a row subquery, so the comparison is at the
@@ -10,7 +13,7 @@ import com.histmersion.api.Paging
   */
 private[histmersion] object Keyset:
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
 
   /** The order every paged list uses. `alias` = the table's alias in the query (with its dot). */
 
@@ -30,10 +33,10 @@ private[histmersion] object Keyset:
     Sql.of(Sql.OfText(s"SELECT 1 FROM $table WHERE id = ?"), cursor).frag.query[Int].run().nonEmpty
 
   /** `SELECT <state>, count(*) … GROUP BY <state>`, largest first then by name. */
-  def countsOn(from: Sql, stateCol: String)(using DbCon): List[(com.histmersion.util.database.Keyset.State, com.histmersion.RowCount)] =
+  def countsOn(from: Sql, stateCol: String)(using DbCon): List[(State, RowCount)] =
     (Sql.raw(Sql.Text(s"SELECT $stateCol, count(*)::int ")) ++ from ++ Sql
       .raw(Sql.Text(s" GROUP BY $stateCol"))).frag
-      .query[(com.histmersion.util.database.Keyset.State, com.histmersion.RowCount)]
+      .query[(State, RowCount)]
       .run()
       .toList
       .sortBy((s, n) => (-n.value, s.value))
@@ -47,7 +50,7 @@ private[histmersion] object Keyset:
       where: Sql,
       alias: String,
       table: String,
-      limit: com.histmersion.PageSize,
+      limit: PageSize,
       before: Option[Param],
       upTo: Option[Param],
       id: R => Param
@@ -55,7 +58,7 @@ private[histmersion] object Keyset:
     val bounds = before.fold(Sql.empty)(olderThan(alias, table, _)) ++ upTo.fold(Sql.empty)(atOrNewer(alias, table, _))
     val rows =
       (select ++ where ++ bounds ++ orderBy(alias) ++ Sql.of(
-        com.histmersion.util.database.Sql.OfText(" LIMIT ?"),
+        Sql.OfText(" LIMIT ?"),
         Param.I(Param.I.V(math.min(limit.value, Int.MaxValue - 1) + 1))
       )).frag.query[R].run()
     val (shown, more) = Paging.cut(rows, Paging.Limit(limit.value))

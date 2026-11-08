@@ -1,7 +1,10 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
   * the lists match any of their values.
@@ -16,22 +19,22 @@ final case class ApprovalQuery(
 
 object ApprovalQuery:
   type Cursor = Cursor.T
-  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cursor extends RefinedType[String, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
   type UpTo = UpTo.T
-  object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpTo extends RefinedType[String, Pure]
   /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.
     */
 
   type Subject = Subject.T
-  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Subject extends RefinedType[String, Pure]
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
 
   val decidedByExpr: String =
     import ListFilters.DecidedBy

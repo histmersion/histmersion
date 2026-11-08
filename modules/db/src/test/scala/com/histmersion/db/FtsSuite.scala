@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,13 +14,17 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.api.library.{Filter, SearchHit, Source}
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.search.Search
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.sources.SourceRepairs
 
 /** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the point of plan
   * §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable because they are chunked, and every hit
   * carries the passage that matched.
   */
-class FtsSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class FtsSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -29,10 +34,10 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     d
 
   private def chunkChars = cfg.limits.chunkChars
-  private def words = com.histmersion.domain.library.search.Search.SnippetWords(cfg.limits.snippetWords.value)
+  private def words = Search.SnippetWords(cfg.limits.snippetWords.value)
 
   private def source(
-      ck: com.histmersion.api.library.Citekey,
+      ck: Citekey,
       title: com.histmersion.api.library.Title,
       summary: Source.Summary,
       body: Source.OcrMarkdown
@@ -42,15 +47,15 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       title = title,
       authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
-      year = (Some(1999)).map(com.histmersion.api.catalogue.Year.apply),
+      year = (Some(1999)).map(Year.apply),
       venue = None,
-      status = com.histmersion.api.library.Source.Status.Current,
+      status = Source.Status.Current,
       topics = Nil,
       regions = Nil,
       tags = Nil,
       period = None,
       summary = Some(summary),
-      citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(0)),
+      citedByCount = Some(Source.CitedByCount(0)),
       influentialCitations = None,
       provenance = None,
       calibreId = None,
@@ -75,7 +80,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source(
-        com.histmersion.api.library.Citekey("zz_fts_big"),
+        Citekey("zz_fts_big"),
         com.histmersion.api.library.Title("Aegean stratigraphy"),
         Source.Summary("A summary with no query terms."),
         Source.OcrMarkdown(big)
@@ -85,7 +90,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source(
-        com.histmersion.api.library.Citekey("zz_fts_egypt"),
+        Citekey("zz_fts_egypt"),
         com.histmersion.api.library.Title("Delta excavations"),
         Source.Summary("Another summary."),
         Source.OcrMarkdown("## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III.")
@@ -95,7 +100,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       source(
-        com.histmersion.api.library.Citekey("zz_fts_title"),
+        Citekey("zz_fts_title"),
         com.histmersion.api.library.Title("The Sea Peoples reconsidered"),
         Source.Summary("Historiography."),
         Source.OcrMarkdown("## Body\n\nThis body never mentions the raiders by name; it discusses pottery.")
@@ -136,7 +141,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
   test("no query keeps the most-cited listing, with no snippet"):
     fixture
-    val hits = listing(Filter(limit = com.histmersion.api.library.Filter.Limit(5)))
+    val hits = listing(Filter(limit = Filter.Limit(5)))
     assert(hits.nonEmpty)
     assert(hits.forall(h => h.snippet.isEmpty && h.matchedHeading.isEmpty))
 
@@ -156,14 +161,14 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       ds,
       chunkChars,
       after = Some(com.histmersion.domain.library.Citekey("zz_fts_a")),
-      maxSources = Some(com.histmersion.domain.library.sources.SourceRepairs.MaxSources(3))
+      maxSources = Some(SourceRepairs.MaxSources(3))
     )
     assert(r.sources.value == 3 && r.chunks.value > r.sources.value, r)
     assert(search(Filter.Q("\"sea peoples\"")).exists(_.citekey.value == "zz_fts_big"))
 
 /** Planner/statistics upkeep against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class PlannerUpkeepSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

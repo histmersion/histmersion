@@ -1,7 +1,11 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.{Param, Sql}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
 
 /** Postgres full-text search, as composable SQL fragments (plan §1.4).
   *
@@ -32,30 +36,30 @@ import com.histmersion.util.database.{Param, Sql}
   */
 object Search:
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type SnippetWords = SnippetWords.T
-  object SnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SnippetWords extends RefinedType[Int, Pure]
 
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
-  type FtsPredicateQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val FtsPredicateQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
-  type RankExprQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val RankExprQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
-  type BestChunkJoinQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val BestChunkJoinQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
-  type BestChunkCteQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val BestChunkCteQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
-  type RankExprCteQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val RankExprCteQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
-  type SnippetsQueryQ = _root_.com.histmersion.domain.library.search.Search.Query
-  val SnippetsQueryQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type FtsPredicateQ = Query
+  val FtsPredicateQ: Query.type = Query
+  type RankExprQ = Query
+  val RankExprQ: Query.type = Query
+  type BestChunkJoinQ = Query
+  val BestChunkJoinQ: Query.type = Query
+  type BestChunkCteQ = Query
+  val BestChunkCteQ: Query.type = Query
+  type RankExprCteQ = Query
+  val RankExprCteQ: Query.type = Query
+  type SnippetsQueryQ = Query
+  val SnippetsQueryQ: Query.type = Query
 
-  def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Sql.of(Sql.OfText("websearch_to_tsquery('english', ?)"), Param.S(Param.S.V(q.value)))
+  def tsQuery(q: Query): Sql = Sql.of(Sql.OfText("websearch_to_tsquery('english', ?)"), Param.S(Param.S.V(q.value)))
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body chunks. Use in a
     * `WHERE`.
     */
-  def ftsPredicate(q: com.histmersion.domain.library.search.Search.FtsPredicateQ, alias: String = "s"): Sql =
+  def ftsPredicate(q: FtsPredicateQ, alias: String = "s"): Sql =
     Sql.raw(Sql.RawText(s"($alias.tsv @@ ")) ++ tsQuery(q) ++
       s" OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = $alias.citekey AND fts_p.tsv @@ " ++
       tsQuery(q) ++ "))"
@@ -64,7 +68,7 @@ object Search:
     * do the work — chunk lexemes are unweighted, i.e. D — so a title match outranks a body match without any hand-tuned
     * multiplier. Use in an `ORDER BY … DESC`.
     */
-  def rankExpr(q: com.histmersion.domain.library.search.Search.RankExprQ, alias: String = "s"): Sql =
+  def rankExpr(q: RankExprQ, alias: String = "s"): Sql =
     Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++
       ") + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, " ++ tsQuery(q) ++
       s")) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ " ++
@@ -87,7 +91,7 @@ object Search:
     * **Deprecated in favour of the two-phase approach**: [[bestChunkCte]] + [[snippetsQuery]]. Kept for reference; new
     * callers should use the CTE path.
     */
-  def bestChunkJoin(q: com.histmersion.domain.library.search.Search.BestChunkJoinQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, alias: String = "s"): Sql =
+  def bestChunkJoin(q: BestChunkJoinQ, maxWords: SnippetWords, alias: String = "s"): Sql =
     val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
@@ -108,11 +112,11 @@ object Search:
     * Boilerplate headings (references, bibliography, etc.) are penalised at 0.001x, matching the behaviour of
     * [[bestChunkJoin]].
     */
-  def bestChunkCte(q: com.histmersion.domain.library.search.Search.BestChunkCteQ): Sql =
+  def bestChunkCte(q: BestChunkCteQ): Sql =
     // `fts_m` ranks each matching chunk ONCE (MATERIALIZED stops Postgres inlining it back into the
     // sort key): `ts_rank_cd` de-TOASTs the chunk's tsvector, and evaluating it three times per
     // chunk (rank + both CASE arms) tripled the cost of a common word — 6.7k chunks for "bronze".
-    Sql.raw(com.histmersion.util.database.Sql.RawText("WITH fts_m AS MATERIALIZED (SELECT citekey, ord, heading, ts_rank_cd(tsv, ")) ++ tsQuery(q) ++
+    Sql.raw(Sql.RawText("WITH fts_m AS MATERIALIZED (SELECT citekey, ord, heading, ts_rank_cd(tsv, ")) ++ tsQuery(q) ++
       ") AS r FROM source_chunks WHERE tsv @@ " ++ tsQuery(q) ++ "), " ++
       "best_chunks AS (SELECT DISTINCT ON (citekey) citekey, r AS rank FROM fts_m" ++
       " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
@@ -122,7 +126,7 @@ object Search:
     * `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE. Falls back gracefully: `coalesce(bc.rank, 0)` when the
     * source matched only on title/summary.
     */
-  def rankExprCte(q: com.histmersion.domain.library.search.Search.RankExprCteQ, alias: String = "s"): Sql =
+  def rankExprCte(q: RankExprCteQ, alias: String = "s"): Sql =
     Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
 
   /** Compute the snippet and heading for a specific set of citekeys. Uses a two-level query:
@@ -141,14 +145,14 @@ object Search:
     * Returns `(citekey, heading, snippet)` rows. An empty `citekeys` list returns an empty fragment that matches
     * nothing (the caller should skip the query).
     */
-  def snippetsQuery(q: com.histmersion.domain.library.search.Search.SnippetsQueryQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, citekeys: List[com.histmersion.domain.library.Citekey]): Sql =
-    if citekeys.isEmpty then return Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"))
+  def snippetsQuery(q: SnippetsQueryQ, maxWords: SnippetWords, citekeys: List[Citekey]): Sql =
+    if citekeys.isEmpty then return Sql.raw(Sql.RawText("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"))
     val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
     val qmarks = List.fill(citekeys.size)("?").mkString(", ")
     // inner: find the best chunk (citekey, ord) per source — no ts_headline
-    val inner = Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT DISTINCT ON (citekey) citekey, ord")) ++
+    val inner = Sql.raw(Sql.RawText("SELECT DISTINCT ON (citekey) citekey, ord")) ++
       Sql(Sql.Text(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ "), citekeys.map(c => Param.S(Param.S.V(c.value)))) ++
       tsQuery(q) ++ " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
       "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.domain.Scheduling
@@ -7,6 +8,10 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Goal
+import com.histmersion.domain.library.Doi
 
 /** The store of the work lists (`queue_items`, migration `V009__queue.sql`): one table, every list in it by its `list`.
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that
@@ -17,11 +22,11 @@ import com.augustnagro.magnum.*
   */
 private[worklists] object QueueRepo:
   type QueueItemId = QueueItemId.T
-  object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueueItemId extends RefinedType[Int, Pure]
   type JobText = JobText.T
-  object JobText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobText extends RefinedType[String, Pure]
   type GoalText = GoalText.T
-  object GoalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalText extends RefinedType[String, Pure]
 
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated column lists). `to_char`
     * normalises to UTC so the value is stable whatever the session TZ is.
@@ -48,23 +53,23 @@ private[worklists] object QueueRepo:
   /** The open (with `all`, every) items of `kind` that serve goal `goal`: their own goal, or one of `linked` (the
     * references of the goal's `queue-item` links, compared with the id as text).
     */
-  def forGoal(kind: Kind, goal: QueueRepo.GoalText, linked: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref], all: Boolean)(using DbCon): Vector[QueueItem] =
+  def forGoal(kind: Kind, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND ($all OR status = $Open)
               AND (goal_slug = $goal OR id::text = ANY($linked::text[]))
             ORDER BY id""".query[QueueItem].run()
 
   /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
-  def forJob(kind: Kind, job: QueueRepo.JobText)(using DbCon): Vector[QueueItem] =
+  def forJob(kind: Kind, job: JobText)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
             ORDER BY id""".query[QueueItem].run()
 
-  def get(id: com.histmersion.domain.automation.worklists.QueueRepo.QueueItemId)(using DbCon): Option[QueueItem] =
+  def get(id: QueueItemId)(using DbCon): Option[QueueItem] =
     sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption
 
   /** The items with these ids (any list, any status), by id; ids with no row are simply absent. */
-  def byIds(ids: List[com.histmersion.domain.automation.worklists.QueueRepo.QueueItemId])(using DbCon): Vector[QueueItem] =
+  def byIds(ids: List[QueueItemId])(using DbCon): Vector[QueueItem] =
     if ids.isEmpty then Vector.empty
     else
       // a text[] crosses as a real array (db/Codecs.scala); the ids are compared as text there
@@ -75,7 +80,7 @@ private[worklists] object QueueRepo:
     * backlog make right before adding one to the acquisition list (a sweep's snapshot of the list can be minutes old,
     * and another watcher's sweep may have added it since).
     */
-  def naming(kind: Kind, doi: com.histmersion.domain.library.Doi)(using DbCon): Vector[QueueItem] =
+  def naming(kind: Kind, doi: Doi)(using DbCon): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} AND strpos(lower(text), $d) > 0
@@ -106,9 +111,9 @@ private[worklists] object QueueRepo:
                     done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
                 WHERE id = ${next.id}""".update.run()
 
-  def delete(id: com.histmersion.domain.automation.worklists.QueueRepo.QueueItemId)(using DbCon): Unit =
+  def delete(id: QueueItemId)(using DbCon): Unit =
     val _ = sql"DELETE FROM queue_items WHERE id = $id".update.run()
 
   /** Every row of `kind` removed; how many. */
-  def deleteList(kind: Kind)(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run())
+  def deleteList(kind: Kind)(using DbCon): RowCount =
+    RowCount(sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run())

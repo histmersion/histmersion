@@ -1,16 +1,22 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.catalogue.Attestation
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
   * edge. Every method runs on the connection it is given.
   */
 private[evidence] object AttestationRepo:
   type AttestationId = AttestationId.T
-  object AttestationId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AttestationId extends RefinedType[Long, Pure]
 
 
   private given DbCodec[Attestation] = DbCodec.derived
@@ -20,7 +26,7 @@ private[evidence] object AttestationRepo:
       "a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, " +
       "a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
-  def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType], targetId: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using
+  def list(citekey: Option[Citekey], targetType: Option[BAttestationFullRow.TargetType], targetId: Option[BAttestationFullRow.TargetId], limit: PageSize, offset: Offset)(using
       DbCon
   ): Attestation.List =
     val ck = citekey.map(_.value.trim).filter(_.nonEmpty)
@@ -39,12 +45,12 @@ private[evidence] object AttestationRepo:
           LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}
           """.query[Attestation].run().toList
     Attestation.List.of(
-      com.histmersion.api.RowCount(total),
+      RowCount(total),
       rows,
-      com.histmersion.api.personal.UnreadPage.Offset(offset.value.max(0))
+      UnreadPage.Offset(offset.value.max(0))
     )
 
-  def get(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Option[Attestation] =
+  def get(id: AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
   def create(in: Attestation.Put)(using DbCon): Attestation =
@@ -59,9 +65,9 @@ private[evidence] object AttestationRepo:
                    RETURNING id""".query[Long].run().head
     get(AttestationId(id)).get
 
-  def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
+  def exists(id: AttestationId)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
-  def update(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId, p: Attestation.Patch)(using DbCon): Unit =
+  def update(id: AttestationId, p: Attestation.Patch)(using DbCon): Unit =
     p.quote.foreach(v => sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run())
     p.prefix.foreach(v => sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run())
     p.suffix.foreach(v => sql"UPDATE attestations SET suffix = $v WHERE id = $id".update.run())
@@ -74,4 +80,4 @@ private[evidence] object AttestationRepo:
     p.ctsUrn.foreach(v => sql"UPDATE attestations SET cts_urn = $v WHERE id = $id".update.run())
     p.note.foreach(v => sql"UPDATE attestations SET note = $v WHERE id = $id".update.run())
 
-  def delete(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Boolean = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0
+  def delete(id: AttestationId)(using DbCon): Boolean = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0

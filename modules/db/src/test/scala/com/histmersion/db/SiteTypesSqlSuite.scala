@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,17 +15,18 @@ import com.histmersion.api.catalogue.{Place, SiteTypes}
 import com.histmersion.api.catalogue.CatalogRecord.Wikidata
 import com.histmersion.api.catalogue.SiteTypes.{Geonames, Pleiades, SiteType}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
 
 /** `SiteTypesSql.expr` — the map tiles' site type in SQL — answers what [[SiteTypes.of]] answers, for every entry of
   * its tables and the cases between them (HISTMERSION_TEST_DB_URL; skipped otherwise).
   */
-class SiteTypesSqlSuite extends com.histmersion.db.DbSuite:
+class SiteTypesSqlSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val cfg = AppConfig.load()
-    testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   private val site = Place.Kind.Wire("site")
   private val polity = Place.Kind.Wire("polity")
@@ -71,7 +73,7 @@ class SiteTypesSqlSuite extends com.histmersion.db.DbSuite:
     assertEquals(
       sqlType(kind.value, stored.map(_.value), ft.map(_.value), fcode.map(_.value), cls.map(_.value), json),
       SiteTypes.of(
-        com.histmersion.api.catalogue.Place.Id("x"),
+        Place.Id("x"),
         kind,
         stored,
         ft,

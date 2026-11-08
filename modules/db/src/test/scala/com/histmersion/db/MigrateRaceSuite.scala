@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import hearth.kindlings.optics.syntax.*
 
@@ -15,7 +16,7 @@ import com.histmersion.util.database.given
   * cluster-global, so both used to try to create it and the second failed. Works in databases of its own
   * (`histmersion_race_*_test`) and a throwaway role, both dropped afterwards. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
+class MigrateRaceSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()

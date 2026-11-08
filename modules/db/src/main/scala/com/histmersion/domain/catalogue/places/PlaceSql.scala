@@ -1,9 +1,13 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 import com.histmersion.domain.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.DeepTime
 
 /** The places' SQL other queries embed, over a `places` row by its alias: what an import brought in, how a place is
   * dated, its time basis and the time rule of a view at a year or over a window, the base layers' predicates, the
@@ -19,7 +23,7 @@ object PlaceSql:
     */
   type ImportedList = ImportedListValue
   type ImportedListValue = ImportedListValue.T
-  object ImportedListValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportedListValue extends RefinedType[String, Pure]
   type ModernSqlAlias = String
   type DefaultModernFrom = DefaultModernFromValue
   export com.histmersion.domain.DeepTime.{SignedYear as DefaultModernFromValue}
@@ -28,7 +32,7 @@ object PlaceSql:
   type TimeBasisSqlAlias = String
   export com.histmersion.domain.DeepTime.{SignedYear as TimeWindowCteModernFrom}
   type InTimeSqlAlias = String
-  export com.histmersion.domain.catalogue.Place.Kind.{Wire as InTimeSqlKind}
+  export Place.Kind.{Wire as InTimeSqlKind}
   type InWindowSqlAlias = String
 
   def importedSql(alias: String): String =
@@ -37,7 +41,7 @@ object PlaceSql:
   /** `('wikidata', 'geonames', 'tgn')` — [[Gazetteer.ImportedSources]] as an SQL list. The partial indexes of
     * V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word.
     */
-  val ImportedList: com.histmersion.domain.catalogue.places.PlaceSql.ImportedList =
+  val ImportedList: ImportedList =
     ImportedListValue(Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")"))
 
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open range there means
@@ -90,26 +94,26 @@ object PlaceSql:
   val ModernSql = modernSql("p")
 
   /** [[ModernSql]] over a `places` row aliased `alias`. */
-  def modernSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.ModernSqlAlias): String = s"coalesce(($alias.properties->>'modern')::boolean, false)"
+  def modernSql(alias: ModernSqlAlias): String = s"coalesce(($alias.properties->>'modern')::boolean, false)"
 
   // ── the time rule (2026-10-09): what a view AT A TIME shows ─────────────────────────────────────
 
   /** The configured `places.modern-from` for callers that hold no config (the tests). It MUST equal `reference.conf`;
     * `PlaceTimeSuite` asserts it. Every production read passes the configured value.
     */
-  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = DefaultModernFromValue(1500L)
+  val DefaultModernFrom: DefaultModernFrom = DefaultModernFromValue(1500L)
 
   /** A stored period open on both sides: the source states no date. An unknown start (V074) is not — it stores a
     * window.
     */
-  private def undatedSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.UndatedSqlAlias): String = s"(lower_inf($alias.period) AND upper_inf($alias.period))"
+  private def undatedSql(alias: UndatedSqlAlias): String = s"(lower_inf($alias.period) AND upper_inf($alias.period))"
 
   /** A physical feature of the seed: there at any time ([[PlaceTimeBasis.Timeless]]). */
-  private def timelessSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.TimelessSqlAlias): String =
+  private def timelessSql(alias: TimelessSqlAlias): String =
     s"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR ($alias.kind = 'region' AND ${modernSql(alias)})))"
 
   /** [[PlaceTimeBasis.of]] in SQL, over a `places` row aliased `alias`: the basis's wire name. */
-  def timeBasisSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.TimeBasisSqlAlias): String =
+  def timeBasisSql(alias: TimeBasisSqlAlias): String =
     s"CASE WHEN ${timelessSql(alias)} THEN 'timeless' WHEN ${modernSql(alias)} THEN 'modern'" +
       s" WHEN ${undatedSql(alias)} AND $alias.geom IS NULL THEN 'grouping'" +
       s" WHEN ${undatedSql(alias)} THEN 'findings' ELSE 'dated' END"
@@ -118,15 +122,15 @@ object PlaceSql:
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
     * time-filtered place query starts with it.
     */
-  def timeWindowCte(asOf: Option[com.histmersion.domain.DeepTime.SignedYear], modernFrom: com.histmersion.domain.catalogue.places.PlaceSql.TimeWindowCteModernFrom): Sql =
+  def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: PlaceSql.TimeWindowCteModernFrom): Sql =
     windowCte(asOf.map(y => (y, y)), modernFrom)
 
   /** [[timeWindowCte]] for the inclusive window `lo..hi` (the map's area layer over a whole range, [[GeoTime.Within]]):
     * `modern_on` when its END reaches `modern-from`. A year is the window `y..y`.
     */
-  def windowCte(window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)], modernFrom: com.histmersion.domain.DeepTime.SignedYear): Sql =
+  def windowCte(window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)], modernFrom: DeepTime.SignedYear): Sql =
     import Param.*
-    window.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("tw AS (SELECT NULL::int8range AS w, false AS modern_on)")))((lo, hi) =>
+    window.fold(Sql.raw(Sql.RawText("tw AS (SELECT NULL::int8range AS w, false AS modern_on)")))((lo, hi) =>
       Sql.of(
         Sql.OfText("tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)"),
         L(L.V(lo.value)),
@@ -151,7 +155,7 @@ object PlaceSql:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of a search, the
     * (kind, period) GiSTs of a map layer (V076).
     */
-  def inTimeSql(alias: com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlAlias, asOf: Option[com.histmersion.domain.DeepTime.SignedYear], kind: Option[com.histmersion.domain.catalogue.places.PlaceSql.InTimeSqlKind] = None): String =
+  def inTimeSql(alias: InTimeSqlAlias, asOf: Option[DeepTime.SignedYear], kind: Option[PlaceSql.InTimeSqlKind] = None): String =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 
   /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. With `modernFrom` the
@@ -161,10 +165,10 @@ object PlaceSql:
     * finding of the window for each of them (2.5 s of a sites tile over -3000..2000, 2026-10-27).
     */
   def inWindowSql(
-      alias: com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlAlias,
-      window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)],
-      kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire] = None,
-      modernFrom: Option[com.histmersion.domain.DeepTime.SignedYear] = None
+      alias: InWindowSqlAlias,
+      window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
+      kind: Option[Place.Kind.Wire] = None,
+      modernFrom: Option[DeepTime.SignedYear] = None
   ): String =
     window.fold("true") { (lo, hi) =>
       val w = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range($lo::bigint, $hi::bigint, '[]')")

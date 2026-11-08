@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.library.Tree
@@ -14,6 +15,10 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.config.PlacesConfig
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.util.identity.AliasTable
+import com.histmersion.api.library.Finding
+import com.histmersion.domain.catalogue.evidence.EventMatcher
+import com.histmersion.api.library.Filter
+import com.histmersion.domain.library.Citekey
 
 /** The places' repository as the db suites seed and read it: each call on a connection (a write in a transaction) of
   * the suite's own `ds`, and the SQL the suites assert on.
@@ -30,7 +35,7 @@ object PlaceFixtures:
   private def areaTolerance(t: PlacesConfig.PointToleranceKm) = PointAreaRepo.Settings.ToleranceKm(t.value)
 
   def upsertPlaces(ds: DataSource, batch: List[Place.Input], dataset: Dataset = Dataset.Seed): Place.ImportResult =
-    if batch.isEmpty then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
+    if batch.isEmpty then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
 
   def search(
       ds: DataSource,
@@ -45,7 +50,7 @@ object PlaceFixtures:
       id: com.histmersion.domain.catalogue.Place.Id,
       asOf: Option[SignedYear] = None,
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
-  ): Option[com.histmersion.api.catalogue.Place.Entry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
+  ): Option[Place.Entry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
 
   def children(
       ds: DataSource,
@@ -65,8 +70,8 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Vector[Place.TreeRow] = connect(ds)(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom))
 
-  def placesOf(ds: DataSource, findingId: com.histmersion.api.library.Finding.Id): Vector[Place.Summary] =
-    connect(ds)(PlaceRepo.placesOf(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id(findingId.value)))
+  def placesOf(ds: DataSource, findingId: Finding.Id): Vector[Place.Summary] =
+    connect(ds)(PlaceRepo.placesOf(EventMatcher.NearFinding.Id(findingId.value)))
 
   def geoJson(
       ds: DataSource,
@@ -84,7 +89,7 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): PlaceRepo.GeoJson = connect(ds)(PlaceRepo.geoJsonAt(kind, time, limit, modernFrom))
 
-  def scopeFor(ds: DataSource, values: List[com.histmersion.api.library.Filter.Places], period: Option[Period]): PlaceScope =
+  def scopeFor(ds: DataSource, values: List[Filter.Places], period: Option[Period]): PlaceScope =
     connect(ds)(PlaceRepo.scopeFor(values.map(v => PlaceRepo.ScopeForValues(v.value)), period))
 
   def footprints(ds: DataSource, placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[SignedYear]): Vector[Place.Footprint] =
@@ -107,19 +112,19 @@ object PlaceFixtures:
 
   def addPlace(ds: DataSource, in: Place.Input): Either[Api.Error, Place.Summary] = transact(ds)(PlaceRepo.addPlace(in))
 
-  def count(ds: DataSource): com.histmersion.RowCount = connect(ds)(PlaceRepo.count())
+  def count(ds: DataSource): RowCount = connect(ds)(PlaceRepo.count())
 
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: PlacesConfig.PointToleranceKm): Place.RebuildResult =
     transact(ds)(FindingPlaceRepo.rebuildFindingPlaces(findingTolerance(toleranceKm)))
 
-  def materialisePlaces(ds: DataSource, placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm): com.histmersion.RowCount =
+  def materialisePlaces(ds: DataSource, placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm): RowCount =
     transact(ds)(FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm)))
 
   /** The same, on the suite's own transaction. */
-  def materialisePlacesIn(placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm)(using DbCon): com.histmersion.RowCount =
+  def materialisePlacesIn(placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm)(using DbCon): RowCount =
     FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm))
 
-  def unresolvedPlaceholders(ds: DataSource): List[(com.histmersion.domain.library.Citekey, FindingPlaceRepo.Placeholder.Detail)] =
+  def unresolvedPlaceholders(ds: DataSource): List[(Citekey, FindingPlaceRepo.Placeholder.Detail)] =
     connect(ds)(FindingPlaceRepo.unresolvedPlaceholdersIn())
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
@@ -141,12 +146,12 @@ object PlaceFixtures:
 
   def overrides(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[Place.Override] = connect(ds)(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
 
-  def replaceLand(ds: DataSource, geometries: List[BPlaceRow.Geom]): com.histmersion.RowCount =
+  def replaceLand(ds: DataSource, geometries: List[BPlaceRow.Geom]): RowCount =
     val n = transact(ds)(LandRepo.replace(geometries))
     connect(ds)(LandRepo.analyze())
     n
 
-  def reclip(ds: DataSource): com.histmersion.RowCount =
+  def reclip(ds: DataSource): RowCount =
     connect(ds)(LandRepo.polities()).grouped(LandRepo.ReclipBatch).foreach(b => transact(ds)(LandRepo.reclip(b)))
     connect(ds)(LandRepo.clipped())
 
@@ -154,10 +159,10 @@ object PlaceFixtures:
 
   def proposals(ds: DataSource): List[PlaceReview.Proposal] = connect(ds)(PlaceReviewRepo.proposals())
 
-  def applyProposals(ds: DataSource, ps: List[PlaceReview.Proposal], toleranceKm: PlacesConfig.PointToleranceKm): (com.histmersion.RowCount, com.histmersion.RowCount) =
+  def applyProposals(ds: DataSource, ps: List[PlaceReview.Proposal], toleranceKm: PlacesConfig.PointToleranceKm): (RowCount, RowCount) =
     transact(ds)(PlaceReviewRepo.apply(ps, areaTolerance(toleranceKm)))
 
   def relocations(ds: DataSource): List[PlaceReviewRepo.Relocation] = connect(ds)(PlaceReviewRepo.relocations())
 
-  def relocate(ds: DataSource, rs: List[PlaceReviewRepo.Relocation], toleranceKm: PlacesConfig.PointToleranceKm): com.histmersion.RowCount =
+  def relocate(ds: DataSource, rs: List[PlaceReviewRepo.Relocation], toleranceKm: PlacesConfig.PointToleranceKm): RowCount =
     transact(ds)(PlaceReviewRepo.relocate(rs, areaTolerance(toleranceKm)))

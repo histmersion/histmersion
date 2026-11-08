@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.exchange.Bundle
 
@@ -15,11 +16,11 @@ import java.util.UUID
   */
 object WorkListMergeFollowUps extends MergeFollowUps:
   def recordIn(
-      m: com.histmersion.api.exchange.Bundle.Manifest,
+      m: Bundle.Manifest,
       from: MergeFollowUps.FromRecordRef,
       mergeId: UUID,
       ap: MergePlanner.Apply,
-      counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
+      counts: List[Bundle.KindCounts],
       dump: MergeFollowUps.DumpRecordRef
   )(using DbCon): (List[Bundle.Article.Slug], Queue.QueueItem.Id) =
     val short = mergeId.toString.take(8)
@@ -28,7 +29,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
         Queue.Kind.Tasks,
         Queue.QueueAdd(
           Queue.QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
-          topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge")),
+          topic = Some(Queue.QueueItem.Topic("merge")),
           reason = Some(Queue.QueueItem.Reason(s"`merge apply` changed the article; a merged text is not reviewed"))
         )
       )
@@ -40,10 +41,10 @@ object WorkListMergeFollowUps extends MergeFollowUps:
       Queue.QueueAdd(
         Queue.QueueItem.Text(
           s"Merged the bundle of ${from.value} (${m.bundleId.toString.take(8)}…) as merge $short: " +
-            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), com.histmersion.api.Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted.value)} new, " +
+            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted.value)} new, " +
             s"${Plural.count(Plural.CountN(reviews.size.toLong), Plural.CountSingular("article"))} to review; backup ${dump.value}"
         ),
-        topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge"))
+        topic = Some(Queue.QueueItem.Topic("merge"))
       )
     )
     (reviews, log.id)

@@ -1,10 +1,13 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A goal's schedule as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BGoalScheduleRow(
@@ -17,8 +20,8 @@ final private[histmersion] case class BGoalScheduleRow(
 
 object BGoalScheduleRow:
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Cron = Cron.T
-  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cron extends RefinedType[String, Pure]
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]

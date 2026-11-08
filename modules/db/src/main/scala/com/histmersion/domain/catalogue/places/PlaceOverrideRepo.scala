@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -12,6 +13,9 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -23,7 +27,7 @@ import com.histmersion.api.catalogue.Place
   */
 private[places] object PlaceOverrideRepo:
   type RemovalReason = RemovalReason.T
-  object RemovalReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RemovalReason extends RefinedType[String, Pure]
 
 
   final private case class Row(
@@ -31,28 +35,28 @@ private[places] object PlaceOverrideRepo:
       kind: Row.Kind,
       start: Option[Row.Start],
       end: Option[Row.End],
-      lat: Option[com.histmersion.Latitude],
-      lon: Option[com.histmersion.Longitude],
+      lat: Option[Latitude],
+      lon: Option[Longitude],
       hasShape: Row.HasShape
   ) derives DbCodec
 
   object Row:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Start extends RefinedType[Long, Pure]
     type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object End extends RefinedType[Long, Pure]
     type HasShape = HasShape.T
-    object HasShape extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HasShape extends RefinedType[Boolean, Pure]
   private given DbCodec[Place.Override] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`
     * when its geometry is a line or an area).
     */
-  private def rowOf(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): Option[Row] =
+  private def rowOf(id: BPlaceRow.Id)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
                  ${SqlLiteral(RangeSql.end("p.period"))},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
@@ -60,16 +64,16 @@ private[places] object PlaceOverrideRepo:
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
           FROM places p WHERE p.id = $id""".query[Row].run().headOption
 
-  private def linked(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): List[String] =
+  private def linked(id: BPlaceRow.Id)(using DbCon): List[String] =
     sql"SELECT finding_id FROM finding_places WHERE place_id = $id".query[String].run().toList
 
   /** Apply `edit` to place `id` and re-match its findings. `Left` when there is no such place, or a reset finds no
     * override.
     */
   def set(
-      id: com.histmersion.domain.catalogue.places.BPlaceRow.Id,
+      id: BPlaceRow.Id,
       edit: Place.OverrideEdit,
-      toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm
+      toleranceKm: FindingPlacement.Implementation.ToleranceKm
   )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
     rowOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { before =>
       val had = linked(id)
@@ -156,8 +160,8 @@ private[places] object PlaceOverrideRepo:
           .head
         def period(start: Option[Row.Start], end: Option[Row.End]) =
           Place.Overrides.periodText(
-            start.map(s => com.histmersion.api.catalogue.Year(s.value)),
-            end.map(e => com.histmersion.api.catalogue.Year(e.value))
+            start.map(s => Year(s.value)),
+            end.map(e => Year(e.value))
           ).value
         Place.OverrideChanged(
           Place.Id(id.value),
@@ -178,22 +182,22 @@ private[places] object PlaceOverrideRepo:
       }
     }
 
-  private def labelOf(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.BPlaceRow.Label] =
-    sql"SELECT label FROM places WHERE id = $id".query[com.histmersion.domain.catalogue.places.BPlaceRow.Label].run().headOption
+  private def labelOf(id: BPlaceRow.Id)(using DbCon): Option[BPlaceRow.Label] =
+    sql"SELECT label FROM places WHERE id = $id".query[BPlaceRow.Label].run().headOption
 
-  private def stillLocated(ids: List[String])(using DbCon): com.histmersion.RowCount =
+  private def stillLocated(ids: List[String])(using DbCon): RowCount =
     sql"""SELECT count(*)::int FROM unnest(${ids.distinct}::text[]) AS f(id)
-          WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)""".query[com.histmersion.RowCount].run().head
+          WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)""".query[RowCount].run().head
 
   /** Merge place `from` into `into` ([[PlaceReviewRepo.mergeIn]]: findings, links, children, events, attestations and
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
     * `into`'s findings again.
     */
-  def merge(from: com.histmersion.domain.catalogue.places.BPlaceRow.Id, into: com.histmersion.domain.catalogue.places.BPlaceRow.Id, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
+  def merge(from: BPlaceRow.Id, into: BPlaceRow.Id, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
       case (None, _)            => Left(Api.Error(Api.Error.Message(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       case (_, None)            => Left(Api.Error(Api.Error.Message(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case _ if from == into    => Left(Api.Error(com.histmersion.api.Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid))))
+      case _ if from == into    => Left(Api.Error(Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid))))
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
         val _ = PlaceReviewRepo.mergeIn(com.histmersion.domain.catalogue.Place.Id.assume(from.value), com.histmersion.domain.catalogue.Place.Id.assume(into.value))
@@ -204,7 +208,7 @@ private[places] object PlaceOverrideRepo:
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
-  def remove(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
+  def remove(id: BPlaceRow.Id, reason: Option[RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
     labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { label =>
       def n(q: Frag) = q.query[Int].run().head
       val refs = List(
@@ -242,7 +246,7 @@ private[places] object PlaceOverrideRepo:
     }
 
   /** The overrides, by place id; `id` narrows to one place. */
-  def list(id: Option[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): List[Place.Override] =
+  def list(id: Option[BPlaceRow.Id])(using DbCon): List[Place.Override] =
     sql"""SELECT o.place_id, p.label, o.kind,
                  ${SqlLiteral(RangeSql.cols("o.period"))},
                  o.period IS NOT NULL, o.reason, o.source_kind,

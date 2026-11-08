@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.library.sources.referrers.*

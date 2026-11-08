@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.concurrent.duration.Duration

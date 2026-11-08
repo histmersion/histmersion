@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.BundleImport
@@ -11,6 +12,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.library.Citekey
+import com.histmersion.util.data.exchange.PlanQuestions
+import com.histmersion.domain.catalogue.Place
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -31,11 +35,11 @@ private[places] object PlaceBundleRepo:
     * of those ids as well (what a merge compares the bundle's against).
     */
 
-  def places(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
+  def places(scope: BundleScope, alsoIds: List[BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
     val own = Sql.raw(Sql.Text("p.dataset = 'local' AND ")) ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
     else
-      Sql.raw(com.histmersion.util.database.Sql.RawText("((")) ++ own ++
+      Sql.raw(Sql.RawText("((")) ++ own ++
         Sql.of(Sql.OfText(") OR p.id = ANY(?::text[]))"), Param.A(alsoIds.distinct.map(i => Param.A.V(i.value))))
     val rows = (Sql.raw(Sql.RawText(s"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
                        ${rangeCols("p.period")}, p.source, p.properties::text, ${ts("p.updated_at")}
@@ -108,7 +112,7 @@ private[places] object PlaceBundleRepo:
               Bundle.PlaceType(
                 Bundle.PlaceType.TypeLabel(t.typeLabel.value),
                 rangeOf(t.pNull.value, t.pLo.map(_.value), t.pHi.map(_.value)),
-                t.citekey.map(c => com.histmersion.api.library.Citekey(c.value))
+                t.citekey.map(c => Citekey(c.value))
               )
             ),
           Bundle.Place.UpdatedAt(r.updatedAt.value)
@@ -142,32 +146,32 @@ private[places] object PlaceBundleRepo:
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
   /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: String, ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
+  private def owners(q: String, ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
     if ids.isEmpty then Map.empty
     else
       Sql
         .of(Sql.OfText(q), Param.A(ids.distinct.map(i => Param.A.V(i.value))))
         .frag
-        .query[(com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID)]
+        .query[(BPlaceRow.Id, UUID)]
         .run()
         .toMap
 
   /** The places here among `ids` → their uids. */
-  def placesNamed(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
+  def placesNamed(ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
     owners("SELECT id, uid FROM places WHERE id = ANY(?::text[])", ids)
 
   /** The old place ids here among `ids` → the uid of the place each names. */
-  def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
+  def oldIdsNamed(ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
     owners(
       "SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY(?::text[])",
       ids
     )
 
   /** Which of `ids` name a place here. */
-  def present(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Set[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
+  def present(ids: List[BPlaceRow.Id])(using DbCon): Set[BPlaceRow.Id] =
     if ids.isEmpty then Set.empty
     else sql"SELECT id FROM places WHERE id = ANY(${ids.distinct}::text[])"
-        .query[com.histmersion.domain.catalogue.places.BPlaceRow.Id]
+        .query[BPlaceRow.Id]
         .run()
         .toSet
 
@@ -177,7 +181,7 @@ private[places] object PlaceBundleRepo:
     * geometry match on the label alone. The nearest (most overlapping) place wins; a local place is preferred to a seed
     * one.
     */
-  def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
+  def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, BPlaceRow.Id] =
     val norm = PlaceRepo.normLabelSql("p.label")
     ps.flatMap { b =>
       val within = cfg.placeWithinKm.value * 1000.0
@@ -203,7 +207,7 @@ private[places] object PlaceBundleRepo:
           Param.D(Param.D.V(cfg.placeOverlapAtLeast.value))
         )
         .frag
-        .query[com.histmersion.domain.catalogue.places.BPlaceRow.Id]
+        .query[BPlaceRow.Id]
         .run()
         .headOption
         .map(b.uid -> _)
@@ -214,7 +218,7 @@ private[places] object PlaceBundleRepo:
   /** A place the other side renamed whose line is not written here (this collection's version was kept) keeps its id:
     * the bundle's events and child places that name the new id point at it.
     */
-  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.BPlaceRow.Id => com.histmersion.domain.catalogue.places.BPlaceRow.Id =
+  def placeHere(w: BundleImport.Writer): BPlaceRow.Id => BPlaceRow.Id =
     val ours = w.local.places.map(p => p.uid -> p.id.value).toMap
     val kept =
       w.es.places
@@ -233,11 +237,11 @@ private[places] object PlaceBundleRepo:
       _.uid,
       _.id,
       w.local.places.map(p => p.uid -> p.id).toMap,
-      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place")
+      PlanQuestions.LabelTakenWhat("place")
     )((from, to) =>
       PlaceRepo.renameIn(
-        com.histmersion.domain.catalogue.Place.Id.assume(from.value),
-        com.histmersion.domain.catalogue.Place.Id.assume(to.value)
+        Place.Id.assume(from.value),
+        Place.Id.assume(to.value)
       )
     )
 

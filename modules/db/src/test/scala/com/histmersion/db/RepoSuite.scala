@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,47 +18,50 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Year}
 import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Doi
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class RepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class RepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val src = Source(
-    citekey = com.histmersion.api.library.Citekey("zz_test_source"),
+    citekey = Citekey("zz_test_source"),
     title = com.histmersion.api.library.Title("Test"),
     authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    year = (Some(2020)).map(Year.apply),
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Current,
-    topics = List(com.histmersion.api.library.Source.Topics("t")),
-    regions = List(com.histmersion.api.library.Source.Regions("Anatolia")),
-    tags = List(com.histmersion.api.library.Source.Tags("x")),
-    period = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
-    summary = Some(com.histmersion.api.library.Source.Summary("sum")),
-    citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(1)),
+    status = Source.Status.Current,
+    topics = List(Source.Topics("t")),
+    regions = List(Source.Regions("Anatolia")),
+    tags = List(Source.Tags("x")),
+    period = Some(Period(Year(-2000), Year(-1500))),
+    summary = Some(Source.Summary("sum")),
+    citedByCount = Some(Source.CitedByCount(1)),
     influentialCitations = None,
     provenance = None,
     calibreId = None,
     findings = List(
       Finding(
-        com.histmersion.api.library.Finding.Id("zz_test_source#0"),
-        com.histmersion.api.library.Citekey("zz_test_source"),
-        com.histmersion.api.library.Finding.Claim("claim"),
-        Some(com.histmersion.api.library.Finding.Region("Anatolia")),
+        Finding.Id("zz_test_source#0"),
+        Citekey("zz_test_source"),
+        Finding.Claim("claim"),
+        Some(Finding.Region("Anatolia")),
         Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))),
+        Some(Period(Year(-1800), Year(-1700))),
         None,
-        List(com.histmersion.api.library.Finding.Tags("f")),
+        List(Finding.Tags("f")),
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind.References))
+    edges = List(Edge(Citekey("zz_test_source"), Citekey("zz_other"), Edge.Kind.References))
   )
 
   test("upsert → get round-trip, int8range bounds inclusive"):
@@ -70,17 +74,17 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("findingsFor (the map feed): period overlap + bbox"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = com.histmersion.api.library.Filter.Limit(10))
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = Filter.Limit(10))
     val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1750), Year(-1750)))))
     val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1000), Year(-900)))))
     assert(hit.exists(_.citekey.value == "zz_test_source")); assert(!miss.exists(_.citekey.value == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1007/978-3-030-12345-6_7"))), AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = com.histmersion.api.library.Filter.Limit(10))
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some(Doi("10.1007/978-3-030-12345-6_7"))), AppConfig.load().limits.chunkChars)
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(Year(-1750), Year(-1750))), limit = Filter.Limit(10))
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey.value == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))), AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Book))
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Unknown))

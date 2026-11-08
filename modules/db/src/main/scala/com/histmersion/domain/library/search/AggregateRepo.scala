@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.library.Tree
 
@@ -16,6 +17,11 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Period
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.RegionNode
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.library.Aggregate]].
   *
@@ -24,7 +30,7 @@ import com.histmersion.api.catalogue.Period
   */
 private[search] object AggregateRepo:
   type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Unit extends RefinedType[String, Pure]
 
   private given DbCodec[Period.Row] = DbCodec.derived
 
@@ -43,7 +49,7 @@ private[search] object AggregateRepo:
     *     place/tag/bbox criterion, at least one finding must match it (so a source with no findings at all drops out,
     *     as it always has for places).
     */
-  def periodsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+  def periodsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit.value == "findings" then
       Sql.raw(
         Sql.Text(
@@ -51,11 +57,11 @@ private[search] object AggregateRepo:
             " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
         )
       ) ++
-        FilterSql.sourceWhere(filter) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope)
+        FilterSql.sourceWhere(filter) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
-        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(Sql.RawText(" AND fp.matched > 0")) else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw(Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
         Sql.Text(
           s"SELECT COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)" +
@@ -65,19 +71,19 @@ private[search] object AggregateRepo:
         )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
-        Sql.raw(com.histmersion.util.database.Sql.Text(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ")) ++
+        Sql.raw(Sql.Text(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ")) ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
         Sql.raw(Sql.Text(") fp ON true WHERE ")) ++ FilterSql.sourceWhere(filter) ++ gate ++
         Sql.raw(Sql.Text(" AND (")) ++ ownPeriod ++ Sql.raw(Sql.Text(" OR fp.in_window > 0)"))
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
-  def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
+  def periods(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
     periodsQuery(unit, filter, scope).frag.query[Period.Row].run()
 
   /** One row as SQL returns it — the place ids arrive as a `text[]`. */
   final private[search] case class TreeRowRaw(
       key: TreeRowRaw.Key,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       title: TreeRowRaw.Title,
       periodStart: Option[DeepTime.SignedYear],
       periodEnd: Option[DeepTime.SignedYear],
@@ -88,18 +94,18 @@ private[search] object AggregateRepo:
         Tree.TreeRow.Key(key.value),
         com.histmersion.api.library.Citekey(citekey.value),
         com.histmersion.api.library.Title(title.value),
-        periodStart.map(y => com.histmersion.api.catalogue.Year(y.value)),
-        periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value)),
-        placeIds.distinct.map(p => com.histmersion.api.catalogue.RegionNode.Id(p.value))
+        periodStart.map(y => Year(y.value)),
+        periodEnd.map(y => Year(y.value)),
+        placeIds.distinct.map(p => RegionNode.Id(p.value))
       )
 
   object TreeRowRaw:
     type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Key extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type PlaceIds = PlaceIds.T
-    object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlaceIds extends RefinedType[String, Pure]
 
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 
@@ -119,7 +125,7 @@ private[search] object AggregateRepo:
     * Ordering is the caller's `sort=`, which is what makes `samples` under a leaf the *top* sources for that bucket
     * rather than an arbitrary few.
     */
-  def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+  def treeRowsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit.value == "findings" then
       Sql.raw(
         Sql.Text(
@@ -127,12 +133,12 @@ private[search] object AggregateRepo:
             " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
         )
       ) ++
-        FilterSql.sourceWhere(filter) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
+        FilterSql.sourceWhere(filter) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
         Sql.raw(Sql.Text(" ")) ++ FilterSql.orderBySql(filter)
     else
       val gate =
-        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(Sql.RawText(" AND fp.matched > 0")) else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw(Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
         Sql.Text(
           "SELECT s.citekey, s.citekey, s.title," +
@@ -158,5 +164,5 @@ private[search] object AggregateRepo:
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
     * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
-  def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
+  def treeRows(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
     treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run().map(_.toRow)

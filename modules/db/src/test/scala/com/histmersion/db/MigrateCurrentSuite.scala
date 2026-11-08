@@ -1,20 +1,22 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
 
 /** The schema version without a Flyway instance (#880), against a real Postgres (HISTMERSION_TEST_DB_URL); skipped
   * otherwise.
   */
-class MigrateCurrentSuite extends com.histmersion.db.DbSuite with Bounded:
+class MigrateCurrentSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   /** The scribe records Flyway logs on THIS thread while `f` runs (other suites migrate concurrently). */

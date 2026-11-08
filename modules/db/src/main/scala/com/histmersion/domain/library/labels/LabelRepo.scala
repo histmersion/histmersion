@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.labels
+package com.histmersion
+package domain.library.labels
 
 import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -19,7 +20,7 @@ private[labels] object LabelRepo:
       field: Facet.Field,
       prefix: Option[FilterSql.FacetPrefix],
       filter: Filter,
-      limit: com.histmersion.PageSize,
+      limit: PageSize,
       scope: PlaceScope = PlaceScope.empty
   )(using DbCon): Vector[Facet] =
     FilterSql.facetsQuery(field, prefix, filter, limit, scope).frag.query[Facet].run()

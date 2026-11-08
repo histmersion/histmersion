@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,21 +19,21 @@ class ContentDirectorySuite extends munit.FunSuite:
     val store = ContentDirectory(dir)
     val data = ByteSource.Content("an original".getBytes(UTF_8))
     assertEquals(store.find(sha(data)), None)
-    assert(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
+    assert(store.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
     assertEquals(Files.list(dir).count(), 0L)
-    assertEquals(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("PDF"), java.io.ByteArrayInputStream(data.value)), Right(()))
+    assertEquals(store.store(sha(data), ContentStore.Ext("PDF"), java.io.ByteArrayInputStream(data.value)), Right(()))
     val (file, ext) = store.find(sha(data)).get
     assertEquals(ext, "pdf")
     assertEquals(file.size, data.value.length.toLong)
     assertEquals(file.read(_.readAllBytes()).toList, data.value.toList)
-    assertEquals(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("txt"), java.io.ByteArrayInputStream(data.value)), Right(())) // already there
+    assertEquals(store.store(sha(data), ContentStore.Ext("txt"), java.io.ByteArrayInputStream(data.value)), Right(())) // already there
     assertEquals(Files.list(dir).count(), 1L)
 
   test("an extension is kept only when short and alphanumeric"):
-    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext(" PDF ")), "pdf")
-    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("../evil")), "bin")
-    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("")), "bin")
-    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("abcdefghi")), "bin")
+    assertEquals(ContentStore.safeExt(ContentStore.Ext(" PDF ")), "pdf")
+    assertEquals(ContentStore.safeExt(ContentStore.Ext("../evil")), "bin")
+    assertEquals(ContentStore.safeExt(ContentStore.Ext("")), "bin")
+    assertEquals(ContentStore.safeExt(ContentStore.Ext("abcdefghi")), "bin")
 
   test("bytes in memory read from the start each time"):
     val source = ByteSource.bytes(ByteSource.Content("abc".getBytes(UTF_8)))

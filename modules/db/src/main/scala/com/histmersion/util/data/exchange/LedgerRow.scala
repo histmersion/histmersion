@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
@@ -24,6 +25,8 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final private[exchange] case class LedgerRow(
     foreignUid: UUID,
@@ -39,14 +42,14 @@ final private[exchange] case class LedgerRow(
 
 object LedgerRow:
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type ForeignRev = ForeignRev.T
-  object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ForeignRev extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type LocalRevAfter = LocalRevAfter.T
-  object LocalRevAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LocalRevAfter extends RefinedType[String, Pure]
   type Decision = Decision.T
-  object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Decision extends RefinedType[String, Pure]
   type RecordedAt = RecordedAt.T
-  object RecordedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RecordedAt extends RefinedType[String, Pure]

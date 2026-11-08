@@ -1,7 +1,10 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.augustnagro.magnum.{connect, transact}
 import javax.sql.DataSource
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.Place
 
 /** The sites' refined types as a db suite writes and reads them. */
 object SiteTypeFixtures:
@@ -12,17 +15,17 @@ object SiteTypeFixtures:
       ds: DataSource,
       limit: PlaceRepo.Limit,
       refresh: SiteTypeRepo.Refresh,
-      before: Option[com.histmersion.domain.DeepTime.SignedYear]
+      before: Option[DeepTime.SignedYear]
   ) =
     connect(ds)(SiteTypeRepo.sitesToType(limit, refresh, before))
   def countSitesToType(
       ds: DataSource,
       refresh: SiteTypeRepo.Refresh,
-      before: Option[com.histmersion.domain.DeepTime.SignedYear]
-  ): com.histmersion.RowCount =
+      before: Option[DeepTime.SignedYear]
+  ): RowCount =
     connect(ds)(SiteTypeRepo.countSitesToType(refresh, before))
   def setSiteTypes(
       ds: DataSource,
-      types: List[(com.histmersion.domain.catalogue.Place.Id, Option[PlaceRepo.SiteType])]
+      types: List[(Place.Id, Option[PlaceRepo.SiteType])]
   ): Unit =
     transact(ds)(SiteTypeRepo.setSiteTypes(types))

@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,6 +19,9 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Place, Year}
 import com.histmersion.domain.catalogue.Place as DPlace
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.library.Citekey
+import com.histmersion.util.identity.AliasTable
 
 /** A person's kind and period for a place (V080), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * setting one re-matches the place's findings; every writer of `places` — a re-seed, a gazetteer-style upsert, the
@@ -26,13 +30,13 @@ import com.histmersion.util.database.given
   * is the same as, a removal deletes one nothing refers to; no seed import brings either back. Around 150–152°E
   * 30–32°S; ids `zzpo…`.
   */
-class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
+class PlaceOverrideSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -55,8 +59,8 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def regio(kind: Place.KindValue = Place.KindValue(DPlace.Kind.Site), period: Option[Period] = None) =
     Place(
-      com.histmersion.api.catalogue.Place.Id("zzpo_regio"),
-      com.histmersion.api.catalogue.Place.Label("Zzpo Regio XII (Piscina Publica)"),
+      Place.Id("zzpo_regio"),
+      Place.Label("Zzpo Regio XII (Piscina Publica)"),
       kind,
       pt(150.5, -30.6),
       period,
@@ -67,20 +71,20 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        Place.Input(regio(), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Regio XII (Piscina Publica)")))),
+        Place.Input(regio(), List(Place.Name(Place.Name.Value("Zzpo Regio XII (Piscina Publica)")))),
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zzpo_city"), com.histmersion.api.catalogue.Place.Label("Zzpo Roma"), Place.KindValue(DPlace.Kind.Site), pt(150.51, -30.61)),
-          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Roma")))
+          Place(Place.Id("zzpo_city"), Place.Label("Zzpo Roma"), Place.KindValue(DPlace.Kind.Site), pt(150.51, -30.61)),
+          List(Place.Name(Place.Name.Value("Zzpo Roma")))
         ),
         Place.Input(
           Place(
-            com.histmersion.api.catalogue.Place.Id("zzpo_tribe"),
-            com.histmersion.api.catalogue.Place.Label("Zzpo Aiantis"),
+            Place.Id("zzpo_tribe"),
+            Place.Label("Zzpo Aiantis"),
             Place.KindValue(DPlace.Kind.Region),
             pt(151.5, -31.6),
             properties = Some(Place.Properties("""{"feature_types":"people"}"""))
           ),
-          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Aiantis")))
+          List(Place.Name(Place.Name.Value("Zzpo Aiantis")))
         )
       ),
       Dataset.Seed
@@ -88,13 +92,13 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey("zzpo_src"),
+        citekey = Citekey("zzpo_src"),
         title = com.histmersion.api.library.Title("Override fixture"),
         authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2026)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -106,10 +110,10 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
         calibreId = None,
         findings = List(
           Finding(
-            com.histmersion.api.library.Finding.Id("zzpo_src#0"),
-            com.histmersion.api.library.Citekey("zzpo_src"),
-            com.histmersion.api.library.Finding.Claim("the city"),
-            Some(com.histmersion.api.library.Finding.Region("Zzpo Roma")),
+            Finding.Id("zzpo_src#0"),
+            Citekey("zzpo_src"),
+            Finding.Claim("the city"),
+            Some(Finding.Region("Zzpo Roma")),
             Some(GeoPoint(Longitude(150.51), Latitude(-30.61))),
             None,
             None,
@@ -117,9 +121,9 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
             None
           ),
           Finding(
-            com.histmersion.api.library.Finding.Id("zzpo_src#1"),
-            com.histmersion.api.library.Citekey("zzpo_src"),
-            com.histmersion.api.library.Finding.Claim("near the city"),
+            Finding.Id("zzpo_src#1"),
+            Citekey("zzpo_src"),
+            Finding.Claim("near the city"),
             None,
             Some(GeoPoint(Longitude(150.53), Latitude(-30.62))),
             None,
@@ -184,7 +188,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     // the seed again, now with a period of its own: the override wins, the source's period is remembered
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(regio(period = Some(Period(com.histmersion.api.catalogue.Year(1700), com.histmersion.api.catalogue.Year(2100)))), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Regio XII (Piscina Publica)"))))),
+      List(Place.Input(regio(period = Some(Period(Year(1700), Year(2100)))), List(Place.Name(Place.Name.Value("Zzpo Regio XII (Piscina Publica)"))))),
       Dataset.Seed
     )
     assertEquals(row(Regio), ("region", "[-7,)", false))
@@ -235,7 +239,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.setOverride(
       ds,
       Tribe,
-      Place.OverrideEdit.Put(None, Some((Some(com.histmersion.api.catalogue.Year(-508L)), Some(com.histmersion.api.catalogue.Year(-322L)))), Some(Place.OverrideEdit.Put.Reason("kept a region"))),
+      Place.OverrideEdit.Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Place.OverrideEdit.Put.Reason("kept a region"))),
       tol
     )
     assertEquals(listed, Set.empty[String])
@@ -244,7 +248,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
   test("a merge moves the findings and the id; a re-seed of the merged id does not bring it back"):
     seed()
     val dup =
-      Place(com.histmersion.api.catalogue.Place.Id("zzpo_dup"), com.histmersion.api.catalogue.Place.Label("Withdrawn: Zzpo Roma"), Place.KindValue(DPlace.Kind.Site), pt(150.52, -30.62))
+      Place(Place.Id("zzpo_dup"), Place.Label("Withdrawn: Zzpo Roma"), Place.KindValue(DPlace.Kind.Site), pt(150.52, -30.62))
     val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(dup, List(Place.Name(Place.Name.Value("Withdrawn: Zzpo Roma"))))), Dataset.Seed)
     connect(ds):
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
@@ -253,7 +257,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(placesOf(1), Set(Regio, City, "zzpo_dup"))
     val r = PlaceFixtures.merge(ds, DPlace.Id("zzpo_dup"), City, tol).toOption.get
     assertEquals((r.into, r.findingsBefore, r.findingsAfter, r.unlocated), (Some(City), 2, 2, 0))
-    assertEquals(PlaceFixtures.renamedTo(ds, com.histmersion.util.identity.AliasTable.Id("zzpo_dup")), Some(City))
+    assertEquals(PlaceFixtures.renamedTo(ds, AliasTable.Id("zzpo_dup")), Some(City))
     assertEquals(PlaceFixtures.links(ds, City).map(_.externalId).toList, List("zzpo1"))
     assertEquals(placesOf(1), Set(Regio, City))
     // the seed sends the duplicate again: it is left out, the rest of the batch goes in
@@ -274,7 +278,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
     val refused = PlaceFixtures.remove(ds, City, None)
     assert(refused.left.exists(_.message.value.contains("2 finding(s) it is the only place of")), refused.toString)
     val road =
-      Place(com.histmersion.api.catalogue.Place.Id("zzpo_road"), com.histmersion.api.catalogue.Place.Label("Withdrawn: Untitled"), Place.KindValue(DPlace.Kind.Site), pt(151.9, -31.9))
+      Place(Place.Id("zzpo_road"), Place.Label("Withdrawn: Untitled"), Place.KindValue(DPlace.Kind.Site), pt(151.9, -31.9))
     val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))), Dataset.Seed)
     val _ = PlaceFixtures.addName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
     assert(PlaceFixtures.remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None).left.exists(_.message.value.contains("1 name(s) added by hand")))
@@ -299,13 +303,13 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
   private def tribe(geometry: Option[Place.Geometry]) =
     Place.Input(
       Place(
-        com.histmersion.api.catalogue.Place.Id("zzpo_tribe"),
-        com.histmersion.api.catalogue.Place.Label("Zzpo Aiantis"),
+        Place.Id("zzpo_tribe"),
+        Place.Label("Zzpo Aiantis"),
         Place.KindValue(DPlace.Kind.Region),
         geometry,
         properties = Some(Place.Properties("""{"feature_types":"people"}"""))
       ),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Aiantis")))
+      List(Place.Name(Place.Name.Value("Zzpo Aiantis")))
     )
 
   private def movePoint(
@@ -383,8 +387,8 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("pleiades_zzpo_parthia"), com.histmersion.api.catalogue.Place.Label("Zzpo Parthyene"), Place.KindValue(DPlace.Kind.Region), pt(152.5, -32.5)),
-          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Parthyene")))
+          Place(Place.Id("pleiades_zzpo_parthia"), Place.Label("Zzpo Parthyene"), Place.KindValue(DPlace.Kind.Region), pt(152.5, -32.5)),
+          List(Place.Name(Place.Name.Value("Zzpo Parthyene")))
         )
       ),
       Dataset.Seed

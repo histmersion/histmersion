@@ -1,4 +1,8 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the jobs list is filtered by (core `ListFilters.JobFilter`, validated): any of these states and kinds; `since`
   * / `until` bound `created_at` (until exclusive); `q` = text in what the job is about — its citekey, an agent run's
@@ -14,8 +18,8 @@ final case class JobQuery(
 
 object JobQuery:
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Kinds = Kinds.T
-  object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kinds extends RefinedType[String, Pure]
   type Q = Q.T
-  object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Q extends RefinedType[String, Pure]

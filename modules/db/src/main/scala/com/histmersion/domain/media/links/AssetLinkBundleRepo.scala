@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql

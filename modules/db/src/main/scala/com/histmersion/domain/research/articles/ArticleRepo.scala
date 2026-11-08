@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import hearth.kindlings.optics.syntax.*
 
@@ -21,6 +22,15 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource}
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.text.WikiLinks
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.library.sources.CitekeyMillis
+import com.histmersion.domain.automation.Goal
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
@@ -39,11 +49,11 @@ given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.d
   */
 private[articles] object ArticleRepo:
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Long, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type VersionId = VersionId.T
-  object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VersionId extends RefinedType[Long, Pure]
 
 
 
@@ -86,11 +96,11 @@ private[articles] object ArticleRepo:
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
     json.flatMap(j => Jsonb.read[Article.Filter](Jsonb.JsonText(j)))
-  private[articles] def reasonsOf(json: String): Map[com.histmersion.api.library.Citekey, Article.ReasonsValue] =
+  private[articles] def reasonsOf(json: String): Map[Citekey, Article.ReasonsValue] =
     Jsonb
       .read[Map[String, String]](Jsonb.JsonText(json))
       .getOrElse(Map.empty)
-      .map((ck, reason) => com.histmersion.api.library.Citekey(ck) -> Article.ReasonsValue(reason))
+      .map((ck, reason) => Citekey(ck) -> Article.ReasonsValue(reason))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -101,7 +111,7 @@ private[articles] object ArticleRepo:
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
-  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, by: com.histmersion.domain.research.articles.CritiqueRepo.By = com.histmersion.domain.research.articles.CritiqueRepo.By("person"))(using DbCon): Either[Api.Error, Article.UpdatedAt] =
+  def patch(slug: Slug, p: Article.Patch, by: CritiqueRepo.By = CritiqueRepo.By("person"))(using DbCon): Either[Api.Error, Article.UpdatedAt] =
     // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
     // two concurrent patches both saw the token they were given and both "succeeded", the second
     // discarding the first. See the twin comment in `SourceRepo.patch`.
@@ -122,7 +132,7 @@ private[articles] object ArticleRepo:
                   .applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
                   .map(_ => Article.UpdatedAt(token(slug.value).getOrElse("")))
 
-  def delete(slug: com.histmersion.domain.research.Slug)(using DbCon): Boolean =
+  def delete(slug: Slug)(using DbCon): Boolean =
     sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0
 
   /** The write itself, inside the caller's transaction: snapshot the previous body into `article_versions` (when the
@@ -148,12 +158,12 @@ private[articles] object ArticleRepo:
   /** Rewrite one article's outgoing links. A `[[x]]` is a SOURCE link iff x is citekey-shaped AND a source with that
     * citekey exists — resolved with one query over the citekey-shaped candidates.
     */
-  private[histmersion] def writeLinks(slug: com.histmersion.domain.research.Slug, body: com.histmersion.domain.research.articles.BArticleRow.Body)(using DbCon): Unit =
+  private[histmersion] def writeLinks(slug: Slug, body: BArticleRow.Body)(using DbCon): Unit =
     linkRows(slug.value, body.value)
 
   private def linkRows(slug: String, body: String)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
-    val written = Article.Links.targets(com.histmersion.api.text.WikiLinks.Body(body)).filter(_.value != slug) // an article does not link to itself
+    val written = Article.Links.targets(WikiLinks.Body(body)).filter(_.value != slug) // an article does not link to itself
     if written.nonEmpty then
       // an OLD citekey (V027) links the source it was renamed to, and is recorded under the new one
       // so `backlinksForSource` finds it
@@ -176,15 +186,15 @@ private[articles] object ArticleRepo:
     */
   private[histmersion] def retargetLinks(needle: Article.Link.Target, to: Article.Link.Target => Option[Article.Link.Target])(using
       DbCon
-  ): List[(com.histmersion.domain.research.Slug, com.histmersion.RowCount)] =
+  ): List[(Slug, RowCount)] =
     sql"""SELECT slug FROM articles
           WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.value.toLowerCase}) > 0
-          ORDER BY slug""".query[com.histmersion.domain.research.Slug].run().toList.flatMap { slug =>
+          ORDER BY slug""".query[Slug].run().toList.flatMap { slug =>
       load(slug).flatMap { a =>
-        val (body, nb) = Article.Links.retarget(com.histmersion.api.text.WikiLinks.Body(a.body.value), to)
-        val summary = a.summary.map(s => Article.Links.retarget(com.histmersion.api.text.WikiLinks.Body(s.value), to))
+        val (body, nb) = Article.Links.retarget(WikiLinks.Body(a.body.value), to)
+        val summary = a.summary.map(s => Article.Links.retarget(WikiLinks.Body(s.value), to))
         val reasons = a.reasons.map((ck, r) =>
-          to(Article.Link.Target(ck.value)).fold(ck)(t => com.histmersion.api.library.Citekey(t.value)) -> r
+          to(Article.Link.Target(ck.value)).fold(ck)(t => Citekey(t.value)) -> r
         )
         val nr = a.reasons.keys.count(ck => to(Article.Link.Target(ck.value)).isDefined)
         val moved = nb.value + summary.fold(0)(_._2.value) + nr
@@ -197,7 +207,7 @@ private[articles] object ArticleRepo:
               .modify(_.reasons)
               .setTo(reasons)
           )
-          slug -> com.histmersion.RowCount(moved)
+          slug -> RowCount(moved)
         }
       }
     }
@@ -209,10 +219,10 @@ private[articles] object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
-  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.Slug, newSlug: com.histmersion.domain.research.Slug)(using DbCon): Either[Api.Error, List[com.histmersion.domain.research.Slug]] =
-    def exists(s: com.histmersion.domain.research.Slug) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
+  private[histmersion] def renameIn(oldSlug: Slug, newSlug: Slug)(using DbCon): Either[Api.Error, List[Slug]] =
+    def exists(s: Slug) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug"
-      .query[com.histmersion.domain.research.Slug]
+      .query[Slug]
       .run()
       .headOption
     if !exists(oldSlug) then Left(Articles.notFound(Article.Slug(oldSlug.value)))
@@ -251,13 +261,13 @@ private[articles] object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
-  def rename(oldSlug: com.histmersion.domain.research.Slug, newSlug: com.histmersion.domain.research.Slug)(using DbCon): Either[Api.Error, List[com.histmersion.domain.research.Slug]] =
+  def rename(oldSlug: Slug, newSlug: Slug)(using DbCon): Either[Api.Error, List[Slug]] =
     renameIn(oldSlug, newSlug)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
-  def canonical(slug: com.histmersion.domain.research.Slug)(using DbCon): com.histmersion.domain.research.Slug =
+  def canonical(slug: Slug)(using DbCon): Slug =
     sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
-      .query[com.histmersion.domain.research.Slug]
+      .query[Slug]
       .run()
       .headOption
       .getOrElse(slug)
@@ -267,7 +277,7 @@ private[articles] object ArticleRepo:
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
-  def load(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[Article] =
+  def load(slug: Slug)(using DbCon): Option[Article] =
     Sql
       .of(Sql.Text(s"SELECT $LoadCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(slug.value)))
       .frag
@@ -285,7 +295,7 @@ private[articles] object ArticleRepo:
           regions = r.regions.map(v => Article.Regions(v.value)),
           period = (r.periodStart, r.periodEnd) match
             case (Some(a), Some(b)) =>
-              Some(Period(com.histmersion.api.catalogue.Year(a.value.toLong), com.histmersion.api.catalogue.Year(b.value.toLong)))
+              Some(Period(Year(a.value.toLong), Year(b.value.toLong)))
             case _ => None,
           updatedAt = Some(Article.UpdatedAt(r.updatedAt.value)),
           filter = filterOf(r.filter.map(_.value)),
@@ -293,7 +303,7 @@ private[articles] object ArticleRepo:
         )
       }
 
-  def get(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[Article.Row] =
+  def get(slug: Slug)(using DbCon): Option[Article.Row] =
     Sql
       .of(Sql.Text(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(canonical(slug).value)))
       .frag
@@ -302,7 +312,7 @@ private[articles] object ArticleRepo:
       .headOption
 
   /** The article plus both directions of its link graph — one connection, three queries. */
-  def view(requested: com.histmersion.domain.research.Slug)(using DbCon): Option[Article.View] =
+  def view(requested: Slug)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
     Sql
       .of(Sql.Text(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(slug.value)))
@@ -316,7 +326,7 @@ private[articles] object ArticleRepo:
     * `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather than `LIKE` so an underscore in a
     * slug stays a literal underscore.
     */
-  def backlinks(slug: com.histmersion.domain.research.Slug)(using DbCon): List[Backlink] =
+  def backlinks(slug: Slug)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
           FROM article_links l JOIN articles a ON a.slug = l.src_slug
           WHERE l.target_kind = 'article' AND l.target = $slug AND a.slug <> $slug
@@ -330,7 +340,7 @@ private[articles] object ArticleRepo:
   /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
     * card lists those citing the sources that attest it.
     */
-  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize)(using DbCon): List[EventArticleRef] =
+  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: PageSize)(using DbCon): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
     else sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
@@ -353,17 +363,17 @@ private[articles] object ArticleRepo:
   /** Which of `slugs` actually exist — the article half of resolving a `[[wikilink]]`. One query for the whole body, so
     * rendering an article is still three round trips.
     */
-  def existingSlugs(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Set[com.histmersion.domain.research.Slug] =
+  def existingSlugs(slugs: List[Slug])(using DbCon): Set[Slug] =
     val wanted = slugs.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Set.empty
     else
       sql"SELECT slug FROM articles WHERE slug = ANY($wanted::text[])"
-        .query[com.histmersion.domain.research.Slug]
+        .query[Slug]
         .run()
         .toSet
 
   /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
-  def refs(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): List[Article.Ref] =
+  def refs(slugs: List[Slug])(using DbCon): List[Article.Ref] =
     val wanted = slugs.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Nil
     else
@@ -375,7 +385,7 @@ private[articles] object ArticleRepo:
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in the corpus still
     * appears (with a NULL title) — a dangling citation is a lint finding, not a reason to hide it.
     */
-  def sourcesCited(slug: com.histmersion.domain.research.Slug)(using DbCon): List[CitedSource] =
+  def sourcesCited(slug: Slug)(using DbCon): List[CitedSource] =
     sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
@@ -392,12 +402,12 @@ private[articles] object ArticleRepo:
       filter: Filter,
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
-      text: Option[com.histmersion.domain.library.search.Search.Query],
-      limit: com.histmersion.domain.research.articles.ArticleRepo.Limit,
-      offset: com.histmersion.Offset
+      text: Option[Search.Query],
+      limit: Limit,
+      offset: Offset
   )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
-    val order = text.map(t => com.histmersion.domain.library.search.Search.Query(t.value.trim)).filter(_.value.nonEmpty) match
+    val order = text.map(t => Search.Query(t.value.trim)).filter(_.value.nonEmpty) match
       case Some(t) => Sql.raw(Sql.Text("ORDER BY ts_rank_cd(a.tsv, ")) ++ tsQuery(t) ++ ") DESC, a.title"
       case None    => Sql.raw(Sql.Text("ORDER BY a.kind, a.title"))
     val kinds = Article.List.byKind(
@@ -412,18 +422,18 @@ private[articles] object ArticleRepo:
       order ++ Sql.of(Sql.Text(" LIMIT ? OFFSET ?"), I(Param.I.V(limit.value)), I(Param.I.V(offset.value.max(0))))).frag
       .query[ArticleSummaryRow]
       .run()
-    Article.List.of(total, rows.toList.map(_.summaryRow), com.histmersion.api.personal.UnreadPage.Offset(offset.value.max(0)), kinds)
+    Article.List.of(total, rows.toList.map(_.summaryRow), UnreadPage.Offset(offset.value.max(0)), kinds)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
     * [[FilterSql.articleWhere]] (the one rule relating articles to sources).
     */
-  def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.Article.Kind], text: Option[com.histmersion.domain.library.search.Search.Query]): Sql =
+  def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.Article.Kind], text: Option[Search.Query]): Sql =
     val ps = List.newBuilder[Sql]
     val related = FilterSql.articleWhere(filter, scope)
     if related.text.value != "TRUE" then ps += related
     kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).foreach(k => ps += Sql.of(Sql.OfText("lower(a.kind) = ?"), S(Param.S.V(k))))
     text.map(_.value.trim).filter(_.nonEmpty).foreach { t =>
-      val fts = Sql.raw(Sql.RawText("(a.tsv @@ ")) ++ tsQuery(com.histmersion.domain.library.search.Search.Query(t)) ++
+      val fts = Sql.raw(Sql.RawText("(a.tsv @@ ")) ++ tsQuery(Search.Query(t)) ++
         Sql.of(Sql.OfText(s" OR a.title ILIKE ?$Esc)"), S(Param.S.V(FilterSql.contains(t))))
       ps += fts
     }
@@ -431,13 +441,13 @@ private[articles] object ArticleRepo:
     if parts.isEmpty then Sql.raw(Sql.RawText("TRUE"))
     else Sql(Sql.Text(parts.map(_.text.value).mkString(" AND ")), parts.flatMap(_.params))
 
-  private def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Search.tsQuery(q)
+  private def tsQuery(q: Search.Query): Sql = Search.tsQuery(q)
 
-  def slugs(using DbCon): Vector[com.histmersion.domain.research.Slug] =
-    sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[com.histmersion.domain.research.Slug].run()
+  def slugs(using DbCon): Vector[Slug] =
+    sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[Slug].run()
 
   /** `slug -> updated_at` in epoch millis, for the seed guard (one query for the whole wiki). */
-  def updatedAtMillis(using DbCon): Map[com.histmersion.domain.research.Slug, com.histmersion.domain.library.sources.CitekeyMillis.Millis] =
+  def updatedAtMillis(using DbCon): Map[Slug, CitekeyMillis.Millis] =
     sql"SELECT slug, (extract(epoch from updated_at) * 1000)::bigint FROM articles"
       .query[SlugMillis]
       .run()
@@ -455,7 +465,7 @@ private[articles] object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
-  def listVersions(slug: com.histmersion.domain.research.Slug, limit: com.histmersion.domain.research.articles.ArticleRepo.Limit = com.histmersion.domain.research.articles.ArticleRepo.Limit(20))(using DbCon): List[Article.Version] =
+  def listVersions(slug: Slug, limit: Limit = Limit(20))(using DbCon): List[Article.Version] =
     Sql
       .of(
         Sql.Text(s"""SELECT v.id, v.slug, left(v.summary, 200),
@@ -472,13 +482,13 @@ private[articles] object ArticleRepo:
 
   /** One historical version's full body. */
   /** How many articles are stored. */
-  def count()(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.Count = Count(sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong)
+  def count()(using DbCon): Count = Count(sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong)
 
   /** The newest saved version of an article: after a write, the row holding the text it replaced. */
-  def latestVersion(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.VersionId] =
+  def latestVersion(slug: Slug)(using DbCon): Option[VersionId] =
     sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten.map(VersionId(_))
 
-  def getVersion(slug: com.histmersion.domain.research.Slug, versionId: com.histmersion.domain.research.articles.ArticleRepo.VersionId)(using DbCon): Option[Article.VersionFull] =
+  def getVersion(slug: Slug, versionId: VersionId)(using DbCon): Option[Article.VersionFull] =
     Sql
       .of(
         Sql.Text(s"""SELECT v.id, v.slug, v.body, v.summary,
@@ -494,13 +504,13 @@ private[articles] object ArticleRepo:
 
   /** Every goal's linked articles that exist: goal → slugs. */
   /** Is there an article with this slug? */
-  def slugExists(slug: com.histmersion.domain.research.Slug)(using DbCon): Boolean =
+  def slugExists(slug: Slug)(using DbCon): Boolean =
     sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
 
-  def articlesByGoal(using DbCon): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]] =
+  def articlesByGoal(using DbCon): Map[Goal.Slug, List[Slug]] =
     sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
             WHERE l.kind = 'article' ORDER BY l.goal_slug, l.ref"""
-      .query[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.research.Slug)]
+      .query[(Goal.Slug, Slug)]
       .run()
       .toList
       .groupMap(_._1)(_._2)

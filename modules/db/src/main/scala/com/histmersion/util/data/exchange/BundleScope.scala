@@ -1,6 +1,9 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which rows a bundle read covers: every one, the ones changed after a moment (`--since`), or the ones with the given
   * uids (what an import compares the bundle against).
@@ -13,4 +16,4 @@ enum BundleScope:
 object BundleScope:
   object Since:
     type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object At extends RefinedType[String, Pure]

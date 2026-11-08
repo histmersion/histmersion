@@ -1,9 +1,11 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.storage.ContentStore
 
 /** The carried kinds and merge rules an export, an import and a plan run over: every entry of the format once, in its
   * order, whoever registered first; the import's steps in stage and rank order; each kind of record's table.
@@ -26,12 +28,12 @@ class CarriedKindsSuite extends munit.FunSuite:
     val odd = new CarriedKind:
       def owner: DataOwner = DataOwner("x")
       def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
-      def out(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
+      def out(scope: BundleScope, files: ContentStore)(using
           com.augustnagro.magnum.DbCon
       ): CarriedOut = CarriedOut(CarriedOut.Payload(Array.emptyByteArray), None)
-      def into(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
+      def into(scope: BundleScope, files: ContentStore)(using
           com.augustnagro.magnum.DbCon
-      ): com.histmersion.util.data.exchange.BundleEntities => com.histmersion.util.data.exchange.BundleEntities =
+      ): BundleEntities => BundleEntities =
         identity
     val withoutTombstones =
       TestExchange.carried.filterNot(_.entry.value == com.histmersion.api.exchange.Bundle.Files.Tombstones)

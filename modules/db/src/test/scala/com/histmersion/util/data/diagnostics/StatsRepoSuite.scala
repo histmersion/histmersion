@@ -1,4 +1,5 @@
-package com.histmersion.util.data.diagnostics
+package com.histmersion
+package util.data.diagnostics
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,18 +15,24 @@ import com.augustnagro.magnum.*
 import com.histmersion.db.*
 import com.histmersion.api.instance.CorpusCounts
 import com.histmersion.api.jobs.{JobCounts, JobState}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.util.data.TableName
+import com.histmersion.util.jobs.JobRepo
+import com.histmersion.api.ByteCount
 
 /** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites write into the
   * same database at the same time, so each count is compared with its own table read in the same breath, not with a
   * fixed number.
   */
-class StatsRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class StatsRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def count(table: String): Int =
@@ -34,13 +41,13 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
   test("#718: corpus counts read every table they name"):
     val c = connect(ds)(
       CorpusCounts(
-        CorpusCounts.Sources(StatsRepo.rows(com.histmersion.util.data.TableName("sources")).value.toInt),
-        CorpusCounts.Findings(StatsRepo.rows(com.histmersion.util.data.TableName("findings")).value.toInt),
-        CorpusCounts.Articles(StatsRepo.rows(com.histmersion.util.data.TableName("articles")).value.toInt),
-        CorpusCounts.Events(StatsRepo.rows(com.histmersion.util.data.TableName("events")).value.toInt),
-        CorpusCounts.Places(StatsRepo.rows(com.histmersion.util.data.TableName("places")).value.toInt),
-        CorpusCounts.Periods(StatsRepo.rows(com.histmersion.util.data.TableName("periods")).value.toInt),
-        CorpusCounts.Presets(StatsRepo.rowsWith(com.histmersion.util.data.TableName("periods"), com.histmersion.util.data.diagnostics.StatsRepo.ColumnName("preset")).value.toInt)
+        CorpusCounts.Sources(StatsRepo.rows(TableName("sources")).value.toInt),
+        CorpusCounts.Findings(StatsRepo.rows(TableName("findings")).value.toInt),
+        CorpusCounts.Articles(StatsRepo.rows(TableName("articles")).value.toInt),
+        CorpusCounts.Events(StatsRepo.rows(TableName("events")).value.toInt),
+        CorpusCounts.Places(StatsRepo.rows(TableName("places")).value.toInt),
+        CorpusCounts.Periods(StatsRepo.rows(TableName("periods")).value.toInt),
+        CorpusCounts.Presets(StatsRepo.rowsWith(TableName("periods"), StatsRepo.ColumnName("preset")).value.toInt)
       )
     )
     // places and periods are reference data no other suite deletes: they can only have grown
@@ -53,7 +60,7 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("#718: the job queue by state adds up to the jobs table"):
     val before = count("jobs")
-    val j = JobCounts.of(connect(ds)(com.histmersion.util.jobs.JobRepo.states).map((state, n) => (JobState.Wire(state.value), JobCounts.Count(n.value))))
+    val j = JobCounts.of(connect(ds)(JobRepo.states).map((state, n) => (JobState.Wire(state.value), JobCounts.Count(n.value))))
     val after = count("jobs")
     val total = JobState.values.toList.map(state => j.of(state).value).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
@@ -62,7 +69,7 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
     val (name, bytes) = connect(ds)(StatsRepo.databaseSize)
     assert(name.value.endsWith("_test"), name)
     assert(bytes.value > 0, bytes)
-    val top = connect(ds)(StatsRepo.tableBytes).take(5).map((table, size) => TableSize(TableSize.Name(table.value), com.histmersion.api.ByteCount(size.value)))
+    val top = connect(ds)(StatsRepo.tableBytes).take(5).map((table, size) => TableSize(TableSize.Name(table.value), ByteCount(size.value)))
     assert(top.nonEmpty && top.size <= 5, top)
     assertEquals(top.map(_.bytes), top.map(_.bytes).sortBy(b => b.value: Long).reverse)
     assert(top.forall(t => t.bytes.value <= bytes.value), top)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.api.exchange.Bundle
 
@@ -11,7 +12,7 @@ import hearth.kindlings.optics.syntax.*
 /** What a bundle carries of the named periods: this collection's own, after the places and before the events. */
 object PeriodsCarried:
 
-  val periods: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Period](
+  val periods: CarriedKind = CarriedKind.records[Bundle.Period](
     DataOwner("catalogue"),
     Bundle.Kind.Period,
     TableName("periods"),

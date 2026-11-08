@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,6 +18,9 @@ import com.histmersion.util.database.{Migrate, Sql}
 import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Place}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Citekey
 
 /** A finding whose POINT is a placeholder (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise). 12 findings on "Greece" sat on 37.5 N 22.5 E, an atlas grid square's centre near Tegea, and had joined
@@ -29,13 +33,13 @@ import com.histmersion.util.database.given
   *   - an unnamed placeholder keeps its areas by containment and is listed by `finding-placeholder`;
   *   - a precise point is matched as before; nobody loses their last place; a write and a rebuild agree.
   */
-class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
+class PlaceholderPointSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -74,27 +78,27 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), com.histmersion.api.catalogue.Place.Label("Zzph Hellas"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(150, -44, 154, -40))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), com.histmersion.api.catalogue.Place.Label("Zzph Balkans"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(149, -46, 156, -39))),
+        in(Place(Place.Id(Hellas), Place.Label("Zzph Hellas"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(150, -44, 154, -40))),
+        in(Place(Place.Id(Balkans), Place.Label("Zzph Balkans"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(149, -46, 156, -39))),
         in(
           Place(
-            com.histmersion.api.catalogue.Place.Id(Pelop),
-            com.histmersion.api.catalogue.Place.Label("Zzph Peloponnesos"),
+            Place.Id(Pelop),
+            Place.Label("Zzph Peloponnesos"),
             Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
             box(151.0, -43.5, 152.8, -42.2)
           )
         ),
         in(
           Place(
-            com.histmersion.api.catalogue.Place.Id(Mykenai),
-            com.histmersion.api.catalogue.Place.Label("Zzph Mykenai Realm"),
+            Place.Id(Mykenai),
+            Place.Label("Zzph Mykenai Realm"),
             Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
             box(150, -44, 152, -41),
-            Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
+            Some(Period(Year(-1600), Year(-1100)))
           )
         ),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), com.histmersion.api.catalogue.Place.Label("Zzph Tegea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.52, -42.53))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), com.histmersion.api.catalogue.Place.Label("Zzph Mantinea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.45, -42.45)))
+        in(Place(Place.Id(Tegea), Place.Label("Zzph Tegea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.52, -42.53))),
+        in(Place(Place.Id(Mantinea), Place.Label("Zzph Mantinea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.45, -42.45)))
       )
     )
     val r = rep
@@ -103,8 +107,8 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       List(
         in(
           Place(
-            com.histmersion.api.catalogue.Place.Id(NearRep),
-            com.histmersion.api.catalogue.Place.Label("Zzph Nearrep"),
+            Place.Id(NearRep),
+            Place.Label("Zzph Nearrep"),
             Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
             pt(r.lon.value + 0.02, r.lat.value + 0.01)
           )
@@ -112,17 +116,17 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint], period: Option[Period] = None) =
-      Finding(Finding.Id(s"zzph_src#$n"), com.histmersion.api.library.Citekey("zzph_src"), Finding.Claim(s"claim $n"), region, at, period, None, Nil, None)
+      Finding(Finding.Id(s"zzph_src#$n"), Citekey("zzph_src"), Finding.Claim(s"claim $n"), region, at, period, None, Nil, None)
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey("zzph_src"),
+        citekey = Citekey("zzph_src"),
         title = com.histmersion.api.library.Title("Placeholder fixture"),
         authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2026)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -133,11 +137,11 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         provenance = None,
         calibreId = None,
         findings = List(
-          f(0, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // a model's "Greece" on round numbers
-          f(1, None, Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // the same point, no name
+          f(0, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(Year(-1300), Year(-1200)))), // a model's "Greece" on round numbers
+          f(1, None, Some(Grid), Some(Period(Year(-1300), Year(-1200)))), // the same point, no name
           f(2, Some(Finding.Region("Zzph Hellas")), Some(r)), // the geocoder's point for the name
           f(3, Some(Finding.Region("Zzph Tegea")), Some(GeoPoint(Longitude(152.52), Latitude(-42.53)))), // a precise point
-          f(4, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))))
+          f(4, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(Year(-500), Year(-400))))
         )
       ), // after the Mykenai realm
       cfg.limits.chunkChars,
@@ -211,8 +215,8 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), com.histmersion.api.catalogue.Place.Label("Zzph Tribe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People), pt(153.31, -41.17)),
-          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzph Tribe")))
+          Place(Place.Id("zzph_tribe"), Place.Label("Zzph Tribe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People), pt(153.31, -41.17)),
+          List(Place.Name(Place.Name.Value("Zzph Tribe")))
         )
       )
     )

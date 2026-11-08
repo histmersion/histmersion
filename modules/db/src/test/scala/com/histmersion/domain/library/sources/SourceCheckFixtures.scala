@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.checks.Lint.{FormatChecker, LintReport, Rule}
 import com.histmersion.domain.research.articles.ArticleCheckFixtures
@@ -9,6 +10,8 @@ import com.augustnagro.magnum.connect
 import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
+import com.histmersion.util.ocr.Chunker
+import com.histmersion.api.checks.Lint
 
 /** The library's and the articles' lint rules as the db suites run them: one connection for the lot, each rule by its
   * owner's repository; and the SQL each rule reads.
@@ -16,7 +19,7 @@ import javax.sql.DataSource
 object SourceCheckFixtures:
   def reindexStale(
       ds: DataSource,
-      chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars,
+      chunkChars: Chunker.ChunkMaxChars,
       maxChars: SourceRepairs.MaxChars
   ): ReindexResult =
     SourceRepairs(Transactor(ds)).reindexStale(chunkChars, maxChars)
@@ -24,8 +27,8 @@ object SourceCheckFixtures:
   def run(
       ds: DataSource,
       rules: List[Rule],
-      maxItems: com.histmersion.api.checks.Lint.ItemLimit,
-      suggestions: com.histmersion.api.checks.Lint.ItemLimit,
+      maxItems: Lint.ItemLimit,
+      suggestions: Lint.ItemLimit,
       format: FormatChecker,
       geocode: GeocodeSettings
   ): LintReport =

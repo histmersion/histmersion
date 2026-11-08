@@ -1,9 +1,14 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.media.AssetLink
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.media.assets.MediaItemRow
+import com.histmersion.domain.media.imports.Target
+import com.histmersion.domain.media.assets.AssetInfoRow
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
@@ -13,10 +18,10 @@ private[links] object AssetLinkRepo:
   given DbCodec[AssetLink] = DbCodec.derived
 
   def list(
-      citekey: Option[com.histmersion.domain.library.Citekey],
-      asset: Option[com.histmersion.domain.media.assets.MediaItemRow.Uid],
-      targetType: Option[com.histmersion.domain.media.imports.Target.TargetType],
-      targetId: Option[com.histmersion.domain.media.imports.Target.Id]
+      citekey: Option[Citekey],
+      asset: Option[MediaItemRow.Uid],
+      targetType: Option[Target.TargetType],
+      targetId: Option[Target.Id]
   )(using DbCon): List[AssetLink] =
     sql"""SELECT id, citekey, asset_name, relation, target_type, target_id, xywh, notes
           FROM asset_links
@@ -27,7 +32,7 @@ private[links] object AssetLinkRepo:
           ORDER BY id""".query[AssetLink].run().toList
 
   /** Whether the figure a link names is stored. */
-  def figureExists(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Boolean =
+  def figureExists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
   def insert(in: AssetLink.Put)(using DbCon): AssetLink =

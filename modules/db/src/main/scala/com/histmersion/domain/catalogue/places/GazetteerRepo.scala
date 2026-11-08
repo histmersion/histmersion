@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 
 import com.histmersion.util.database.given
@@ -41,10 +42,10 @@ private[places] object GazetteerRepo:
     * import ([[PlaceRepo.upsertPlaces]]) writes them for the places it touches. Places an external source wrote are
     * left alone. Idempotent.
     */
-  def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then com.histmersion.RowCount(0)
+  def linkSeedIds(ids: List[BPlaceRow.Id])(using DbCon): RowCount =
+    if ids.isEmpty then RowCount(0)
     else
-      com.histmersion.RowCount(
+      RowCount(
       sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
             SELECT id, scheme, ext, rel FROM (
               SELECT id, 'pleiades' AS scheme, substring(properties->>'pleiades_uri' FROM '/places/([0-9]+)') AS ext,
@@ -74,15 +75,15 @@ private[places] object GazetteerRepo:
 
   /** Record a finished import: what was read, and what it now holds in the store. */
   def recordSource(
-      key: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key,
+      key: GazetteerSourceRow.Key,
       kind: Gazetteer.Kind,
-      title: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Title,
-      version: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Version,
-      sha256: com.histmersion.Sha256,
-      file: com.histmersion.domain.catalogue.places.GazetteerSourceRow.File,
-      url: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url],
-      licence: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Licence],
-      citation: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Citation],
+      title: GazetteerSourceRow.Title,
+      version: GazetteerSourceRow.Version,
+      sha256: Sha256,
+      file: GazetteerSourceRow.File,
+      url: Option[GazetteerSourceRow.Url],
+      licence: Option[GazetteerSourceRow.Licence],
+      citation: Option[GazetteerSourceRow.Citation],
       span: Span
   )(using DbCon): Unit =
     val lo = span.from.map(y => DeepTime.SignedYear(y.value))
@@ -166,11 +167,11 @@ private[places] object GazetteerRepo:
       if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil
       else
         PointAreaRepo.ofSourceIn(
-          com.histmersion.domain.catalogue.places.PointAreas.Group.Source(source.value),
+          PointAreas.Group.Source(source.value),
           pointAreaKinds.toList.sortBy(_.value).map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
         )
 
-    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): com.histmersion.RowCount = PointAreaRepo.deletePlacesIn(ids)
+    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): RowCount = PointAreaRepo.deletePlacesIn(ids)
 
     def sweep(): Gazetteer.LoadCounts =
       val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
@@ -312,8 +313,8 @@ private[places] object GazetteerRepo:
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
 
     /** The records' own places: inserted, or updated where something differs. (inserted, updated) */
-    private def writePlaces(rows: List[(GazRecord, Place.Id)]): (com.histmersion.RowCount, com.histmersion.RowCount) =
-      if rows.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0))
+    private def writePlaces(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount) =
+      if rows.isEmpty then (RowCount(0), RowCount(0))
       else
         val doc = Json.arr(rows.map { (r, id) =>
           val v = Gazetteer.validity(source, r.span, windowYears)
@@ -355,10 +356,10 @@ private[places] object GazetteerRepo:
                    OR NOT ST_OrderingEquals(coalesce(places.geom, 'POINT EMPTY'::geometry),
                                             coalesce(EXCLUDED.geom, 'POINT EMPTY'::geometry))
                 RETURNING (xmax = 0)""".query[Boolean].run()
-        (com.histmersion.RowCount(out.count(identity)), com.histmersion.RowCount(out.count(!_)))
+        (RowCount(out.count(identity)), RowCount(out.count(!_)))
 
     /** The records' names on their places, as a diff. (added, removed, changed) */
-    private def writeNames(rows: List[(GazRecord, Place.Id)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
+    private def writeNames(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.names.map(n =>
           Json.obj(
@@ -393,10 +394,10 @@ private[places] object GazetteerRepo:
               WHERE (place_names.period, place_names.import_version, place_names.citation)
                     IS DISTINCT FROM (EXCLUDED.period, EXCLUDED.import_version, EXCLUDED.citation)
               RETURNING (xmax = 0)""".query[Boolean].run()
-      (com.histmersion.RowCount(out.count(identity)), com.histmersion.RowCount(removed), com.histmersion.RowCount(out.count(!_)))
+      (RowCount(out.count(identity)), RowCount(removed), RowCount(out.count(!_)))
 
     /** The records' descriptions on their places (joined ones too), as a diff. (added, removed, changed) */
-    private def writeDescriptions(rows: List[(GazRecord, Place.Id)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
+    private def writeDescriptions(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.descriptions
           .distinctBy(_.lang)
@@ -426,14 +427,14 @@ private[places] object GazetteerRepo:
               WHERE (place_descriptions.text, place_descriptions.import_version)
                     IS DISTINCT FROM (EXCLUDED.text, EXCLUDED.import_version)
               RETURNING (xmax = 0)""".query[Boolean].run()
-      (com.histmersion.RowCount(out.count(identity)), com.histmersion.RowCount(removed), com.histmersion.RowCount(out.count(!_)))
+      (RowCount(out.count(identity)), RowCount(removed), RowCount(out.count(!_)))
 
     /** The records' links on their places, as a diff. A link another record wrote first stays its. The record's OWN
       * identifier link also carries what the record says the item is (V077): its class, its point and its stated dates
       * — on a link the seed wrote for the same id too (a curated place citing that Wikidata item), where only those
       * three columns change. (added, removed, changed)
       */
-    private def writeLinks(rows: List[(GazRecord, Place.Id)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
+    private def writeLinks(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.placeLinks.map { l =>
           val own = r.own.contains(l.id)
@@ -488,5 +489,5 @@ private[places] object GazetteerRepo:
                      AND (place_links.item_class, place_links.item_geom, place_links.item_period)
                          IS DISTINCT FROM (EXCLUDED.item_class, EXCLUDED.item_geom, EXCLUDED.item_period))
               RETURNING (xmax = 0)""".query[Boolean].run()
-      (com.histmersion.RowCount(out.count(identity)), com.histmersion.RowCount(removed), com.histmersion.RowCount(out.count(!_)))
+      (RowCount(out.count(identity)), RowCount(removed), RowCount(out.count(!_)))
 

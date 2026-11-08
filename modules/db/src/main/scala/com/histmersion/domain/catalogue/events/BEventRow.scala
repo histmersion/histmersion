@@ -1,9 +1,14 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
 final private[events] case class BEventRow(
@@ -18,10 +23,10 @@ final private[events] case class BEventRow(
     notAfter: Option[BEventRow.NotAfter],
     historicity: BEventRow.Historicity,
     geom: Option[BEventRow.Geom],
-    placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+    placeId: Option[Place.Id],
     parentUid: Option[UUID],
     description: Option[BEventRow.Description],
-    citekey: Option[com.histmersion.domain.library.Citekey],
+    citekey: Option[Citekey],
     sourceUid: Option[UUID],
     updatedAt: BEventRow.UpdatedAt,
     scale: Option[BEventRow.Scale],
@@ -35,38 +40,38 @@ final private[events] case class BEventRow(
 
 object BEventRow:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type NotBefore = NotBefore.T
-  object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotBefore extends RefinedType[Long, Pure]
   type BeginBy = BeginBy.T
-  object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BeginBy extends RefinedType[Long, Pure]
   type EndFrom = EndFrom.T
-  object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EndFrom extends RefinedType[Long, Pure]
   type NotAfter = NotAfter.T
-  object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotAfter extends RefinedType[Long, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Historicity extends RefinedType[String, Pure]
   type Geom = Geom.T
-  object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Geom extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]
   type Scale = Scale.T
-  object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Scale extends RefinedType[String, Pure]
   type Catalogue = Catalogue.T
-  object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Catalogue extends RefinedType[String, Pure]
   type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Names extends RefinedType[String, Pure]
   type Wikidata = Wikidata.T
-  object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wikidata extends RefinedType[String, Pure]
   type Central = Central.T
-  object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Central extends RefinedType[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlusMinus extends RefinedType[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatingMethod extends RefinedType[String, Pure]

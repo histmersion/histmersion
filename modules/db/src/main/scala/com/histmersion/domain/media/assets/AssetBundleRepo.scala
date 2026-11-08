@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
@@ -10,6 +11,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.Sha256
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
@@ -35,7 +37,7 @@ private[assets] object AssetBundleRepo:
       r.sourceUid,
       Bundle.Asset.Name(r.name.value),
       Bundle.Asset.Mime(r.mime.value),
-      com.histmersion.api.Sha256(r.sha.value),
+      Sha256(r.sha.value),
       r.width.map(w => Bundle.Asset.Width(w.value)),
       r.height.map(h => Bundle.Asset.Height(h.value)),
       r.kind.map(k => Bundle.Asset.Kind(k.value)),
@@ -68,7 +70,7 @@ private[assets] object AssetBundleRepo:
     w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
-  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBytesRow.Bytes]): Unit =
+  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[AssetBytesRow.Bytes]): Unit =
     given DbCon = w.transaction
     w.touchSource(a.sourceUid)
     val ck = w.citekeyOf(a.sourceUid)
@@ -96,7 +98,7 @@ private[assets] object AssetBundleRepo:
   // ── a merge ──────────────────────────────────────────────────────────────────────────────────
 
   /** (source uid, asset name) → asset uid here, for the sources of `assets`. */
-  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, com.histmersion.domain.media.assets.AssetBundleRow.Name), UUID] =
+  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, AssetBundleRow.Name), UUID] =
     if sourceUids.isEmpty then Map.empty
     else
       sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey

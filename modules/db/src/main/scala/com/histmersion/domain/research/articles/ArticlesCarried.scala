@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.exchange.Bundle
 
@@ -23,6 +24,8 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
   * and their old slugs.
@@ -32,13 +35,13 @@ import hearth.kindlings.optics.syntax.*
   */
 object ArticlesCarried:
   type Stem = Stem.T
-  object Stem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stem extends RefinedType[String, Pure]
 
   private val Research = DataOwner("research")
 
   private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
-  val articles: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Article](
+  val articles: CarriedKind = CarriedKind.records[Bundle.Article](
     Research,
     Bundle.Kind.Article,
     TableName("articles"),
@@ -69,7 +72,7 @@ object ArticlesCarried:
 
     override def blobIn(
         use: BlobUse,
-        sha256: com.histmersion.Sha256,
+        sha256: Sha256,
         writer: BundleImport.Writer,
         files: ContentStore
     ): Option[BlobSink] = ArticleBundleRepo.blobIn(use, writer)
@@ -77,12 +80,12 @@ object ArticlesCarried:
     override val rowsIn: List[RowsIn] = List(rows(ImportRank(45))(ArticleBundleRepo.mergedVersionsIn))
 
   /** The entry of a set records own, by its file's stem. */
-  private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
+  private def set(stem: Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
 
   val aliases: CarriedKind =
-    CarriedKind.owned[com.histmersion.api.exchange.Bundle.ArticleAlias](
+    CarriedKind.owned[Bundle.ArticleAlias](
       Research,
-      set(com.histmersion.domain.research.articles.ArticlesCarried.Stem("article-aliases")),
+      set(Stem("article-aliases")),
       List(rows(ImportRank(44))(ArticleBundleRepo.articleAliasesIn))
     )(scope => ArticleBundleRepo.articleAliases(scope).toList)(
       a => Some(CarriedKind.OwnedClock(a.createdAt.value)),

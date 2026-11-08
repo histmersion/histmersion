@@ -1,4 +1,5 @@
-package com.histmersion.util.identity
+package com.histmersion
+package util.identity
 
 import com.histmersion.api.given
 import com.histmersion.util.data.DataOwner

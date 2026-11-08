@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,6 +24,11 @@ import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Bucket, Filter, Finding, Source}
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
@@ -31,13 +37,13 @@ import com.histmersion.util.database.given
   * counts), a period on each polity so the as-of walk has something to drop, and **one finding nowhere at all** so the
   * `unlocated` leaf has an occupant.
   */
-class TreeRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class TreeRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
@@ -53,54 +59,54 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   // gazetteer) materialises. Keep new fixture geometry away from real places.
   private val batch = List(
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zzt_world"), com.histmersion.api.catalogue.Place.Label("Zzt World"), Place.KindValue(Place.Kind.Region)),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzt World")))
+      Place(Place.Id("zzt_world"), Place.Label("Zzt World"), Place.KindValue(Place.Kind.Region)),
+      List(Place.Name(Place.Name.Value("Zzt World")))
     ),
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zzt_land"), com.histmersion.api.catalogue.Place.Label("Zzt Land"), Place.KindValue(Place.Kind.Region), Some(box(170, -50, 179, -40))),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzt Land"))),
-      List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzt_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzt_world")))
+      Place(Place.Id("zzt_land"), Place.Label("Zzt Land"), Place.KindValue(Place.Kind.Region), Some(box(170, -50, 179, -40))),
+      List(Place.Name(Place.Name.Value("Zzt Land"))),
+      List(Place.Relation(Place.Relation.ChildId("zzt_land"), Place.Relation.ParentId("zzt_world")))
     ),
     Place.Input(
       Place(
-        com.histmersion.api.catalogue.Place.Id("zzt_north"),
-        com.histmersion.api.catalogue.Place.Label("Zzt North"),
+        Place.Id("zzt_north"),
+        Place.Label("Zzt North"),
         Place.KindValue(Place.Kind.Polity),
         Some(box(171, -48, 175, -44)),
-        Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))),
-        Some(com.histmersion.api.catalogue.Place.Source("test fixture"))
+        Some(Period(Year(-1650), Year(-1180))),
+        Some(Place.Source("test fixture"))
       ),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzt North"))),
-      List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzt_north"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))))
+      List(Place.Name(Place.Name.Value("Zzt North"))),
+      List(Place.Relation(Place.Relation.ChildId("zzt_north"), Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1650), Year(-1180)))))
     ),
     Place.Input(
       Place(
-        com.histmersion.api.catalogue.Place.Id("zzt_south"),
-        com.histmersion.api.catalogue.Place.Label("Zzt South"),
+        Place.Id("zzt_south"),
+        Place.Label("Zzt South"),
         Place.KindValue(Place.Kind.Polity),
         Some(box(174, -47, 178, -44)),
-        Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1300))),
-        Some(com.histmersion.api.catalogue.Place.Source("test fixture"))
+        Some(Period(Year(-1500), Year(-1300))),
+        Some(Place.Source("test fixture"))
       ),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzt South"))),
-      List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzt_south"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1300)))))
+      List(Place.Name(Place.Name.Value("Zzt South"))),
+      List(Place.Relation(Place.Relation.ChildId("zzt_south"), Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1500), Year(-1300)))))
     )
   )
 
   private val Tag = "zzt-tree-fixture"
 
   private val src = Source(
-    citekey = com.histmersion.api.library.Citekey("zzt_src"),
+    citekey = Citekey("zzt_src"),
     title = com.histmersion.api.library.Title("Tree fixture"),
     authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply),
+    year = (Some(2021)).map(Year.apply),
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Current,
+    status = Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = List(Source.Tags(Tag)),
-    period = Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1350))),
+    period = Some(Period(Year(-1400), Year(-1350))),
     summary = None,
     citedByCount = None,
     influentialCitations = None,
@@ -110,11 +116,11 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // in the OVERLAP of the two polities (and in the region containing both)
       Finding(
         Finding.Id("zzt_src#0"),
-        com.histmersion.api.library.Citekey("zzt_src"),
+        Citekey("zzt_src"),
         Finding.Claim("Frontier hoard"),
         Some(Finding.Region("Frontier")),
-        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(174.5), com.histmersion.api.catalogue.Latitude(-45.0))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1350))),
+        Some(GeoPoint(Longitude(174.5), Latitude(-45.0))),
+        Some(Period(Year(-1400), Year(-1350))),
         None,
         Nil,
         Some(Confidence.High)
@@ -122,11 +128,11 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // in the northern polity only
       Finding(
         Finding.Id("zzt_src#1"),
-        com.histmersion.api.library.Citekey("zzt_src"),
+        Citekey("zzt_src"),
         Finding.Claim("Capital archive"),
         Some(Finding.Region("Capital")),
-        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(172.0), com.histmersion.api.catalogue.Latitude(-45.0))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1350))),
+        Some(GeoPoint(Longitude(172.0), Latitude(-45.0))),
+        Some(Period(Year(-1400), Year(-1350))),
         None,
         Nil,
         None
@@ -134,11 +140,11 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
       // nowhere: mid-Atlantic, no place covers it
       Finding(
         Finding.Id("zzt_src#2"),
-        com.histmersion.api.library.Citekey("zzt_src"),
+        Citekey("zzt_src"),
         Finding.Claim("Atlantic core"),
         None,
-        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(-30.0), com.histmersion.api.catalogue.Latitude(45.0))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1350))),
+        Some(GeoPoint(Longitude(-30.0), Latitude(45.0))),
+        Some(Period(Year(-1400), Year(-1350))),
         None,
         Nil,
         None
@@ -157,7 +163,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     */
   private val filter = Filter(
     tags = List(Filter.Tags(Tag)),
-    period = Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200)))
+    period = Some(Period(Year(-1600), Year(-1200)))
   )
 
   private def find(bs: List[Bucket], key: String): Option[Bucket] =
@@ -199,7 +205,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a window that excludes the fixture returns no rows"):
     seed()
-    assertEquals(SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("sources"), filter.modify(_.period).setTo(Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-200))))).toList, Nil)
+    assertEquals(SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("sources"), filter.modify(_.period).setTo(Some(Period(Year(-500), Year(-200))))).toList, Nil)
 
   // ── the gazetteer slice ──────────────────────────────────────────────────────────────────────
 
@@ -208,15 +214,15 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     val rows = SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("findings"), filter).toList
     val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
     assert(ns.exists(_.id.value == "zzt_world"), "the ancestor nobody is materialised into is still needed")
-    assertEquals(ns.find(_.id.value == "zzt_north").flatMap(_.period), Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))))
+    assertEquals(ns.find(_.id.value == "zzt_north").flatMap(_.period), Some(Period(Year(-1650), Year(-1180))))
     assertEquals(ns.find(_.id.value == "zzt_world").flatMap(_.period), None)
     assertEquals(ns.find(_.id.value == "zzt_land").map(_.kind), Some(com.histmersion.domain.catalogue.Place.Kind.Region))
     assert(rels.exists(r => r.childId.value == "zzt_north" && r.parentId.value == "zzt_land"))
-    assertEquals(rels.find(_.childId.value == "zzt_south").flatMap(_.period), Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1300))))
+    assertEquals(rels.find(_.childId.value == "zzt_south").flatMap(_.period), Some(Period(Year(-1500), Year(-1300))))
     assert(rels.forall(_.kind.value == Place.Relation.PartOf))
 
   test("gazetteer() runs no query at all when nothing is located"):
-    assertEquals(PlaceFixtures.gazetteer(ds, Vector(TreeRow(com.histmersion.api.library.Tree.TreeRow.Key("x"), com.histmersion.api.library.Citekey("x"), com.histmersion.api.library.Title("X")))), (Nil, Nil))
+    assertEquals(PlaceFixtures.gazetteer(ds, Vector(TreeRow(TreeRow.Key("x"), Citekey("x"), com.histmersion.api.library.Title("X")))), (Nil, Nil))
 
   // ── repo + pure tree, end to end ─────────────────────────────────────────────────────────────
 
@@ -224,7 +230,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     seed()
     val rows = SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("findings"), filter).toList
     val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
-    val tree = Tree.regionTree(rows, ns, rels, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3), com.histmersion.api.library.Tree.RegionTreeSamples(2))
+    val tree = Tree.regionTree(rows, ns, rels, Some(Year(-1400)), Tree.RegionTreeDepth(3), Tree.RegionTreeSamples(2))
 
     assertEquals(find(tree, "zzt_world").map(_.count), Some(2), "2 of the 3 findings are located")
     assertEquals(find(tree, "zzt_land").map(_.count), Some(2))
@@ -243,7 +249,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     seed()
     val rows = SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("findings"), filter).toList
     val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
-    val tree = Tree.regionTree(rows, ns, rels, Some(com.histmersion.api.catalogue.Year(-1250)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
+    val tree = Tree.regionTree(rows, ns, rels, Some(Year(-1250)), Tree.RegionTreeDepth(3))
     assertEquals(find(tree, "zzt_south"), None)
     assertEquals(find(tree, "zzt_north").map(_.count), Some(2))
     assertEquals(find(tree, "zzt_land").map(_.overlap), Some(0))
@@ -252,7 +258,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     seed()
     val rows = SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("sources"), filter).toList
     val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
-    val tree = Tree.timeRegionTree(rows, com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200), ns, rels, com.histmersion.api.library.Tree.TimeRegionTreeDepth(2), com.histmersion.api.library.Tree.TimeRegionTreeSamples(1))
+    val tree = Tree.timeRegionTree(rows, Year(-1600), Year(-1200), ns, rels, Tree.TimeRegionTreeDepth(2), Tree.TimeRegionTreeSamples(1))
     val bucket = tree.find(_.start.contains(-1400L)).get
     assertEquals(bucket.kind, Tree.KindTime)
     assertEquals(bucket.count, 1)
@@ -265,16 +271,16 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     val scope = PlaceScope(
       Map(PlaceScope.Value("zzt_north") -> List(PlaceId("zzt_north"), PlaceId("zzt_land")))
     )
-    val sql = SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("findings"), Filter(places = List(com.histmersion.api.library.Filter.Places("zzt_north"))), scope)
+    val sql = SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("findings"), Filter(places = List(Filter.Places("zzt_north"))), scope)
     assert(sql.text.value.contains("finding_places"), sql.text)
-    assert(sql.params.exists(_ == Param.A(List(com.histmersion.util.database.Param.A.V("zzt_north"), com.histmersion.util.database.Param.A.V("zzt_land")))), sql.params.toString)
+    assert(sql.params.exists(_ == Param.A(List(Param.A.V("zzt_north"), Param.A.V("zzt_land")))), sql.params.toString)
 
   test("rowsQuery(sources) gates on a matching finding exactly as the histogram does"):
-    val f = Filter(places = List(com.histmersion.api.library.Filter.Places("anywhere")), period = Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200))))
+    val f = Filter(places = List(Filter.Places("anywhere")), period = Some(Period(Year(-1600), Year(-1200))))
     assert(SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f).text.value.contains("fp.matched > 0"))
     assert(
       !SearchFixtures
-        .treeRowsQuery(SearchFixtures.AggregateUnit("sources"), Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200)))))
+        .treeRowsQuery(SearchFixtures.AggregateUnit("sources"), Filter(period = Some(Period(Year(-1600), Year(-1200)))))
         .text
         .value
         .contains("fp.matched > 0")

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place

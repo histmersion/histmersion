@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given

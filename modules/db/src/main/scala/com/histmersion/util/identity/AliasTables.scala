@@ -1,4 +1,5 @@
-package com.histmersion.util.identity
+package com.histmersion
+package util.identity
 
 import javax.sql.DataSource
 import com.histmersion.api.aliases.AliasKind

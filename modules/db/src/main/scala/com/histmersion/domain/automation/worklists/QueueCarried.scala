@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.exchange.Bundle
 
@@ -10,7 +11,7 @@ import hearth.kindlings.optics.syntax.*
 
 /** What a bundle carries of the work lists: their items, written after every goal (rank 50). */
 object QueueCarried:
-  val items: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.QueueItem](
+  val items: CarriedKind = CarriedKind.records[Bundle.QueueItem](
     DataOwner("automation"),
     Bundle.Kind.QueueItem,
     TableName("queue_items"),

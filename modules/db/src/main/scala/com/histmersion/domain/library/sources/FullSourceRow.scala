@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.domain.library.sources.SourceColumns.given
 
@@ -7,21 +8,24 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's row as a write path reads it back (Magnum maps a SELECT's columns positionally). */
 final private[sources] case class FullSourceRow(
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     title: FullSourceRow.Title,
     authors: List[FullSourceRow.Authors],
     doi: Option[FullSourceRow.Doi],
-    year: Option[com.histmersion.Year],
+    year: Option[Year],
     venue: Option[FullSourceRow.Venue],
     status: Source.Status,
     topics: List[FullSourceRow.Topics],
     regions: List[FullSourceRow.Regions],
     tags: List[FullSourceRow.Tags],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     summary: Option[FullSourceRow.Summary],
     citedByCount: Option[FullSourceRow.CitedByCount],
     influentialCitations: Option[FullSourceRow.InfluentialCitations],
@@ -34,32 +38,32 @@ final private[sources] case class FullSourceRow(
 
 object FullSourceRow:
   type Doi = Doi.T
-  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Doi extends RefinedType[String, Pure]
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Authors extends RefinedType[String, Pure]
   type Venue = Venue.T
-  object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends RefinedType[String, Pure]
   type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends RefinedType[String, Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedByCount extends RefinedType[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfluentialCitations extends RefinedType[Int, Pure]
   type Provenance = Provenance.T
-  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provenance extends RefinedType[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CalibreId extends RefinedType[String, Pure]
   type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OcrMarkdown extends RefinedType[String, Pure]
   type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends RefinedType[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]

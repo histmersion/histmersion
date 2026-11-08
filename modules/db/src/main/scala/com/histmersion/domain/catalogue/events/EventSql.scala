@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -7,13 +8,16 @@ import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy, EventTier}
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.catalogue.Place
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list
   * (and of the map's events layer), the map's event tiles' candidates.
   */
 object EventSql:
   type Point = Point.T
-  object Point extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Point extends RefinedType[String, Pure]
 
   /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. */
 
@@ -26,21 +30,21 @@ object EventSql:
   object AnchorSqlValue:
     inline def apply(v: String): String = v
 
-  val TierSql: com.histmersion.domain.catalogue.events.EventSql.TierSql =
+  val TierSql: TierSql =
     "CASE WHEN e.citekey IS NOT NULL OR EXISTS (SELECT 1 FROM attestations ta WHERE ta.target_type = 'event' " +
       s"AND ta.target_id = e.id) THEN '${EventTier.Attested}' ELSE '${EventTier.Catalogue}' END"
 
   /** An event's anchor point over `events e` with its place `ep` joined: its own geometry, else its place's (a point,
     * or the point-on-surface of an area).
     */
-  val AnchorSql: com.histmersion.domain.catalogue.events.EventSql.AnchorSql =
+  val AnchorSql: AnchorSql =
     "(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END " +
       "FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
 
   /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer before the
     * exact geography distance is computed (a `::geography` cast cannot use it).
     */
-  def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.Point, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km): String =
+  def boxAround(pt: Point, km: CatalogMerge.Tolerance.Km): String =
     val dy = km.value / 111.32
     s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
@@ -50,13 +54,13 @@ object EventSql:
   /** What only the catalogue work narrows events by: the tier, the catalogue context of the map's layer, and the area
     * the anchor lies in.
     */
-  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = com.histmersion.domain.catalogue.events.EventSql.Narrow.Context(false), area: Option[BBox] = None)
+  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = Narrow.Context(false), area: Option[BBox] = None)
 
   object Narrow:
     type Tier = Tier.T
-    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tier extends RefinedType[String, Pure]
     type Context = Context.T
-    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Context extends RefinedType[Boolean, Pure]
 
   /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related to
     * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),
@@ -66,10 +70,10 @@ object EventSql:
       related: EventSourceFilter,
       filter: Filter,
       scope: PlaceScope,
-      text: Option[com.histmersion.domain.catalogue.events.EventSelection.Text],
-      kind: Option[com.histmersion.domain.catalogue.events.EventSelection.Kind],
-      historicity: Option[com.histmersion.domain.catalogue.events.EventSelection.Historicity],
-      placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+      text: Option[EventSelection.Text],
+      kind: Option[EventSelection.Kind],
+      historicity: Option[EventSelection.Historicity],
+      placeId: Option[Place.Id],
       more: Narrow = Narrow()
   ): Sql =
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
@@ -80,7 +84,7 @@ object EventSql:
       if more.context.value then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (Sql.raw(com.histmersion.util.database.Sql.RawText("(")) ++ selected ++ Sql.raw(Sql.Text(s" OR ($catalogueOnly AND ")) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
+        ps += (Sql.raw(Sql.RawText("(")) ++ selected ++ Sql.raw(Sql.Text(s" OR ($catalogueOnly AND ")) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
       else ps += selected
     clean(more.tier.map(_.value)).map(_.toLowerCase).foreach(t => ps += Sql.of(Sql.Text(s"($TierSql) = ?"), Param.S(Param.S.V(t))))
     more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
@@ -97,7 +101,7 @@ object EventSql:
     clean(historicity.map(_.value)).map(_.toLowerCase).foreach(h => ps += Sql.of(Sql.Text("e.historicity = ?"), Param.S(Param.S.V(h))))
     clean(placeId.map(_.value)).foreach(p => ps += Sql.of(Sql.Text("e.place_id = ?"), Param.S(Param.S.V(p))))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE"))
     else Sql(Sql.Text(parts.map(_.text.value).mkString(" AND ")), parts.flatMap(_.params))
 
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a

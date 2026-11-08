@@ -1,4 +1,5 @@
-package com.histmersion.domain.research
+package com.histmersion
+package domain.research
 
 import com.histmersion.domain.research.articles.{ArticleMergeRules, ArticlesCarried, ArticleVersionMergeRules}
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}

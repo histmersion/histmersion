@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -24,19 +25,25 @@ import com.histmersion.api.checks.{FormatIssue, FormatRule, FormatSeverity, Lint
 import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Doi
+import com.histmersion.util.ocr.Chunker
+import com.histmersion.domain.library.sources.SourceRepairs
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
   * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the assertions can ignore
   * whatever else the test database happens to hold.
   */
-class LintRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class LintRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -51,23 +58,23 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   private def source(
       citekey: String,
-      status: com.histmersion.api.library.Source.Status = com.histmersion.api.library.Source.Status.Current,
+      status: Source.Status = Source.Status.Current,
       regions: List[Source.Regions] = List(Source.Regions("Anatolia")),
-      period: Option[Period] = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
+      period: Option[Period] = Some(Period(Year(-2000), Year(-1500))),
       summary: Option[Source.Summary] = Some(Source.Summary("a summary")),
       doi: Option[String] = None,
       body: Option[Source.OcrMarkdown] = None,
       findings: List[Finding] = Nil,
       edges: List[Edge] = Nil
   ) = Source(
-    citekey = com.histmersion.api.library.Citekey(citekey),
+    citekey = Citekey(citekey),
     title = com.histmersion.api.library.Title(s"Fixture $citekey"),
     authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
-    doi = (doi).map(com.histmersion.api.library.Doi.apply),
-    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    doi = (doi).map(Doi.apply),
+    year = (Some(2020)).map(Year.apply),
     venue = None,
     status = status,
-    topics = List(com.histmersion.api.library.Source.Topics("t")),
+    topics = List(Source.Topics("t")),
     regions = regions,
     tags = Nil,
     period = period,
@@ -82,7 +89,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def finding(id: Finding.Id, ck: String, period: Option[Period], region: Option[Finding.Region], geo: Option[GeoPoint]) =
-    Finding(id, com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("a claim"), region, geo, period, None, Nil, Some(Confidence.High))
+    Finding(id, Citekey(ck), Finding.Claim("a claim"), region, geo, period, None, Nil, Some(Confidence.High))
 
   /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from a previous failure
     * must not leak into the next assertion.
@@ -103,10 +110,10 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
           FormatRule.Emphasis,
           FormatSeverity.Error,
           field,
-          com.histmersion.api.checks.FormatIssue.Line(1),
-          com.histmersion.api.checks.FormatIssue.Column(text.indexOf("**") + 1),
-          if article then com.histmersion.api.checks.FormatIssue.Excerpt("article") else com.histmersion.api.checks.FormatIssue.Excerpt("not an article"),
-          com.histmersion.api.checks.FormatIssue.Message("unpaired")
+          FormatIssue.Line(1),
+          FormatIssue.Column(text.indexOf("**") + 1),
+          if article then FormatIssue.Excerpt("article") else FormatIssue.Excerpt("not an article"),
+          FormatIssue.Message("unpaired")
         )
       )
     else Nil
@@ -148,7 +155,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     put(
       source(
         Prefix + "bare",
-        status = com.histmersion.api.library.Source.Status.Unassessed,
+        status = Source.Status.Unassessed,
         regions = Nil,
         period = None,
         summary = Some(Source.Summary("   "))
@@ -161,7 +168,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
           finding(
             Finding.Id(Prefix + "full#0"),
             Prefix + "full",
-            Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))),
+            Some(Period(Year(-1800), Year(-1700))),
             Some(Finding.Region("Anatolia")),
             Some(GeoPoint(Longitude(32.0), Latitude(39.0)))
           )
@@ -181,9 +188,9 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       source(
         Prefix + "src",
         edges = List(
-          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target_full"), com.histmersion.api.library.Edge.Kind.References), // resolves
-          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target"), com.histmersion.api.library.Edge.Kind.Cites), // short form
-          Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "vanished"), com.histmersion.api.library.Edge.Kind.Refutes)
+          Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target_full"), Edge.Kind.References), // resolves
+          Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target"), Edge.Kind.Cites), // short form
+          Edge(Citekey(Prefix + "src"), Citekey(Prefix + "vanished"), Edge.Kind.Refutes)
         )
       )
     ) // dead
@@ -195,7 +202,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     assert(items.exists(_.detail.value.contains("refutes → " + Prefix + "vanished")), items.toString)
 
   test("unresolved-short-citekeys is the fixable subset, and `lint --fix` really fixes it"):
-    put(source(Prefix + "src", edges = List(Edge(com.histmersion.api.library.Citekey(Prefix + "src"), com.histmersion.api.library.Citekey(Prefix + "target"), com.histmersion.api.library.Edge.Kind.Cites))))
+    put(source(Prefix + "src", edges = List(Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target"), Edge.Kind.Cites))))
     put(source(Prefix + "target_full"))
     assertEquals(run(Lint.Rule.Name(UnresolvedShortCitekeys)).size, 1)
     assert(run(Lint.Rule.Name(UnresolvedShortCitekeys)).head.detail.value.contains("resolves to"))
@@ -205,7 +212,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   test("orphan-sources: no edges in, no edges out"):
     put(source(Prefix + "lonely"))
-    put(source(Prefix + "linked", edges = List(Edge(com.histmersion.api.library.Citekey(Prefix + "linked"), com.histmersion.api.library.Citekey(Prefix + "lonely"), com.histmersion.api.library.Edge.Kind.Cites))))
+    put(source(Prefix + "linked", edges = List(Edge(Citekey(Prefix + "linked"), Citekey(Prefix + "lonely"), Edge.Kind.Cites))))
     val ks = keys(Lint.Rule.Name(OrphanSources))
     assert(!ks.contains(Prefix + "lonely"), "an incoming edge is enough")
     assert(!ks.contains(Prefix + "linked"), "an outgoing edge is enough")
@@ -234,13 +241,13 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
     // shared test database. That is exactly why it is best-effort per source; the assertion is about
     // THIS suite's fixture.
-    val r = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val r = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
     assert(r.chunks.value > 0, s"reindexStale wrote no chunks: $r")
     assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil)
 
   test("reindexStale reports nothing left once it has swept everything stale"):
-    val _ = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
-    val r = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val _ = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val r = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
     assertEquals(r.remaining, 0)
 
   test("undated-findings and unlocated-findings, named by finding id"):
@@ -250,8 +257,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
         ck,
         findings = List(
           finding(Finding.Id(s"$ck#0"), ck, None, Some(Finding.Region("Anatolia")), Some(GeoPoint(Longitude(32.0), Latitude(39.0)))), // undated
-          finding(Finding.Id(s"$ck#1"), ck, Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))), None, None), // unlocated
-          finding(Finding.Id(s"$ck#2"), ck, Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))), Some(Finding.Region("Anatolia")), Some(GeoPoint(Longitude(32.0), Latitude(39.0))))
+          finding(Finding.Id(s"$ck#1"), ck, Some(Period(Year(-1800), Year(-1700))), None, None), // unlocated
+          finding(Finding.Id(s"$ck#2"), ck, Some(Period(Year(-1800), Year(-1700))), Some(Finding.Region("Anatolia")), Some(GeoPoint(Longitude(32.0), Latitude(39.0))))
         )
       )
     )
@@ -267,8 +274,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       SourceCheckFixtures.run(
         ds,
         List(Lint.rule(Lint.Rule.Name(NoFindings)).get),
-        maxItems = com.histmersion.api.checks.Lint.ItemLimit(2),
-        suggestions = com.histmersion.api.checks.Lint.ItemLimit(3),
+        maxItems = Lint.ItemLimit(2),
+        suggestions = Lint.ItemLimit(3),
         format = checker,
         geocode = geo
       )
@@ -278,7 +285,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   test("article-markdown and note-markdown check every article body and summary, every source's summary and notes"):
     val slug = Prefix + "fmt_article"
     connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())
-    ArticleFixtures.put(ds, Article(Article.Slug(slug), com.histmersion.api.research.Article.Title("Fmt"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# Fmt\n\nA ** bad line."), Some(com.histmersion.api.research.Article.SummaryText("a fine summary"))))
+    ArticleFixtures.put(ds, Article(Article.Slug(slug), Article.Title("Fmt"), Article.KindValue("concept"), Article.Body("# Fmt\n\nA ** bad line."), Some(Article.SummaryText("a fine summary"))))
     put(source(Prefix + "fmt_note", summary = Some(Source.Summary("a **bad summary"))).modify(_.notes).setTo(Some(Source.Notes("fine notes"))))
     put(source(Prefix + "fmt_clean", summary = Some(Source.Summary("clean"))).modify(_.notes).setTo(Some(Source.Notes("clean"))))
     try

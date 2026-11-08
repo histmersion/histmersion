@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*

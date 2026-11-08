@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import hearth.kindlings.optics.syntax.*
 
@@ -19,6 +20,9 @@ import io.circe.syntax.*
 import java.io.InputStream
 import java.util.UUID
 import javax.sql.DataSource
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
 
 /** `bundle import` and `merge apply` over the registry's carried kinds (docs/research-merge-import.md §6–§7): ONE
   * transaction, holding the import lock, in two passes over the bundle:
@@ -35,16 +39,16 @@ import javax.sql.DataSource
   */
 object BundleImporter:
   type BackupFile = BackupFile.T
-  object BackupFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BackupFile extends RefinedType[String, Pure]
   type IssueName = IssueName.T
-  object IssueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IssueName extends RefinedType[String, Pure]
 
 
 
   def run(
       ds: DataSource,
       bundle: ByteSource,
-      bundleSha256: com.histmersion.Sha256,
+      bundleSha256: Sha256,
       opts: ImportOptions,
       files: ContentStore,
       resolutions: MergeResolutions,
@@ -78,12 +82,12 @@ object BundleImporter:
     )
 
   /** The issue as a problem line names it. */
-  private def named(i: MergeIssue): com.histmersion.util.data.exchange.BundleImporter.IssueName =
+  private def named(i: MergeIssue): IssueName =
     IssueName(s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}")
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
   private def counted(decided: List[MergePlanner.Row]): List[Bundle.KindCounts] =
-    com.histmersion.api.exchange.Bundle.Kind.values.toList
+    Bundle.Kind.values.toList
       .map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
       .filter(c =>
         c.inserted.value + c.updated.value + c.unchanged.value + c.keptLocal.value + c.conflicts.value + c.deleted.value + c.skippedDeleted.value + c.held.value > 0
@@ -99,7 +103,7 @@ object BundleImporter:
     */
   private def importIn(
       bundle: ByteSource,
-      bundleSha: com.histmersion.Sha256,
+      bundleSha: Sha256,
       m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
@@ -159,7 +163,7 @@ object BundleImporter:
         BundlePlan.EntityOwnBundle(ownBundle),
         decided,
         result(applied = Bundle.ImportResult.Applied(true), None).asJson,
-        com.histmersion.RowCount(result(applied = Bundle.ImportResult.Applied(true), None).changed.value)
+        RowCount(result(applied = Bundle.ImportResult.Applied(true), None).changed.value)
       )
       result(applied = Bundle.ImportResult.Applied(true), mergeId)
 
@@ -179,7 +183,7 @@ object BundleImporter:
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
     def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val needed = neededBlobs(es, writes)
-    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(true))
+    MergeRepo.importing(MergeRepo.Importing(true))
     val w =
       BundleImport.Writer(
         es,
@@ -187,7 +191,7 @@ object BundleImporter:
         decisionOf,
         writes,
         input.local,
-        planned.skipAliases.map(c => com.histmersion.domain.library.Citekey.assume(c.value)),
+        planned.skipAliases.map(c => Citekey.assume(c.value)),
         planned.apply,
         opts,
         kinds
@@ -198,16 +202,16 @@ object BundleImporter:
       val failures = bundle.read(in => blobs(in, needed, w, files, kinds))
       if failures.nonEmpty then throw ImportAbort(failures)
     kinds.steps(ImportStage.AfterBlobs).foreach(_.write(w))
-    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(false))
+    MergeRepo.importing(MergeRepo.Importing(false))
     kinds.steps(ImportStage.Derived).foreach(_.write(w))
-    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(true))
+    MergeRepo.importing(MergeRepo.Importing(true))
 
   /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
-  private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[com.histmersion.Sha256, List[BlobUse]] =
+  private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[Sha256, List[BlobUse]] =
     es.blobRefs.view
       .mapValues(_.filter(u => writes(u.record)))
       .filter(_._2.nonEmpty)
-      .flatMap((sha, uses) => com.histmersion.Sha256.option(sha.value).map(_ -> uses))
+      .flatMap((sha, uses) => Sha256.option(sha.value).map(_ -> uses))
       .toMap
 
   /** Stream the bundle's blobs and hand the ones `needed` names to the kinds that own their uses; every failure is
@@ -216,7 +220,7 @@ object BundleImporter:
     */
   private def blobs(
       in: InputStream,
-      needed: Map[com.histmersion.Sha256, List[BlobUse]],
+      needed: Map[Sha256, List[BlobUse]],
       w: BundleImport.Writer,
       files: ContentStore,
       kinds: CarriedKinds
@@ -229,7 +233,7 @@ object BundleImporter:
         case Left(e)        => failures += ImportAbort.Problem(e.value)
         case Right(None)    => ()
         case Right(Some(e)) =>
-          Bundle.blobSha(e.name.value).flatMap(a => com.histmersion.Sha256.option(a.value)).flatMap(sha => needed.get(sha).map(sha -> _)) match
+          Bundle.blobSha(e.name.value).flatMap(a => Sha256.option(a.value)).flatMap(sha => needed.get(sha).map(sha -> _)) match
             case None              => ()
             case Some((sha, uses)) =>
               val sinks = uses.flatMap(kinds.sink(_, sha, w, files))
@@ -265,13 +269,13 @@ object BundleImporter:
   def apply(
       ds: DataSource,
       bundle: ByteSource,
-      bundleSha256: com.histmersion.Sha256,
+      bundleSha256: Sha256,
       opts: ImportOptions,
       files: ContentStore,
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[com.histmersion.util.data.exchange.BundleImporter.BackupFile, String],
+      backup: () => Either[BackupFile, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
@@ -306,7 +310,7 @@ object BundleImporter:
 
   private def applyIn(
       bundle: ByteSource,
-      bundleSha: com.histmersion.Sha256,
+      bundleSha: Sha256,
       m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
@@ -314,7 +318,7 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[com.histmersion.util.data.exchange.BundleImporter.BackupFile, String],
+      backup: () => Either[BackupFile, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
@@ -369,7 +373,7 @@ object BundleImporter:
               BundlePlan.EntityOwnBundle(input.ownBundle),
               planned.rows,
               report.asJson,
-              com.histmersion.RowCount(report.changed.value + plan.changes.value),
+              RowCount(report.changed.value + plan.changes.value),
               Some((MergeRow.AppliedAt(plan.planHash.value), MergeRow.Backup(dump), MergeRow.FromLabel(Jsonb.write(resolutions).value)))
             )
             .getOrElse(throw ImportAbort(List(ImportAbort.Problem("the merge wrote nothing"))))

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
@@ -7,6 +8,7 @@ import com.augustnagro.magnum.*
 import java.io.OutputStream
 import javax.sql.DataSource
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.ByteCount
 
 /** `bundle export` (docs/research-merge-import.md §4, milestone M1): the database as a `.hmx` bundle, written to a
   * stream, from the carried kinds of the registry.
@@ -26,7 +28,7 @@ object BundleExport:
   def write(
       ds: DataSource,
       out: OutputStream,
-      since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At],
+      since: Option[BundleScope.Since.At],
       files: ContentStore,
       kinds: CarriedKinds
   ): Either[String, Bundle.Manifest] =
@@ -38,8 +40,8 @@ object BundleExport:
       val carried = kinds.inBundleOrder.map(k => k.entry -> k.out(scope, files))
 
       // the first use of a digest is the one read
-      val blobs: Map[com.histmersion.Sha256, BlobOut] =
-        carried.flatMap(_._2.blobs).foldLeft(Map.empty[com.histmersion.Sha256, BlobOut]) { (m, b) =>
+      val blobs: Map[Sha256, BlobOut] =
+        carried.flatMap(_._2.blobs).foldLeft(Map.empty[Sha256, BlobOut]) { (m, b) =>
           if m.contains(b.sha256) then m else m + (b.sha256 -> b)
         }
       val shas = blobs.keys.toList.sortBy(_.value)
@@ -57,7 +59,7 @@ object BundleExport:
         files = listed,
         blobs = Bundle.Blobs(
           Bundle.Blobs.Count(shas.size),
-          com.histmersion.api.ByteCount(shas.map(blobs(_).size.value).sum)
+          ByteCount(shas.map(blobs(_).size.value).sum)
         ),
         reference = BundleRepo.reference
       )

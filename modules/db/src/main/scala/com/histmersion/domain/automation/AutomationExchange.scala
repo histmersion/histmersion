@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import com.histmersion.domain.automation.goals.{GoalMergeRules, GoalsCarried}
 import com.histmersion.domain.automation.worklists.{QueueCarried, QueueItemMergeRules}

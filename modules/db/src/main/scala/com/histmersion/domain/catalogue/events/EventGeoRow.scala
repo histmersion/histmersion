@@ -1,14 +1,18 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.catalogue.{EventGeo, EventLeads}
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.api.catalogue.LeadFacts
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One event on the map before its outline is read (the map's events). */
 final private[events] case class EventGeoRow(
     row: EventRow,
-    lat: com.histmersion.Latitude,
-    lon: com.histmersion.Longitude,
+    lat: Latitude,
+    lon: Longitude,
     anchor: EventGeoRow.Anchor,
     placeLabel: Option[EventGeoRow.PlaceLabel],
     hasArea: Boolean,
@@ -35,8 +39,8 @@ final private[events] case class EventGeoRow(
       EventGeo.Tier(e.tier.value),
       EventLeads
         .size(
-          vei.map(v => com.histmersion.api.catalogue.LeadFacts.Vei(v.value)),
-          magnitude.map(m => com.histmersion.api.catalogue.LeadFacts.Magnitude(m.value))
+          vei.map(v => LeadFacts.Vei(v.value)),
+          magnitude.map(m => LeadFacts.Magnitude(m.value))
         )
         .map(s => EventGeo.Size(s)),
       EventGeo.Precision(e.precision.value),
@@ -45,10 +49,10 @@ final private[events] case class EventGeoRow(
 
 object EventGeoRow:
   type Anchor = Anchor.T
-  object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Anchor extends RefinedType[String, Pure]
   type PlaceLabel = PlaceLabel.T
-  object PlaceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceLabel extends RefinedType[String, Pure]
   type Vei = Vei.T
-  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Vei extends RefinedType[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Magnitude extends RefinedType[Double, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.exchange.Bundle
 
@@ -24,6 +25,9 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.
@@ -33,7 +37,7 @@ import hearth.kindlings.optics.syntax.*
   */
 object SourcesCarried:
   type Stem = Stem.T
-  object Stem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stem extends RefinedType[String, Pure]
 
   private val Library = DataOwner("library")
 
@@ -53,7 +57,7 @@ object SourcesCarried:
 
   /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes.
     */
-  def sources(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): CarriedKind = new CarriedKind:
+  def sources(referrers: SourceReferrers): CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
     val entry: BundleEntry = BundleEntry(Bundle.Kind.Source.file)
     override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Source)
@@ -89,7 +93,7 @@ object SourcesCarried:
 
     override def blobIn(
         use: BlobUse,
-        sha256: com.histmersion.Sha256,
+        sha256: Sha256,
         writer: BundleImport.Writer,
         files: ContentStore
     ): Option[BlobSink] = SourceBundleRepo.blobIn(use, sha256, writer, files)
@@ -100,7 +104,7 @@ object SourcesCarried:
       RowsIn(ImportStage.Derived, ImportRank(200), SourceBundleRepo.derivedIn)
     )
 
-  val findings: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Finding](
+  val findings: CarriedKind = CarriedKind.records[Bundle.Finding](
     Library,
     Bundle.Kind.Finding,
     TableName("findings"),
@@ -108,26 +112,26 @@ object SourcesCarried:
   )(scope => SourceBundleRepo.findings(scope).toList)(f => CarriedKind.RecordsClock(f.updatedAt.value), (es, ls) => es.modify(_.findings).setTo(ls))
 
   /** The entry of a set records own, by its file's stem. */
-  private def set(stem: com.histmersion.domain.library.sources.SourcesCarried.Stem): BundleEntry = BundleEntry(s"entities/${stem.value}.ndjson")
+  private def set(stem: Stem): BundleEntry = BundleEntry(s"entities/${stem.value}.ndjson")
 
   val edges: CarriedKind =
     CarriedKind
-      .owned[com.histmersion.api.exchange.Bundle.Edge](Library, set(com.histmersion.domain.library.sources.SourcesCarried.Stem("edges")), List(rows(ImportRank(20))(SourceBundleRepo.edgesIn)))(
+      .owned[Bundle.Edge](Library, set(Stem("edges")), List(rows(ImportRank(20))(SourceBundleRepo.edgesIn)))(
         scope => SourceBundleRepo.edges(scope).toList
       )(_ => None, (es, ls) => es.modify(_.edges).setTo(ls))
 
-  val unresolvedEdges: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.UnresolvedEdge](
+  val unresolvedEdges: CarriedKind = CarriedKind.owned[Bundle.UnresolvedEdge](
     Library,
-    set(com.histmersion.domain.library.sources.SourcesCarried.Stem("unresolved-edges")),
+    set(Stem("unresolved-edges")),
     List(rows(ImportRank(21))(SourceBundleRepo.unresolvedEdgesIn))
   )(scope => SourceBundleRepo.unresolvedEdges(scope).toList)(
     _ => None,
     (es, ls) => es.modify(_.unresolvedEdges).setTo(ls)
   )
 
-  val assessments: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.Assessment](
+  val assessments: CarriedKind = CarriedKind.owned[Bundle.Assessment](
     Library,
-    set(com.histmersion.domain.library.sources.SourcesCarried.Stem("assessments")),
+    set(Stem("assessments")),
     List(rows(ImportRank(24))(SourceBundleRepo.assessmentsIn))
   )(scope => SourceBundleRepo.assessments(scope).toList)(
     a => Some(CarriedKind.OwnedClock(a.checkedAt.value)),
@@ -135,9 +139,9 @@ object SourcesCarried:
   )
 
   val aliases: CarriedKind =
-    CarriedKind.owned[com.histmersion.api.exchange.Bundle.Alias](
+    CarriedKind.owned[Bundle.Alias](
       Library,
-      set(com.histmersion.domain.library.sources.SourcesCarried.Stem("aliases")),
+      set(Stem("aliases")),
       List(rows(ImportRank(22))(SourceBundleRepo.aliasesIn))
     )(scope => SourceBundleRepo.aliases(scope).toList)(
       a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
@@ -145,4 +149,4 @@ object SourcesCarried:
     )
 
   /** Every kind of the library, in the order the registry has always listed them. */
-  def all(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): List[CarriedKind] = List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)
+  def all(referrers: SourceReferrers): List[CarriedKind] = List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)

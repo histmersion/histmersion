@@ -1,4 +1,5 @@
-package com.histmersion.util.data
+package com.histmersion
+package util.data
 
 import io.github.iltotore.iron.*
 

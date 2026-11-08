@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.Vocab
@@ -7,7 +8,7 @@ private[histmersion] object SourceColumns:
   given apiStatus: DbCodec[Source.Status] =
     Vocab.codec(
       s => Source.Status.values.find(_.wire.value.equalsIgnoreCase(s.value)),
-      e => com.histmersion.WireEnumValues.Wire(e.wire.value),
+      e => WireEnumValues.Wire(e.wire.value),
       Source.Status.Unassessed
     )
 
@@ -17,4 +18,4 @@ private[histmersion] object SourceColumns:
   )
 
   given apiEdgeKind: DbCodec[Edge.Kind] =
-    Vocab.codec(s => Edge.Kind.fromWire(Edge.Kind.Wire(s.value)), e => com.histmersion.WireEnumValues.Wire(Edge.Kind.wireOf(e).value), Edge.Kind.References)
+    Vocab.codec(s => Edge.Kind.fromWire(Edge.Kind.Wire(s.value)), e => WireEnumValues.Wire(Edge.Kind.wireOf(e).value), Edge.Kind.References)

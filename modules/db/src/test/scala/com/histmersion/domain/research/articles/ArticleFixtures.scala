@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.research.Slug
@@ -9,6 +10,9 @@ import javax.sql.DataSource
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, Backlink, CitedSource, CritiqueReason}
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.sources.CitekeyMillis
 
 /** The db suites' reads and writes of research's articles on a database of their own, each write in a transaction of
   * its own and each read on a connection of its own, as the service runs them.
@@ -28,7 +32,7 @@ object ArticleFixtures:
   def get(ds: DataSource, slug: Slug): Option[Article.Row] = connect(ds)(ArticleRepo.get(slug))
   def view(ds: DataSource, requested: Slug): Option[Article.View] = connect(ds)(ArticleRepo.view(requested))
   def backlinks(ds: DataSource, slug: Slug): List[Backlink] = connect(ds)(ArticleRepo.backlinks(slug))
-  def backlinksForSource(ds: DataSource, citekey: com.histmersion.domain.library.Citekey): List[Backlink] =
+  def backlinksForSource(ds: DataSource, citekey: Citekey): List[Backlink] =
     connect(ds)(ArticleRepo.backlinksForSource(citekey))
   def sourcesCited(ds: DataSource, slug: Slug): List[CitedSource] = connect(ds)(ArticleRepo.sourcesCited(slug))
   def list(
@@ -36,12 +40,12 @@ object ArticleFixtures:
       filter: Filter,
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
-      text: Option[com.histmersion.domain.library.search.Search.Query],
+      text: Option[Search.Query],
       limit: ArticleRepo.Limit,
-      offset: com.histmersion.Offset
+      offset: Offset
   ): Article.List = connect(ds)(ArticleRepo.list(filter, scope, kind, text, limit, offset))
   def slugs(ds: DataSource): Vector[Slug] = connect(ds)(ArticleRepo.slugs)
-  def updatedAtMillis(ds: DataSource): Map[Slug, com.histmersion.domain.library.sources.CitekeyMillis.Millis] =
+  def updatedAtMillis(ds: DataSource): Map[Slug, CitekeyMillis.Millis] =
     connect(ds)(ArticleRepo.updatedAtMillis)
   def listVersions(ds: DataSource, slug: Slug, limit: ArticleRepo.Limit = ArticleRepo.Limit(20)): List[Article.Version] =
     connect(ds)(ArticleRepo.listVersions(slug, limit))
@@ -56,6 +60,6 @@ object ArticleFixtures:
       filter: Filter,
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
-      text: Option[com.histmersion.domain.library.search.Search.Query]
+      text: Option[Search.Query]
   ): Sql =
     ArticleRepo.listWhere(filter, scope, kind, text)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Goal.Plans.*
@@ -7,19 +8,22 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Goal
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.
   */
 object GoalLinkRepo:
   type ItemId = ItemId.T
-  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemId extends RefinedType[Int, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class LinkRow(
-      kind: com.histmersion.api.automation.Goal.LinkKind.Wire,
+      kind: Goal.LinkKind.Wire,
       ref: GoalLink.Ref,
       note: Option[GoalLink.Note],
       title: Option[GoalLink.Title],
@@ -45,7 +49,7 @@ object GoalLinkRepo:
     }
 
   /** [[goalsOfItems]] on the caller's connection. */
-  def goalsOfItemsIn(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId])(using DbCon): List[(ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] =
+  def goalsOfItemsIn(items: List[ItemId])(using DbCon): List[(ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] =
     if items.isEmpty then Nil
     else
       locally:
@@ -81,10 +85,10 @@ object GoalLinkRepo:
 
   /** Every goal's links counted by kind: (goal, kind) → n. Article links count only articles that exist.
     */
-  def linkCounts()(using DbCon): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), com.histmersion.RowCount] =
+  def linkCounts()(using DbCon): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), RowCount] =
     sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
           WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
-          GROUP BY l.goal_slug, l.kind""".query[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire, com.histmersion.RowCount)].run().map((g, k, n) => (g, k) -> n).toMap
+          GROUP BY l.goal_slug, l.kind""".query[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire, RowCount)].run().map((g, k, n) => (g, k) -> n).toMap
 
   /** The goals that record an approved plan. */
   def planned()(using DbCon): Set[com.histmersion.domain.automation.Goal.Slug] =
@@ -93,7 +97,7 @@ object GoalLinkRepo:
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */
-  def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[(Option[com.histmersion.domain.automation.goals.BGoalRow.Plan], Option[BigDecimal])] =
+  def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
     sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
       .query[(Option[BGoalRow.Plan], Option[BigDecimal])]
       .run()
@@ -102,7 +106,7 @@ object GoalLinkRepo:
   /** Record an approved plan, and when it was approved (V054: two collections' plans for one goal are merged by "the
     * one approved later wins").
     */
-  def setPlan(goal: com.histmersion.domain.automation.Goal.Slug, planJson: com.histmersion.domain.automation.goals.BGoalRow.Plan)(using DbCon): Unit =
+  def setPlan(goal: com.histmersion.domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using DbCon): Unit =
     val _ = sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
                                WHERE slug = $goal""".update.run()
 
@@ -112,7 +116,7 @@ object GoalLinkRepo:
   // ── schedules ──────────────────────────────────────────────────────────────────────────────────
 
   final private case class ScheduleRow(
-      goal: com.histmersion.api.automation.Goal.Slug,
+      goal: Goal.Slug,
       kind: ScheduleKind.Wire,
       cron: GoalSchedule.Cron,
       enabled: GoalSchedule.Enabled,

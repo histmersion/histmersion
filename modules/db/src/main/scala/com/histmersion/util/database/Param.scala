@@ -1,4 +1,8 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum Param:
   case S(v: Param.S.V)
   case L(v: Param.L.V)
@@ -11,16 +15,16 @@ enum Param:
 object Param:
   object S:
     type V = V.T
-    object V extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object V extends RefinedType[String, Pure]
   object L:
     type V = V.T
-    object V extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object V extends RefinedType[Long, Pure]
   object I:
     type V = V.T
-    object V extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object V extends RefinedType[Int, Pure]
   object D:
     type V = V.T
-    object V extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object V extends RefinedType[Double, Pure]
   object A:
     type V = V.T
-    object V extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object V extends RefinedType[String, Pure]

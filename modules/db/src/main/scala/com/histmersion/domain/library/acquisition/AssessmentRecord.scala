@@ -1,10 +1,15 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
+
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A verdict as it is recorded against a stored source: `noticesJson` is the raw JSON of everything that was found, so
   * a later reader can see WHY without asking Crossref again.
   */
 final case class AssessmentRecord(
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     verdict: AssessmentRecord.Verdict,
     retracted: AssessmentRecord.Retracted,
     noticesJson: AssessmentRecord.NoticesJson,
@@ -14,12 +19,12 @@ final case class AssessmentRecord(
 
 object AssessmentRecord:
   type Verdict = Verdict.T
-  object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Verdict extends RefinedType[String, Pure]
   type Retracted = Retracted.T
-  object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Retracted extends RefinedType[Boolean, Pure]
   type NoticesJson = NoticesJson.T
-  object NoticesJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoticesJson extends RefinedType[String, Pure]
   type CitedBy = CitedBy.T
-  object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedBy extends RefinedType[Int, Pure]
   type Influential = Influential.T
-  object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Influential extends RefinedType[Int, Pure]

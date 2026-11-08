@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,12 +14,14 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.{MetadataPatch, Provenance, Source}
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.
   */
-class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ProvenanceRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
@@ -27,14 +30,14 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
 
   private val Prefix = "zzprov"
 
-  private def source(ck: com.histmersion.domain.library.Citekey, provenance: Option[Source.Provenance]) = Source(
+  private def source(ck: Citekey, provenance: Option[Source.Provenance]) = Source(
     citekey = com.histmersion.api.library.Citekey(ck.value),
     title = com.histmersion.api.library.Title(s"Title $ck"),
     authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    year = (Some(2020)).map(Year.apply),
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Current,
+    status = Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,
@@ -46,14 +49,14 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     calibreId = None
   )
 
-  private def stored(ck: com.histmersion.domain.library.Citekey): Option[String] =
+  private def stored(ck: Citekey): Option[String] =
     connect(ds)(sql"SELECT source FROM sources WHERE citekey = $ck".query[Option[String]].run().head)
 
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
 
   test("a put and a patch store a provenance as written, a value no code knows included"):
-    val a = com.histmersion.domain.library.Citekey.applyUnsafe(s"${Prefix}a2020_x")
+    val a = Citekey.applyUnsafe(s"${Prefix}a2020_x")
     SourceFixtures.upsert(ds, source(a, Some(Source.Provenance("Unheard-Of"))), cfg.limits.chunkChars)
     assertEquals(stored(a), Some("Unheard-Of"))
     SourceFixtures.upsert(ds, source(a, Some(Source.Provenance(Provenance.ExternalFile))), cfg.limits.chunkChars)
@@ -61,7 +64,7 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     val patched = SourceFixtures.patch(
       ds,
       a,
-      Source.Patch(metadata = Some(MetadataPatch(provenance = Some(com.histmersion.api.library.Source.Provenance("another-one"))))),
+      Source.Patch(metadata = Some(MetadataPatch(provenance = Some(Source.Provenance("another-one"))))),
       cfg.limits.chunkChars
     )
     assert(patched.isRight, patched.toString)

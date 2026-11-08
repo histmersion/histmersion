@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,6 +19,9 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both
@@ -25,13 +29,13 @@ import com.histmersion.util.database.given
   *
   * These tests race two real threads against one row; exactly one must win.
   */
-class WriteRaceSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class WriteRaceSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   /** Run `a` and `b` at the same moment (a latch, not a hope) and collect both outcomes. */
@@ -47,7 +51,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       pool.shutdownNow()
       val _ = pool.awaitTermination(5, TimeUnit.SECONDS)
 
-  private val ck = com.histmersion.domain.library.Citekey("zzrace_src")
+  private val ck = Citekey("zzrace_src")
 
   private def seedSource(): Source.UpdatedAt =
     SourceFixtures.put(
@@ -59,12 +63,12 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         doi = None,
         year = None,
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Unassessed,
+        status = Source.Status.Unassessed,
         topics = Nil,
         regions = Nil,
         tags = Nil,
         period = None,
-        summary = Some(com.histmersion.api.library.Source.Summary("before")),
+        summary = Some(Source.Summary("before")),
         citedByCount = None,
         influentialCitations = None,
         provenance = None,
@@ -85,14 +89,14 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         SourceFixtures.patch(
           ds,
           ck,
-          Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("A")), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some(Source.Summary("A")), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         ),
         SourceFixtures.patch(
           ds,
           ck,
-          Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("B")), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some(Source.Summary("B")), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         )
@@ -103,16 +107,16 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       assert(Set(Some("A"), Some("B")).contains(SourceFixtures.load(ds, ck).get.summary.map(_.value)))
     }
 
-  private val slug = com.histmersion.domain.research.Slug("zzrace_article")
+  private val slug = Slug("zzrace_article")
 
   private def seedArticle(): Article.UpdatedAt =
     ArticleFixtures.put(
       ds,
       Article(
         slug = Article.Slug("zzrace_article"),
-        title = com.histmersion.api.research.Article.Title("Race"),
-        kind = com.histmersion.api.research.Article.KindValue("concept"),
-        body = com.histmersion.api.research.Article.Body("before"),
+        title = Article.Title("Race"),
+        kind = Article.KindValue("concept"),
+        body = Article.Body("before"),
         summary = None,
         tags = Nil,
         regions = Nil,
@@ -124,8 +128,8 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
     (1 to Rounds).foreach { round =>
       val token = seedArticle()
       val (a, b) = race(
-        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(com.histmersion.api.research.Article.Body("A")), ifUpdatedAt = Some(token))),
-        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(com.histmersion.api.research.Article.Body("B")), ifUpdatedAt = Some(token)))
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(Article.Body("A")), ifUpdatedAt = Some(token))),
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(Article.Body("B")), ifUpdatedAt = Some(token)))
       )
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -12,6 +13,8 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.Api
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.util.data.exchange.PlanQuestions
+import com.histmersion.domain.automation.Goal
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
@@ -120,11 +123,11 @@ private[goals] object GoalBundleRepo:
 
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(
+    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, PlanQuestions.LabelTakenWhat("goal"))(
       (old, now) =>
         GoalRepo.renameIn(
-          com.histmersion.domain.automation.Goal.Slug.assume(old.value),
-          com.histmersion.domain.automation.Goal.Slug.assume(now.value)
+          Goal.Slug.assume(old.value),
+          Goal.Slug.assume(now.value)
         )
     )
 
@@ -186,8 +189,8 @@ private[goals] object GoalBundleRepo:
     }
     goals.foreach(goalSets(w, _))
 
-  private def goalSlugOf(u: UUID)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
-    sql"SELECT slug FROM goals WHERE uid = $u".query[com.histmersion.domain.automation.Goal.Slug].run().headOption
+  private def goalSlugOf(u: UUID)(using DbCon): Option[Goal.Slug] =
+    sql"SELECT slug FROM goals WHERE uid = $u".query[Goal.Slug].run().headOption
 
   def goalAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction

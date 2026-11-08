@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.ResourceProvider
@@ -6,6 +7,8 @@ import org.flywaydb.core.api.resource.LoadableResource
 import java.io.{InputStreamReader, Reader}
 import java.nio.charset.Charset
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
   * build-generated `db/migration/index.txt` (Flyway's classpath scanning does not work inside a native image; this
@@ -14,15 +17,15 @@ import scala.jdk.CollectionConverters.*
   */
 object Migrate:
   type MigrationName = MigrationName.T
-  object MigrationName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MigrationName extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type RetryAttempts = RetryAttempts.T
-  object RetryAttempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetryAttempts extends RefinedType[Int, Pure]
   type RoleName = RoleName.T
-  object RoleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RoleName extends RefinedType[String, Pure]
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[String, Pure]
 
   private val Base = "db/migration"
 

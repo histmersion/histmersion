@@ -1,21 +1,26 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One row of `FilterSql.findingsQuery`. */
 final private[search] case class FindingHitRow(
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     id: FindingHitRow.Id,
     claim: FindingHitRow.Claim,
     regionName: Option[FindingHitRow.RegionName],
-    lon: Option[com.histmersion.Longitude],
-    lat: Option[com.histmersion.Latitude],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    lon: Option[Longitude],
+    lat: Option[Latitude],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     periodName: Option[FindingHitRow.PeriodName],
     tags: List[FindingHitRow.Tags],
     /** The gazetteer labels / ids this finding was materialised into (plan §1.6a). */
@@ -26,7 +31,7 @@ final private[search] case class FindingHitRow(
     Finding.Match(
       Finding.Id(id.value),
       Finding.Claim(claim.value),
-      regionName.map(r => com.histmersion.api.catalogue.Place.Region(r.value)),
+      regionName.map(r => Place.Region(r.value)),
       lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
       lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
       periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
@@ -42,16 +47,16 @@ final private[search] case class FindingHitRow(
 object FindingHitRow:
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Claim = Claim.T
-  object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Claim extends RefinedType[String, Pure]
   type RegionName = RegionName.T
-  object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegionName extends RefinedType[String, Pure]
   type PeriodName = PeriodName.T
-  object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodName extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Places = Places.T
-  object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Places extends RefinedType[String, Pure]
   type PlaceIds = PlaceIds.T
-  object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceIds extends RefinedType[String, Pure]

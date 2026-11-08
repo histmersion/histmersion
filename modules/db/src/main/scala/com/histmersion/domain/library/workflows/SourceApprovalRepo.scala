@@ -1,26 +1,30 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.domain.library.{Source, Edge}
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.ManagerPolicy
 
 private[workflows] object SourceApprovalRepo:
 
   def record(
-      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      jobId: Option[Job.Id],
       kind: ApprovalKind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       status: Option[Source.Status],
       current: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.Citekey],
+      target: Option[Citekey],
       payload: String,
       state: ApprovalState,
       result: Option[String],
       now: java.time.Instant
-  )(using DbCon): Option[com.histmersion.domain.ManagerPolicy.ApprovalId] =
+  )(using DbCon): Option[ManagerPolicy.ApprovalId] =
     val decided = Option.when(state != ApprovalState.Open)(now.toString)
     sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
                                  result, decided_at)
@@ -31,14 +35,14 @@ private[workflows] object SourceApprovalRepo:
       .query[Long]
       .run()
       .headOption
-      .map(com.histmersion.domain.ManagerPolicy.ApprovalId(_))
+      .map(ManagerPolicy.ApprovalId(_))
 
   def proposedBefore(
       kind: ApprovalKind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       status: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.Citekey]
+      target: Option[Citekey]
   )(using DbCon): Boolean =
     sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
           AND coalesce(status, '') = ${status.fold("")(_.wire.value)}
