@@ -18,7 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * val harness = PluginHarness.load("my-plugin", config, http = mode.toOption.get)
   * }}}
   */
-enum HttpMode:
+enum HttpMode derives CanEqual:
   /** The real network, nothing kept. */
   case Live
 
