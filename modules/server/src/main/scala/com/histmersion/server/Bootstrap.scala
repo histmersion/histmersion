@@ -69,10 +69,10 @@ final class Bootstrap(
           PeriodSources.PeriodoUrl(cfg.periods.periodoUrl.value),
           cfg.periods.collections.map(c => PeriodSources.Collections(c.value))
         ),
-      () => bundledSeed,
+      () => bundledSeed.left.map(domain.Problem.fromApi),
       url =>
         download(HttpDownload.Url(url.value)).left
-          .map(p => Problem(p.value))
+          .map(p => domain.Problem(p.value))
           .map(t => PeriodImports.Document(t.value))
     )
 
@@ -249,7 +249,7 @@ final class Bootstrap(
         gazetteerImports
           .source(
             BuiltinGazetteers.Entry.Name(other),
-            Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
+            domain.Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
           )
           .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun(false)))
           .left

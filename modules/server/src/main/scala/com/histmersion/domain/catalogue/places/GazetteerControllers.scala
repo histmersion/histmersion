@@ -60,7 +60,7 @@ final class GazetteerControllers(
         imports
           .source(
             BuiltinGazetteers.Entry.Name(name),
-            Problem(
+            domain.Problem(
               s"unknown source '$source' (available: ${(imports.available.map(_.value) :+ NaturalEarthLand.name).mkString(", ")})"
             )
           )
@@ -95,7 +95,7 @@ final class GazetteerControllers(
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
-  private def refused(problem: Problem): Api.Error = Api.Error(Problem(problem.value))
+  private def refused(problem: domain.Problem): Api.Error = Api.Error(Problem(problem.value))
 
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(

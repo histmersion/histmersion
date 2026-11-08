@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -46,7 +46,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       urls = urls :+ url
       if url.value.startsWith(cfg.crossref.url.value) then Right(crossrefPage)
       else Left(Problem(s"$url failed after 4 attempts: HTTP 503"))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(domain.Problem("unused"))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
@@ -67,8 +67,8 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("both down: the error names both upstreams"):
     val dead = new Http:
       def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
-        Left(Problem(s"$url: HTTP 503"))
-      def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
+        Left(domain.Problem(s"$url: HTTP 503"))
+      def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(domain.Problem("unused"))
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
@@ -100,7 +100,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       if url.value.startsWith(c.crossref.url.value) then Right(crossrefWork)
       else if url.value.startsWith(c.unpaywall.url.value) then Right(unpaywallGold)
       else Left(Problem(s"$url failed after 4 attempts: HTTP 503"))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(domain.Problem("unused"))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 

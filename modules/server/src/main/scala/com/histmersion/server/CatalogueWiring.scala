@@ -174,12 +174,12 @@ object CatalogueWiring:
           deps.storage.find(Location.GazetteerFolder),
           deps.storage.store(Location.GazetteerDrop),
           GazetteerLoad.Stores.ManifestAt(paths.manifest.toString),
-          () => paths.manifestText()
+          () => paths.manifestText().left.map(domain.Problem.fromApi)
         )
       ,
       () => deps.cfg,
       download,
-      text,
+      u => text(u).left.map(domain.Problem.fromApi),
       () => deps.plugins.registries.gazetteerSources,
       () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places))
     )

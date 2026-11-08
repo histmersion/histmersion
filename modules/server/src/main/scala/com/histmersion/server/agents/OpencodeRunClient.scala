@@ -62,7 +62,7 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
         val o = out.get().getOrElse(throw IllegalStateException("opencode: no outcome"))
         o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Message(e.value))) match
           case Some(m) =>
-            throw new ModelLimitReached(model, None, api.Problem(s"opencode run: $m".take(300)))
+            throw new ModelLimitReached(model, None, domain.Problem(s"opencode run: $m".take(300)))
           case None =>
             CliOutcomes.result(
               o,

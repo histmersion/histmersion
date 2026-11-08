@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, StepInfo}
@@ -144,7 +144,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      )
+      ).left.map(Problem.fromApi)
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -158,7 +158,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      )
+      ).left.map(Problem.fromApi)
     def approvalFacets(
         q: ApprovalQuery
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
@@ -217,7 +217,7 @@ object ApprovalService:
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
     def closeForRun(jobId: Job.Id, why: Problem): RowCount =
-      db.transact(AgentRepo.closeForRun(jobId, why))
+      db.transact(AgentRepo.closeForRun(jobId, Problem.wire(why)))
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       db.transact(
         AgentRepo.decide(

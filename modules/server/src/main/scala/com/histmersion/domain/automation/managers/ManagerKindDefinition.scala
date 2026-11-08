@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.automation.approvals.ApprovalChecks

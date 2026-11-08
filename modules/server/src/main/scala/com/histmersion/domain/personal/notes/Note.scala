@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.notes
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}

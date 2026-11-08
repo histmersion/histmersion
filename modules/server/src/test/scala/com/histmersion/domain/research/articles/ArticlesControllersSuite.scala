@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*

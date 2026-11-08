@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -90,13 +90,13 @@ class GazetteerLoadSuite extends DbSuite:
       legacy.map(Storage.at(Location.GazetteerFolder, _)),
       Storage.at(Location.GazetteerDrop, lpf),
       GazetteerLoad.Stores.ManifestAt(manifest.toString),
-      () => GazetteerPaths(extracts, lpf, manifest).manifestText()
+      () => GazetteerPaths(extracts, lpf, manifest).manifestText().left.map(Problem.fromApi)
     )
 
   private def extractsOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.extracts.where().value)
   private def manifestOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.manifestAt.value)
 
-  private val noNet: GazetteerLoad.Download = (u, _, _) => Left(Problem(s"no network in a test ($u)"))
+  private val noNet: GazetteerLoad.Download = (u, _, _) => Left(domain.Problem(s"no network in a test ($u)"))
   private lazy val db = Transactor(ds)
 
   /** A download that writes `bytes` where it is told to. */

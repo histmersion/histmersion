@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -170,7 +170,7 @@ final class ModelPicker(
         ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
           case (errs, _) => Left(Problem(errs.mkString("; ")))
-        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value))
+        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value)).left.map(Problem.fromApi)
       yield a
       Effective(Target.Wire(s.target.value), a, SettingSource.Saved)
     }
@@ -418,7 +418,7 @@ final class ModelPicker(
             RoleChain.Source(SettingSource.Config.wire.value),
             Nil,
             None,
-            Some(Problem(m.value))
+            Some(api.Problem(m.value))
           )
         case Right((ms, src)) =>
           val entries = ms.map { m =>
@@ -428,7 +428,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(false),
                   usable = ModelChains.ChainEntry.Usable(false),
-                  Some(Problem(why.value))
+                  Some(api.Problem(why.value))
                 )
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
@@ -436,7 +436,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(true),
                   ChainEntry.Usable(st.usable.value),
-                  st.why.map(w => Problem(w.value)),
+                  st.why.map(w => api.Problem(w.value)),
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
                   Some(ChainEntry.Billing(billing.describe)),
                   cooling = ChainEntry.Cooling(st.cooling.value)
@@ -448,7 +448,7 @@ final class ModelPicker(
             entries,
             entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
             Option.when(ms.isEmpty)(
-              Problem(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
+              api.Problem(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
             )
           )
     }

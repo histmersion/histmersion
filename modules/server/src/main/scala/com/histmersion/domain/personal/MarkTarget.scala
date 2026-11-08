@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*

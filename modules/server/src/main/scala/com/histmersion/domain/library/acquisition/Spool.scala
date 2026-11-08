@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}
 import com.histmersion.util.storage.Blob

@@ -141,7 +141,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
       ),
       h
     )
@@ -371,7 +371,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     Transactor(ds).transact(
       PlanQuotaRepo.setRefusal(
         PoolId.ChatgptPlan,
-        Some(Problem("ordinary usage not allowed")),
+        Some(domain.Problem("ordinary usage not allowed")),
         None,
         Some(PlanQuotaRepo.Pool.PlanType("prolite"))
       )

@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -140,7 +140,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
 
   private object NoWiki extends WikiClient:
-    def refs(url: WikiClient.ArticleUrl) = Left(api.Problem("not used here"))
+    def refs(url: WikiClient.ArticleUrl) = Left(domain.Problem("not used here"))
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
   private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
@@ -1074,7 +1074,7 @@ class AcquireHandlerSuite extends DbSuite:
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Right(Nil)
-      def meta(doi: com.histmersion.domain.library.Doi) = Left(api.Problem(s"$doi: HTTP 404"))
+      def meta(doi: com.histmersion.domain.library.Doi) = Left(domain.Problem(s"$doi: HTTP 404"))
       def references(doi: com.histmersion.domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
       def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
     val h = handlers(blind)

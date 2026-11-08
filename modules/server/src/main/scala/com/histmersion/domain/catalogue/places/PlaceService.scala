@@ -667,7 +667,7 @@ object PlaceService:
                   .modify(_.period)
                   .using(p => merged.orElse(p))
                   .modify(_.reason)
-                  .using(r => reason.map(x => Problem(x.value)).orElse(r))
+                  .using(r => reason.map(x => domain.Problem(x.value)).orElse(r))
                   .modify(_.updatedAt)
                   .setTo(now)
               )

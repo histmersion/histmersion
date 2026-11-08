@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*

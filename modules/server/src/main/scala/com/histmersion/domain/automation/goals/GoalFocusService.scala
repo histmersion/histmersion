@@ -160,7 +160,7 @@ final class GoalFocusService(
       facts,
       rows,
       goals.map(g => Goal.Slug.assume(g.slug.value) -> g.title).toMap,
-      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy)).toMap,
+      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy.map(domain.Problem.wire))).toMap,
       Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
@@ -182,7 +182,7 @@ final class GoalFocusService(
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
-      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
+      val cleared = Transactor(ds).transact(FocusRepo.clearActive(domain.Problem.fromApi(notInForce), now))
       if released.value + cleared.value == 0 then Nil
       else
         val line = s"autopilot focus: not in force (${notInForce.value}): ${count(released.value, "item")} released, " +
@@ -214,12 +214,12 @@ final class GoalFocusService(
   /** The goals that joined and left, recorded with why. */
   private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
-      agents.focusStore.joined(p.slug, Problem(p.why.value), now)
+      agents.focusStore.joined(p.slug, domain.Problem(p.why.value), now)
       event(p.slug, s"focus: active — ${p.why.value}")
       s"+${p.slug.value} (${p.stage.wire.value})"
     }
     val left = plan.left.map { (g, why) =>
-      agents.focusStore.left(g, Problem(why.value), now)
+      agents.focusStore.left(g, domain.Problem(why.value), now)
       event(g, s"focus: no longer active — ${why.value}")
       s"-${g.value} (${why.value})"
     }

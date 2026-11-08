@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -524,7 +524,7 @@ final class OaBacklog(
             first.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
             first.venue.map(v => Source.Venue(v.value)),
             apiGoals,
-            first.why.fold(Problem(""))(w => Problem(w.value)),
+            first.why.fold(api.Problem(""))(w => api.Problem(w.value)),
             Some(OaWork.FoundBy(first.job.value)),
             Some(OaWork.AcquireText(first.text.value))
           )

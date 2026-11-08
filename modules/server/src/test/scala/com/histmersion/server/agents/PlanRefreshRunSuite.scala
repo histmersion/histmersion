@@ -173,7 +173,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}")),
+        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}")),
         CliRuntime(cfg, EngineContributions.roster),
         reads.seams
       ),

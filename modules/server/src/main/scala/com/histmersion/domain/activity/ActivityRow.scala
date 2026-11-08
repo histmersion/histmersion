@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.activity
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 import com.histmersion.util.database.{Param, Sql}
@@ -42,7 +42,7 @@ final private[activity] case class ActivityRow(
     state,
     what,
     text,
-    error,
+    error.map(Problem.wire),
     endedAt,
     goal,
     job,

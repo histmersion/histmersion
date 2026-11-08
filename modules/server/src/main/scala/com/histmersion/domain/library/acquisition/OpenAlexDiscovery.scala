@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
 import com.histmersion.api.library.{RefRow, WorkRef}

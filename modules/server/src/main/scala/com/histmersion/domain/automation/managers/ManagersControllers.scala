@@ -382,7 +382,7 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
-            Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, Problem("the manager was stopped")))
+            Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, domain.Problem("the manager was stopped")))
           record(
             m.id,
             None,

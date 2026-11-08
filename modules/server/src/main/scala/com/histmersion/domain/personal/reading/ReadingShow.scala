@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.reading
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */

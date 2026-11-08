@@ -111,7 +111,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         Left(
           Halt
             .Fail(
-              Problem(
+              domain.Problem(
                 s"step $seq is '$recorded' in the checkpoint but '$name' now — the pipeline changed; start a new run"
               )
             )
@@ -119,7 +119,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       else
         decode[O](json.value).left
           .map(e =>
-            Halt.Fail(Problem(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
+            Halt.Fail(domain.Problem(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
           )
     }
 
@@ -183,7 +183,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               ),
               Nil
             )
-            Left(Halt.Fail(Problem(s"$name: $m")))
+            Left(Halt.Fail(domain.Problem(s"$name: $m")))
       }
     }
 
@@ -262,7 +262,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                   ),
                   Nil
                 )
-                Left(Halt.Fail(Problem(s"$name: $m")))
+                Left(Halt.Fail(domain.Problem(s"$name: $m")))
               case Right(json) if dryRun =>
                 skipped.add(
                   WouldWrite(
@@ -356,7 +356,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           d <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(Prompt.System(sys), Prompt.User(user.value)))).left
-          .map(m => Halt.Fail(Problem(s"$name: $m")))
+          .map(m => Halt.Fail(domain.Problem(s"$name: $m")))
           .flatMap { (d, prompt) =>
             attempts(
               seq,
@@ -390,8 +390,8 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       run.modelFor(role).map(m => AgentsControllers.ModelName(m.value)),
       onRefresh = n => warn(s"${role.wire}: $n")
     ) match
-      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(Problem(s"$name: $m")))
-      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, Problem(s"$name: $m"), at))
+      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(domain.Problem(s"$name: $m")))
+      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, domain.Problem(s"$name: $m"), at))
       case Right(p)                                =>
         p.skipped
           .filter(warnedSkips.add)
@@ -430,7 +430,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(
             Halt.Fail(
-              Problem(
+              domain.Problem(
                 s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"
               )
             )
@@ -491,7 +491,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               Left(
                 Halt.Pause(
                   PauseReason.Provider,
-                  Problem(s"$name: ${e.message} — fix the provider, then resume")
+                  domain.Problem(s"$name: ${e.message} — fix the provider, then resume")
                 )
               )
             case Right(res) =>
@@ -517,7 +517,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Budget, Problem(s"$name: the run's budget is exhausted")))
+                  Left(Halt.Pause(PauseReason.Budget, domain.Problem(s"$name: the run's budget is exhausted")))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(
                     seq,
@@ -559,7 +559,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Provider, Problem(msg)))
+                  Left(Halt.Pause(PauseReason.Provider, domain.Problem(msg)))
                 case _ =>
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
@@ -605,7 +605,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                       if last then
                         Left(
                           Halt.Fail(
-                            Problem(
+                            domain.Problem(
                               s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"
                             )
                           )

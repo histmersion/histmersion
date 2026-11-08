@@ -37,14 +37,14 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       f(s).goals().map(g => (g.slug, g.active, g.pinned, g.priority, g.parent)),
       List(("zz-a", false, false, 0, None), ("zz-b", false, false, 0, Some("zz-a")))
     )
-    f(s).joined(Goal.Slug("zz-a"), Problem("pinned"), t)
+    f(s).joined(Goal.Slug("zz-a"), domain.Problem("pinned"), t)
     assert(f(s).pin(Goal.Slug("zz-a"), pinned = FocusRepo.GoalRow.Pinned(true)))
     assert(f(s).priority(Goal.Slug("zz-b"), FocusRepo.GoalRow.Priority(5)))
     assert(!f(s).pin(Goal.Slug("zz-none"), pinned = FocusRepo.GoalRow.Pinned(true)))
     assert(!f(s).priority(Goal.Slug("zz-none"), FocusRepo.GoalRow.Priority(1)))
     val Some(a) = f(s).goals().find(_.slug.value == "zz-a"): @unchecked
     assertEquals((a.active, a.pinned, a.since, a.why), (true, true, Some("2026-11-03T06:00:00Z"), Some("pinned")))
-    f(s).left(Goal.Slug("zz-a"), Problem("done"), t.plusSeconds(60))
+    f(s).left(Goal.Slug("zz-a"), domain.Problem("done"), t.plusSeconds(60))
     val Some(a2) = f(s).goals().find(_.slug.value == "zz-a"): @unchecked
     assertEquals(
       (a2.active, a2.leftAt, a2.leftWhy, a2.pinned),

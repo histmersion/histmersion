@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A provider's failure that is already a whole description (`RuntimeException: Claude API error: Overloaded`): a run's

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
@@ -42,7 +42,7 @@ private[acquisition] object CandidateRepo:
       .query[WatchRow]
       .run()
       .toList
-      .map(r => CandidateWatch(r.goal, r.kind, r.subject, r.index, r.watermark, r.lastRun, r.lastError, r.lastFound))
+      .map(r => CandidateWatch(r.goal, r.kind, r.subject, r.index, r.watermark, r.lastRun, r.lastError.map(Problem.wire), r.lastFound))
 
   /** A watch read: its new watermark (on success; a failed read keeps the old one, so nothing is skipped), what it
     * found, or why it failed.

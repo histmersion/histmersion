@@ -109,7 +109,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
     )
     AgentsControllers(
       ServerEngineSite(deps, h),
-      (_, ref) => Option.when(ref == Model)(c).toRight(Problem(s"no scripted client for ${ref.wire}"))
+      (_, ref) => Option.when(ref == Model)(c).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
     )
 
   test("an empty title and a null year are sent back with the problems; the second answer matches"):
@@ -171,7 +171,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
     )
     AgentsControllers(
       ServerEngineSite(deps, h),
-      (_, ref) => Option.when(ref == Model)(client).toRight(Problem(s"no client for ${ref.wire}"))
+      (_, ref) => Option.when(ref == Model)(client).toRight(domain.Problem(s"no client for ${ref.wire}"))
     )
 
   test("claude-code: a prose answer is asked again with why; the typed second answer matches (#915)"):

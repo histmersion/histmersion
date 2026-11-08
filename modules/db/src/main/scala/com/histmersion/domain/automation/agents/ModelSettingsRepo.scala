@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 

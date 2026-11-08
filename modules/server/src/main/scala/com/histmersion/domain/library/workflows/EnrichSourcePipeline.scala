@@ -53,7 +53,7 @@ final class EnrichSourcePipeline(
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     for
-      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(api.Problem(m)))
+      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem(m)))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
       _ <- ctx.code[MetaChecked](AgentRepo.StepRecord.Name("metadata"))(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified](

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -337,7 +337,7 @@ final class ManagerSupervisor(
       item.state,
       run,
       st.transformInto[com.histmersion.domain.automation.Run.State],
-      error.map(domain.Problem.fromApi),
+      error,
       kind.facts(this, item, run),
       now
     ) match
@@ -364,7 +364,7 @@ final class ManagerSupervisor(
           out += TickLine(s"${item.target}: done")
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
-        val hold = Hold(reason = Problem(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
+        val hold = Hold(reason = api.Problem(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
         if Transactor(ds).transact(
             ManagerRepo.evaluated(
               item.id,
@@ -491,7 +491,7 @@ final class ManagerSupervisor(
         val id = seedId(Goal.Ref(goal.value))
         val _ = ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value)))
         val added = plan.articles.count { p =>
-          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why.transformInto[Problem])
+          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why)
           agents.managerStore
             .upsert(
               id,
@@ -938,7 +938,7 @@ final class ManagerSupervisor(
         itemKind: ManagerContext.ItemKind,
         raw: ManagerItem.Target
     ): Either[Api.Error, ManagerContext.ItemTarget] =
-      Left(Api.Error(Problem(s"unknown item kind '$itemKind'")))
+      Left(Api.Error(api.Problem(s"unknown item kind '$itemKind'")))
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 

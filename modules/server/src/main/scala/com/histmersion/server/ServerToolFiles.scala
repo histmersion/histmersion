@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.{ToolFiles, Upload}
 import com.histmersion.util.storage.SafePath

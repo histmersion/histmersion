@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.plugin.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.pluginhost.{Challenge, HttpAnswer, OaFetcher}
@@ -26,15 +26,15 @@ class LandingFetchSuite extends munit.FunSuite:
   /** Answers by URL, records every request. */
   final private class FakeUpstream(routes: PartialFunction[String, Either[String, Array[Byte]]]) extends Http:
     var asked: List[String] = Nil // a test double: the simplest record of calls
-    private def answer(url: Http.Url): Either[api.Problem, Array[Byte]] =
+    private def answer(url: Http.Url): Either[Problem, Array[Byte]] =
       asked = asked :+ url.value
-      routes.applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404")).left.map(api.Problem(_))
+      routes.applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404")).left.map(Problem(_))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(HttpAnswer.Body(_))
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b, "UTF-8")))
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[api.Problem, Json] =
-      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => api.Problem(e.getMessage)))
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
+      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Problem(e.getMessage)))
 
   private def cfg = AppConfig.load().acquire
 
@@ -49,7 +49,7 @@ class LandingFetchSuite extends munit.FunSuite:
   private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
-  private def fail2(http: FakeUpstream)(e: Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
+  private def fail2(http: FakeUpstream)(e: plugin.Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
 
   test("Zenodo: the record page OpenAlex gives as the PDF is resolved by the API to the record's open PDF"):
     val c = cfg

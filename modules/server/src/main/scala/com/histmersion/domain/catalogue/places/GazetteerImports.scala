@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.config.AppConfig

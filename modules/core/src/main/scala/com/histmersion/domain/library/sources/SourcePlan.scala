@@ -179,7 +179,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(l)),
         Some(MergeIssue.Detail.side(r)),
-        Problem.wire(why),
+        Problem.wireAll(why),
         opts,
         suggested,
         cond,

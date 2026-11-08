@@ -20,4 +20,4 @@ object Problem extends Newtype[String, Pure]:
   def wire(p: Problem): ApiProblem = ApiProblem(p.value)
 
   /** The domain's failures as the wire contract's. */
-  def wire(ps: List[Problem]): List[ApiProblem] = ps.map(wire)
+  def wireAll(ps: List[Problem]): List[ApiProblem] = ps.map(wire)

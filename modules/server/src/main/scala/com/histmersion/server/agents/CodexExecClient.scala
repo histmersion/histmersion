@@ -106,7 +106,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
               .flatMap(_.blocked(PlanQuota.PoolId.ChatgptPlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(ms => java.time.Instant.ofEpochMilli(ms.value))
-            throw new ModelLimitReached(model, until, api.Problem(s"codex exec: $m".take(300)))
+            throw new ModelLimitReached(model, until, domain.Problem(s"codex exec: $m".take(300)))
           case None =>
             CliOutcomes.result(
               o,

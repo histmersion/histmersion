@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.config.ApiKey
 import com.histmersion.domain.*
 import com.histmersion.plugin.UpstreamQuota
@@ -24,7 +24,7 @@ final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, lim
     key match
       case None =>
         Left(
-          Problem(
+          domain.Problem(
             "no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one"
           )
         )

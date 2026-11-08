@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given

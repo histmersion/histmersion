@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.managers.ManagerContext
@@ -126,7 +126,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item.state,
       run,
       st.transformInto[Run.State],
-      error.map(domain.Problem.fromApi),
+      error,
       facts,
       task,
       now
@@ -253,7 +253,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       c.chainReview(
         ManagerLight.Id(m.id.value),
         Slug.assume(item.target.value),
-        api.Problem(s"extended by run ${run.fold("")(_.value.take(8))}"),
+        domain.Problem(s"extended by run ${run.fold("")(_.value.take(8))}"),
         out
       )
 
@@ -309,7 +309,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .flatMap(_._3) match
           case Some(itemId) =>
             Option
-              .when(c.restale(itemId, prio, api.Problem(p.why.value)))(s"${p.target} (${p.why}$boost)")
+              .when(c.restale(itemId, prio, domain.Problem(p.why.value)))(s"${p.target} (${p.why}$boost)")
           case None =>
             val (_, isNew) = c.upsert(
               manager,
