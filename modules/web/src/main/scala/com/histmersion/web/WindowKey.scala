@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works
   * with the enum.
   */
-enum WindowKey:
+enum WindowKey derives CanEqual:
   /** The server-rendered page of a source. */
   case Source(citekey: WindowKey.Source.Citekey)
 

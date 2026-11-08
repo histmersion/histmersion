@@ -17,7 +17,7 @@ final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
     val maxWeight: BoundedCache.MaxWeight = BoundedCache.MaxWeight(Long.MaxValue),
     weigh: V => BoundedCache.WeighResult = (_: V) => BoundedCache.WeighResult(0L)
-):
+)(using CanEqual[K, K]):
   require(maxEntries.value > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
   private val entries = mutable.LinkedHashMap.empty[K, (V, Long)]

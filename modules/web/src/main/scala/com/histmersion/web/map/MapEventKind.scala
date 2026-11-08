@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 
 /** What happened on the map. */
-enum MapEventKind:
+enum MapEventKind derives CanEqual:
   case MoveStart, Move, MoveEnd, ZoomStart, ZoomEnd, Resize
 
   /** A click on the map (the app's markers answer their own clicks: see [[MapEvent.overMarker]]). */

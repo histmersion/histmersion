@@ -6,7 +6,7 @@ import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings' sections, in the order of its side navigation; `rare`: under "Rarely needed". */
-enum SettingsSection(val slug: SettingsSection.Slug, val label: SettingsSection.Label, val rare: SettingsSection.Rare = SettingsSection.Rare(false)):
+enum SettingsSection(val slug: SettingsSection.Slug, val label: SettingsSection.Label, val rare: SettingsSection.Rare = SettingsSection.Rare(false)) derives CanEqual:
   case General extends SettingsSection(SettingsSection.Slug("general"), SettingsSection.Label("General"))
   case Data extends SettingsSection(SettingsSection.Slug("data"), SettingsSection.Label("Data and downloads"))
   case Finders extends SettingsSection(SettingsSection.Slug("sources"), SettingsSection.Label("Where to look for sources"))

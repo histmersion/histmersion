@@ -11,7 +11,7 @@ import com.histmersion.api.library.Ingest
   * ([[DoiIngest]]); the answer says what was found and links to the new source.
   */
 object DoiForm:
-  private enum State:
+  private enum State derives CanEqual:
     case Idle
     case Adding
     case Failed(message: ErrorLine.Problem)

@@ -122,7 +122,7 @@ object ChipInput:
         if prefix.isEmpty then close()
         else
           latest.onCurrent(config.getSuggestions(Api.Facets.Prefix(prefix))) { result =>
-            if inputEl != null && dom.document.activeElement == inputEl then
+            if inputEl != null && (dom.document.activeElement eq inputEl) then
               result.fold(_ => close(), rows => open(rows))
           }
 

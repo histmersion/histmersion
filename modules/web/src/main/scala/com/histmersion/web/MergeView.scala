@@ -70,7 +70,7 @@ object MergeView:
   /** How the issue list is grouped, in the order it is shown. */
 
 
-  enum Group(val title: Group.Title):
+  enum Group(val title: Group.Title) derives CanEqual:
     case Open extends Group(Group.Title("to decide"))
     case Decided extends Group(Group.Title("decided"))
     case Conditional extends Group(Group.Title("conditional — listed now, so no new question appears after a decision"))
@@ -190,7 +190,7 @@ object MergeView:
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
   def rows(fs: List[IssueField]): List[(IssueField, Boolean)] =
-    val (diff, same) = fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left != f.right)
+    val (diff, same) = fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left.map(_.value) != f.right.map(_.value))
     diff.map(_ -> true) ++ same.map(_ -> false)
 
   /** The text the article editor starts from: the agreed regions as they are, each conflict with git-style markers

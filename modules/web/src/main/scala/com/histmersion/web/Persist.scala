@@ -9,7 +9,7 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 
 /** Where a field survives a reload. */
-enum Persist:
+enum Persist derives CanEqual:
   /** In the URL hash: shareable, and walked by back/forward. */
   case Hash
 

@@ -22,7 +22,7 @@ import com.histmersion.api.Plural
   */
 object ListPaging:
   /** What is shown: the rows, newest first, and the last page's word on the rest of the list. */
-  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Boolean = false):
+  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Boolean = false) derives CanEqual:
     def hasOlder: Boolean = page.hasMore
 
   object Listing:

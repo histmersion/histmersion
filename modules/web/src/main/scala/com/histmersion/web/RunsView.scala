@@ -181,7 +181,7 @@ object RunsView:
         page.count(Paging.Page.CountState(RunState.Running.wire.value)).value > 0
 
   /** What a person can do to a run in this state. */
-  enum Action(val wire: Action.Wire, val label: Action.Label):
+  enum Action(val wire: Action.Wire, val label: Action.Label) derives CanEqual:
     case Pause extends Action(Action.Wire("pause"), Action.Label("pause"))
     case Resume extends Action(Action.Wire("resume"), Action.Label("resume"))
     case Cancel extends Action(Action.Wire("cancel"), Action.Label("cancel"))

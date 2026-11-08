@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 
 /** An overlay the map can show. The wire name is how it is persisted in [[UiState]]. */
-enum MapLayer(val wire: MapLayer.Wire, val label: MapLayer.Label, val icon: Icon):
+enum MapLayer(val wire: MapLayer.Wire, val label: MapLayer.Label, val icon: Icon) derives CanEqual:
   case Boundaries extends MapLayer(MapLayer.Wire("boundaries"), MapLayer.Label("Boundaries"), Icon.Region)
   case Sites extends MapLayer(MapLayer.Wire("sites"), MapLayer.Label("Sites"), Icon.PointSite)
   case Media extends MapLayer(MapLayer.Wire("media"), MapLayer.Label("Media"), Icon.PointMedia)

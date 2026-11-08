@@ -11,7 +11,7 @@ import com.histmersion.api.UiLabels
 /** The colour theme a reader picked: follow the system's setting (the default), always light, or always dark. One
   * button cycles them in that order, as the documentation site's does.
   */
-enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val icon: Icon):
+enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val icon: Icon) derives CanEqual:
   case System extends ThemeChoice(ThemeChoice.Wire("system"), ThemeChoice.Label("Theme: follows the system"), Icon.ThemeSystem)
   case Light extends ThemeChoice(ThemeChoice.Wire("light"), ThemeChoice.Label("Theme: light"), Icon.ThemeLight)
   case Dark extends ThemeChoice(ThemeChoice.Wire("dark"), ThemeChoice.Label("Theme: dark"), Icon.ThemeDark)

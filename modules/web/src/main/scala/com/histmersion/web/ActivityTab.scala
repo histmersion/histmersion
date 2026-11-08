@@ -13,7 +13,7 @@ enum ActivityTab(
     val label: String,
     val agents: Boolean,
     val show: Option[Activity.Show]
-):
+) derives CanEqual:
   case Everything
       extends ActivityTab(
         "",

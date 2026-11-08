@@ -11,7 +11,7 @@ import scala.scalajs.js
 import com.histmersion.api.library.Filter
 
 /** What a field is FOR — which fields "clear all" clears and which become chips. */
-enum Role:
+enum Role derives CanEqual:
   /** Part of the query, shown as a removable chip (unless `chip = false`), cleared by "clear all". */
   case Filter
 

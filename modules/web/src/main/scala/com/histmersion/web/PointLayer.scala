@@ -64,7 +64,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
             fresh += d
           case Some(d) =>
             val was = d.item.asInstanceOf[A]
-            if !(d.span == dotSpan(span) && was == a) then
+            if !(d.span == dotSpan(span) && was.equals(a)) then
               val sameLook = PointMarker.signature(kind, was) == PointMarker.signature(kind, a)
               val member = kind.member(a)
               if member != d.member then reshaped = true
@@ -114,4 +114,4 @@ object PointLayer:
   object FadeIn extends Newtype[Boolean, Pure]
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
 
-  private[web] def same[A](d: Dot, a: A, span: (Years.Astronomical, Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && d.item == a
+  private[web] def same[A](d: Dot, a: A, span: (Years.Astronomical, Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && a.equals(d.item)

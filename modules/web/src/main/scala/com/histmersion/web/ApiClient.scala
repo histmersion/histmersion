@@ -97,6 +97,8 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.ItemStatus
 
 object ApiClient:
+  private given CanEqual[Method, Method] = CanEqual.derived
+
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 

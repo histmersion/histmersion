@@ -174,7 +174,7 @@ object PlacesInput:
       if q.isEmpty then close()
       else
         val show: List[Place.Hit] => Unit = rows =>
-          if inputEl == null || dom.document.activeElement != inputEl then ()
+          if inputEl == null || (dom.document.activeElement ne inputEl) then ()
           else
             val gaz = Option(rows)
               .getOrElse(Nil)

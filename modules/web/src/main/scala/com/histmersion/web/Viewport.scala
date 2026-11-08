@@ -24,7 +24,7 @@ object Viewport:
   type ModeHeight = ModeHeight.T
   object ModeHeight extends Newtype[Double, Pure]
 
-  enum Mode(val wire: Mode.Wire):
+  enum Mode(val wire: Mode.Wire) derives CanEqual:
     case Narrow extends Mode(Mode.Wire("narrow"))
     case Tablet extends Mode(Mode.Wire("narrow"))
     case Wide extends Mode(Mode.Wire("wide"))

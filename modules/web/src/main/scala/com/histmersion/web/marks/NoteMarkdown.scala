@@ -14,7 +14,7 @@ object NoteMarkdown:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
-  enum Inline:
+  enum Inline derives CanEqual:
     case Text(s: String)
     case Strong(s: String)
     case Em(s: String)
@@ -22,7 +22,7 @@ object NoteMarkdown:
     case Link(text: String, href: Href)
     case Cite(citekey: Citekey)
 
-  enum Block:
+  enum Block derives CanEqual:
     case Heading(level: Block.Heading.Level, text: List[Inline])
     case Para(text: List[Inline])
     case Items(ordered: Block.Items.Ordered, items: List[List[Inline]])

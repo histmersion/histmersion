@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come
   * from.
   */
-enum DotKind(val one: DotKind.One, val many: DotKind.Many):
+enum DotKind(val one: DotKind.One, val many: DotKind.Many) derives CanEqual:
   case Finding extends DotKind(DotKind.One("finding"), DotKind.Many("findings"))
   case Site extends DotKind(DotKind.One("site"), DotKind.Many("sites"))
   case Event extends DotKind(DotKind.One("event"), DotKind.Many("events"))

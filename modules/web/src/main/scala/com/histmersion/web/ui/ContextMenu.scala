@@ -26,7 +26,7 @@ object ContextMenu:
       disabled: Entry.Disabled = Entry.Disabled(false),
       hint: Option[Entry.Hint] = None,
       pressed: Option[Entry.Pressed] = None
-  )
+  ) derives CanEqual
 
   object Entry:
     type Label = Label.T
@@ -162,7 +162,7 @@ object ContextMenu:
       onKeyDown --> { ev =>
         val el = ev.currentTarget.asInstanceOf[dom.Element]
         val all = items(el)
-        val at = all.indexWhere(_ == dom.document.activeElement)
+        val at = all.indexWhere(_ eq dom.document.activeElement)
         def go(i: Int): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
         ev.key match
           case "ArrowDown" => go(at + 1)

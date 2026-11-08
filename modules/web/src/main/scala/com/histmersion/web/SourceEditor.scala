@@ -60,7 +60,7 @@ object SourceEditor:
     )
 
   /** The form field a message is shown next to. */
-  enum Field:
+  enum Field derives CanEqual:
     case Title, Authors, Year, Venue, Doi, Status, Topics, Regions, Tags, Period, Summary, Form
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ package web.ui
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
+enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label) derives CanEqual:
   case Sources extends SidebarTab(SidebarTab.Key("sources"), SidebarTab.Label("Sources"))
   case Articles extends SidebarTab(SidebarTab.Key("articles"), SidebarTab.Label("Articles"))
   case Events extends SidebarTab(SidebarTab.Key("events"), SidebarTab.Label("Events"))

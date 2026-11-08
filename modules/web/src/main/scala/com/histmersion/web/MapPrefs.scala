@@ -23,7 +23,7 @@ final case class MapPrefs(
     contours: Option[MapPrefs.Contours] = None,
     depthPhysical: Option[MapPrefs.DepthPhysical] = None,
     depthReadable: Option[MapPrefs.DepthReadable] = None
-) derives hearth.kindlings.circederivation.KindlingsCodecAsObject:
+) derives hearth.kindlings.circederivation.KindlingsCodecAsObject, CanEqual:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
   def seaDepth(style: VectorStyle): Boolean = style match
