@@ -1,6 +1,9 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.WireEnumValues
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Edge:
 
@@ -13,33 +16,33 @@ object Edge:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    private val wireMap: Map[com.histmersion.domain.library.Edge.Kind.Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
+    private val wireMap: Map[Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
 
     /** The wire string for an edge kind: lowercase with underscores preserved. `SupersededBy` → `"superseded_by"`,
       * `FoundationalFor` → `"foundational_for"`.
       */
-    def wireOf(e: Kind): com.histmersion.domain.library.Edge.Kind.Wire = e match
-      case References      => _root_.com.histmersion.domain.library.Edge.Kind.Wire("references")
-      case Challenges      => _root_.com.histmersion.domain.library.Edge.Kind.Wire("challenges")
-      case Refutes         => _root_.com.histmersion.domain.library.Edge.Kind.Wire("refutes")
-      case Updates         => _root_.com.histmersion.domain.library.Edge.Kind.Wire("updates")
-      case SupersededBy    => _root_.com.histmersion.domain.library.Edge.Kind.Wire("superseded_by")
-      case Supersedes      => _root_.com.histmersion.domain.library.Edge.Kind.Wire("supersedes")
-      case Confirms        => _root_.com.histmersion.domain.library.Edge.Kind.Wire("confirms")
-      case Cites           => _root_.com.histmersion.domain.library.Edge.Kind.Wire("cites")
-      case FoundationalFor => _root_.com.histmersion.domain.library.Edge.Kind.Wire("foundational_for")
-      case CompilationOf   => _root_.com.histmersion.domain.library.Edge.Kind.Wire("compilation_of")
-      case ReviewOf        => _root_.com.histmersion.domain.library.Edge.Kind.Wire("review_of")
-      case Verifies        => _root_.com.histmersion.domain.library.Edge.Kind.Wire("verifies")
+    def wireOf(e: Kind): Wire = e match
+      case References      => Wire("references")
+      case Challenges      => Wire("challenges")
+      case Refutes         => Wire("refutes")
+      case Updates         => Wire("updates")
+      case SupersededBy    => Wire("superseded_by")
+      case Supersedes      => Wire("supersedes")
+      case Confirms        => Wire("confirms")
+      case Cites           => Wire("cites")
+      case FoundationalFor => Wire("foundational_for")
+      case CompilationOf   => Wire("compilation_of")
+      case ReviewOf        => Wire("review_of")
+      case Verifies        => Wire("verifies")
 
-    def fromWire(s: com.histmersion.domain.library.Edge.Kind.Wire): Option[Kind] = wireMap.get(_root_.com.histmersion.domain.library.Edge.Kind.Wire((s).value.toLowerCase))
+    def fromWire(s: Wire): Option[Kind] = wireMap.get(Wire((s).value.toLowerCase))
 
     /** All wire strings, for validators and legends. */
-    val allWire: List[com.histmersion.domain.library.Edge.Kind.Wire] = (values.map(wireOf).toList).map(refactorValue => _root_.com.histmersion.domain.library.Edge.Kind.Wire((refactorValue).value))
+    val allWire: List[Wire] = (values.map(wireOf).toList).map(refactorValue => Wire((refactorValue).value))
 
     given WireEnumValues[Kind]:
-      def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.domain.library.Edge.Kind.Wire((s).value))
+      def all: Array[Kind] = values
+      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))

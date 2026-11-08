@@ -1,7 +1,9 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Run:
 
@@ -15,22 +17,22 @@ object Run:
     * it waits on; `Cancelled` and the other terminal states are final.
     */
   enum State(val wire: State.Wire):
-    case Queued extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("queued"))
-    case Running extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("running"))
-    case Paused extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("paused"))
-    case WaitingApproval extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("waiting"))
-    case Done extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("done"))
-    case Failed extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("failed"))
-    case Cancelled extends State(_root_.com.histmersion.domain.automation.Run.State.Wire("cancelled"))
+    case Queued extends State(State.Wire("queued"))
+    case Running extends State(State.Wire("running"))
+    case Paused extends State(State.Wire("paused"))
+    case WaitingApproval extends State(State.Wire("waiting"))
+    case Done extends State(State.Wire("done"))
+    case Failed extends State(State.Wire("failed"))
+    case Cancelled extends State(State.Wire("cancelled"))
 
     def isTerminal: Boolean = (this == Done || this == Failed || this == Cancelled)
 
   object State:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.domain.automation.Run.State.Wire): Option[State] = values.find(_.wire == _root_.com.histmersion.domain.automation.Run.State.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     /** The legal transitions. `None` = refuse (the run has moved on). Resume is `Paused → Queued`. */
     def next(from: State, to: State): Option[State] = (from, to) match

@@ -1,8 +1,10 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import java.util.Locale
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
+import com.histmersion.domain.catalogue.Place
 
 /** Wikidata item ids, as the gazetteer and the catalogues carry them. Pure. */
 object Wikidata:
@@ -12,9 +14,9 @@ object Wikidata:
   def isQid(s: String): Boolean = ((s).matches("Q[1-9][0-9]*"))
 
   /** Pure: the item a gazetteer place id names (`wikidata_q132564` → `Q132564`). */
-  def qidOfPlaceId(id: com.histmersion.domain.catalogue.Place.Id): Option[Wikidata.Id] =
+  def qidOfPlaceId(id: Place.Id): Option[Id] =
     val s = (id).value.trim.toLowerCase(Locale.ROOT)
-    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).flatMap(Wikidata.Id.option)
+    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).flatMap(Id.option)
 
   /** A Wikidata item: `Q` and its number (`Q12554`). */
   type Id = Id.T

@@ -1,6 +1,9 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.{Ascii, WireEnumValues}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum EditionsPolicy:
   /** Merge them (the year issue then takes the earliest year). */
   case Merge
@@ -10,9 +13,9 @@ enum EditionsPolicy:
 
 object EditionsPolicy:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   given WireEnumValues[EditionsPolicy]:
-    def all: Array[EditionsPolicy] = EditionsPolicy.values
-    def wire(e: EditionsPolicy): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))))
-    def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def all: Array[EditionsPolicy] = values
+    def wire(e: EditionsPolicy): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+    def fromWire(s: WireEnumValues.Wire): Option[EditionsPolicy] = values.find(_.toString.equalsIgnoreCase((s).value.trim))

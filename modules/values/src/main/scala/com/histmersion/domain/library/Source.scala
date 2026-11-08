@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.*
@@ -6,29 +7,29 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Source:
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
-    def wire: com.histmersion.domain.library.Source.Status.Wire = com.histmersion.domain.library.Source.Status.Wire(Ascii.lower((toString)))
+    def wire: Status.Wire = Status.Wire(Ascii.lower((toString)))
 
   object Status:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def fromString(s: com.histmersion.domain.library.Source.Status.Wire): Status =
+    def fromString(s: Wire): Status =
       values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 
     given WireEnumValues[Status]:
-      def all: Array[Status] = Status.values
-      def wire(e: Status): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((_root_.com.histmersion.domain.library.Source.Status.Wire(e.toString.toLowerCase)).value)
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[Status] =
-        Status.values.find(_.toString.equalsIgnoreCase((s).value))
+      def all: Array[Status] = values
+      def wire(e: Status): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Status] =
+        values.find(_.toString.equalsIgnoreCase((s).value))
 
   /** A source's stable identity across renames, merges and databases (`sources.uid`). */
   type Uid = Uid.T

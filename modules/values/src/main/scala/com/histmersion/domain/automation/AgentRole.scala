@@ -1,21 +1,25 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum AgentRole(val wire: AgentRole.Wire):
-  case Probe extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("probe"))
-  case Extractor extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("extractor"))
-  case Reviewer extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("reviewer"))
-  case ColdReader extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("cold-reader"))
-  case Skeptic extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("skeptic"))
-  case Fixer extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("fixer"))
+  case Probe extends AgentRole(AgentRole.Wire("probe"))
+  case Extractor extends AgentRole(AgentRole.Wire("extractor"))
+  case Reviewer extends AgentRole(AgentRole.Wire("reviewer"))
+  case ColdReader extends AgentRole(AgentRole.Wire("cold-reader"))
+  case Skeptic extends AgentRole(AgentRole.Wire("skeptic"))
+  case Fixer extends AgentRole(AgentRole.Wire("fixer"))
 
   /** plan-goal: sub-goals, queries and candidate works for a goal; acquisition-sweep: ranks them. */
-  case Planner extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("planner"))
+  case Planner extends AgentRole(AgentRole.Wire("planner"))
 
   /** compile-article: drafts the article (or the section to append) from the verified claims. */
-  case Writer extends AgentRole(_root_.com.histmersion.domain.automation.AgentRole.Wire("writer"))
+  case Writer extends AgentRole(AgentRole.Wire("writer"))
 
 object AgentRole:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
 
-  def parse(s: com.histmersion.domain.automation.AgentRole.Wire): Option[AgentRole] = values.find(_.wire == _root_.com.histmersion.domain.automation.AgentRole.Wire((s).value.trim.toLowerCase))
+  def parse(s: Wire): Option[AgentRole] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

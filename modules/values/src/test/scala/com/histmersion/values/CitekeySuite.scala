@@ -1,4 +1,5 @@
-package com.histmersion.values
+package com.histmersion
+package values
 
 import com.histmersion.values.testsupport.ComparedByValue.given
 

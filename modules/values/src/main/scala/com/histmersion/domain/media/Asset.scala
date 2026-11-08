@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -13,11 +14,11 @@ object Asset:
   /** What a picture's link points at: the kinds of record it depicts. */
   object LinkTarget:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     val Event = "event"
     val Finding = "finding"
     val Place = "place"
     val Source = "source"
     val Article = "article"
-    val all: List[com.histmersion.domain.media.Asset.LinkTarget.Wire] = List(_root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Event), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Finding), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Place), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Source), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Article))
+    val all: List[Wire] = List(Wire(Event), Wire(Finding), Wire(Place), Wire(Source), Wire(Article))

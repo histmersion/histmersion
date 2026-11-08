@@ -1,23 +1,24 @@
-package com.histmersion.domain.research
+package com.histmersion
+package domain.research
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Article:
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
   type Lead = Lead.T
-  object Lead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lead extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type Page = Page.T
-  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Page extends RefinedType[String, Pure]
   type ReachSummary = ReachSummary.T
-  object ReachSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReachSummary extends RefinedType[String, Pure]
   type StrictMode = StrictMode.T
-  object StrictMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StrictMode extends RefinedType[Boolean, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
 
   /** An article's stable identity across renames, merges and databases (`articles.uid`). */
   type Uid = Uid.T

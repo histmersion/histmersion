@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match

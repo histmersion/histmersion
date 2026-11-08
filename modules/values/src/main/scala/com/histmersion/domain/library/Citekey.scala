@@ -1,6 +1,8 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Lower-case, starts with a letter, then letters, digits, `_`, `.` or `-`, 2 to 121 characters, and never `..`. A
   * citekey is a file name on the server (the ingest spool keeps `<spool>/<citekey>`) and a URL segment, so it is
@@ -13,20 +15,20 @@ type Citekey = Citekey.T
 
 object Citekey extends RefinedType[String, CitekeyRule]:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** A citekey from what a person or a client typed (trimmed), or why it is none. */
   type ValidRaw = String
 
-  def parse(raw: String): Either[com.histmersion.domain.library.Citekey.Problem, Citekey] =
+  def parse(raw: String): Either[Problem, Citekey] =
     val s = Option(raw).map((_).trim).getOrElse("")
-    if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.Problem("citekey is required"))
-    else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.Problem(s"invalid citekey '$raw' — it may not contain '..'"))
+    if s.isEmpty then Left(Problem("citekey is required"))
+    else if s.contains("..") then Left(Problem(s"invalid citekey '$raw' — it may not contain '..'"))
     else
       either(s).left.map(_ =>
-        _root_.com.histmersion.domain.library.Citekey.Problem(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
+        Problem(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
           "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse")
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */
-  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): Boolean = (parse(raw).isRight)
+  def valid(raw: ValidRaw): Boolean = (parse(raw).isRight)
