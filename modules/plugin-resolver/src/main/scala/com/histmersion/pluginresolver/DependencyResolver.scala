@@ -25,6 +25,8 @@ import com.histmersion.util.console.Console
 @main def pluginResolver(args: String*): Unit = sys.exit((DependencyResolver.exitCode((args.toList).map(refactorValue3 => Resolver.Argument(refactorValue3)))(using Console.system)).value)
 
 object DependencyResolver:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
 
   export Resolver.{Problem as ParseLoopResultPart1, Argument as ParseLoopRest, ExitCode as ExitCodeResult, Argument as ExitCodeArgs, ExitCode as RunResult, Argument as RunArgs, Problem as ParseResultPart1, Argument as ParseArgs, ExitCode as ResolveResult, ExitCode as ResolveRootsResultPart1, ExitCode as ResolveSomeResultPart1, Problem as ServerModulesResultPart1, FileName as InputsResultPart1, Sha256 as InputsResultPart2}
 
