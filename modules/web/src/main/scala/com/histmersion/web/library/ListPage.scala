@@ -1,23 +1,28 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
+
+import com.histmersion.api.Offset
+import com.histmersion.api.RowCount
+import com.histmersion.web.ErrorLine
 
 /** One page of a Library list as the server answered it: its rows, where it starts, and how many the filter selects in
   * all; `loading` while a newer page is on its way, `error` when the last one failed.
   */
 final case class ListPage[Row](
     rows: List[Row] = Nil,
-    offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
-    total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
+    offset: Offset = Offset(0),
+    total: RowCount = RowCount(0),
     loaded: Boolean = false,
     loading: Boolean = false,
-    error: Option[com.histmersion.web.ErrorLine.Problem] = None
+    error: Option[ErrorLine.Problem] = None
 ):
 
   def hasPrevious: Boolean = offset.value > 0
   def hasNext: Boolean = offset.value + rows.size < total.value
 
   /** Where the page before and after this one start, for pages of `size` rows. */
-  def previousOffset(size: Int): com.histmersion.api.Offset = com.histmersion.api.Offset(math.max(0, offset.value - size))
-  def nextOffset(size: Int): com.histmersion.api.Offset = com.histmersion.api.Offset(offset.value + size)
+  def previousOffset(size: Int): Offset = Offset(math.max(0, offset.value - size))
+  def nextOffset(size: Int): Offset = Offset(offset.value + size)
 
 object ListPage:
   /** Pure: a whole number with its thousands grouped by commas (`1,026`), whatever the browser's locale. */

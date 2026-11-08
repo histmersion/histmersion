@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,18 +13,24 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.api.Paging
+import com.histmersion.api.Wording
+import com.histmersion.web.ErrorLine
 
 /** "Where should the map open?" — where this browser last left it, or at a place: one found by its name in the
   * gazetteer, or the map's view now. The choice is held in `choice` until the form saves it.
   */
 object StartPlace:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
 
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
 
   type ChooserName = ChooserName.T
-  object ChooserName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChooserName extends RefinedType[String, Pure]
 
   def zoomFor(b: GeoBounds): MapSurface.Zoom =
     val span = math.max(b.east.value - b.west.value, (b.north.value - b.south.value) * 1.4)
@@ -31,7 +38,7 @@ object StartPlace:
     else MapSurface.Zoom(math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1)))
 
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
-  def viewOf(geometry: com.histmersion.api.catalogue.Place.Geometry): Option[(LatLon, MapSurface.Zoom)] =
+  def viewOf(geometry: Place.Geometry): Option[(LatLon, MapSurface.Zoom)] =
     scala.util.Try(js.JSON.parse(geometry.value)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
       (LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)), zoomFor(b))
     }
@@ -49,14 +56,14 @@ object StartPlace:
   private def round(v: Double): String =
     BigDecimal(v).setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
-  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: Boolean = true): HtmlElement =
+  def chooser(choice: Var[MapStartConfig], name: ChooserName, showLegend: Boolean = true): HtmlElement =
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
     def search(q: String): Unit =
       query.set(q)
       if q.trim.length >= 2 then
-        ApiClient.places(Some(com.histmersion.api.Api.Search.Text(q.trim)), None, Some(com.histmersion.api.Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
+        ApiClient.places(Some(Api.Search.Text(q.trim)), None, Some(Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
       else hits.set(Nil)
     def pick(h: Place.Hit): Unit =
       ApiClient.place(h.id, None).foreach { d =>
@@ -121,7 +128,7 @@ object StartPlace:
                   typ := "button",
                   cls := "btn btn--bare start-place-hit",
                   h.label.value,
-                  span(cls := "muted", s" ${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(h.kind.value))}"),
+                  span(cls := "muted", s" ${Wording.humanize(Wording.Id(h.kind.value))}"),
                   onClick --> (_ => pick(h))
                 )
               )
@@ -129,13 +136,13 @@ object StartPlace:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m)))),
+      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m)))),
       p(cls := "muted start-place-now", child.text <-- choice.signal.map(c => describe(c).value))
     )
 
   /** What the choice means, in words. Pure. */
-  def describe(c: MapStartConfig): com.histmersion.web.settings.StartPlace.Description =
+  def describe(c: MapStartConfig): Description =
     val at = if c.label.value.trim.nonEmpty then c.label.value else s"${round(c.lat.value)}, ${round(c.lon.value)}"
     MapStartMode.parse(c.mode) match
-      case MapStartMode.Last  => com.histmersion.web.settings.StartPlace.Description(s"The first time, and in a new browser, it opens at $at.")
-      case MapStartMode.Place => com.histmersion.web.settings.StartPlace.Description(s"It opens at $at (zoom ${round(c.zoom.value)}).")
+      case MapStartMode.Last  => Description(s"The first time, and in a new browser, it opens at $at.")
+      case MapStartMode.Place => Description(s"It opens at $at (zoom ${round(c.zoom.value)}).")

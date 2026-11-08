@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 /** What the reading pane reads of a source beyond its row: its record with its findings, and its place in the citation
   * graph.

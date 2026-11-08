@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,9 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.{Autopilot, Managers, PlanQuota}
 import com.histmersion.api.automation.Agents.ApprovalInfo
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Goal
 
 /** The overview's pure parts: what to read before a decision, the oldest first, a goal's progress and what blocks it,
   * the weekly allowance.
@@ -19,7 +23,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
       subject: Option[ApprovalInfo.Subject] = None,
       target: Option[ApprovalInfo.Target] = None
   ) =
-    ApprovalInfo(id, Some(com.histmersion.api.automation.Agents.RunInfo.Id("r1")), kind, com.histmersion.api.library.Citekey("drake2012"), createdAt = at, subject = subject, target = target)
+    ApprovalInfo(id, Some(Agents.RunInfo.Id("r1")), kind, Citekey("drake2012"), createdAt = at, subject = subject, target = target)
 
   test("a decision names what to read first, and the evidence comes before its accept button"):
     assertEquals(
@@ -57,20 +61,20 @@ class ResearchOverviewSuite extends munit.FunSuite:
       approval(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge"), ApprovalInfo.CreatedAt("2026-10-29T10:00:00Z")).modify(_.state).setTo(ApprovalInfo.State("approved"))
     )
     assertEquals(ResearchOverview.oldestFirst(as).map(_.id), List(1L, 3L))
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(5 * 3600000.0)), "5 hours")
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(1800000.0)), "less than an hour")
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(72 * 3600000.0)), "3 days")
+    assertEquals(ResearchOverview.waited(ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(5 * 3600000.0)), "5 hours")
+    assertEquals(ResearchOverview.waited(ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(1800000.0)), "less than an hour")
+    assertEquals(ResearchOverview.waited(ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(72 * 3600000.0)), "3 days")
 
   private def manager(
       id: Managers.ManagerInfo.Id,
-      goal: com.histmersion.api.automation.Goal.Slug,
+      goal: Goal.Slug,
       done: Managers.ItemCounts.Done,
       pending: Managers.ItemCounts.Pending,
       note: Option[Managers.ManagerInfo.StatusNote] = None
   ) =
     Managers.ManagerInfo(
       id,
-      com.histmersion.api.automation.Managers.ManagerInfo.Kind("seed"),
+      Managers.ManagerInfo.Kind("seed"),
       goal = Some(goal),
       counts = Managers.ItemCounts(pending = pending, done = done),
       statusNote = note
@@ -84,13 +88,13 @@ class ResearchOverviewSuite extends munit.FunSuite:
       manager(ManagerInfo.Id("watch:a"), Goal.Slug("a"), ItemCounts.Done(0), ItemCounts.Pending(1)),
       manager(ManagerInfo.Id("seed:b"), Goal.Slug("b"), ItemCounts.Done(1), ItemCounts.Pending(0))
     )
-    assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("a"), ms), ResearchOverview.Progress(com.histmersion.web.ResearchOverview.Progress.Done(8), com.histmersion.web.ResearchOverview.Progress.Total(12)))
-    assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("a"), ms).pct, 66)
-    assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("none"), ms), ResearchOverview.Progress(com.histmersion.web.ResearchOverview.Progress.Done(0), com.histmersion.web.ResearchOverview.Progress.Total(0)))
-    val g = Autopilot.GoalProgress(com.histmersion.api.automation.Autopilot.GoalProgress.Slug("a"), com.histmersion.api.automation.Autopilot.GoalProgress.Title("A"), com.histmersion.api.automation.Autopilot.GoalProgress.Status("seeding"), openApprovals = com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals(2))
+    assertEquals(ResearchOverview.progressOf(Goal.Slug("a"), ms), ResearchOverview.Progress(ResearchOverview.Progress.Done(8), ResearchOverview.Progress.Total(12)))
+    assertEquals(ResearchOverview.progressOf(Goal.Slug("a"), ms).pct, 66)
+    assertEquals(ResearchOverview.progressOf(Goal.Slug("none"), ms), ResearchOverview.Progress(ResearchOverview.Progress.Done(0), ResearchOverview.Progress.Total(0)))
+    val g = Autopilot.GoalProgress(Autopilot.GoalProgress.Slug("a"), Autopilot.GoalProgress.Title("A"), Autopilot.GoalProgress.Status("seeding"), openApprovals = Autopilot.GoalProgress.OpenApprovals(2))
     val focus = Autopilot.FocusInfo(
-      on = com.histmersion.api.automation.Autopilot.FocusInfo.On(true),
-      waiting = List(Autopilot.FocusWaiting(com.histmersion.api.automation.Autopilot.FocusWaiting.Slug("a"), com.histmersion.api.automation.Autopilot.FocusWaiting.Code("person"), com.histmersion.api.automation.Autopilot.FocusWaiting.Why("an approval only a person decides")))
+      on = Autopilot.FocusInfo.On(true),
+      waiting = List(Autopilot.FocusWaiting(Autopilot.FocusWaiting.Slug("a"), Autopilot.FocusWaiting.Code("person"), Autopilot.FocusWaiting.Why("an approval only a person decides")))
     )
     assertEquals(ResearchOverview.blocker(g, Some(focus), ms), Some("an approval only a person decides"))
     assertEquals(ResearchOverview.blocker(g, None, ms), Some("waits for 2 of your decisions"))
@@ -102,22 +106,22 @@ class ResearchOverviewSuite extends munit.FunSuite:
     assertEquals(ResearchOverview.blocker(g.modify(_.openApprovals).setTo(Autopilot.GoalProgress.OpenApprovals(0)), None, ms), None)
 
   test("the weekly allowance: each plan that reports this week's limit"):
-    val w = PlanQuota.WindowStatus(com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude"), com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("seven_day"), com.histmersion.api.automation.PlanQuota.WindowStatus.UsedPct(39), com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(61), com.histmersion.api.automation.PlanQuota.WindowStatus.Floor(10), usable = com.histmersion.api.automation.PlanQuota.WindowStatus.Usable(true), stale = com.histmersion.api.automation.PlanQuota.WindowStatus.Stale(false), None, com.histmersion.api.automation.PlanQuota.WindowStatus.ObservedAt(""), com.histmersion.api.automation.PlanQuota.WindowStatus.AgeSeconds(0), com.histmersion.api.automation.PlanQuota.WindowStatus.Source(""))
+    val w = PlanQuota.WindowStatus(PlanQuota.WindowStatus.Limit("claude"), PlanQuota.WindowStatus.Kind("seven_day"), PlanQuota.WindowStatus.UsedPct(39), PlanQuota.WindowStatus.LeftPct(61), PlanQuota.WindowStatus.Floor(10), usable = PlanQuota.WindowStatus.Usable(true), stale = PlanQuota.WindowStatus.Stale(false), None, PlanQuota.WindowStatus.ObservedAt(""), PlanQuota.WindowStatus.AgeSeconds(0), PlanQuota.WindowStatus.Source(""))
     val pool = PlanQuota.PoolStatus(
-      com.histmersion.api.automation.PlanQuota.PoolStatus.Pool("claude"),
-      com.histmersion.api.automation.PlanQuota.PoolStatus.Title("Claude plan"),
-      com.histmersion.api.automation.PlanQuota.PoolStatus.Kind("claude"),
+      PlanQuota.PoolStatus.Pool("claude"),
+      PlanQuota.PoolStatus.Title("Claude plan"),
+      PlanQuota.PoolStatus.Kind("claude"),
       Nil,
-      com.histmersion.api.automation.PlanQuota.PoolStatus.Floors(""),
-      com.histmersion.api.automation.PlanQuota.PoolStatus.FloorsSource(""),
-      held = com.histmersion.api.automation.PlanQuota.PoolStatus.Held(false),
-      usable = com.histmersion.api.automation.PlanQuota.PoolStatus.Usable(true),
+      PlanQuota.PoolStatus.Floors(""),
+      PlanQuota.PoolStatus.FloorsSource(""),
+      held = PlanQuota.PoolStatus.Held(false),
+      usable = PlanQuota.PoolStatus.Usable(true),
       None,
       None,
-      com.histmersion.api.automation.PlanQuota.PoolStatus.MaxCallsInFlight(1),
+      PlanQuota.PoolStatus.MaxCallsInFlight(1),
       List(w)
     )
     assertEquals(
-      ResearchOverview.weekly(PlanQuota.QuotaInfo(List(pool, pool.modify(_.windows).setTo(Nil)), Nil, Nil, com.histmersion.api.automation.PlanQuota.QuotaInfo.Now(""))),
+      ResearchOverview.weekly(PlanQuota.QuotaInfo(List(pool, pool.modify(_.windows).setTo(Nil)), Nil, Nil, PlanQuota.QuotaInfo.Now(""))),
       List("Claude plan: 61% of this week's limit left")
     )

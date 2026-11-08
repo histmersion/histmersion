@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
@@ -6,6 +7,9 @@ import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import com.histmersion.api.UiLabels
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** ONE controller for the newest-first list windows — jobs, agent runs, approvals (#1798 item 6): the rows
   * ([[ListPaging]]: keyset pages, "Show older", a poll that keeps the pages loaded), the poll ([[Poll]], none for a
@@ -32,9 +36,9 @@ final class PolledList[A](
 )(using ExecutionContext):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
-  val loaded: Var[com.histmersion.web.PolledList.Loaded] = Var(com.histmersion.web.PolledList.Loaded(false))
-  val older: Var[com.histmersion.web.PolledList.Older] = Var(com.histmersion.web.PolledList.Older(false))
-  val failure: Var[Option[com.histmersion.web.PolledList.Problem]] = Var(None)
+  val loaded: Var[PolledList.Loaded] = Var(PolledList.Loaded(false))
+  val older: Var[PolledList.Older] = Var(PolledList.Older(false))
+  val failure: Var[Option[PolledList.Problem]] = Var(None)
 
   /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
   private val restarting: Var[Boolean] = Var(false)
@@ -46,7 +50,7 @@ final class PolledList[A](
   private var mounted: Boolean = false
 
   /** The window opened: load the newest page (and poll while anything is live). */
-  def open(): Unit = { mounted = true; loaded.set(com.histmersion.web.PolledList.Loaded(false)); restart() }
+  def open(): Unit = { mounted = true; loaded.set(PolledList.Loaded(false)); restart() }
 
   /** The window closed: no poll, and an answer still on its way is dropped. */
   def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel(); restarting.set(false) }
@@ -55,17 +59,17 @@ final class PolledList[A](
   def lifecycle: Modifier[HtmlElement] = List(onMountCallback(_ => open()), onUnmountCallback(_ => close()))
 
   /** Start over from the newest page: the window opened, a filter changed, or "refresh". */
-  def restart(): Unit = load(reset = true, changed = com.histmersion.web.Poll.DataChanged(true))
+  def restart(): Unit = load(reset = true, changed = Poll.DataChanged(true))
 
   /** A poll — or an outside change (a decision, a job started here): the rows shown, current again. */
-  def refresh(changed: com.histmersion.web.Poll.DataChanged = com.histmersion.web.Poll.DataChanged(false)): Unit = load(reset = false, changed)
+  def refresh(changed: Poll.DataChanged = Poll.DataChanged(false)): Unit = load(reset = false, changed)
 
-  private def load(reset: Boolean, changed: com.histmersion.web.Poll.DataChanged): Unit =
+  private def load(reset: Boolean, changed: Poll.DataChanged): Unit =
     if mounted then
       cancel(timer)
       val cur = listing.now()
       val upTo = if reset then None else ListPaging.pollUpTo(cur, a => id(a).value).map(Paging.Cursor(_))
-      older.set(com.histmersion.web.PolledList.Older(false))
+      older.set(PolledList.Older(false))
       if reset then restarting.set(true)
       val ticket = latest.start()
       fetch(upTo, None).onComplete(r =>
@@ -75,9 +79,9 @@ final class PolledList[A](
   private[web] def answered(
       r: Try[(List[A], Paging.Page)],
       cur: ListPaging.Listing[A],
-      upTo: Option[com.histmersion.api.Paging.Cursor],
+      upTo: Option[Paging.Cursor],
       reset: Boolean,
-      changed: com.histmersion.web.Poll.DataChanged
+      changed: Poll.DataChanged
   ): Unit =
     restarting.set(false)
     r match
@@ -93,7 +97,7 @@ final class PolledList[A](
         if !reset && loaded.now().value then after(cur, rows)
         failure.set(None)
         listing.set(next)
-        loaded.set(com.histmersion.web.PolledList.Loaded(true))
+        loaded.set(PolledList.Loaded(true))
         schedule(Poll.next(delay, Poll.LiveMode(live(rows, page)), Poll.DataChanged(moved)))
 
   /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
@@ -101,17 +105,17 @@ final class PolledList[A](
     listing.now().page.next.foreach { cursor =>
       if mounted then
         cancel(timer)
-        older.set(com.histmersion.web.PolledList.Older(true))
+        older.set(PolledList.Older(true))
         val ticket = latest.start()
         fetch(None, Some(cursor)).onComplete { r =>
           if mounted && latest.isCurrent(ticket) then
-            older.set(com.histmersion.web.PolledList.Older(false))
+            older.set(PolledList.Older(false))
             r match
               case Failure(e)            => failure.set(Some(PolledList.Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
               case Success((rows, page)) =>
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, a => id(a).value))
-                schedule(Poll.next(delay, Poll.LiveMode(live(listing.now().rows, page)), changed = com.histmersion.web.Poll.DataChanged(false)))
+                schedule(Poll.next(delay, Poll.LiveMode(live(listing.now().rows, page)), changed = Poll.DataChanged(false)))
         }
     }
 
@@ -126,38 +130,38 @@ final class PolledList[A](
   def olderButton: HtmlElement = ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.value), () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
-  def errorLine(what: com.histmersion.api.UiLabels.Text): HtmlElement =
+  def errorLine(what: UiLabels.Text): HtmlElement =
     div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(s"${what.value}: ${m.value}")))))
 
 object PolledList:
   type ItemId = ItemId.T
-  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemId extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type TimerId = TimerId.T
-  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimerId extends RefinedType[Int, Pure]
 
   /** ONE polled item — an agent run's window (#1946): a one-row [[PolledList]], so it shares the schedule, the
     * `mounted` guard, the stale-answer guard and the error line with the list windows; it has no pages, so it never
     * shows older rows. `after` gets the item before and after each poll (not the first load).
     */
   type Loaded = Loaded.T
-  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Loaded extends RefinedType[Boolean, Pure]
   type Older = Older.T
-  object Older extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Older extends RefinedType[Boolean, Pure]
   type Restarting = Restarting.T
-  object Restarting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Restarting extends RefinedType[Boolean, Pure]
 
   def single[A](
       fetch: () => Future[A],
       live: A => Boolean,
       after: (Option[A], A) => Unit = (_: Option[A], _: A) => (),
-      later: (Poll.Revision, () => Unit) => PolledList.TimerId = (ms, f) => PolledList.TimerId(dom.window.setTimeout(() => f(), ms.value)),
-      cancel: PolledList.TimerId => Unit = id => dom.window.clearTimeout(id.value)
+      later: (Poll.Revision, () => Unit) => TimerId = (ms, f) => TimerId(dom.window.setTimeout(() => f(), ms.value)),
+      cancel: TimerId => Unit = id => dom.window.clearTimeout(id.value)
   )(using ExecutionContext): PolledList[A] =
     PolledList[A](
       fetch = (_, _) => fetch().map(a => (List(a), Paging.Page.empty)),
-      id = _ => com.histmersion.web.PolledList.ItemId(""),
+      id = _ => ItemId(""),
       live = (rows, _) => rows.exists(live),
       after = (cur, rows) => rows.headOption.foreach(after(cur.rows.headOption, _)),
       later = later,

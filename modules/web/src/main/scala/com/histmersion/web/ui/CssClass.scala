@@ -1,4 +1,5 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
 
 opaque type CssClass = String
 object CssClass:

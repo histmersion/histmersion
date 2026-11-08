@@ -1,15 +1,23 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.{ItemKey, Target}
 import com.histmersion.api.ItemKind
 import com.histmersion.web.{Preview, Route}
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.LibrarySection
+import com.histmersion.api.library.Title
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.research.Article
+import com.histmersion.api.media.MediaThumb
+import com.histmersion.api.exchange.Bundle
 
 /** An item the person can bookmark, leave a note on or mark read, as the page knows it: what it points at and what it
   * is called. Pure.
   */
-final case class ItemRef(target: Target, title: com.histmersion.api.library.Title):
+final case class ItemRef(target: Target, title: Title):
   def identity: Option[Target.Identity] = target.identity
   def kind: ItemKind = target.kind
 
@@ -18,13 +26,13 @@ final case class ItemRef(target: Target, title: com.histmersion.api.library.Titl
 
 object ItemRef:
   type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Href extends RefinedType[String, Pure]
 
-  def source(ck: com.histmersion.api.library.Citekey, title: com.histmersion.api.library.Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)
-  def article(slug: com.histmersion.api.research.Article.Slug, title: com.histmersion.api.library.Title): ItemRef = ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)
+  def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)
+  def article(slug: Article.Slug, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)
 
   /** An item chosen in Explore's results or on the map. */
-  def of(t: Preview.Target, title: com.histmersion.api.library.Title): ItemRef = t match
+  def of(t: Preview.Target, title: Title): ItemRef = t match
     case Preview.Target.Source(ck)    => source(ck, title)
     case Preview.Target.Article(slug) => article(slug, title)
     case Preview.Target.Place(id, _)  => ItemRef(Target.item(ItemKind.Place, ItemKey(id.value)), title)
@@ -33,7 +41,7 @@ object ItemRef:
   /** Where a target opens as its own page, for a link ("Open in a new tab"); a point, a view or a period has none of
     * its own but Explore.
     */
-  def page(t: Target): com.histmersion.web.marks.ItemRef.Href =
+  def page(t: Target): Href =
     Href(t.itemKey.fold(Route.Explore.path) { key =>
       t.kind match
         case ItemKind.Source  => Route.Source(Route.Source.Citekey(key.value)).path
@@ -41,14 +49,14 @@ object ItemRef:
         case ItemKind.Event   => Route.Event(Route.Event.Id(key.value)).path
         case ItemKind.Place   => Route.Place(Route.Place.Id(key.value)).path
         case ItemKind.Goal    => Route.Goal(Route.Goal.Slug(key.value)).path
-        case ItemKind.Picture => com.histmersion.api.media.MediaThumb.filePath(com.histmersion.api.exchange.Bundle.Asset.Uid(key.value)).value
+        case ItemKind.Picture => MediaThumb.filePath(Bundle.Asset.Uid(key.value)).value
         case _                => Route.Explore.path
     })
 
   /** Where a target opens back in the web UI, for a link in My library: a source or an article in Library's reading
     * pane, a goal on its page, anything else in Explore.
     */
-  def back(t: Target): com.histmersion.web.marks.ItemRef.Href =
+  def back(t: Target): Href =
     (t.kind, t.itemKey) match
       case (ItemKind.Source, Some(k))  => Href(LibraryAddress.href(LibrarySection.Sources, Some(k)))
       case (ItemKind.Article, Some(k)) => Href(LibraryAddress.href(LibrarySection.Articles, Some(k)))

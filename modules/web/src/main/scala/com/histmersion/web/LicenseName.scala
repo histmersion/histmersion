@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 /** A picture's licence as a reader reads it: the stored SPDX-style id (`CC-BY-SA-3.0`, `CC0-1.0`, `public-domain`) as
   * the licence's own name (`CC BY-SA 3.0`), and where its text is, when the record gives no link of its own. Pure.

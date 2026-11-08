@@ -1,4 +1,5 @@
-package com.histmersion.web.setup
+package com.histmersion
+package web.setup
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,11 +8,16 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.catalogue.{Latitude, Longitude, MapArea}
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
+import com.histmersion.api.instance.MapStartMode
+import com.histmersion.api.instance.DebounceConfig
+import com.histmersion.api.instance.TimeConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.instance.EventsUiConfig
 
 class SetupPlanSuite extends munit.FunSuite:
 
   private val before =
-    SetupChoices(email = com.histmersion.web.setup.SetupChoices.Email(""), finders = Map(SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue(true), SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(true)), area = Some(com.histmersion.web.setup.SetupChoices.Area("world")))
+    SetupChoices(email = SetupChoices.Email(""), finders = Map(SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue(true), SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(true)), area = Some(SetupChoices.Area("world")))
 
   test("the seven steps in order, two of them optional"):
     assertEquals(SetupStep.values.length, 7)
@@ -21,9 +27,9 @@ class SetupPlanSuite extends munit.FunSuite:
     assertEquals(SetupStep.values.filter(_.optional.value).toList, List(SetupStep.Agents, SetupStep.Calibre))
 
   test("an e-mail address, or none"):
-    assertEquals(SetupPlan.email(com.histmersion.web.setup.SetupChoices.Email(" ")), Right(""))
-    assertEquals(SetupPlan.email(com.histmersion.web.setup.SetupChoices.Email("someone@example.org")), Right("someone@example.org"))
-    assert(SetupPlan.email(com.histmersion.web.setup.SetupChoices.Email("someone")).isLeft)
+    assertEquals(SetupPlan.email(SetupChoices.Email(" ")), Right(""))
+    assertEquals(SetupPlan.email(SetupChoices.Email("someone@example.org")), Right("someone@example.org"))
+    assert(SetupPlan.email(SetupChoices.Email("someone")).isLeft)
 
   test("the defaults change nothing but the mark that the setup was done"):
     assertEquals(SetupPlan.changes(before, before), List("setup.completed" -> Some("true")))
@@ -35,25 +41,25 @@ class SetupPlanSuite extends munit.FunSuite:
       .modify(_.area).setTo(Some(SetupChoices.Area("-12,20,90,62")))
       .modify(_.agents).setTo(SetupChoices.Agents(true))
       .modify(_.calibre).setTo(SetupChoices.Calibre("~/Books"))
-      .modify(_.start).setTo(MapStartConfig(com.histmersion.api.instance.MapStartMode.Wire("place"), Latitude(37), Longitude(30), com.histmersion.api.instance.MapStartConfig.Zoom(5), com.histmersion.api.instance.MapStartConfig.Label("Anatolia")))
+      .modify(_.start).setTo(MapStartConfig(MapStartMode.Wire("place"), Latitude(37), Longitude(30), MapStartConfig.Zoom(5), MapStartConfig.Label("Anatolia")))
     val ch = SetupPlan.changes(c, before).toMap
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("acquire.contact-email")), Some("someone@example.org"))
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("plugins.arxiv.enabled")), Some("false"))
-    assert(!ch.contains(com.histmersion.api.settings.ConfigEdit.Field.Key("plugins.oa-unpaywall.enabled")))
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("basemap.bbox")), Some("-12,20,90,62"))
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("agents.enabled")), Some("true"))
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("cli.calibre.library-dir")), Some("~/Books"))
-    assertEquals(ch(com.histmersion.api.settings.ConfigEdit.Field.Key("ui.map-start.mode")), Some("place"))
+    assertEquals(ch(ConfigEdit.Field.Key("acquire.contact-email")), Some("someone@example.org"))
+    assertEquals(ch(ConfigEdit.Field.Key("plugins.arxiv.enabled")), Some("false"))
+    assert(!ch.contains(ConfigEdit.Field.Key("plugins.oa-unpaywall.enabled")))
+    assertEquals(ch(ConfigEdit.Field.Key("basemap.bbox")), Some("-12,20,90,62"))
+    assertEquals(ch(ConfigEdit.Field.Key("agents.enabled")), Some("true"))
+    assertEquals(ch(ConfigEdit.Field.Key("cli.calibre.library-dir")), Some("~/Books"))
+    assertEquals(ch(ConfigEdit.Field.Key("ui.map-start.mode")), Some("place"))
     assertEquals(SetupPlan.changes(c, before).last, "setup.completed" -> Some("true"))
 
   test("the downloads: the map's area and the background data chosen, nothing else"):
     assertEquals(
       SetupPlan.downloads(before),
-      List(SetupDownload.Map(com.histmersion.web.setup.SetupDownload.Map.Area("world")), SetupDownload.Boundaries, SetupDownload.Events)
+      List(SetupDownload.Map(SetupDownload.Map.Area("world")), SetupDownload.Boundaries, SetupDownload.Events)
     )
     assertEquals(SetupPlan.downloads(before.modify(_.area).setTo(None).modify(_.boundaries).setTo(SetupChoices.Boundaries(false)).modify(_.events).setTo(SetupChoices.Events(false))), Nil)
     assert(SetupPlan.downloads(before.modify(_.pictures).setTo(SetupChoices.Pictures(true)).modify(_.morePlaces).setTo(SetupChoices.MorePlaces(true))).contains(SetupDownload.MorePlaces))
-    val areas = List(MapArea(com.histmersion.api.catalogue.MapArea.Label("The whole world"), com.histmersion.api.catalogue.MapArea.Bbox("world"), MapArea.ApproxGb(8.8)))
+    val areas = List(MapArea(MapArea.Label("The whole world"), MapArea.Bbox("world"), MapArea.ApproxGb(8.8)))
     assertEquals(SetupPlan.mapGb(before, areas), 8.8)
     assertEquals(SetupPlan.mapGb(before.modify(_.area).setTo(None), areas), 0.0)
 
@@ -61,25 +67,25 @@ class SetupPlanSuite extends munit.FunSuite:
     val page = ConfigEdit.Page(sections =
       List(
         ConfigEdit.Section(
-          com.histmersion.api.settings.ConfigEdit.Section.Id("basemap"),
+          ConfigEdit.Section.Id("basemap"),
           fields = List(
             ConfigEdit.Field(
-              com.histmersion.api.settings.ConfigEdit.Field.Key("histmersion.basemap.setup-areas"),
-              com.histmersion.api.settings.ConfigEdit.Field.Section("basemap"),
-              com.histmersion.api.settings.ConfigEdit.Field.Kind("list"),
-              effective = Some(com.histmersion.api.settings.ConfigEdit.Field.Effective("[\"The whole world|world|8.8\",\"Europe|-12,20,90,62|2.0\",\"broken\"]"))
+              ConfigEdit.Field.Key("histmersion.basemap.setup-areas"),
+              ConfigEdit.Field.Section("basemap"),
+              ConfigEdit.Field.Kind("list"),
+              effective = Some(ConfigEdit.Field.Effective("[\"The whole world|world|8.8\",\"Europe|-12,20,90,62|2.0\",\"broken\"]"))
             ),
-            ConfigEdit.Field(com.histmersion.api.settings.ConfigEdit.Field.Key("histmersion.basemap.bbox"), com.histmersion.api.settings.ConfigEdit.Field.Section("basemap"), com.histmersion.api.settings.ConfigEdit.Field.Kind("text"), effective = Some(com.histmersion.api.settings.ConfigEdit.Field.Effective("\"-12,20,90,62\"")))
+            ConfigEdit.Field(ConfigEdit.Field.Key("histmersion.basemap.bbox"), ConfigEdit.Field.Section("basemap"), ConfigEdit.Field.Kind("text"), effective = Some(ConfigEdit.Field.Effective("\"-12,20,90,62\"")))
           )
         ),
         ConfigEdit.Section(
-          com.histmersion.api.settings.ConfigEdit.Section.Id("acquire"),
+          ConfigEdit.Section.Id("acquire"),
           fields = List(
             ConfigEdit.Field(
-              com.histmersion.api.settings.ConfigEdit.Field.Key("histmersion.acquire.contact-email"),
-              com.histmersion.api.settings.ConfigEdit.Field.Section("acquire"),
-              com.histmersion.api.settings.ConfigEdit.Field.Kind("text"),
-              effective = Some(com.histmersion.api.settings.ConfigEdit.Field.Effective("\"someone@example.org\""))
+              ConfigEdit.Field.Key("histmersion.acquire.contact-email"),
+              ConfigEdit.Field.Section("acquire"),
+              ConfigEdit.Field.Kind("text"),
+              effective = Some(ConfigEdit.Field.Effective("\"someone@example.org\""))
             )
           )
         )
@@ -87,21 +93,21 @@ class SetupPlanSuite extends munit.FunSuite:
     )
     assertEquals(SetupPage.areasOf(page).map(_.label), List("The whole world", "Europe"))
     val ui = UiConfig(
-      com.histmersion.api.instance.UiConfig.Tiles(""),
-      com.histmersion.api.instance.UiConfig.TilesMaxZoom(1),
-      com.histmersion.api.instance.UiConfig.MarkerRadius(1),
-      com.histmersion.api.instance.UiConfig.ViewportDebounceMs(1),
-      com.histmersion.api.instance.UiConfig.PageSize(1),
-      com.histmersion.api.instance.UiConfig.FacetSuggestions(1),
-      com.histmersion.api.instance.UiConfig.TreeDepth(1),
-      com.histmersion.api.instance.UiConfig.TreeSamples(1),
-      com.histmersion.api.instance.UiConfig.MaxBuckets(1),
-      com.histmersion.api.instance.DebounceConfig(com.histmersion.api.instance.DebounceConfig.SuggestMs(1), com.histmersion.api.instance.DebounceConfig.SearchMs(1), com.histmersion.api.instance.DebounceConfig.ReloadMs(1), com.histmersion.api.instance.DebounceConfig.PreviewMs(1)),
-      com.histmersion.api.instance.TimeConfig(com.histmersion.api.catalogue.Year(0), com.histmersion.api.catalogue.Year(1), com.histmersion.api.catalogue.Year(0), com.histmersion.api.catalogue.Year(1)),
-      com.histmersion.api.instance.UiConfig.NarrowMaxWidthPx(1),
-      com.histmersion.api.instance.UiConfig.NarrowMaxHeightPx(1),
-      com.histmersion.api.instance.UiConfig.TabletMaxWidthPx(1),
-      com.histmersion.api.instance.EventsUiConfig(com.histmersion.api.instance.EventsUiConfig.LocalFadeSeconds(1), com.histmersion.api.instance.EventsUiConfig.RegionalFadeSeconds(1), com.histmersion.api.instance.EventsUiConfig.MapLimit(1), com.histmersion.api.instance.EventsUiConfig.OutlineToleranceDeg(1))
+      UiConfig.Tiles(""),
+      UiConfig.TilesMaxZoom(1),
+      UiConfig.MarkerRadius(1),
+      UiConfig.ViewportDebounceMs(1),
+      UiConfig.PageSize(1),
+      UiConfig.FacetSuggestions(1),
+      UiConfig.TreeDepth(1),
+      UiConfig.TreeSamples(1),
+      UiConfig.MaxBuckets(1),
+      DebounceConfig(DebounceConfig.SuggestMs(1), DebounceConfig.SearchMs(1), DebounceConfig.ReloadMs(1), DebounceConfig.PreviewMs(1)),
+      TimeConfig(Year(0), Year(1), Year(0), Year(1)),
+      UiConfig.NarrowMaxWidthPx(1),
+      UiConfig.NarrowMaxHeightPx(1),
+      UiConfig.TabletMaxWidthPx(1),
+      EventsUiConfig(EventsUiConfig.LocalFadeSeconds(1), EventsUiConfig.RegionalFadeSeconds(1), EventsUiConfig.MapLimit(1), EventsUiConfig.OutlineToleranceDeg(1))
     )
     val c = SetupPage.choicesOf(page, ui)
     assertEquals(c.email, "someone@example.org")

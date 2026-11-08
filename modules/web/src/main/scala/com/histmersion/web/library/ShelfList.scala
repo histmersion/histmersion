@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.personal.{ItemKey, Target, UnreadPage}
 import com.histmersion.api.ItemKind
@@ -9,6 +10,8 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.Paging
+import com.histmersion.api.Offset
 
 /** A shelf of My library in place of the table: the person's bookmarks, notes, what they have not marked read (the
   * tab's sources or articles, a page at a time) or what they opened lately. A row opens back where it was left — a
@@ -40,7 +43,7 @@ object ShelfList:
     def readUnread(): Unit =
       val kind = if section == LibrarySection.Articles then ItemKind.Article else ItemKind.Source
       ApiClient
-        .unread(kind.wire, com.histmersion.api.Paging.Limit(Layout.libraryPage.value), com.histmersion.api.Offset(offset.now()))
+        .unread(kind.wire, Paging.Limit(Layout.libraryPage.value), Offset(offset.now()))
         .onComplete(r =>
           unread.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse("the server could not be reached"))))
         )

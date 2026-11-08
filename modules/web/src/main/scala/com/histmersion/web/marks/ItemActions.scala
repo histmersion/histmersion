@@ -1,8 +1,13 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.web.{Auth, Icon, WindowKey, WindowManager}
 import com.histmersion.web.ui.ContextMenu
 import com.raquo.laminar.api.L.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.personal.ReadMark
+import com.histmersion.api.personal.Target
 
 /** An item's own actions where it is read — Library's reading pane, Explore's detail: Bookmark (pressed while it is),
   * Add note, Mark as read / unread (a source or an article), and "⋯" with the copies. A change that needs the API key
@@ -11,14 +16,14 @@ import com.raquo.laminar.api.L.*
 object ItemActions:
 
   type BookmarkButtonCompact = BookmarkButtonCompact.T
-  object BookmarkButtonCompact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BookmarkButtonCompact extends RefinedType[Boolean, Pure]
 
   private def writing(act: => Unit): Unit =
     if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
 
   def bookmark(ref: ItemRef): Unit = writing(MyItems.toggle(ref))
 
-  def bookmarkButton(ref: ItemRef, compact: com.histmersion.web.marks.ItemActions.BookmarkButtonCompact = com.histmersion.web.marks.ItemActions.BookmarkButtonCompact(false)): HtmlElement =
+  def bookmarkButton(ref: ItemRef, compact: BookmarkButtonCompact = BookmarkButtonCompact(false)): HtmlElement =
     val on = MyItems.bookmarked(ref)
     button(
       typ := "button",
@@ -56,8 +61,8 @@ object ItemActions:
           Icon(Icon.Read),
           cls("is-on") <-- read,
           child.text <-- read.map(r => if r then "Mark as unread" else "Mark as read"),
-          onClick --> (_ => writing(MyItems.setRead(ref, com.histmersion.api.personal.ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(com.histmersion.api.personal.Target.Identity("")))))))
+          onClick --> (_ => writing(MyItems.setRead(ref, ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(Target.Identity("")))))))
         )
       ),
-      ContextMenu.button(ContextMenu.ButtonTitle(s"More: ${ref.title.value}"), () => ItemMenu.entries(ref, byline), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("item-more"))
+      ContextMenu.button(ContextMenu.ButtonTitle(s"More: ${ref.title.value}"), () => ItemMenu.entries(ref, byline), ContextMenu.ButtonExtraCls("item-more"))
     )

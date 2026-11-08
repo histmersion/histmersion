@@ -1,4 +1,9 @@
-package com.histmersion.web
+package com.histmersion
+package web
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
 
 /** Where the timeline overview's two years go — the selection's "from" and "to" under its handles — so they never
   * overlap and never leave the bar. Pure, so the placement is a unit test and [[TimelineView]] only applies the answer.
@@ -10,9 +15,9 @@ package com.histmersion.web
   */
 object RangeLabels:
   type ElementSize = ElementSize.T
-  object ElementSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ElementSize extends RefinedType[Double, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScreenPixels extends RefinedType[Double, Pure]
 
   /** The gap between a year and its handle, and the least gap between the two years. */
 
@@ -20,11 +25,11 @@ object RangeLabels:
   val Gap = 6.0
 
   /** The width of `text` at the overview's 8 px label font (tabular digits; a rough upper bound). */
-  def width(text: com.histmersion.api.UiLabels.Text): com.histmersion.web.RangeLabels.ElementSize = ElementSize(text.value.length * 5.0)
+  def width(text: UiLabels.Text): ElementSize = ElementSize(text.value.length * 5.0)
 
   /** One label: its left edge `x` and width `w` (drawn with `text-anchor: start` at `x`). */
-  final case class Label(text: com.histmersion.api.UiLabels.Text, x: ScreenPixels, w: ElementSize):
-    def end: com.histmersion.web.RangeLabels.ScreenPixels = ScreenPixels(x.value + w.value)
+  final case class Label(text: UiLabels.Text, x: ScreenPixels, w: ElementSize):
+    def end: ScreenPixels = ScreenPixels(x.value + w.value)
 
   enum Placement:
     case Inside(from: Label, to: Label)
@@ -32,7 +37,7 @@ object RangeLabels:
     case Joined(label: Label)
 
   /** The placement for a selection from `x0` to `x1` (px, `x0 ≤ x1`) in a bar `barW` wide. */
-  def place(fromText: com.histmersion.api.UiLabels.Text, toText: com.histmersion.api.UiLabels.Text, x0: com.histmersion.web.RangeLabels.ScreenPixels, x1: com.histmersion.web.RangeLabels.ScreenPixels, barW: com.histmersion.web.RangeLabels.ElementSize): Placement =
+  def place(fromText: UiLabels.Text, toText: UiLabels.Text, x0: ScreenPixels, x1: ScreenPixels, barW: ElementSize): Placement =
     val wf: Double = width(fromText).value
     val wt: Double = width(toText).value
     val a0: Double = x0.value
@@ -52,7 +57,7 @@ object RangeLabels:
       if fromX >= 0.0 && toX + wt <= bw && fromX + wf + Gap <= toX then
         Placement.Outside(Label(fromText, ScreenPixels(fromX), ElementSize(wf)), Label(toText, ScreenPixels(toX), ElementSize(wt)))
       else
-        val text = com.histmersion.api.UiLabels.Text(s"$fromText – $toText")
+        val text = UiLabels.Text(s"$fromText – $toText")
         val w: Double = width(text).value
         val x = ((a0 + a1) / 2 - w / 2).max(0.0).min(math.max(0.0, bw - w))
         Placement.Joined(Label(text, ScreenPixels(x), ElementSize(w)))

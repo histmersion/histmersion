@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.instance.{UiConfig, UiNotices}
@@ -7,6 +8,7 @@ import com.raquo.laminar.codecs.StringAsIsCodec
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.Api
 
 /** The one bar at the top of every page: the logo's place, the four places (Explore · Library · Research · Settings) as
   * labelled links, one search field, what the research agents are doing, how many of their proposals wait for a person
@@ -97,7 +99,7 @@ object TopBar:
           // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
           controlled(
             value <-- UiState.q.signal.map(_.getOrElse("")),
-            onInput.mapToValue --> (v => UiState.setSearch(com.histmersion.api.Api.Search.Text(v)))
+            onInput.mapToValue --> (v => UiState.setSearch(Api.Search.Text(v)))
           ),
           onKeyDown --> { e =>
             if e.key == "Enter" then

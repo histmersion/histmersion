@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,6 +14,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu, Year}
 import com.histmersion.api.instance.{TimeConfig, UiConfig}
 import com.histmersion.api.library.TimeBucket
+import com.histmersion.web.ui.Flash
+import com.histmersion.api.personal.Bookmark
+import com.histmersion.api.UiLabels
+import com.histmersion.web.ui.ContextMenu
+import com.histmersion.web.marks.PeriodMarks
 
 object TimelineView:
   private val OH = Layout.overviewHeight.value
@@ -29,8 +35,8 @@ object TimelineView:
   /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without committing, and commits once,
     * on release.
     */
-  private def spanFrom: com.histmersion.api.Years.Astronomical = Years.Astronomical(UiState.from.now().getOrElse(limits.defaultFrom.value))
-  private def spanTo: com.histmersion.api.Years.Astronomical = Years.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
+  private def spanFrom: Years.Astronomical = Years.Astronomical(UiState.from.now().getOrElse(limits.defaultFrom.value))
+  private def spanTo: Years.Astronomical = Years.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
 
   /** A span of the timeline as the filter and the labels read it. */
   private def period(from: Years.Astronomical, to: Years.Astronomical): Period = Period(Year(from.value), Year(to.value))
@@ -83,11 +89,11 @@ object TimelineView:
   private var dtResizeRaf: Int = 0
 
   /** The span the current `detailBars` were fetched for — not the span on screen. */
-  private var dtBarsRange: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(0L))
+  private var dtBarsRange: (Years.Astronomical, Years.Astronomical) = (Years.Astronomical(0L), Years.Astronomical(0L))
   private var lastOvFilterKey: String = ""
 
   /** What the detail curve layer was drawn for: (from, to, width). */
-  private var dtDrawn: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical, Double) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(0L), 0.0)
+  private var dtDrawn: (Years.Astronomical, Years.Astronomical, Double) = (Years.Astronomical(0L), Years.Astronomical(0L), 0.0)
 
   private enum DragKind:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -96,7 +102,7 @@ object TimelineView:
 
   private val dragState = Var(Option.empty[DragInfo])
 
-  def currentSpan: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (spanFrom, spanTo)
+  def currentSpan: (Years.Astronomical, Years.Astronomical) = (spanFrom, spanTo)
 
   private val foldedKey = "histmersion.timelineFolded"
 
@@ -111,7 +117,7 @@ object TimelineView:
 
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
-  private def clamp(a0: com.histmersion.api.Years.Astronomical, b0: com.histmersion.api.Years.Astronomical): (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) =
+  private def clamp(a0: Years.Astronomical, b0: Years.Astronomical): (Years.Astronomical, Years.Astronomical) =
     var a = Math.round(Math.min(a0.value.toDouble, b0.value.toDouble))
     var b = Math.round(Math.max(a0.value.toDouble, b0.value.toDouble))
     if b - a < MIN_SPAN then
@@ -128,13 +134,13 @@ object TimelineView:
 
   def setLocked(on: Boolean): Unit =
     locked.set(on)
-    ui.Flash.say(if on then com.histmersion.web.ui.Flash.Text("The timeline is locked: its years stay until you unlock it.")
-    else com.histmersion.web.ui.Flash.Text("The timeline moves again."))
+    Flash.say(if on then Flash.Text("The timeline is locked: its years stay until you unlock it.")
+    else Flash.Text("The timeline moves again."))
 
   /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
-  private val namingPeriod = Var(Option.empty[com.histmersion.api.personal.Bookmark.Label])
+  private val namingPeriod = Var(Option.empty[Bookmark.Label])
 
-  private def setSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical, push: com.histmersion.web.Router.Push = com.histmersion.web.Router.Push(true)): Unit =
+  private def setSpan(from: Years.Astronomical, to: Years.Astronomical, push: Router.Push = Router.Push(true)): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
     else if nf == spanFrom && nt == spanTo then ()
@@ -152,7 +158,7 @@ object TimelineView:
 
   private def scheduleDetail(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(com.histmersion.web.UiState.ReloadDelayNormalMs(150)).value)
+    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(150)).value)
 
   /** What the detail strip was last asked for: the filter over the span on screen. */
   private var lastDtKey: String = ""
@@ -163,7 +169,7 @@ object TimelineView:
   /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers), and never more than
     * `Layout.maxBuckets`.
     */
-  private[web] def bucketSizeFor(spanYears: com.histmersion.api.Years.Shift, pixelWidth: Double): com.histmersion.web.PlaybackBuckets.BucketYears =
+  private[web] def bucketSizeFor(spanYears: Years.Shift, pixelWidth: Double): PlaybackBuckets.BucketYears =
     val byPixels = Math.ceil(spanYears.value.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket.value)).toLong
     val byLimit = Math.ceil(spanYears.value.toDouble / Layout.maxBuckets.value).toLong
     PlaybackBuckets.BucketYears(Math.max(1L, Math.max(byPixels, byLimit)))
@@ -274,14 +280,14 @@ object TimelineView:
   private def drawAreaCurve(
       svg: dom.Element,
       bs: List[TimeBucket],
-      from: com.histmersion.api.Years.Astronomical,
-      to: com.histmersion.api.Years.Astronomical,
+      from: Years.Astronomical,
+      to: Years.Astronomical,
       w: Double,
       baseY: Double,
       gradId: String
   ): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
-    val pts = TimelineCurve.points(bs, from, to, TimelineCurve.ElementSize(w), TimelineCurve.ScreenPixels(baseY), top = com.histmersion.web.TimelineCurve.ScreenPixels(4))
+    val pts = TimelineCurve.points(bs, from, to, TimelineCurve.ElementSize(w), TimelineCurve.ScreenPixels(baseY), top = TimelineCurve.ScreenPixels(4))
     if pts.nonEmpty then
       val defs = dom.document.createElementNS(ns, "defs")
       val grad = dom.document.createElementNS(ns, "linearGradient")
@@ -328,9 +334,9 @@ object TimelineView:
     else TimelineCurve.nearest(pts, TimelineCurve.ScreenPixels((px - tx) / scale)).map(p => (tx + p.x.value * scale, p))
 
   /** Pure: what the hover marker says of a bucket. */
-  private[web] def hoverText(b: TimeBucket): com.histmersion.api.UiLabels.Text =
+  private[web] def hoverText(b: TimeBucket): UiLabels.Text =
     val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
-    com.histmersion.api.UiLabels.Text(s"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), com.histmersion.api.Plural.CountSingular("source"))}")
+    UiLabels.Text(s"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
     if layer != null then
@@ -371,7 +377,7 @@ object TimelineView:
     g
 
   /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
-  private[web] def realign(drawn: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical, Double), now: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical, Double)): (Double, Double) =
+  private[web] def realign(drawn: (Years.Astronomical, Years.Astronomical, Double), now: (Years.Astronomical, Years.Astronomical, Double)): (Double, Double) =
     val (df, dt, dw) = drawn
     val (nf, nt, nw) = now
     val dSpan = (dt.value - df.value).toDouble.max(1)
@@ -458,8 +464,8 @@ object TimelineView:
         g.appendChild(h)
       // the two years: inside the selection, outside its handles when they are close, else one label
       val labels = RangeLabels.place(
-        com.histmersion.api.UiLabels.Text(Fmt.yr(Year(sf.value)).value),
-        com.histmersion.api.UiLabels.Text(Fmt.yr(Year(st.value)).value),
+        UiLabels.Text(Fmt.yr(Year(sf.value)).value),
+        UiLabels.Text(Fmt.yr(Year(st.value)).value),
         RangeLabels.ScreenPixels(selX0),
         RangeLabels.ScreenPixels(selX1),
         RangeLabels.ElementSize(w)
@@ -483,7 +489,7 @@ object TimelineView:
 
   /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
     */
-  private[web] def underlayBuckets(bs: List[TimeBucket], from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): List[TimeBucket] =
+  private[web] def underlayBuckets(bs: List[TimeBucket], from: Years.Astronomical, to: Years.Astronomical): List[TimeBucket] =
     val idx = bs.indices.filter(i => bs(i).end.value >= from.value && bs(i).start.value <= to.value)
     if idx.isEmpty then Nil
     else bs.slice(Math.max(0, idx.head - 1), Math.min(bs.length, idx.last + 2))
@@ -669,25 +675,25 @@ object TimelineView:
     )
 
   /** The timeline's own actions: lock it, start it at the years shown, keep the years as one of my periods. */
-  private def menuEntries(config: UiConfig): List[ui.ContextMenu.Entry] =
+  private def menuEntries(config: UiConfig): List[ContextMenu.Entry] =
     val (a, b) = (Year(spanFrom.value), Year(spanTo.value))
     List(
-      ui.ContextMenu.Entry(
-        if locked.now() then com.histmersion.web.ui.ContextMenu.Entry.Label("Unlock the timeline") else com.histmersion.web.ui.ContextMenu.Entry.Label("Lock the timeline"),
+      ContextMenu.Entry(
+        if locked.now() then ContextMenu.Entry.Label("Unlock the timeline") else ContextMenu.Entry.Label("Lock the timeline"),
         () => setLocked(!locked.now()),
-        pressed = Some(com.histmersion.web.ui.ContextMenu.Entry.Pressed(locked.now()))
+        pressed = Some(ContextMenu.Entry.Pressed(locked.now()))
       ),
-      ui.ContextMenu.Entry(
-        com.histmersion.web.ui.ContextMenu.Entry.Label(s"Start the timeline at ${Fmt.periodStr(a, b)}"),
-        () => marks.PeriodMarks.startAt(a, b),
-        hint = Some(com.histmersion.web.ui.ContextMenu.Entry.Hint("The years the timeline opens on, for everyone who opens Histmersion from this server"))
+      ContextMenu.Entry(
+        ContextMenu.Entry.Label(s"Start the timeline at ${Fmt.periodStr(a, b)}"),
+        () => PeriodMarks.startAt(a, b),
+        hint = Some(ContextMenu.Entry.Hint("The years the timeline opens on, for everyone who opens Histmersion from this server"))
       ),
-      ui.ContextMenu.Entry(
-        com.histmersion.web.ui.ContextMenu.Entry.Label("Add these years to my periods…"),
+      ContextMenu.Entry(
+        ContextMenu.Entry.Label("Add these years to my periods…"),
         () => {
           presetView.set(ViewportToggle.viewBox)
           loadPresets()
-          namingPeriod.set(Some(com.histmersion.api.personal.Bookmark.Label(Fmt.periodStr(a, b).value)))
+          namingPeriod.set(Some(Bookmark.Label(Fmt.periodStr(a, b).value)))
           showPresets.set(true)
         }
       )
@@ -706,7 +712,7 @@ object TimelineView:
       cls := "tl-presets-dropdown",
       aria.label := "period presets",
       hidden <-- showPresets.signal.map(!_),
-      marks.PeriodMarks
+      PeriodMarks
         .section(
           namingPeriod,
           () => (Year(spanFrom.value), Year(spanTo.value)),
@@ -751,7 +757,7 @@ object TimelineView:
       // folded to its line of controls (a wide screen), as this browser left it
       cls("is-folded") <-- folded.signal,
       cls("is-locked") <-- locked.signal,
-      ui.ContextMenu.on(com.histmersion.web.ui.ContextMenu.OnTitle("Timeline actions"), () => menuEntries(config)),
+      ContextMenu.on(ContextMenu.OnTitle("Timeline actions"), () => menuEntries(config)),
       // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
         cls := "tl-overview-wrap",
@@ -831,11 +837,11 @@ object TimelineView:
                   case DragKind.LeftHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nf = Math.max(limits.min.value, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(d.origTo), push = com.histmersion.web.Router.Push(false))
+                    setSpan(Years.Astronomical(nf), Years.Astronomical(d.origTo), push = Router.Push(false))
                   case DragKind.RightHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nt = Math.min(limits.max.value, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
-                    setSpan(Years.Astronomical(d.origFrom), Years.Astronomical(nt), push = com.histmersion.web.Router.Push(false))
+                    setSpan(Years.Astronomical(d.origFrom), Years.Astronomical(nt), push = Router.Push(false))
                   case DragKind.PanRange =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val rangeWidth = d.origTo - d.origFrom
@@ -843,7 +849,7 @@ object TimelineView:
                     var nt = d.origTo + yearDelta
                     if nf < limits.min.value then { nf = limits.min.value; nt = nf + rangeWidth }
                     if nt > limits.max.value then { nt = limits.max.value; nf = nt - rangeWidth }
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(nt), push = com.histmersion.web.Router.Push(false))
+                    setSpan(Years.Astronomical(nf), Years.Astronomical(nt), push = Router.Push(false))
                   case _ => ()
               }
           )
@@ -1068,7 +1074,7 @@ object TimelineView:
             ),
             presetsDropdown
           ),
-          ui.ContextMenu.button(com.histmersion.web.ui.ContextMenu.ButtonTitle("Timeline actions"), () => menuEntries(config), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("tl-menu-btn")),
+          ContextMenu.button(ContextMenu.ButtonTitle("Timeline actions"), () => menuEntries(config), ContextMenu.ButtonExtraCls("tl-menu-btn")),
           button(
             typ := "button",
             cls := "btn btn--ghost tl-all-time",

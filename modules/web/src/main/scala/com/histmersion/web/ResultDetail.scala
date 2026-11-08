@@ -1,10 +1,20 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Api
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.library.Title
+import com.histmersion.web.marks.MyItems
+import com.histmersion.web.ui.ContextMenu
+import com.histmersion.web.marks.ItemMenu
+import com.histmersion.web.marks.ItemActions
+import com.histmersion.web.marks.NoteList
 
 /** An item chosen in the results or on the map, shown in place of the results: "← Results" back to them, its card, "Pin
   * as window" (it floats over whatever is shown next) and "Open in a new tab"; for a place, what its record holds
@@ -14,18 +24,18 @@ object ResultDetail:
 
   /** Pure: an item's own page. */
 
-  def pageOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
-    case Preview.Target.Source(ck)    => com.histmersion.api.UiLabels.Text(Route.Source(ck).path)
-    case Preview.Target.Article(slug) => com.histmersion.api.UiLabels.Text(Route.Article(slug).path)
-    case Preview.Target.Place(id, _)  => com.histmersion.api.UiLabels.Text(Route.Place(id).path)
-    case Preview.Target.Event(id)     => com.histmersion.api.UiLabels.Text(Route.Event(id).path)
+  def pageOf(t: Preview.Target): UiLabels.Text = t match
+    case Preview.Target.Source(ck)    => UiLabels.Text(Route.Source(ck).path)
+    case Preview.Target.Article(slug) => UiLabels.Text(Route.Article(slug).path)
+    case Preview.Target.Place(id, _)  => UiLabels.Text(Route.Place(id).path)
+    case Preview.Target.Event(id)     => UiLabels.Text(Route.Event(id).path)
 
   /** Pure: what the item is, for the actions' names. */
-  def kindOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
-    case _: Preview.Target.Source  => com.histmersion.api.UiLabels.Text("source")
-    case _: Preview.Target.Article => com.histmersion.api.UiLabels.Text("article")
-    case _: Preview.Target.Place   => com.histmersion.api.UiLabels.Text("place")
-    case _: Preview.Target.Event   => com.histmersion.api.UiLabels.Text("event")
+  def kindOf(t: Preview.Target): UiLabels.Text = t match
+    case _: Preview.Target.Source  => UiLabels.Text("source")
+    case _: Preview.Target.Article => UiLabels.Text("article")
+    case _: Preview.Target.Place   => UiLabels.Text("place")
+    case _: Preview.Target.Event   => UiLabels.Text("event")
 
   private def pin(t: Preview.Target, from: dom.Element): Unit = t match
     case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(ck.value)))
@@ -45,7 +55,7 @@ object ResultDetail:
           .fetch(t)
           .onComplete(r => card.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse(e.toString)))))
         t match
-          case Preview.Target.Place(id, asOf) => ApiClient.place(Place.Id(id.value), asOf.map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value))).foreach(d => record.set(Some(d.record)))
+          case Preview.Target.Place(id, asOf) => ApiClient.place(Place.Id(id.value), asOf.map(a => Api.AggregateQuery.AsOf(a.value))).foreach(d => record.set(Some(d.record)))
           case _                              => ()
       },
       div(
@@ -78,15 +88,15 @@ object ResultDetail:
       ),
       // the item's own marks once its card says what it is called
       child.maybe <-- card.signal.map(_.flatMap(_.toOption).map { c =>
-        val ref = marks.ItemRef.of(t, com.histmersion.api.library.Title(c.title.value))
-        marks.MyItems.opened(ref)
+        val ref = ItemRef.of(t, Title(c.title.value))
+        MyItems.opened(ref)
         div(
           cls := "detail-marks",
-          com.histmersion.web.ui.ContextMenu.on(
-            com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${c.title}"),
-            () => marks.ItemMenu.entries(ref, c.byline.value)
+          ContextMenu.on(
+            ContextMenu.OnTitle(s"Actions: ${c.title}"),
+            () => ItemMenu.entries(ref, c.byline.value)
           ),
-          marks.ItemActions(ref, c.byline.value)
+          ItemActions(ref, c.byline.value)
         )
       }),
       child <-- card.signal.map {
@@ -94,7 +104,7 @@ object ResultDetail:
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read it: $m")
         case Some(Right(c)) => div(cls := "cite-tooltip detail-card", Preview.cardView(c))
       },
-      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, com.histmersion.api.library.Title(c.title.value))))),
+      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => NoteList.on(ItemRef.of(t, Title(c.title.value))))),
       child.maybe <-- record.signal.map(_.filterNot(_.isEmpty).map(recordView))
     )
 

@@ -1,9 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.library.GeoHit
+import com.histmersion.web.map.GeoBounds
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it counts for (a
   * findings' point counts its findings), their dated mids and least certainty ([[Certainty.NoSay]] for a dot that is
@@ -16,8 +20,8 @@ final case class Member(
     certainty: Certainty,
     findings: List[GeoHit] = Nil,
     entry: Option[DotEntry] = None,
-    cell: Option[com.histmersion.web.map.GeoBounds] = None,
-    undated: Member.Undated = com.histmersion.web.Member.Undated(0)
+    cell: Option[GeoBounds] = None,
+    undated: Member.Undated = Member.Undated(0)
 ):
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
     * where a click zooms.
@@ -27,8 +31,8 @@ final case class Member(
 object Member:
 
   type N = N.T
-  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object N extends RefinedType[Int, Pure]
   type Mids = Mids.T
-  object Mids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mids extends RefinedType[Double, Pure]
   type Undated = Undated.T
-  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Undated extends RefinedType[Int, Pure]

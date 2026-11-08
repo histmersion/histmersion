@@ -1,9 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
+import com.histmersion.api.catalogue.EventSummary
 
 /** The icon at the head of every card ([[Preview.cardView]]) and of every row a map cluster lists — one per KIND of
   * thing, from the one registry ([[Glyphs]]), so a reader sees what a card is about before reading it, whichever layer
@@ -52,7 +54,7 @@ object CardIcons:
   /** Pure: a place's icon — a site its type's (the one its marker draws, else a pin), a natural feature its type's when
     * it has one (a cave) else a mountain, a region or polity a map, a people a group.
     */
-  def place(kind: com.histmersion.api.catalogue.Place.Kind.Wire, siteType: Option[com.histmersion.api.catalogue.Place.Entry.SiteType]): Glyphs.Name =
+  def place(kind: Place.Kind.Wire, siteType: Option[Place.Entry.SiteType]): Glyphs.Name =
     val typed = siteType.flatMap(t => SiteTypes.icon(SiteTypes.IconId(t.value))).map(_.value)
     Glyphs.Name(kind.value match
       case Place.Kind.Site                       => typed.getOrElse(GenericPlace)
@@ -62,9 +64,9 @@ object CardIcons:
       case _                                     => GenericPlace)
 
   /** Pure: a site's MARKER icon — its type's, the exclamation mark when the type is unknown. */
-  def siteMarker(siteType: Option[com.histmersion.api.catalogue.Place.Entry.SiteType]): Glyphs.Name = Glyphs.Name(siteType.flatMap(t => SiteTypes.icon(SiteTypes.IconId(t.value))).map(_.value).getOrElse(Unknown))
+  def siteMarker(siteType: Option[Place.Entry.SiteType]): Glyphs.Name = Glyphs.Name(siteType.flatMap(t => SiteTypes.icon(SiteTypes.IconId(t.value))).map(_.value).getOrElse(Unknown))
 
-  def event(kind: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
+  def event(kind: EventSummary.Kind): EventTaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
 
   /** Pure: a card icon's markup, for the cards built as HTML (a popup): the same element, class and size as
     * [[Preview.cardView]]'s.

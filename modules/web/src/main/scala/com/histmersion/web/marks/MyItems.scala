@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.*
 import com.histmersion.web.{ApiClient, ApiFailure, Auth}
@@ -6,6 +7,9 @@ import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Title
 
 /** The person's bookmarks, notes and read marks, as the page holds them: read once when it opens, changed in place by
   * each write the server accepted, so every row, header and list shows the same state at once. A change refused says
@@ -13,9 +17,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object MyItems:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Loaded = Loaded.T
-  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Loaded extends RefinedType[Boolean, Pure]
 
   val bookmarks: Var[List[Bookmark]] = Var(Nil)
   val notes: Var[List[Note]] = Var(Nil)
@@ -24,8 +28,8 @@ object MyItems:
   val marks: Var[Map[Target.Identity, ReadMark]] = Var(Map.empty)
 
   /** The last change that did not go through, and why. */
-  val problem: Var[Option[com.histmersion.web.marks.MyItems.Problem]] = Var(None)
-  val loaded: Var[com.histmersion.web.marks.MyItems.Loaded] = Var(com.histmersion.web.marks.MyItems.Loaded(false))
+  val problem: Var[Option[Problem]] = Var(None)
+  val loaded: Var[Loaded] = Var(Loaded(false))
 
   private def markKey(m: ReadMark): Target.Identity = Target.Identity(s"${m.kind.wire}:${m.id.value}")
 
@@ -34,7 +38,7 @@ object MyItems:
       bookmarks.set(bs)
       notes.set(ns)
       marks.set(ms.map(m => markKey(m) -> m).toMap)
-      loaded.set(com.histmersion.web.marks.MyItems.Loaded(true))
+      loaded.set(Loaded(true))
     }
 
   private def refused(e: Throwable): Unit =
@@ -55,7 +59,7 @@ object MyItems:
   def bookmarked(ref: ItemRef): Signal[Boolean] =
     ref.identity.fold(Val(false): Signal[Boolean])(i => bookmarkOf(i).map(_.isDefined))
 
-  def add(target: Target, label: Option[Bookmark.Label], title: com.histmersion.api.library.Title): Future[Bookmark] =
+  def add(target: Target, label: Option[Bookmark.Label], title: Title): Future[Bookmark] =
     tracked(ApiClient.addBookmark(Bookmark.New(target, label, Some(title)))) { b =>
       bookmarks.update(bs => b :: bs.filterNot(_.id == b.id))
     }
@@ -78,7 +82,7 @@ object MyItems:
 
   def notesOn(identity: Target.Identity): Signal[List[Note]] = notes.signal.map(_.filter(_.target.identity.contains(identity)))
 
-  def addNote(target: Target, text: Note.Text, title: com.histmersion.api.library.Title): Future[Note] =
+  def addNote(target: Target, text: Note.Text, title: Title): Future[Note] =
     tracked(ApiClient.addNote(Note.New(target, text, Some(title))))(n => notes.update(n :: _))
 
   def editNote(n: Note, text: Note.Text): Future[Note] =

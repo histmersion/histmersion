@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.Target
 import com.histmersion.api.ItemKind
@@ -34,17 +35,17 @@ object OpenBack:
         Router.go(Route.Explore)
         t.view.foreach(v => UiState.loadHash(UiState.UrlHash(v.value)))
         span(t)
-        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush(true))
         at(t)
       case ItemKind.Point =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush(true))
         at(t)
       case ItemKind.Period =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush(true))
 
   private def span(t: Target): Unit =
     for a <- t.from; b <- t.to do

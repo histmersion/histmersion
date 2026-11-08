@@ -1,9 +1,12 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A group of points drawn as ONE cluster layer: nearby points of every kind join one bubble ([[Clustering]]), the rest
   * are drawn alone; only what is in view (and a margin) has an element. The kinds' look is the caller's (and their
@@ -53,11 +56,11 @@ final class PointSet[D](
   private var awaitingMoves: Option[(LatLon, MapSurface.Zoom)] = None
 
   /** How many zooms have animated (the browser regressions read it through the diagnostics). */
-  var animations: com.histmersion.web.map.PointSet.Animations = com.histmersion.web.map.PointSet.Animations(0)
+  var animations: PointSet.Animations = PointSet.Animations(0)
 
-  def size: com.histmersion.web.map.PointSet.PointCount = com.histmersion.web.map.PointSet.PointCount(items.size)
-  def keys: Iterable[com.histmersion.web.map.PointSet.Key] = items.keys
-  def get(k: com.histmersion.web.map.PointSet.Key): Option[D] = items.get(k)
+  def size: PointSet.PointCount = PointSet.PointCount(items.size)
+  def keys: Iterable[PointSet.Key] = items.keys
+  def get(k: PointSet.Key): Option[D] = items.get(k)
 
   private def install(): Unit =
     if !installed && surface() != null then
@@ -97,7 +100,7 @@ final class PointSet[D](
     schedule()
 
   /** Take these points out: one drawn alone fades out where it stood. */
-  def remove(ks: Iterable[com.histmersion.web.map.PointSet.Key]): Unit =
+  def remove(ks: Iterable[PointSet.Key]): Unit =
     var any = false
     ks.foreach { k =>
       if items.remove(k).isDefined then any = true
@@ -118,7 +121,7 @@ final class PointSet[D](
     bubbles.values.foreach((m, ks) => if ks.forall(items.contains) then repaint(m, ks.map(items)))
 
   /** The point `k`'s own marker, while it is drawn alone (or fanned out of its bubble). */
-  def drawnAlone(k: com.histmersion.web.map.PointSet.Key): Option[DomMarker] =
+  def drawnAlone(k: PointSet.Key): Option[DomMarker] =
     singles
       .get(k)
       .filter((m, p) => p.has(m))
@@ -138,13 +141,13 @@ final class PointSet[D](
   private var spider: Option[Spider] = None
 
   /** The points fanned out now (none: no bubble is). */
-  def spidered: Seq[com.histmersion.web.map.PointSet.Key] = spider.fold(Seq.empty)(_.keys)
+  def spidered: Seq[PointSet.Key] = spider.fold(Seq.empty)(_.keys)
 
   /** Fan the points `ks` out around where their bubble stands ([[Spiderfy]]), each drawn as it is alone, a thin leg
     * back to the spot — the only way to reach points no zoom can part (one spot, or the deepest zoom). Anything else
     * fanned out folds back first. `separation`: the markers' spacing, px.
     */
-  def spiderfy(ks: Seq[com.histmersion.web.map.PointSet.Key], separation: com.histmersion.web.map.Spiderfy.Separation): Unit =
+  def spiderfy(ks: Seq[PointSet.Key], separation: Spiderfy.Separation): Unit =
     unspiderfy()
     install()
     val ds = ks.filter(items.contains)
@@ -182,13 +185,13 @@ final class PointSet[D](
     spider = None
 
   /** The group `k` is in at this zoom (itself alone: one key). */
-  def groupKeys(k: com.histmersion.web.map.PointSet.Key): Seq[com.histmersion.web.map.PointSet.Key] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
+  def groupKeys(k: PointSet.Key): Seq[PointSet.Key] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
 
   /** Zoom (and pan) until `k` stands alone, then `andThen` — or, where no zoom parts it from its bubble (points at its
     * very spot, or the deepest zoom reached), `andThen` where it is: it was left undone there, and a picture at a spot
     * it shares never opened.
     */
-  def zoomToShow(k: com.histmersion.web.map.PointSet.Key, andThen: () => Unit): Unit =
+  def zoomToShow(k: PointSet.Key, andThen: () => Unit): Unit =
     val s = surface()
     items.get(k).foreach { d =>
       def done(): Boolean = drawnAlone(k).isDefined
@@ -327,7 +330,7 @@ final class PointSet[D](
     def dist(ks: Vector[PointSet.Key]): Double =
       val q = s.project(at(items(ks.head)))
       math.hypot(q.x.value - c.x.value, q.y.value - c.y.value)
-    def onScreen(ks: Vector[com.histmersion.web.map.PointSet.Key]): Boolean =
+    def onScreen(ks: Vector[PointSet.Key]): Boolean =
       val pts = ks.flatMap(items.get).map(at)
       pts.nonEmpty && Clustering.inView(
         s,
@@ -436,14 +439,14 @@ object PointSet:
   type Key = Clustering.GroupKey
   val Key: Clustering.GroupKey.type = Clustering.GroupKey
   type PointCount = PointCount.T
-  object PointCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointCount extends RefinedType[Int, Pure]
   type FadeIn = FadeIn.T
-  object FadeIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FadeIn extends RefinedType[Boolean, Pure]
   type AnimateMax = AnimateMax.T
-  object AnimateMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AnimateMax extends RefinedType[Int, Pure]
   type ExitMs = ExitMs.T
-  object ExitMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExitMs extends RefinedType[Int, Pure]
   type FadeOut = FadeOut.T
-  object FadeOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FadeOut extends RefinedType[String, Pure]
   type Animations = Animations.T
-  object Animations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Animations extends RefinedType[Int, Pure]

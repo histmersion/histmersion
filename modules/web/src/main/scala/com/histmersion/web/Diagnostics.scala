@@ -1,8 +1,12 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.map.TheMap
 
 /** What the page holds, readable from outside (#1949): `window.histmersionDiagnostics()` answers every bounded cache's
   * entries and weight against its ceilings, the names the map places, and the findings kept for time-only redraws. The
@@ -11,20 +15,20 @@ import scala.scalajs.js
   */
 object Diagnostics:
   type CacheName = CacheName.T
-  object CacheName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CacheName extends RefinedType[String, Pure]
 
   /** Every cache and its figures, by name. */
 
-  def caches: List[(com.histmersion.web.Diagnostics.CacheName, BoundedCache.Stats)] =
+  def caches: List[(CacheName, BoundedCache.Stats)] =
     List(
       CacheName("places.geo") -> MapView.geoCacheStats,
       CacheName("ident") -> IdentLink.cacheStats,
       CacheName("places.labels") -> PlacesInput.cacheStats
     ) ++ Preview.cacheStats.map((n, s) => CacheName(n.value) -> s) ++ MapLabels.stats.map((n, s) => CacheName(n.value) -> s) ++
-      List(CacheName("findings.kept") -> BoundedCache.Stats(App.keptFindings, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)))
+      List(CacheName("findings.kept") -> BoundedCache.Stats(App.keptFindings, BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
-  def toJs(cs: List[(com.histmersion.web.Diagnostics.CacheName, BoundedCache.Stats)]): js.Object =
+  def toJs(cs: List[(CacheName, BoundedCache.Stats)]): js.Object =
     val o = js.Dictionary.empty[js.Any]
     cs.foreach { (n, s) =>
       o(n.value) = js.Dynamic.literal(
@@ -40,10 +44,10 @@ object Diagnostics:
     dom.window.asInstanceOf[js.Dynamic].histmersionDiagnostics = (() =>
       val o = toJs(caches).asInstanceOf[js.Dynamic]
       // the map: the points its cluster layer holds, the DOM markers drawn, the shapes drawn
-      if com.histmersion.web.map.TheMap.isUp then
+      if TheMap.isUp then
         o.map = js.Dynamic.literal(
           points = MapView.dots.size.value,
-          markers = com.histmersion.web.map.TheMap.markerCount.value,
+          markers = TheMap.markerCount.value,
           animations = MapView.dots.animations.value
         )
       o.asInstanceOf[js.Object]

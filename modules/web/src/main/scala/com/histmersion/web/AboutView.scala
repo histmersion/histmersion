@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{ByteCount, ServiceState, Wording}
 import com.raquo.laminar.api.L.*

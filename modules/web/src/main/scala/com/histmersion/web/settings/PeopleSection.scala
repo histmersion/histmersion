@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.web.{Route, RouteLink, SettingsSection}
 import com.raquo.laminar.api.L.*

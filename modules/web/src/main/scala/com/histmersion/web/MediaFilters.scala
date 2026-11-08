@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.*
@@ -6,15 +7,17 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.media.MediaCount
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their options the
   * server's counts (`/api/media/facets`, fetched once when the layer is first shown).
   */
 object MediaFilters:
   type ChoiceLabel = ChoiceLabel.T
-  object ChoiceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChoiceLabel extends RefinedType[String, Pure]
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
 
   val providers: Var[List[MediaCount]] = Var(Nil)
   val licences: Var[List[MediaCount]] = Var(Nil)
@@ -40,12 +43,12 @@ object MediaFilters:
     (MediaCount.Key("") -> ChoiceLabel("all")) :: (listed ++ kept)
 
   def select(
-      name: com.histmersion.web.MediaFilters.FieldName,
+      name: FieldName,
       field: Field[Option[String]],
       counts: Signal[List[MediaCount]],
       label: MediaCount.Key => ChoiceLabel,
       disabled: Signal[Boolean] = Val(false),
-      why: com.histmersion.web.IconSelect.Reason = com.histmersion.web.IconSelect.Reason("")
+      why: IconSelect.Reason = IconSelect.Reason("")
   ): HtmlElement =
     IconSelect(
       IconSelect.Name(s"media $name"),

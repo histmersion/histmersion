@@ -1,11 +1,15 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 opaque type Px = Int
 object Px:
   type Css = Css.T
-  object Css extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Css extends RefinedType[String, Pure]
 
   def apply(v: Int): Px = v
   extension (p: Px)
     def value: Int = p
-    def css: com.histmersion.web.ui.Px.Css = Css(s"${p}px")
+    def css: Css = Css(s"${p}px")

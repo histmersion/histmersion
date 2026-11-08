@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.ThemeTokens
@@ -10,6 +11,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.basemap.Basemap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.map.MapSurface
+import com.histmersion.web.map.BaseMapSpec
+import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.BBox
 
 /** The library's styles for the app's base maps ([[BaseMapSpec]]): the two vector styles are MapLibre style documents
   * in the web resources (`web/styles/<style>.json`, every value with the rule it follows, docs/research-map-styles.md),
@@ -17,7 +24,7 @@ import com.histmersion.api.basemap.Basemap
   */
 object MapLibreStyles:
   type Origin = Origin.T
-  object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Origin extends RefinedType[String, Pure]
 
   private val docs = mutable.HashMap.empty[VectorStyle.Id, Future[js.Dynamic]]
 
@@ -40,7 +47,7 @@ object MapLibreStyles:
   /** A copy of a JSON value. */
   private def copy(v: js.Any): js.Dynamic = js.JSON.parse(js.JSON.stringify(v)).asInstanceOf[js.Dynamic]
 
-  private def background(): String = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--bg")).value
+  private def background(): String = ThemeTokens(ThemeTokens.Name("--bg")).value
 
   /** The page's own background and nothing else. */
   def blank(): js.Object =
@@ -67,15 +74,15 @@ object MapLibreStyles:
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then
           Future.delegate(contours(s, v.status, origin)).map(_ => s: js.Any).recover { case _ =>
-            drop(s, com.histmersion.web.map.MapSurface.LayerId("contours")); s
+            drop(s, MapSurface.LayerId("contours")); s
           }
-        else { drop(s, com.histmersion.web.map.MapSurface.LayerId("contours")); Future.successful(s) }
+        else { drop(s, MapSurface.LayerId("contours")); Future.successful(s) }
       }
 
   /** The credits a style owes: each source's `attribution` that a layer drawn (not `visibility: none`) reads, once
     * each, in the style's order. Pure over the JSON.
     */
-  def credits(s: js.Dynamic): Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] =
+  def credits(s: js.Dynamic): Seq[BaseMapSpec.Raster.Attribution] =
     if js.isUndefined(s) || s == null || js.isUndefined(s.sources) || js.isUndefined(s.layers) then Nil
     else
       val drawn = s.layers
@@ -94,7 +101,7 @@ object MapLibreStyles:
       }.distinct.map(a => BaseMapSpec.Raster.Attribution(a))
 
   /** `{s}` → the subdomains a, b, c. Pure. */
-  def expand(template: com.histmersion.api.basemap.BasemapApi.TileTemplate): js.Array[String] =
+  def expand(template: BasemapApi.TileTemplate): js.Array[String] =
     val t = template.value
     if t.contains("{s}") then js.Array("a", "b", "c").map(x => t.replace("{s}", x))
     else js.Array(t)
@@ -140,7 +147,7 @@ object MapLibreStyles:
     info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.value))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
-  def drop(s: js.Dynamic, id: com.histmersion.web.map.MapSurface.LayerId): Unit =
+  def drop(s: js.Dynamic, id: MapSurface.LayerId): Unit =
     js.special.delete(s.sources, id)
     s.layers =
       s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => js.isUndefined(l.source) || l.source.toString != id.value)
@@ -156,11 +163,11 @@ object MapLibreStyles:
   def resolve(
       s: js.Dynamic,
       status: Basemap.Status,
-      lang: com.histmersion.web.map.BaseMapSpec.Vector.Lang,
-      names: com.histmersion.web.map.BaseMapSpec.Vector.Names,
-      reduced: com.histmersion.web.map.BaseMapSpec.Vector.Reduced,
+      lang: BaseMapSpec.Vector.Lang,
+      names: BaseMapSpec.Vector.Names,
+      reduced: BaseMapSpec.Vector.Reduced,
       origin: Origin,
-      seaDepth: com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth = com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth(true)
+      seaDepth: BaseMapSpec.Vector.SeaDepth = BaseMapSpec.Vector.SeaDepth(true)
   ): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
     js.Object.keys(s.sources.asInstanceOf[js.Object]).foreach { id =>
@@ -182,7 +189,7 @@ object MapLibreStyles:
               // where the server has tiles: the map asks for none outside — unless the server reads the layer on
               // demand there (#3760), or (the relief) a focus region lies outside it
               i.bbox
-                .flatMap(com.histmersion.api.BBox.parse)
+                .flatMap(BBox.parse)
                 .filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled.value))
                 .foreach(b => src.bounds = js.Array(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value))
         case None => drop(s, MapSurface.LayerId(id))

@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.{Wording, YearFmt}
 import com.histmersion.api.library.{Label, SearchHit}
@@ -26,8 +27,8 @@ object ReadingHead:
   private def text(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
 
   /** A source's type as a word (`Book`), none when it is not known. */
-  def kindWord(kind: com.histmersion.api.library.Source.Kinds.Wire): Option[String] =
-    Option.when(kind.value != com.histmersion.api.library.Source.Kinds.Unknown)(Wording.capitalize(kind.value))
+  def kindWord(kind: Source.Kinds.Wire): Option[String] =
+    Option.when(kind.value != Source.Kinds.Unknown)(Wording.capitalize(kind.value))
 
   /** From a row of the table: no type or venue yet. */
   def of(h: SearchHit): ReadingHead =
@@ -41,9 +42,9 @@ object ReadingHead:
       text(h.summary.map(_.value))
     )
 
-  def of(sw: com.histmersion.api.library.Source.WithFindings): ReadingHead =
+  def of(sw: Source.WithFindings): ReadingHead =
     val s = sw.source
-    val kind = com.histmersion.api.library.Source.Kinds.of(
+    val kind = Source.Kinds.of(
       s.doi,
       s.venue,
       s.provenance,

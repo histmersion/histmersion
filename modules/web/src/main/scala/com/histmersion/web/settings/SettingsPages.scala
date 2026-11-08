@@ -1,27 +1,30 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.{AboutView, Auth, CreditsView, Route, SettingsSection}
 import com.raquo.laminar.api.L.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings' pages: one per section of its side navigation, each over the settings file as the server reads it now
   * (read when a page opens).
   */
 object SettingsPages:
   type Lead = Lead.T
-  object Lead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lead extends RefinedType[String, Pure]
 
   /** What a section's page says under its title. Pure. */
 
-  def lead(s: SettingsSection): Option[com.histmersion.web.settings.SettingsPages.Lead] = s match
-    case SettingsSection.General => Some(com.histmersion.web.settings.SettingsPages.Lead("How Histmersion looks and where the map opens."))
-    case SettingsSection.Finders => Some(com.histmersion.web.settings.SettingsPages.Lead("Where Histmersion looks for the free, legal copy of a paper you add."))
-    case SettingsSection.Agents  => Some(com.histmersion.web.settings.SettingsPages.Lead("Research agents that read, enrich and write for you — optional."))
+  def lead(s: SettingsSection): Option[Lead] = s match
+    case SettingsSection.General => Some(Lead("How Histmersion looks and where the map opens."))
+    case SettingsSection.Finders => Some(Lead("Where Histmersion looks for the free, legal copy of a paper you add."))
+    case SettingsSection.Agents  => Some(Lead("Research agents that read, enrich and write for you — optional."))
     case SettingsSection.Keys    =>
-      Some(com.histmersion.web.settings.SettingsPages.Lead("Keys and passwords: whether each is set, and where it is kept. Never the key itself."))
-    case SettingsSection.Calibre => Some(com.histmersion.web.settings.SettingsPages.Lead("The Calibre library that keeps your originals, and the server's folders."))
-    case SettingsSection.Backups => Some(com.histmersion.web.settings.SettingsPages.Lead("Copies of the database, kept on this computer."))
-    case SettingsSection.Plugins => Some(com.histmersion.web.settings.SettingsPages.Lead("What the plugins add, each on or off."))
+      Some(Lead("Keys and passwords: whether each is set, and where it is kept. Never the key itself."))
+    case SettingsSection.Calibre => Some(Lead("The Calibre library that keeps your originals, and the server's folders."))
+    case SettingsSection.Backups => Some(Lead("Copies of the database, kept on this computer."))
+    case SettingsSection.Plugins => Some(Lead("What the plugins add, each on or off."))
     case _                       => None
 
   def page(ui: UiConfig, s: SettingsSection): HtmlElement =

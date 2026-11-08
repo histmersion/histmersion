@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
@@ -24,6 +25,8 @@ import com.histmersion.api.exchange.{
   MergeResolutions
 }
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.PlanMatches
+import com.histmersion.api.catalogue.Year
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.
@@ -55,19 +58,19 @@ class MergeViewSuite extends munit.FunSuite:
   private def plan(is: List[MergeIssue], changes: MergePlan.Changes = MergePlan.Changes(3)): MergePlan =
     MergePlan(
       U,
-      com.histmersion.api.exchange.Bundle.Instance(U, Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
-      com.histmersion.api.exchange.Bundle.Instance(U, Some(com.histmersion.api.exchange.Bundle.Instance.Label("home"))),
-      com.histmersion.api.exchange.MergePlan.FormatVersion(1),
-      com.histmersion.api.exchange.MergePlan.SchemaVersion("54"),
+      Bundle.Instance(U, Some(Bundle.Instance.Label("work"))),
+      Bundle.Instance(U, Some(Bundle.Instance.Label("home"))),
+      MergePlan.FormatVersion(1),
+      MergePlan.SchemaVersion("54"),
       None,
-      com.histmersion.api.exchange.MergePlan.PlanHash("cafe0123"),
+      MergePlan.PlanHash("cafe0123"),
       MatchCounts(),
-      com.histmersion.api.exchange.PlanMatches.empty,
+      PlanMatches.empty,
       is,
       Nil,
       Nil,
       Nil,
-      com.histmersion.api.exchange.MergePlan.Resolved(0),
+      MergePlan.Resolved(0),
       changes
     )
 
@@ -75,7 +78,7 @@ class MergeViewSuite extends munit.FunSuite:
     val is = List(
       issue(MergeIssue.Id("S-1")),
       issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left"))),
-      issue(MergeIssue.Id("S-3"), cond = Some(IssueCondition(com.histmersion.api.exchange.IssueCondition.Issue("S-9"), MergeDecision.Kind.Map))),
+      issue(MergeIssue.Id("S-3"), cond = Some(IssueCondition(IssueCondition.Issue("S-9"), MergeDecision.Kind.Map))),
       issue(MergeIssue.Id("O-4"), MergeIssue.Severity.Default, Some(MergeDecision.Wire("keep-left")))
     )
     assertEquals(
@@ -93,7 +96,7 @@ class MergeViewSuite extends munit.FunSuite:
       List(
         issue(MergeIssue.Id("S-1")),
         issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left"))),
-        issue(MergeIssue.Id("S-3"), cond = Some(IssueCondition(com.histmersion.api.exchange.IssueCondition.Issue("S-9"), MergeDecision.Kind.Map))),
+        issue(MergeIssue.Id("S-3"), cond = Some(IssueCondition(IssueCondition.Issue("S-9"), MergeDecision.Kind.Map))),
         issue(MergeIssue.Id("O-4"), MergeIssue.Severity.Default)
       )
     )
@@ -101,7 +104,7 @@ class MergeViewSuite extends munit.FunSuite:
     assert(!MergeView.applicable(p))
     assert(MergeView.applicable(plan(List(issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left")))))))
     assert(!MergeView.applicable(plan(Nil, changes = MergePlan.Changes(0))), "nothing to write is nothing to apply")
-    assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List(com.histmersion.api.exchange.MergePlan.Problems("a blob is missing")))))
+    assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List(MergePlan.Problems("a blob is missing")))))
 
   test("the filter matches the id, the kind, the title and the labels"):
     val is = List(issue(MergeIssue.Id("S-1")), issue(MergeIssue.Id("A-2"), kind = MergeIssue.Kind.ArticleDiverged))
@@ -110,20 +113,20 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(MergeView.filtered(is, "RIGHT_S-1").map(_.id), List("S-1"))
 
   test("a decision replaces the earlier one of its issue; taking it back removes it; a text goes with file: only"):
-    val r0 = MergeResolutions(List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-2"), com.histmersion.api.exchange.MergeResolution.Decision("keep-left"))))
-    val r1 = MergeView.decide(r0, com.histmersion.api.exchange.MergeIssue.Id("S-1"), Some(MergeDecision.of(MergeDecision.Kind.KeepRight)), Some(com.histmersion.api.exchange.MergeResolution.Text("ignored")))
-    assertEquals(r1.resolve, List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-1"), com.histmersion.api.exchange.MergeResolution.Decision("keep-right")), MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-2"), com.histmersion.api.exchange.MergeResolution.Decision("keep-left"))))
+    val r0 = MergeResolutions(List(MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))))
+    val r1 = MergeView.decide(r0, MergeIssue.Id("S-1"), Some(MergeDecision.of(MergeDecision.Kind.KeepRight)), Some(MergeResolution.Text("ignored")))
+    assertEquals(r1.resolve, List(MergeResolution(MergeResolution.Issue("S-1"), MergeResolution.Decision("keep-right")), MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))))
     val r2 =
-      MergeView.decide(r1, com.histmersion.api.exchange.MergeIssue.Id("S-2"), Some(MergeDecision.withArg(MergeDecision.Kind.File, com.histmersion.api.exchange.MergeDecision.Argument("merged/x.md"))), Some(com.histmersion.api.exchange.MergeResolution.Text("text")))
-    assertEquals(r2.resolve.find(_.issue == MergeResolution.Issue("S-2")), Some(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-2"), com.histmersion.api.exchange.MergeResolution.Decision("file:merged/x.md"), Some(com.histmersion.api.exchange.MergeResolution.Text("text")))))
-    assertEquals(MergeView.decide(r2, com.histmersion.api.exchange.MergeIssue.Id("S-1"), None).resolve.map(_.issue), List("S-2"))
-    assertEquals(MergeView.chosen(r2, com.histmersion.api.exchange.MergeIssue.Id("S-2")).map(_.kind), Some(MergeDecision.Kind.File))
+      MergeView.decide(r1, MergeIssue.Id("S-2"), Some(MergeDecision.withArg(MergeDecision.Kind.File, MergeDecision.Argument("merged/x.md"))), Some(MergeResolution.Text("text")))
+    assertEquals(r2.resolve.find(_.issue == MergeResolution.Issue("S-2")), Some(MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("file:merged/x.md"), Some(MergeResolution.Text("text")))))
+    assertEquals(MergeView.decide(r2, MergeIssue.Id("S-1"), None).resolve.map(_.issue), List("S-2"))
+    assertEquals(MergeView.chosen(r2, MergeIssue.Id("S-2")).map(_.kind), Some(MergeDecision.Kind.File))
 
   test(
     "the result column: the row the issue is about follows the decision (to decide until then); the others are the server's"
   ):
     val i = issue(MergeIssue.Id("S-1"))
-    val f =IssueField(com.histmersion.api.exchange.IssueField.Field("status"), Some(com.histmersion.api.exchange.IssueField.Left("current")), Some(com.histmersion.api.exchange.IssueField.Right("contested")))
+    val f =IssueField(IssueField.Field("status"), Some(IssueField.Left("current")), Some(IssueField.Right("contested")))
     assertEquals(MergeView.resultOf(i, f, None), Some(Left("to decide")))
     assertEquals(
       MergeView.resultOf(i, f, Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
@@ -131,37 +134,37 @@ class MergeViewSuite extends munit.FunSuite:
     )
     assertEquals(
       MergeView
-        .resultOf(i, IssueField(com.histmersion.api.exchange.IssueField.Field("title"), Some(com.histmersion.api.exchange.IssueField.Left("a")), Some(com.histmersion.api.exchange.IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
+        .resultOf(i, IssueField(IssueField.Field("title"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
       None
     )
     val notes = issue(MergeIssue.Id("S-2"), kind = MergeIssue.Kind.NotesDiffers)
     assertEquals(
       MergeView
-        .resultOf(notes, IssueField(com.histmersion.api.exchange.IssueField.Field("notes"), Some(com.histmersion.api.exchange.IssueField.Left("a")), Some(com.histmersion.api.exchange.IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.Concat))),
+        .resultOf(notes, IssueField(IssueField.Field("notes"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.Concat))),
       Some(Right("a\n\nb"))
     )
     val gate = issue(MergeIssue.Id("S-3"), kind = MergeIssue.Kind.SameWork)
     assertEquals(
       MergeView.resultOf(
         gate,
-        IssueField(com.histmersion.api.exchange.IssueField.Field("citekey"), Some(com.histmersion.api.exchange.IssueField.Left("a")), Some(com.histmersion.api.exchange.IssueField.Right("b"))),
-        Some(MergeDecision.withArg(MergeDecision.Kind.Map, com.histmersion.api.exchange.MergeDecision.Argument("b")))
+        IssueField(IssueField.Field("citekey"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+        Some(MergeDecision.withArg(MergeDecision.Kind.Map, MergeDecision.Argument("b")))
       ),
       Some(Right("b"))
     )
     // the rows that differ come first; empty rows go
-    val rows = MergeView.rows(List(IssueField(com.histmersion.api.exchange.IssueField.Field("year"), Some(com.histmersion.api.exchange.IssueField.Left("1")), Some(com.histmersion.api.exchange.IssueField.Right("1"))), f, IssueField(com.histmersion.api.exchange.IssueField.Field("doi"), None, None)))
+    val rows = MergeView.rows(List(IssueField(IssueField.Field("year"), Some(IssueField.Left("1")), Some(IssueField.Right("1"))), f, IssueField(IssueField.Field("doi"), None, None)))
     assertEquals(rows.map((x, d) => x.field -> d), List("status" -> true, "year" -> false))
 
   test("the editor starts from the agreed text with every conflict marked; markers left mean not merged"):
     val t = IssueText(
-      Some(com.histmersion.api.exchange.IssueText.Base("a\nb\nc")),
-      com.histmersion.api.exchange.IssueText.Left("a\nB\nc"),
-      com.histmersion.api.exchange.IssueText.Right("a\nβ\nc"),
+      Some(IssueText.Base("a\nb\nc")),
+      IssueText.Left("a\nB\nc"),
+      IssueText.Right("a\nβ\nc"),
       List(
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("a"))),
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(true), List(com.histmersion.api.exchange.IssueHunk.Base("b")), List(com.histmersion.api.exchange.IssueHunk.Left("B")), List(com.histmersion.api.exchange.IssueHunk.Right("β"))),
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("c")))
+        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("a"))),
+        IssueHunk(IssueHunk.Conflict(true), List(IssueHunk.Base("b")), List(IssueHunk.Left("B")), List(IssueHunk.Right("β"))),
+        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("c")))
       )
     )
     val m = MergeView.markedText(t)
@@ -171,13 +174,13 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(MergeView.fileName(issue(MergeIssue.Id("A-1"))), "merged/left_A-1.md")
 
   test("spans: one axis for both, each a bar in per cent of it"):
-    val (lo, hi) = MergeView.axis(List(IssueSpan(Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1190))), IssueSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None))).get
+    val (lo, hi) = MergeView.axis(List(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), IssueSpan(Some(Year(-1210)), None))).get
     assertEquals((lo, hi), (-1220L, -1180L))
-    assertEquals(MergeView.bar(IssueSpan(Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1190))), lo, hi), (50.0, 25.0))
+    assertEquals(MergeView.bar(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), lo, hi), (50.0, 25.0))
     assertEquals(MergeView.axis(Nil), None)
-    assertEquals(YearFmt.openPeriod(Some(com.histmersion.api.catalogue.Year(-1274)), None), "from 1274 BCE")
+    assertEquals(YearFmt.openPeriod(Some(Year(-1274)), None), "from 1274 BCE")
 
   test("the window key and the /merge address"):
-    assertEquals(WindowKey.parse(com.histmersion.web.WindowKey.Wire("merge")), Some(WindowKey.Merge))
+    assertEquals(WindowKey.parse(WindowKey.Wire("merge")), Some(WindowKey.Merge))
     assertEquals(WindowKey.Merge.wire, "merge")
     assertEquals(Route.legacy("/merge", Nil), Some(Route.Landing(Route.Library(LibrarySection.Merge), Nil)))

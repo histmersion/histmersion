@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
@@ -9,6 +10,13 @@ import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.research.{ReviewBadge, ReviewState}
 import com.histmersion.api.research.Article
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.RowCount
+import com.histmersion.web.marks.RowActions
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.library.Title
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Markdown
 
 object ArticlesTab:
 
@@ -18,7 +26,7 @@ object ArticlesTab:
     */
 
   private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
-    name = com.histmersion.web.FilterTab.Name("articles"),
+    name = FilterTab.Name("articles"),
     singular = Plural.Noun.Singular("article"),
     noun = Plural.Noun.Plural("articles"),
     query = () => UiState.articleQuery(),
@@ -26,10 +34,10 @@ object ArticlesTab:
       ApiClient
         .articles(q.modify(_.filter.offset).setTo(offset))
         .map(r =>
-          TabPage(r.articles, r.total, kindCounts(r.kinds).map(TabPage.Extras(_)) :+ TabPage.Extras(ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value))
+          TabPage(r.articles, r.total, kindCounts(r.kinds).map(TabPage.Extras(_)) :+ TabPage.Extras(ResultsPaging.span(UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))).value))
         ),
     render = renderArticle(_, inPanel = true),
-    empty = com.histmersion.web.FilterTab.Empty("No articles relate to the current filter."),
+    empty = FilterTab.Empty("No articles relate to the current filter."),
     page = ResultsPaging.PageNumber(Layout.tabPage.value),
     debounceMs = () => UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value))
   )
@@ -37,7 +45,7 @@ object ArticlesTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
-  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
+  val total: Signal[Option[RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".
@@ -45,7 +53,7 @@ object ArticlesTab:
   private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
-      marks.RowActions(marks.ItemRef.article(art.slug, com.histmersion.api.library.Title(art.title.value)), marks.ItemRef.Href(Route.Article(Route.Article.Slug(art.slug.value)).path), Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value),
+      RowActions(ItemRef.article(art.slug, Title(art.title.value)), ItemRef.Href(Route.Article(Route.Article.Slug(art.slug.value)).path), Fmt.display(UiLabels.Text(art.kind.value)).value),
       a(
         href := Route.Article(Route.Article.Slug(art.slug.value)).path,
         cls := "article-link",
@@ -57,7 +65,7 @@ object ArticlesTab:
         div(cls := "article-title", art.title.value),
         div(
           cls := "article-meta",
-          span(cls := "article-kind", Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value),
+          span(cls := "article-kind", Fmt.display(UiLabels.Text(art.kind.value)).value),
           art.review.map(reviewBadge),
           Fmt.periodStr(art.periodStart, art.periodEnd).value match
             case ""  => emptyNode
@@ -66,7 +74,7 @@ object ArticlesTab:
         art.summary
           .filter(_.value.nonEmpty)
           .map { s =>
-            div(cls := "article-summary", Fmt.clip(stripMd(s.value), com.histmersion.api.Markdown.CharLimit(120)))
+            div(cls := "article-summary", Fmt.clip(stripMd(s.value), Markdown.CharLimit(120)))
           }
           .getOrElse(emptyNode),
         if art.tags.nonEmpty then div(cls := "article-tags", art.tags.filter(_.value.nonEmpty).map(t => Chip.value(Chip.Choice(t.value))))

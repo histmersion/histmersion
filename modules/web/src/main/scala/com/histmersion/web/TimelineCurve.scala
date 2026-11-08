@@ -1,6 +1,10 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.library.TimeBucket
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Years
 
 /** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by a MONOTONE
   * cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve never leaves the band their
@@ -9,9 +13,9 @@ import com.histmersion.api.library.TimeBucket
   */
 object TimelineCurve:
   type ElementSize = ElementSize.T
-  object ElementSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ElementSize extends RefinedType[Double, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScreenPixels extends RefinedType[Double, Pure]
 
   /** How wide one bucket is drawn, px: coarse enough for a smooth line, fine enough for a peak. */
 
@@ -23,7 +27,7 @@ object TimelineCurve:
   /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
     * largest count between `baseY` (none) and `top` (the largest).
     */
-  def points(bs: Seq[TimeBucket], from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical, w: com.histmersion.web.TimelineCurve.ElementSize, baseY: com.histmersion.web.TimelineCurve.ScreenPixels, top: com.histmersion.web.TimelineCurve.ScreenPixels): Vector[Pt] =
+  def points(bs: Seq[TimeBucket], from: Years.Astronomical, to: Years.Astronomical, w: ElementSize, baseY: ScreenPixels, top: ScreenPixels): Vector[Pt] =
     val maxCount = bs.iterator.map(_.count.value).maxOption.getOrElse(0)
     if maxCount <= 0 then Vector.empty
     else
@@ -129,7 +133,7 @@ object TimelineCurve:
       else s"$start${curve(pts)} L ${num(pts.last.x.value)} ${num(baseY.value)} Z"
 
   /** Pure: the point nearest screen x `x` (points in increasing x), by binary search — the hover's. */
-  def nearest(pts: IndexedSeq[Pt], x: com.histmersion.web.TimelineCurve.ScreenPixels): Option[Pt] =
+  def nearest(pts: IndexedSeq[Pt], x: ScreenPixels): Option[Pt] =
     if pts.isEmpty then None
     else
       var lo = 0

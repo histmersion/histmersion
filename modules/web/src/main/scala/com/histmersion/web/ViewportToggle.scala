@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{BBox, GeoPick}
@@ -8,6 +9,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.web.map.MapSurface
 
 /** "Only sources in view" toggle: mirrors the map's viewport into UiState.bbox so the server-side filter and the
   * shareable URL hash always agree with what the user is looking at.
@@ -75,18 +77,18 @@ object ViewportToggle:
       case MapLayer.Boundaries => List(areaPickSelect)
       case MapLayer.Sites      =>
         List(
-          IconSelect(com.histmersion.web.IconSelect.Name("site type"), UiState.siteType, Val(LayerFilters.siteTypes)),
+          IconSelect(IconSelect.Name("site type"), UiState.siteType, Val(LayerFilters.siteTypes)),
           undatedBox(UiState.sitesUndated, "sites")
         )
       case MapLayer.Media =>
         List(
-          MediaFilters.select(com.histmersion.web.MediaFilters.FieldName("provider"), UiState.mediaProvider, MediaFilters.providers.signal, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
-          MediaFilters.select(com.histmersion.web.MediaFilters.FieldName("licence"), UiState.mediaLicense, MediaFilters.licences.signal, k => MediaFilters.ChoiceLabel(LicenseName.label(k.value)))
+          MediaFilters.select(MediaFilters.FieldName("provider"), UiState.mediaProvider, MediaFilters.providers.signal, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
+          MediaFilters.select(MediaFilters.FieldName("licence"), UiState.mediaLicense, MediaFilters.licences.signal, k => MediaFilters.ChoiceLabel(LicenseName.label(k.value)))
         )
       case MapLayer.Events =>
         List(
-          IconSelect(com.histmersion.web.IconSelect.Name("event kind"), UiState.eventKind, Val(LayerFilters.eventKinds)),
-          IconSelect(com.histmersion.web.IconSelect.Name("tier"), UiState.eventTier, Val(LayerFilters.tiers)),
+          IconSelect(IconSelect.Name("event kind"), UiState.eventKind, Val(LayerFilters.eventKinds)),
+          IconSelect(IconSelect.Name("tier"), UiState.eventTier, Val(LayerFilters.tiers)),
           undatedBox(UiState.eventsUndated, "events")
         )
       case MapLayer.Notes => Nil
@@ -152,7 +154,7 @@ object ViewportToggle:
         aria.label := "Map layers",
         cls("is-open") <-- open.signal,
         // on a phone this panel is the map & tools drawer, and this its heading
-        MobileChrome.drawerHead(com.histmersion.web.MobileChrome.Name("map & tools")),
+        MobileChrome.drawerHead(MobileChrome.Name("map & tools")),
         div(
           cls := "layers-head",
           h2(cls := "layers-title", "Layers"),
@@ -232,7 +234,7 @@ object ViewportToggle:
                 // minLon > maxLon means the saved viewport crossed the antimeridian: the map needs
                 // a monotonically increasing east bound.
                 val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
-                map.fitBounds(GeoBounds(GeoBounds.South(parts(1)), GeoBounds.West(parts(0)), GeoBounds.North(parts(3)), GeoBounds.East(east)), com.histmersion.web.map.MapSurface.FitBoundsPadding(0), map.maxZoom, animate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(false))
+                map.fitBounds(GeoBounds(GeoBounds.South(parts(1)), GeoBounds.West(parts(0)), GeoBounds.North(parts(3)), GeoBounds.East(east)), MapSurface.FitBoundsPadding(0), map.maxZoom, animate = MapSurface.FitBoundsAnimate(false))
               else UiState.set(UiState.bbox := Some(bboxOf(map)))()
             sub
           },

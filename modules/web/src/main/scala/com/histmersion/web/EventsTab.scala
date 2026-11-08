@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
@@ -8,26 +9,39 @@ import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.{EventPrecision, EventSummary, EventTaxonomy, EventTier}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Plural
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.RowCount
+import com.histmersion.web.marks.RowActions
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.personal.Target
+import com.histmersion.api.ItemKind
+import com.histmersion.api.personal.ItemKey
+import com.histmersion.api.library.Title
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Markdown
 
 object EventsTab:
   type When = When.T
-  object When extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object When extends RefinedType[String, Pure]
 
   /** The tab ([[FilterTab]]): the GLOBAL filter (title included), as the Sources tab sends it — the server relates it
     * to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past the first.
     */
 
   private val tab = FilterTab[Api.EventQuery, EventSummary](
-    name = com.histmersion.web.FilterTab.Name("events"),
-    singular = com.histmersion.api.Plural.Noun.Singular("event"),
-    noun = com.histmersion.api.Plural.Noun.Plural("events"),
+    name = FilterTab.Name("events"),
+    singular = Plural.Noun.Singular("event"),
+    noun = Plural.Noun.Plural("events"),
     query = () => UiState.eventQuery(),
     fetch = (q, offset) =>
       ApiClient
         .events(q.modify(_.filter.offset).setTo(offset))
-        .map(r => TabPage(r.events, r.total, List(TabPage.Extras(ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value)))),
+        .map(r => TabPage(r.events, r.total, List(TabPage.Extras(ResultsPaging.span(UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))).value)))),
     render = renderEvent,
-    empty = com.histmersion.web.FilterTab.Empty("No events relate to the current filter."),
+    empty = FilterTab.Empty("No events relate to the current filter."),
     page = ResultsPaging.PageNumber(Layout.tabPage.value),
     debounceMs = () => UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value))
   )
@@ -35,23 +49,23 @@ object EventsTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
-  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
+  val total: Signal[Option[RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.
     */
-  def when(e: EventSummary): com.histmersion.web.EventsTab.When = When(e.datingNote.getOrElse(YearFmt.span(e.timeSpan)))
+  def when(e: EventSummary): When = When(e.datingNote.getOrElse(YearFmt.span(e.timeSpan)))
 
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
       cls := "event-row",
-      marks.RowActions(
-        marks.ItemRef(
-          com.histmersion.api.personal.Target.item(com.histmersion.api.ItemKind.Event, com.histmersion.api.personal.ItemKey(evt.id.value)),
-          com.histmersion.api.library.Title(evt.label.value)
+      RowActions(
+        ItemRef(
+          Target.item(ItemKind.Event, ItemKey(evt.id.value)),
+          Title(evt.label.value)
         ),
-        marks.ItemRef.Href(Route.Event(Route.Event.Id(evt.id.value)).path),
-        EventsTab.when(evt).value
+        ItemRef.Href(Route.Event(Route.Event.Id(evt.id.value)).path),
+        when(evt).value
       ),
       // its card on hover (Preview: the event's picture and credit, #1446); a plain click shows its detail
       a(
@@ -73,8 +87,8 @@ object EventsTab:
       ),
       div(
         cls := "event-meta",
-        span(cls := "event-kind", Fmt.display(com.histmersion.api.UiLabels.Text(evt.kind.value)).value),
-        span(cls := "event-period", EventsTab.when(evt).value),
+        span(cls := "event-kind", Fmt.display(UiLabels.Text(evt.kind.value)).value),
+        span(cls := "event-period", when(evt).value),
         EventPrecision
           .label(evt.precision)
           .map(l =>
@@ -86,12 +100,12 @@ object EventsTab:
             )
           )
           .getOrElse(emptyNode),
-        span(cls := "event-historicity", Fmt.display(com.histmersion.api.UiLabels.Text(evt.historicity.value)).value)
+        span(cls := "event-historicity", Fmt.display(UiLabels.Text(evt.historicity.value)).value)
       ),
       evt.description
         .filter(_.value.nonEmpty)
         .map { d =>
-          div(cls := "event-desc", Fmt.clip(d.value, com.histmersion.api.Markdown.CharLimit(120)))
+          div(cls := "event-desc", Fmt.clip(d.value, Markdown.CharLimit(120)))
         }
         .getOrElse(emptyNode),
       evt.citekey

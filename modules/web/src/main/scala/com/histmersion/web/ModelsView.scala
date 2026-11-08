@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{CheckLevel, DoctorReport, ModelsInfo}

@@ -1,8 +1,11 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One shape: its id (unique in its set), GeoJSON geometry, colour, whether it is drawn dashed, and its visibility
   * (0…1).
@@ -10,17 +13,17 @@ import scala.scalajs.js
 final case class ShapeFeature(
     id: ShapeFeature.Id,
     geometry: js.Any,
-    colour: ShapeFeature.Colour = com.histmersion.web.map.ShapeFeature.Colour(""),
-    dashed: ShapeFeature.Dashed = com.histmersion.web.map.ShapeFeature.Dashed(false),
-    alpha: ShapeFeature.Alpha = com.histmersion.web.map.ShapeFeature.Alpha(1.0)
+    colour: ShapeFeature.Colour = ShapeFeature.Colour(""),
+    dashed: ShapeFeature.Dashed = ShapeFeature.Dashed(false),
+    alpha: ShapeFeature.Alpha = ShapeFeature.Alpha(1.0)
 )
 
 object ShapeFeature:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Colour = Colour.T
-  object Colour extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Colour extends RefinedType[String, Pure]
   type Dashed = Dashed.T
-  object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dashed extends RefinedType[Boolean, Pure]
   type Alpha = Alpha.T
-  object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Alpha extends RefinedType[Double, Pure]

@@ -1,9 +1,14 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.Plan
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Managers
 
 /** The pure parts of the approvals window. */
 class ApprovalsViewSuite extends munit.FunSuite:
@@ -12,31 +17,31 @@ class ApprovalsViewSuite extends munit.FunSuite:
   // evidence line, once at the top of the plan block
   test("a plan's rationale is shown once, by the plan block; other evidence keeps its line"):
     val plan = ApprovalInfo(
-      com.histmersion.api.automation.Agents.ApprovalInfo.Id(1),
-      Some(com.histmersion.api.automation.Agents.RunInfo.Id("r")),
-      com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"),
-      com.histmersion.api.library.Citekey(""),
-      evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("tin sources and their dating"),
-      plan = Some(Plan(com.histmersion.api.automation.Goal.Slug("g"), rationale = com.histmersion.api.automation.Goal.Plans.Plan.Rationale("tin sources and their dating"))),
-      subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("g"))
+      ApprovalInfo.Id(1),
+      Some(Agents.RunInfo.Id("r")),
+      ApprovalInfo.Kind("goal-plan"),
+      Citekey(""),
+      evidence = ApprovalInfo.Evidence("tin sources and their dating"),
+      plan = Some(Plan(Goal.Slug("g"), rationale = Plan.Rationale("tin sources and their dating"))),
+      subject = Some(ApprovalInfo.Subject("g"))
     )
     assertEquals(ApprovalsView.evidenceLine(plan), None)
-    val status = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(2), Some(com.histmersion.api.automation.Agents.RunInfo.Id("r")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("status-change"), com.histmersion.api.library.Citekey("a2020_b"), evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("a retraction notice"))
+    val status = ApprovalInfo(ApprovalInfo.Id(2), Some(Agents.RunInfo.Id("r")), ApprovalInfo.Kind("status-change"), Citekey("a2020_b"), evidence = ApprovalInfo.Evidence("a retraction notice"))
     assertEquals(ApprovalsView.evidenceLine(status), Some("a retraction notice"))
     assertEquals(ApprovalsView.evidenceLine(status.modify(_.evidence).setTo(ApprovalInfo.Evidence(""))), None)
 
   test("a model's hint action reads as what it does to which manager; the phase 2 kinds read as themselves"):
     import com.histmersion.api.automation.Managers.{HintEffect, HintProposal}
     val h = ApprovalInfo(
-      com.histmersion.api.automation.Agents.ApprovalInfo.Id(3),
+      ApprovalInfo.Id(3),
       None,
-      com.histmersion.api.automation.Agents.ApprovalInfo.Kind("hint-effect"),
-      com.histmersion.api.library.Citekey(""),
-      subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("review")),
+      ApprovalInfo.Kind("hint-effect"),
+      Citekey(""),
+      subject = Some(ApprovalInfo.Subject("review")),
       hintEffect = Some(
-        HintProposal(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), com.histmersion.api.automation.Managers.HintProposal.Hint(7), com.histmersion.api.automation.Managers.HintProposal.Text("wait with tin"), HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin")), until = Some(com.histmersion.api.automation.Managers.HintEffect.Until("2026-12-01"))), com.histmersion.api.automation.Managers.HintProposal.By("mcp"))
+        HintProposal(Managers.ManagerInfo.Id("review"), HintProposal.Hint(7), HintProposal.Text("wait with tin"), HintEffect(HintEffect.Action("hold"), List(HintEffect.Targets("tin")), until = Some(HintEffect.Until("2026-12-01"))), HintProposal.By("mcp"))
       )
     )
     assertEquals(ApprovalsView.describe(h), "manager review: hold tin until 2026-12-01")
-    val plan = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(4), None, com.histmersion.api.automation.Agents.ApprovalInfo.Kind("article-plan"), com.histmersion.api.library.Citekey(""), subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("g")))
+    val plan = ApprovalInfo(ApprovalInfo.Id(4), None, ApprovalInfo.Kind("article-plan"), Citekey(""), subject = Some(ApprovalInfo.Subject("g")))
     assertEquals(ApprovalsView.describe(plan), "compile 0 new articles for goal g")

@@ -1,7 +1,10 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE menu with icons (a native `<select>` cannot show one): a button showing the current choice — its icon and label
   * — that opens a listbox of the options, each with the icon the map draws for it (an event kind's square badge, a site
@@ -14,9 +17,9 @@ import org.scalajs.dom
   */
 object IconSelect:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
 
   /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under, and what it
     * means (its tooltip), when the label alone does not say.
@@ -24,20 +27,20 @@ object IconSelect:
   final case class Opt(
       value: Opt.Value,
       label: Opt.Label,
-      icon: com.histmersion.web.Icon.Html,
+      icon: Icon.Html,
       group: Option[Opt.Group] = None,
       hint: Option[Opt.Hint] = None
   )
 
   object Opt:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Group = Group.T
-    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Group extends RefinedType[String, Pure]
     type Hint = Hint.T
-    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hint extends RefinedType[String, Pure]
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =
@@ -69,11 +72,11 @@ object IconSelect:
     * control that comes and goes moves everything after it.
     */
   def apply(
-      name: com.histmersion.web.IconSelect.Name,
+      name: Name,
       field: Field[Option[String]],
       options: Signal[List[Opt]],
       disabled: Signal[Boolean] = Val(false),
-      why: com.histmersion.web.IconSelect.Reason = com.histmersion.web.IconSelect.Reason("")
+      why: Reason = Reason("")
   ): HtmlElement =
     seq += 1
     val id = s"isel-$seq"

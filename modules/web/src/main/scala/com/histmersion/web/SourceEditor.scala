@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,11 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, MetadataPatch}
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.UiLabels
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with
@@ -18,7 +24,7 @@ import com.histmersion.api.library.Facet
   */
 object SourceEditor:
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
 
@@ -39,7 +45,7 @@ object SourceEditor:
   )
 
   object Draft:
-    def of(s: com.histmersion.api.library.Source.Detail): Draft = Draft(
+    def of(s: Source.Detail): Draft = Draft(
       title = s.title.value,
       authors = s.authors.map(_.value),
       year = s.year.map(_.value.toInt).fold("")(_.toString),
@@ -64,7 +70,7 @@ object SourceEditor:
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
-  def year(raw: com.histmersion.api.Years.Text): Either[com.histmersion.api.Years.Problem, Option[com.histmersion.api.catalogue.Year]] =
+  def year(raw: Years.Text): Either[Years.Problem, Option[com.histmersion.api.catalogue.Year]] =
     if raw.value.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
 
@@ -72,9 +78,9 @@ object SourceEditor:
     * `Right(None)` when nothing changed, `Left` with what is wrong, per field.
     */
   def toPatch(
-      orig: com.histmersion.api.library.Source.Detail,
+      orig: Source.Detail,
       d: Draft
-  ): Either[List[(Field, String)], Option[com.histmersion.api.library.Source.Patch]] =
+  ): Either[List[(Field, String)], Option[Source.Patch]] =
     val errs = List.newBuilder[(Field, String)]
     def text(v: String, was: Option[String], field: Field, what: String): Option[String] =
       val t = v.trim
@@ -101,7 +107,7 @@ object SourceEditor:
     val status = Option.when(d.status != orig.status)(d.status)
     val summary = text(d.summary, orig.summary.map(_.value), Field.Summary, "the summary")
 
-    val period = (year(com.histmersion.api.Years.Text(d.periodStart)), year(com.histmersion.api.Years.Text(d.periodEnd))) match
+    val period = (year(Years.Text(d.periodStart)), year(Years.Text(d.periodEnd))) match
       case (Left(e), _)               => errs += Field.Period -> e.value; None
       case (_, Left(e))               => errs += Field.Period -> e.value; None
       case (Right(None), Right(None)) =>
@@ -124,8 +130,8 @@ object SourceEditor:
     val problems = errs.result()
     if problems.nonEmpty then Left(problems)
     else
-      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(com.histmersion.api.library.AuthorName.apply)), year = (yr).map(n => com.histmersion.api.catalogue.Year(n.toLong)), venue = (venue).map(com.histmersion.api.library.Source.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
-      val patch = com.histmersion.api.library.Source.Patch(
+      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(AuthorName.apply)), year = (yr).map(n => com.histmersion.api.catalogue.Year(n.toLong)), venue = (venue).map(Source.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
+      val patch = Source.Patch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary.map(Source.Summary(_)),
         topics = Option.when(d.topics != orig.topics.map(_.value))(d.topics.map(Source.Topics(_))),
@@ -133,7 +139,7 @@ object SourceEditor:
         period = period,
         tags = tags
       )
-      if patch == com.histmersion.api.library.Source.Patch() then Right(None)
+      if patch == Source.Patch() then Right(None)
       else Right(Some(patch.modify(_.ifUpdatedAt).setTo(orig.updatedAt.map(u => Source.UpdatedAt(u.value)))))
 
   /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
@@ -161,9 +167,9 @@ object SourceEditor:
 
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
-  def apply(ck: com.histmersion.web.Preview.Target.Source.Citekey): HtmlElement =
-    val key = com.histmersion.api.library.Citekey(ck.value)
-    val orig = Var(Option.empty[com.histmersion.api.library.Source.Detail])
+  def apply(ck: Preview.Target.Source.Citekey): HtmlElement =
+    val key = Citekey(ck.value)
+    val orig = Var(Option.empty[Source.Detail])
     // the form's own model until it is saved; it shadows nothing in UiState
     val draft = Var(Option.empty[Draft])
     val errors = Var(List.empty[(Field, String)])
@@ -180,7 +186,7 @@ object SourceEditor:
             notice.set(then0)
             WindowManager.retitle(
               WindowKey.EditSource(WindowKey.EditSource.Citekey(ck.value)),
-              com.histmersion.api.UiLabels.Text(s"Edit · ${sw.source.title}")
+              UiLabels.Text(s"Edit · ${sw.source.title}")
             )
         )
       }
@@ -230,7 +236,7 @@ object SourceEditor:
         controlled(value <-- draft.signal.map(_.fold("")(get)), onInput.mapToValue --> (v => edit(set(_, v))))
       )
 
-    def field(name: com.histmersion.web.SourceEditor.FieldName, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
+    def field(name: FieldName, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
       div(cls := "form-field", label(name.value, control), extra, errorFor(f))
 
     def chips(
@@ -247,9 +253,9 @@ object SourceEditor:
           field = ChipInput.Config.Field(Facet.Field.label(facet).value),
           label = ChipInput.Config.Label(Facet.Field.label(facet).value),
           placeholder = ChipInput.Config.Placeholder(hint),
-          debounceMs = com.histmersion.web.ChipInput.Config.DebounceMs(150),
+          debounceMs = ChipInput.Config.DebounceMs(150),
           getSuggestions = prefix =>
-            ApiClient.facets(com.histmersion.api.Api.Facets.Field(Facet.Field.label(facet).value), Some(prefix), Filter()),
+            ApiClient.facets(Api.Facets.Field(Facet.Field.label(facet).value), Some(prefix), Filter()),
           onChange = vs => zoomed.set(vs)
         ),
         zoomed.signal
@@ -261,7 +267,7 @@ object SourceEditor:
         cls := "year-echo muted",
         child.text <-- draft.signal.map(
           _.fold("")(d =>
-            year(com.histmersion.api.Years.Text(get(d))) match
+            year(Years.Text(get(d))) match
               case Right(Some(v)) => s"= ${YearFmt(v)}"
               case Right(None)    => ""
               case Left(_)        => "not a year"
@@ -280,7 +286,7 @@ object SourceEditor:
         hidden <-- draft.signal.map(_.isEmpty),
         onSubmit.preventDefault --> (_ => if Auth.writableNow then save()),
         p(cls := "muted", "Editing ", SourceLink(key), " — only what you change is sent."),
-        field(com.histmersion.web.SourceEditor.FieldName("title"), Field.Title, textIn(_.title, (d, v) => d.modify(_.title).setTo(v))),
+        field(FieldName("title"), Field.Title, textIn(_.title, (d, v) => d.modify(_.title).setTo(v))),
         div(
           cls := "form-field",
           label("authors"),
@@ -289,9 +295,9 @@ object SourceEditor:
         ),
         div(
           cls := "form-pair",
-          field(com.histmersion.web.SourceEditor.FieldName("year"), Field.Year, textIn(_.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007")),
+          field(FieldName("year"), Field.Year, textIn(_.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007")),
           field(
-            com.histmersion.web.SourceEditor.FieldName("status"),
+            FieldName("status"),
             Field.Status,
             select(
               cls := "field",
@@ -303,8 +309,8 @@ object SourceEditor:
             )
           )
         ),
-        field(com.histmersion.web.SourceEditor.FieldName("venue"), Field.Venue, textIn(_.venue, (d, v) => d.modify(_.venue).setTo(v))),
-        field(com.histmersion.web.SourceEditor.FieldName("DOI"), Field.Doi, textIn(_.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…")),
+        field(FieldName("venue"), Field.Venue, textIn(_.venue, (d, v) => d.modify(_.venue).setTo(v))),
+        field(FieldName("DOI"), Field.Doi, textIn(_.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…")),
         div(
           cls := "form-field",
           label("topics"),
@@ -342,7 +348,7 @@ object SourceEditor:
           errorFor(Field.Period)
         ),
         field(
-          com.histmersion.web.SourceEditor.FieldName("summary"),
+          FieldName("summary"),
           Field.Summary,
           textArea(
             cls := "field",

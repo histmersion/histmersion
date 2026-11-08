@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.LabelMotion.Motion
@@ -10,6 +11,13 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Years
+import com.histmersion.web.ui.Layout
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.Geo
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
   * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they
@@ -41,11 +49,11 @@ import scala.scalajs.js
   */
 object MapLabels:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type WrapClass = WrapClass.T
-  object WrapClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WrapClass extends RefinedType[String, Pure]
 
   /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer target (the shape
     * under a name answers the pointer).
@@ -77,7 +85,7 @@ object MapLabels:
 
   object Entry:
     type Rank = Rank.T
-    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rank extends RefinedType[Double, Pure]
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 
@@ -108,11 +116,11 @@ object MapLabels:
   private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](BoundedCache.MaxEntries(ShapeCacheSize))
 
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
-  def stats: List[(com.histmersion.web.MapLabels.Key, BoundedCache.Stats)] =
+  def stats: List[(Key, BoundedCache.Stats)] =
     List(
-      com.histmersion.web.MapLabels.Key("labels.entries") -> BoundedCache.Stats(BoundedCache.Stats.Entries(entries.size), com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
-      com.histmersion.web.MapLabels.Key("labels.state") -> BoundedCache.Stats(BoundedCache.Stats.Entries(state.size), com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
-      com.histmersion.web.MapLabels.Key("labels.shapes") -> BoundedCache.stats(shapes)
+      Key("labels.entries") -> BoundedCache.Stats(BoundedCache.Stats.Entries(entries.size), BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)),
+      Key("labels.state") -> BoundedCache.Stats(BoundedCache.Stats.Entries(state.size), BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)),
+      Key("labels.shapes") -> BoundedCache.stats(shapes)
     )
   private def live(k: String): Live = state.getOrElseUpdate(k, Live())
 
@@ -165,11 +173,11 @@ object MapLabels:
     */
   def syncAreas(
       features: Seq[js.Dynamic],
-      key: js.Dynamic => com.histmersion.web.MapLabels.Key,
-      label: js.Dynamic => com.histmersion.web.MapLabels.Label,
-      wrapClass: js.Dynamic => com.histmersion.web.MapLabels.WrapClass,
-      place: js.Dynamic => Option[(com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind)],
-      asOf: () => Option[com.histmersion.api.Years.Astronomical],
+      key: js.Dynamic => Key,
+      label: js.Dynamic => Label,
+      wrapClass: js.Dynamic => WrapClass,
+      place: js.Dynamic => Option[(PlaceHover.PlaceId, UiLabels.Text, PlaceHover.PlaceKind)],
+      asOf: () => Option[Years.Astronomical],
       release: js.Dynamic => Unit = _ => ()
   ): Unit =
     generation += 1
@@ -209,11 +217,11 @@ object MapLabels:
   /** The names of `named` (the areas whose place is known), the others' names gone (fading out). */
   private def applyAreas(
       named: Seq[(js.Dynamic, LabelPlacement.Shape)],
-      key: js.Dynamic => com.histmersion.web.MapLabels.Key,
-      label: js.Dynamic => com.histmersion.web.MapLabels.Label,
-      wrapClass: js.Dynamic => com.histmersion.web.MapLabels.WrapClass,
-      place: js.Dynamic => Option[(com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind)],
-      asOf: () => Option[com.histmersion.api.Years.Astronomical]
+      key: js.Dynamic => Key,
+      label: js.Dynamic => Label,
+      wrapClass: js.Dynamic => WrapClass,
+      place: js.Dynamic => Option[(PlaceHover.PlaceId, UiLabels.Text, PlaceHover.PlaceKind)],
+      asOf: () => Option[Years.Astronomical]
   ): Unit =
     if map != null && areasOn then
       val keep = named.map((f, _) => AreaKey + key(f).value).toSet
@@ -223,7 +231,7 @@ object MapLabels:
         val stays = keep(k)
         if !stays then
           m.el.classList.add(FadingLayer.fadeOut.value.toString)
-          dom.window.setTimeout(() => pane.remove(m), com.histmersion.web.ui.Layout.exitAnimMs.value)
+          dom.window.setTimeout(() => pane.remove(m), Layout.exitAnimMs.value)
         stays
       }
       // the names new to the map are made a slice at a time (a whole range's 1 600 at once was one long
@@ -260,7 +268,7 @@ object MapLabels:
       schedule()
 
   /** A point-only label ([[PlaceGlyph.labelMarker]]) takes part in the pass while it is on the map. */
-  def trackPoint(marker: DomMarker, key: com.histmersion.web.MapLabels.Key): Unit =
+  def trackPoint(marker: DomMarker, key: Key): Unit =
     val k = PointKey + key.value
     marker.onAdded(() =>
       entries(k) = Entry(marker.at, Entry.Rank(-1.0), None, () => inner(marker))
@@ -276,7 +284,7 @@ object MapLabels:
     * cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes over another name); without a map
     * pass it is simply shown.
     */
-  def trackEvent(key: com.histmersion.api.catalogue.Event.Id, marker: DomMarker, rank: com.histmersion.web.MapLabels.Entry.Rank, label: () => Option[dom.HTMLElement]): Unit =
+  def trackEvent(key: Event.Id, marker: DomMarker, rank: Entry.Rank, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
       entries(EventKey + key.value) = Entry(marker.at, rank, None, label, Some(() => Some(marker.el)))
@@ -284,7 +292,7 @@ object MapLabels:
       schedule()
 
   /** The event's name is gone from the map: the names it hid come back at the next pass. */
-  def untrackEvent(key: com.histmersion.api.catalogue.Event.Id): Unit =
+  def untrackEvent(key: Event.Id): Unit =
     state.remove(EventKey + key.value)
     if entries.remove(EventKey + key.value).isDefined then schedule()
 
@@ -301,7 +309,7 @@ object MapLabels:
   private def inner(m: DomMarker): Option[dom.HTMLElement] =
     Option(m.el.firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
 
-  private def areaMarker(s: LabelPlacement.Shape, label: com.histmersion.web.MapLabels.Label, wrapClass: com.histmersion.web.MapLabels.WrapClass): DomMarker =
+  private def areaMarker(s: LabelPlacement.Shape, label: Label, wrapClass: WrapClass): DomMarker =
     // hidden until the first pass has sized and placed it; it then fades and grows in
     new DomMarker(
       s.lat,
@@ -359,10 +367,10 @@ object MapLabels:
   /** One polygon's rings as (lat, lon), thinned on the way in to at most [[LabelPlacement.MaxRingPoints]] each — the
     * label needs the shape's room, not its coastline.
     */
-  private def polyRings(p: js.Dynamic): Seq[Seq[(com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)]] =
+  private def polyRings(p: js.Dynamic): Seq[Seq[(Geo.Latitude, Geo.Longitude)]] =
     p.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].toSeq.map { ring =>
       val step = math.max(1, math.ceil(ring.length.toDouble / LabelPlacement.MaxRingPoints).toInt)
-      (0 until ring.length by step).map(i => (com.histmersion.api.Geo.Latitude(ring(i)(1)), com.histmersion.api.Geo.Longitude(ring(i)(0))))
+      (0 until ring.length by step).map(i => (Geo.Latitude(ring(i)(1)), Geo.Longitude(ring(i)(0))))
     }
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.web.SourceLink
 import com.raquo.laminar.api.L.*
@@ -8,7 +9,7 @@ import com.raquo.laminar.api.L.*
 object NoteView:
 
 
-  def apply(text: com.histmersion.web.marks.NoteMarkdown.Markdown): HtmlElement =
+  def apply(text: NoteMarkdown.Markdown): HtmlElement =
     div(cls := "note-text reading", NoteMarkdown.blocks(text).map(block))
 
   private def block(b: NoteMarkdown.Block): HtmlElement = b match

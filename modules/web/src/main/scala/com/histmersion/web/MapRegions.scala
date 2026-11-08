@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,67 +7,71 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.basemap.Basemap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.MapArea
 
 /** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
   * asks for, and the dry run's sizes zoom by zoom.
   */
 object MapRegions:
   type SizesText = SizesText.T
-  object SizesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SizesText extends RefinedType[String, Pure]
   type ZoomText = ZoomText.T
-  object ZoomText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoomText extends RefinedType[String, Pure]
 
   /** What a region's download holds. */
 
   enum Content(val label: Content.Label):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
-    case Map extends Content(com.histmersion.web.MapRegions.Content.Label("the map, every layer (in place of the region downloaded now)"))
+    case Map extends Content(Content.Label("the map, every layer (in place of the region downloaded now)"))
 
     /** The relief from the extract's depth to the on-demand depth, kept beside the map until removed. */
-    case Relief extends Content(com.histmersion.web.MapRegions.Content.Label("the detailed relief, kept beside the map"))
+    case Relief extends Content(Content.Label("the detailed relief, kept beside the map"))
 
   object Content:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.web.MapRegions.Content.Name): Content = values.find(_.toString == s.value).getOrElse(Map)
+    def parse(s: Name): Content = values.find(_.toString == s.value).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
-  final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[com.histmersion.api.BBox.Text])
+  final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[BBox.Text])
 
   object RegionChoice:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
 
   val OwnBox = "own"
 
   /** The configured region first — the whole world by default, then listed once, as itself. */
   def choices(s: Basemap.Status): List[RegionChoice] =
-    val world = RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("world"), com.histmersion.web.MapRegions.RegionChoice.Label("the whole world"), Some(com.histmersion.api.BBox.Text("world")))
+    val world = RegionChoice(RegionChoice.Id("world"), RegionChoice.Label("the whole world"), Some(BBox.Text("world")))
     val configured =
       if s.bbox.value.trim.equalsIgnoreCase("world") then
         world
           .modify(_.id)
-          .setTo(com.histmersion.web.MapRegions.RegionChoice.Id("configured"))
+          .setTo(RegionChoice.Id("configured"))
           .modify(_.label)
-          .setTo(com.histmersion.web.MapRegions.RegionChoice.Label("the configured region (the whole world)"))
-      else RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("configured"), com.histmersion.web.MapRegions.RegionChoice.Label(s"the configured region (${s.bbox})"), Some(s.bbox))
-    List(configured) ++ s.regions.map(r => RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id(r.name.value), com.histmersion.web.MapRegions.RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))) ++
-      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id(OwnBox), com.histmersion.web.MapRegions.RegionChoice.Label("a box of my own"), None))
+          .setTo(RegionChoice.Label("the configured region (the whole world)"))
+      else RegionChoice(RegionChoice.Id("configured"), RegionChoice.Label(s"the configured region (${s.bbox})"), Some(s.bbox))
+    List(configured) ++ s.regions.map(r => RegionChoice(RegionChoice.Id(r.name.value), RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))) ++
+      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(RegionChoice.Id(OwnBox), RegionChoice.Label("a box of my own"), None))
 
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
     * configured one). A relief download is a focus region: the named one, or one named after its box.
     */
   def request(
-      box: com.histmersion.api.catalogue.MapArea.Bbox,
+      box: MapArea.Bbox,
       content: Content,
       named: Option[Basemap.Focus.Name],
-      maxZoom: com.histmersion.web.MapRegions.ZoomText,
+      maxZoom: ZoomText,
       dryRun: Basemap.FetchQuery.DryRun
   ): Either[Basemap.Problem, Basemap.FetchQuery] =
     val typed = box.value.trim
@@ -100,14 +105,14 @@ object MapRegions:
 
   object LayerSizes:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]
     type Zooms = Zooms.T
-    object Zooms extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Zooms extends RefinedType[String, Pure]
 
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).
     */
-  def sizes(answer: com.histmersion.web.MapRegions.SizesText): List[LayerSizes] =
+  def sizes(answer: SizesText): List[LayerSizes] =
     answer.value.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then
         acc.init :+ acc.last.copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(z => LayerSizes.Zooms(z.trim)))

@@ -1,6 +1,9 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.collection.mutable
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their summed weight, the
   * least recently used going first. Every cache the page keeps for its life is one of these — a hover card per source,
@@ -14,7 +17,7 @@ import scala.collection.mutable
 final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
     val maxWeight: BoundedCache.MaxWeight = BoundedCache.MaxWeight(Long.MaxValue),
-    weigh: V => BoundedCache.WeighResult = (_: V) => com.histmersion.web.BoundedCache.WeighResult(0L)
+    weigh: V => BoundedCache.WeighResult = (_: V) => BoundedCache.WeighResult(0L)
 ):
   require(maxEntries.value > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
@@ -22,8 +25,8 @@ final class BoundedCache[K, V](
   // `var`: the summed weight of `entries`, kept with every change
   private var total = 0L
 
-  def size: com.histmersion.web.BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(entries.size)
-  def weight: com.histmersion.web.BoundedCache.Stats.Weight = BoundedCache.Stats.Weight(total)
+  def size: BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(entries.size)
+  def weight: BoundedCache.Stats.Weight = BoundedCache.Stats.Weight(total)
   def keys: List[K] = entries.keys.toList
   def contains(k: K): Boolean = entries.contains(k)
 
@@ -53,7 +56,7 @@ final class BoundedCache[K, V](
         x
 
   /** `k`'s weight is now `w` (its value arrived); over budget, the least recently used others go. */
-  def reweigh(k: K, w: com.histmersion.web.BoundedCache.ReweighW): Unit =
+  def reweigh(k: K, w: BoundedCache.ReweighW): Unit =
     entries.get(k).foreach { (v, old) =>
       entries(k) = (v, math.max(0L, w.value))
       total += math.max(0L, w.value) - old
@@ -90,25 +93,25 @@ final class BoundedCache[K, V](
 object BoundedCache:
   /** The figures a diagnostics read reports for one cache. */
   type MaxEntries = MaxEntries.T
-  object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxEntries extends RefinedType[Int, Pure]
   type MaxWeight = MaxWeight.T
-  object MaxWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxWeight extends RefinedType[Long, Pure]
   type WeighResult = WeighResult.T
-  object WeighResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WeighResult extends RefinedType[Long, Pure]
 
   type ReweighW = ReweighW.T
-  object ReweighW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReweighW extends RefinedType[Long, Pure]
 
   final case class Stats(entries: Stats.Entries, maxEntries: Stats.MaxEntries, weight: Stats.Weight, maxWeight: Stats.MaxWeight)
 
   object Stats:
     type Entries = Entries.T
-    object Entries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Entries extends RefinedType[Int, Pure]
     type MaxEntries = MaxEntries.T
-    object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxEntries extends RefinedType[Int, Pure]
     type Weight = Weight.T
-    object Weight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Weight extends RefinedType[Long, Pure]
     type MaxWeight = MaxWeight.T
-    object MaxWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxWeight extends RefinedType[Long, Pure]
 
   def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))

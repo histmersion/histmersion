@@ -1,7 +1,9 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
+import com.histmersion.api.Plural
 
 /** The rows a newest-first list window (jobs, agent runs, approvals) shows, page by page ([[Paging]]: keyset cursors,
   * the total and the per-state counts from the server).
@@ -59,7 +61,7 @@ object ListPaging:
     */
   def heading[A](
       l: Listing[A],
-      singular: com.histmersion.api.Plural.Noun.Singular,
+      singular: Plural.Noun.Singular,
       state: Option[String],
       stateOf: A => String,
       filters: List[String] = Nil

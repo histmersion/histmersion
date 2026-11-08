@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.VocabularyCodecs.given
@@ -6,18 +7,20 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether the base map under the names is light or dark — what the map's label colours follow (`.map-tone-light` /
   * `.map-tone-dark`: dark text on a light halo, or the inverse).
   */
 enum MapTone(val wire: MapTone.Wire):
-  case Light extends MapTone(com.histmersion.web.MapTone.Wire("light"))
-  case Dark extends MapTone(com.histmersion.web.MapTone.Wire("dark"))
+  case Light extends MapTone(MapTone.Wire("light"))
+  case Dark extends MapTone(MapTone.Wire("dark"))
 
 object MapTone:
   /** Pure: `ui.tiles-tone`'s value; anything but "dark" is the light default (OSM's own tiles). */
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
 
-  def parse(s: com.histmersion.web.MapTone.Wire): MapTone = if s.value.trim.equalsIgnoreCase("dark") then Dark else Light
+  def parse(s: Wire): MapTone = if s.value.trim.equalsIgnoreCase("dark") then Dark else Light

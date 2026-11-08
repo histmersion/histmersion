@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,54 +10,65 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.{Filter, GeoHit, Hit, SearchResult}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.RowCount
+import com.histmersion.api.UiLabels
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.Markdown
+import com.histmersion.api.Paging
+import com.histmersion.api.catalogue.Year
+import com.histmersion.web.marks.RowActions
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.library.Title
 
 object ResultsList:
   type Busy = Busy.T
-  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Busy extends RefinedType[Boolean, Pure]
   type InPanel = InPanel.T
-  object InPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InPanel extends RefinedType[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
-  type HitRowInPanel = _root_.com.histmersion.web.ResultsList.InPanel
-  val HitRowInPanel: _root_.com.histmersion.web.ResultsList.InPanel.type = _root_.com.histmersion.web.ResultsList.InPanel
+  type HitRowInPanel = InPanel
+  val HitRowInPanel: InPanel.type = InPanel
 
   case class SourceRenderOpts(
-      findings: SourceRenderOpts.Findings = com.histmersion.web.ResultsList.SourceRenderOpts.Findings(0),
-      total: SourceRenderOpts.Total = com.histmersion.web.ResultsList.SourceRenderOpts.Total(0),
-      inView: SourceRenderOpts.InView = com.histmersion.web.ResultsList.SourceRenderOpts.InView(false),
+      findings: SourceRenderOpts.Findings = SourceRenderOpts.Findings(0),
+      total: SourceRenderOpts.Total = SourceRenderOpts.Total(0),
+      inView: SourceRenderOpts.InView = SourceRenderOpts.InView(false),
       params: Option[Filter] = None
   )
 
   object SourceRenderOpts:
     type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Findings extends RefinedType[Int, Pure]
     type Total = Total.T
-    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends RefinedType[Int, Pure]
     type InView = InView.T
-    object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object InView extends RefinedType[Boolean, Pure]
 
   sealed private trait LastRender
   private case class LastSources(result: SearchResult, opts: SourceRenderOpts) extends LastRender
 
   private var last: Option[LastRender] = None
   private var pageHits: List[Hit] = Nil
-  private var pageTotal: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0)
+  private var pageTotal: RowCount = RowCount(0)
   private var pageParams: Option[Filter] = None
   private var pageOpts: Option[SourceRenderOpts] = None
 
   private val content = Var[List[HtmlElement]](Nil)
 
   /** How many sources the filter selects (the Sources tab's count), once answered. */
-  val total: Var[Option[com.histmersion.api.RowCount]] = Var(None)
-  private val countText = Var(com.histmersion.api.UiLabels.Text(""))
+  val total: Var[Option[RowCount]] = Var(None)
+  private val countText = Var(UiLabels.Text(""))
   private val isBusy = Var(false)
   private val isError = Var(false)
 
   /** The "show more" button's label (none while a cluster is picked or every source is shown), and whether its page is
     * on its way.
     */
-  private val moreLabel = Var(Option.empty[com.histmersion.api.UiLabels.Text])
+  private val moreLabel = Var(Option.empty[UiLabels.Text])
   private val moreLoading = Var(false)
 
   val element: HtmlElement =
@@ -87,14 +99,14 @@ object ResultsList:
       ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal.map(b => ResultsPaging.Loading(b)), () => more())
     )
 
-  def busy(on: com.histmersion.web.ResultsList.Busy): Unit =
+  def busy(on: Busy): Unit =
     isBusy.set(on.value)
     if on.value then isError.set(false)
 
-  def failed(msg: com.histmersion.web.ResultsList.Problem): Unit =
+  def failed(msg: Problem): Unit =
     isError.set(true)
     isBusy.set(false)
-    countText.set(com.histmersion.api.UiLabels.Text(if msg.value.nonEmpty then msg.value else "failed to load — retrying on the next change"))
+    countText.set(UiLabels.Text(if msg.value.nonEmpty then msg.value else "failed to load — retrying on the next change"))
 
   def renderSources(result: SearchResult, opts: SourceRenderOpts): Unit =
     last = Some(LastSources(result, opts))
@@ -109,7 +121,7 @@ object ResultsList:
     isError.set(false)
 
     countText.set(countLine())
-    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = com.histmersion.web.ResultsList.HitRowInPanel(true))))
+    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = HitRowInPanel(true))))
     moreLoading.set(false)
     moreLabel.set(nextLabel())
 
@@ -119,14 +131,14 @@ object ResultsList:
     */
   def pick(
       items: List[GeoHit],
-      title: com.histmersion.api.UiLabels.Text,
+      title: UiLabels.Text,
       onZoom: Option[() => Unit],
       others: List[(DotEntry, dom.Element => Unit)] = Nil
   ): Unit =
     // on a phone the list is a sheet at the bottom: a picked cluster must be where the reader looks
     if Viewport.narrowNow && UiState.sheet.now() == Sheet.Peek then UiState.set(UiState.sheet := Sheet.Half)()
     val bySource = scala.collection.mutable.LinkedHashMap
-      .empty[com.histmersion.api.library.Citekey, (com.histmersion.api.library.Citekey, GeoHit.Title, scala.collection.mutable.ListBuffer[GeoHit])]
+      .empty[Citekey, (Citekey, GeoHit.Title, scala.collection.mutable.ListBuffer[GeoHit])]
     items.foreach { pt =>
       val entry =
         bySource.getOrElseUpdate(pt.citekey, (pt.citekey, pt.title, scala.collection.mutable.ListBuffer.empty))
@@ -171,7 +183,7 @@ object ResultsList:
         div(cls := "ck", pickIcon(Glyphs.Name(CardIcons.GenericSource), "finding"), SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl.value),
         div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.value.nonEmpty then s" · $per" else "")),
-        div(cls := "claim", Fmt.clip(pts.head.claim.value, com.histmersion.api.Markdown.CharLimit(140))),
+        div(cls := "claim", Fmt.clip(pts.head.claim.value, Markdown.CharLimit(140))),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
           if ev.key == "Enter" || ev.key == " " then
@@ -211,30 +223,30 @@ object ResultsList:
 
   private def plural(n: Int, word: String): String = s"$n $word${if n == 1 then "" else "s"}"
 
-  private def snippetHtml(text: com.histmersion.api.UiLabels.Text): String =
+  private def snippetHtml(text: UiLabels.Text): String =
     val cleaned = text.value.replaceAll("\\s+", " ").trim
     Fmt.esc(cleaned).replaceAll("\\*\\*(.+?)\\*\\*", "<mark>$1</mark>")
 
-  private def countLine(): com.histmersion.api.UiLabels.Text =
+  private def countLine(): UiLabels.Text =
     val findings = pageOpts match
-      case Some(o) if o.inView.value => s"${Plural.count(Plural.Count(o.findings.value.toLong), com.histmersion.api.Plural.CountSingular("finding"))} in view / ${o.total} total"
-      case Some(o)                   => Plural.count(Plural.Count(o.findings.value.toLong), com.histmersion.api.Plural.CountSingular("finding")).value
+      case Some(o) if o.inView.value => s"${Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding"))} in view / ${o.total} total"
+      case Some(o)                   => Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding")).value
       case None                      => ""
     ResultsPaging.countLine(
-      com.histmersion.api.Paging.Shown(pageHits.length),
-      com.histmersion.api.Paging.Page.Total(pageTotal.value),
-      com.histmersion.api.Plural.Noun.Singular("source"),
+      Paging.Shown(pageHits.length),
+      Paging.Page.Total(pageTotal.value),
+      Plural.Noun.Singular("source"),
       extras = List(
-        com.histmersion.api.UiLabels.Text(findings),
-        ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_)))
+        UiLabels.Text(findings),
+        ResultsPaging.span(UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_)))
       )
     )
 
   /** The next page's size: the request's own limit (at least 20). */
-  private def pageSize: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(pageParams.fold(20)(p => math.max(p.limit.value, 20)))
+  private def pageSize: Paging.Limit = Paging.Limit(pageParams.fold(20)(p => math.max(p.limit.value, 20)))
 
-  private def nextLabel(): Option[com.histmersion.api.UiLabels.Text] =
-    pageParams.flatMap(_ => ResultsPaging.moreLabel(com.histmersion.api.RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value)))
+  private def nextLabel(): Option[UiLabels.Text] =
+    pageParams.flatMap(_ => ResultsPaging.moreLabel(RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value)))
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
   private def more(): Unit =
@@ -245,7 +257,7 @@ object ResultsList:
           pageTotal = r.total
           pageHits = pageHits ++ r.hits
           countText.set(countLine())
-          content.set(pageHits.map(hitRow(_, inPanel = com.histmersion.web.ResultsList.HitRowInPanel(true))))
+          content.set(pageHits.map(hitRow(_, inPanel = HitRowInPanel(true))))
           moreLoading.set(false)
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
@@ -257,7 +269,7 @@ object ResultsList:
   /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window), what it is, why it matched, and "open in a new tab".
     */
-  private[web] def hitRow(h: Hit, inPanel: com.histmersion.web.ResultsList.HitRowInPanel = com.histmersion.web.ResultsList.HitRowInPanel(false)): HtmlElement =
+  private[web] def hitRow(h: Hit, inPanel: HitRowInPanel = HitRowInPanel(false)): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
@@ -284,7 +296,7 @@ object ResultsList:
       div(cls := "meta", meta),
       src.snippet
         .filter(_.value.nonEmpty)
-        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(com.histmersion.api.UiLabels.Text(s.value)))))
+        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value)))))
         .getOrElse(emptyNode),
       if why.nonEmpty then ul(cls := "why", why.map(w => li(w.value)))
       else emptyNode,
@@ -296,11 +308,11 @@ object ResultsList:
             shownMatches.map { m =>
               val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.value).isDefined)
               li(
-                span(cls := "claim", Fmt.clip(m.claim.value, com.histmersion.api.Markdown.CharLimit(160))),
+                span(cls := "claim", Fmt.clip(m.claim.value, Markdown.CharLimit(160))),
                 Fmt.periodStr(m.periodStart, m.periodEnd).value match
                   case "" => emptyNode
                   case p  => span(cls := "p", s" $p"),
-                m.regionName.filter(_.value.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(com.histmersion.api.UiLabels.Text(r.value))}")).getOrElse(emptyNode),
+                m.regionName.filter(_.value.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}")).getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
@@ -309,9 +321,9 @@ object ResultsList:
           )
         )
       else emptyNode,
-      marks.RowActions(
-        marks.ItemRef.source(src.citekey, com.histmersion.api.library.Title(src.title.value)),
-        marks.ItemRef.Href(SourceLink.href(src.citekey)),
+      RowActions(
+        ItemRef.source(src.citekey, Title(src.title.value)),
+        ItemRef.Href(SourceLink.href(src.citekey)),
         List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
       ),
       onClick --> { ev =>
@@ -325,7 +337,7 @@ object ResultsList:
       }
     )
 
-  private def openSource(ck: com.histmersion.web.Preview.Target.Source.Citekey, inPanel: com.histmersion.web.ResultsList.InPanel): Unit =
+  private def openSource(ck: Preview.Target.Source.Citekey, inPanel: InPanel): Unit =
     if inPanel.value then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 
@@ -333,7 +345,7 @@ object ResultsList:
     val chips = UiState.activeChips()
     val causes = scala.collection.mutable.ListBuffer.empty[String]
     if UiState.inView.now() then causes += "the map viewport (\"only sources in view\" is on)"
-    causes += s"the span ${Fmt.yr(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)))} → ${Fmt.yr(UiState.to.now().map(com.histmersion.api.catalogue.Year(_)))}"
+    causes += s"the span ${Fmt.yr(UiState.from.now().map(Year(_)))} → ${Fmt.yr(UiState.to.now().map(Year(_)))}"
     if chips.nonEmpty then causes += s"${plural(chips.length, "filter")} below"
 
     div(

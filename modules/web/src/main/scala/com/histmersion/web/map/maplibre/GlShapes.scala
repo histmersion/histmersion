@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -7,6 +8,8 @@ import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.web.map.MapSurface
+import com.histmersion.web.map.ShapeFeature
 
 /** One [[ShapeSet]] as a GeoJSON source and its layers. Its features carry numeric ids (feature state needs them) and
   * their own id as `hid`; colour and visibility live in feature state, so a restyle never sends the geometry again.
@@ -37,7 +40,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
   private def times(k: Double): js.Any = js.Array("*", k, alphaExpr)
   private val notPoint = js.Array("!=", js.Array("geometry-type"), "Point")
 
-  def layerIds: List[com.histmersion.web.map.MapSurface.LayerId] =
+  def layerIds: List[MapSurface.LayerId] =
     List(
       Option.when(look.fillOpacity.value > 0)(MapSurface.LayerId(s"$sourceId-fill")),
       Some(MapSurface.LayerId(s"$sourceId-line")),
@@ -132,7 +135,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
 
   restore()
 
-  def ids: Seq[com.histmersion.web.map.ShapeFeature.Id] = drawn.keys.toSeq
+  def ids: Seq[ShapeFeature.Id] = drawn.keys.toSeq
 
   // `var`: how many times the outlines were sent (diagnostics)
   private var sent = 0
@@ -142,7 +145,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds it, a point
     * within its circle.
     */
-  def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[com.histmersion.web.map.ShapeFeature.Id] =
+  def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[ShapeFeature.Id] =
     // a shape faded out (playback's states before and after their years) answers nothing
     drawn.toSeq.reverseIterator
       .filter((_, d) => d.alpha.value > 0.05)
@@ -189,7 +192,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
           stated.foreach(k => state(drawn(k)))
         case None => restore()
 
-  def restyle(k: com.histmersion.web.map.ShapeFeature.Id, colour: com.histmersion.web.map.ShapeFeature.Colour, alpha: com.histmersion.web.map.ShapeFeature.Alpha): Unit =
+  def restyle(k: ShapeFeature.Id, colour: ShapeFeature.Colour, alpha: ShapeFeature.Alpha): Unit =
     drawn.get(k).foreach { d =>
       if d.colour != colour || d.alpha != alpha then
         d.colour = colour

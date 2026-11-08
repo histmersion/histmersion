@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 /** The arrow keys in a list: which row is chosen after ↑ or ↓. Pure. */
 object TableKeys:
@@ -12,7 +13,7 @@ object TableKeys:
   /** The row chosen after moving `delta` rows from `current` among `rows`, held at the ends; with no choice on this
     * page yet, ↓ takes the first row and ↑ the last. `None` for an empty page.
     */
-  def step(rows: List[com.histmersion.web.library.TableRow.Key], current: Option[com.histmersion.web.library.TableRow.Key], delta: Int): Option[com.histmersion.web.library.TableRow.Key] =
+  def step(rows: List[TableRow.Key], current: Option[TableRow.Key], delta: Int): Option[TableRow.Key] =
     if rows.isEmpty then None
     else
       current.map(rows.indexOf).filter(_ >= 0) match

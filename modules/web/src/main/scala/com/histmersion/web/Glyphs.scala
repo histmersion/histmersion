@@ -1,4 +1,8 @@
-package com.histmersion.web
+package com.histmersion
+package web
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker keeps the colour
   * its dot has (the period ramp, the confidence desaturation) and only its SHAPE says what it is — an event's kind
@@ -11,15 +15,15 @@ package com.histmersion.web
   */
 object Glyphs:
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtraClass extends RefinedType[String, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Svg = Svg.T
-  object Svg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Svg extends RefinedType[String, Pure]
 
   /** Name → the SVG elements of a 24×24 Lucide icon. */
-  type BadgeName = _root_.com.histmersion.web.Glyphs.Name
-  val BadgeName: _root_.com.histmersion.web.Glyphs.Name.type = _root_.com.histmersion.web.Glyphs.Name
+  type BadgeName = Name
+  val BadgeName: Name.type = Name
 
   private[web] val inner: Map[String, String] = Map(
     "activity" -> """<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />""",
@@ -81,7 +85,7 @@ object Glyphs:
   /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour `currentColor`), or empty
     * for an unknown name.
     */
-  def svg(name: com.histmersion.web.Glyphs.Name, extraClass: com.histmersion.web.Glyphs.ExtraClass = com.histmersion.web.Glyphs.ExtraClass("")): com.histmersion.web.Glyphs.Svg =
+  def svg(name: Name, extraClass: ExtraClass = ExtraClass("")): Svg =
     Svg(inner.get(name.value).fold("") { body =>
       val cls = if extraClass.value.isEmpty then "glyph" else s"glyph $extraClass"
       s"""<svg class="$cls" viewBox="0 0 24 24" aria-hidden="true" focusable="false">$body</svg>"""
@@ -91,12 +95,12 @@ object Glyphs:
     * light ink — so a white line stays readable on a pale period colour. Two strokes, no CSS filter: thousands of
     * markers draw it. Empty for an unknown name.
     */
-  def badge(name: com.histmersion.web.Glyphs.BadgeName): com.histmersion.web.Glyphs.Svg = Svg(badges.getOrElseUpdate(name.value, badgeOf(name)))
+  def badge(name: BadgeName): Svg = Svg(badges.getOrElseUpdate(name.value, badgeOf(name)))
 
   // one string per icon, built once: thousands of markers share it
   private val badges = scala.collection.mutable.HashMap.empty[String, String]
 
-  private def badgeOf(name: com.histmersion.web.Glyphs.Name): String =
+  private def badgeOf(name: Name): String =
     inner.get(name.value).fold("") { body =>
       s"""<svg class="glyph glyph--badge" viewBox="0 0 24 24" aria-hidden="true" focusable="false">""" +
         s"""<g class="glyph-halo">$body</g><g class="glyph-ink">$body</g></svg>"""

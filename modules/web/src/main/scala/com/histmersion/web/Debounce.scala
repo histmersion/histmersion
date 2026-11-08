@@ -1,8 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Runs `f` once the calls have stopped for `quietMs`, with the latest arguments — for work too heavy to repeat while a
   * drag goes on (a whole range's boundaries: megabytes per answer), where [[Throttle]] would still fire every interval.
@@ -30,9 +33,9 @@ final class Debounce[A](
 
 object Debounce:
   type QuietMs = QuietMs.T
-  object QuietMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QuietMs extends RefinedType[Int, Pure]
   type Delay = Delay.T
-  object Delay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Delay extends RefinedType[Double, Pure]
   type TimerId = TimerId.T
-  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimerId extends RefinedType[Int, Pure]
 

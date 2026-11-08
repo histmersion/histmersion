@@ -1,8 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import org.scalajs.dom.window
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Wording
 
 /** The page being shown, from the address bar: [[Route.parse]] of the path, kept in step with back/forward. Moving
   * between the web UI's pages changes the address without reloading (the map, the filters and the open windows stay);
@@ -81,29 +84,29 @@ object Router:
       case Some(r) => go(r, search = Pages.UrlQuery(search))
       case None    => window.location.assign(href)
 
-  private val titleBus = EventBus[(Route, com.histmersion.api.UiLabels.Text)]()
+  private val titleBus = EventBus[(Route, UiLabels.Text)]()
 
   /** An item's own title, once its page or window has read it: the page's heading follows it. */
-  def titles: EventStream[(Route, com.histmersion.api.UiLabels.Text)] = titleBus.events
+  def titles: EventStream[(Route, UiLabels.Text)] = titleBus.events
 
   /** The page's title in the browser's tab: the page's name; an item's own title once it is known. */
-  def retitle(r: Route, t: com.histmersion.api.UiLabels.Text): Unit =
+  def retitle(r: Route, t: UiLabels.Text): Unit =
     if current.now() == r then dom.document.title = s"$t · Histmersion"
     titleBus.emit(r -> t)
 
   /** A page's name, before its content has said a better one. */
-  def title(r: Route): com.histmersion.api.UiLabels.Text = r match
-    case Route.Explore     => com.histmersion.api.UiLabels.Text("Explore")
-    case Route.Library(s)  => if s == LibrarySection.Sources then com.histmersion.api.UiLabels.Text("Library") else com.histmersion.api.UiLabels.Text(s.label.value)
-    case Route.Research(s) => if s == ResearchSection.Overview then com.histmersion.api.UiLabels.Text("Research") else s.label
-    case Route.Activity(t) => com.histmersion.api.UiLabels.Text(t.label)
+  def title(r: Route): UiLabels.Text = r match
+    case Route.Explore     => UiLabels.Text("Explore")
+    case Route.Library(s)  => if s == LibrarySection.Sources then UiLabels.Text("Library") else UiLabels.Text(s.label.value)
+    case Route.Research(s) => if s == ResearchSection.Overview then UiLabels.Text("Research") else s.label
+    case Route.Activity(t) => UiLabels.Text(t.label)
     case Route.Settings(s) => s.label
-    case Route.Setup       => com.histmersion.api.UiLabels.Text("Set up Histmersion")
-    case Route.Goal(slug)  => com.histmersion.api.UiLabels.Text(s"Goal · ${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(slug.value))}")
-    case Route.Run(_)      => com.histmersion.api.UiLabels.Text("Agent run")
-    case Route.Manager(id) => com.histmersion.api.UiLabels.Text(com.histmersion.api.Wording.manager(com.histmersion.api.Wording.ManagerId(id.value)))
-    case Route.Job(_)      => com.histmersion.api.UiLabels.Text("Background job")
-    case Route.Place(_)    => com.histmersion.api.UiLabels.Text("Place")
-    case Route.Event(_)    => com.histmersion.api.UiLabels.Text("Event")
-    case Route.Source(_)   => com.histmersion.api.UiLabels.Text("Source")
-    case Route.Article(_)  => com.histmersion.api.UiLabels.Text("Article")
+    case Route.Setup       => UiLabels.Text("Set up Histmersion")
+    case Route.Goal(slug)  => UiLabels.Text(s"Goal · ${Wording.humanize(Wording.Id(slug.value))}")
+    case Route.Run(_)      => UiLabels.Text("Agent run")
+    case Route.Manager(id) => UiLabels.Text(Wording.manager(Wording.ManagerId(id.value)))
+    case Route.Job(_)      => UiLabels.Text("Background job")
+    case Route.Place(_)    => UiLabels.Text("Place")
+    case Route.Event(_)    => UiLabels.Text("Event")
+    case Route.Source(_)   => UiLabels.Text("Source")
+    case Route.Article(_)  => UiLabels.Text("Article")

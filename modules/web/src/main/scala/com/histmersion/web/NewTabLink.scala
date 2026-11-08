@@ -1,17 +1,20 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The "open in a new tab" action of a list row or a detail. */
 object NewTabLink:
   type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Href extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
 
-  def apply(href0: com.histmersion.web.NewTabLink.Href, what: com.histmersion.web.NewTabLink.Label): HtmlElement =
+  def apply(href0: Href, what: Label): HtmlElement =
     a(
       cls := "btn btn--bare btn--icon btn--sm new-tab",
       href := href0.value,

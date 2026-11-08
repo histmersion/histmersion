@@ -1,9 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.Years
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** ONE layer of points of one kind (docs/map-layers.md): its points in the map's one cluster layer, diffed by key on
   * every [[show]] — new ones fade in, gone ones leave their bubble at once and fade out where they were drawn alone,
@@ -11,10 +15,10 @@ import scala.scalajs.js
   * a click or Enter activates it; switched off, it keeps the last content and shows it again when switched on. The same
   * code for every kind.
   */
-final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[com.histmersion.api.Years.Astronomical]):
+final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[Years.Astronomical]):
   // `var`s: what was shown last (shown again when the layer is switched back on), whether it is on, and
   // its points in the cluster layer, by key
-  private var last: Option[(Iterable[A], (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical))] = None
+  private var last: Option[(Iterable[A], (Years.Astronomical, Years.Astronomical))] = None
   private var attached = false
   private val live = scala.collection.mutable.LinkedHashMap.empty[PointSet.Key, Dot]
   private val prefix = s"${kind.dot.ordinal}|"
@@ -36,11 +40,11 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     val (lat, lon) = kind.at(d.item.asInstanceOf[A])
     LatLon(lat, lon)
 
-  private def dotSpan(span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): (Dot.SpanPart1, Dot.SpanPart2) =
+  private def dotSpan(span: (Years.Astronomical, Years.Astronomical)): (Dot.SpanPart1, Dot.SpanPart2) =
     (Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))
 
   /** Show `items` for `span` (remembered while the layer is off). */
-  def show(items: Iterable[A], span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def show(items: Iterable[A], span: (Years.Astronomical, Years.Astronomical)): Unit =
     last = Some((items, span))
     if attached then
       val next = scala.collection.mutable.LinkedHashMap.empty[PointSet.Key, A]
@@ -78,7 +82,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       if reshaped then set().refresh() else if restyled then set().recolour()
 
   /** A point's marker, as the cluster layer draws it alone. */
-  def render(d: Dot, fadeIn: com.histmersion.web.PointLayer.FadeIn): DomMarker =
+  def render(d: Dot, fadeIn: PointLayer.FadeIn): DomMarker =
     val a = d.item.asInstanceOf[A]
     val (w, h) = kind.box
     val el = DomMarker.element(
@@ -86,7 +90,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       PointMarker.html(
         kind,
         a,
-        kind.fill(a, (com.histmersion.api.Years.Astronomical(d.span._1.value), com.histmersion.api.Years.Astronomical(d.span._2.value)))
+        kind.fill(a, (Years.Astronomical(d.span._1.value), Years.Astronomical(d.span._2.value)))
       )
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
@@ -108,7 +112,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
 
 object PointLayer:
   type FadeIn = FadeIn.T
-  object FadeIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FadeIn extends RefinedType[Boolean, Pure]
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
 
-  private[web] def same[A](d: Dot, a: A, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && d.item == a
+  private[web] def same[A](d: Dot, a: A, span: (Years.Astronomical, Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && d.item == a

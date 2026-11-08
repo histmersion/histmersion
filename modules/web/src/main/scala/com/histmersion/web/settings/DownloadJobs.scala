@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.automation.ListFilters
@@ -7,6 +8,15 @@ import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.basemap.BasemapJobKinds
+import com.histmersion.api.exchange.ExchangeJobKinds
+import com.histmersion.api.catalogue.PlacesJobKinds
+import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.Paging
 
 /** The downloads under way — the background map, the gazetteers, the event catalogues, the pictures — each with Pause,
   * Resume and Cancel in place (the jobs' own controls). Asked again while one is going.
@@ -15,30 +25,30 @@ object DownloadJobs:
 
   /** The job kinds Data and downloads follows. */
   type ConfigureMs = ConfigureMs.T
-  object ConfigureMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConfigureMs extends RefinedType[Int, Pure]
 
   val Kinds: List[JobInfo.Kind] =
     List(
-      com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind,
-      com.histmersion.api.exchange.ExchangeJobKinds.Init.kind,
-      com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind,
-      com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind,
-      com.histmersion.api.media.ImportJobKinds.MediaImport.kind
+      BasemapJobKinds.BasemapFetch.kind,
+      ExchangeJobKinds.Init.kind,
+      PlacesJobKinds.PlacesFetch.kind,
+      EventsJobKinds.EventsImport.kind,
+      ImportJobKinds.MediaImport.kind
     )
 
   private val jobs = Var(List.empty[JobInfo])
   private var mounted = false
   private var pollMs = 1500.0
 
-  def configure(ms: com.histmersion.web.settings.DownloadJobs.ConfigureMs): Unit = pollMs = math.max(500, ms.value).toDouble
+  def configure(ms: ConfigureMs): Unit = pollMs = math.max(500, ms.value).toDouble
 
   /** Read again now (after a download was started here). */
   def refresh(): Unit =
     ApiClient
-      .jobs(ListFilters.JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("running"), com.histmersion.api.jobs.JobState.Wire("queued"), com.histmersion.api.jobs.JobState.Wire("paused")), kind = Kinds), Some(com.histmersion.api.Paging.Limit(20)))
+      .jobs(ListFilters.JobFilter(status = List(JobState.Wire("running"), JobState.Wire("queued"), JobState.Wire("paused")), kind = Kinds), Some(Paging.Limit(20)))
       .foreach { (js, _) =>
         jobs.set(js)
-        if mounted && js.exists(_.status != com.histmersion.api.jobs.JobState.Paused.wire) then
+        if mounted && js.exists(_.status != JobState.Paused.wire) then
           val _ = scala.scalajs.js.timers.setTimeout(pollMs)(if mounted then refresh())
       }
 
@@ -56,7 +66,7 @@ object DownloadJobs:
             cls := "activity-list download-jobs-list",
             js.map { j =>
               val e = Entry(
-                Entry.Key(s"job:${j.id}"), com.histmersion.api.automation.Activity.Entry.Kind("job"), Entry.At(j.createdAt.value), state = Entry.State(j.status.value), what = Entry.What(j.kind.value),
+                Entry.Key(s"job:${j.id}"), Entry.Kind("job"), Entry.At(j.createdAt.value), state = Entry.State(j.status.value), what = Entry.What(j.kind.value),
                 text = Entry.Text(j.progress.map(_.value).getOrElse("")), job = Some(j.id)
               )
               ActivityView.row(e, () => refresh())

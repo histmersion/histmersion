@@ -1,8 +1,11 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the
   * default, the settings file, or an environment variable that wins over the file. A setting the file writes with a
@@ -10,14 +13,14 @@ import com.raquo.laminar.api.L.*
   */
 object SettingControl:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
 
-  def nameOf(key: ConfigEdit.Field.Key): com.histmersion.web.settings.SettingsForm.Item.Name =
+  def nameOf(key: ConfigEdit.Field.Key): SettingsForm.Item.Name =
     SettingsForm.Item.Name(Wording.humanize(Wording.Id(key.value.split('.').lastOption.getOrElse(key.value))))
 
-  def apply(f: ConfigEdit.Field, draft: Draft, name: Option[com.histmersion.web.settings.SettingsForm.Item.Name] = None, help: Option[com.histmersion.web.settings.SettingsForm.Item.Help] = None): HtmlElement =
+  def apply(f: ConfigEdit.Field, draft: Draft, name: Option[SettingsForm.Item.Name] = None, help: Option[SettingsForm.Item.Help] = None): HtmlElement =
     val id = "set-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")
     val locked = f.locked.isDefined
     div(
@@ -70,9 +73,9 @@ object SettingControl:
 
   /** Where the value comes from, and the way back to the default. */
   /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
-  def defaultText(kind: ConfigEdit.Field.Kind, default: Draft.Text): com.histmersion.web.settings.SettingControl.Text =
+  def defaultText(kind: ConfigEdit.Field.Kind, default: Draft.Text): Text =
     if kind.value == "flag" then Text(s"${if Draft.isOn(default) then "On" else "Off"} by default.")
-    else if default.value.isEmpty then com.histmersion.web.settings.SettingControl.Text("Default: (empty).")
+    else if default.value.isEmpty then Text("Default: (empty).")
     else Text(s"Default: $default.")
 
   private def status(f: ConfigEdit.Field, draft: Draft): HtmlElement =

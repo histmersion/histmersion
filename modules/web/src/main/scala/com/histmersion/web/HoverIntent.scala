@@ -1,7 +1,10 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
   * the pointer across twenty polygons fetches nothing and the one it rests on fetches once. `later`/`cancel` are
@@ -33,7 +36,7 @@ final class HoverIntent[K](
 
 object HoverIntent:
   type DelayMs = DelayMs.T
-  object DelayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DelayMs extends RefinedType[Int, Pure]
   type TimerId = TimerId.T
-  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimerId extends RefinedType[Int, Pure]
 

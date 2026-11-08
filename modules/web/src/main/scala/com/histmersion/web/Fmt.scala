@@ -1,37 +1,44 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{ConfidenceStyle, YearFmt, Years}
 import com.histmersion.api.library.Label
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 import com.histmersion.api.library.Confidence
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Wcag
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Markdown
 
 object Fmt:
   type PeriodText = PeriodText.T
-  object PeriodText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodText extends RefinedType[String, Pure]
   type RampPosition = RampPosition.T
-  object RampPosition extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RampPosition extends RefinedType[Double, Pure]
 
   /** Aliases of the ONE year formatter ([[YearFmt]]), kept for the many views that call them. */
 
-  type ColorT = _root_.com.histmersion.web.Fmt.RampPosition
-  val ColorT: _root_.com.histmersion.web.Fmt.RampPosition.type = _root_.com.histmersion.web.Fmt.RampPosition
+  type ColorT = RampPosition
+  val ColorT: RampPosition.type = RampPosition
   export com.histmersion.api.UiLabels.{Text as DisplayTagS}
 
-  def yr(y: com.histmersion.api.catalogue.Year): com.histmersion.api.Years.Text = com.histmersion.api.Years.Text(YearFmt(y))
+  def yr(y: Year): Years.Text = Years.Text(YearFmt(y))
 
-  def yr(y: Option[com.histmersion.api.catalogue.Year]): com.histmersion.api.Years.Text = com.histmersion.api.Years.Text(YearFmt(y))
+  def yr(y: Option[Year]): Years.Text = Years.Text(YearFmt(y))
 
-  def periodStr(a: Option[com.histmersion.api.catalogue.Year], b: Option[com.histmersion.api.catalogue.Year]): com.histmersion.web.Fmt.PeriodText = com.histmersion.web.Fmt.PeriodText(YearFmt.period(a, b))
+  def periodStr(a: Option[Year], b: Option[Year]): PeriodText = PeriodText(YearFmt.period(a, b))
 
-  def periodStr(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): com.histmersion.web.Fmt.PeriodText = periodStr(Some(a), Some(b))
+  def periodStr(a: Year, b: Year): PeriodText = periodStr(Some(a), Some(b))
 
   /** The period ramp at `t` ∈ [0,1], interpolated between the stylesheet's `--ramp-*` stops. */
-  def color(t: com.histmersion.web.Fmt.ColorT): com.histmersion.api.Wcag.Hex = colorOn(ThemeTokens.ramp, t)
+  def color(t: ColorT): Wcag.Hex = colorOn(ThemeTokens.ramp, t)
 
   /** Pure: `t` on a ramp of RGB stops, as `rgb(r,g,b)`; `""` on an empty ramp (no stylesheet). */
-  def colorOn(stops: Vector[(com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel)], t: com.histmersion.web.Fmt.RampPosition): com.histmersion.api.Wcag.Hex =
-    if stops.isEmpty then com.histmersion.api.Wcag.Hex("")
+  def colorOn(stops: Vector[(Wcag.Channel, Wcag.Channel, Wcag.Channel)], t: RampPosition): Wcag.Hex =
+    if stops.isEmpty then Wcag.Hex("")
     else
       val ct = max(0.0, min(1.0, t.value))
       val f = ct * (stops.length - 1)
@@ -39,21 +46,21 @@ object Fmt:
       val g = f - i
       val a = stops(i)
       val b = stops(min(i + 1, stops.length - 1))
-      def lerp(av: com.histmersion.api.Wcag.Channel, bv: com.histmersion.api.Wcag.Channel) = (av.value + (bv.value - av.value) * g).round.toInt
-      com.histmersion.api.Wcag.Hex(s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})")
+      def lerp(av: Wcag.Channel, bv: Wcag.Channel) = (av.value + (bv.value - av.value) * g).round.toInt
+      Wcag.Hex(s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})")
 
   /** A year a person typed ([[Years.parse]]); `None` when it is not one. */
-  def parseYear(raw: com.histmersion.api.Years.Text): Option[com.histmersion.api.catalogue.Year] = Years.parse(raw).toOption
+  def parseYear(raw: Years.Text): Option[Year] = Years.parse(raw).toOption
 
   /** Delegates to the shared [[ConfidenceStyle]], so map dots and page badges use one palette. */
-  def desaturate(rgbStr: com.histmersion.api.Wcag.Hex, confidence: Confidence): com.histmersion.api.Wcag.Hex =
-    com.histmersion.api.Wcag.Hex(ConfidenceStyle.desaturate(com.histmersion.api.ConfidenceStyle.Rgb(rgbStr.value), confidence).value)
+  def desaturate(rgbStr: Wcag.Hex, confidence: Confidence): Wcag.Hex =
+    Wcag.Hex(ConfidenceStyle.desaturate(ConfidenceStyle.Rgb(rgbStr.value), confidence).value)
 
   def worstConf(items: Iterable[Confidence]): Confidence =
     items.foldLeft(Confidence.High)((w, c) => if ConfidenceStyle.rank(c).value < ConfidenceStyle.rank(w).value then c else w)
 
-  def display(s: com.histmersion.api.UiLabels.Text): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text(Label.display(Label.Text(s.value)).value)
-  def displayTag(s: com.histmersion.web.Fmt.DisplayTagS): com.histmersion.api.UiLabels.Text = display(s)
+  def display(s: UiLabels.Text): UiLabels.Text = UiLabels.Text(Label.display(Label.Text(s.value)).value)
+  def displayTag(s: Fmt.DisplayTagS): UiLabels.Text = display(s)
 
   def esc(s: String): String =
     val sb = new StringBuilder(s.length)
@@ -69,7 +76,7 @@ object Fmt:
       i += 1
     sb.toString
 
-  def clip(text: String, maxLen: com.histmersion.api.Markdown.CharLimit): String =
+  def clip(text: String, maxLen: Markdown.CharLimit): String =
     val s = text.trim
     val limit = maxLen.value
     if s.length <= limit then s

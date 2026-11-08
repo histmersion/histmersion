@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Api, Paging, Plural}
 import com.raquo.laminar.api.L.*
@@ -8,6 +9,17 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
 import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.UiLabels
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.web.map.MapEventKind
+import com.histmersion.web.marks.RowActions
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.personal.Target
+import com.histmersion.api.personal.ItemKey
+import com.histmersion.api.library.Title
 
 /** The Places and Pictures tabs of the results: "On the map", what the map's sites and pictures layers hold in its view
   * (with what they only count there); "Everywhere", the places named by the filter's words, or every picture of the
@@ -15,33 +27,33 @@ import com.histmersion.api.catalogue.Place
   */
 object MapLists:
   type Asked = Asked.T
-  object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Asked extends RefinedType[String, Pure]
   type CountLine = CountLine.T
-  object CountLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CountLine extends RefinedType[String, Pure]
   type ListedCount = ListedCount.T
-  object ListedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ListedCount extends RefinedType[Int, Pure]
   type OnMap = OnMap.T
-  object OnMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OnMap extends RefinedType[Boolean, Pure]
   type SiteNote = SiteNote.T
-  object SiteNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SiteNote extends RefinedType[String, Pure]
   type TotalCount = TotalCount.T
-  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TotalCount extends RefinedType[Int, Pure]
 
   /** Pure: the count line — `12 places on the map`, `40 listed of 312 (zoom in to list the rest)`. */
   type PaneName = PaneName.T
-  object PaneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PaneName extends RefinedType[String, Pure]
 
-  def countLine(listed: com.histmersion.web.MapLists.ListedCount, total: com.histmersion.web.MapLists.TotalCount, one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural, onMap: com.histmersion.web.MapLists.OnMap): com.histmersion.web.MapLists.CountLine =
+  def countLine(listed: ListedCount, total: TotalCount, one: Plural.Noun.Singular, many: Plural.Noun.Plural, onMap: OnMap): CountLine =
     val where = if onMap.value then " on the map" else ""
     val count = Plural.count(Plural.CountN(total.value.toLong), one, many)
-    com.histmersion.web.MapLists.CountLine(
+    CountLine(
       if total.value <= listed.value then s"$count$where"
       else s"$count$where · $listed listed${if onMap.value then ", zoom in to list the rest" else ""}"
     )
 
   /** Pure: a site's row note — its type, its dates, or that it has none. */
-  def siteNote(p: SitePoint): com.histmersion.web.MapLists.SiteNote =
-    com.histmersion.web.MapLists.SiteNote(
+  def siteNote(p: SitePoint): SiteNote =
+    SiteNote(
       List(
         p.known.fold("site")(_.label.value),
         if p.undated.value then "date unknown"
@@ -49,8 +61,8 @@ object MapLists:
           p.period.fold("")((a, b) =>
             Fmt
               .periodStr(
-                Some(com.histmersion.api.catalogue.Year(a.value.toLong)),
-                Some(com.histmersion.api.catalogue.Year(b.value.toLong))
+                Some(Year(a.value.toLong)),
+                Some(Year(b.value.toLong))
               )
               .value
           )
@@ -82,7 +94,7 @@ object MapLists:
       MapListRow.Label(h.label.value),
       MapListRow.Note(
         List(
-          Fmt.display(com.histmersion.api.UiLabels.Text(h.kind.value)).value,
+          Fmt.display(UiLabels.Text(h.kind.value)).value,
           Fmt.periodStr(h.periodStart, h.periodEnd).value
         ).filter(_.nonEmpty).mkString(" · ")
       ),
@@ -97,26 +109,26 @@ object MapLists:
       MapListRow.Label(h.assetName.value),
       MapListRow.Note(
         List(
-          Fmt.display(com.histmersion.api.UiLabels.Text(h.kind.fold("picture")(_.value))).value,
+          Fmt.display(UiLabels.Text(h.kind.fold("picture")(_.value))).value,
           Fmt.periodStr(h.periodStart, h.periodEnd).value
         )
           .filter(_.nonEmpty)
           .mkString(" · ")
       ),
       MapListRow.Icon(Glyphs.svg(Glyphs.Name(CardIcons.Media)).value),
-      MapListRow.Href(MediaThumb.filePath(com.histmersion.api.exchange.Bundle.Asset.Uid(h.uid.value)).value),
+      MapListRow.Href(MediaThumb.filePath(Bundle.Asset.Uid(h.uid.value)).value),
       () => PointKinds.Media.open(PointKinds.Media.key(h), h, org.scalajs.dom.document.body)
     )
 
   // ── the state, following the map and the filter ───────────────────────────────────────────────────
 
-  val places: Var[MapListState] = Var(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("")))
-  val pictures: Var[MapListState] = Var(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("")))
+  val places: Var[MapListState] = Var(MapListState(Nil, MapListState.Total(0), MapListState.Note("")))
+  val pictures: Var[MapListState] = Var(MapListState(Nil, MapListState.Total(0), MapListState.Note("")))
   private val placesLatest = Latest()
   private val picturesLatest = Latest()
 
   // `var`: what the lists were last asked for everywhere (asked again only when it changed)
-  private var askedEverywhere: Option[com.histmersion.web.MapLists.Asked] = None
+  private var askedEverywhere: Option[Asked] = None
 
   /** The lists follow the map's layers as they read their tiles, the view, and the filter. */
   def follow(config: UiConfig): Unit =
@@ -125,7 +137,7 @@ object MapLists:
     MapView.mediaLayer.changed.signal.foreach(_ => if UiState.inView.now() then refresh(config))
     UiState.signal.foreach(_ => refresh(config))
     if TheMap.isUp then
-      val _ = TheMap.surface.on(com.histmersion.web.map.MapEventKind.MoveEnd)(_ =>
+      val _ = TheMap.surface.on(MapEventKind.MoveEnd)(_ =>
         if UiState.inView.now() then refresh(config)
       )
 
@@ -139,18 +151,18 @@ object MapLists:
       places.set(
         MapListState(
           sRows,
-          com.histmersion.web.MapListState.Total(sRows.size + sCounted.value),
+          MapListState.Total(sRows.size + sCounted.value),
           if UiState.layers.now()(MapLayer.Sites) then
-            com.histmersion.web.MapListState.Note(
+            MapListState.Note(
               countLine(
-                com.histmersion.web.MapLists.ListedCount(sRows.size),
-                com.histmersion.web.MapLists.TotalCount(sRows.size + sCounted.value),
-                com.histmersion.api.Plural.Noun.Singular("place"),
-                com.histmersion.api.Plural.Noun.Plural("places"),
-                onMap = com.histmersion.web.MapLists.OnMap(true)
+                ListedCount(sRows.size),
+                TotalCount(sRows.size + sCounted.value),
+                Plural.Noun.Singular("place"),
+                Plural.Noun.Plural("places"),
+                onMap = OnMap(true)
               ).value
             )
-          else com.histmersion.web.MapListState.Note("Turn on Sites under Layers to list the places on the map.")
+          else MapListState.Note("Turn on Sites under Layers to list the places on the map.")
         )
       )
       val (ms, mCounted) = MapView.mediaLayer.inViewNow()
@@ -158,23 +170,23 @@ object MapLists:
       pictures.set(
         MapListState(
           mRows,
-          com.histmersion.web.MapListState.Total(mRows.size + mCounted.value),
+          MapListState.Total(mRows.size + mCounted.value),
           if UiState.layers.now()(MapLayer.Media) then
-            com.histmersion.web.MapListState.Note(
+            MapListState.Note(
               countLine(
-                com.histmersion.web.MapLists.ListedCount(mRows.size),
-                com.histmersion.web.MapLists.TotalCount(mRows.size + mCounted.value),
-                com.histmersion.api.Plural.Noun.Singular("picture"),
-                com.histmersion.api.Plural.Noun.Plural("pictures"),
-                onMap = com.histmersion.web.MapLists.OnMap(true)
+                ListedCount(mRows.size),
+                TotalCount(mRows.size + mCounted.value),
+                Plural.Noun.Singular("picture"),
+                Plural.Noun.Plural("pictures"),
+                onMap = OnMap(true)
               ).value
             )
-          else com.histmersion.web.MapListState.Note("Turn on Media under Layers to list the pictures on the map.")
+          else MapListState.Note("Turn on Media under Layers to list the pictures on the map.")
         )
       )
     else
       val f0 = UiState.toFilter()
-      val key = com.histmersion.web.MapLists.Asked(
+      val key = Asked(
         s"${UiState.q.now()}|${f0.period}|${UiState.mediaProvider.now()}|${UiState.mediaLicense.now()}"
       )
       if !askedEverywhere.contains(key) then
@@ -195,15 +207,15 @@ object MapLists:
             places.set(
               MapListState(
                 hs.map(placeRow),
-                com.histmersion.web.MapListState.Total(hs.size),
-                com.histmersion.web.MapListState.Note(
-                  s"${countLine(com.histmersion.web.MapLists.ListedCount(hs.size), com.histmersion.web.MapLists.TotalCount(hs.size), com.histmersion.api.Plural.Noun.Singular("place"), com.histmersion.api.Plural.Noun.Plural("places"), onMap = com.histmersion.web.MapLists.OnMap(false))} named like “$words”"
+                MapListState.Total(hs.size),
+                MapListState.Note(
+                  s"${countLine(ListedCount(hs.size), TotalCount(hs.size), Plural.Noun.Singular("place"), Plural.Noun.Plural("places"), onMap = OnMap(false))} named like “$words”"
                 )
               )
             ),
-          m => places.set(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note(s"Could not list places: $m")))
+          m => places.set(MapListState(Nil, MapListState.Total(0), MapListState.Note(s"Could not list places: $m")))
         )
-      case None => places.set(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("Type words in the filters to find places by name everywhere.")))
+      case None => places.set(MapListState(Nil, MapListState.Total(0), MapListState.Note("Type words in the filters to find places by name everywhere.")))
     val f = UiState.toFilter()
     picturesLatest(
       ApiClient.mediaGeo(
@@ -221,18 +233,18 @@ object MapLists:
         pictures.set(
           MapListState(
             rows,
-            com.histmersion.web.MapListState.Total(rows.size),
-            com.histmersion.web.MapListState.Note(
-              countLine(com.histmersion.web.MapLists.ListedCount(rows.size), com.histmersion.web.MapLists.TotalCount(rows.size), com.histmersion.api.Plural.Noun.Singular("picture"), com.histmersion.api.Plural.Noun.Plural("pictures"), onMap = com.histmersion.web.MapLists.OnMap(false)).value
+            MapListState.Total(rows.size),
+            MapListState.Note(
+              countLine(ListedCount(rows.size), TotalCount(rows.size), Plural.Noun.Singular("picture"), Plural.Noun.Plural("pictures"), onMap = OnMap(false)).value
             )
           )
         )
       },
-      m => pictures.set(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note(s"Could not list pictures: $m")))
+      m => pictures.set(MapListState(Nil, MapListState.Total(0), MapListState.Note(s"Could not list pictures: $m")))
     )
 
   /** One tab's list. */
-  def pane(state: Var[MapListState], name: com.histmersion.web.MapLists.PaneName): HtmlElement =
+  def pane(state: Var[MapListState], name: PaneName): HtmlElement =
     div(
       cls := s"map-list map-list-$name",
       div(cls := "count-bar", span(cls := "count", child.text <-- state.signal.map(_.note.value))),
@@ -251,12 +263,12 @@ object MapLists:
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); r.open() } }
       ),
       Option.when(r.note.value.nonEmpty)(div(cls := "meta", r.note.value)),
-      marks.RowActions(
-        marks.ItemRef(
-          com.histmersion.api.personal.Target.item(r.kind, com.histmersion.api.personal.ItemKey(r.key.value)),
-          com.histmersion.api.library.Title(r.label.value)
+      RowActions(
+        ItemRef(
+          Target.item(r.kind, ItemKey(r.key.value)),
+          Title(r.label.value)
         ),
-        marks.ItemRef.Href(r.href.value),
+        ItemRef.Href(r.href.value),
         r.note.value
       )
     )

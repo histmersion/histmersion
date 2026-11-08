@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,9 @@ import org.scalajs.dom
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.research.Article
+import com.histmersion.api.Offset
+import com.histmersion.web.ErrorLine
+import com.histmersion.api.RowCount
 
 /** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the map's view never
   * narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both are read whenever the filter
@@ -31,7 +35,7 @@ object LibraryLists:
   def sort: LibrarySort = LibrarySort.of(UiState.librarySort.now().map(LibrarySort.Wire(_)))
 
   /** The filter the lists follow: the panel's, everywhere. */
-  def filter(): Filter = UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("bbox")))
+  def filter(): Filter = UiState.toFilter(except = Set(UiState.ToFilterExcept("bbox")))
 
   private def key(f: Filter): String = s"$f|${sort.wire.value}"
 
@@ -45,8 +49,8 @@ object LibraryLists:
     val f = filter()
     if !readFor.contains(key(f)) then
       readFor = Some(key(f))
-      readSources(f, com.histmersion.api.Offset(0))
-      readArticles(f, com.histmersion.api.Offset(0))
+      readSources(f, Offset(0))
+      readArticles(f, Offset(0))
 
   /** [[refresh]] after the filter has stopped changing (typing in the words field), as Explore's lists do. */
   def refreshSoon(): Unit =
@@ -54,28 +58,28 @@ object LibraryLists:
     timer = dom.window.setTimeout(() => refresh(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value)).value)
 
   /** Turn `section`'s list to the page starting at `offset`. */
-  def turnTo(section: LibrarySection, offset: com.histmersion.api.Offset): Unit =
+  def turnTo(section: LibrarySection, offset: Offset): Unit =
     if section == LibrarySection.Articles then readArticles(filter(), offset) else readSources(filter(), offset)
 
-  private def readSources(f: Filter, offset: com.histmersion.api.Offset): Unit =
+  private def readSources(f: Filter, offset: Offset): Unit =
     sources.update(_.copy(loading = true, error = None))
     val page = f.modify(_.sort).setTo(sort.sort).modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
     latestSources(ApiClient.sources(page))(
       r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
-      m => sources.update(_.copy(loading = false, loaded = true, error = Some(com.histmersion.web.ErrorLine.Problem(m))))
+      m => sources.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))
     )
 
-  private def readArticles(f: Filter, offset: com.histmersion.api.Offset): Unit =
+  private def readArticles(f: Filter, offset: Offset): Unit =
     articles.update(_.copy(loading = true, error = None))
     val page = f.modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
       r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
-      m => articles.update(_.copy(loading = false, loaded = true, error = Some(com.histmersion.web.ErrorLine.Problem(m))))
+      m => articles.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))
     )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */
-  def everything(): Future[com.histmersion.api.RowCount] =
+  def everything(): Future[RowCount] =
     ApiClient
-      .sources(Filter(limit = com.histmersion.api.library.Filter.Limit(1)))
-      .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = com.histmersion.api.library.Filter.Limit(1)))))
-      .map((s, a) => com.histmersion.api.RowCount(s.total.value + a.total.value))
+      .sources(Filter(limit = Filter.Limit(1)))
+      .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = Filter.Limit(1)))))
+      .map((s, a) => RowCount(s.total.value + a.total.value))

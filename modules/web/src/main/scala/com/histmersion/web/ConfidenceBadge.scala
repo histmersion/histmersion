@@ -1,17 +1,20 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{ConfidenceStyle, HtmlAtoms}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.library.Confidence
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The confidence mark: the shared icon plus the colour the map's dots use for that level ([[ConfidenceStyle]]),
   * labelled for screen readers and on hover.
   */
 object ConfidenceBadge:
   type Html = Html.T
-  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Html extends RefinedType[String, Pure]
 
   def apply(c: Confidence): HtmlElement =
     span(
@@ -34,4 +37,4 @@ object ConfidenceBadge:
     )
 
   /** As an HTML string, for map popups — the server's markup, from [[HtmlAtoms]]. */
-  def html(c: Confidence): com.histmersion.web.ConfidenceBadge.Html = Html(HtmlAtoms.confidenceBadge(c))
+  def html(c: Confidence): Html = Html(HtmlAtoms.confidenceBadge(c))

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,12 +10,13 @@ import org.scalajs.dom.document
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.UiLabels
 
 object WindowManager:
   private case class WinState(
       id: Int,
       key: WindowKey,
-      title: com.histmersion.api.UiLabels.Text,
+      title: UiLabels.Text,
       x: Double,
       y: Double,
       w: Double,
@@ -128,7 +130,7 @@ object WindowManager:
   /** The title of `key`'s window, once its content knows a better one than [[WindowKey.initialTitle]]: an item's own
     * title, never its identifier (which the title's tooltip keeps).
     */
-  def retitle(key: WindowKey, title: com.histmersion.api.UiLabels.Text): Unit =
+  def retitle(key: WindowKey, title: UiLabels.Text): Unit =
     Route.ofItem(key).foreach(Router.retitle(_, title))
     shown
       .get(key)
@@ -161,7 +163,7 @@ object WindowManager:
           if contentEl != null then
             contentEl.innerHTML = html
             val titleEl = contentEl.querySelector("h1, h2")
-            val title = if titleEl != null then com.histmersion.api.UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
+            val title = if titleEl != null then UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
             windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))
             // both handlers are delegated on the content root, which outlives its content: wire it once.
             // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
@@ -179,11 +181,11 @@ object WindowManager:
   /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE, or `None` for any
     * other href.
     */
-  private[web] def filterHash(href: String): Option[com.histmersion.web.UiState.UrlHash] =
+  private[web] def filterHash(href: String): Option[UiState.UrlHash] =
     Option(href)
       .map(_.trim)
       .filter(h => (h.startsWith("/#") || h.startsWith("#")) && h.contains("="))
-      .map(h => com.histmersion.web.UiState.UrlHash(h.dropWhile(_ != '#')))
+      .map(h => UiState.UrlHash(h.dropWhile(_ != '#')))
 
   /** In-window links open in the page — another window, a filter added — on a plain click only: with ⌘/Ctrl/Shift/Alt
     * (or the middle button, which sends no click) the browser opens the link's address in a new tab or window, as
@@ -235,7 +237,7 @@ object WindowManager:
   /** The actions of a source window: its citation graph, and the metadata editor — which asks for the API key first
     * when the server wants one and none is held.
     */
-  private def sourceActions(ck: com.histmersion.web.WindowKey.Source.Citekey): HtmlElement =
+  private def sourceActions(ck: WindowKey.Source.Citekey): HtmlElement =
     div(
       cls := "wm-actions",
       button(

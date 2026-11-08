@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.web.{ApiClient, ApiFailure}
@@ -6,31 +7,34 @@ import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ErrorLine
 
 /** The settings as the server reads its settings file, for every Settings page: read once when a page opens and again
   * after each change; and the change itself — written into the file by the server, then applied.
   */
 object SettingsStore:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type SaveLiteralConsent = SaveLiteralConsent.T
-  object SaveLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SaveLiteralConsent extends RefinedType[Boolean, Pure]
 
   private val page = Var(Option.empty[Either[Problem, ConfigEdit.Page]])
   private val result = Var(Option.empty[Either[Problem, ConfigEdit.Written]])
 
-  def current: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.Problem, ConfigEdit.Page]]] = page.signal
+  def current: Signal[Option[Either[Problem, ConfigEdit.Page]]] = page.signal
   def now: Option[ConfigEdit.Page] = page.now().flatMap(_.toOption)
 
   /** What the last change did, or why it was refused. */
-  def lastResult: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.Problem, ConfigEdit.Written]]] = result.signal
+  def lastResult: Signal[Option[Either[Problem, ConfigEdit.Written]]] = result.signal
 
   def load(): Unit =
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
 
   /** `changes` written against the version read; the page is read again either way. */
-  def save(changes: List[ConfigEdit.Change], literalConsent: com.histmersion.web.settings.SettingsStore.SaveLiteralConsent = com.histmersion.web.settings.SettingsStore.SaveLiteralConsent(false)): Future[ConfigEdit.Written] =
+  def save(changes: List[ConfigEdit.Change], literalConsent: SaveLiteralConsent = SaveLiteralConsent(false)): Future[ConfigEdit.Written] =
     val w = ConfigEdit.Write(changes, version = now.map(p => ConfigEdit.Write.Version(p.version.value)), literalConsent = ConfigEdit.Write.LiteralConsent(literalConsent.value))
     val f = ApiClient.writeSettings(w)
     f.onComplete { r =>
@@ -41,7 +45,7 @@ object SettingsStore:
 
   def clearResult(): Unit = result.set(None)
 
-  def message(e: Throwable): com.histmersion.web.settings.SettingsStore.Problem = e match
+  def message(e: Throwable): Problem = e match
     case f: ApiFailure => Problem(f.getMessage)
     case other         => Problem(Option(other.getMessage).getOrElse("the server could not be reached"))
 
@@ -57,7 +61,7 @@ object SettingsStore:
       cls := "settings-notice",
       role := "status",
       child.maybe <-- result.signal.map(_.map {
-        case Left(why) => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(why.value))
+        case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
         case Right(w)  => written(w)
       })
     )
@@ -76,7 +80,7 @@ object SettingsStore:
       ),
       Option.when(w.restart.nonEmpty)(restartLine(w)),
       w.warnings.map(x => p(cls := "settings-warning", x.value)),
-      reloadErrors.map(e => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"The server did not take the change on: $e"))),
+      reloadErrors.map(e => ErrorLine.text(ErrorLine.Problem(s"The server did not take the change on: $e"))),
       button(typ := "button", cls := "btn btn--ghost btn--sm", "Dismiss", onClick --> (_ => clearResult()))
     )
 
@@ -105,7 +109,7 @@ object SettingsStore:
             )
           ),
           child.maybe <-- restarting.signal.map(_.map {
-            case Left(why) => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(why.value))
+            case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
             case Right(m)  => span(cls := "muted", m)
           })
         )

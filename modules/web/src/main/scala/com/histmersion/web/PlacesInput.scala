@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -19,6 +20,18 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.Label
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.UiLabels
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ui.Layout
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Years
+import com.histmersion.api.Api
+import com.histmersion.api.Paging
+import com.histmersion.web.map.MapSurface
+import com.histmersion.web.map.ShapeStyle
+import com.histmersion.web.ui.ThemeTokens
+import com.histmersion.api.Geo
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *
@@ -31,16 +44,16 @@ object PlacesInput:
   val ChipTextSignalId: Pages.PlaceId.type = Pages.PlaceId
 
   /** Cached label/kind/contested for gazetteer ids. */
-  private case class KnownPlace(label: com.histmersion.api.UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean)
+  private case class KnownPlace(label: UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean)
 
   object KnownPlace:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
 
   private def knownOf(label: String, kind: String, contested: Boolean): KnownPlace =
-    KnownPlace(com.histmersion.api.UiLabels.Text(label), KnownPlace.Kind(kind), contested)
+    KnownPlace(UiLabels.Text(label), KnownPlace.Kind(kind), contested)
 
-  private val known = BoundedCache[PlaceId, KnownPlace](BoundedCache.MaxEntries(com.histmersion.web.ui.Layout.placeLabelCacheSize.value))
+  private val known = BoundedCache[PlaceId, KnownPlace](BoundedCache.MaxEntries(Layout.placeLabelCacheSize.value))
 
   /** The labels' figures, for [[Diagnostics]]. */
   def cacheStats: BoundedCache.Stats = BoundedCache.stats(known)
@@ -61,8 +74,8 @@ object PlacesInput:
       findings: Option[Int],
       contested: Boolean,
       textFallback: Boolean,
-      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
-      periodEnd: Option[com.histmersion.api.catalogue.Year] = None
+      periodStart: Option[Year] = None,
+      periodEnd: Option[Year] = None
   )
 
   private var items: List[SuggestItem] = Nil
@@ -94,7 +107,7 @@ object PlacesInput:
   private var layer: Boolean = false
   private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
-  private val drawnPlaces = scala.collection.mutable.HashMap.empty[PlaceId, (PlaceId, com.histmersion.api.UiLabels.Text, PlaceHover.PlaceKind)]
+  private val drawnPlaces = scala.collection.mutable.HashMap.empty[PlaceId, (PlaceId, UiLabels.Text, PlaceHover.PlaceKind)]
   private var previewShown = false
   private var previewId: Option[PlaceId] = None
   private var drawn: String = ""
@@ -104,18 +117,18 @@ object PlacesInput:
   private def ids(): List[PlaceId] = UiState.placeIds.now().map(PlaceId(_))
   private def texts(): List[String] = UiState.places.now()
 
-  private def fetchPlace(id: PlaceId, year: Option[com.histmersion.api.Years.Astronomical]): Future[PlaceDetail] =
-    ApiClient.place(Place.Id(id.value), year.map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value)))
+  private def fetchPlace(id: PlaceId, year: Option[Years.Astronomical]): Future[PlaceDetail] =
+    ApiClient.place(Place.Id(id.value), year.map(a => Api.AggregateQuery.AsOf(a.value)))
 
   /** The year the gazetteer is read at: the middle of the selected span. */
-  private def asOf(): Option[com.histmersion.api.Years.Astronomical] =
+  private def asOf(): Option[Years.Astronomical] =
     val f = UiState.from.now()
     val t = UiState.to.now()
     (f, t) match
       case (None, None)       => None
-      case (None, Some(b))    => Some(com.histmersion.api.Years.Astronomical(b))
-      case (Some(a), None)    => Some(com.histmersion.api.Years.Astronomical(a))
-      case (Some(a), Some(b)) => Some(com.histmersion.api.Years.Astronomical(Math.round((a.toDouble + b.toDouble) / 2)))
+      case (None, Some(b))    => Some(Years.Astronomical(b))
+      case (Some(a), None)    => Some(Years.Astronomical(a))
+      case (Some(a), Some(b)) => Some(Years.Astronomical(Math.round((a.toDouble + b.toDouble) / 2)))
 
   private def flag(contested: Boolean, label: String): Boolean =
     contested && !Option(label).getOrElse("").toLowerCase.contains("contested")
@@ -191,9 +204,9 @@ object PlacesInput:
             menuHidden.set(false)
 
         latest.onCurrent(ApiClient.places(
-          Some(com.histmersion.api.Api.Search.Text(q)),
-          asOf().map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value)),
-          Some(com.histmersion.api.Paging.Limit(uiConfig.facetSuggestions.value))
+          Some(Api.Search.Text(q)),
+          asOf().map(a => Api.AggregateQuery.AsOf(a.value)),
+          Some(Paging.Limit(uiConfig.facetSuggestions.value))
         )) {
           case Success(rows) => show(rows)
           case Failure(_)    => show(Nil)
@@ -209,28 +222,28 @@ object PlacesInput:
     * suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot.
     */
   private def pickSet: ShapeSet = TheMap.surface.shapes(
-    com.histmersion.web.map.MapSurface.ShapesId("place-pick"),
+    MapSurface.ShapesId("place-pick"),
     ShapeStyle(
-      fillOpacity = com.histmersion.web.map.ShapeStyle.FillOpacity(0.06),
-      lineWidth = com.histmersion.web.map.ShapeStyle.LineWidth(2),
-      lineOpacity = com.histmersion.web.map.ShapeStyle.LineOpacity(0.9),
-      colour = Some(com.histmersion.web.map.ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--place-pick")).value)),
-      dash = List(com.histmersion.web.map.ShapeStyle.Dash(4), com.histmersion.web.map.ShapeStyle.Dash(3)),
-      dashedLineOpacity = Some(com.histmersion.web.map.ShapeStyle.DashedLineOpacity(0.7)),
-      circleRadius = com.histmersion.web.map.ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
-      interactive = com.histmersion.web.map.ShapeStyle.Interactive(true)
+      fillOpacity = ShapeStyle.FillOpacity(0.06),
+      lineWidth = ShapeStyle.LineWidth(2),
+      lineOpacity = ShapeStyle.LineOpacity(0.9),
+      colour = Some(ShapeStyle.Colour(ThemeTokens(ThemeTokens.Name("--place-pick")).value)),
+      dash = List(ShapeStyle.Dash(4), ShapeStyle.Dash(3)),
+      dashedLineOpacity = Some(ShapeStyle.DashedLineOpacity(0.7)),
+      circleRadius = ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
+      interactive = ShapeStyle.Interactive(true)
     )
   )
   private def previewSet: ShapeSet = TheMap.surface.shapes(
-    com.histmersion.web.map.MapSurface.ShapesId("place-preview"),
+    MapSurface.ShapesId("place-preview"),
     ShapeStyle(
-      fillOpacity = com.histmersion.web.map.ShapeStyle.FillOpacity(0.05),
-      lineWidth = com.histmersion.web.map.ShapeStyle.LineWidth(2),
-      lineOpacity = com.histmersion.web.map.ShapeStyle.LineOpacity(0.9),
-      colour = Some(com.histmersion.web.map.ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--place-preview")).value)),
-      dash = List(com.histmersion.web.map.ShapeStyle.Dash(1), com.histmersion.web.map.ShapeStyle.Dash(2)),
-      circleRadius = com.histmersion.web.map.ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
-      interactive = com.histmersion.web.map.ShapeStyle.Interactive(true)
+      fillOpacity = ShapeStyle.FillOpacity(0.05),
+      lineWidth = ShapeStyle.LineWidth(2),
+      lineOpacity = ShapeStyle.LineOpacity(0.9),
+      colour = Some(ShapeStyle.Colour(ThemeTokens(ThemeTokens.Name("--place-preview")).value)),
+      dash = List(ShapeStyle.Dash(1), ShapeStyle.Dash(2)),
+      circleRadius = ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
+      interactive = ShapeStyle.Interactive(true)
     )
   )
 
@@ -240,19 +253,19 @@ object PlacesInput:
       d: PlaceDetail,
       geo: js.Dynamic,
       names: scala.collection.mutable.ListBuffer[DomMarker],
-      at: () => Option[com.histmersion.api.Years.Astronomical]
+      at: () => Option[Years.Astronomical]
   ): Option[ShapeFeature] =
-    drawnPlaces(id) = (id, com.histmersion.api.UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value))
+    drawnPlaces(id) = (id, UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value))
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
-    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, com.histmersion.web.PlaceGlyph.GeometryType("Point")) == PlaceGlyph.Label then
+    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, PlaceGlyph.GeometryType("Point")) == PlaceGlyph.Label then
       val c = if t == "Point" then geo.coordinates else geo.coordinates.selectDynamic("0")
       val m = PlaceGlyph.labelMarker(
-        com.histmersion.api.Geo.Latitude(c.selectDynamic("1").asInstanceOf[Double]),
-        com.histmersion.api.Geo.Longitude(c.selectDynamic("0").asInstanceOf[Double]),
-        com.histmersion.api.UiLabels.Text(d.place.label.value),
+        Geo.Latitude(c.selectDynamic("1").asInstanceOf[Double]),
+        Geo.Longitude(c.selectDynamic("0").asInstanceOf[Double]),
+        UiLabels.Text(d.place.label.value),
         d.place.kind
       )
-      PlaceHover.bind(m, id, com.histmersion.api.UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value), at)
+      PlaceHover.bind(m, id, UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value), at)
       TheMap.pane(MapStack.Pane.AreaPoints).add(m)
       names += m
       None
@@ -289,7 +302,7 @@ object PlacesInput:
             pickSet.set(shapes)
             if fit && bounds.nonEmpty then
               val all = bounds.reduceLeft(_.extend(_))
-              if all.valid then TheMap.surface.fitBounds(all, com.histmersion.web.map.MapSurface.FitBoundsPadding(20), com.histmersion.web.map.MapSurface.MaxZoom(9))
+              if all.valid then TheMap.surface.fitBounds(all, MapSurface.FitBoundsPadding(20), MapSurface.MaxZoom(9))
         }
 
   // ── public API ─────────────────────────────────────────────────────────────
@@ -308,10 +321,10 @@ object PlacesInput:
           chips.zipWithIndex.map { case ((key, label, contested, isText), idx) =>
             if isText then
               Chip(
-                com.histmersion.web.Chip.Text(label),
-                prefix = Some(com.histmersion.web.Chip.Prefix("text: ")),
-                extraCls = com.histmersion.web.Chip.ExtraClass("place place-text"),
-                tip = Some(com.histmersion.web.Chip.Tip("matched as text against the finding's region name")),
+                Chip.Text(label),
+                prefix = Some(Chip.Prefix("text: ")),
+                extraCls = Chip.ExtraClass("place place-text"),
+                tip = Some(Chip.Tip("matched as text against the finding's region name")),
                 remove = Some { () =>
                   // text chips come after gaz chips; compute text index
                   removeTextAt(idx - ids().length)
@@ -320,10 +333,10 @@ object PlacesInput:
               )
             else
               Chip(
-                com.histmersion.web.Chip.Text(label),
-                extraCls = com.histmersion.web.Chip.ExtraClass(s"place${if contested then " contested-chip" else ""}"),
+                Chip.Text(label),
+                extraCls = Chip.ExtraClass(s"place${if contested then " contested-chip" else ""}"),
                 mods = List[Modifier[HtmlElement]](
-                  placeCard(PlaceId(key), com.histmersion.api.UiLabels.Text(label)),
+                  placeCard(PlaceId(key), UiLabels.Text(label)),
                   if flag(contested, label) then span(cls := "contested", title := "disputed extent", " (contested)")
                   else emptyNode
                 ),
@@ -418,7 +431,7 @@ object PlacesInput:
               val findingsText = it.findings match
                 case Some(n) if n > 0 => s"$n finding${if n != 1 then "s" else ""}"
                 case _                => "no findings"
-              val detail = List(Fmt.display(com.histmersion.api.UiLabels.Text(it.kind)).value, findingsText, period.value)
+              val detail = List(Fmt.display(UiLabels.Text(it.kind)).value, findingsText, period.value)
                 .filter(_.nonEmpty)
                 .mkString(" · ")
               li(
@@ -437,7 +450,7 @@ object PlacesInput:
                 onMouseDown.preventDefault --> { _ => pick(it) },
                 onMouseOver --> { _ =>
                   activeIdx = i; activeVar.set(i)
-                  if it.id.nonEmpty then PlacesInput.preview(PlaceId(it.id), asOf())
+                  if it.id.nonEmpty then preview(PlaceId(it.id), asOf())
                 }
               )
           }
@@ -447,8 +460,8 @@ object PlacesInput:
       onMountCallback { _ =>
         layer = TheMap.isUp
         if layer then
-          PlaceHover.shapes(com.histmersion.web.PlaceHover.ShapeSetName("place-pick"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
-          PlaceHover.shapes(com.histmersion.web.PlaceHover.ShapeSetName("place-preview"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
+          PlaceHover.shapes(PlaceHover.ShapeSetName("place-pick"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
+          PlaceHover.shapes(PlaceHover.ShapeSetName("place-preview"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
         draw(fit = true)
 
         // Subscribe to UiState changes
@@ -472,7 +485,7 @@ object PlacesInput:
 
   /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id clears it.
     */
-  def preview(id: PlaceId, asOfYear: Option[com.histmersion.api.Years.Astronomical]): Unit =
+  def preview(id: PlaceId, asOfYear: Option[Years.Astronomical]): Unit =
     if !layer then ()
     else
       val wasShowing = previewId.contains(id) && previewShown
@@ -492,7 +505,7 @@ object PlacesInput:
                 drawPlace(id, d, geo, previewNames, () => effectiveAsOf).map(_.modify(_.dashed).setTo(ShapeFeature.Dashed(true))).toList
               )
               previewShown = true
-              GeoBounds.ofGeometry(geo).filter(_.valid).foreach(bb => TheMap.surface.fitBounds(bb, com.histmersion.web.map.MapSurface.FitBoundsPadding(20), com.histmersion.web.map.MapSurface.MaxZoom(9)))
+              GeoBounds.ofGeometry(geo).filter(_.valid).foreach(bb => TheMap.surface.fitBounds(bb, MapSurface.FitBoundsPadding(20), MapSurface.MaxZoom(9)))
             }
         }
 
@@ -500,14 +513,14 @@ object PlacesInput:
   private var chosenOnMap = false
 
   /** Remember what a gazetteer id is called, so its chip reads as a name the moment it appears. */
-  def remember(id: PlaceId, label: com.histmersion.api.UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean = false): Unit =
+  def remember(id: PlaceId, label: UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean = false): Unit =
     if label.value.trim.nonEmpty then learn(id, KnownPlace(label, kind, contested))
 
   /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the box above sets, so
     * the lists narrow to it and its descendants and its chip appears — or, when it already is chosen, it is unchosen.
     * Returns whether it is chosen now.
     */
-  def toggleFromMap(id: PlaceId, label: com.histmersion.api.UiLabels.Text, kind: PlaceHover.PlaceKind): Boolean =
+  def toggleFromMap(id: PlaceId, label: UiLabels.Text, kind: PlaceHover.PlaceKind): Boolean =
     remember(id, label, KnownPlace.Kind(kind.value), known.get(id).exists(_.contested))
     chosenOnMap = true
     UiState.togglePlace(UiState.TogglePlaceId(id.value))
@@ -526,9 +539,9 @@ object PlacesInput:
             val id = PlaceId(raw)
             ensureKnown(id)
             Chip(
-              com.histmersion.web.Chip.Text(chipText(id, describe).value),
-              prefix = Some(com.histmersion.web.Chip.Prefix("place: ")),
-              extraCls = com.histmersion.web.Chip.ExtraClass("place"),
+              Chip.Text(chipText(id, describe).value),
+              prefix = Some(Chip.Prefix("place: ")),
+              extraCls = Chip.ExtraClass("place"),
               remove = Some { () =>
                 val _ = UiState.togglePlace(UiState.TogglePlaceId(id.value))
               },
@@ -541,7 +554,7 @@ object PlacesInput:
   /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card, a click or Enter
     * pins it so its links can be followed.
     */
-  private def placeCard(id: PlaceId, label: com.histmersion.api.UiLabels.Text): Modifier[HtmlElement] =
+  private def placeCard(id: PlaceId, label: UiLabels.Text): Modifier[HtmlElement] =
     List(
       dataAttr("place") := id.value,
       tabIndex := 0,
@@ -551,19 +564,19 @@ object PlacesInput:
     )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
-  def labelOf(id: PlaceId): com.histmersion.api.UiLabels.Text =
-    known.get(id).map(_.label).getOrElse(com.histmersion.api.UiLabels.Text(id.value))
+  def labelOf(id: PlaceId): UiLabels.Text =
+    known.get(id).map(_.label).getOrElse(UiLabels.Text(id.value))
 
   /** The (label, kind) of a place this page has seen, if any. */
-  def describe(id: PlaceId): Option[(com.histmersion.api.UiLabels.Text, com.histmersion.web.PlacesInput.KnownPlace.Kind)] = known.get(id).map(k => (k.label, k.kind))
+  def describe(id: PlaceId): Option[(UiLabels.Text, KnownPlace.Kind)] = known.get(id).map(k => (k.label, k.kind))
 
   /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"), NEVER its id: while
     * the label is still being fetched, "…".
     */
-  def chipText(id: PlaceId, lookup: PlaceId => Option[(com.histmersion.api.UiLabels.Text, com.histmersion.web.PlacesInput.KnownPlace.Kind)]): com.histmersion.api.UiLabels.Text =
-    lookup(id).fold(com.histmersion.api.UiLabels.Text("…"))((label, kind) =>
+  def chipText(id: PlaceId, lookup: PlaceId => Option[(UiLabels.Text, KnownPlace.Kind)]): UiLabels.Text =
+    lookup(id).fold(UiLabels.Text("…"))((label, kind) =>
       if kind.value.trim.isEmpty then label
-      else com.histmersion.api.UiLabels.Text(s"${label.value} (${Label.display(Label.Text(kind.value)).value})")
+      else UiLabels.Text(s"${label.value} (${Label.display(Label.Text(kind.value)).value})")
     )
 
   /** Fetch the label of a chosen place the page has not seen (one from a link or a restored state). */
@@ -578,7 +591,7 @@ object PlacesInput:
   private val fetching = scala.collection.mutable.Set.empty[PlaceId]
 
   /** A chip's text for a chosen place, following what the page learns about it ([[chipText]]). */
-  def chipTextSignal(id: PlaceId): Signal[com.histmersion.api.UiLabels.Text] =
+  def chipTextSignal(id: PlaceId): Signal[UiLabels.Text] =
     ensureKnown(id)
     knownVersion.signal.map(_ => chipText(id, describe))
 

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.VectorStyle
@@ -7,6 +8,8 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"). `Readable` and `Physical` are the two vector
   * styles drawn from the server's own extracts ([[BaseMaps]]); `Standard`, `Muted` and `Dark` the ONLINE raster maps —
@@ -16,29 +19,29 @@ import scala.scalajs.js
 enum BaseMap(
     val wire: BaseMap.Wire,
     val label: BaseMap.Label,
-    val vector: Option[com.histmersion.web.map.VectorStyle],
+    val vector: Option[VectorStyle],
     val url: Option[BaseMap.Url]
 ):
-  case Readable extends BaseMap(com.histmersion.web.BaseMap.Wire("readable"), com.histmersion.web.BaseMap.Label("Readable"), Some(com.histmersion.web.map.VectorStyle.Readable), None)
-  case Physical extends BaseMap(com.histmersion.web.BaseMap.Wire("physical"), com.histmersion.web.BaseMap.Label("Physical"), Some(com.histmersion.web.map.VectorStyle.Physical), None)
-  case Standard extends BaseMap(com.histmersion.web.BaseMap.Wire("standard"), com.histmersion.web.BaseMap.Label("Standard (online)"), None, None)
+  case Readable extends BaseMap(BaseMap.Wire("readable"), BaseMap.Label("Readable"), Some(VectorStyle.Readable), None)
+  case Physical extends BaseMap(BaseMap.Wire("physical"), BaseMap.Label("Physical"), Some(VectorStyle.Physical), None)
+  case Standard extends BaseMap(BaseMap.Wire("standard"), BaseMap.Label("Standard (online)"), None, None)
   case Muted
-      extends BaseMap(com.histmersion.web.BaseMap.Wire("muted"), com.histmersion.web.BaseMap.Label("Muted (online)"), None, Some(com.histmersion.web.BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")))
-  case Dark extends BaseMap(com.histmersion.web.BaseMap.Wire("dark"), com.histmersion.web.BaseMap.Label("Dark (online)"), None, None)
+      extends BaseMap(BaseMap.Wire("muted"), BaseMap.Label("Muted (online)"), None, Some(BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")))
+  case Dark extends BaseMap(BaseMap.Wire("dark"), BaseMap.Label("Dark (online)"), None, None)
 
   def online: Boolean = vector.isEmpty
 
 object BaseMap:
   /** A kept choice; `terrain` is what a browser kept for the local map before the two styles: Readable. */
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
 
 
-  def fromWire(s: com.histmersion.web.BaseMap.Wire): Option[BaseMap] =
+  def fromWire(s: Wire): Option[BaseMap] =
     val w = s.value.trim.toLowerCase
     if w == "terrain" then Some(Readable) else values.find(_.wire.value == w)
 

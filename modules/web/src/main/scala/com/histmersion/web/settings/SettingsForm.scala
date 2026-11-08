@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import hearth.kindlings.optics.syntax.*
 
@@ -7,17 +8,20 @@ import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ErrorLine
 
 /** A group of settings with one Save: the changes are held until Save writes them into the settings file together (or
   * Undo drops them), then the server applies them.
   */
 object SettingsForm:
   type Intro = Intro.T
-  object Intro extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Intro extends RefinedType[String, Pure]
 
   /** One setting of the form: its key, and the name and help shown instead of reference.conf's words. */
   type ApplyTitle = ApplyTitle.T
-  object ApplyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApplyTitle extends RefinedType[String, Pure]
 
   final case class Item(
       key: Item.Key,
@@ -30,13 +34,13 @@ object SettingsForm:
     type Key = ConfigEdit.Field.Key
     val Key: ConfigEdit.Field.Key.type = ConfigEdit.Field.Key
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Help = Help.T
-    object Help extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Help extends RefinedType[String, Pure]
     type Fallback = Fallback.T
-    object Fallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fallback extends RefinedType[String, Pure]
 
-  def apply(title: com.histmersion.web.settings.SettingsForm.ApplyTitle, intro: Option[com.histmersion.web.settings.SettingsForm.Intro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
+  def apply(title: ApplyTitle, intro: Option[Intro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
     val draft = Draft()
     sectionTag(
       cls := "settings-card",
@@ -49,7 +53,7 @@ object SettingsForm:
         cls := "settings-card-body",
         children <-- SettingsStore.current.map {
           case None           => List(p(cls := "muted", "Loading…"))
-          case Some(Left(m))  => List(com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m")))
+          case Some(Left(m))  => List(ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m")))
           case Some(Right(p)) =>
             items.flatMap(i =>
               p.field(i.key)

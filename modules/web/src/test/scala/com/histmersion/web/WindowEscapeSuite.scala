@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 /** #887: Escape closed no window anywhere. It closes the focused window, else the topmost one showing — and only a bare
   * Escape that no field, dropdown, lightbox or drawer took first. The pure parts of [[WindowManager.installKeys]]; the

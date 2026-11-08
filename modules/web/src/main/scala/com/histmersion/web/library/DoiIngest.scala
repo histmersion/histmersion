@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 /** "Add by DOI": what a person types — a DOI, a doi.org link, `arxiv:<id>` or a bare arXiv id — as the ingest the
   * server is asked for. The web UI asks the LEGAL open-access chain only, always: the server's configuration may allow
@@ -6,16 +7,17 @@ package com.histmersion.web.library
   * server still records the source from its metadata. Pure.
   */
 import com.histmersion.api.library.Ingest
+import com.histmersion.web.ErrorLine
 object DoiIngest:
   private val DoiLink = "(?i)^(https?://)?(dx\\.)?doi\\.org/"
   private val Doi = "(?i)^10\\.\\d{4,9}/\\S+$"
   private val Arxiv = "(?i)^(arxiv:)?(\\d{4}\\.\\d{4,5}(v\\d+)?|[a-z-]+(\\.[a-z]{2})?/\\d{7}(v\\d+)?)$"
 
   /** The request for `typed`, or what is wrong with it. */
-  def request(typed: String): Either[com.histmersion.web.ErrorLine.Problem, Ingest.Request] =
+  def request(typed: String): Either[ErrorLine.Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
-    if t.isEmpty then Left(com.histmersion.web.ErrorLine.Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
-    else if t.matches(Doi) then Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
+    if t.isEmpty then Left(ErrorLine.Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
+    else if t.matches(Doi) then Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly(true)))
     else if t.matches(Arxiv) then
-      Right(Ingest.Request(id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"), legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
-    else Left(com.histmersion.web.ErrorLine.Problem(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id."))
+      Right(Ingest.Request(id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"), legalOnly = Ingest.Request.LegalOnly(true)))
+    else Left(ErrorLine.Problem(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id."))

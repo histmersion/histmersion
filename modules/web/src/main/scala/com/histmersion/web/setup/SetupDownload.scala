@@ -1,16 +1,20 @@
-package com.histmersion.web.setup
+package com.histmersion
+package web.setup
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the setup downloads when it is finished — nothing before. */
 enum SetupDownload(val label: SetupDownload.Label):
-  case Map(area: SetupDownload.Map.Area) extends SetupDownload(com.histmersion.web.setup.SetupDownload.Label("The background map"))
-  case Boundaries extends SetupDownload(com.histmersion.web.setup.SetupDownload.Label("Historical boundaries, regions and named periods"))
-  case Events extends SetupDownload(com.histmersion.web.setup.SetupDownload.Label("Volcanic eruptions, earthquakes and tsunamis"))
-  case Pictures extends SetupDownload(com.histmersion.web.setup.SetupDownload.Label("Pictures of places from Wikidata and Wikimedia Commons"))
-  case MorePlaces extends SetupDownload(com.histmersion.web.setup.SetupDownload.Label("More place names (GeoNames and Wikidata)"))
+  case Map(area: SetupDownload.Map.Area) extends SetupDownload(SetupDownload.Label("The background map"))
+  case Boundaries extends SetupDownload(SetupDownload.Label("Historical boundaries, regions and named periods"))
+  case Events extends SetupDownload(SetupDownload.Label("Volcanic eruptions, earthquakes and tsunamis"))
+  case Pictures extends SetupDownload(SetupDownload.Label("Pictures of places from Wikidata and Wikimedia Commons"))
+  case MorePlaces extends SetupDownload(SetupDownload.Label("More place names (GeoNames and Wikidata)"))
 
 object SetupDownload:
   object Map:
-    export com.histmersion.web.setup.SetupChoices.Area
+    export SetupChoices.Area
 
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

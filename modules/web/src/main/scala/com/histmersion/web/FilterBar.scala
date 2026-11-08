@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.Wording
@@ -11,6 +12,11 @@ import scala.scalajs.js
 import com.raquo.laminar.codecs.StringAsIsCodec
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.Label
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Years
 
 /** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
   * period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags and the publication
@@ -20,18 +26,18 @@ import com.histmersion.api.library.Label
   */
 object FilterBar:
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
   type StorageKey = StorageKey.T
-  object StorageKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StorageKey extends RefinedType[String, Pure]
   type StoredText = StoredText.T
-  object StoredText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StoredText extends RefinedType[String, Pure]
 
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
 
   type Folded = Folded.T
-  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Folded extends RefinedType[Boolean, Pure]
 
   final private case class ChipField(state: Field[List[String]], facet: ChipInput.Config.Field, label: ChipInput.Config.Label, placeholder: ChipInput.Config.Placeholder)
 
@@ -50,28 +56,28 @@ object FilterBar:
   private val moreOpen = Var(false)
 
   /** Whether the panel is folded to its rail (a wide screen; a phone's drawer never folds). */
-  val folded: Var[com.histmersion.web.FilterBar.Folded] = Var(com.histmersion.web.FilterBar.Folded(false))
+  val folded: Var[Folded] = Var(Folded(false))
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
   /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
     * link, say), so nothing that filters is hidden.
     */
-  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.StoredText], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
+  def moreOpenInitially(stored: Option[StoredText], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
     stored.exists(_.value == "1") || someMoreSet
 
   /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
-  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.StoredText]): Boolean = stored.exists(_.value == "1")
+  def foldedInitially(stored: Option[StoredText]): Boolean = stored.exists(_.value == "1")
 
-  private def stored(key: com.histmersion.web.FilterBar.StorageKey): Option[com.histmersion.web.FilterBar.StoredText] =
+  private def stored(key: StorageKey): Option[StoredText] =
     try Option(dom.window.localStorage.getItem(key.value)).map(StoredText(_))
     catch case _: Exception => None
 
-  private def keep(key: com.histmersion.web.FilterBar.StorageKey, on: Boolean): Unit =
+  private def keep(key: StorageKey, on: Boolean): Unit =
     try dom.window.localStorage.setItem(key.value, if on then "1" else "0")
     catch case _: Exception => ()
 
-  def setFolded(on: com.histmersion.web.FilterBar.Folded): Unit =
+  def setFolded(on: Folded): Unit =
     folded.set(on)
     keep(foldedKey, on.value)
 
@@ -84,8 +90,8 @@ object FilterBar:
       getSuggestions = prefix =>
         ApiClient
           .facets(
-            com.histmersion.api.Api.Facets.Field(c.facet.value),
-            Some(com.histmersion.api.Api.Facets.Prefix(prefix.value)),
+            Api.Facets.Field(c.facet.value),
+            Some(Api.Facets.Prefix(prefix.value)),
             UiState.toFilter(except = Set(UiState.ToFilterExcept(c.state.key.value)))
           )
           .map(_.take(config.facetSuggestions.value)),
@@ -93,7 +99,7 @@ object FilterBar:
       onPreview = v => UiState.setPreview(v.map(x => UiState.Preview(UiState.Preview.Key(c.state.key.value), UiState.Preview.Value(x.value)))),
       // a status reads as the status code: its mark and its word
       display =
-        if c.state.key == UiState.status.key then wire => ChipInput.Config.DisplayResult(Wording.statusOf(com.histmersion.api.Api.GoalQuery.Status(wire.value)))
+        if c.state.key == UiState.status.key then wire => ChipInput.Config.DisplayResult(Wording.statusOf(Api.GoalQuery.Status(wire.value)))
         else v => ChipInput.Config.DisplayResult(Label.display(Label.Text(v.value)).value),
       mark = v => Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
     )
@@ -101,7 +107,7 @@ object FilterBar:
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
   private def periodField(config: UiConfig): HtmlElement =
-    def end(name: com.histmersion.web.FilterBar.FieldName, field: Field[Option[Long]], dflt: Long, other: () => Long, valid: (Long, Long) => Boolean) =
+    def end(name: FieldName, field: Field[Option[Long]], dflt: Long, other: () => Long, valid: (Long, Long) => Boolean) =
       val bad = Var(false)
       input(
         typ := "text",
@@ -110,12 +116,12 @@ object FilterBar:
         aria.label := s"Period $name",
         inputMode := "numeric",
         aria.invalid <-- bad.signal.map(_.toString),
-        value <-- field.signal.map(v => Fmt.yr(com.histmersion.api.catalogue.Year(v.getOrElse(dflt))).value),
+        value <-- field.signal.map(v => Fmt.yr(Year(v.getOrElse(dflt))).value),
         onChange.mapToValue --> { raw =>
-          Fmt.parseYear(com.histmersion.api.Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
+          Fmt.parseYear(Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
             case Some(y) =>
               bad.set(false)
-              UiState.set(field := Some(y))(push = com.histmersion.web.UiState.SetPush(true))
+              UiState.set(field := Some(y))(push = UiState.SetPush(true))
             case None => bad.set(true)
         }
       )
@@ -125,7 +131,7 @@ object FilterBar:
       div(
         cls := "f-period-ends",
         end(
-          com.histmersion.web.FilterBar.FieldName("from"),
+          FieldName("from"),
           UiState.from,
           config.time.defaultFrom.value,
           () => UiState.to.now().getOrElse(config.time.defaultTo.value),
@@ -133,7 +139,7 @@ object FilterBar:
         ),
         span(cls := "dash", "to"),
         end(
-          com.histmersion.web.FilterBar.FieldName("to"),
+          FieldName("to"),
           UiState.to,
           config.time.defaultTo.value,
           () => UiState.from.now().getOrElse(config.time.defaultFrom.value),
@@ -163,7 +169,7 @@ object FilterBar:
       role := "search",
       aria.label := "Filters",
       // on a phone this panel is the filters drawer, and this its heading
-      MobileChrome.drawerHead(com.histmersion.web.MobileChrome.Name("filters")),
+      MobileChrome.drawerHead(MobileChrome.Name("filters")),
       // folded: the rail, which counts the active filters and opens the panel
       button(
         typ := "button",
@@ -174,7 +180,7 @@ object FilterBar:
         title := "Show the filters",
         Icon(Icon.Filter),
         child.maybe <-- active.map(n => Option.when(n.value > 0)(span(cls := "rail-count", n.toString))),
-        onClick --> (_ => setFolded(com.histmersion.web.FilterBar.Folded(false)))
+        onClick --> (_ => setFolded(Folded(false)))
       ),
       div(
         cls := "filter-body",
@@ -190,7 +196,7 @@ object FilterBar:
             aria.label := "Fold the filters",
             title := "Fold the filters to the side",
             Icon(Icon.FoldLeft),
-            onClick --> (_ => setFolded(com.histmersion.web.FilterBar.Folded(true)))
+            onClick --> (_ => setFolded(Folded(true)))
           )
         ),
         div(
@@ -202,7 +208,7 @@ object FilterBar:
             idAttr := "f-words",
             placeholder := "words in the sources",
             // the same state as the top bar's search: typing in either is typing in both
-            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> (t => UiState.setSearch(com.histmersion.api.Api.Search.Text(t))))
+            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> (t => UiState.setSearch(Api.Search.Text(t))))
           )
         ),
         div(cls := "f f-gazetteer", label(forId := "f-place-search", "Place"), PlacesInput.init(config)),

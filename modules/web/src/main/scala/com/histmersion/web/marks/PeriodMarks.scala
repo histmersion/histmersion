@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.personal.{Bookmark, Target}
@@ -10,6 +11,7 @@ import com.histmersion.web.ui.Flash
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.library.Title
 
 /** The person's own periods: years kept under a name (a bookmark of kind "period"), listed first in the timeline's
   * "Zoom to period" menu, beside the authorities' presets; and the years the timeline opens on (`ui.time.default-from`
@@ -50,7 +52,7 @@ object PeriodMarks:
         .add(
           target(from, to),
           Some(name.value.trim).filter(_.nonEmpty).map(Bookmark.Label(_)),
-          com.histmersion.api.library.Title(name.value.trim)
+          Title(name.value.trim)
         )
         .foreach(_ => Flash.say(Flash.Text(s"Kept “${name.value.trim}” in my periods.")))
 

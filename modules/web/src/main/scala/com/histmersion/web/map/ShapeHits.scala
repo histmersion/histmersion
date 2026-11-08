@@ -1,8 +1,10 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.Geo
 
 /** Which shape is under a point: pure geometry over GeoJSON, so finding what the pointer is over never depends on what
   * the library has rendered yet.
@@ -13,7 +15,7 @@ object ShapeHits:
     */
 
 
-  def contains(g: js.Dynamic, lat: com.histmersion.api.Geo.Latitude, lon: com.histmersion.api.Geo.Longitude): Boolean =
+  def contains(g: js.Dynamic, lat: Geo.Latitude, lon: Geo.Longitude): Boolean =
     if js.isUndefined(g) || g == null then false
     else
       val (la, lo) = (lat.value, lon.value)

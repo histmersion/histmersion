@@ -1,9 +1,14 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.histmersion.api.Plural
+import com.histmersion.api.library.Filter
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One controller for the list tabs that follow the global filter (Articles, Events — #1798 item 5): on a UiState
   * change it recomputes the query, skips an unchanged one, debounces, drops answers to superseded requests
@@ -24,10 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 final class FilterTab[Q, Row](
     name: FilterTab.Name,
-    singular: com.histmersion.api.Plural.Noun.Singular,
-    noun: com.histmersion.api.Plural.Noun.Plural,
+    singular: Plural.Noun.Singular,
+    noun: Plural.Noun.Plural,
     query: () => Q,
-    fetch: (Q, com.histmersion.api.library.Filter.Offset) => Future[TabPage[Row]],
+    fetch: (Q, Filter.Offset) => Future[TabPage[Row]],
     render: Row => HtmlElement,
     empty: FilterTab.Empty,
     page: ResultsPaging.PageNumber,
@@ -71,7 +76,7 @@ final class FilterTab[Q, Row](
     val q = query()
     lastQuery = Some(q)
     state.update(TabState.loading)
-    latest(fetch(q, com.histmersion.api.library.Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m))))
+    latest(fetch(q, Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m))))
 
   /** "show more": the loaded rows first, then the next page from the server. */
   def more(): Unit =
@@ -80,14 +85,14 @@ final class FilterTab[Q, Row](
       case Left(offset) =>
         val q = lastQuery.getOrElse(query())
         state.update(TabState.loading)
-        latest(fetch(q, com.histmersion.api.library.Filter.Offset(offset.value)))(
+        latest(fetch(q, Filter.Offset(offset.value)))(
           p => state.update(TabState.appended(_, p, page)),
           m => state.update(TabState.failed(_, TabState.Problem(m)))
         )
 
 object FilterTab:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Empty = Empty.T
-  object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Empty extends RefinedType[String, Pure]
 

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
@@ -11,6 +12,14 @@ import com.histmersion.api.automation.{Agents, AgentsMarkdown, ListFilters}
 import com.histmersion.api.library.{Facet, Label}
 import com.histmersion.api.research.Article
 import com.histmersion.api.UiLabels.Text
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.RowCount
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.Api
+import com.histmersion.api.jobs.JobInfo
 
 /** The embedded agent runs (docs/research-embedded-agents.md §5.3): the runs window (`GET /api/agents/runs`, filtered
   * on the server through [[UiState.runStatus]], a page at a time: [[ListPaging]]) and one window per run (`GET
@@ -22,37 +31,37 @@ object RunsView:
   /** How many runs a page lists. */
 
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
 
   val Limit = 100
 
   /** Whether the server runs agents (`/api/config`); the toolbar offers these windows only then. */
-  val enabled: Var[com.histmersion.web.RunsView.Enabled] = Var(com.histmersion.web.RunsView.Enabled(false))
+  val enabled: Var[Enabled] = Var(Enabled(false))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
   private def stateWire(status: RunInfo.Status): RunState.Wire = RunState.Wire(status.value)
 
-  def live(status: com.histmersion.api.automation.Agents.RunInfo.Status): Boolean =
+  def live(status: RunInfo.Status): Boolean =
     RunState.parse(stateWire(status)).exists(s => s == RunState.Queued || s == RunState.Running)
 
   /** The polling schedule: `None` = stop (nothing is live); a change goes back to the quick delay. */
-  def nextPoll(previous: Option[com.histmersion.web.Poll.Revision], anyLive: com.histmersion.web.Poll.LiveMode, changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
+  def nextPoll(previous: Option[Poll.Revision], anyLive: Poll.LiveMode, changed: Poll.DataChanged): Option[Poll.Revision] =
     Poll.next(previous, anyLive, changed)
 
   /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`, not the wire word
     * `waiting`.
     */
-  def stateLabel(s: RunState): com.histmersion.api.UiLabels.Text = Text(Wording.runState(s))
+  def stateLabel(s: RunState): Text = Text(Wording.runState(s))
 
   /** A pipeline as a person reads it ([[Wording.pipeline]]); its identifier stays in the tooltip. */
-  def pipelineLabel(pipeline: com.histmersion.api.automation.Agents.RunInfo.Pipeline): com.histmersion.api.UiLabels.Text =
+  def pipelineLabel(pipeline: RunInfo.Pipeline): Text =
     Pipeline.parse(Pipeline.Wire(pipeline.value)).fold(Text(Wording.humanize(Wording.Id(pipeline.value))))(p => Text(Wording.pipeline(p)))
 
   /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
-  def stateMeaning(s: RunState): com.histmersion.api.UiLabels.Text = s match
-    case RunState.Queued  => com.histmersion.api.UiLabels.Text("Waiting for a free place among the runs at once; it starts by itself.")
+  def stateMeaning(s: RunState): Text = s match
+    case RunState.Queued  => Text("Waiting for a free place among the runs at once; it starts by itself.")
     case RunState.Running => Text("Its steps are being worked on now; the run's window shows each one.")
     case RunState.Paused  =>
       Text(
@@ -61,12 +70,12 @@ object RunsView:
       )
     case RunState.WaitingApproval =>
       Text("Waits for a person to decide its approval; it holds no worker and is queued again once decided.")
-    case RunState.Done      => com.histmersion.api.UiLabels.Text("Finished every step.")
-    case RunState.Failed    => com.histmersion.api.UiLabels.Text("Ended with the error shown on its row.")
+    case RunState.Done      => Text("Finished every step.")
+    case RunState.Failed    => Text("Ended with the error shown on its row.")
     case RunState.Cancelled => Text("Stopped for good by a person, or because its manager was stopped; it does not resume.")
 
   /** [[stateLabel]] of a status as stored; an unknown one as words. */
-  def statusLabel(status: com.histmersion.api.automation.Agents.RunInfo.Status): com.histmersion.api.UiLabels.Text = RunState.parse(stateWire(status)).fold(Text(Wording.humanize(Wording.Id(status.value))))(stateLabel)
+  def statusLabel(status: RunInfo.Status): Text = RunState.parse(stateWire(status)).fold(Text(Wording.humanize(Wording.Id(status.value))))(stateLabel)
 
   /** The runs a status filter shows. */
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
@@ -85,7 +94,7 @@ object RunsView:
     )
 
   /** What each pipeline does; a tooltip on its filter chip. */
-  def pipelineMeaning(pipeline: com.histmersion.api.automation.Agents.RunInfo.Pipeline): Option[com.histmersion.api.UiLabels.Text] = pipeline.value match
+  def pipelineMeaning(pipeline: RunInfo.Pipeline): Option[Text] = pipeline.value match
     case "plan-goal" => Some(Text("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval)."))
     case "propose-articles"  => Some(Text("Proposes which articles a goal needs (an article-plan approval)."))
     case "compile-article"   => Some(Text("Writes an article draft from the corpus (an article-publish approval)."))
@@ -101,36 +110,36 @@ object RunsView:
   /** Who started a run, for a person: `ingest` is the enrichment an ingest started itself, before the enrich manager
     * took that over (16 Oct 2026); since then those runs are the manager's.
     */
-  def originLabel(origin: com.histmersion.api.automation.Agents.Origin.Wire): com.histmersion.api.UiLabels.Text = origin.value match
-    case "person"    => com.histmersion.api.UiLabels.Text("by a person")
-    case "manager"   => com.histmersion.api.UiLabels.Text("by a manager")
-    case "ingest"    => com.histmersion.api.UiLabels.Text("by an ingest (before the enrich manager)")
-    case "run"       => com.histmersion.api.UiLabels.Text("by another run")
+  def originLabel(origin: Agents.Origin.Wire): Text = origin.value match
+    case "person"    => Text("by a person")
+    case "manager"   => Text("by a manager")
+    case "ingest"    => Text("by an ingest (before the enrich manager)")
+    case "run"       => Text("by another run")
     case "scheduler" => Text("by a goal's schedule")
     case other       => Text(Label.display(Label.Text(other)).value)
 
   /** Who started a run, in a sentence; a tooltip on its filter chip. */
-  def originMeaning(origin: com.histmersion.api.automation.Agents.Origin.Wire): Option[com.histmersion.api.UiLabels.Text] = Agents.Origin.values.find(_.wire == origin).map {
-    case Agents.Origin.Person    => com.histmersion.api.UiLabels.Text("Started by a person: from this page, the CLI or an MCP tool.")
+  def originMeaning(origin: Agents.Origin.Wire): Option[Text] = Agents.Origin.values.find(_.wire == origin).map {
+    case Agents.Origin.Person    => Text("Started by a person: from this page, the CLI or an MCP tool.")
     case Agents.Origin.Scheduler =>
       Text("Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item.")
     case Agents.Origin.Run =>
       Text("Started by another run, such as a compile-article run starting the review of its article.")
     case Agents.Origin.FromIngest =>
       Text("Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over.")
-    case Agents.Origin.Manager => com.histmersion.api.UiLabels.Text("Dispatched by a process manager for one of its work items.")
+    case Agents.Origin.Manager => Text("Dispatched by a process manager for one of its work items.")
   }
 
   /** Who serves a model, for a person; a tooltip on the provider menu's options. A provider a plugin registered has no
     * meaning here.
     */
-  def providerMeaning(provider: com.histmersion.api.automation.Agents.ProviderDoctor.Provider): Option[com.histmersion.api.UiLabels.Text] = provider.value match
+  def providerMeaning(provider: Agents.ProviderDoctor.Provider): Option[Text] = provider.value match
     case "anthropic" => Some(Text("Anthropic's API, with an API key: metered, billed per token."))
     case "openai"    => Some(Text("OpenAI's API, with an API key: metered, billed per token."))
     case "local" => Some(Text("A model behind an OpenAI-compatible endpoint you run (llama.cpp, LM Studio, vLLM, Ollama)."))
     case "claude-code" =>
       Some(Text("Your own claude command-line tool on your Claude login: your plan's usage, not an API key."))
-    case "codex"    => Some(com.histmersion.api.UiLabels.Text("Your own codex command-line tool on its ChatGPT plan login."))
+    case "codex"    => Some(Text("Your own codex command-line tool on its ChatGPT plan login."))
     case "opencode" => Some(Text("The opencode command-line tool; its model is named as opencode names it (openai/…)."))
     case _          => None
 
@@ -142,7 +151,7 @@ object RunsView:
       manager: Option[ListFilters.RunFilter.Manager],
       provider: Option[ListFilters.RunFilter.Provider],
       model: Option[ListFilters.RunFilter.Model],
-      goal: Option[com.histmersion.api.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       since: Option[ListFilters.RunFilter.Since],
       until: Option[ListFilters.RunFilter.Until],
       subject: Option[ListFilters.RunFilter.Subject]
@@ -160,8 +169,8 @@ object RunsView:
       subject
     )
 
-  def counts(runs: List[RunInfo]): Map[com.histmersion.api.automation.Agents.RunInfo.Status, com.histmersion.api.RowCount] =
-    runs.groupBy(_.status).map((status, rs) => status -> com.histmersion.api.RowCount(rs.size))
+  def counts(runs: List[RunInfo]): Map[RunInfo.Status, RowCount] =
+    runs.groupBy(_.status).map((status, rs) => status -> RowCount(rs.size))
 
   /** Is any run still queued or running — anywhere (the server's counts), not just among the rows a filter shows; the
     * rows' own states when the server sent no counts.
@@ -174,17 +183,17 @@ object RunsView:
 
   /** What a person can do to a run in this state. */
   enum Action(val wire: Action.Wire, val label: Action.Label):
-    case Pause extends Action(com.histmersion.web.RunsView.Action.Wire("pause"), com.histmersion.web.RunsView.Action.Label("pause"))
-    case Resume extends Action(com.histmersion.web.RunsView.Action.Wire("resume"), com.histmersion.web.RunsView.Action.Label("resume"))
-    case Cancel extends Action(com.histmersion.web.RunsView.Action.Wire("cancel"), com.histmersion.web.RunsView.Action.Label("cancel"))
+    case Pause extends Action(Action.Wire("pause"), Action.Label("pause"))
+    case Resume extends Action(Action.Wire("resume"), Action.Label("resume"))
+    case Cancel extends Action(Action.Wire("cancel"), Action.Label("cancel"))
 
   object Action:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Label = com.histmersion.api.UiLabels.Text
-    val Label: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
+    object Wire extends RefinedType[String, Pure]
+    type Label = Text
+    val Label: Text.type = Text
 
-  def actions(status: com.histmersion.api.automation.Agents.RunInfo.Status): List[Action] = RunState.parse(stateWire(status)) match
+  def actions(status: RunInfo.Status): List[Action] = RunState.parse(stateWire(status)) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)
     case Some(RunState.Paused)                          => List(Action.Resume, Action.Cancel)
     // a run waiting for an approval goes on when the approval is decided; it can only be cancelled
@@ -205,7 +214,7 @@ object RunsView:
     )
 
   /** What a paused run's window says about its pause. An allowance pause ends by itself. */
-  def pausedText(r: RunInfo, why: com.histmersion.api.automation.Agents.PauseReason.Wire): com.histmersion.api.UiLabels.Text =
+  def pausedText(r: RunInfo, why: Agents.PauseReason.Wire): Text =
     Text(
       if why == Agents.PauseReason.Budget.wire then s"Paused: $why. Raise the budget to resume."
       else if why == Agents.PauseReason.Allowance.wire then
@@ -221,16 +230,16 @@ object RunsView:
     )
 
   /** A budget the person typed: a positive number of dollars, or nothing. */
-  def budget(s: com.histmersion.api.UiLabels.Text): Option[com.histmersion.api.automation.Agents.RunRequest.BudgetUsd] = s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
+  def budget(s: Text): Option[RunRequest.BudgetUsd] = s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
 
-  def tokens(u: Agents.Usage): com.histmersion.api.UiLabels.Text = Text(s"${u.input} in / ${u.output} out")
+  def tokens(u: Agents.Usage): Text = Text(s"${u.input} in / ${u.output} out")
 
   /** The columns of a run's steps table, in order. */
-  val StepColumns: List[com.histmersion.api.UiLabels.Text] =
+  val StepColumns: List[Text] =
     List("#", "step", "kind", "try", "status", "model", "tokens", "USD", "note").map(Text(_))
 
   /** One step's cells, each with its column's name (the label a narrow card shows). Pure. */
-  def stepCells(s: Agents.StepInfo): List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.UiLabels.Text)] =
+  def stepCells(s: Agents.StepInfo): List[(Text, Text)] =
     StepColumns.zip(
       List(
         s.seq.toString,
@@ -270,7 +279,7 @@ object RunsView:
       UiState.runManager.now().map(ListFilters.RunFilter.Manager(_)),
       UiState.runProvider.now().map(ListFilters.RunFilter.Provider(_)),
       UiState.runModel.now().map(ListFilters.RunFilter.Model(_)),
-      UiState.runGoal.now().map(com.histmersion.api.automation.Goal.Slug(_)),
+      UiState.runGoal.now().map(Goal.Slug(_)),
       UiState.runSince.now().map(ListFilters.RunFilter.Since(_)),
       UiState.runUntil.now().map(ListFilters.RunFilter.Until(_)),
       UiState.runSubject.now().map(ListFilters.RunFilter.Subject(_))
@@ -336,7 +345,7 @@ object RunsView:
             facet(Facet.Name("manager")),
             UiState.runManager,
             show = v => Wording.manager(Wording.ManagerId(v)),
-            hint = v => ManagersView.managerMeaning(com.histmersion.api.automation.Managers.ManagerInfo.Id(v)).map(_.value),
+            hint = v => ManagersView.managerMeaning(Managers.ManagerInfo.Id(v)).map(_.value),
             about = "Show only the runs one process manager dispatched."
           ),
           ListFilterBar.picker(
@@ -364,14 +373,14 @@ object RunsView:
           ListFilterBar.clearButton(filterFields)
         )
       ),
-      list.errorLine(com.histmersion.api.UiLabels.Text("Could not list runs")),
+      list.errorLine(Text("Could not list runs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded.value && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
               l,
-              com.histmersion.api.Plural.Noun.Singular("run"),
+              Plural.Noun.Singular("run"),
               filter.map(_.wire.value),
               _.status.value,
               filter.map(f => stateLabel(f).value).toList ++
@@ -407,7 +416,7 @@ object RunsView:
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.runStatus.now()))
 
   private def filterButtons: HtmlElement =
-    def btn(label: com.histmersion.api.UiLabels.Text, value: Option[RunState], count: Signal[Int]) =
+    def btn(label: Text, value: Option[RunState], count: Signal[Int]) =
       button(
         typ := "button",
         cls := "btn btn--toggle",
@@ -419,7 +428,7 @@ object RunsView:
       )
     div(
       cls := "btn-group jobs-filter",
-      btn(com.histmersion.api.UiLabels.Text("All"), None, listing.signal.map(l => ListPaging.count(l, None, _.status.value))),
+      btn(Text("All"), None, listing.signal.map(l => ListPaging.count(l, None, _.status.value))),
       RunState.values.toList.map(s =>
         btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire.value), _.status.value)))
       )
@@ -437,7 +446,7 @@ object RunsView:
   private def target(r: RunInfo): HtmlElement =
     TargetKind.parse(TargetKind.Wire(r.targetKind.value)) match
       case Some(TargetKind.Article) =>
-        com.histmersion.web.ArticleLink(Article.Slug(r.target.value), r.target.value)
+        ArticleLink(Article.Slug(r.target.value), r.target.value)
       case Some(TargetKind.Goal) =>
         WinLink(
           WindowKey.Goal(WindowKey.Goal.Slug(r.target.value)),
@@ -450,7 +459,7 @@ object RunsView:
           title := r.target.value,
           Wording.manager(Wording.ManagerId(r.target.value))
         )
-      case _ => SourceLink(com.histmersion.api.library.Citekey(r.target.value))
+      case _ => SourceLink(Citekey(r.target.value))
 
   private def row(r: RunInfo): HtmlElement =
     li(
@@ -469,7 +478,7 @@ object RunsView:
         r.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
         r.error.filter(_.value.nonEmpty).map(e => div(cls := "job-error", e.value)),
         Option.when(r.warnings.nonEmpty)(
-          div(cls := "run-warn-count muted", s"${Plural.count(Plural.CountN(r.warnings.size.toLong), com.histmersion.api.Plural.CountSingular("warning"))}")
+          div(cls := "run-warn-count muted", s"${Plural.count(Plural.CountN(r.warnings.size.toLong), Plural.CountSingular("warning"))}")
         ),
         div(
           cls := "job-meta muted",
@@ -487,7 +496,7 @@ object RunsView:
   // ── one run ─────────────────────────────────────────────────────────────────────────────────────
 
   /** One run's window. Its state is its own (several runs can be open at once). */
-  def runPane(id: com.histmersion.api.automation.Agents.RunInfo.Id): HtmlElement =
+  def runPane(id: RunInfo.Id): HtmlElement =
     val busy = Var(false)
     val raise = Var("")
     // the poll, the closed-window and stale-answer guards and the error: the list windows' controller
@@ -499,7 +508,7 @@ object RunsView:
         if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(())
     )
 
-    def refresh(changed: com.histmersion.web.Poll.DataChanged): Unit = run.refresh(changed)
+    def refresh(changed: Poll.DataChanged): Unit = run.refresh(changed)
 
     def act(a: Action): Unit =
       busy.set(true)
@@ -507,14 +516,14 @@ object RunsView:
       ApiClient
         .agentControl(
           id,
-          com.histmersion.api.Api.JobControl.Action(a.wire.value),
+          Api.JobControl.Action(a.wire.value),
           usd.map(b => RunRequest.BudgetUsd(b.value))
         )
         .onComplete { r =>
           busy.set(false)
           r.failed.foreach(e => run.failure.set(Some(PolledList.Problem(e.getMessage))))
           if r.isSuccess then raise.set("")
-          refresh(changed = com.histmersion.web.Poll.DataChanged(true))
+          refresh(changed = Poll.DataChanged(true))
         }
 
     div(
@@ -525,11 +534,11 @@ object RunsView:
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
       },
-      QueueView.ofJob(com.histmersion.api.jobs.JobInfo.Id(id.value)),
+      QueueView.ofJob(JobInfo.Id(id.value)),
       run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
         WindowManager.retitle(
           WindowKey.Run(WindowKey.Run.Id(id.value)),
-          com.histmersion.api.UiLabels.Text(s"Agent run · ${pipelineLabel(pl).value}")
+          Text(s"Agent run · ${pipelineLabel(pl).value}")
         )
       )
     )

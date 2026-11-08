@@ -1,23 +1,26 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 trait MapSurface:
   // ── the view ───────────────────────────────────────────────────────────────────────────────
-  def zoom: com.histmersion.web.map.MapSurface.Zoom
-  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom
-  def setMaxZoom(z: com.histmersion.web.map.MapSurface.MaxZoom): Unit
+  def zoom: MapSurface.Zoom
+  def maxZoom: MapSurface.MaxZoom
+  def setMaxZoom(z: MapSurface.MaxZoom): Unit
   def center: LatLon
   def bounds: GeoBounds
 
   /** The container's size, CSS pixels. */
-  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension)
-  def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit
-  def setZoom(zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(true)): Unit = setView(center, zoom, animate)
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit
-  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit
+  def size: (MapSurface.Dimension, MapSurface.Dimension)
+  def setView(at: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit
+  def setZoom(zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(true)): Unit = setView(center, zoom, animate)
+  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit
+  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit
   def project(p: LatLon): ScreenPt
   def unproject(p: ScreenPt): LatLon
 
@@ -36,10 +39,10 @@ trait MapSurface:
   def popupBody(p: Popup): Option[dom.HTMLElement] = p.element
 
   /** Locked, a person's drag, wheel, keys and pinch neither pan nor zoom it (the page's own moves still do). */
-  def setLocked(locked: com.histmersion.web.map.MapSurface.Locked): Unit = ()
+  def setLocked(locked: MapSurface.Locked): Unit = ()
 
   /** How many times a change of the container's size was taken (diagnostics). */
-  def resizeCount: com.histmersion.web.map.MapSurface.ResizeCount = com.histmersion.web.map.MapSurface.ResizeCount(0)
+  def resizeCount: MapSurface.ResizeCount = MapSurface.ResizeCount(0)
   def isMoving: Boolean
 
   /** Still, and every tile of the view drawn. */
@@ -60,11 +63,11 @@ trait MapSurface:
   /** The credits (HTML, one per source) of the base map drawn now — known once it is drawn
     * ([[MapEventKind.BaseMapReady]]); the app shows them ([[com.histmersion.web.BaseMaps]]).
     */
-  def credits: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = Nil
-  def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet
+  def credits: Seq[BaseMapSpec.Raster.Attribution] = Nil
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet
 
   /** A set made already, if it was. */
-  def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet]
+  def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet]
 
   /** The interactive shapes under `p`, topmost first. */
   def shapesAt(p: ScreenPt): Seq[ShapeHit]
@@ -72,28 +75,28 @@ trait MapSurface:
   /** The point layer `id` of the server's tiles, its features in the tiles' layer `layer`, cut down to the tiles'
     * `maxZoom` (MapLibre's 512-pixel zoom; a deeper view reads those). Made once per id.
     */
-  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles
-  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup
   def closePopups(): Unit
 
   /** The base map's names placed in the view now, their text as drawn (the regressions read it). */
-  def drawnNames: Seq[com.histmersion.web.map.MapSurface.LabelText]
+  def drawnNames: Seq[MapSurface.LabelText]
 
   /** The base map's areas drawn under a point, as `layer:kind` (the regressions check the land cover). */
-  def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId]
+  def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId]
 
   /** The base map's names placed now: their layer, text and anchor on the screen (a line's middle) — the regressions
     * measure their contrast against what lies under them.
     */
-  def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)]
+  def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)]
 
   /** A layer of the base map's style: its visibility (`visible`, `none`), `None` when the style has no such layer (the
     * regressions check what an option turns on and off).
     */
-  def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId]
+  def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId]
 
   /** How many of a base-map layer's features are drawn in the view now (0 for none, or no such layer). */
-  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount
+  def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount
 
   /** The browser's own capabilities, as the surface found them. */
   def capabilities: Capabilities
@@ -103,40 +106,40 @@ trait MapSurface:
 
 object MapSurface:
   type Dimension = Dimension.T
-  object Dimension extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dimension extends RefinedType[Double, Pure]
   type DrawnCount = DrawnCount.T
-  object DrawnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DrawnCount extends RefinedType[Int, Pure]
   type LabelText = LabelText.T
-  object LabelText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LabelText extends RefinedType[String, Pure]
   type LayerId = LayerId.T
-  object LayerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LayerId extends RefinedType[String, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxZoom extends RefinedType[Double, Pure]
   type ResizeCount = ResizeCount.T
-  object ResizeCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResizeCount extends RefinedType[Int, Pure]
   type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Zoom extends RefinedType[Double, Pure]
   type SetViewAnimate = SetViewAnimate.T
-  object SetViewAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetViewAnimate extends RefinedType[Boolean, Pure]
   type FitBoundsPadding = FitBoundsPadding.T
-  object FitBoundsPadding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FitBoundsPadding extends RefinedType[Int, Pure]
   type FitBoundsAnimate = FitBoundsAnimate.T
-  object FitBoundsAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FitBoundsAnimate extends RefinedType[Boolean, Pure]
   type PanByDx = PanByDx.T
-  object PanByDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PanByDx extends RefinedType[Double, Pure]
   type PanByDy = PanByDy.T
-  object PanByDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PanByDy extends RefinedType[Double, Pure]
   type PanByAnimate = PanByAnimate.T
-  object PanByAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PanByAnimate extends RefinedType[Boolean, Pure]
   type Locked = Locked.T
-  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Locked extends RefinedType[Boolean, Pure]
   type ShapesId = ShapesId.T
-  object ShapesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShapesId extends RefinedType[String, Pure]
   type ShapeSetId = ShapeSetId.T
-  object ShapeSetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShapeSetId extends RefinedType[String, Pure]
   type PointTilesMaxZoom = PointTilesMaxZoom.T
-  object PointTilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointTilesMaxZoom extends RefinedType[Int, Pure]
   type PopupHtml = PopupHtml.T
-  object PopupHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PopupHtml extends RefinedType[String, Pure]
   type PopupCls = PopupCls.T
-  object PopupCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PopupCls extends RefinedType[String, Pure]

@@ -1,24 +1,29 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.library.{Hit, SearchHit}
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
 
 class TableRowSuite extends munit.FunSuite:
 
   private def hit(authors: List[String]) =
     Hit(
       SearchHit(
-        com.histmersion.api.library.Citekey("cline2014_year"),
-        com.histmersion.api.library.Title("1177 B.C."),
-        (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
+        Citekey("cline2014_year"),
+        Title("1177 B.C."),
+        (Some(2014)).map(Year.apply),
         Source.Status.Current,
         Nil,
-        List(com.histmersion.api.library.Source.Regions("levant")),
-        Some(com.histmersion.api.catalogue.Year(-1250)),
-        Some(com.histmersion.api.catalogue.Year(-1100)),
+        List(Source.Regions("levant")),
+        Some(Year(-1250)),
+        Some(Year(-1100)),
         None,
-        authors = (authors).map(com.histmersion.api.library.AuthorName.apply)
+        authors = (authors).map(AuthorName.apply)
       ),
       Nil,
       Nil
@@ -29,10 +34,10 @@ class TableRowSuite extends munit.FunSuite:
     assertEquals(
       r,
       TableRow(
-        com.histmersion.web.library.TableRow.Key("cline2014_year"),
+        TableRow.Key("cline2014_year"),
         "1177 B.C.",
         "Eric H. Cline",
-        Some(com.histmersion.api.catalogue.Year(2014)),
+        Some(Year(2014)),
         Some(Source.Status.Current),
         "",
         "1250 BCE–1100 BCE",
@@ -47,12 +52,12 @@ class TableRowSuite extends munit.FunSuite:
 
   test("an article's row: its kind in words, its regions under the title, no status"):
     val r = TableRow.of(
-      Article.Summary(com.histmersion.api.research.Article.Slug("sea-peoples"), com.histmersion.api.research.Article.Title("The Sea Peoples"), com.histmersion.api.research.Article.Kind.Wire("concept"), None, Nil, List(com.histmersion.api.research.Article.Regions("eastern_mediterranean")), None, None)
+      Article.Summary(Article.Slug("sea-peoples"), Article.Title("The Sea Peoples"), Article.Kind.Wire("concept"), None, Nil, List(Article.Regions("eastern_mediterranean")), None, None)
     )
     assertEquals(
       r,
       TableRow(
-        com.histmersion.web.library.TableRow.Key("sea-peoples"),
+        TableRow.Key("sea-peoples"),
         "The Sea Peoples",
         "eastern mediterranean",
         None,

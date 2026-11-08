@@ -1,8 +1,14 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.api.instance.UiNotices
+import com.histmersion.api.catalogue.Year
 
 /** The narrow (phone) layout's own controls. There the page is the map; everything else is shown on demand:
   *   - the app bar: ☰ filters, the search box, ⏱ the timeline, and the map & tools drawer;
@@ -16,9 +22,9 @@ import org.scalajs.dom
   */
 object MobileChrome:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type SpanLabel = SpanLabel.T
-  object SpanLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpanLabel extends RefinedType[String, Pure]
 
   /** A drawer: which edge it comes from. */
 
@@ -101,7 +107,7 @@ object MobileChrome:
         // the same state as the filter bar's box: typing in either is typing in both
         controlled(
           value <-- UiState.q.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> (v => UiState.setSearch(com.histmersion.api.Api.Search.Text(v)))
+          onInput.mapToValue --> (v => UiState.setSearch(Api.Search.Text(v)))
         ),
         onKeyDown --> { e => if e.key == "Enter" then e.target.asInstanceOf[dom.HTMLElement].blur() }
       ),
@@ -123,7 +129,7 @@ object MobileChrome:
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         // the tools in that drawer: a window there has something new (Notices)
         cls("has-news") <-- Notices.anyFresh(b =>
-          b != com.histmersion.api.instance.UiNotices.Board.Approvals || RunsView.enabled.now().value
+          b != UiNotices.Board.Approvals || RunsView.enabled.now().value
         ),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools))
@@ -133,13 +139,13 @@ object MobileChrome:
   /** The span the map shows, short: `3500 BCE–500 BCE`. With the timeline folded, this is what says which time the map
     * is at.
     */
-  private def spanLabel(config: UiConfig): Signal[com.histmersion.web.MobileChrome.SpanLabel] =
+  private def spanLabel(config: UiConfig): Signal[SpanLabel] =
     UiState.from.signal.combineWith(UiState.to.signal).map { (a, b) =>
-      SpanLabel(Fmt.periodStr(com.histmersion.api.catalogue.Year(a.getOrElse(config.time.defaultFrom.value)), com.histmersion.api.catalogue.Year(b.getOrElse(config.time.defaultTo.value))).value)
+      SpanLabel(Fmt.periodStr(Year(a.getOrElse(config.time.defaultFrom.value)), Year(b.getOrElse(config.time.defaultTo.value))).value)
     }
 
   /** A drawer's heading: its name and a close button. */
-  def drawerHead(name: com.histmersion.web.MobileChrome.Name): HtmlElement =
+  def drawerHead(name: Name): HtmlElement =
     div(
       cls := "drawer-head",
       span(cls := "drawer-title", name.value),

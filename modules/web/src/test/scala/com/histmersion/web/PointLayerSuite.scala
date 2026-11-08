@@ -1,4 +1,7 @@
-package com.histmersion.web
+package com.histmersion
+package web
+
+import com.histmersion.api.Years
 
 class PointLayerSuite extends munit.FunSuite:
 
@@ -14,10 +17,10 @@ class PointLayerSuite extends munit.FunSuite:
     )
 
   test("same: the item and the span it was drawn for, again — nothing to redraw") {
-    assert(PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 1), (com.histmersion.api.Years.Astronomical(-100L), com.histmersion.api.Years.Astronomical(100L))))
+    assert(PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 1), (Years.Astronomical(-100L), Years.Astronomical(100L))))
   }
 
   test("same: a changed item or a moved span is redrawn") {
-    assert(!PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 2), (com.histmersion.api.Years.Astronomical(-100L), com.histmersion.api.Years.Astronomical(100L))))
-    assert(!PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 1), (com.histmersion.api.Years.Astronomical(-100L), com.histmersion.api.Years.Astronomical(101L))))
+    assert(!PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 2), (Years.Astronomical(-100L), Years.Astronomical(100L))))
+    assert(!PointLayer.same(dot(Item("a", 1), (Dot.SpanPart1(-100L), Dot.SpanPart2(100L))), Item("a", 1), (Years.Astronomical(-100L), Years.Astronomical(101L))))
   }

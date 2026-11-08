@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -8,6 +9,11 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Api
+import com.histmersion.api.Years
 
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
   * tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the kind and tier menus); the points
@@ -15,7 +21,7 @@ import com.histmersion.api.library.Filter
   */
 object EventMarkers:
   type Undated = Undated.T
-  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Undated extends RefinedType[Boolean, Pure]
 
   /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
     * ([[MapView]]).
@@ -33,28 +39,28 @@ object EventMarkers:
     */
   def query(
       filter: Filter,
-      tiles: (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year),
-      kind: Option[com.histmersion.api.Api.EventQuery.Kind],
-      tier: Option[com.histmersion.api.Api.EventQuery.Tier],
-      undated: com.histmersion.web.EventMarkers.Undated = com.histmersion.web.EventMarkers.Undated(false)
+      tiles: (Year, Year),
+      kind: Option[Api.EventQuery.Kind],
+      tier: Option[Api.EventQuery.Tier],
+      undated: Undated = Undated(false)
   ): TilesApi.TileQuery =
     TilesApi.TileQuery(
       TileLayer.Events.wire,
-      com.histmersion.api.catalogue.TilesApi.TileQuery.Z(0),
-      com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
-      com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
+      TilesApi.TileQuery.Z(0),
+      TilesApi.TileQuery.X(0),
+      TilesApi.TileQuery.Y(0),
       filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(Filter.Offset(0)).modify(_.sort).setTo(Filter().sort),
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
-      context = Some(com.histmersion.api.catalogue.TilesApi.TileQuery.Context(true)),
+      context = Some(TilesApi.TileQuery.Context(true)),
       undated = Option.when(undated.value)(TilesApi.TileQuery.Undated(true))
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
-  def load(tiles: (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year), span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def load(tiles: (Year, Year), span: (Years.Astronomical, Years.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(
-        query(UiState.toFilter(), tiles, UiState.eventKind.now().map(com.histmersion.api.Api.EventQuery.Kind(_)), UiState.eventTier.now().map(com.histmersion.api.Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
+        query(UiState.toFilter(), tiles, UiState.eventKind.now().map(Api.EventQuery.Kind(_)), UiState.eventTier.now().map(Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
       ),
       span
     )

@@ -1,6 +1,8 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.scalajs.js
+import com.histmersion.api.automation.Activity
 
 /** Research › Activity: ONE list of what the agents, the server and the person did, shown through one of its filter
   * chips (`show`: [[com.histmersion.api.automation.Activity.Show]]) — or one of the detailed lists it sums up (every
@@ -10,49 +12,49 @@ enum ActivityTab(
     val slug: String,
     val label: String,
     val agents: Boolean,
-    val show: Option[com.histmersion.api.automation.Activity.Show]
+    val show: Option[Activity.Show]
 ):
   case Everything
       extends ActivityTab(
         "",
         "Everything",
         agents = false,
-        Some(com.histmersion.api.automation.Activity.Show.Everything)
+        Some(Activity.Show.Everything)
       )
   case Running
       extends ActivityTab(
         "running",
         "Running now",
         agents = false,
-        Some(com.histmersion.api.automation.Activity.Show.Running)
+        Some(Activity.Show.Running)
       )
   case Agents
       extends ActivityTab(
         "agents",
         "Agent work",
         agents = true,
-        Some(com.histmersion.api.automation.Activity.Show.Agents)
+        Some(Activity.Show.Agents)
       )
   case Jobs
       extends ActivityTab(
         "jobs",
         "Background jobs",
         agents = false,
-        Some(com.histmersion.api.automation.Activity.Show.Jobs)
+        Some(Activity.Show.Jobs)
       )
   case Yours
       extends ActivityTab(
         "yours",
         "Your actions",
         agents = true,
-        Some(com.histmersion.api.automation.Activity.Show.Yours)
+        Some(Activity.Show.Yours)
       )
   case Problems
       extends ActivityTab(
         "problems",
         "Problems",
         agents = false,
-        Some(com.histmersion.api.automation.Activity.Show.Problems)
+        Some(Activity.Show.Problems)
       )
   case Runs extends ActivityTab("runs", "Every agent run", agents = true, None)
   case JobList extends ActivityTab("all-jobs", "Every background job", agents = false, None)

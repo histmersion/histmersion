@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Palette, Wording}
@@ -10,6 +11,10 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.{GraphNode, Label}
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
+import com.histmersion.api.catalogue.Year
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].
@@ -23,7 +28,7 @@ object GraphPanel:
   val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
 
-  def open(citekey: com.histmersion.web.GraphPanel.Citekey): Unit =
+  def open(citekey: Citekey): Unit =
     WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
 
   private val Depth = 2
@@ -33,7 +38,7 @@ object GraphPanel:
   /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order — typed, so a new kind is
     * a compile-time decision, not a stray string.
     */
-  def legend(g: com.histmersion.api.library.Source.Graph): (List[Source.Status], List[Edge.Kind]) =
+  def legend(g: Source.Graph): (List[Source.Status], List[Edge.Kind]) =
     val statuses = g.nodes.map(_.status.getOrElse(Source.Status.Unassessed)).toSet
     val kinds = g.links.map(l => l.kind).toSet
     (Source.Status.values.toList.filter(statuses), Edge.Kind.values.toList.filter(kinds))
@@ -41,7 +46,7 @@ object GraphPanel:
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
     */
-  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(Int, Int, Edge.Kind)] =
+  def indexLinks(g: Source.Graph): List[(Int, Int, Edge.Kind)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
 
@@ -50,14 +55,14 @@ object GraphPanel:
   private enum Load:
     case Loading
     case Failed(message: Load.Failed.Message)
-    case Loaded(g: com.histmersion.api.library.Source.Graph)
+    case Loaded(g: Source.Graph)
 
   private object Load:
     object Failed:
       type Message = Message.T
-      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Message extends RefinedType[String, Pure]
 
-  def element(citekey: com.histmersion.web.GraphPanel.Citekey): HtmlElement =
+  def element(citekey: Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
     ApiClient.graph(citekey, Some(Source.Graph.DepthCount(Depth))).onComplete {
@@ -67,7 +72,7 @@ object GraphPanel:
           .find(_.id == g.root)
           .flatMap(_.title)
           .filter(_.value.trim.nonEmpty)
-          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), com.histmersion.api.UiLabels.Text(s"Citation graph · ${t.value}")))
+          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), UiLabels.Text(s"Citation graph · ${t.value}")))
       case scala.util.Failure(e) => state.set(Load.Failed(Load.Failed.Message(e.getMessage)))
     }
     div(
@@ -82,7 +87,7 @@ object GraphPanel:
       }
     )
 
-  private def legendView(g: com.histmersion.api.library.Source.Graph): HtmlElement =
+  private def legendView(g: Source.Graph): HtmlElement =
     val (statuses, kinds) = legend(g)
     div(
       cls := "graph-legend",
@@ -116,7 +121,7 @@ object GraphPanel:
   final private case class SimNode(
       id: com.histmersion.api.library.Citekey,
       title: String,
-      year: Option[com.histmersion.api.catalogue.Year],
+      year: Option[Year],
       status: Option[Source.Status],
       depth: Int,
       var x: Double,
@@ -127,7 +132,7 @@ object GraphPanel:
   )
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
-  private def stage(g: com.histmersion.api.library.Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =
+  private def stage(g: Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =
     // the drawing area in CSS pixels — THE size: every frame reads it, so a resize re-centres
     val size = Var((0.0, 0.0))
     div(
@@ -162,7 +167,7 @@ object GraphPanel:
     * start, and world (0,0) is kept at the canvas centre.
     */
   final private class Simulation(
-      g: com.histmersion.api.library.Source.Graph,
+      g: Source.Graph,
       canvas: dom.html.Canvas,
       size: () => (Double, Double),
       hovered: Var[Option[GraphNode]]
@@ -372,12 +377,12 @@ object GraphPanel:
         ctx.fillStyle = ThemeTokens(ThemeTokens.Name(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire).value)).value
         ctx.fill()
         if on then
-          ctx.strokeStyle = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--graph-hover")).value
+          ctx.strokeStyle = ThemeTokens(ThemeTokens.Name("--graph-hover")).value
           ctx.lineWidth = 2
           ctx.stroke()
         val label = if n.title.length > GL.labelMaxLen.value then n.title.take(GL.labelTruncLen.value) + "…" else n.title
         ctx.font = if on then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = ThemeTokens(if on then com.histmersion.web.ui.ThemeTokens.Name("--graph-label-hover") else com.histmersion.web.ui.ThemeTokens.Name("--graph-label")).value
+        ctx.fillStyle = ThemeTokens(if on then ThemeTokens.Name("--graph-label-hover") else ThemeTokens.Name("--graph-label")).value
         ctx.textAlign = "center"
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()

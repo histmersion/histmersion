@@ -1,21 +1,24 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A short line saying that something happened ("Copied the link"), read out by screen readers, gone after a few
   * seconds. Mounted once by the page.
   */
 object Flash:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
 
   private val line = Var(Option.empty[String])
   // `var`: the timer that clears the line
   private var timer = 0
 
-  def say(text: com.histmersion.web.ui.Flash.Text): Unit =
+  def say(text: Text): Unit =
     line.set(Some(text.value))
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => line.set(None), 3000)

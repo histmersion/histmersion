@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -11,6 +12,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.basemap.{Basemap, BaseMapSource, BaseStyles}
 import com.histmersion.api.instance.UiConfig
+import com.histmersion.web.map.MapSurface
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *
@@ -152,7 +154,7 @@ object BaseMaps:
       ui: UiConfig,
       local: Boolean,
       soft: Boolean
-  ): (BaseMapSpec, Option[(String, Boolean)], com.histmersion.api.basemap.Basemap.Zoom) =
+  ): (BaseMapSpec, Option[(String, Boolean)], Basemap.Zoom) =
     b.vector match
       case None    => (raster(b, ui), None, Basemap.Zoom(ui.tilesMaxZoom.value))
       case Some(v) =>
@@ -221,7 +223,7 @@ object BaseMaps:
       val eb = effective(b, localOnly.now(), s)
       shown.set(eb)
       val (spec, notice, maxZoom) = plan(eb, s, prefs, config, localOnly.now(), software.now())
-      m.setMaxZoom(com.histmersion.web.map.MapSurface.MaxZoom(maxZoom.value.toDouble))
+      m.setMaxZoom(MapSurface.MaxZoom(maxZoom.value.toDouble))
       m.setBaseMap(spec)
       current = spec
       setNotice(
@@ -263,7 +265,7 @@ object BaseMaps:
   private def foldAfterMove(): Unit =
     noticeEl.foreach { box =>
       if footOpen.isEmpty && !notice.exists(_._2) then
-        MapFold.set(box, com.histmersion.web.MapFold.Open(false))
+        MapFold.set(box, MapFold.Open(false))
         dom.window.requestAnimationFrame((_: Double) => fitNotice())
     }
 
@@ -279,13 +281,13 @@ object BaseMaps:
       // reader's first pan or zoom; opened with the button it shows the notice about the past landscape too
       val open = footOpenNow(footOpen, moved, notice.exists(_._2))
       box.innerHTML = MapFold.toggleHtml(
-        com.histmersion.web.MapFold.ClassName("btn--icon map-foot-toggle"),
-        com.histmersion.web.MapFold.ControlsId("map-foot-body"),
-        if notice.nonEmpty then com.histmersion.web.MapFold.Label("about this map: its terrain and credits") else com.histmersion.web.MapFold.Label("map credits"),
-        com.histmersion.web.MapFold.InnerHtml(Icon.html(Icon.Info).value),
-        com.histmersion.web.MapFold.Open(open)
+        MapFold.ClassName("btn--icon map-foot-toggle"),
+        MapFold.ControlsId("map-foot-body"),
+        if notice.nonEmpty then MapFold.Label("about this map: its terrain and credits") else MapFold.Label("map credits"),
+        MapFold.InnerHtml(Icon.html(Icon.Info).value),
+        MapFold.Open(open)
       ).value
-      MapFold.set(box, com.histmersion.web.MapFold.Open(open))
+      MapFold.set(box, MapFold.Open(open))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not
       if keepsOsmCredit(shown.now()) then

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Ingest
+import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.UiLabels
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and the metadata the
   * endpoint takes, watch the upload, then follow the OCR job in the jobs window. The form can start from an item of the
@@ -25,33 +31,33 @@ object UploadView:
 
   final case class Draft(
       fileName: Option[Draft.FileName] = None,
-      citekey: Draft.Citekey = com.histmersion.web.UploadView.Draft.Citekey(""),
-      title: Draft.Title = com.histmersion.web.UploadView.Draft.Title(""),
+      citekey: Draft.Citekey = Draft.Citekey(""),
+      title: Draft.Title = Draft.Title(""),
       authors: List[Draft.Authors] = Nil,
-      year: Draft.Year = com.histmersion.web.UploadView.Draft.Year(""),
-      doi: Draft.Doi = com.histmersion.web.UploadView.Draft.Doi(""),
-      quality: Draft.Quality = com.histmersion.web.UploadView.Draft.Quality(false),
-      force: Draft.Force = com.histmersion.web.UploadView.Draft.Force(false),
+      year: Draft.Year = Draft.Year(""),
+      doi: Draft.Doi = Draft.Doi(""),
+      quality: Draft.Quality = Draft.Quality(false),
+      force: Draft.Force = Draft.Force(false),
       forItem: Option[Queue.QueueItem] = None
   )
 
   object Draft:
-    type FileName = com.histmersion.api.Api.FileName
-    val FileName: _root_.com.histmersion.api.Api.FileName.type = _root_.com.histmersion.api.Api.FileName
+    type FileName = Api.FileName
+    val FileName: Api.FileName.type = Api.FileName
     type Citekey = Citekey.T
-    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Citekey extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Authors extends RefinedType[String, Pure]
     type Year = Year.T
-    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Year extends RefinedType[String, Pure]
     type Doi = Doi.T
-    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Doi extends RefinedType[String, Pure]
     type Quality = Quality.T
-    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quality extends RefinedType[Boolean, Pure]
     type Force = Force.T
-    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Force extends RefinedType[Boolean, Pure]
 
   /** A form field a message belongs next to. */
   enum Field:
@@ -62,7 +68,7 @@ object UploadView:
   /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
     * reader types one); the server judges it when the upload is sent.
     */
-  def suggestCitekey(fileName: com.histmersion.api.Api.FileName): Option[com.histmersion.api.library.Citekey] =
+  def suggestCitekey(fileName: Api.FileName): Option[com.histmersion.api.library.Citekey] =
     val name = fileName.value
     val stem = name.reverse.dropWhile(_ != '.').drop(1).reverse match
       case "" => name
@@ -104,7 +110,7 @@ object UploadView:
           quality = Ingest.Params.Quality(d.quality.value),
           force = Ingest.Params.Force(d.force.value),
           title = Some(d.title.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Title(_)),
-          authors = d.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+          authors = d.authors.map(a => AuthorName(a.value)),
           year = year.toOption.flatten.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
           doi = doi.toOption.flatten.map(com.histmersion.api.library.Doi(_)),
           acquireItem = d.forItem.map(i => Ingest.Params.AcquireItem(i.id.value))
@@ -132,9 +138,9 @@ object UploadView:
     )
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
-  def itemLabel(item: Queue.QueueItem, max: Int = 110): com.histmersion.api.UiLabels.Text =
+  def itemLabel(item: Queue.QueueItem, max: Int = 110): UiLabels.Text =
     val line = item.text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
-    com.histmersion.api.UiLabels.Text(s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
+    UiLabels.Text(s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
   def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
@@ -347,11 +353,11 @@ object UploadView:
         label("authors"),
         ChipInput(
           ChipInput.Config(
-            field = com.histmersion.web.ChipInput.Config.Field("authors"),
-            label = com.histmersion.web.ChipInput.Config.Label("authors"),
-            placeholder = com.histmersion.web.ChipInput.Config.Placeholder("add an author…"),
-            debounceMs = com.histmersion.web.ChipInput.Config.DebounceMs(150),
-            getSuggestions = prefix => ApiClient.facets(com.histmersion.api.Api.Facets.Field("authors"), Some(prefix), Filter()),
+            field = ChipInput.Config.Field("authors"),
+            label = ChipInput.Config.Label("authors"),
+            placeholder = ChipInput.Config.Placeholder("add an author…"),
+            debounceMs = ChipInput.Config.DebounceMs(150),
+            getSuggestions = prefix => ApiClient.facets(Api.Facets.Field("authors"), Some(prefix), Filter()),
             onChange = vs => draft.update(_.modify(_.authors).setTo(vs.map(c => Draft.Authors(c.value))))
           ),
           authors.signal

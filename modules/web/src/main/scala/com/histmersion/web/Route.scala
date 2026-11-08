@@ -1,9 +1,12 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.HtmlAtoms
 import com.histmersion.api.automation.Queue
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be bookmarked, shared,
   * and opened in a new tab; the open windows and the filters ride along in the hash ([[UiState]]). `/source/…` and
@@ -68,35 +71,35 @@ enum Route:
 
 object Route:
   type ManagerId = ManagerId.T
-  object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ManagerId extends RefinedType[String, Pure]
   type RunId = RunId.T
-  object RunId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunId extends RefinedType[String, Pure]
 
   /** The front page of each place. */
   object Goal:
     export com.histmersion.api.automation.Goal.Slug
 
   object Source:
-    type Citekey = com.histmersion.web.Preview.Target.Source.Citekey
-    val Citekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
+    type Citekey = Preview.Target.Source.Citekey
+    val Citekey: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
 
   object Article:
     export com.histmersion.api.research.Article.Slug
 
   object Place:
-    export com.histmersion.web.Pages.{PlaceId as Id}
+    export Pages.{PlaceId as Id}
 
   object Event:
-    export com.histmersion.web.Pages.{EventId as Id}
+    export Pages.{EventId as Id}
 
   object Run:
-    export com.histmersion.web.Route.{RunId as Id}
+    export Route.{RunId as Id}
 
   object Manager:
-    export com.histmersion.web.Route.{ManagerId as Id}
+    export Route.{ManagerId as Id}
 
   object Job:
-    export com.histmersion.web.Pages.{JobId as Id}
+    export Pages.{JobId as Id}
 
   type ParsePath = String
   type LegacyPath = String
@@ -118,7 +121,7 @@ object Route:
   /** The page an address stands for; `None` for one the web UI does not know. The root and the old addresses of the
     * lists (`/acquire`, `/tasks`, `/log`, `/merge`) are [[legacy]]'s.
     */
-  def parse(path: com.histmersion.web.Route.ParsePath): Option[Route] =
+  def parse(path: ParsePath): Option[Route] =
     segments(path) match
       case List("explore")   => Some(Explore)
       case "library" :: rest =>
@@ -225,7 +228,7 @@ object Route:
     * are dropped, and the windows of single items stay open over it. `None` when the address is already a page of its
     * own and names no toolbar window. Pure.
     */
-  def legacy(path: com.histmersion.web.Route.LegacyPath, open: List[WindowKey]): Option[Landing] =
+  def legacy(path: LegacyPath, open: List[WindowKey]): Option[Landing] =
     val byPath: Option[Route] = segments(path) match
       case Nil           => Some(Explore)
       case List("merge") => Some(Library(LibrarySection.Merge))
@@ -244,4 +247,4 @@ object Route:
       Some(Landing(target, items))
 
   /** Is a path one the web UI's page answers (the server serves it the app)? Pure. */
-  def isAppPath(path: com.histmersion.web.Route.IsAppPathPath): Boolean = parse(path).exists(!_.serverPage) || legacy(path, Nil).isDefined
+  def isAppPath(path: IsAppPathPath): Boolean = parse(path).exists(!_.serverPage) || legacy(path, Nil).isDefined

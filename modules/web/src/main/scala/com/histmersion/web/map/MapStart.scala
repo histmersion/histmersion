@@ -1,15 +1,19 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.Store
 
 /** Where the map opens (`ui.map-start`): where this browser last left it ("last", kept per browser under
   * [[StorageKey]]) or always at the configured place.
   */
 object MapStart:
   type Encoded = Encoded.T
-  object Encoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Encoded extends RefinedType[String, Pure]
 
   val StorageKey = "histmersion.mapView"
 
@@ -41,4 +45,4 @@ object MapStart:
   /** Keep the map's view for the next visit (only where the map opens where it was left). */
   def remember(cfg: MapStartConfig, at: LatLon, zoom: MapSurface.Zoom): Unit =
     if MapStartMode.parse(cfg.mode) == MapStartMode.Last then
-      val _ = Try(com.histmersion.web.Store.Browser.put(StorageKey, encode(at, zoom).value))
+      val _ = Try(Store.Browser.put(StorageKey, encode(at, zoom).value))

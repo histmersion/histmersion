@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.{Note, Target}
 import com.histmersion.web.{Auth, ErrorLine, WindowKey, WindowManager}
@@ -6,6 +7,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.library.Title
 
 /** Writing a note: what it is left on, a plain text box (Markdown) with a preview of what it will look like, and Save
   * or Cancel — nothing is saved until Save. What is typed is kept by this browser as a draft ([[NoteDrafts]]) until
@@ -14,14 +16,14 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object NoteEditor:
 
-  final private case class Session(target: Target, title: com.histmersion.api.library.Title, note: Option[Note], back: Option[dom.HTMLElement])
+  final private case class Session(target: Target, title: Title, note: Option[Note], back: Option[dom.HTMLElement])
 
   private val session = Var(Option.empty[Session])
 
   def isOpen: Boolean = session.now().isDefined
 
   /** A new note on `target`. */
-  def write(target: Target, title: com.histmersion.api.library.Title): Unit = open(Session(target, title, None, focused))
+  def write(target: Target, title: Title): Unit = open(Session(target, title, None, focused))
 
   def edit(n: Note): Unit = open(Session(n.target, n.title, Some(n), focused))
 
@@ -84,8 +86,8 @@ object NoteEditor:
           cls := "note-editor-on muted",
           s"On ${s.target.kind.label.value.toLowerCase}: ",
           strong(s.title.value),
-          Option.when(com.histmersion.api.personal.Target.where(s.target).value.nonEmpty)(
-            span(s" · ${com.histmersion.api.personal.Target.where(s.target).value}")
+          Option.when(Target.where(s.target).value.nonEmpty)(
+            span(s" · ${Target.where(s.target).value}")
           )
         ),
         Option.when(restored.isDefined)(

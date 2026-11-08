@@ -1,8 +1,10 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.basemap.BasemapApi
 
 /** One of the server's point layers read as vector tiles (`GET /api/tiles/{layer}/{z}/{x}/{y}`): the map fetches,
   * caches and decodes the tiles of the view; the app reads their features and draws them as its own markers. Nothing is
@@ -12,7 +14,7 @@ trait PointTiles:
   /** The URL template of the tiles (`{z}`, `{x}`, `{y}`), or none: no tile is asked for. A template the same as the one
     * set is no change; another one is fetched while the features of the old one stay readable until its tiles are in.
     */
-  def setTiles(template: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate]): Unit
+  def setTiles(template: Option[BasemapApi.TileTemplate]): Unit
 
   /** The features of the tiles of the view at its zoom, each once (a world copy, a tile's neighbour holding the same
     * item: one).

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Api, MapStack}
 import com.histmersion.api.MapStack
@@ -9,6 +10,9 @@ import scala.collection.mutable
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, EventScale}
 import com.histmersion.api.instance.EventsUiConfig
+import com.histmersion.web.ui.ThemeTokens
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Event
 
 /** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the filter's events over
   * the span played — `/api/events/geo`); every frame after that is local: each event's visibility is computed from the
@@ -37,7 +41,7 @@ object EventLayer:
         fillOpacity = ShapeStyle.FillOpacity(0.06),
         lineWidth = ShapeStyle.LineWidth(1.5),
         lineOpacity = ShapeStyle.LineOpacity(0.55),
-        colour = Some(ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--accent")).value)),
+        colour = Some(ShapeStyle.Colour(ThemeTokens(ThemeTokens.Name("--accent")).value)),
         dash = List(ShapeStyle.Dash(2.7), ShapeStyle.Dash(2.7))
       )
     )
@@ -45,16 +49,16 @@ object EventLayer:
 
   private var running = false
   private var config: EventsUiConfig = null
-  private var items: Vector[(EventGeo, (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year))] = Vector.empty
+  private var items: Vector[(EventGeo, (Year, Year))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
-  private var anchors: Map[EventPlayback.AnchorKey, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
-  private val shown = mutable.HashMap.empty[com.histmersion.api.catalogue.Event.Id, Shown]
+  private var anchors: Map[EventPlayback.AnchorKey, Vector[Event.Id]] = Map.empty
+  private val shown = mutable.HashMap.empty[Event.Id, Shown]
   // the outlines drawn now, by event id, with their geometry
-  private val outlined = mutable.LinkedHashMap.empty[com.histmersion.api.catalogue.Event.Id, js.Any]
+  private val outlined = mutable.LinkedHashMap.empty[Event.Id, js.Any]
   // the events request a late answer must belong to: `stop` supersedes it
   private val latest = Latest()
   // the last frame drawn, so the events that arrive after it are drawn at once
-  private var lastFrame: Option[(com.histmersion.api.catalogue.Year, com.histmersion.web.EventLayer.YearsPerSecond)] = None
+  private var lastFrame: Option[(Year, YearsPerSecond)] = None
 
   /** Start: fetch the events of `query` and draw them at the next frame. */
   def start(cfg: EventsUiConfig, query: Api.EventQuery): Unit =
@@ -69,7 +73,7 @@ object EventLayer:
     })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** One frame: the playhead at `playhead`, playing `yearsPerSecond`. */
-  def frame(playhead: com.histmersion.api.catalogue.Year, yearsPerSecond: com.histmersion.web.EventLayer.YearsPerSecond): Unit =
+  def frame(playhead: Year, yearsPerSecond: YearsPerSecond): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
       val localFade = EventPlayback.fadeYears(EventPlayback.Seconds(config.localFadeSeconds.value), yearsPerSecond)
@@ -123,10 +127,10 @@ object EventLayer:
 
   private def drawOutlines(): Unit =
     outlines.foreach(
-      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = com.histmersion.web.map.ShapeFeature.Dashed(true), alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
+      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = ShapeFeature.Dashed(true), alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
     )
 
-  private def add(e: EventGeo, start: com.histmersion.api.catalogue.Year, a: com.histmersion.web.EventLayer.Alpha): Shown =
+  private def add(e: EventGeo, start: Year, a: Alpha): Shown =
     val outline = e.outline
       .filter(_ => e.scale.value == EventScale.Regional)
       .flatMap { geometry =>
@@ -141,13 +145,13 @@ object EventLayer:
     val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a).value)
     val marker = new DomMarker(LatLon.Lat(e.lat.value), LatLon.Lon(e.lon.value), el)
     // a regional label under the local ones: the battle stays readable inside its war
-    marker.setZ(if e.scale.value == EventScale.Regional then com.histmersion.web.map.DomMarker.ZIndex(1) else com.histmersion.web.map.DomMarker.ZIndex(2))
+    marker.setZ(if e.scale.value == EventScale.Regional then DomMarker.ZIndex(1) else DomMarker.ZIndex(2))
     pane.add(marker)
     val s = Shown(marker, outline, a, Slot(0))
     MapLabels.trackEvent(e.id, marker, MapLabels.Entry.Rank(EventPlayback.rank(e, start).value), () => nameOf(s))
     s
 
-  private def remove(id: com.histmersion.api.catalogue.Event.Id, s: Shown): Unit =
+  private def remove(id: Event.Id, s: Shown): Unit =
     MapLabels.untrackEvent(id)
     pane.remove(s.marker)
     outlined.remove(id)
@@ -161,10 +165,10 @@ object EventLayer:
     labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
   /** The visibility, as `--a` on the label and the outline's own. */
-  private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: com.histmersion.web.EventLayer.Alpha): Unit =
+  private def setAlpha(id: Event.Id, s: Shown, a: Alpha): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    if s.outline then outlines.foreach(_.restyle(ShapeFeature.Id(id.value), com.histmersion.web.map.ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
+    if s.outline then outlines.foreach(_.restyle(ShapeFeature.Id(id.value), ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
 
   /** The stacking slot, as `--i`, on the label. */
-  private def setSlot(s: Shown, slot: com.histmersion.web.EventLayer.Slot): Unit =
+  private def setSlot(s: Shown, slot: Slot): Unit =
     labelOf(s).foreach(_.style.setProperty("--i", slot.toString))
