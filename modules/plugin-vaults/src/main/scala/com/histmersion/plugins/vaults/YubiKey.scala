@@ -10,6 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * [[KeePassXcVault]] runs the tools. Slots and serials are not secrets.
   */
 object YubiKey:
+  private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
+
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   export Subprocess.Problem
@@ -20,7 +22,7 @@ object YubiKey:
   type SerialsOut = SerialsOut.T
   object SerialsOut extends Newtype[String, Pure]
 
-  final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
+  final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]) derives CanEqual:
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
     def shown: Label = Label(serial.fold(slot.value.toString)(s => s"${slot.value}:${s.value}"))
 
@@ -67,7 +69,7 @@ object YubiKey:
     (ordered, absent)
 
   /** What one failed attempt means. */
-  enum Failure:
+  enum Failure derives CanEqual:
     /** This key is not there or did not answer: the next one may. */
     case Next(why: Failure.Next.Why)
 
