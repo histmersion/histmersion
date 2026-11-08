@@ -1,4 +1,5 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -6,6 +7,7 @@ import com.histmersion.plugin.Plugin.Config.given
 
 import java.nio.file.Path
 import scala.concurrent.duration.*
+import com.histmersion.plugin.Processes
 
 final class KeePassXcVault(
     val name: Secret.Vault.NameResult,
@@ -19,7 +21,7 @@ final class KeePassXcVault(
     ykman: Option[Vaults.Path],
     yubikeyTimeout: FiniteDuration,
     log: Plugin.Log
-)(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
+)(using processes: Processes) extends Secret.Vault:
 
   /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
   private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)

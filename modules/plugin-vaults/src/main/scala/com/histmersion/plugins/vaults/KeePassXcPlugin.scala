@@ -1,4 +1,5 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -6,16 +7,19 @@ import com.histmersion.plugin.Plugin.Config.given
 
 import java.nio.file.{Files, Path}
 import scala.concurrent.duration.*
+import com.histmersion.plugin.Plugin
+import com.histmersion.plugin.LocalFiles
+import com.histmersion.plugin.Processes
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
-  val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("keepassxc"), _root_.com.histmersion.plugin.Plugin.Info.Version(Vaults.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
+  val info = Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Unit] =
-    given files: com.histmersion.plugin.LocalFiles = ctx.files
-    given processes: com.histmersion.plugin.Processes = ctx.processes
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+    given files: LocalFiles = ctx.files
+    given processes: Processes = ctx.processes
     def failed(why: String) = Plugin.RegisterResultPart1(why)
-    val home = ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("HOME"))
+    val home = ctx.env(Plugin.Context.EnvName("HOME"))
     for
       db <- Option(c.database.value)
         .map(_.trim)
@@ -61,18 +65,18 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Option[Vaults.Path]] =
-    given files: com.histmersion.plugin.LocalFiles = ctx.files
+  private def detector(ykman: KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Option[Vaults.Path]] =
+    given files: LocalFiles = ctx.files
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
-      ctx.log.info(_root_.com.histmersion.plugin.Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
+      ctx.log.info(Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
       Right(None)
     else
-      Subprocess.locate(_root_.com.histmersion.plugins.vaults.Subprocess.Tool(t), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))) match
+      Subprocess.locate(Subprocess.Tool(t), ctx.env(Plugin.Context.EnvName("PATH"))) match
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
-            _root_.com.histmersion.plugin.Plugin.Log.InfoMessage("the configured YubiKeys are tried in order, the one that opened the database last first " +
+            Plugin.Log.InfoMessage("the configured YubiKeys are tried in order, the one that opened the database last first " +
               "(optional: with ykman on the PATH, only the connected ones are tried)")
           )
           Right(None)

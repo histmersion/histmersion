@@ -1,7 +1,10 @@
-package com.histmersion.plugins.vaults
+package com.histmersion
+package plugins.vaults
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** KeePassXC's YubiKey challenge-response (`keepassxc-cli … -y <slot>[:<serial>]`): which keys the `yubikey` setting
   * lists, which of them are connected, and what a failed attempt means — the next key, or stop. All pure;
@@ -9,55 +12,55 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
   */
 object YubiKey:
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.plugins.vaults.Subprocess.Problem
+  object Label extends RefinedType[String, Pure]
+  export Subprocess.Problem
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   /** One `<slot>[:<serial>]`: the challenge-response slot (1 or 2) and, optionally, which key. */
   type SerialsOut = SerialsOut.T
-  object SerialsOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SerialsOut extends RefinedType[String, Pure]
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
-    def shown: com.histmersion.plugins.vaults.YubiKey.Label = _root_.com.histmersion.plugins.vaults.YubiKey.Label(serial.fold(slot.value.toString)(s => s"${slot.value}:${s.value}"))
+    def shown: Label = Label(serial.fold(slot.value.toString)(s => s"${slot.value}:${s.value}"))
 
   object Slot:
 
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Int, Pure]
     type Serial = Serial.T
-    object Serial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Serial extends RefinedType[Long, Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
-  def parse(text: com.histmersion.plugins.vaults.YubiKey.Text): Either[com.histmersion.plugins.vaults.YubiKey.Problem, Slot] =
+  def parse(text: Text): Either[YubiKey.Problem, Slot] =
     val t = (text).value.trim
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(v => Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(v), None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(YubiKey.Problem(bad))
       case List(s, n) =>
         (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
-        yield Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(slot), Some(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(serial)))).left.map(refactorError2 => _root_.com.histmersion.plugins.vaults.YubiKey.Problem(refactorError2))
-      case _ => Left(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
+        yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).left.map(refactorError2 => YubiKey.Problem(refactorError2))
+      case _ => Left(YubiKey.Problem(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
-  def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.Setting.Entries]): Either[com.histmersion.plugins.vaults.YubiKey.Problem, List[Slot]] =
+  def parseAll(entries: List[Setting.Entries]): Either[YubiKey.Problem, List[Slot]] =
     (entries.map((_).value.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
-      acc.flatMap(ok => (parse(_root_.com.histmersion.plugins.vaults.YubiKey.Text(e)).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
-    }).left.map(refactorError3 => _root_.com.histmersion.plugins.vaults.YubiKey.Problem(refactorError3))
+      acc.flatMap(ok => (parse(Text(e)).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
+    }).left.map(refactorError3 => YubiKey.Problem(refactorError3))
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
-  def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.Slot.Serial] =
-    ((out).value.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet).map(refactorValue => _root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(refactorValue))
+  def serials(out: SerialsOut): Set[Slot.Serial] =
+    ((out).value.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet).map(refactorValue => Slot.Serial(refactorValue))
 
   /** Pure: which entries to try and which are absent. `connected = None` (no way to tell): all of them, in order.
     * Otherwise an entry with a serial only when that key is connected, one without when any key is. `first` (the entry
     * that last opened the database) goes to the front: its touch is the one most likely wanted.
     */
-  def plan(entries: List[Slot], connected: Option[Set[com.histmersion.plugins.vaults.YubiKey.Slot.Serial]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
+  def plan(entries: List[Slot], connected: Option[Set[Slot.Serial]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
     val (tryThese, absent) = connected match
       case None      => (entries, Nil)
       case Some(set) => entries.partition(e => e.serial.fold(set.nonEmpty)(set.contains))
@@ -75,21 +78,21 @@ object YubiKey:
   object Failure:
     object Next:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
     object Stop:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
 
   /** Pure: KeePassXC's message for a failed attempt (lower-cased stderr) → next or stop. Wrong credentials stop at
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong
     * key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
-  def failure(err: com.histmersion.plugins.vaults.YubiKey.Problem, entry: com.histmersion.plugins.vaults.YubiKey.Setting.Entries): Failure =
+  def failure(err: YubiKey.Problem, entry: Setting.Entries): Failure =
     def has(s: String*) = s.exists((err).value.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
-      Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
-    else if has("could not find entry") then Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why(s"no entry '$entry'"))
-    else if has("timed out waiting", "user interaction") then Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("the YubiKey was not touched in time"))
+      Failure.Stop(Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
+    else if has("could not find entry") then Failure.Stop(Failure.Stop.Why(s"no entry '$entry'"))
+    else if has("timed out waiting", "user interaction") then Failure.Stop(Failure.Stop.Why("the YubiKey was not touched in time"))
     else if has(
         "could not find hardware key",
         "could not find interface",
@@ -100,7 +103,7 @@ object YubiKey:
         "no hardware key",
         "no challenge-response key"
       )
-    then Failure.Next(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why("not connected"))
+    then Failure.Next(Failure.Next.Why("not connected"))
     else if has(
         "challenge-response",
         "challenge response",
@@ -109,15 +112,15 @@ object YubiKey:
         "locked or timed out",
         "hardware key"
       )
-    then Failure.Next(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why("challenge-response failed"))
-    else Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("an error KeePassXC gave"))
+    then Failure.Next(Failure.Next.Why("challenge-response failed"))
+    else Failure.Stop(Failure.Stop.Why("an error KeePassXC gave"))
 
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
     */
-  def problem(err: com.histmersion.plugins.vaults.YubiKey.Problem): com.histmersion.plugins.vaults.YubiKey.Problem =
+  def problem(err: YubiKey.Problem): YubiKey.Problem =
     Subprocess.problem(
-      _root_.com.histmersion.plugins.vaults.Subprocess.Problem((err).value.linesIterator
+      Subprocess.Problem((err).value.linesIterator
         .filterNot { l =>
           val low = l.toLowerCase(java.util.Locale.ROOT)
           low.contains("touch your yubikey") || low.contains("enter password")
@@ -132,9 +135,9 @@ object YubiKey:
 
   object Setting:
     type Entries = Entries.T
-    object Entries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Entries extends RefinedType[String, Pure]
 
     given ConfigReader[Setting] = new ConfigReader[Setting]:
       def from(v: ConfigValue) =
-        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(l => Setting(l.map(refactorValue3 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue3))))
-        else ConfigReader.stringReader.from(v).map(s => Setting((s.split("[,\\s]+").toList.filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue4))))
+        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(l => Setting(l.map(refactorValue3 => Entries(refactorValue3))))
+        else ConfigReader.stringReader.from(v).map(s => Setting((s.split("[,\\s]+").toList.filter(_.nonEmpty)).map(refactorValue4 => Entries(refactorValue4))))
