@@ -6,5 +6,5 @@ package plugin
   * rewritten ([[SourceCollection.update]], [[SourceCollection.updateAll]], [[SourceCollection.set]]). The host never
   * calls a writing member whose capability is not declared.
   */
-enum CollectionCapability:
+enum CollectionCapability derives CanEqual:
   case Read, Add, Update

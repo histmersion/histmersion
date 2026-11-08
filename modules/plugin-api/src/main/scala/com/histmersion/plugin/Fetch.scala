@@ -4,7 +4,7 @@ package plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One fetcher's answer for one work. */
-enum Fetch:
+enum Fetch derives CanEqual:
   /** A copy. */
   case Found(file: FetchedFile)
 

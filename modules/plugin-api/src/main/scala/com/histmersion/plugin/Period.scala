@@ -18,7 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A span of deep time, both ends included; a single year is a period whose ends are the same year. Built with
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
-final case class Period private (start: Year, end: Year):
+final case class Period private (start: Year, end: Year) derives CanEqual:
   def isPoint: Period.IsPointResult = Period.IsPointResult(start == end)
 
 object Period:

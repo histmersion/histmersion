@@ -4,7 +4,7 @@ package plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A call that did not answer. */
-enum AiFailure:
+enum AiFailure derives CanEqual:
   /** The provider failed (unreachable, an error answer): the run pauses, as for any provider error. */
   case Error(message: AiFailure.Error.Message)
 

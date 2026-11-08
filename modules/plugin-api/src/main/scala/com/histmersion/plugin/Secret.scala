@@ -35,7 +35,7 @@ object Secret:
   /** Where a secret's value comes from. The config holds only this reference, never the value (except the discouraged
     * `value:` form, which is masked wherever it is shown).
     */
-  enum Ref:
+  enum Ref derives CanEqual:
     /** `value:<literal>` — the value itself, in the config file. Allowed, discouraged: the host warns. */
     case Value(literal: Ref.Value.Literal)
 
