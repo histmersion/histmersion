@@ -424,6 +424,18 @@ class PluginTreeSuite extends munit.FunSuite:
       .filterNot(p => tree.contains(SafePath.Candidate(p)))
     assertEquals(extra, Nil, "files in plugin/ the generator does not write")
 
+  test(".claude/skills links every plugin skill; only the repo's own skills (scalafix) are real directories"):
+    def names(d: Path) =
+      val all = Files.list(d)
+      try all.iterator.asScala.map(_.getFileName.toString).filterNot(_.startsWith(".")).toList.sorted
+      finally all.close()
+    val skills = root.resolve(".claude/skills")
+    val plugin = names(root.resolve("plugin/skills"))
+    val (links, own) = names(skills).partition(n => Files.isSymbolicLink(skills.resolve(n)))
+    assertEquals(links, plugin, "one link per plugin skill: ln -s ../../plugin/skills/<name> .claude/skills/<name>")
+    links.foreach(n => assertEquals(Files.readSymbolicLink(skills.resolve(n)).toString, s"../../plugin/skills/$n"))
+    assertEquals(own, List("scalafix"), "repo-only skills, never shipped in plugin/")
+
   test("the interactive review agents are the hand-written definitions, byte for byte"):
     val sk = Files.readString(root.resolve("plugin/agents/article-skeptic.md"))
     assert(sk.startsWith("---\nname: article-skeptic\ndescription: A specialist adversary"), sk.take(120))

@@ -780,8 +780,9 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 - `skills/<name>/SKILL.md` and `agents/<name>.md` are canonical (tools named `{{tool:<name>}}`);
   the server's agent generator renders them per runtime (docs/research-agent-runtimes.md). `plugin/`
   and `.claude-plugin/marketplace.json` are its checked-in Claude Code output — regenerate with
-  `just plugin` (`PluginTreeSuite` fails when stale); `.claude/skills` and `.opencode/skill` point at
-  `plugin/skills`. Edit the canonical copies only.
+  `just plugin` (`PluginTreeSuite` fails when stale); `.opencode/skill` points at `plugin/skills`;
+  `.claude/skills` holds one link per plugin skill plus the repo-only skills (`scalafix`, for agents working on this
+  repository, never shipped to users) — `PluginTreeSuite` checks the links. Edit the canonical copies only.
 - When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching reference
   page (`docs/user-guide/reference/`) in the same commit. Docs that lie are worse than missing docs.
 - A part of an agent body, a fragment or the writing guide that only one audience acts on is marked
