@@ -57,8 +57,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
         case None =>
           Left(
             AiFailure.Error(
-              _root_.com.histmersion.plugin.AiFailure.Error
-                .Message(s"no scripted reply for this step (${replies.size} repl(ies))")
+              Problem(s"no scripted reply for this step (${replies.size} repl(ies))")
             )
           )
         case Some(r) =>

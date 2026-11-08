@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.bookmarks
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}

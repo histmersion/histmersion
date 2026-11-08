@@ -198,7 +198,7 @@ final class CandidateSearch(
             candidates.recordWatch(
               w,
               mark,
-              got.left.toOption.map(e => Problem(e.take(500))),
+              got.left.toOption.map(e => domain.Problem(e.take(500))),
               lastFound
             )
           w.modify(_.watermark)

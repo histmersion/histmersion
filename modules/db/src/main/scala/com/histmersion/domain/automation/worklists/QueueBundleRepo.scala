@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport

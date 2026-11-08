@@ -136,7 +136,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         c.chainReview(
           review,
           Slug.assume(item.target.value),
-          Problem(s"compiled by ${m.id}"),
+          domain.Problem(s"compiled by ${m.id}"),
           out
         )
         c.event(

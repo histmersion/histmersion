@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
@@ -66,7 +66,7 @@ private[acquisition] object AssessmentRepo:
           FROM retraction_watch WHERE doi = ${doi.value.toLowerCase}"""
       .query[RwRow]
       .run()
-      .map(r => RetractionNotice(r.nature, r.reason, r.date))
+      .map(r => RetractionNotice(r.nature, r.reason.map(Problem.wire), r.date))
       .toList
 
   /** Record the verdict for a stored source; the `checked_at` stamp. */

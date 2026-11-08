@@ -45,11 +45,11 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
     try
       val conn = open(url, timeoutSeconds.value * 1000)
       val code = conn.getResponseCode
-      if code != 200 then Left(Problem(s"HTTP $code from $url"))
+      if code != 200 then Left(domain.Problem(s"HTTP $code from $url"))
       else
         Using.resource(conn.getInputStream)(in => Using.resource(into.output())(out => in.transferTo(out)))
         Right(())
-    catch case e: Exception => Left(Problem(s"download of $url failed: ${e.getMessage}"))
+    catch case e: Exception => Left(domain.Problem(s"download of $url failed: ${e.getMessage}"))
 
 object HttpDownload:
   type Text = Text.T

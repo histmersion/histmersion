@@ -67,7 +67,7 @@ final class ProposeArticlesPipeline(
   import ProposeArticlesPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Goal.Slug.either(ctx.run.target.value).left.map(m => Halt.Fail(api.Problem(m))).flatMap(runFor(ctx, _))
+    Goal.Slug.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem(m))).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId

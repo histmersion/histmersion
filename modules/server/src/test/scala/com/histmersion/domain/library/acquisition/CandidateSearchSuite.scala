@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -215,7 +215,7 @@ class CandidateSearchSuite extends DbSuite:
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
     assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(CandidateSweep.Unseen(0)))))
-    assert(!WatchManagerKind.nothingNew(Left(Problem("not connected"))))
+    assert(!WatchManagerKind.nothingNew(Left(api.Problem("not connected"))))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
     fresh()
@@ -339,9 +339,9 @@ class CandidateSearchSuite extends DbSuite:
       val name = ScholarlyIndex.Name("core")
       val asked = ConcurrentLinkedQueue[String]()
       override def unavailable =
-        Option.when(!asked.isEmpty)(Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
+        Option.when(!asked.isEmpty)(domain.Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = {
-        asked.add(query.value); Left(Problem("CORE not asked: CORE answered HTTP 429"))
+        asked.add(query.value); Left(domain.Problem("CORE not asked: CORE answered HTTP 429"))
       }
     val core = Throttled()
     val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24))
@@ -362,7 +362,7 @@ class CandidateSearchSuite extends DbSuite:
     // a budget spent before the sweep: CORE is not asked at all
     val spent = new ScholarlyIndex:
       val name = ScholarlyIndex.Name("core")
-      override def unavailable = Some(Problem("CORE's daily budget for searches is spent"))
+      override def unavailable = Some(domain.Problem("CORE's daily budget for searches is spent"))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24))
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(true))

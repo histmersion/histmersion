@@ -1,7 +1,7 @@
 package com.histmersion
 package util.identity
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, Referable}
 import com.histmersion.util.database.Transactor
 

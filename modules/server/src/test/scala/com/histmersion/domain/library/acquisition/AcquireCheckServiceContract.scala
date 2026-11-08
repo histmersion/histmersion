@@ -56,21 +56,21 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       T0,
       AcquireRecheck.LastCheck.Generation("g1"),
       AcquireRecheck.Outcome.NoCopy,
-      Problem("no copy")
+      domain.Problem("no copy")
     )
     s.checks.record(
       open,
       T0.plusSeconds(60),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Fetched,
-      Problem("fetched")
+      domain.Problem("fetched")
     )
     s.checks.record(
       done,
       T0.plusSeconds(120),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Closed,
-      Problem("held")
+      domain.Problem("held")
     )
     val _ = s.queues.patch(
       QueueItemId(done.value),

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.domain.library.Citekey
 

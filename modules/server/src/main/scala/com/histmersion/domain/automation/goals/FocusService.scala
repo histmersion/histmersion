@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
@@ -147,7 +147,7 @@ object FocusService:
           .modify(_.since)
           .setTo(Some(now))
           .modify(_.why)
-          .setTo(Some(Problem(why.value)))
+          .setTo(Some(why))
       )
     def left(slug: com.histmersion.domain.automation.Goal.Slug, why: Problem, now: Instant): Unit =
       val focusKey = AutomationState.FocusKey(slug.value)
@@ -162,7 +162,7 @@ object FocusService:
                   .modify(_.leftAt)
                   .setTo(Some(now))
                   .modify(_.leftWhy)
-                  .setTo(Some(Problem(why.value)))
+                  .setTo(Some(why))
               )
             )
         )

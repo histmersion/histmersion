@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.library.{CandidateCount, Candidates, CandidateWatch}
 import com.histmersion.util.database.Transactor
 
@@ -118,7 +118,7 @@ object CandidateService:
               watch.index,
               watermark.orElse(before),
               Some(CandidateWatch.LastRun(at)),
-              error,
+              error.map(Problem.wire),
               found
             )
           )

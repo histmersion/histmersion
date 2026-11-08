@@ -413,9 +413,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       (CitationsClient.Backend("stub"), Nil)
     )
   private object NoWiki extends WikiClient:
-    def refs(articleUrl: WikiClient.ArticleUrl) = Left(Problem("not used here"))
+    def refs(articleUrl: WikiClient.ArticleUrl) = Left(domain.Problem("not used here"))
   private object NoRw extends RetractionWatchClient:
-    def csv() = Left(Problem("not used here"))
+    def csv() = Left(domain.Problem("not used here"))
 
   test(
     "through the real chain: the legal fetchers only, even with acquire.allow-unauthorised = true; a copy found goes into the metadata-only source"
@@ -584,7 +584,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             Instant.now().minusSeconds(3600),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            Problem("x")
+            domain.Problem("x")
           )
       )
     assertEquals(
@@ -835,7 +835,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             since.plusSeconds(60),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            Problem("x")
+            domain.Problem("x")
           )
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())

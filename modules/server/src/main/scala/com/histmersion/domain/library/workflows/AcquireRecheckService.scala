@@ -577,7 +577,7 @@ final class AcquireRecheckService(
           now,
           generation,
           Outcome.Closed,
-          Problem(AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value)).value)
+          domain.Problem(AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value)).value)
         )
         Some(
           RecheckRow(
@@ -608,7 +608,7 @@ final class AcquireRecheckService(
           case e: InterruptedException => throw e
           case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
     val why = AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail))
-    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, Problem(why.value))
+    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, domain.Problem(why.value))
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),

@@ -232,7 +232,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run),
           RunState.Running,
           status,
-          error = Option.when(status == RunState.Failed)(Problem("boom"))
+          error = Option.when(status == RunState.Failed)(domain.Problem("boom"))
         )
         .isDefined
     )
@@ -659,7 +659,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run2),
           RunState.Running,
           RunState.Paused,
-          error = Some(Problem("stalled: no sign of life")),
+          error = Some(domain.Problem("stalled: no sign of life")),
           resumeAt = Some(Instant.now().plusSeconds(600))
         )
         .isDefined
@@ -716,7 +716,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           ApiIds.run(run3),
           RunState.Queued,
           RunState.Paused,
-          error = Some(Problem("requested: paused on request"))
+          error = Some(domain.Problem("requested: paused on request"))
         )
         .isDefined
     )

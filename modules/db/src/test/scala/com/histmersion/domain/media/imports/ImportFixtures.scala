@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.augustnagro.magnum.*
 import com.histmersion.domain.media.assets.MediaItemRow
 import javax.sql.DataSource

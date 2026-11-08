@@ -129,7 +129,7 @@ final class ReviewArticlePipeline(
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(api.Problem(p.value))).flatMap(runFor(ctx, _))
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Problem(p.value))).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes

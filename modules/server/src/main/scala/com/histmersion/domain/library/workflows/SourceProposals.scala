@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Agents.ApprovalState

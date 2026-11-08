@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.agents.RunCtx
 
 import com.histmersion.api.automation.Queue.QueueAdd
@@ -49,5 +49,5 @@ private[histmersion] object Pipelines:
   def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problem, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
     ctx.write("log line", entry.asJson)(
-      workLists.add(WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line)
+      workLists.add(WorkListControllers.ListName("log"), entry).left.map(e => Problem.fromApi(e.message)).map(_ => line)
     )(Right(line))

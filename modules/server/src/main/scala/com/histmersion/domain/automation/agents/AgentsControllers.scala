@@ -437,10 +437,10 @@ final class AgentsControllers(
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[Problem, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[domain.Problem, (LlmClient, Billing)] =
     for
-      ps <- prices.left.map(p => Problem(p.value))
-      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => Problem(p.value))
+      ps <- prices.left.map(p => domain.Problem(p.value))
+      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => domain.Problem(p.value))
       c <- clientFor(cfg, m)
     yield (c, b)
 
@@ -462,7 +462,7 @@ final class AgentsControllers(
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
   def runnable(role: Role, overrideRef: Option[ModelName]): Either[Problem, Unit] =
-    picker.chainFor(role, overrideRef).flatMap { chain =>
+    picker.chainFor(role, overrideRef).left.map(domain.Problem.wire).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
       else

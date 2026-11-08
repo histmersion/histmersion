@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.api.Plural
@@ -126,7 +126,7 @@ final class SeedService(
               c.authors,
               c.venue,
               List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-              Problem("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
+              api.Problem("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
             )
           )
         }

@@ -125,7 +125,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
       ),
       h
     )
@@ -294,7 +294,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val limited = new LlmClient:
       val model = A
       def run[Out](call: LlmCall[Out]) =
-        throw ModelLimitReached(A, Some(until), Problem("claude -p: Claude AI usage limit reached"))
+        throw ModelLimitReached(A, Some(until), domain.Problem("claude -p: Claude AI usage limit reached"))
     val cb = ScriptedClient(B); enrichScripts(cb)
     val (a, h) = handlers(Map(A -> limited, B -> cb)); seed(h)
     val run = startAndRun(a)

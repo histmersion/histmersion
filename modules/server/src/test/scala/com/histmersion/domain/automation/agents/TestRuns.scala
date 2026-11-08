@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.server.agents.*
 
 import com.histmersion.domain.library.workflows.*
@@ -108,7 +108,7 @@ object TestRuns:
             id,
             RunRow.Status(from.wire.value),
             RunRow.Status(t.wire.value),
-            error,
+            error.map(Problem.wire),
             None,
             resumeAt
           )
@@ -120,7 +120,7 @@ object TestRuns:
       Job.Kind.assume(JobKind),
       RunRow.Status(RunState.Running.wire.value),
       RunRow.Status(RunState.Paused.wire.value),
-      Problem(PauseReason.Interrupted.wire.value),
+      api.Problem(PauseReason.Interrupted.wire.value),
       RunRow.Status(RunState.Queued.wire.value),
       Nil
     )

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.Registries
 import com.histmersion.util.plugins.Plugin

@@ -854,7 +854,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
-    (_, ref) => cs.find(_.model == ref).toRight(Problem(s"no scripted client for ${ref.wire}"))
+    (_, ref) => cs.find(_.model == ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
 
   private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)

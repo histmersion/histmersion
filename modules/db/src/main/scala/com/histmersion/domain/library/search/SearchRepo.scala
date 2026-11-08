@@ -99,8 +99,8 @@ private[search] object SearchRepo:
             byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
               val m = fr.toMatch
               val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-              if why.isEmpty then None else Some(m.modify(_.why).setTo(why))
+              if why.isEmpty then None else Some(m.modify(_.why).setTo(domain.Problem.wireAll(why)))
             }
-        Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
+        Hit(withSnippet.toHit, matched, domain.Problem.wireAll(FilterSql.sourceWhy(filter, withSnippet)))
       }
       SearchResult.of(SearchResult.Total(total), hits.toList, UnreadPage.Offset(filter.offset.value.max(0)))

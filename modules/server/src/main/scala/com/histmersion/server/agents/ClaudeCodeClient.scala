@@ -143,12 +143,12 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
             throw new ModelLimitReached(
               model,
               until,
-              api.Problem(s"claude -p stopped by the quota guard: $why")
+              domain.Problem(s"claude -p stopped by the quota guard: $why")
             )
           case None =>
             ClaudeCode.result(o, call.user, call.schema) match
               case Right(r)  => r
               case Left(lim) =>
-                throw new ModelLimitReached(model, lim.until, api.Problem(lim.message.value))
+                throw new ModelLimitReached(model, lim.until, domain.Problem(lim.message.value))
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

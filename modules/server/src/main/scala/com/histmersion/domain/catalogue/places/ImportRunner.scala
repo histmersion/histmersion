@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Dataset

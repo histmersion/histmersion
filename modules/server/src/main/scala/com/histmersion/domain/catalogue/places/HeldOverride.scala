@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure

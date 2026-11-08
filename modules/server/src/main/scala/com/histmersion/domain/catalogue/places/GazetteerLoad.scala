@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -443,7 +443,7 @@ object GazetteerLoad:
                     n,
                     meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
                   )
-                  .map(Gazetteer.inDataset(_, meta))
+                  .left.map(Problem.fromApi).map(Gazetteer.inDataset(_, meta))
               )
           }
         })
@@ -480,7 +480,7 @@ object GazetteerLoad:
                   b.add(
                     Gazetteer
                       .fromFeature(j, slug, i, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
-                      .map(Gazetteer.inDataset(_, meta))
+                      .left.map(Problem.fromApi).map(Gazetteer.inDataset(_, meta))
                   )
                 )
               )

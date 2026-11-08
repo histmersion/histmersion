@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 /** Every domain's [[Referable]], by the kinds each owns: what a domain that points at records of any kind is given. */
 final class Referables(all: List[Referable]):
   private val byKind: Map[ItemKind, Referable] = all.flatMap(r => r.kinds.toList.map(_ -> r)).toMap

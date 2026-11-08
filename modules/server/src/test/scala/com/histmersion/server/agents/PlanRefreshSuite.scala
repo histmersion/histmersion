@@ -255,7 +255,7 @@ class PlanRefreshSuite extends munit.FunSuite:
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
     assertEquals(
       ModelPicker.pausedRole(
-        Problem(
+        domain.Problem(
           "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
         )
       ),
@@ -263,11 +263,11 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     assertEquals(
       ModelPicker.pausedRole(
-        Problem("plan-quota: review: all models for role cold-reader are below their allowance")
+        domain.Problem("plan-quota: review: all models for role cold-reader are below their allowance")
       ),
       Some(Role.ColdReader)
     )
-    assertEquals(ModelPicker.pausedRole(Problem("plan-quota: something else")), None)
+    assertEquals(ModelPicker.pausedRole(domain.Problem("plan-quota: something else")), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time

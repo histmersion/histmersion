@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.goals
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given

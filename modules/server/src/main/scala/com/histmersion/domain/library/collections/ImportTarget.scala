@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.collections
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
 import io.github.iltotore.iron.constraint.any.Pure

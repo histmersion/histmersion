@@ -39,7 +39,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
       CandidateWatch.Index("openalex")
     )
     s.candidates.recordWatch(w, Some(CandidateWatch.Watermark("2026-10-01")), None, CandidateWatch.LastFound(3))
-    s.candidates.recordWatch(w, None, Some(Problem("HTTP 503")), CandidateWatch.LastFound(0))
+    s.candidates.recordWatch(w, None, Some(domain.Problem("HTTP 503")), CandidateWatch.LastFound(0))
     s.candidates.recordWatch(
       CandidateWatch(
         CandidateWatch.Goal("zq-goal"),

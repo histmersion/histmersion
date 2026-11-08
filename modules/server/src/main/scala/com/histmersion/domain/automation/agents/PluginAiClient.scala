@@ -163,8 +163,8 @@ object PluginAiClient:
           throw new ModelLimitReached(
             model,
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
-            Problem(s"${model.wire}: $m".take(300))
+            domain.Problem(s"${model.wire}: $m".take(300))
           )
         case Left(AiFailure.Error(m)) if caps.verbatimFailures.value =>
-          throw VerbatimFailure(Problem(m.value))
+          throw VerbatimFailure(domain.Problem(m.value))
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))

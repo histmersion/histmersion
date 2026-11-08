@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse
@@ -40,7 +40,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
 
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left
-      .map(Problem(_))
+      .map(domain.Problem(_))
 
   private def work(doi: Doi): Either[String, io.circe.Json] =
     http
@@ -61,14 +61,14 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .map(_.split("/").last)
       .flatMap(id => works(s"cites:$id,from_publication_date:$since", limit.value, None))
       .left
-      .map(Problem(_))
+      .map(domain.Problem(_))
 
   def authors(doi: Doi) =
     work(doi)
       .map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value)))
       .left
-      .map(Problem(_))
+      .map(domain.Problem(_))
 
   def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) =
     works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None).left
-      .map(Problem(_))
+      .map(domain.Problem(_))

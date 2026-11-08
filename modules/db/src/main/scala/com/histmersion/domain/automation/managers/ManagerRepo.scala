@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.managers
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.automation.Managers.*
 
