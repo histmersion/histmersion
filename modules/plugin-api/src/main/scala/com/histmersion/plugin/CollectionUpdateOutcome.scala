@@ -4,7 +4,7 @@ package plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What [[SourceCollection.updateAll]] does, or did, to one item. */
-enum CollectionUpdateOutcome:
+enum CollectionUpdateOutcome derives CanEqual:
   /** A dry run: these fields would change. */
   case Change(changes: List[CollectionChange])
 

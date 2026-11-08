@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 /** On what terms a fetcher obtains its copy. The host decides from this alone whether it may run. */
-enum Access:
+enum Access derives CanEqual:
   /** Openly licensed or free to read: an open-access index, a repository, a public archive. */
   case Open
 

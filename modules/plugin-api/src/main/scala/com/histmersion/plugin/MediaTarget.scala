@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What a collection asks about ([[MediaCollection.asks]]): the places on the map, the events with a Wikidata item, or
   * both.
   */
-enum MediaTarget:
+enum MediaTarget derives CanEqual:
   case Places, Events
 
 object MediaTarget:
