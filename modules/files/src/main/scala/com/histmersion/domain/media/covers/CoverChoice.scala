@@ -1,4 +1,9 @@
-package com.histmersion.domain.media.covers
+package com.histmersion
+package domain.media.covers
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Isbn
 
 /** Where a book's cover comes from (#1446), in order: the cover the local Calibre library keeps for the entry (the
   * user's own copy's cover — it is the edition they hold), else Open Library's by the first usable ISBN (the record's,
@@ -13,18 +18,18 @@ object CoverChoice:
   object Pick:
     object Calibre:
       type Path = Path.T
-      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Path extends RefinedType[String, Pure]
     object OpenLibrary:
       type Kind = Kind.T
-      object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Kind extends RefinedType[String, Pure]
       type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Id extends RefinedType[String, Pure]
 
   def choose(
-      calibreCover: Option[com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path],
+      calibreCover: Option[Pick.Calibre.Path],
       exists: Pick.Calibre.Path => Boolean,
-      isbns: List[com.histmersion.domain.library.Isbn],
-      oclc: Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc]
+      isbns: List[Isbn],
+      oclc: Option[OpenLibrary.Oclc]
   ): Option[Pick] =
     calibreCover
       .map(_.value.trim)

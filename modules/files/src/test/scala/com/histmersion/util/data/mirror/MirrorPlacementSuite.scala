@@ -1,4 +1,5 @@
-package com.histmersion.util.data.mirror
+package com.histmersion
+package util.data.mirror
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,4 +14,4 @@ class MirrorPlacementSuite extends munit.FunSuite:
     assertEquals(MirrorPlacement.MetaFiles, MirrorPlacement.Named(MirrorPlacement.MetaDirectory))
 
   test("a record's note file"):
-    assertEquals(MirrorPlacement.noteFile(com.histmersion.util.data.mirror.MirrorPlacement.RecordId("anthony2007_horse")), "anthony2007_horse.md")
+    assertEquals(MirrorPlacement.noteFile(MirrorPlacement.RecordId("anthony2007_horse")), "anthony2007_horse.md")

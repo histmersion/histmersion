@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.GeoPoint
@@ -14,6 +15,16 @@ import com.histmersion.util.storage.SafePath
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Edge, Finding, Source}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.storage.TextFiles
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 /** A source's note in the Markdown mirror (`wiki/sources/<citekey>.md`): its YAML frontmatter carries the catalog
   * fields and findings, its body [[Source.notes]], the agent-written article about the source. [[note]] renders a
@@ -23,7 +34,7 @@ import com.histmersion.api.library.{Edge, Finding, Source}
   */
 object SourceNote:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   def note(s: Source): Text =
     Text(frontmatterOf(s).note(s.notes.map(n => Frontmatter.NoteBody(n.value.trim)).filter(_.value.nonEmpty)).value)
@@ -74,22 +85,22 @@ object SourceNote:
     m.put("significance", f.significance.orNull)
     m
 
-  def parseFile(p: Path)(using files: com.histmersion.util.storage.TextFiles): Option[Source] = parseFile(p, None)
+  def parseFile(p: Path)(using files: TextFiles): Option[Source] = parseFile(p, None)
 
   /** `confineTo` is `corpus.dir` when it is configured: `md_path` is a path out of a note's frontmatter — content an
     * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
     * host-side workflow where the server legitimately sees the user's own tree.
     */
-  def parseFile(p: Path, confineTo: Option[SafePath.Base])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
+  def parseFile(p: Path, confineTo: Option[SafePath.Base])(using files: TextFiles): Option[Source] =
     val text = Text(files.read(p).value)
-    val fallbackCitekey = com.histmersion.api.library.Citekey(p.getFileName.toString.stripSuffix(".md"))
+    val fallbackCitekey = Citekey(p.getFileName.toString.stripSuffix(".md"))
     parseNote(text, fallbackCitekey).map(src => src.modify(_.ocrMarkdown).setTo(fullText(p, yamlMap(text), confineTo)))
 
   /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. The BODY becomes
     * [[Source.notes]] — the agent-written article about the source — which is what makes [[note]] a true inverse of
     * this function.
     */
-  def parseNote(text: Text, fallbackCitekey: com.histmersion.api.library.Citekey): Option[Source] =
+  def parseNote(text: Text, fallbackCitekey: Citekey): Option[Source] =
     extractYaml(text).map { y =>
       val m = parse(y)
       val src = toSource(m, fallbackCitekey)
@@ -108,35 +119,35 @@ object SourceNote:
     * `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references` edges to things that are not
     * sources.
     */
-  private def linkTargets(citekey: com.histmersion.api.library.Citekey, noteText: Text): (List[com.histmersion.api.library.Citekey], List[Source.Topics]) =
+  private def linkTargets(citekey: Citekey, noteText: Text): (List[Citekey], List[Source.Topics]) =
     val (cites, topics) = CkLink
       .findAllMatchIn(noteText.value)
       .map(_.group(1))
       .filter(_ != citekey.value)
       .toList
       .distinct
-      .partition(t => Lint.looksLikeCitekey(com.histmersion.api.library.Citekey(t)))
-    (cites.map(com.histmersion.api.library.Citekey(_)), topics.map(Source.Topics(_)))
+      .partition(t => Lint.looksLikeCitekey(Citekey(t)))
+    (cites.map(Citekey(_)), topics.map(Source.Topics(_)))
 
   /** Typed, directed reference edges out of this note. */
-  private def edgesOf(citekey: com.histmersion.api.library.Citekey, m: Map[String, Any], noteText: Text): List[Edge] =
-    val superseded = str(m, "superseded_by").map(d => Edge(citekey, com.histmersion.api.library.Citekey(d), Edge.Kind.SupersededBy)).toList
+  private def edgesOf(citekey: Citekey, m: Map[String, Any], noteText: Text): List[Edge] =
+    val superseded = str(m, "superseded_by").map(d => Edge(citekey, Citekey(d), Edge.Kind.SupersededBy)).toList
     val rel = list(m, "topics").flatMap {
-      case RelTag(kind, dst) => Edge.Kind.fromWire(Edge.Kind.Wire(kind)).map(k => Edge(citekey, com.histmersion.api.library.Citekey(dst), k))
+      case RelTag(kind, dst) => Edge.Kind.fromWire(Edge.Kind.Wire(kind)).map(k => Edge(citekey, Citekey(dst), k))
       case _                 => None
     }
     val links = linkTargets(citekey, noteText)._1.map(dst => Edge(citekey, dst, Edge.Kind.References))
     (superseded ++ rel ++ links).distinct
 
   /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
-  private def withLinkedTopics(topics: List[Source.Topics], citekey: com.histmersion.api.library.Citekey, noteText: Text): List[Source.Topics] =
+  private def withLinkedTopics(topics: List[Source.Topics], citekey: Citekey, noteText: Text): List[Source.Topics] =
     val have = topics.map(_.value.toLowerCase).toSet
     topics ++ linkTargets(citekey, noteText)._2.filterNot(t => have(t.value.toLowerCase))
 
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
-  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using files: com.histmersion.util.storage.TextFiles): Option[Source.OcrMarkdown] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using files: TextFiles): Option[Source.OcrMarkdown] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))
@@ -202,20 +213,20 @@ object SourceNote:
     */
   private def period(m: Map[String, Any]): Option[Period] =
     (long(m, "period_start"), long(m, "period_end")) match
-      case (Some(a), Some(b)) if a <= b => Some(Period(com.histmersion.api.catalogue.Year(a), com.histmersion.api.catalogue.Year(b)))
-      case (Some(a), Some(b))           => Some(Period(com.histmersion.api.catalogue.Year(b), com.histmersion.api.catalogue.Year(a)))
+      case (Some(a), Some(b)) if a <= b => Some(Period(Year(a), Year(b)))
+      case (Some(a), Some(b))           => Some(Period(Year(b), Year(a)))
       case _                            => None
 
-  private def toSource(m: Map[String, Any], fallbackCitekey: com.histmersion.api.library.Citekey): Source =
-    val citekey = str(m, "citekey").map(com.histmersion.api.library.Citekey(_)).getOrElse(fallbackCitekey)
+  private def toSource(m: Map[String, Any], fallbackCitekey: Citekey): Source =
+    val citekey = str(m, "citekey").map(Citekey(_)).getOrElse(fallbackCitekey)
     Source(
       citekey = citekey,
-      title = com.histmersion.api.library.Title(str(m, "title").getOrElse(fallbackCitekey.value)),
-      authors = (list(m, "authors")).map(com.histmersion.api.library.AuthorName.apply),
-      doi = (str(m, "doi")).map(com.histmersion.api.library.Doi.apply),
-      year = (int(m, "year")).map(com.histmersion.api.catalogue.Year.apply),
-      venue = (str(m, "venue")).map(com.histmersion.api.library.Source.Venue.apply),
-      status = com.histmersion.api.library.Source.Status.fromString(com.histmersion.api.library.Source.Status.Wire(str(m, "status").getOrElse("unassessed"))),
+      title = Title(str(m, "title").getOrElse(fallbackCitekey.value)),
+      authors = (list(m, "authors")).map(AuthorName.apply),
+      doi = (str(m, "doi")).map(Doi.apply),
+      year = (int(m, "year")).map(Year.apply),
+      venue = (str(m, "venue")).map(Source.Venue.apply),
+      status = Source.Status.fromString(Source.Status.Wire(str(m, "status").getOrElse("unassessed"))),
       topics = list(m, "topics").map(Source.Topics(_)),
       regions = list(m, "regions").map(Source.Regions(_)),
       tags = list(m, "tags").map(Source.Tags(_)),
@@ -228,13 +239,13 @@ object SourceNote:
       findings = findings(m, citekey)
     )
 
-  private def findings(m: Map[String, Any], citekey: com.histmersion.api.library.Citekey): List[Finding] =
+  private def findings(m: Map[String, Any], citekey: Citekey): List[Finding] =
     raw(m, "findings") match
       case Some(l: java.util.List[?]) =>
         l.asScala.toList.map(_.asMatchable).zipWithIndex.collect { case (fm: java.util.Map[?, ?], i) =>
           val f = fm.asScala.toMap.map((k, v) => k.toString -> v)
           val geo = (double(f, "lon"), double(f, "lat")) match
-            case (Some(x), Some(y)) => Some(GeoPoint(com.histmersion.api.catalogue.Longitude(x), com.histmersion.api.catalogue.Latitude(y)))
+            case (Some(x), Some(y)) => Some(GeoPoint(Longitude(x), Latitude(y)))
             case _                  => None
           Finding(
             id = Finding.Id(s"${citekey.value}#$i"),

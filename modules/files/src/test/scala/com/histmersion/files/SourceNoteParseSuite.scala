@@ -1,4 +1,5 @@
-package com.histmersion.files
+package com.histmersion
+package files
 
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
@@ -7,6 +8,10 @@ import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 class SourceNoteParseSuite extends munit.FunSuite:
   val note =
@@ -39,28 +44,28 @@ class SourceNoteParseSuite extends munit.FunSuite:
       |""".stripMargin
 
   test("parses frontmatter with null values safely"):
-    val s = SourceNote.parseNote(SourceNote.Text(note), com.histmersion.api.library.Citekey("fallback")).get
+    val s = SourceNote.parseNote(SourceNote.Text(note), Citekey("fallback")).get
     assertEquals(s.citekey, "heggarty2023_language")
     assertEquals(s.venue, None)
     assertEquals(s.year, Some(2023))
-    assertEquals(s.period, Some(Period(com.histmersion.api.catalogue.Year(-6000), com.histmersion.api.catalogue.Year(-3000))))
+    assertEquals(s.period, Some(Period(Year(-6000), Year(-3000))))
     assertEquals(s.status, Source.Status.Current)
 
   test("findings: geo + period, and null geo → None"):
-    val fs = SourceNote.parseNote(SourceNote.Text(note), com.histmersion.api.library.Citekey("x")).get.findings
+    val fs = SourceNote.parseNote(SourceNote.Text(note), Citekey("x")).get.findings
     assertEquals(fs.map(_.id), List("heggarty2023_language#0", "heggarty2023_language#1"))
-    assertEquals(fs.head.geo, Some(GeoPoint(com.histmersion.api.catalogue.Longitude(44.0), com.histmersion.api.catalogue.Latitude(42.5))))
+    assertEquals(fs.head.geo, Some(GeoPoint(Longitude(44.0), Latitude(42.5))))
     assertEquals(fs(1).geo, None)
     assertEquals(fs(1).period, None)
 
   test("edges: relation tags and wikilinks (aliased or not), never self"):
-    val es = SourceNote.parseNote(SourceNote.Text(note), com.histmersion.api.library.Citekey("x")).get.edges.toSet
+    val es = SourceNote.parseNote(SourceNote.Text(note), Citekey("x")).get.edges.toSet
     assertEquals(
       es,
       Set(
-        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("anthony2007"), Edge.Kind.Refutes),
-        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("anthony2007_horse"), Edge.Kind.References),
-        Edge(com.histmersion.api.library.Citekey("heggarty2023_language"), com.histmersion.api.library.Citekey("bouckaert2012_mapping"), Edge.Kind.References)
+        Edge(Citekey("heggarty2023_language"), Citekey("anthony2007"), Edge.Kind.Refutes),
+        Edge(Citekey("heggarty2023_language"), Citekey("anthony2007_horse"), Edge.Kind.References),
+        Edge(Citekey("heggarty2023_language"), Citekey("bouckaert2012_mapping"), Edge.Kind.References)
       )
     )
 
@@ -69,7 +74,7 @@ class SourceNoteParseSuite extends munit.FunSuite:
       "and [[bouckaert2012_mapping]].",
       "and [[bouckaert2012_mapping]], see [[bronze_age_collapse]] and [[Indo_European]]."
     )
-    val s = SourceNote.parseNote(SourceNote.Text(withTopic), com.histmersion.api.library.Citekey("x")).get
+    val s = SourceNote.parseNote(SourceNote.Text(withTopic), Citekey("x")).get
     assertEquals(
       s.edges.filter(_.kind == Edge.Kind.References).map(_.dst).toSet,
       Set("anthony2007_horse", "bouckaert2012_mapping")
@@ -79,11 +84,11 @@ class SourceNoteParseSuite extends munit.FunSuite:
     assertEquals(s.topics, List("indo-european", "refutes_anthony2007", "bronze_age_collapse"))
     // an already-declared topic is not duplicated
     val dup = withTopic.replace("topics: [indo-european,", "topics: [Bronze_Age_Collapse, indo-european,")
-    assertEquals(SourceNote.parseNote(SourceNote.Text(dup), com.histmersion.api.library.Citekey("x")).get.topics.count(_.value.equalsIgnoreCase("bronze_age_collapse")), 1)
+    assertEquals(SourceNote.parseNote(SourceNote.Text(dup), Citekey("x")).get.topics.count(_.value.equalsIgnoreCase("bronze_age_collapse")), 1)
 
   test("no frontmatter → None; fallback citekey from filename"):
-    assertEquals(SourceNote.parseNote(com.histmersion.domain.library.sources.SourceNote.Text("just text"), com.histmersion.api.library.Citekey("x")), None)
-    assertEquals(SourceNote.parseNote(com.histmersion.domain.library.sources.SourceNote.Text("---\ntitle: T\n---\n"), com.histmersion.api.library.Citekey("fromfile")).get.citekey, "fromfile")
+    assertEquals(SourceNote.parseNote(SourceNote.Text("just text"), Citekey("x")), None)
+    assertEquals(SourceNote.parseNote(SourceNote.Text("---\ntitle: T\n---\n"), Citekey("fromfile")).get.citekey, "fromfile")
 
   // ── a note whose deep-time bounds are the wrong way round ────────────────────────────────────
 
@@ -103,9 +108,9 @@ class SourceNoteParseSuite extends munit.FunSuite:
         |---
         |body
         |""".stripMargin
-    val s = SourceNote.parseNote(SourceNote.Text(note), com.histmersion.api.library.Citekey("zz_inverted")).get
-    assertEquals(s.period, Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))))
-    assertEquals(s.findings.head.period, Some(Period(com.histmersion.api.catalogue.Year(-1100), com.histmersion.api.catalogue.Year(-900))))
+    val s = SourceNote.parseNote(SourceNote.Text(note), Citekey("zz_inverted")).get
+    assertEquals(s.period, Some(Period(Year(-1400), Year(-1200))))
+    assertEquals(s.findings.head.period, Some(Period(Year(-1100), Year(-900))))
 
   test("a correctly-ordered period is untouched"):
     val note =
@@ -115,4 +120,4 @@ class SourceNoteParseSuite extends munit.FunSuite:
         |period_end: -1200
         |---
         |""".stripMargin
-    assertEquals(SourceNote.parseNote(SourceNote.Text(note), com.histmersion.api.library.Citekey("zz_ordered")).get.period, Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))))
+    assertEquals(SourceNote.parseNote(SourceNote.Text(note), Citekey("zz_ordered")).get.period, Some(Period(Year(-1400), Year(-1200))))

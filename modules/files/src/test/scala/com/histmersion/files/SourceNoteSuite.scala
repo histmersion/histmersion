@@ -1,4 +1,5 @@
-package com.histmersion.files
+package com.histmersion
+package files
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,53 +10,60 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Edge, Finding, Source}
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 /** `SourceNote.note` must be the inverse of `SourceNote.parseNote` — that round trip is what lets the Markdown wiki
   * stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`).
   */
 class SourceNoteSuite extends munit.FunSuite:
 
-  private val ck = com.histmersion.api.library.Citekey("haak2015_massive")
+  private val ck = Citekey("haak2015_massive")
 
   private val source = Source(
     citekey = ck,
-    title = com.histmersion.api.library.Title("Massive migration from the steppe"),
-    authors = (List("Wolfgang Haak", "David Reich")).map(com.histmersion.api.library.AuthorName.apply),
-    doi = (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
-    year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
-    status = com.histmersion.api.library.Source.Status.Foundational,
-    topics = List(com.histmersion.api.library.Source.Topics("ancient_dna"), com.histmersion.api.library.Source.Topics("yamnaya_culture")),
-    regions = List(com.histmersion.api.library.Source.Regions("Eurasian Steppe"), com.histmersion.api.library.Source.Regions("Central Europe")),
-    tags = List(com.histmersion.api.library.Source.Tags("adna")),
-    period = Some(Period(com.histmersion.api.catalogue.Year(-8000), com.histmersion.api.catalogue.Year(-900))),
-    summary = Some(com.histmersion.api.library.Source.Summary("Genome-wide data from 69 Europeans, 8000-3000 years ago.")),
-    citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(2038)),
+    title = Title("Massive migration from the steppe"),
+    authors = (List("Wolfgang Haak", "David Reich")).map(AuthorName.apply),
+    doi = (Some("10.1038/nature14317")).map(Doi.apply),
+    year = (Some(2015)).map(Year.apply),
+    venue = (Some("Nature")).map(Source.Venue.apply),
+    status = Source.Status.Foundational,
+    topics = List(Source.Topics("ancient_dna"), Source.Topics("yamnaya_culture")),
+    regions = List(Source.Regions("Eurasian Steppe"), Source.Regions("Central Europe")),
+    tags = List(Source.Tags("adna")),
+    period = Some(Period(Year(-8000), Year(-900))),
+    summary = Some(Source.Summary("Genome-wide data from 69 Europeans, 8000-3000 years ago.")),
+    citedByCount = Some(Source.CitedByCount(2038)),
     influentialCitations = None,
-    provenance = Some(com.histmersion.api.library.Source.Provenance("unpaywall")),
-    calibreId = Some(com.histmersion.api.library.Source.CalibreId("412")),
-    ocrMarkdown = Some(com.histmersion.api.library.Source.OcrMarkdown("MEGABYTES of converted paper that must NOT be exported")),
+    provenance = Some(Source.Provenance("unpaywall")),
+    calibreId = Some(Source.CalibreId("412")),
+    ocrMarkdown = Some(Source.OcrMarkdown("MEGABYTES of converted paper that must NOT be exported")),
     findings = List(
       Finding(
-        com.histmersion.api.library.Finding.Id(s"$ck#0"),
+        Finding.Id(s"$ck#0"),
         ck,
-        com.histmersion.api.library.Finding.Claim("Corded Ware derived ~75% of ancestry from Yamnaya."),
-        Some(com.histmersion.api.library.Finding.Region("Central Europe (Germany)")),
-        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(10.4), com.histmersion.api.catalogue.Latitude(51.2))),
-        Some(Period(com.histmersion.api.catalogue.Year(-2500), com.histmersion.api.catalogue.Year(-2200))),
-        Some(com.histmersion.api.library.Finding.PeriodName("Late Neolithic / Corded Ware")),
-        List(com.histmersion.api.library.Finding.Tags("corded_ware"), com.histmersion.api.library.Finding.Tags("yamnaya_culture")),
+        Finding.Claim("Corded Ware derived ~75% of ancestry from Yamnaya."),
+        Some(Finding.Region("Central Europe (Germany)")),
+        Some(GeoPoint(Longitude(10.4), Latitude(51.2))),
+        Some(Period(Year(-2500), Year(-2200))),
+        Some(Finding.PeriodName("Late Neolithic / Corded Ware")),
+        List(Finding.Tags("corded_ware"), Finding.Tags("yamnaya_culture")),
         Some(Confidence.High)
       ),
-      Finding(com.histmersion.api.library.Finding.Id(s"$ck#1"), ck, com.histmersion.api.library.Finding.Claim("An undated, unplaced claim."), None, None, None, None, Nil, None)
+      Finding(Finding.Id(s"$ck#1"), ck, Finding.Claim("An undated, unplaced claim."), None, None, None, None, Nil, None)
     ),
-    edges = List(Edge(ck, com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References)),
-    notes = Some(com.histmersion.api.library.Source.Notes("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one")),
-    updatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
+    edges = List(Edge(ck, Citekey("anthony2007_horse"), Edge.Kind.References)),
+    notes = Some(Source.Notes("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one")),
+    updatedAt = Some(Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
   )
 
   test("export then parse round-trips every frontmatter field"):
-    val back = SourceNote.parseNote(SourceNote.note(source), com.histmersion.api.library.Citekey("wrong_fallback")).get
+    val back = SourceNote.parseNote(SourceNote.note(source), Citekey("wrong_fallback")).get
     assertEquals(back.citekey, source.citekey)
     assertEquals(back.title, source.title)
     assertEquals(back.authors, source.authors)
@@ -93,13 +101,13 @@ class SourceNoteSuite extends munit.FunSuite:
 
   test("a source with no findings, notes or optional metadata still round-trips"):
     val bare = Source(
-      citekey = com.histmersion.api.library.Citekey("bare_one"),
-      title = com.histmersion.api.library.Title("T"),
-      authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+      citekey = Citekey("bare_one"),
+      title = Title("T"),
+      authors = (Nil).map(AuthorName.apply),
       doi = None,
       year = None,
       venue = None,
-      status = com.histmersion.api.library.Source.Status.Unassessed,
+      status = Source.Status.Unassessed,
       topics = Nil,
       regions = Nil,
       tags = Nil,
@@ -110,17 +118,17 @@ class SourceNoteSuite extends munit.FunSuite:
       provenance = None,
       calibreId = None
     )
-    val back = SourceNote.parseNote(SourceNote.note(bare), com.histmersion.api.library.Citekey("fallback")).get
+    val back = SourceNote.parseNote(SourceNote.note(bare), Citekey("fallback")).get
     assertEquals(back.citekey, "bare_one")
     assertEquals(back.findings, Nil)
     assertEquals(back.notes, None)
     assertEquals(back.period, None)
 
   test("superseded_by is exported from the edge and parsed back into it"):
-    val s = source.modify(_.edges).setTo(List(Edge(ck, com.histmersion.api.library.Citekey("reich2018_who"), com.histmersion.api.library.Edge.Kind.SupersededBy)))
+    val s = source.modify(_.edges).setTo(List(Edge(ck, Citekey("reich2018_who"), Edge.Kind.SupersededBy)))
     val back = SourceNote.parseNote(SourceNote.note(s), ck).get
-    assert(back.edges.contains(Edge(ck, com.histmersion.api.library.Citekey("reich2018_who"), com.histmersion.api.library.Edge.Kind.SupersededBy)), back.edges.toString)
+    assert(back.edges.contains(Edge(ck, Citekey("reich2018_who"), Edge.Kind.SupersededBy)), back.edges.toString)
 
   test("wikilinks in the notes body are re-derived as reference edges"):
     val back = SourceNote.parseNote(SourceNote.note(source), ck).get
-    assert(back.edges.contains(Edge(ck, com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References)), back.edges.toString)
+    assert(back.edges.contains(Edge(ck, Citekey("anthony2007_horse"), Edge.Kind.References)), back.edges.toString)

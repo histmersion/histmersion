@@ -1,4 +1,8 @@
-package com.histmersion.util.data.mirror
+package com.histmersion
+package util.data.mirror
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the Markdown mirror puts the notes of one kind of record, under the directory `histmersion export <dir>` is
   * given (and `histmersion seed <dir>` reads back): the source notes in `<dir>/sources/<citekey>.md`, each article in
@@ -16,18 +20,18 @@ enum MirrorPlacement:
   case Named(name: MirrorPlacement.Directory)
 
   /** The directory the notes go in, under the export's directory; `None` when each note's type decides it. */
-  def directory: Option[com.histmersion.util.data.mirror.MirrorPlacement.Directory] = this match
+  def directory: Option[MirrorPlacement.Directory] = this match
     case InDirectory(d) => Some(d)
     case Named(d)       => Some(d)
     case ByType         => None
 
 object MirrorPlacement:
   type Directory = Directory.T
-  object Directory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Directory extends RefinedType[String, Pure]
   type NoteFile = NoteFile.T
-  object NoteFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoteFile extends RefinedType[String, Pure]
   type RecordId = RecordId.T
-  object RecordId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RecordId extends RefinedType[String, Pure]
 
   val SourcesDirectory: Directory = Directory("sources")
   val MetaDirectory: Directory = Directory("meta")
@@ -37,4 +41,4 @@ object MirrorPlacement:
   val MetaFiles: MirrorPlacement = Named(MetaDirectory)
 
   /** The file name of the note of the record `id`. */
-  def noteFile(id: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): com.histmersion.util.data.mirror.MirrorPlacement.NoteFile = NoteFile(s"$id.md")
+  def noteFile(id: RecordId): NoteFile = NoteFile(s"$id.md")
