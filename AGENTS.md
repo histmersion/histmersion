@@ -187,7 +187,10 @@ is a written reason.
 ## Coding practices
 
 These rules bind new and changed code. Existing code that breaks them is brought in line when it is
-changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) is a dependency of
+changed for another reason, not in a sweep: every change also brings the files it touches up to these rules (the
+boy-scout rule). The goal is correctness by design: a rule that can be checked by the compiler or a lint is, so an
+easily avoidable bug cannot get in. Nothing is published yet, so compatibility (API, MCP, CLI output, plugin SPI,
+schema history) is not a constraint; only the data in existing databases must survive. Iron (`io.github.iltotore::iron`) is a dependency of
 `values`, `api`, `core` and `plugin-api`; Chimney (`io.scalaland::chimney`) of `server`, where the layers meet (and of
 `chimney-iron`): another module that needs it adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
 Chimney 2.1.0.
@@ -199,16 +202,21 @@ _Check: `ContractsSuite` rules `primitive` (a public service, repository or cont
 Every value in the model has a type that says what it means: an Iron newtype, not a raw
 `String`/`Int`/`Long`, and not a bare refined type (`String :| Match[…]`) passed around as such. A
 constraint is optional (`Pure` accepts every value of the base type). A smart constructor exists only
-where the data must be checked. Use `RefinedType` (opaque), not `RefinedSubtype`: a `Citekey` is not
-silently a `String`; `.value` says where the raw value is taken out.
+where the data must be checked. Extend `Newtype` (module `newtype`, an opaque Iron `RefinedType` that also gives
+`CanEqual` and an `Ordering` lifted from the base), not `RefinedSubtype`: a `Citekey` is not silently a `String`.
+The raw value (`.value`, or building a newtype from a runtime primitive) appears only inside the newtype's own
+companion and at a boundary listed in `architecture/boundaries.tsv` (SQL, HTTP bodies, JSON, CLI arguments, the DOM,
+config, processes, the plugin SPI), and there preferably through a lifted type class, not by hand. Controllers convert
+API values to domain values; renderers work on concepts and hand only the final text out. A missing operation goes on
+the type's companion. Building a newtype from a literal (`Citekey("x")`) is fine anywhere.
 
 ```scala
 type Year = Year.T
-object Year extends RefinedType[Int, Pure]                    // Year(-3300): BCE negative
+object Year extends Newtype[Int, Pure]                        // Year(-3300): BCE negative
 
 type CitekeyRule = Match["[a-z][a-z0-9_-]*"]
 type Citekey = Citekey.T
-object Citekey extends RefinedType[String, CitekeyRule]       // Citekey.either(raw) at the boundary
+object Citekey extends Newtype[String, CitekeyRule]           // Citekey.either(raw) at the boundary
 
 def neighbours(citekey: Citekey, depth: Int): List[Citekey]   // not (citekey: String, depth: Int)
 ```
@@ -278,7 +286,7 @@ or newer: Chimney 2 and Iron 3.4 are compiled by Scala 3.9, which no older compi
 Scala 3.9.0 compiler bug, fixed in 3.10.0, stops the extension's own compilation with a cyclic
 reference. It converts `From` into `To` as `To(from.value)`, with no check, when
 
-- both are `type X = X.T` over an `object X extends RefinedType[Base, Constraint]` (rule 1's shape),
+- both are `type X = X.T` over an `object X extends Newtype[Base, Constraint]` (rule 1's shape),
 - the two companions have the same name (`domain.Citekey` → `api.Citekey`), and
 - their base types and constraints are the same types.
 
@@ -290,7 +298,7 @@ a pair out, for a conversion that must check, or between differently named newty
 ```scala
 package com.histmersion.api
 type Citekey = Citekey.T
-object Citekey extends RefinedType[String, CitekeyRule]       // same name, same constraint as domain's
+object Citekey extends Newtype[String, CitekeyRule]           // same name, same constraint as domain's
 
 source.transformInto[SourceView]              // field by field, no constraint re-checked, no givens
 ```
@@ -599,7 +607,10 @@ adjusted with media queries and swapped as a theme without touching Scala.
 
 ## Magnum / SQL conventions
 
-- `sql"…"` interpolation with **parameters**, never string concatenation of user input.
+- `sql"…"` interpolation with **parameters**, never string concatenation of user input. A dynamic part (a column,
+  a direction, a table) is a `sql"…"` fragment chosen from a closed set (`case SortBy.Created => sql"created_at"`),
+  never a `String` passed to a raw operator (`Sql.raw`, `Sql.of(Text(…))`, `SqlLiteral`). An enum or newtype is bound
+  through its `DbCodec`, never interpolated as text: `s"$kind"` stores `toString`, not the wire spelling.
 - Deep time is a Postgres **`int8range`** of signed years (BCE negative). Postgres normalises
   `[a,b]` to `[a,b+1)`, so the inclusive upper bound you read back is **`upper − 1`**. Get this wrong
   and every period is one year too long.
