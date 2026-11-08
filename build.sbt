@@ -38,7 +38,10 @@ ThisBuild / scalacOptions ++= Seq(
   "-source:future",
   // a pattern match on a non-Matchable type (E165: tapir's `Any` value matchers #829, decoded YAML
   // and JDBC arrays #879) is an ERROR anywhere in the build, so the warning cannot creep back unnoticed
-  "-Wconf:id=E165:e"
+  "-Wconf:id=E165:e",
+  // `==` and `!=` compile only between types with a `CanEqual` (G53): a newtype's own (its `Newtype` base), an enum's or
+  // record's `derives CanEqual`, the standard library's; comparing two unrelated types is a compile error
+  "-language:strictEquality"
 )
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
