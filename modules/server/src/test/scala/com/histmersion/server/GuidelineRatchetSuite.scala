@@ -104,6 +104,17 @@ class GuidelineRatchetSuite extends munit.FunSuite:
       List(Finding("G44", "core", "modules/core/src/test/scala/A.scala", 3, "value:Citekey"))
     )
 
+  test("the inventory reads the SemanticDB of meta and test-meta, never a leftover one beside the classes"):
+    val out = Files.createTempDirectory("ratchet-out")
+    val dirs =
+      List("jvm/scala-3.10.0/m/meta", "jvm/scala-3.10.0/m/test-meta", "jvm/scala-3.10.0/m/classes/META-INF/semanticdb")
+    dirs.foreach(d => Files.createDirectories(out.resolve(d)))
+    assertEquals(
+      Inventory.semanticdbTargetRoots(out).map(p => out.toAbsolutePath.normalize.relativize(p).toString),
+      List("jvm/scala-3.10.0/m/meta", "jvm/scala-3.10.0/m/test-meta")
+    )
+    assertEquals(Inventory.semanticdbTargetRoots(out.resolve("missing")), Nil)
+
 object GuidelineRatchetSuite:
 
   val RatchetFile: Path = Path.of("architecture/guidelines-ratchet.tsv")
@@ -169,9 +180,22 @@ object GuidelineRatchetSuite:
     val Report: Path = Path.of("target/guidelines/findings.tsv")
     val Log: Path = Path.of("target/guidelines/inventory.log")
 
+    /** The directories sbt writes the SemanticDB to (`meta`, `test-meta` beside each module's classes). Scalafix is
+      * told them, because by default it reads the first `META-INF/semanticdb` on the classpath — a leftover one under
+      * `classes` from an older build layout too, which describes an older text of the file.
+      */
+    def semanticdbTargetRoots(out: Path): List[Path] =
+      if !Files.isDirectory(out) then Nil
+      else
+        val stream = Files.find(out, 4, (p, a) => a.isDirectory && Set("meta", "test-meta")(p.getFileName.toString))
+        try stream.iterator.asScala.map(_.toAbsolutePath.normalize).toList.sortBy(_.toString)
+        finally stream.close()
+
     def run(): List[Finding] =
       Files.createDirectories(Log.getParent)
       Files.deleteIfExists(Report)
+      val targetRoots =
+        semanticdbTargetRoots(Path.of("target/out")).flatMap(p => List("--semanticdb-targetroots", p.toString))
       val command = List(
         "scala-cli",
         "run",
@@ -194,10 +218,8 @@ object GuidelineRatchetSuite:
         ".",
         "--auto-classpath",
         "--auto-classpath-roots",
-        "target/out",
-        "--files",
-        "modules"
-      )
+        "target/out"
+      ) ++ targetRoots ++ List("--files", "modules")
       val process = new ProcessBuilder(command.asJava).redirectErrorStream(true).redirectOutput(Log.toFile).start()
       val finished = process.waitFor(15, TimeUnit.MINUTES)
       if !finished then process.destroyForcibly()

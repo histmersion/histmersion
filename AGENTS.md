@@ -552,7 +552,12 @@ The guideline inventory (`tools/refactor/GuidelineInventory.scala`, a Scalafix r
 writes) is a ratchet too: `GuidelineRatchetSuite` (server tests) counts its findings per rule, module and scope in
 `architecture/guidelines-ratchet.tsv`. A count above the file fails and names the new findings (path:line); a count
 below it fails until the file is regenerated with `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly
-*GuidelineRatchetSuite'`. A rewrite of any of the three lists refuses a count that rises.
+*GuidelineRatchetSuite'`. A rewrite of any of the three lists refuses a count that rises. A count is only valid over
+current SemanticDB: the suite reads the `meta`/`test-meta` directories sbt writes (never a leftover
+`classes/META-INF/semanticdb`) and the inventory refuses a file whose SemanticDB describes other text, so a fresh
+baseline (the file deleted and written again) is valid only from a run that reports no stale documents. The source
+checks (`ContractsSuite`, `ArchitectureSuite`, `StyleLintSuite`, the inventory) count occurrences in the code, never
+lines, so formatting moves no count.
 
 Rules 7–14 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
 a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict

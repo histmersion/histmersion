@@ -125,6 +125,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
   private val plainDefs = new ConcurrentHashMap[String, PlainDef]()
   private val plainCalls = new ConcurrentLinkedQueue[PlainCall]()
   private val unclassified = new ConcurrentHashMap[String, (Int, String)]()
+  private val stale = new ConcurrentLinkedQueue[String]()
   private val controller = policy.controllerFile.r
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
@@ -140,6 +141,9 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
   override def fix(implicit doc: SemanticDocument): Patch = {
     val path = relative(doc.input match { case Input.File(p, _) => p.toString; case Input.VirtualFile(p, _) => p; case other => other.toString })
     visited.add(path)
+    // a SemanticDB written for another version of the file resolves no symbol, and every symbol-based rule would read
+    // the file wrongly (G9prefix doubles when no type has an owner): such a file is refused, never counted
+    if (staleSemanticdb(doc)) stale.add(path)
     val mod = module(path)
     val scope = if (policy.testMarkers.exists(path.contains)) "test" else "main"
     val boundary = boundaryKinds.contains(path)
@@ -195,6 +199,12 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case v: s.ValueSignature => v.tpe
       case m: s.MethodSignature => m.returnType
     }
+    /** What calling `sym(…)` gives: a method's result; applying a value (`text(i)` on a String) calls its `apply`, whose
+      * result is not the value's type. */
+    def callResult(sym: Symbol): Option[s.Type] = info(sym).map(_.signature) match {
+      case Some(m: s.MethodSignature) if m.parameterLists.nonEmpty => Some(m.returnType)
+      case _ => None
+    }
     def lit(name: String): Option[s.Type] = Some(s.TypeRef(s.Type.Empty, name, Nil))
     def isIronValue(n: Name): Boolean = n.value == "value" && n.symbol.value.startsWith(ironValue)
     def termType(t: Term): Option[s.Type] = t match {
@@ -210,8 +220,8 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case sel: Term.Select => if (hasKind(sel.name.symbol, objectKinds)) None else resultOf(sel.name.symbol)
       case a: Term.Apply => a.fun match {
         case n: Term.Name if isNewtypeObject(n.symbol) => None
-        case n: Term.Name => resultOf(n.symbol)
-        case sel: Term.Select => resultOf(sel.name.symbol)
+        case n: Term.Name => callResult(n.symbol)
+        case sel: Term.Select => callResult(sel.name.symbol)
         case _ => None
       }
       case b: Term.Block if b.stats.size == 1 => b.stats.head match { case x: Term => termType(x); case _ => None }
@@ -345,7 +355,11 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           else report("G44", s, s"value:$ntName" + fedInto.fold("")(f => s";bridge->$f"))
         }
         // G49: inside a lambda passed to a collection op
-        val lambdaOp = ancestors(s).takeWhile(a => !a.is[Defn.Def] && !a.is[Template]).sliding(3).collectFirst {
+        // a block that only holds the lambda (`xs.map { x => … }`) is the same argument as `xs.map(x => …)`
+        val lambdaOp = ancestors(s).takeWhile(a => !a.is[Defn.Def] && !a.is[Template]).filterNot {
+          case b: Term.Block => b.stats.size == 1
+          case _ => false
+        }.sliding(3).collectFirst {
           case List(f: Term.FunctionTerm, _: Term.ArgClause, a: Term.Apply) => a
           case List(f: Term.AnonymousFunction, _: Term.ArgClause, a: Term.Apply) => a
           case List(f: Term.PartialFunction, _: Term.ArgClause, a: Term.Apply) => a
@@ -598,8 +612,21 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     patches.asPatch
   }
 
+  /** The document's SemanticDB was written from other text than the file's (its md5 differs). Scalafix keeps the
+    * document it loaded behind a scalafix-private accessor, so it is read reflectively; a document it cannot read is
+    * taken as current. */
+  private def staleSemanticdb(doc: SemanticDocument): Boolean = scala.util.Try {
+    val internal = doc.getClass.getMethod("internal").invoke(doc)
+    val textDocument = internal.getClass.getMethod("textDocument").invoke(internal).asInstanceOf[s.TextDocument]
+    val md5 = java.security.MessageDigest.getInstance("MD5").digest(doc.input.text.getBytes(UTF_8)).map(b => f"${b & 255}%02X").mkString
+    textDocument.md5.nonEmpty && textDocument.md5 != md5
+  }.getOrElse(false)
+
   override def afterComplete(): Unit = {
     val seen = visited.asScala.toSet
+    val staleFiles = stale.asScala.toList.distinct.sorted
+    require(staleFiles.isEmpty, s"Stale SemanticDB for ${staleFiles.size} source(s) (compile them; or a leftover META-INF/semanticdb is read): " +
+      staleFiles.take(5).mkString(", "))
     if (policy.requireCoverage) {
       val expectedFiles = sources(policy.roots)
       val missing = expectedFiles -- seen
