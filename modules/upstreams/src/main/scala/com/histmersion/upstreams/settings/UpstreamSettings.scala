@@ -1,7 +1,10 @@
-package com.histmersion.upstreams.settings
+package com.histmersion
+package upstreams.settings
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition upstreams as `histmersion.acquire` configures them: their endpoints, the landing-page rules, the
   * contact e-mail and the identity the PMC hosts see. Decoded by the first-party fetcher plugins from the settings the
@@ -27,14 +30,14 @@ final case class UpstreamSettings(
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured: a blank one means anonymous (no polite pool, no Unpaywall). */
-  def contact: Option[com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail] = (Option(contactEmail).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail(refactorValue))
+  def contact: Option[UpstreamSettings.ContactEmail] = (Option(contactEmail).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => UpstreamSettings.ContactEmail(refactorValue))
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
-  def mailto: com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail = contact.getOrElse(UpstreamSettings.ContactEmail(""))
+  def mailto: UpstreamSettings.ContactEmail = contact.getOrElse(UpstreamSettings.ContactEmail(""))
 
 object UpstreamSettings:
 
   type ContactEmail = ContactEmail.T
-  object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContactEmail extends RefinedType[String, Pure]
   type PublicUserAgent = PublicUserAgent.T
-  object PublicUserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublicUserAgent extends RefinedType[String, Pure]

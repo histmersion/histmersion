@@ -1,10 +1,14 @@
-package com.histmersion.upstreams.unpaywall
+package com.histmersion
+package upstreams.unpaywall
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class OaAccess(isOa: OaAccess.IsOa, status: Option[OaAccess.Status], url: Option[OaAccess.Url])
 
 object OaAccess:
   type IsOa = IsOa.T
-  object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsOa extends RefinedType[Boolean, Pure]
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]

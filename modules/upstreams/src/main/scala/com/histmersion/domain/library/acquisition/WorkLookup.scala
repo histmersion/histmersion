@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 import com.histmersion.plugin.{Doi, WorkKey, Year}
 import io.circe.Json
 import com.histmersion.upstreams.http.Url
@@ -6,6 +7,9 @@ import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.plugin.Plugin
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.upstreams.ArxivId
 
 /** A work's metadata by its DOI, as an ingest looks it up before asking the acquisition chain: OpenAlex first (richer,
   * keyless), Crossref as the fallback, with Unpaywall's open-access status when Crossref answered. `json` is the
@@ -13,29 +17,29 @@ import com.histmersion.plugin.Plugin
   */
 object WorkLookup:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
   type WorkFields = WorkFieldsValue
   type WorkFieldsValue = WorkFieldsValue.T
-  object WorkFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WorkFieldsValue extends RefinedType[String, Pure]
 
-  val WorkFields: com.histmersion.domain.library.acquisition.WorkLookup.WorkFields =
-    _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkFieldsValue("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
+  val WorkFields: WorkFields =
+    WorkFieldsValue("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
       "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works")
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
-  def workUrl(cfg: UpstreamSettings, doi: com.histmersion.plugin.Doi): Candidate.Url =
+  def workUrl(cfg: UpstreamSettings, doi: Doi): Candidate.Url =
     Candidate.Url(s"${cfg.openalex.url}/works/https://doi.org/$doi")
 
   /** Crossref's record of a DOI. */
-  def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.plugin.Doi): Candidate.Url =
-    Url(Candidate.Url(cfg.crossref.url.value), _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/works/$doi"), "mailto" -> cfg.mailto.value)
+  def crossrefUrl(cfg: UpstreamSettings, doi: Doi): Candidate.Url =
+    Url(Candidate.Url(cfg.crossref.url.value), Url.UrlPath(s"/works/$doi"), "mailto" -> cfg.mailto.value)
 
-  def meta(cfg: UpstreamSettings, json: Candidate.Url => Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, Json], log: Plugin.Log)(
-      doi: com.histmersion.plugin.Doi
-  ): Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, WorkRef] =
-    json(Url(workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> (WorkFields).value, "mailto" -> cfg.mailto.value))
+  def meta(cfg: UpstreamSettings, json: Candidate.Url => Either[Problem, Json], log: Plugin.Log)(
+      doi: Doi
+  ): Either[Problem, WorkRef] =
+    json(Url(workUrl(cfg, doi), Url.UrlPath(""), "select" -> (WorkFields).value, "mailto" -> cfg.mailto.value))
       .map(AcquireParse.openalexWork)
       .left
       .flatMap { why =>
@@ -51,19 +55,19 @@ object WorkLookup:
     */
   private def withUnpaywall(
       cfg: UpstreamSettings,
-      json: Candidate.Url => Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, Json],
-      doi: com.histmersion.plugin.Doi,
+      json: Candidate.Url => Either[Problem, Json],
+      doi: Doi,
       w: WorkRef
   ): WorkRef =
     cfg.contact
-      .flatMap(email => json(Url(Candidate.Url(cfg.unpaywall.url.value), _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/$doi"), "email" -> email.value)).toOption)
+      .flatMap(email => json(Url(Candidate.Url(cfg.unpaywall.url.value), Url.UrlPath(s"/$doi"), "email" -> email.value)).toOption)
       .map(AcquireParse.unpaywallAccess)
       .fold(w)(a => w.copy(isOa = WorkRef.IsOa(a.isOa.value), oaStatus = a.status.map(s => WorkRef.OaStatus(s.value)), oaUrl = a.url.map(u => WorkRef.OaUrl(u.value))))
 
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata record says of it.
     * A DOI that is none is not passed on.
     */
-  def key(doi: Option[com.histmersion.plugin.Doi], arxiv: Option[com.histmersion.upstreams.ArxivId], work: Option[WorkRef]): WorkKey =
+  def key(doi: Option[Doi], arxiv: Option[ArxivId], work: Option[WorkRef]): WorkKey =
     WorkKey(
       doi = doi.map(_.value.trim).filter(_.matches("10\\.[0-9]+/\\S+")).map(Doi(_)),
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)).map(a => WorkKey.Arxiv(a.value)),

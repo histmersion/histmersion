@@ -1,4 +1,10 @@
-package com.histmersion.upstreams.archiveorg
+package com.histmersion
+package upstreams.archiveorg
+
+import com.histmersion.upstreams.ArchiveId
+import com.histmersion.plugin.WorkKey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class ArchiveItem(
     identifier: ArchiveItem.Identifier,
     title: Option[ArchiveItem.Title] = None,
@@ -6,22 +12,22 @@ final case class ArchiveItem(
     year: Option[ArchiveItem.Year] = None,
     publisher: Option[ArchiveItem.Publisher] = None,
     description: Option[ArchiveItem.Description] = None,
-    lendingOnly: ArchiveItem.LendingOnly = _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(false),
+    lendingOnly: ArchiveItem.LendingOnly = ArchiveItem.LendingOnly(false),
     files: List[ArchiveFile] = Nil
 )
 
 object ArchiveItem:
-  type Identifier = com.histmersion.upstreams.ArchiveId
-  val Identifier: _root_.com.histmersion.upstreams.ArchiveId.type = _root_.com.histmersion.upstreams.ArchiveId
-  type Title = com.histmersion.plugin.WorkKey.Title
-  val Title: _root_.com.histmersion.plugin.WorkKey.Title.type = _root_.com.histmersion.plugin.WorkKey.Title
+  type Identifier = ArchiveId
+  val Identifier: ArchiveId.type = ArchiveId
+  type Title = WorkKey.Title
+  val Title: WorkKey.Title.type = WorkKey.Title
   type Creator = Creator.T
-  object Creator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Creator extends RefinedType[String, Pure]
   type Year = com.histmersion.plugin.Year
-  val Year: _root_.com.histmersion.plugin.Year.type = _root_.com.histmersion.plugin.Year
+  val Year: com.histmersion.plugin.Year.type = com.histmersion.plugin.Year
   type Publisher = Publisher.T
-  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Publisher extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type LendingOnly = LendingOnly.T
-  object LendingOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LendingOnly extends RefinedType[Boolean, Pure]

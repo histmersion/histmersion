@@ -1,25 +1,33 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
+
+import com.histmersion.plugin.Year
+import com.histmersion.plugin.Doi
+import com.histmersion.plugin.WorkKey
+import com.histmersion.upstreams.ArxivId
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class FollowupRow(
     title: Option[FollowupRow.Title] = None,
-    year: Option[com.histmersion.plugin.Year] = None,
-    doi: Option[com.histmersion.plugin.Doi] = None,
+    year: Option[Year] = None,
+    doi: Option[Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
-    isInfluential: FollowupRow.IsInfluential = _root_.com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential(false),
+    isInfluential: FollowupRow.IsInfluential = FollowupRow.IsInfluential(false),
     intents: List[FollowupRow.Intents] = Nil,
     contexts: List[FollowupRow.Contexts] = Nil
 )
 
 object FollowupRow:
-  type Title = com.histmersion.plugin.WorkKey.Title
-  val Title: _root_.com.histmersion.plugin.WorkKey.Title.type = _root_.com.histmersion.plugin.WorkKey.Title
-  type Arxiv = com.histmersion.upstreams.ArxivId
-  val Arxiv: _root_.com.histmersion.upstreams.ArxivId.type = _root_.com.histmersion.upstreams.ArxivId
+  type Title = WorkKey.Title
+  val Title: WorkKey.Title.type = WorkKey.Title
+  type Arxiv = ArxivId
+  val Arxiv: ArxivId.type = ArxivId
   type CitedBy = CitedBy.T
-  object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedBy extends RefinedType[Int, Pure]
   type IsInfluential = IsInfluential.T
-  object IsInfluential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsInfluential extends RefinedType[Boolean, Pure]
   type Intents = Intents.T
-  object Intents extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Intents extends RefinedType[String, Pure]
   type Contexts = Contexts.T
-  object Contexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Contexts extends RefinedType[String, Pure]
