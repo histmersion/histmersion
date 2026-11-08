@@ -18,7 +18,7 @@ object Tag extends Newtype[String, Pure]
 type Year = Year.T
 object Year extends Newtype[Int, Pure]
 
-enum SourceStatusView:
+enum SourceStatusView derives CanEqual:
   case Current
   case Contested(by: Citekey)
   case Superseded(by: Citekey)
