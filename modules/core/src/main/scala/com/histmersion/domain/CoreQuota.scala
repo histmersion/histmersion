@@ -281,7 +281,7 @@ object CoreQuota:
       UpstreamQuota.SearchDailyTokens(limits.searchDailyTokens.value),
       UpstreamQuota.PerMinute(limits.perMinute.value),
       b.map(x => UpstreamQuota.BlockedUntil(x.until.toString)),
-      b.map(x => Problem(x.why.value)),
+      b.map(x => api.Problem(x.why.value)),
       s.window.flatMap(_.limit).map(l => UpstreamQuota.RateLimit(l.value)),
       s.window.flatMap(_.remaining).map(m => UpstreamQuota.RateRemaining(m.value)),
       s.window.map(w => UpstreamQuota.ObservedAt(w.at.toString))

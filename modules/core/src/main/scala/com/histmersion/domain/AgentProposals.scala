@@ -21,7 +21,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object AgentProposals:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-  export AgentVerify.Problem
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
@@ -78,12 +77,8 @@ object AgentProposals:
     case Ask
 
     /** Nothing to do (the source already has that status). */
-    case Skip(reason: Route.Skip.Reason)
+    case Skip(reason: Problem)
 
-  object Route:
-    object Skip:
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
 
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
@@ -93,7 +88,7 @@ object AgentProposals:
     p.kind match
       case Approval.Kind.StatusChange =>
         if p.status.isEmpty || p.status == current then
-          Route.Skip(Route.Skip.Reason(s"already ${current.fold("?")(_.wire)}"))
+          Route.Skip(Problem(s"already ${current.fold("?")(_.wire)}"))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
@@ -101,7 +96,7 @@ object AgentProposals:
         else Route.Ask
       case Approval.Kind.Edge =>
         if edgeMode == Approval.Mode.Auto then Route.Apply else Route.Ask
-      case k => Route.Skip(Route.Skip.Reason(s"${k.wire} is not a source change"))
+      case k => Route.Skip(Problem(s"${k.wire} is not a source change"))
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 
@@ -160,10 +155,10 @@ object AgentProposals:
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: AgentVerify.MinRatio
-  ): Either[AgentProposals.Problem, Proposal] =
+  ): Either[Problem, Proposal] =
     val raw = a.citekey.value.trim
     val label = s"proposal for ${if raw.isEmpty then "?" else raw}"
-    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[AgentProposals.Problem, Proposal.Quote] =
+    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[Problem, Proposal.Quote] =
       val q = Proposal.Quote(a.quote.value.trim)
       if q.value.isEmpty then Left(Problem(s"$label: no quote"))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)

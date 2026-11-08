@@ -24,14 +24,12 @@ object HintProposals:
   object Item extends Newtype[String, Pure]
   type Last = Last.T
   object Last extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
 
   final case class HintAnswer(
       action: HintAnswer.Action,
-      why: HintAnswer.Why = HintAnswer.Why(""),
+      why: Problem = Problem(""),
       targets: List[HintAnswer.Targets] = Nil,
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
@@ -42,8 +40,6 @@ object HintProposals:
   object HintAnswer:
     type Action = Action.T
     object Action extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Targets = Targets.T
     object Targets extends Newtype[String, Pure]
     type Tag = Tag.T
@@ -154,9 +150,6 @@ object HintProposals:
   /** What the step checkpoints: the proposal that passed (None: nothing asked for, or nothing passed), why, and the
     * warnings.
     */
-  final case class Proposed(effect: Option[HintEffect], why: Proposed.Why, problems: List[Description] = Nil)
+  final case class Proposed(effect: Option[HintEffect], why: Problem, problems: List[Description] = Nil)
       derives KindlingsCodecAsObject
 
-  object Proposed:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]

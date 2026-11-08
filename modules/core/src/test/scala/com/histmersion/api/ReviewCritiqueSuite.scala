@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -412,7 +413,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val ok = List(
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites > frazer1922_golden"),
-        ReviewArticle.NotMaterialAnswer.Reason("  It is cited for the\nseasons only. ")
+        Problem("  It is cited for the\nseasons only. ")
       )
     )
     val (rs, ps, ws) = checkNotMaterial(ok, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(false))
@@ -444,19 +445,19 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val bad = List(
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("lee1990_ritual>frazer1922_golden"),
-        ReviewArticle.NotMaterialAnswer.Reason("x")
+        Problem("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("smith1987_dying>frazer1922_golden"),
-        ReviewArticle.NotMaterialAnswer.Reason("x")
+        Problem("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("zz2000_a>zz2001_b"),
-        ReviewArticle.NotMaterialAnswer.Reason("x")
+        Problem("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites>frazer1922_golden"),
-        ReviewArticle.NotMaterialAnswer.Reason(" ")
+        Problem(" ")
       )
     )
     val (rs4, _, ws4) = checkNotMaterial(bad, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(true))
@@ -483,7 +484,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       List(
         NotMaterialAnswer(
           ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites>frazer1922_golden"),
-          ReviewArticle.NotMaterialAnswer.Reason("Off the article's question.")
+          Problem("Off the article's question.")
         )
       )
     )
@@ -507,7 +508,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       .setTo(
         a.notMaterial :+ NotMaterialAnswer(
           ReviewArticle.NotMaterialAnswer.Pair("smith1987_dying>frazer1922_golden"),
-          ReviewArticle.NotMaterialAnswer.Reason("Off the question.")
+          Problem("Off the question.")
         )
       )
     assertEquals(
@@ -613,12 +614,12 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAside(
           ReviewArticle.SetAside.Id("S1"),
           CritiqueRef(Citekey("smith1987_dying"), Citekey("frazer1922_golden")),
-          ReviewArticle.SetAside.Reason("Cited for the date only.")
+          Problem("Cited for the date only.")
         ),
         SetAside(
           ReviewArticle.SetAside.Id("S2"),
           CritiqueRef(Citekey("brown1999_rites"), Citekey("frazer1922_golden")),
-          ReviewArticle.SetAside.Reason("Off the point.")
+          Problem("Off the point.")
         )
       )
     )

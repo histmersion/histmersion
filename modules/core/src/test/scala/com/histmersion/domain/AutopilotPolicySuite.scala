@@ -57,7 +57,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(6)),
       Verdict.Leave(
-        Verdict.Leave.Why("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
+        Problem("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
       )
     )
     assert(
@@ -208,7 +208,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("the note marks the decision as the autopilot's; a left one carries none"):
     assertEquals(note(Verdict.Approve(AutopilotPolicy.Verdict.Approve.Reason("r"))), Some("autopilot: approved — r"))
     assertEquals(note(Verdict.Reject(AutopilotPolicy.Verdict.Reject.Reason("r"))), Some("autopilot: rejected — r"))
-    assertEquals(note(Verdict.Leave(AutopilotPolicy.Verdict.Leave.Why("r"))), None)
+    assertEquals(note(Verdict.Leave(Problem("r"))), None)
 
   test("depth: the parents above a goal; a cycle stops"):
     val parent = Map(Slug("c") -> Slug("b"), Slug("b") -> Slug("a"))

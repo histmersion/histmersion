@@ -24,16 +24,16 @@ object PlanReadSchedule:
       now: Instant
   ): ScheduledRead =
     schedule match
-      case ReadSchedule.Off             => ScheduledRead.NotDue(ScheduledRead.NotDue.Why("the schedule is off"))
+      case ReadSchedule.Off             => ScheduledRead.NotDue(Problem("the schedule is off"))
       case ReadSchedule.Every(interval) =>
         val latest = List(newestReading, lastAttempt).flatten.maxOption
         val age = latest.map(Duration.between(_, now))
-        if !autopilotOn.value then ScheduledRead.NotDue(ScheduledRead.NotDue.Why("the autopilot is off"))
-        else if !wanted.value then ScheduledRead.NotDue(ScheduledRead.NotDue.Why("no queued work wants the pool"))
+        if !autopilotOn.value then ScheduledRead.NotDue(Problem("the autopilot is off"))
+        else if !wanted.value then ScheduledRead.NotDue(Problem("no queued work wants the pool"))
         else
           age.filter(_.toMinutes < interval.toMinutes) match
             case Some(a) =>
               ScheduledRead.NotDue(
-                ScheduledRead.NotDue.Why(s"read ${a.toMinutes} min ago (every ${interval.toMinutes} min)")
+                Problem(s"read ${a.toMinutes} min ago (every ${interval.toMinutes} min)")
               )
             case None => ScheduledRead.Due

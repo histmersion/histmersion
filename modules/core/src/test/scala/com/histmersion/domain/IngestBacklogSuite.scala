@@ -183,10 +183,10 @@ class IngestBacklogSuite extends munit.FunSuite:
   test(
     "a failed ingest: no legal copy → the acquisition list at once; another failure → again after the backoff, the list after max-failures"
   ):
-    assert(isNoLegalCopy(IngestBacklog.Problem("no legal open-access copy of 10.1/x: nothing found")))
-    assert(!isNoLegalCopy(IngestBacklog.Problem("HTTP 503 from the converter")))
+    assert(isNoLegalCopy(Problem("no legal open-access copy of 10.1/x: nothing found")))
+    assert(!isNoLegalCopy(Problem("HTTP 503 from the converter")))
     onFailure(
-      IngestBacklog.Problem("no legal open-access copy of 10.1/x"),
+      Problem("no legal open-access copy of 10.1/x"),
       IngestBacklog.Failure.Retry.Failures(0),
       ManagerPolicy.ReviewSettings.MaxFailures(3),
       ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -197,7 +197,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       case other                  => fail(s"expected the acquisition list, got $other")
     assertEquals(
       onFailure(
-        IngestBacklog.Problem("timeout"),
+        Problem("timeout"),
         IngestBacklog.Failure.Retry.Failures(0),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -207,12 +207,12 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(15 * 60),
         IngestBacklog.Failure.Retry.Failures(1),
-        IngestBacklog.Failure.Why("timeout")
+        Problem("timeout")
       )
     )
     assertEquals(
       onFailure(
-        IngestBacklog.Problem("timeout"),
+        Problem("timeout"),
         IngestBacklog.Failure.Retry.Failures(1),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -222,11 +222,11 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(30 * 60),
         IngestBacklog.Failure.Retry.Failures(2),
-        IngestBacklog.Failure.Why("timeout")
+        Problem("timeout")
       )
     )
     onFailure(
-      IngestBacklog.Problem("timeout"),
+      Problem("timeout"),
       IngestBacklog.Failure.Retry.Failures(2),
       ManagerPolicy.ReviewSettings.MaxFailures(3),
       ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -237,7 +237,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       case other                  => fail(s"expected the acquisition list, got $other")
     assert(
       onFailure(
-        IngestBacklog.Problem(""),
+        Problem(""),
         IngestBacklog.Failure.Retry.Failures(0),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),

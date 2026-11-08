@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
@@ -22,9 +23,6 @@ final case class NewFigure(
 
 object NewFigure:
 
-  /** Why a payload is unusable. */
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Bytes = Bytes.T
   object Bytes extends Newtype[Array[Byte], Pure]

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
@@ -11,8 +12,6 @@ import com.histmersion.api.RegisteredJobKinds
   */
 object JobControlRules:
 
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def stoppable(kind: JobKinds.Wire): Boolean = JobActions.Stoppable.contains(kind)
 

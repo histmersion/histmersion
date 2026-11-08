@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.domain.Problem
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -126,10 +127,10 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                   if foreign then Some(MergeIssue.Detail.side(l)) else Some(att),
                   if foreign then Some(att) else Some(MergeIssue.Detail.side(r)),
                   List(if t.quote.exists(_.value.nonEmpty) then
-                    Problem(
+                    api.Problem(
                       "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
                     )
-                  else Problem("it has a position but no quote, so it cannot be found again")),
+                  else api.Problem("it has a position but no quote, so it cannot be found again")),
                   List(km.Drop, km.KeepUnanchored),
                   None,
                   c,

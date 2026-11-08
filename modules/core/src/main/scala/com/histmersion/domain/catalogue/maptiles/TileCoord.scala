@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
+import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One tile of the XYZ grid MapLibre asks for (Web Mercator; a tile's side is [[TileCoord.Extent]] units of the vector
@@ -30,8 +31,6 @@ final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord
     ((mx * n - x.value) * TileCoord.Extent.value, (my * n - y.value) * TileCoord.Extent.value)
 
 object TileCoord:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type TilesPerSide = TilesPerSide.T
   object TilesPerSide extends Newtype[Long, Pure]
 

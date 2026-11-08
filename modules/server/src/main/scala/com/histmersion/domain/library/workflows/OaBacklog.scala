@@ -353,7 +353,7 @@ final class OaBacklog(
           case Left(m) =>
             val s = settingsOf(i.managerId)
             IngestBacklog.onFailure(
-              IngestBacklog.Problem(m.value),
+              Problem(m.value),
               Failure.Retry.Failures(i.failures.value),
               s.maxFailures,
               s.backoffMinutes,
@@ -421,7 +421,7 @@ final class OaBacklog(
                     None
                   ),
                   g,
-                  AcquisitionSweepRules.Pick.Why(w.why.value)
+                  Problem(w.why.value)
                 )
                 .value
             )

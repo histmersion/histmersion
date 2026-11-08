@@ -448,13 +448,11 @@ object ReviewArticle:
   /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the reason (the pair
     * becomes `reasoned`, §6.8).
     */
-  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: NotMaterialAnswer.Reason)
+  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem)
       derives KindlingsCodecAsObject
   object NotMaterialAnswer:
     type Pair = CritiqueRef.Wire
     val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
     given Schema[NotMaterialAnswer] = KindlingsSchema
       .derived[NotMaterialAnswer]
@@ -537,8 +535,8 @@ object ReviewArticle:
       extension (c: Citekey) def normalised: String = c.value.trim
     type Id = Rejection.Id
     val Id: Rejection.Id.type = Rejection.Id
-    type Reason = Rejection.Reason
-    val Reason: Rejection.Reason.type = Rejection.Reason
+    type Reason = Problem
+    val Reason: Problem.type = Problem
     type Quote = Rejection.Quote
     val Quote: Rejection.Quote.type = Rejection.Quote
 
@@ -611,8 +609,8 @@ object ReviewArticle:
     val Id: SetAside.Id.type = SetAside.Id
     type Pair = NotMaterialAnswer.Pair
     val Pair: NotMaterialAnswer.Pair.type = NotMaterialAnswer.Pair
-    type Reason = SetAside.Reason
-    val Reason: SetAside.Reason.type = SetAside.Reason
+    type Reason = Problem
+    val Reason: Problem.type = Problem
 
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
@@ -633,8 +631,8 @@ object ReviewArticle:
   object WontFixAnswer:
     type Id = WontFix.Id
     val Id: WontFix.Id.type = WontFix.Id
-    type Reason = WontFix.Reason
-    val Reason: WontFix.Reason.type = WontFix.Reason
+    type Reason = Problem
+    val Reason: Problem.type = Problem
 
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
@@ -852,7 +850,7 @@ object ReviewArticle:
 
   final case class Rejection(
       id: Rejection.Id,
-      reason: Rejection.Reason,
+      reason: Problem,
       citekey: com.histmersion.domain.library.Citekey,
       quote: Rejection.Quote,
       ratio: Rejection.Ratio
@@ -861,8 +859,6 @@ object ReviewArticle:
   object Rejection:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
     type Ratio = AgentVerify.Ratio
@@ -920,22 +916,18 @@ object ReviewArticle:
     type Repairs = Repairs.T
     object Repairs extends Newtype[String, Pure]
 
-  final case class WontFix(id: WontFix.Id, reason: WontFix.Reason) derives KindlingsCodecAsObject
+  final case class WontFix(id: WontFix.Id, reason: Problem) derives KindlingsCodecAsObject
 
   object WontFix:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
-  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: SetAside.Reason) derives KindlingsCodecAsObject
+  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Problem) derives KindlingsCodecAsObject
 
   object SetAside:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or why nothing was
     * written.
@@ -1842,7 +1834,7 @@ object ReviewArticle:
             Left(
               s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
             )
-          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Problem(reason)))
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, api.Problem(reason)))
       }
     }
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
@@ -2155,13 +2147,11 @@ object ReviewArticle:
   final case class BodyCorpus(
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       isTarget: com.histmersion.domain.research.Slug => Boolean,
-      formatErrors: Fix.Body => List[BodyCorpus.FormatError],
+      formatErrors: Fix.Body => List[Problem],
       generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
   )
 
   object BodyCorpus:
-    type FormatError = FormatError.T
-    object FormatError extends Newtype[String, Pure]
 
     type Generated = Generated.T
     object Generated extends Newtype[Boolean, Pure]
@@ -2190,7 +2180,7 @@ object ReviewArticle:
           a =>
             a.text
               .flatMap(t => links(t.value).headOption)
-              .map(p => Problem(s"its text is refused: $p"))
+              .map(p => api.Problem(s"its text is refused: $p"))
         )
       case Article.Edits.Draft.Body(t) => Article.Edits.Applied(Fix.Body(t.value.trim), Nil)
     val body = applied.body
@@ -2302,7 +2292,7 @@ object ReviewArticle:
               val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
               hit.filter(_.accepted) match
                 case Some(qm) =>
-                  Right(Rejection(id, Rejection.Reason(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
+                  Right(Rejection(id, Problem(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
                 case None =>
                   Left(
                     id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
@@ -2319,7 +2309,7 @@ object ReviewArticle:
         case Some(f) if f.major && !needsFilter(f, coverage) =>
           Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
         case Some(_) if Option(w.reason).forall(_.value.trim.isEmpty) => Left(s"won't fix $id: give the reason")
-        case Some(_) => Right(WontFix(id, WontFix.Reason(w.reason.value.trim)))
+        case Some(_) => Right(WontFix(id, Problem(w.reason.value.trim)))
     }
     val edits = Option(a.edits).getOrElse(Nil)
 
@@ -2419,7 +2409,7 @@ object ReviewArticle:
           .map((_, r) => s"listed as applied, but ${unansweredText(r)}")
           .orElse(rejectedBad.find(_._1 == f.id).map(_ => "its rejection's quote is not in the record it names"))
           .getOrElse(if f.major then "the fixer neither applied nor rejected it" else "the fixer did not answer it")
-        WontFix(f.id, WontFix.Reason(why))
+        WontFix(f.id, Problem(why))
       }
       val fix = Fix(
         rev.body,
@@ -2474,7 +2464,7 @@ object ReviewArticle:
           case Some(Left(e))  => Left(s"set aside: $e")
           case Some(Right(r)) =>
             held(s"set aside ${r.wire}", r, reason).map(p =>
-              Right(CritiqueReason(p.ref.src, p.ref.dst, Problem(reason)))
+              Right(CritiqueReason(p.ref.src, p.ref.dst, api.Problem(reason)))
             )
       else
         byId.get(id) match
@@ -2490,7 +2480,7 @@ object ReviewArticle:
                 held(s"set aside $id", r, reason).left
                   .map(m => if m.contains("no recorded edge") then s"$m — apply or reject the finding" else m)
               )
-              .map(p => Left(SetAside(id, p.ref, SetAside.Reason(reason))))
+              .map(p => Left(SetAside(id, p.ref, Problem(reason))))
     }
     val ok = results.collect { case Right(v) => v }
     (

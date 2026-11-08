@@ -674,7 +674,7 @@ class AcquireHandlerSuite extends DbSuite:
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal =
       handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(IngestBacklog.Problem(e.message.value))), legal.toString)
+    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(Problem(e.message.value))), legal.toString)
     assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
     val text = items.head.text
     assert(

@@ -30,8 +30,6 @@ object FilterInference:
   object LogLine extends Newtype[String, Pure]
   type Outcome = Outcome.T
   object Outcome extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   final case class FilterAnswer(
       rationale: FilterAnswer.Rationale,

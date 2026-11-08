@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -58,8 +59,8 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     val ok = checkRanking(
       Ranking(
         List(
-          Pick(Pick.DoiText("https://doi.org/10.1000/A"), Pick.Why("fits")),
-          Pick(Pick.DoiText("10.1000/a"), Pick.Why("twice"))
+          Pick(Pick.DoiText("https://doi.org/10.1000/A"), Problem("fits")),
+          Pick(Pick.DoiText("10.1000/a"), Problem("twice"))
         )
       ),
       List(c),
@@ -68,21 +69,21 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     assertEquals(ok.map(_._1), Right(List((c, "fits"))))
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Pick.Why("invented")))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem("invented")))),
         List(c),
         last = LastAttempt(false)
       ).isLeft
     )
     assertEquals(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Pick.Why("invented")))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem("invented")))),
         List(c),
         last = LastAttempt(true)
       ).map(_._1),
       Right(Nil)
     )
     assertEquals(
-      acquireText(c, Goal.Slug("g"), Pick.Why("fits")),
+      acquireText(c, Goal.Slug("g"), Problem("fits")),
       "(2020). A. https://doi.org/10.1000/a (open access) — for goal g: fits"
     )
 

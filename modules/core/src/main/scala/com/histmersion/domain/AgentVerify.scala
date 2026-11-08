@@ -28,8 +28,6 @@ object AgentVerify:
   object PeriodEnd extends Newtype[Long, Pure]
   type PeriodStart = PeriodStart.T
   object PeriodStart extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Ratio = Ratio.T
   object Ratio extends Newtype[Double, Pure]
   type SignedYear = SignedYear.T

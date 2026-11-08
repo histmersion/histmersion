@@ -25,8 +25,6 @@ object IngestBacklog:
   object DrainLimit extends Newtype[Int, Pure]
   type OwnAllowance = OwnAllowance.T
   object OwnAllowance extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SharedAllowance = SharedAllowance.T
   object SharedAllowance extends Newtype[Int, Pure]
   type SweepAllowance = SweepAllowance.T
@@ -137,12 +135,10 @@ object IngestBacklog:
     * failed `maxFailures` times), or another try after the backoff.
     */
   enum Failure derives CanEqual:
-    case ToAcquire(why: Failure.Why)
-    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Failure.Why)
+    case ToAcquire(why: Problem)
+    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Problem)
 
   object Failure:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     object Retry:
       type Failures = Failures.T
       object Failures extends Newtype[Int, Pure]
@@ -156,12 +152,12 @@ object IngestBacklog:
       now: Instant
   ): Failure =
     val why = Option(message).map(_.value.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
-    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Failure.Why(why))
+    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Problem(why))
     else
       val n = math.max(0, failures.value) + 1
       if n >= math.max(1, maxFailures.value) then
         Failure.ToAcquire(
-          Failure.Why(
+          Problem(
             s"$why (${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
           )
         )
@@ -169,7 +165,7 @@ object IngestBacklog:
         Failure.Retry(
           now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, ManagerPolicy.Next.Retry.Failures(n))),
           Failure.Retry.Failures(n),
-          Failure.Why(why)
+          Problem(why)
         )
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
@@ -253,21 +249,17 @@ object IngestBacklog:
     case Remove(citekey: Citekey)
 
     /** It stays on the list, with why. */
-    case Keep(why: RepairAction.Keep.Why)
+    case Keep(why: Problem)
 
-  object RepairAction:
-    object Keep:
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa.value then
-      RepairAction.Keep(RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
+      RepairAction.Keep(Problem("no legal open-access copy known: it stays on the acquisition list"))
     else
       f.inCorpus match
         case Some(ck)                       => RepairAction.Remove(ck)
         case None if !f.watcherExists.value =>
-          RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} no longer exists"))
+          RepairAction.Keep(Problem(s"its watcher ${f.watcher} no longer exists"))
         case None if !f.watcherAutoIngest.value =>
-          RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} does not auto-ingest"))
+          RepairAction.Keep(Problem(s"its watcher ${f.watcher} does not auto-ingest"))
         case None => RepairAction.Move

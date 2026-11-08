@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.domain.Problem
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -130,7 +131,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           Some(MergeIssue.Detail.side(p.left.source)),
           Some(MergeIssue.Detail.side(p.right.source)),
           (ev.why.map(_.value) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
-            .map(Problem(_)),
+            .map(api.Problem(_)),
           List(km.Map, km.Both),
           Option.when(ev.score.value >= cfg.autoMerge.value)(
             MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))
@@ -178,7 +179,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(l)),
         Some(MergeIssue.Detail.side(r)),
-        why,
+        Problem.wire(why),
         opts,
         suggested,
         cond,
@@ -315,7 +316,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         Some(MergeIssue.Detail.side(o)),
         Some(MergeIssue.Detail.side(s)),
         if asAlias then
-          List(Problem("rename-left cannot free an old citekey: the bundle's source takes a new one"))
+          List(api.Problem("rename-left cannot free an old citekey: the bundle's source takes a new one"))
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
         Some(MergeDecision.withArg(km.RenameRight, MergeDecision.Argument(suggestion.value))),
@@ -440,7 +441,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             if ev.strongKey then MatchMethod.StrongKey else MatchMethod.Score,
             MatchOutcome.AutoMerge,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why.map(w => Problem(w.value))
+            ev.why.map(w => api.Problem(w.value))
           )
         )
       case SourceFate.Gate(p, g) =>
@@ -454,7 +455,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             MatchMethod.Score,
             MatchOutcome.NeedsDecision,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why.map(w => Problem(w.value)),
+            ev.why.map(w => api.Problem(w.value)),
             Some(Source.Match.Issue(g.value))
           )
         )

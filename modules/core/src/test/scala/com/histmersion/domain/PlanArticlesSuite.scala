@@ -24,7 +24,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       topics: List[ArticleAnswer.Topics],
       title: ArticleAnswer.Title = ArticleAnswer.Title("T")
   ) =
-    ArticleAnswer(slug, title, None, None, topics, Nil, ArticleAnswer.Why("why"))
+    ArticleAnswer(slug, title, None, None, topics, Nil, Problem("why"))
 
   private def slug(s: String) = ArticleAnswer.Slug(s)
   private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))

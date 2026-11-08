@@ -220,7 +220,7 @@ object ManagerContext:
   val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
   type StartWhat = StartWhat.T
   object StartWhat extends Newtype[String, Pure]
-  type EvaluateStepError = ManagerPolicy.Problem
-  val EvaluateStepError: ManagerPolicy.Problem.type = ManagerPolicy.Problem
+  type EvaluateStepError = Problem
+  val EvaluateStepError: Problem.type = Problem
   type TickLine = TickLine.T
   object TickLine extends Newtype[String, Pure]

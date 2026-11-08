@@ -257,7 +257,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Rejection(
           ReviewArticle.Rejection.Id("S1"),
-          ReviewArticle.Rejection.Reason("the record dates it"),
+          Problem("the record dates it"),
           Citekey("ck2019"),
           ReviewArticle.Rejection.Quote("Its cargo dates to 1320 BCE."),
           ReviewArticle.Rejection.Ratio(1.0)
@@ -269,10 +269,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
       ReviewArticle.Fix.WordsBefore(1),
       ReviewArticle.Fix.WordsAfter(1),
       wontFix = List(
-        ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("defined in the glossary")),
+        ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), Problem("defined in the glossary")),
         ReviewArticle.WontFix(
           ReviewArticle.WontFix.Id("R1"),
-          ReviewArticle.WontFix.Reason("a major cannot be declined")
+          Problem("a major cannot be declined")
         )
       )
     )
@@ -304,7 +304,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              ReviewArticle.Rejection.Reason("dated"),
+              Problem("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)
@@ -373,7 +373,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.Notes(""),
           ReviewArticle.Fix.WordsBefore(1),
           ReviewArticle.Fix.WordsAfter(1),
-          wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("fine")))
+          wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), Problem("fine")))
         ),
         ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
         ReviewLedger.ApplyFixRound(1)
@@ -541,7 +541,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
         ReviewArticle.Fix.Notes(""),
         ReviewArticle.Fix.WordsBefore(1),
         ReviewArticle.Fix.WordsAfter(1),
-        wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("names, not terms")))
+        wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), Problem("names, not terms")))
       ),
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
@@ -776,7 +776,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              ReviewArticle.Rejection.Reason("dated"),
+              Problem("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)
@@ -872,7 +872,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              ReviewArticle.Rejection.Reason("dated"),
+              Problem("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)
@@ -883,7 +883,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.Notes(""),
           ReviewArticle.Fix.WordsBefore(1),
           ReviewArticle.Fix.WordsAfter(1),
-          wontFix = List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("fine")))
+          wontFix = List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), Problem("fine")))
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)

@@ -39,7 +39,7 @@ object EnrichSource:
   object MaxWindows extends Newtype[Int, Pure]
   type MaxAbsYear = AgentVerify.MaxAbsYear
   val MaxAbsYear: AgentVerify.MaxAbsYear.type = AgentVerify.MaxAbsYear
-  export AgentVerify.{MinRatio, Problem, SourceBody}
+  export AgentVerify.{MinRatio, SourceBody}
   type Topic = Topic.T
   object Topic extends Newtype[String, Pure]
   type Region = Region.T
@@ -432,15 +432,15 @@ object EnrichSource:
     for
       su <- YearUnit
         .parse(p.start.unit)
-        .toRight(AgentVerify.Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
+        .toRight(Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
       eu <- YearUnit
         .parse(p.end.unit)
-        .toRight(AgentVerify.Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
+        .toRight(Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
       s <- toSignedYear(p.start.value, su)
       e <- toSignedYear(p.end.value, eu)
       _ <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, within) match
         case Nil => Right(())
-        case ps  => Left(AgentVerify.Problem(ps.mkString("; ")))
+        case ps  => Left(Problem(ps.mkString("; ")))
     yield Period(Year(s.value), Year(e.value))
 
   /** `classify`: status in the vocabulary, a summary, a convertible and sane period, and the status's evidence unless
@@ -461,9 +461,9 @@ object EnrichSource:
       "the status evidence is empty — say, from the text, why that status"
     )
     val problems = status.left.toOption.toList ++
-      summary.fold(List(AgentVerify.Problem("the summary is empty")))(_ => Nil) ++
-      period.flatMap(_.left.toOption).map(m => AgentVerify.Problem(s"period: $m")).toList ++ noEvidence
-        .map(AgentVerify.Problem(_))
+      summary.fold(List(Problem("the summary is empty")))(_ => Nil) ++
+      period.flatMap(_.left.toOption).map(m => Problem(s"period: $m")).toList ++ noEvidence
+        .map(Problem(_))
         .toList
     val fatal = status.isLeft || summary.isEmpty
     if problems.isEmpty || (last.value && !fatal) then
@@ -633,7 +633,7 @@ object EnrichSource:
     Option.when(total > 0 && minShare.value > 0 && resolved.toDouble < minShare.value * total) {
       val missing = named.filterNot(_._3).map((i, p, _) => s"'$p' (finding $i)").mkString(", ")
       val pct = BigDecimal(minShare.value * 100).setScale(0, BigDecimal.RoundingMode.HALF_UP)
-      AgentVerify.Problem(
+      Problem(
         s"only $resolved of $total places resolve to a gazetteer place (at least $pct% must); not found: $missing — " +
           "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
       )
@@ -713,7 +713,7 @@ object EnrichSource:
       }
     }
     val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).map(_.value).toList
-    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then Left((rejected ++ soft).map(AgentVerify.Problem(_)))
+    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then Left((rejected ++ soft).map(Problem(_)))
     else
       val norm = existingClaims.map(c => normalised(c.value))
       val kept = results

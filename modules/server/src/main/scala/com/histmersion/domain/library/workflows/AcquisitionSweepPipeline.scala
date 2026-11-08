@@ -170,7 +170,7 @@ final class AcquisitionSweepPipeline(
       )
     yield line
 
-  private def skippedText(m: Map[AcquisitionSweepRules.SkipReason, AcquisitionSweepRules.SkipCount]): String =
+  private def skippedText(m: Map[Problem, AcquisitionSweepRules.SkipCount]): String =
     if m.isEmpty then "none left out" else m.toList.sortBy(_._1.value).map((k, n) => s"$n $k").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
@@ -228,11 +228,11 @@ final class AcquisitionSweepPipeline(
             queries,
             cands,
             sw.skipped.map((k, n) =>
-              AcquisitionSweepRules.SkipReason(k.value) -> AcquisitionSweepRules.SkipCount(n.value)
+              Problem(k.value) -> AcquisitionSweepRules.SkipCount(n.value)
             ) ++
               Option
                 .when(gone.nonEmpty)(
-                  AcquisitionSweepRules.SkipReason("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
+                  Problem("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
                 )
                 .toMap,
             stored = open.map(c => Doi.assume(c.doi.value) -> c.id).toMap
@@ -308,12 +308,12 @@ final class AcquisitionSweepPipeline(
       ctx: RunCtx,
       goal: Goal.Slug,
       p: Picked
-  ): Either[AcquisitionSweepRules.IngestFailure, Ingested] =
+  ): Either[Problem, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
-    )(upstream().ingestLegal(doi).left.map(e => AcquisitionSweepRules.IngestFailure(e.value)).map { r =>
+    )(upstream().ingestLegal(doi).left.map(e => Problem(e.value)).map { r =>
       val _ =
         goals.link(
           goal,
@@ -353,7 +353,7 @@ final class AcquisitionSweepPipeline(
         Failed(
           p.candidate.doi,
           Failed.Why(why.value.take(500)),
-          IngestBacklog.isNoLegalCopy(IngestBacklog.Problem(why.value))
+          IngestBacklog.isNoLegalCopy(Problem(why.value))
         )
       )
     )
@@ -401,10 +401,10 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
-  given io.circe.KeyEncoder[AcquisitionSweepRules.SkipReason] =
+  given io.circe.KeyEncoder[Problem] =
     io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
-  given io.circe.KeyDecoder[AcquisitionSweepRules.SkipReason] =
-    io.circe.KeyDecoder.decodeKeyString.map(AcquisitionSweepRules.SkipReason(_))
+  given io.circe.KeyDecoder[Problem] =
+    io.circe.KeyDecoder.decodeKeyString.map(Problem(_))
   given io.circe.KeyEncoder[Doi] = io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
   given io.circe.KeyDecoder[Doi] = io.circe.KeyDecoder.decodeKeyString.map(Doi.assume(_))
 
@@ -420,11 +420,11 @@ object AcquisitionSweepPipeline:
       notes: Option[com.histmersion.api.automation.Goal.Notes],
       queries: List[Search.Query],
       candidates: List[Candidate],
-      skipped: Map[AcquisitionSweepRules.SkipReason, AcquisitionSweepRules.SkipCount],
+      skipped: Map[Problem, AcquisitionSweepRules.SkipCount],
       stored: Map[Doi, Source.Candidate.Id] = Map.empty
   ) derives KindlingsCodecAsObject
 
-  final case class Picked(candidate: Candidate, why: AcquisitionSweepRules.Pick.Why) derives KindlingsCodecAsObject
+  final case class Picked(candidate: Candidate, why: Problem) derives KindlingsCodecAsObject
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
   final case class Ingested(doi: Doi, citekey: Citekey) derives KindlingsCodecAsObject

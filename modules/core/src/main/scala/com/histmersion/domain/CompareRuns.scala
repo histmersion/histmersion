@@ -14,8 +14,6 @@ import com.histmersion.api.catalogue.Year
   * its config). Nothing is judged: counts, tokens, times, and what one run produced that the others did not.
   */
 object CompareRuns:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Similarity = Similarity.T
   object Similarity extends Newtype[Double, Pure]
   type Text = Text.T
@@ -105,7 +103,7 @@ object CompareRuns:
       firstCallTokens: Option[Step.FirstCallTokens],
       turns: Option[Step.Turns],
       output: Option[Step.Output],
-      error: Option[Step.Error]
+      error: Option[Problem]
   )
 
   object Step:
@@ -130,8 +128,6 @@ object CompareRuns:
     object Turns extends Newtype[Int, Pure]
     type Output = Output.T
     object Output extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
 
   final case class Run(run: RunHead, steps: List[Step])
 

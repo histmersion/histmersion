@@ -24,8 +24,6 @@ import com.histmersion.domain.automation.Goal
 object ManagerPolicy:
   type ActiveAll = ActiveAll.T
   object ActiveAll extends Newtype[Int, Pure]
-  type BlockReason = BlockReason.T
-  object BlockReason extends Newtype[String, Pure]
   type Capacity = Capacity.T
   object Capacity extends Newtype[Int, Pure]
   type DueCount = DueCount.T
@@ -48,8 +46,6 @@ object ManagerPolicy:
   object PendingCount extends Newtype[Int, Pure]
   type PoolCap = PoolCap.T
   object PoolCap extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Quota = Quota.T
   object Quota extends Newtype[Int, Pure]
   type Room = Room.T
@@ -203,12 +199,12 @@ object ManagerPolicy:
   /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
     * (`agents.scheduler.min-interval-minutes`).
     */
-  def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: MinIntervalMinutes): Either[Cron.Problem, Cron] =
+  def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: MinIntervalMinutes): Either[Problem, Cron] =
     Cron.parse(text).flatMap { c =>
       c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
         case Some(gap) =>
           Left(
-            Cron.Problem(
+            Problem(
               s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
                 "(agents.scheduler.min-interval-minutes)"
             )
@@ -223,11 +219,11 @@ object ManagerPolicy:
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
-  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[BlockReason] =
+  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[Problem] =
     cap
       .filter(c => spentToday >= BigDecimal(c.value))
       .map(c =>
-        BlockReason(
+        Problem(
           s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
             s"(${ManagersMarkdown.usd(c.value)}); it starts again tomorrow (UTC)"
         )
@@ -469,7 +465,7 @@ object ManagerPolicy:
       pending: PendingCount,
       due: DueCount,
       inFlight: InFlightCount,
-      budget: Option[BlockReason]
+      budget: Option[Problem]
   ): StatusNote =
     if state == Manager.State.Stopped then StatusNote("stopped")
     else if state == Manager.State.Paused then

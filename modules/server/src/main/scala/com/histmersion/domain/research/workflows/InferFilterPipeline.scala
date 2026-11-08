@@ -137,7 +137,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       l: Loaded,
       a: FilterAnswer,
       last: FilterInference.Last
-  ): Either[List[FilterInference.Problem], Inferred] =
+  ): Either[List[Problem], Inferred] =
     FilterInference.filterOf(a) match
       case Left(ps) => if last.value then Right(Inferred(None, ps)) else Left(ps)
       case Right(f) =>

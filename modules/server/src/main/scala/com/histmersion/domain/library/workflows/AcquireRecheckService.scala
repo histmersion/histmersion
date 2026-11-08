@@ -100,7 +100,7 @@ final class AcquireRecheckService(
   private def stopReason(j: JobInfo): String = j.error.fold("stopped")(_.value)
 
   private def resumable(j: JobInfo): Boolean =
-    AcquireRecheck.resumable(j.status, j.error.map(e => AcquireRecheck.Problem(e.value)))
+    AcquireRecheck.resumable(j.status, j.error.map(e => Problem(e.value)))
 
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
@@ -602,7 +602,7 @@ final class AcquireRecheckService(
         try
           upstream().ingestLegalInto(d, into) match
             case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey))
-            case Left(m)  => (AcquireRecheck.failure(IngestBacklog.Problem(m.value)), m.value, into.map(apiCk))
+            case Left(m)  => (AcquireRecheck.failure(Problem(m.value)), m.value, into.map(apiCk))
         catch
           case e: InterruptedException => throw e
           case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))

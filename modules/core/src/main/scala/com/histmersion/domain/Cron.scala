@@ -64,8 +64,6 @@ final case class Cron(
 object Cron:
   type GapMinutes = GapMinutes.T
   object GapMinutes extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type SampleCount = SampleCount.T
   object SampleCount extends Newtype[Int, Pure]
   type Text = Text.T

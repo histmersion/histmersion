@@ -694,15 +694,13 @@ object ReviewLedger:
     )
 
   /** One closed finding a revision would reopen, and why. */
-  final case class Regression(id: Regression.Id, why: Regression.Why) derives KindlingsCodecAsObject:
+  final case class Regression(id: Regression.Id, why: Problem) derives KindlingsCodecAsObject:
     def line: String = s"$id (closed): $why"
 
   object Regression:
 
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
     * checked by code, before any reviewer reads it:
@@ -735,21 +733,21 @@ object ReviewLedger:
         .map(r =>
           Regression(
             e.id,
-            Regression.Why(
+            Problem(
               s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
             )
           )
         )
       val q = Option(e.finding.quote.value).map(_.trim).getOrElse("")
       val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
-        Regression(e.id, Regression.Why(s"the text it fixed is back: \"${q.take(100)}\""))
+        Regression(e.id, Problem(s"the text it fixed is back: \"${q.take(100)}\""))
       )
       val lost = e.closed.toList
         .flatMap(c => AgentVerify.wikilinks(AgentVerify.Text(c.quote.value)))
         .distinct
         .flatMap(ck => Citekey.parse(ck.value).toOption)
         .filter(ck => cites(before, ck) && !cites(after, ck))
-        .map(ck => Regression(e.id, Regression.Why(s"[[$ck]], which its fix cites, is cited nowhere any more")))
+        .map(ck => Regression(e.id, Problem(s"[[$ck]], which its fix cites, is cited nowhere any more")))
       (pair.toList ++ back.toList ++ lost).take(1)
     }
 

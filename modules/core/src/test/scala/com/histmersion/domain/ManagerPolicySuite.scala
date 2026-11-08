@@ -284,7 +284,7 @@ class ManagerPolicySuite extends munit.FunSuite:
         ManagerPolicy.PendingCount(3),
         ManagerPolicy.DueCount(0),
         ManagerPolicy.InFlightCount(0),
-        Some(ManagerPolicy.BlockReason("budget: x"))
+        Some(Problem("budget: x"))
       ),
       "budget: x"
     )
@@ -326,7 +326,7 @@ class ManagerPolicySuite extends munit.FunSuite:
         ItemState(),
         Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
         st,
-        Some(ManagerPolicy.Problem("boom")),
+        Some(Problem("boom")),
         f,
         now
       )

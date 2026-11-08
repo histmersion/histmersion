@@ -1,12 +1,11 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.domain.Problem
 import com.histmersion.api.catalogue.CatalogProviderInfo
 import io.github.iltotore.iron.constraint.any.Pure
 
 object CatalogProvider:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   private val GvpName = "gvp"
   private val NoaaName = "noaa"

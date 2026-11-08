@@ -31,7 +31,7 @@ trait SearchedCollection:
       rec: MediaRecord,
       place: MediaMatch.PlaceInfo,
       resolve: MediaMatch.Resolve
-  ): Either[MediaMatch.Refusal, MediaMatch.Basis] =
+  ): Either[Problem, MediaMatch.Basis] =
     MediaMatch.museum(rec, place, resolve)
 
   /** Does a match read the gazetteer ids the places carry ([[matchesWithIds]])? */
@@ -45,7 +45,7 @@ trait SearchedCollection:
       place: MediaMatch.PlaceInfo,
       resolve: MediaMatch.Resolve,
       resolveId: MediaMatch.ResolveId
-  ): Either[MediaMatch.Refusal, MediaMatch.Basis] = matches(rec, place, resolve)
+  ): Either[Problem, MediaMatch.Basis] = matches(rec, place, resolve)
 
   /** A record about to be stored, completed by the request a search does not answer (Open Context's media item: the
     * files, and the licence read again); a `Left` refuses it. Only stored records pay for it.

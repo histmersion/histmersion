@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -78,7 +79,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       fs: Option[ReviewFacts] = facts(ReviewFacts.OpenMajors(2)),
       task: Option[ManagerPolicy.ItemTask] = Some(ManagerPolicy.ItemTask("review-article [[tin]]: 2 open MAJORs — …")),
       failures: Next.Retry.Failures = Next.Retry.Failures(0),
-      error: Option[ManagerPolicy.Problem] = None
+      error: Option[Problem] = None
   ) =
     evaluateReview(
       s,
@@ -286,7 +287,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case other => fail(other.toString)
 
   test("failed runs back off exponentially; the max-failures-th stops the item with a task"):
-    eval(status = RunState.Failed, fs = None, error = Some(ManagerPolicy.Problem("boom"))) match
+    eval(status = RunState.Failed, fs = None, error = Some(Problem("boom"))) match
       case Next.Retry(nb, n, note) =>
         assertEquals((nb, n), (now.plusSeconds(15 * 60), 1)); assert(note.value.contains("boom"))
       case other => fail(other.toString)
@@ -377,7 +378,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val picks = select(
       majors = List(Slug("a") -> ReviewFacts.OpenMajors(3), Slug("b") -> ReviewFacts.OpenMajors(1)),
       unreviewed = List(Slug("c"), Slug("a")),
-      stale = List(Slug("d") -> Pick.Why("old")),
+      stale = List(Slug("d") -> Problem("old")),
       batch = ReviewSettings.RefillBatch(10),
       inferFilter = ReviewSettings.InferFilter(true),
       hasFilter = Set(Slug("a"), Slug("d")),

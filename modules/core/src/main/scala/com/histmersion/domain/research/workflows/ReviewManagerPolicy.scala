@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Managers.*
@@ -140,7 +141,7 @@ object ReviewManagerPolicy:
       state: ItemState,
       run: Run.Id,
       status: Run.State,
-      error: Option[ManagerPolicy.Problem],
+      error: Option[Problem],
       facts: Option[ReviewFacts],
       taskText: Option[ManagerPolicy.ItemTask],
       now: Instant
@@ -234,12 +235,9 @@ object ReviewManagerPolicy:
       kind: ManagerPolicy.ItemKind,
       target: Slug,
       priority: ManagerPolicy.Candidate.Priority,
-      why: Pick.Why
+      why: Problem
   )
 
-  object Pick:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
@@ -256,7 +254,7 @@ object ReviewManagerPolicy:
   def select(
       majors: List[(Slug, ReviewFacts.OpenMajors)],
       unreviewed: List[Slug],
-      stale: List[(Slug, Pick.Why)],
+      stale: List[(Slug, Problem)],
       batch: ReviewSettings.RefillBatch,
       inferFilter: ReviewSettings.InferFilter,
       hasFilter: Slug => Boolean,
@@ -264,20 +262,20 @@ object ReviewManagerPolicy:
   ): List[Pick] =
     val reviews =
       (majors.map((slug, n) =>
-        Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Pick.Why(counted(n.value, "open MAJOR").value))
+        Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Problem(counted(n.value, "open MAJOR").value))
       ) ++
         unreviewed.map(slug =>
-          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, UnreviewedPriority, Pick.Why("never reviewed"))
+          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, UnreviewedPriority, Problem("never reviewed"))
         ) ++
         stale.map((slug, why) =>
-          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, StalePriority, Pick.Why(s"stale: $why"))
+          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, StalePriority, Problem(s"stale: $why"))
         ))
         .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
         .take(math.max(0, batch.value))
         .toList
     reviews.flatMap { p =>
       val infer = Option.when(inferFilter.value && !hasFilter(p.target) && !inferredBefore(p.target))(
-        Pick(ManagerPolicy.ItemKind.InferFilter, p.target, p.priority, Pick.Why("it records no coverage filter"))
+        Pick(ManagerPolicy.ItemKind.InferFilter, p.target, p.priority, Problem("it records no coverage filter"))
       )
       infer.toList :+ p
     }
@@ -291,7 +289,7 @@ object ReviewManagerPolicy:
       days: ReviewSettings.StaleAfterDays,
       hitsThen: Option[FilterHits],
       hitsNow: Option[FilterHits]
-  ): Option[Pick.Why] =
+  ): Option[Problem] =
     if days.value <= 0 then None
     else
       val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b.value - a.value }
@@ -303,4 +301,4 @@ object ReviewManagerPolicy:
               s"last converged over $days days ago"
             )
         )
-        .map(Pick.Why(_))
+        .map(Problem(_))

@@ -150,17 +150,17 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
-      failure(IngestBacklog.Problem(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")),
+      failure(Problem(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")),
       Outcome.NoCopy
     )
-    assertEquals(failure(IngestBacklog.Problem("HTTP 503 from the converter")), Outcome.Failed)
+    assertEquals(failure(Problem("HTTP 503 from the converter")), Outcome.Failed)
     assertEquals(Outcome.values.toList.flatMap(o => Outcome.parse(o.wire)), Outcome.values.toList)
 
   test("the reason: the day, what was found and what each fetcher answered"):
     val msg = s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found — unpaywall: no copy — none; " +
       "landing: refused — bot-protection 403"
     assertEquals(
-      answers(IngestBacklog.Problem(msg)),
+      answers(Problem(msg)),
       "unpaywall: no copy — none; landing: refused — bot-protection 403"
     )
     assertEquals(
@@ -420,15 +420,15 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
 
   test("which stopped job a later one takes up: a restart's interrupted one, or one the drain stopped"):
-    assert(resumable(JobState.Wire("failed"), Some(AcquireRecheck.Problem(JobState.Interrupted))))
-    assert(resumable(JobState.Wire("failed"), Some(AcquireRecheck.Problem(StoppedDraining))))
+    assert(resumable(JobState.Wire("failed"), Some(Problem(JobState.Interrupted))))
+    assert(resumable(JobState.Wire("failed"), Some(Problem(StoppedDraining))))
     assert(
       !resumable(
         JobState.Wire("failed"),
-        Some(AcquireRecheck.Problem("the acquisition toolset is not connected: nothing tried"))
+        Some(Problem("the acquisition toolset is not connected: nothing tried"))
       )
     )
-    assert(!resumable(JobState.Wire("failed"), Some(AcquireRecheck.Problem("a restore started; stopped"))))
+    assert(!resumable(JobState.Wire("failed"), Some(Problem("a restore started; stopped"))))
     assert(!resumable(JobState.Wire("done"), None))
     assert(!resumable(JobState.Wire("running"), None))
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.domain.Problem
 import com.histmersion.domain.library.Doi
 
 import scala.annotation.tailrec
@@ -29,16 +30,10 @@ object AcquisitionSweepRules:
   object Allowance extends Newtype[Int, Pure]
   type LastAttempt = LastAttempt.T
   object LastAttempt extends Newtype[Boolean, Pure]
-  type SkipReason = SkipReason.T
-  object SkipReason extends Newtype[String, Pure]
   type SkipCount = SkipCount.T
   object SkipCount extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Dropped = Dropped.T
   object Dropped extends Newtype[String, Pure]
-  type IngestFailure = IngestFailure.T
-  object IngestFailure extends Newtype[String, Pure]
   type AcquireText = AcquireText.T
   object AcquireText extends Newtype[String, Pure]
 
@@ -66,7 +61,7 @@ object AcquisitionSweepRules:
       found: List[(Candidate.Query, WorkRef)],
       queued: Set[Doi],
       max: Limit
-  ): (List[Candidate], Map[SkipReason, SkipCount]) =
+  ): (List[Candidate], Map[Problem, SkipCount]) =
     val seen = scala.collection.mutable.LinkedHashMap.empty[Doi, Candidate] // insertion-ordered dedupe
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
@@ -90,15 +85,13 @@ object AcquisitionSweepRules:
     }
     val all = seen.values.toList
     if all.size > max.value then skipped("over the sweep limit") += all.size - max.value
-    (all.take(max.value), skipped.toMap.map((reason, count) => SkipReason(reason) -> SkipCount(count)))
+    (all.take(max.value), skipped.toMap.map((reason, count) => Problem(reason) -> SkipCount(count)))
 
   /** The ranking model's answer: which candidates belong to the goal. */
-  final case class Pick(doi: Pick.DoiText, why: Pick.Why) derives KindlingsCodecAsObject
+  final case class Pick(doi: Pick.DoiText, why: Problem) derives KindlingsCodecAsObject
   object Pick:
     type DoiText = DoiText.T
     object DoiText extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Pick]
@@ -121,12 +114,12 @@ object AcquisitionSweepRules:
       r: Ranking,
       offered: List[Candidate],
       last: LastAttempt
-  ): Either[List[Problem], (List[(Candidate, Pick.Why)], List[Dropped])] =
+  ): Either[List[Problem], (List[(Candidate, Problem)], List[Dropped])] =
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Doi.normalize(p.doi.value).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) => Problem(s"'${p.doi}' is not one of the listed candidates") }
     val kept = parsed
-      .collect { case (p, Some(c)) => (c, Pick.Why(Option(p.why).map(_.value.trim).getOrElse(""))) }
+      .collect { case (p, Some(c)) => (c, Problem(Option(p.why).map(_.value.trim).getOrElse(""))) }
       .distinctBy(_._1.doi)
     if problems.nonEmpty && !last.value then Left(problems)
     else Right((kept, problems.map(p => Dropped(s"rank: dropped — $p"))))
@@ -149,13 +142,13 @@ object AcquisitionSweepRules:
     * the backlog. The open-access picks never offered are the caller's: they wait in the backlog.
     */
   def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Allowance)(
-      ingest: A => Either[IngestFailure, B]
-  ): (List[(A, B)], List[(A, IngestFailure)]) =
+      ingest: A => Either[Problem, B]
+  ): (List[(A, B)], List[(A, Problem)]) =
     @tailrec def loop(
         rest: List[A],
         ok: Vector[(A, B)],
-        ko: Vector[(A, IngestFailure)]
-    ): (List[(A, B)], List[(A, IngestFailure)]) =
+        ko: Vector[(A, Problem)]
+    ): (List[(A, B)], List[(A, Problem)]) =
       rest match
         case p :: tail if ok.size < allowed.value =>
           ingest(p) match
@@ -167,7 +160,7 @@ object AcquisitionSweepRules:
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so
     * [[com.histmersion.domain.Scheduling.dois]] finds it).
     */
-  def acquireText(c: Candidate, goal: Goal.Slug, why: Pick.Why): AcquireText =
+  def acquireText(c: Candidate, goal: Goal.Slug, why: Problem): AcquireText =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa.value then " (open access)" else ""

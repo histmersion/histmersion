@@ -77,7 +77,7 @@ final class HintEffectPipeline(
           .map(_.map(p => RunCtx.Problem(p.value)))
           .map((e, ws) =>
             Checked(
-              Proposed(e, Proposed.Why(Option(a.why).map(_.value.trim).getOrElse("")), ws),
+              Proposed(e, Problem(Option(a.why).map(_.value.trim).getOrElse("")), ws),
               ws.map(w => Checked.Warnings(w.value))
             )
           )

@@ -45,8 +45,8 @@ class PlanGoalSuite extends munit.FunSuite:
       ),
       List(PlanAnswer.Queries("Bronze Age tin"), PlanAnswer.Queries("bronze age tin")),
       List(
-        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), WorkAnswer.Why("the isotopes")),
-        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), WorkAnswer.Why("again"))
+        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), Problem("the isotopes")),
+        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Problem("again"))
       )
     )
     val (p, warns) = check(a, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).toOption.get
@@ -72,7 +72,7 @@ class PlanGoalSuite extends munit.FunSuite:
         SubGoalAnswer(SubGoalAnswer.Slug("ok-slug"), SubGoalAnswer.Title(" "))
       ),
       List(PlanAnswer.Queries("x" * 41)),
-      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), WorkAnswer.Why("?")))
+      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Problem("?")))
     )
     val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).left.toOption.get
     assert(ps.exists(_.value.contains("invalid slug")), ps)
@@ -111,7 +111,7 @@ class PlanGoalSuite extends munit.FunSuite:
           SubGoalAnswer(SubGoalAnswer.Slug("BAD SLUG"), SubGoalAnswer.Title("x")),
           SubGoalAnswer(SubGoalAnswer.Slug("good"), SubGoalAnswer.Title("Good"))
         ),
-        works = List(WorkAnswer(WorkAnswer.Doi("nope"), WorkAnswer.Why("")))
+        works = List(WorkAnswer(WorkAnswer.Doi("nope"), Problem("")))
       )
     val (p, warns) = check(a, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(true)).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("good"))
@@ -127,9 +127,9 @@ class PlanGoalSuite extends munit.FunSuite:
       Nil,
       Nil,
       List(
-        ProposedWork(Doi("10.1000/a"), ProposedWork.Why("a")),
-        ProposedWork(Doi("10.1000/b"), ProposedWork.Why("b")),
-        ProposedWork(Doi("10.1000/c"), ProposedWork.Why("c"))
+        ProposedWork(Doi("10.1000/a"), Problem("a")),
+        ProposedWork(Doi("10.1000/b"), Problem("b")),
+        ProposedWork(Doi("10.1000/c"), Problem("c"))
       ),
       Nil
     )
