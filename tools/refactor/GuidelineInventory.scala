@@ -86,6 +86,8 @@ object GuidelineInventory {
     "silentCompare" -> "==/!=/contains/indexOf whose sides have unrelated types (opaque newtype vs primitive, two newtypes, enum vs primitive/newtype)",
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
+    "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). Layer Problems by module: plugin-api com.histmersion.plugin.Problem; core com.histmersion.domain.Problem; values com.histmersion.Problem; api com.histmersion.api.Problem; config com.histmersion.config.Problem; files com.histmersion.util.Problem; db com.histmersion.util.database.Problem; server com.histmersion.server.Problem; plugin-host com.histmersion.pluginhost.Problem; cli com.histmersion.cli.Problem; web com.histmersion.web.Problem; upstreams com.histmersion.upstreams.Problem; plugin-vaults com.histmersion.plugins.vaults.Problem; plugin-resolver com.histmersion.pluginresolver.Problem; plugin-testkit com.histmersion.plugin.testkit.Problem; each plugin module com.histmersion.plugins.<name>.Problem. Any top-level object called Problem counts as the layer's one; a second top-level Problem in the same module and scope is a finding",
+    "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
     "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
@@ -126,6 +128,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
   private val plainCalls = new ConcurrentLinkedQueue[PlainCall]()
   private val unclassified = new ConcurrentHashMap[String, (Int, String)]()
   private val stale = new ConcurrentLinkedQueue[String]()
+  private val topProblems = new ConcurrentLinkedQueue[(String, String, String, Int)]()
   private val controller = policy.controllerFile.r
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
@@ -449,6 +452,23 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         }
     }
 
+    // ---- G5problem and G55positional ---------------------------------------------------------------------------
+    val problemWord = "(Problem|Error|Reason|Refusal|Failure|Why|Message)$".r
+    val topLevelProblem = "^com/histmersion/(?:[a-z0-9]+/)*Problem\\.$".r
+    val positionalName = "^.+(Result[0-9]*|Arg[0-9]+|Part[0-9]+)$".r
+    doc.tree.traverse {
+      case o: Defn.Object if isNewtypeObject(o.name.symbol) && !o.name.symbol.isLocal =>
+        val base = newtypeParents(o.name.symbol).map(_._2.value)
+        if (base.exists(b => b == "java/lang/String#" || b == "scala/Predef.String#") && problemWord.findFirstIn(o.name.value).nonEmpty) {
+          if (topLevelProblem.pattern.matcher(o.name.symbol.value).matches) topProblems.add((mod, scope, path, o.pos.startLine + 1))
+          else report("G5problem", o, o.name.symbol.value.stripPrefix("com/histmersion/"))
+        }
+        if (positionalName.pattern.matcher(o.name.value).matches) report("G55positional", o, "newtype:" + o.name.value)
+      case t: Defn.Type if !t.name.symbol.isLocal && positionalName.pattern.matcher(t.name.value).matches &&
+          !(t.body match { case Type.Select(q, Type.Name("T")) => q.syntax.split('.').last == t.name.value; case _ => false }) =>
+        report("G55positional", t, "alias:" + t.name.value)
+    }
+
     // ---- G46 alias pairs ----------------------------------------------------------------------------------------
     def statLists: List[List[Stat]] = doc.tree.collect {
       case t: Template => t.body.stats
@@ -656,6 +676,10 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           findings.add(Finding("G44plaindef", d.module, d.path, d.line, s"${d.name}(${ps.mkString(",")});calls=${fed.size}"))
         }
       }
+    }
+    // G5problem: a second top-level Problem in one module and scope is a copy of the layer's one
+    topProblems.asScala.toList.groupBy(p => (p._1, p._2)).values.foreach { ps =>
+      ps.sortBy(p => (p._3, p._4)).drop(1).foreach(p => findings.add(Finding("G5problem", p._1, p._3, p._4, "second top-level Problem")))
     }
     val rows = findings.asScala.toList.sortBy(f => (f.rule, f.path, f.line, f.detail))
     val header = "rule\tmodule\tpath\tline\tdetail"
