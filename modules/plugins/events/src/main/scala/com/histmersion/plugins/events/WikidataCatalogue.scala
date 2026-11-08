@@ -15,27 +15,27 @@ import io.github.iltotore.iron.constraint.any.Pure
   * per class. A part is a class, `class:<qid>`.
   */
 final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
-  def title = EventCatalogue.TitleResult("Wikidata")
+  def title = EventCatalogue.Title("Wikidata")
   def licence = Licence("CC0-1.0")
-  def citation = EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
-  def home = EventCatalogue.HomeResult("https://www.wikidata.org")
-  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
-    EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
+  def citation = EventCatalogue.Citation("Wikidata (CC0), https://www.wikidata.org")
+  def home = EventCatalogue.Home("https://www.wikidata.org")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
+    EventCatalogue.RequestIntervalMs(cfg.requestIntervalMs.value)
 
   private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] =
     WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
 
-  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
-    classes.map((qid, _) => EventCatalogue.PartsResult(s"class:$qid"))
+  def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
+    classes.map((qid, _) => EventCatalogue.ReadPart(s"class:$qid"))
 
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  ): Either[plugin.Problem, CataloguePage] =
     classes.find((qid, _) => part.value == s"class:$qid") match
       case None =>
-        Left(EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
+        Left(plugin.Problem(s"'$part' is no class of the configured events.wikidata.classes"))
       case Some((qid, kind)) =>
         val q = WikidataCatalogue.sparql(
           qid,
@@ -44,12 +44,12 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
           cfg.labelLanguages
         )
         CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q)).left
-          .map(e => EventCatalogue.ReadResultPart1(e.value))
+          .map(e => plugin.Problem(e.value))
           .flatMap(j =>
             WikidataCatalogue
               .parse(j, CatalogueEvent.Kind(kind.value))
               .left
-              .map(e => EventCatalogue.ReadResultPart1(e.value))
+              .map(e => plugin.Problem(e.value))
           )
           .map(CataloguePage(_))
 
@@ -110,8 +110,8 @@ object WikidataCatalogue:
        |}""".stripMargin
     )
 
-  def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
+  def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.Url =
+    Plugin.Http.Url(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
 
   private def binding(b: ACursor, k: String): Option[String] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)

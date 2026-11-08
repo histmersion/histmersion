@@ -459,13 +459,13 @@ object PluginHost:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[Registry.AddId, A] = ListMap.empty
     private var open = true
-    def add(id: Registry.AddId, a: A): Either[Registry.AddResultPart1, Unit] =
-      if !open then Left(Registry.AddResultPart1(s"$kind '$id': registration is over (add from inside register)"))
+    def add(id: Registry.AddId, a: A): Either[plugin.Problem, Unit] =
+      if !open then Left(plugin.Problem(s"$kind '$id': registration is over (add from inside register)"))
       else if committed.contains(id) || added.contains(id) then
-        Left(Registry.AddResultPart1(s"$kind '$id' is already registered"))
+        Left(plugin.Problem(s"$kind '$id' is already registered"))
       else
         valid(id, a) match
-          case Some(err) => Left(Registry.AddResultPart1(err.value))
+          case Some(err) => Left(plugin.Problem(err.value))
           case None      => added = added.updated(id, a); Right(())
     def close(): ListMap[Registry.AddId, A] =
       open = false
@@ -494,14 +494,14 @@ object PluginHost:
         services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(false), HostServices.LogArg3(message.value))
       def warn(message: Plugin.Log.WarnMessage) =
         services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(message.value))
-    def env(name: Plugin.Context.EnvName) =
+    def env(name: EnvVar.Name) =
       Option(services.env.root.get(name.value))
         .flatMap(v => Option(v.unwrapped))
-        .map(v => Plugin.Context.EnvResult(v.toString))
+        .map(v => EnvVar.Value(v.toString))
     def secret(s: Secret) =
       resolved(s).left
-        .map(e => Plugin.Context.SecretResultPart1(e.value))
-        .map(v => Plugin.Context.SecretResultPart2(v.value))
+        .map(e => plugin.Problem(e.value))
+        .map(v => Secret.Resolved(v.value))
     def secretVaults = vaults
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.QuotaArg1(upstream.value))
     override def licences = HostLicences

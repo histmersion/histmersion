@@ -15,27 +15,27 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   // a U.S. federal work: public domain; NCEI asks to be cited
-  def title = EventCatalogue.TitleResult("NOAA NCEI Natural Hazards")
+  def title = EventCatalogue.Title("NOAA NCEI Natural Hazards")
   def licence = Licence("public-domain")
   def citation =
-    EventCatalogue.CitationResult(
+    EventCatalogue.Citation(
       "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
         "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K"
     )
-  def home = EventCatalogue.HomeResult("https://www.ngdc.noaa.gov/hazard/")
-  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
-    EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
-  override def everyPartEachImport: EventCatalogue.EveryPartEachImportResult =
-    EventCatalogue.EveryPartEachImportResult(true)
+  def home = EventCatalogue.Home("https://www.ngdc.noaa.gov/hazard/")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
+    EventCatalogue.RequestIntervalMs(cfg.requestIntervalMs.value)
+  override def everyPartEachImport: EventCatalogue.EveryPartEachImport =
+    EventCatalogue.EveryPartEachImport(true)
 
-  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
-    cfg.datasetList.map(ds => EventCatalogue.PartsResult(s"${ds.value}:1"))
+  def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
+    cfg.datasetList.map(ds => EventCatalogue.ReadPart(s"${ds.value}:1"))
 
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  ): Either[plugin.Problem, CataloguePage] =
     part.value match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt
@@ -43,11 +43,11 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
         CatalogueJson(http)(
           NoaaCatalogue.url(cfg.url, ds, query.from, query.to, NoaaCatalogue.PageNumber(p), cfg.pageSize)
         ).left
-          .map(e => EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j => NoaaCatalogue.parse(ds, j).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
+          .map(e => plugin.Problem(e.value))
+          .flatMap(j => NoaaCatalogue.parse(ds, j).left.map(e => plugin.Problem(e.value)))
           .map((rs, pages) => CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}"))))
       case other =>
-        Left(EventCatalogue.ReadResultPart1(s"'$other' is no page of NOAA's datasets"))
+        Left(plugin.Problem(s"'$other' is no page of NOAA's datasets"))
 
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
@@ -89,8 +89,8 @@ object NoaaCatalogue:
       to: Year,
       page: PageNumber,
       perPage: NoaaSettings.PageSize
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${base.value
           .stripSuffix("/")}/${path(dataset).value}?maxYear=${to.value}${from.fold("")(f => s"&minYear=${f.value}")}" +
         s"&itemsPerPage=${perPage.value}&page=${page.value}"

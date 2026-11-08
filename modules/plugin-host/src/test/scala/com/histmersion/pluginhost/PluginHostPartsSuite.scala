@@ -64,15 +64,15 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
 
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("t"); val licence = Licence("l");
-    val citation = EventCatalogue.CitationResult("c"); val home = EventCatalogue.HomeResult("h")
-    def parts(q: CatalogueQuery) = pages.keys.toList.map(EventCatalogue.PartsResult(_))
+    val title = EventCatalogue.Title("t"); val licence = Licence("l");
+    val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
+    def parts(q: CatalogueQuery) = pages.keys.toList.map(EventCatalogue.ReadPart(_))
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
-      pages(part.value).left.map(EventCatalogue.ReadResultPart1(_))
+      pages(part.value).left.map(Problem(_))
 
   private val offline = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(
-      Plugin.Http.GetResultPart1("offline")
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
+      Problem("offline")
     )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
@@ -113,11 +113,11 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   test("an AI provider's exception or null is its failure"):
     val throwing = new AiProvider:
-      val title = AiProvider.TitleResult("t")
+      val title = AiProvider.Title("t")
       override def check(model: AiProvider.CheckModel) = throw IllegalStateException("no")
       def turn(r: AiTurn.Request, http: AiHttp) = throw IllegalStateException("boom")
     val nulls = new AiProvider:
-      val title = AiProvider.TitleResult("t")
+      val title = AiProvider.Title("t")
       def turn(r: AiTurn.Request, http: AiHttp) = Right(null)
     assertEquals(PluginAi.check(throwing, PluginAi.ModelName("m")), Left("its check threw IllegalStateException"))
     assertEquals(

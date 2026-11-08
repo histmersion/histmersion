@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
+
 import com.histmersion.plugin.MediaCollection
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Plugin.Config.given
@@ -23,20 +25,20 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       ctx: Plugin.Context
   ): MediaCollection
 
-  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     c.apiKey
-      .fold[Either[Plugin.RegisterResultPart1, Option[KeyedCollection.Key]]](Right(None))(s =>
+      .fold[Either[Problem, Option[KeyedCollection.Key]]](Right(None))(s =>
         ctx
           .secret(s)
           .left
-          .map(e => Plugin.RegisterResultPart1(e.value))
+          .map(e => Problem(e.value))
           .map(v => Option(v).map(_.value.trim).filter(_.nonEmpty).map(KeyedCollection.Key(_)))
       )
       .flatMap(key =>
         ctx.mediaCollections
           .add(Registry.AddId(name.value), collection(c, key, ctx))
           .left
-          .map(e => Plugin.RegisterResultPart1(e.value))
+          .map(e => Problem(e.value))
       )
 
 object KeyedPlugin:

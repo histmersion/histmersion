@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.plugin.Problem
+
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
@@ -10,10 +12,10 @@ import com.histmersion.plugin.Registry
   */
 final class ArchiveOrgPlugin extends FetcherPlugin("archive-org"):
   type Config = HostAcquire
-  def register(c: HostAcquire, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: HostAcquire, ctx: Plugin.Context): Either[Problem, Unit] =
     lazy val archive = ArchiveOrg(c.acquire.archiveOrg, ctx.http)
     ctx.sourceFetchers
       .add(Registry.AddId("archive-org"), ArchiveOrgFetcher(() => archive))
       .flatMap(_ => ctx.sourceCollections.add(Registry.AddId("archive-org"), ArchiveOrgCollection(() => archive)))
       .left
-      .map(e => Plugin.RegisterResultPart1(e.value))
+      .map(e => Problem(e.value))

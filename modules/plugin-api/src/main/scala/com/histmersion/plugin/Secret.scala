@@ -14,14 +14,16 @@ final class Secret private (val ref: Secret.Ref):
   override def hashCode: Int = ref.hashCode
 
 object Secret:
-  type ParseResultPart1 = Ref.ParseResultPart1
-  val ParseResultPart1: Ref.ParseResultPart1.type = Ref.ParseResultPart1
+  /** A secret's value once resolved. Never logged. */
+  type Resolved = Resolved.T
+  object Resolved extends Newtype[String, Pure]
+
   type ParseText = Ref.ParseText
   val ParseText: Ref.ParseText.type = Ref.ParseText
 
   def apply(ref: Ref): Secret = new Secret(ref)
 
-  def parse(text: ParseText): Either[ParseResultPart1, Secret] = Ref.parse(text).map(Secret(_))
+  def parse(text: ParseText): Either[Problem, Secret] = Ref.parse(text).map(Secret(_))
 
   /** The HOCON reader: a string holding a reference. It parses the reference only — nothing is resolved while the
     * config is read.
@@ -46,10 +48,10 @@ object Secret:
     case Vault(vault: Ref.Vault.Value, ref: Ref.Vault.Ref)
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
-    def shown: Ref.ShownResult = this match
-      case Value(_)        => Ref.ShownResult(s"${Ref.ValueScheme}:${Ref.Mask}")
-      case Env(n)          => Ref.ShownResult(s"${Ref.EnvScheme}:$n")
-      case Ref.Vault(v, r) => Ref.ShownResult(s"$v:$r")
+    def shown: Ref.Shown = this match
+      case Value(_)        => Ref.Shown(s"${Ref.ValueScheme}:${Ref.Mask}")
+      case Env(n)          => Ref.Shown(s"${Ref.EnvScheme}:$n")
+      case Ref.Vault(v, r) => Ref.Shown(s"$v:$r")
 
   object Ref:
     object Value:
@@ -66,10 +68,8 @@ object Secret:
       type Ref = Ref.T
       object Ref extends Newtype[String, Pure]
 
-    type ShownResult = ShownResult.T
-    object ShownResult extends Newtype[String, Pure]
-    type ParseResultPart1 = ParseResultPart1.T
-    object ParseResultPart1 extends Newtype[String, Pure]
+    type Shown = Shown.T
+    object Shown extends Newtype[String, Pure]
     type ParseText = ParseText.T
     object ParseText extends Newtype[String, Pure]
 
@@ -85,25 +85,25 @@ object Secret:
     val Forms = "value:<literal>, env:<NAME> or <vault>:<ref>"
 
     /** Pure: a reference from its text. Never echoes the text back in an error (it may be a value). */
-    def parse(text: ParseText): Either[ParseResultPart1, Ref] =
+    def parse(text: ParseText): Either[Problem, Ref] =
       val t = Option((text).value).getOrElse("").trim
       t.indexOf(':') match
-        case i if i <= 0 => Left(ParseResultPart1(s"a secret is a reference ($Forms), not a bare value"))
+        case i if i <= 0 => Left(Problem(s"a secret is a reference ($Forms), not a bare value"))
         case i           =>
           val (scheme, rest) = (t.take(i), t.drop(i + 1))
           scheme match
             case ValueScheme =>
-              if rest.isEmpty then Left(ParseResultPart1("value: has no value")) else Right(Value(Value.Literal(rest)))
+              if rest.isEmpty then Left(Problem("value: has no value")) else Right(Value(Value.Literal(rest)))
             case EnvScheme =>
               rest.trim match
                 case EnvName() => Right(Env(Env.Name(rest.trim)))
-                case _         => Left(ParseResultPart1(s"env:${rest.trim} is not an environment variable name"))
+                case _         => Left(Problem(s"env:${rest.trim} is not an environment variable name"))
             case VaultName() =>
-              if rest.trim.isEmpty then Left(ParseResultPart1(s"$scheme: names no entry"))
+              if rest.trim.isEmpty then Left(Problem(s"$scheme: names no entry"))
               else Right(Vault(Vault.Value(scheme), Vault.Ref(rest.trim)))
             case _ =>
               Left(
-                ParseResultPart1(
+                Problem(
                   s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)"
                 )
               )
@@ -113,8 +113,8 @@ object Secret:
     * the tool is missing) and NEVER contains the value.
     */
   trait Vault:
-    def name: Vault.NameResult
-    def resolve(ref: Vault.ResolveRef): Either[Vault.ResolveResultPart1, Vault.ResolveResultPart2]
+    def name: Vault.Name
+    def resolve(ref: Vault.ResolveRef): Either[Problem, Secret.Resolved]
 
     /** Several references at once: the host asks for every reference of this vault that the plugins of one config
       * generation (a server start, a `config reload`) hold, in ONE call, before it registers them. The answer has an
@@ -124,24 +124,12 @@ object Secret:
       * generation only.
       */
     def resolveAll(
-        refs: List[Vault.ResolveAllRefs]
-    ): Map[Vault.ResolveAllResultPart1, Either[Vault.ResolveAllResultPart2Part1, Vault.ResolveAllResultPart2Part2]] =
+        refs: List[Vault.ResolveRef]
+    ): Map[Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
       refs.distinct.map(r => r -> resolve(r)).toMap
 
   object Vault:
-    type NameResult = NameResult.T
-    object NameResult extends Newtype[String, Pure]
-    type ResolveResultPart1 = ResolveResultPart1.T
-    object ResolveResultPart1 extends Newtype[String, Pure]
-    type ResolveResultPart2 = ResolveResultPart2.T
-    object ResolveResultPart2 extends Newtype[String, Pure]
+    type Name = Name.T
+    object Name extends Newtype[String, Pure]
     type ResolveRef = ResolveRef.T
     object ResolveRef extends Newtype[String, Pure]
-    type ResolveAllResultPart1 = ResolveRef
-    val ResolveAllResultPart1: ResolveRef.type = ResolveRef
-    type ResolveAllResultPart2Part1 = ResolveResultPart1
-    val ResolveAllResultPart2Part1: ResolveResultPart1.type = ResolveResultPart1
-    type ResolveAllResultPart2Part2 = ResolveResultPart2
-    val ResolveAllResultPart2Part2: ResolveResultPart2.type = ResolveResultPart2
-    type ResolveAllRefs = ResolveRef
-    val ResolveAllRefs: ResolveRef.type = ResolveRef

@@ -94,7 +94,11 @@ class ArchitectureSuite extends munit.FunSuite:
     // a splice is code: its `.value` is read like any other
     assertEquals(words(oneLine), List("val", "a", "=", "s", "if", "(x).value", "then", "else", "y.value", ".size"))
     assertEquals(words("f(\"a\\\"b\", /* c */ d) // e"), List("f(", ",", "d)"))
-    assertEquals(words("val t = \"\"\"x \"y\" ${z}\"\"\" + 1"), List("val", "t", "=", "+", "1"), "no prefix: not interpolated")
+    assertEquals(
+      words("val t = \"\"\"x \"y\" ${z}\"\"\" + 1"),
+      List("val", "t", "=", "+", "1"),
+      "no prefix: not interpolated"
+    )
 
 object ArchitectureSuite:
 
@@ -129,9 +133,9 @@ object ArchitectureSuite:
         }
         .sortBy(_.key)
 
-  /** The text with every comment and string literal replaced by spaces. A splice (`s"…${expr}…"`) is code and is
-    * kept: `.value` in one is an unwrap like any other (user, 2026-11-08). Line breaks stay, so a check reads the same
-    * code whatever the layout.
+  /** The text with every comment and string literal replaced by spaces. A splice (`s"…${expr}…"`) is code and is kept:
+    * `.value` in one is an unwrap like any other (user, 2026-11-08). Line breaks stay, so a check reads the same code
+    * whatever the layout.
     */
   object Blank:
     def apply(text: String): String =
@@ -143,8 +147,7 @@ object ArchitectureSuite:
         while i < stop do { out += keep(text(i)); i += 1 }
         i
 
-      /** Code from `from`, kept; a splice ends before the `}` that closes it. Returns where
-        * it stopped.
+      /** Code from `from`, kept; a splice ends before the `}` that closes it. Returns where it stopped.
         */
       def code(from: Int, splice: Boolean): Int =
         var i = from

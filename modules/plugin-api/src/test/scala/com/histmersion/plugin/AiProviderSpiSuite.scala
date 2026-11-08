@@ -5,7 +5,7 @@ package plugin
 class AiProviderSpiSuite extends munit.FunSuite:
 
   private object Echo extends AiProvider:
-    val title = AiProvider.TitleResult("Echo")
+    val title = AiProvider.Title("Echo")
     def turn(r: AiTurn.Request, http: AiHttp) =
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
@@ -72,14 +72,14 @@ class AiProviderSpiSuite extends munit.FunSuite:
   test("the offline client sends nothing"):
     assertEquals(
       ((AiHttp.Offline
-        .post(AiHttp.PostUrl("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.PostTimeoutSeconds(5)))
+        .post(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.TimeoutSeconds(5)))
         .left
         .map(refactorError => (refactorError).value): Either[String, AiHttp.Response]),
       Left("offline")
     )
     assertEquals(
       ((AiHttp.Offline
-        .get(AiHttp.GetUrl("https://x.example"), Map.empty, AiHttp.GetTimeoutSeconds(5)))
+        .get(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.TimeoutSeconds(5)))
         .left
         .map(refactorError2 => (refactorError2).value): Either[String, AiHttp.Response]),
       Left("offline")
@@ -89,16 +89,16 @@ class AiProviderSpiSuite extends munit.FunSuite:
     val ctx = new Plugin.Context:
       def http = new Plugin.Http {
         def get(
-            url: Plugin.Http.GetUrl,
-            headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-        ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+            url: Plugin.Http.Url,
+            headers: Map[Header.Name, Header.Value]
+        ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
       }
-      def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-      def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] =
-        Left(Plugin.Context.SecretResultPart1("none"))
+      def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+      def secret(s: Secret): Either[Problem, Secret.Resolved] =
+        Left(Problem("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
     assert(ctx.aiProviders.add(Registry.AddId("echo"), Echo).left.exists((_).value.contains("no AI providers")))
     assertEquals(Spi.Version, 2)

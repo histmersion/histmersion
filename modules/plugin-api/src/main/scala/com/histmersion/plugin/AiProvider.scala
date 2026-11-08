@@ -20,26 +20,26 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait AiProvider:
   /** What to call it: "Google Gemini API". */
-  def title: AiProvider.TitleResult
+  def title: AiProvider.Title
 
-  def description: AiProvider.DescriptionResult = AiProvider.DescriptionResult("")
+  def description: AiProvider.Description = AiProvider.Description("")
 
   def capabilities: AiCapabilities = AiCapabilities()
 
   /** The provider spends the PERSON'S own subscription (a login, not an API key): refused while the server listens
     * beyond loopback, where another client could spend it.
     */
-  def spendsPersonalPlan: AiProvider.SpendsPersonalPlanResult = AiProvider.SpendsPersonalPlanResult(false)
+  def spendsPersonalPlan: AiProvider.SpendsPersonalPlan = AiProvider.SpendsPersonalPlan(false)
 
   /** Whether a client for `model` can be used now (a key configured, a URL given) — asked before a model is picked, so
     * a provider that cannot run is passed over with its reason. Spends nothing.
     */
-  def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] = Right(())
+  def check(model: AiProvider.CheckModel): Either[Problem, Unit] = Right(())
 
   /** The models the provider lists, from a FREE call (never a generation), for `agent doctor`; `Right(Nil)` = it has no
     * listing.
     */
-  def models(http: AiHttp): Either[AiProvider.ModelsResultPart1, List[AiProvider.ModelsResultPart2]] = Right(Nil)
+  def models(http: AiHttp): Either[Problem, List[AiProvider.ModelName]] = Right(Nil)
 
   /** Its own checks for `agent doctor` (`online = false`: send nothing). Spends nothing. */
   def doctor(online: AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] = Nil
@@ -48,19 +48,15 @@ trait AiProvider:
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]
 
 object AiProvider:
-  type TitleResult = TitleResult.T
-  object TitleResult extends Newtype[String, Pure]
-  type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends Newtype[String, Pure]
-  type SpendsPersonalPlanResult = SpendsPersonalPlanResult.T
-  object SpendsPersonalPlanResult extends Newtype[Boolean, Pure]
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends Newtype[String, Pure]
+  type Title = Title.T
+  object Title extends Newtype[String, Pure]
+  type Description = Description.T
+  object Description extends Newtype[String, Pure]
+  type SpendsPersonalPlan = SpendsPersonalPlan.T
+  object SpendsPersonalPlan extends Newtype[Boolean, Pure]
   type CheckModel = CheckModel.T
   object CheckModel extends Newtype[String, Pure]
-  type ModelsResultPart1 = ModelsResultPart1.T
-  object ModelsResultPart1 extends Newtype[String, Pure]
-  type ModelsResultPart2 = ModelsResultPart2.T
-  object ModelsResultPart2 extends Newtype[String, Pure]
+  type ModelName = ModelName.T
+  object ModelName extends Newtype[String, Pure]
   type DoctorOnline = DoctorOnline.T
   object DoctorOnline extends Newtype[Boolean, Pure]

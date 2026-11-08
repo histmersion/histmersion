@@ -10,39 +10,25 @@ import io.github.iltotore.iron.constraint.any.Pure
 trait Processes:
   def run(
       argv: List[Processes.RunArgv],
-      env: Map[Processes.RunEnvPart1, Processes.RunEnvPart2],
+      env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  ): Either[Processes.RunResultPart1, Processes.Result]
+  ): Either[Problem, Processes.Result]
   def start(
       argv: List[Processes.StartArgv],
-      env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
-  ): Either[Processes.StartResultPart1, Processes.Session]
+      env: Map[EnvVar.Name, EnvVar.Value]
+  ): Either[Problem, Processes.Session]
 
   /** Capture a command without a time limit, closing stdin immediately. The caller explicitly chooses this mode. */
-  def capture(argv: List[Processes.CaptureArgv]): Either[Processes.CaptureResultPart1, Processes.Result]
+  def capture(argv: List[Processes.CaptureArgv]): Either[Problem, Processes.Result]
 
 object Processes:
-  type RunResultPart1 = RunResultPart1.T
-  object RunResultPart1 extends Newtype[String, Pure]
   type RunArgv = RunArgv.T
   object RunArgv extends Newtype[String, Pure]
-  type RunEnvPart1 = RunEnvPart1.T
-  object RunEnvPart1 extends Newtype[String, Pure]
-  type RunEnvPart2 = RunEnvPart2.T
-  object RunEnvPart2 extends Newtype[String, Pure]
   type RunStdin = RunStdin.T
   object RunStdin extends Newtype[String, Pure]
-  type StartResultPart1 = StartResultPart1.T
-  object StartResultPart1 extends Newtype[String, Pure]
   type StartArgv = StartArgv.T
   object StartArgv extends Newtype[String, Pure]
-  type StartEnvPart1 = StartEnvPart1.T
-  object StartEnvPart1 extends Newtype[String, Pure]
-  type StartEnvPart2 = StartEnvPart2.T
-  object StartEnvPart2 extends Newtype[String, Pure]
-  type CaptureResultPart1 = CaptureResultPart1.T
-  object CaptureResultPart1 extends Newtype[String, Pure]
   type CaptureArgv = CaptureArgv.T
   object CaptureArgv extends Newtype[String, Pure]
 
@@ -58,65 +44,35 @@ object Processes:
 
   /** Owned by the caller, which must close it. Output is kept in memory and never logged by the implementation. */
   trait Session:
-    def out: Session.OutResult
-    def err: Session.ErrResult
-    def alive: Session.AliveResult
-    def send(line: Session.SendLine): Either[Session.SendResultPart1, Unit]
+    def out: Result.Out
+    def err: Result.Err
+    def alive: Boolean
+    def send(line: Session.SendLine): Either[Problem, Unit]
     def awaitOut(timeout: FiniteDuration)(
-        ready: Session.AwaitOutReadyArg1 => Session.AwaitOutReadyResult
-    ): Session.AwaitOutResult
+        ready: Result.Out => Boolean
+    ): Boolean
     def awaitErr(length: Session.AwaitErrLength, timeout: FiniteDuration): Unit
-    def close(timeout: FiniteDuration): Option[Session.CloseResult]
-    def exit(timeout: FiniteDuration): Option[Session.ExitResult]
+    def close(timeout: FiniteDuration): Option[Result.Exit]
+    def exit(timeout: FiniteDuration): Option[Result.Exit]
 
   object Session:
-    type OutResult = OutResult.T
-    object OutResult extends Newtype[String, Pure]
-    type ErrResult = ErrResult.T
-    object ErrResult extends Newtype[String, Pure]
-    type AliveResult = AliveResult.T
-    object AliveResult extends Newtype[Boolean, Pure]
-    type SendResultPart1 = SendResultPart1.T
-    object SendResultPart1 extends Newtype[String, Pure]
     type SendLine = SendLine.T
     object SendLine extends Newtype[String, Pure]
-    type AwaitOutResult = AwaitOutResult.T
-    object AwaitOutResult extends Newtype[Boolean, Pure]
-    type AwaitOutReadyArg1 = AwaitOutReadyArg1.T
-    object AwaitOutReadyArg1 extends Newtype[String, Pure]
-    type AwaitOutReadyResult = AwaitOutReadyResult.T
-    object AwaitOutReadyResult extends Newtype[Boolean, Pure]
     type AwaitErrLength = AwaitErrLength.T
     object AwaitErrLength extends Newtype[Int, Pure]
-    type CloseResult = CloseResult.T
-    object CloseResult extends Newtype[Int, Pure]
-    type ExitResult = ExitResult.T
-    object ExitResult extends Newtype[Int, Pure]
 
   object Unavailable extends Processes:
-    export Processes.{
-      CaptureArgv,
-      CaptureResultPart1,
-      RunArgv,
-      RunEnvPart1,
-      RunEnvPart2,
-      RunResultPart1,
-      RunStdin,
-      StartArgv,
-      StartEnvPart1,
-      StartEnvPart2,
-      StartResultPart1
-    }
+    export Processes.{CaptureArgv, RunArgv, RunStdin, StartArgv}
 
     def run(
         argv: List[RunArgv],
-        env: Map[RunEnvPart1, RunEnvPart2],
+        env: Map[EnvVar.Name, EnvVar.Value],
         stdin: Option[RunStdin],
         timeout: FiniteDuration
-    ): Either[RunResultPart1, Result] =
-      Left(RunResultPart1("this host supplies no processes"))
-    def start(argv: List[StartArgv], env: Map[StartEnvPart1, StartEnvPart2]): Either[StartResultPart1, Session] =
-      Left(StartResultPart1("this host supplies no processes"))
-    def capture(argv: List[CaptureArgv]): Either[CaptureResultPart1, Result] = Left(
-      CaptureResultPart1("this host supplies no processes")
+    ): Either[Problem, Result] =
+      Left(Problem("this host supplies no processes"))
+    def start(argv: List[StartArgv], env: Map[EnvVar.Name, EnvVar.Value]): Either[Problem, Session] =
+      Left(Problem("this host supplies no processes"))
+    def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(
+      Problem("this host supplies no processes")
     )

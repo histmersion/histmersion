@@ -16,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class ChatCompletionsProvider(
     name: ChatCompletionsProvider.Name,
-    val title: AiProvider.TitleResult,
+    val title: AiProvider.Title,
     settings: ProviderSettings,
     keyed: Option[(ChatCompletionsProvider.KeyLabel, ChatCompletionsProvider.KeyVariable)]
 ) extends AiProvider:
@@ -32,16 +32,13 @@ final class ChatCompletionsProvider(
   private def base: Either[BaseUrl.Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
-  override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
+  override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
     base.left
-      .map(p => AiProvider.CheckResultPart1(p.value))
+      .map(p => Problem(p.value))
       .flatMap(_ =>
         keyed match
           case Some((label, variable)) if settings.apiKey.value.isEmpty =>
-            Left(
-              AiProvider
-                .CheckResultPart1(s"no ${label.value} API key — set ${variable.value} in the server's environment")
-            )
+            Left(Problem(s"no ${label.value} API key — set ${variable.value} in the server's environment"))
           case _ => Right(())
       )
 
@@ -54,15 +51,15 @@ final class ChatCompletionsProvider(
       body = ChatRequest.of(request, settings.strictTools).body
       answer <- http
         .post(
-          AiHttp.PostUrl(url.value),
+          Plugin.Http.Url(url.value),
           ChatCompletionsProvider.headers(key),
           body,
-          AiHttp.PostTimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
+          AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
         )
         .left
         .map(e =>
           SendFailure(SendFailure.Reported(e.value))
-            .describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value))
+            .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
             .value
         )
       turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn.left
@@ -78,21 +75,21 @@ object ChatCompletionsProvider:
   type KeyVariable = KeyVariable.T
   object KeyVariable extends Newtype[String, Pure]
 
-  def headers(key: ProviderSettings.ApiKey): Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2] =
+  def headers(key: ProviderSettings.ApiKey): Map[Header.Name, Header.Value] =
     Map(
-      AiHttp.PostHeadersPart1("Authorization") -> AiHttp.PostHeadersPart2(s"Bearer ${key.value}"),
-      AiHttp.PostHeadersPart1("Content-Type") -> AiHttp.PostHeadersPart2("application/json")
+      Header.Name("Authorization") -> Header.Value(s"Bearer ${key.value}"),
+      Header.Name("Content-Type") -> Header.Value("application/json")
     )
 
   /** The OpenAI API, keyed by `OPENAI_API_KEY`. */
   def openAi(settings: ProviderSettings): ChatCompletionsProvider =
     ChatCompletionsProvider(
       Name("openai"),
-      AiProvider.TitleResult("OpenAI API"),
+      AiProvider.Title("OpenAI API"),
       settings,
       Some((KeyLabel("OpenAI"), KeyVariable("OPENAI_API_KEY")))
     )
 
   /** Any OpenAI-compatible local server, with or without a key. */
   def local(settings: ProviderSettings): ChatCompletionsProvider =
-    ChatCompletionsProvider(Name("local"), AiProvider.TitleResult("OpenAI-compatible local server"), settings, None)
+    ChatCompletionsProvider(Name("local"), AiProvider.Title("OpenAI-compatible local server"), settings, None)

@@ -355,7 +355,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
       g.registries.sourceFetchers.get(Registries.SourceFetchersKey(id)).map(FetchChain.Step.Id(id) -> _)
     )
     assertEquals(
-      FetchChain(steps, registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value)))
+      FetchChain(steps, registered = id => g.registered.exists(_.value == id.value))
         .fetch(Some(LandingDoi), None),
       Left(FetchChain.NoCopy)
     )
@@ -410,7 +410,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     val got =
       FetchChain(
         List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("landing"))),
-        registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value))
+        registered = id => g.registered.exists(_.value == id.value)
       )
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
     assertEquals(got, Left(FetchChain.NoCopy))

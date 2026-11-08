@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.plugin.Header
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -39,7 +41,7 @@ class CoreQuotaLendSuite extends munit.FunSuite:
     lent.observe(
       UpstreamQuota.ObserveStatus(429),
       Map(
-        Plugin.HttpResponse.HeadersKey("x-ratelimit-retry-after") -> Plugin.HttpResponse.HeadersValue(
+        Header.Name("x-ratelimit-retry-after") -> Header.Value(
           "2026-10-26T18:52:11+0000"
         )
       )

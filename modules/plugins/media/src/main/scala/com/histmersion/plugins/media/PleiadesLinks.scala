@@ -18,8 +18,8 @@ object PleiadesLinks:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-  def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
+  def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.Url =
+    Plugin.Http.Url(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
 
   val OnFlickr: Problem = Problem("on Flickr (its API needs a key)")
   val Category: Problem = Problem("a Commons category, not a file")
@@ -39,7 +39,7 @@ object PleiadesLinks:
     * picture at all (a book, a gazetteer entry). Wikipedia's `File:` pages are asked of Commons too — a file only a
     * Wikipedia holds (a non-free one) is then "missing on Commons".
     */
-  def classify(url: Plugin.Http.GetUrl): Option[Either[Problem, Commons.File.Title]] =
+  def classify(url: Plugin.Http.Url): Option[Either[Problem, Commons.File.Title]] =
     val u = url.value.trim.stripPrefix("=")
     val lower = u.toLowerCase(Locale.ROOT)
     val host = scala.util
@@ -91,7 +91,7 @@ object PleiadesLinks:
               val cito = h.str("type").orElse(h.str("citationTypeURI").map(_.split("/").last)).getOrElse("reference")
               (h.str("accessURI").toList ++ h.str("alternateURI").toList)
                 .flatMap(u =>
-                  classify(Plugin.Http.GetUrl(u))
+                  classify(Plugin.Http.Url(u))
                     .map(PleiadesLink(PleiadesLink.Url(u.trim), PleiadesLink.Citation(cito), _))
                 )
             }

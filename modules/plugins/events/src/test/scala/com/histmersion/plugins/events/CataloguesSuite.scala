@@ -231,7 +231,7 @@ class CataloguesSuite extends munit.FunSuite:
     assert(noaa.everyPartEachImport.value)
     assertEquals(noaa.floorYear, None)
     val http = new Plugin.Http:
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
         Right(Plugin.HttpResponse.Body("""{"items":[],"totalPages":2}""".getBytes("UTF-8")))
     assertEquals(
       noaa.read(EventCatalogue.ReadPart("earthquakes:1"), CatalogueQuery(None, Year(499)), http).map(_.next),

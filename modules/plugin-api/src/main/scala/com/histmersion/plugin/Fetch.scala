@@ -41,12 +41,10 @@ object Fetch:
       * another plugin's behalf, what that plugin's upstream holds asks it only while that plugin is on. `false` from a
       * host that does not say.
       */
-    def registered(pluginId: Context.RegisteredPluginId): Context.RegisteredResult = Context.RegisteredResult(false)
+    def registered(pluginId: Context.RegisteredPluginId): Boolean = false
 
   object Context:
     type MemoKey = MemoKey.T
     object MemoKey extends Newtype[String, Pure]
-    type RegisteredResult = RegisteredResult.T
-    object RegisteredResult extends Newtype[Boolean, Pure]
     type RegisteredPluginId = RegisteredPluginId.T
     object RegisteredPluginId extends Newtype[String, Pure]

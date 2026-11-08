@@ -40,12 +40,9 @@ final case class WorkKey(
     format: Option[WorkKey.Format] = None
 ):
   /** No identifier at all (title, authors, year and format alone identify nothing to fetch). */
-  def isEmpty: WorkKey.IsEmptyResult =
-    WorkKey.IsEmptyResult(List(doi, arxiv, pmid, pmcid, archive, isbn).forall(_.isEmpty))
+  def isEmpty: Boolean = List(doi, arxiv, pmid, pmcid, archive, isbn).forall(_.isEmpty)
 
 object WorkKey:
-  type IsEmptyResult = IsEmptyResult.T
-  object IsEmptyResult extends Newtype[Boolean, Pure]
 
   type Arxiv = Arxiv.T
   object Arxiv extends Newtype[String, Pure]

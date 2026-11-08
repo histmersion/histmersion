@@ -6,13 +6,13 @@ class ProviderSpiSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http {
     def get(
-        url: Plugin.Http.GetUrl,
-        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-    ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
+    ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
   }
 
   private object Portal extends MediaCollection:
-    val title = MediaCollection.TitleResult("Portal objects")
+    val title = MediaCollection.Title("Portal objects")
     val role = MediaItem.Role(MediaCollection.Object)
     def search(place: MediaPlace, http: Plugin.Http) =
       Right(
@@ -23,21 +23,21 @@ class ProviderSpiSuite extends munit.FunSuite:
               MediaItem.Title((place.label).value),
               MediaItem.PageUrl("https://portal.example/k"),
               None,
-              Left(MediaItem.RightsPart1("not open access"))
+              Left(Problem("not open access"))
             )
           )
         )
       )
 
   private object Quakes extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("Quakes"); val licence = Licence("CC0-1.0");
-    val citation = EventCatalogue.CitationResult("Q"); val home = EventCatalogue.HomeResult("https://q.example")
-    def parts(q: CatalogueQuery): List[EventCatalogue.PartsResult] = List(EventCatalogue.PartsResult(s"to:${q.to}"))
+    val title = EventCatalogue.Title("Quakes"); val licence = Licence("CC0-1.0");
+    val citation = EventCatalogue.Citation("Q"); val home = EventCatalogue.Home("https://q.example")
+    def parts(q: CatalogueQuery): List[EventCatalogue.ReadPart] = List(EventCatalogue.ReadPart(s"to:${q.to}"))
     def read(
         part: EventCatalogue.ReadPart,
         q: CatalogueQuery,
         http: Plugin.Http
-    ): Either[EventCatalogue.ReadResultPart1, CataloguePage] = Right(CataloguePage(Nil))
+    ): Either[Problem, CataloguePage] = Right(CataloguePage(Nil))
 
   test("a collection's defaults: the museum rule, three per place, a second between requests, complete = as is"):
     assertEquals(
@@ -90,9 +90,9 @@ class ProviderSpiSuite extends munit.FunSuite:
       def log = new Plugin.Log {
         def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
       }
-      def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-      def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] =
-        Left(Plugin.Context.SecretResultPart1("none"))
+      def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+      def secret(s: Secret): Either[Problem, Secret.Resolved] =
+        Left(Problem("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
     assert(
       ctx.mediaCollections.add(Registry.AddId("portal"), Portal).left.exists((_).value.contains("no media import"))

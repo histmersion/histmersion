@@ -141,13 +141,13 @@ class CliopatriaSuite extends munit.FunSuite:
       }
       z.close()
       out.toByteArray
-    val asked = scala.collection.mutable.ListBuffer.empty[Plugin.Http.FetchUrl]
+    val asked = scala.collection.mutable.ListBuffer.empty[Plugin.Http.Url]
     val http = new Plugin.Http:
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-        Left(Plugin.Http.GetResultPart1("get is not used"))
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
+        Left(Problem("get is not used"))
       override def fetch(
-          url: Plugin.Http.FetchUrl,
-          headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]
+          url: Plugin.Http.Url,
+          headers: Map[Header.Name, Header.Value]
       ) =
         asked += url
         Right(Plugin.HttpResponse(Plugin.HttpResponse.Status(200), Map.empty, Plugin.HttpResponse.Body(zip)))
@@ -165,11 +165,11 @@ class CliopatriaSuite extends munit.FunSuite:
 
   test("an error answer, a zip without a usable file: the download says which"):
     def answering(status: Plugin.HttpResponse.Status, body: Plugin.HttpResponse.Body) = new Plugin.Http:
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-        Left(Plugin.Http.GetResultPart1("get is not used"))
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
+        Left(Problem("get is not used"))
       override def fetch(
-          url: Plugin.Http.FetchUrl,
-          headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]
+          url: Plugin.Http.Url,
+          headers: Map[Header.Name, Header.Value]
       ) =
         Right(Plugin.HttpResponse(status, Map.empty, body))
     assertEquals(

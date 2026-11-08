@@ -38,14 +38,7 @@ object DependencyResolver:
     Argument as RunArgs,
     ExitCode as ExitCodeResult,
     ExitCode as ResolveResult,
-    ExitCode as ResolveRootsResultPart1,
-    ExitCode as ResolveSomeResultPart1,
-    ExitCode as RunResult,
-    FileName as InputsResultPart1,
-    Problem as ParseLoopResultPart1,
-    Problem as ParseResultPart1,
-    Problem as ServerModulesResultPart1,
-    Sha256 as InputsResultPart2
+    ExitCode as RunResult
   }
 
   private val Usage =
@@ -66,12 +59,12 @@ object DependencyResolver:
     case _ => console.errorLine(Usage); DependencyResolver.RunResult(1)
 
   /** Pure: the request the arguments make. */
-  def parse(args: List[DependencyResolver.ParseArgs]): Either[DependencyResolver.ParseResultPart1, ResolveRequest] =
+  def parse(args: List[DependencyResolver.ParseArgs]): Either[Resolver.Problem, ResolveRequest] =
     @annotation.tailrec
     def loop(
         rest: List[DependencyResolver.ParseLoopRest],
         acc: ResolveRequest
-    ): Either[DependencyResolver.ParseLoopResultPart1, ResolveRequest] = rest match
+    ): Either[Resolver.Problem, ResolveRequest] = rest match
       case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit") =>
         loop(t, acc.copy(kit = Path.of((d).value)))
       case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib") =>
@@ -85,7 +78,7 @@ object DependencyResolver:
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
         loop(t, acc.copy(check = ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") =>
-        Left(DependencyResolver.ParseLoopResultPart1(s"unknown option $flag"))
+        Left(Resolver.Problem(s"unknown option $flag"))
       case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil))
@@ -124,14 +117,14 @@ object DependencyResolver:
       roots: List[(PluginArtifact, ModuleCoordinates)],
       server: ServerModules,
       coursier: Coursier
-  )(using console: Console): Either[DependencyResolver.ResolveRootsResultPart1, List[Dependency]] =
+  )(using console: Console): Either[Resolver.ExitCode, List[Dependency]] =
     if roots.isEmpty then Right(Nil) else resolveSome(roots, server, coursier)(using console)
 
   private def resolveSome(
       roots: List[(PluginArtifact, ModuleCoordinates)],
       server: ServerModules,
       coursier: Coursier
-  )(using console: Console): Either[DependencyResolver.ResolveSomeResultPart1, List[Dependency]] =
+  )(using console: Console): Either[Resolver.ExitCode, List[Dependency]] =
     val pluginKeys = roots.map(_._2.key).toSet
     val alone = traverse(roots) { (plugin, c) =>
       coursier
@@ -143,29 +136,29 @@ object DependencyResolver:
     alone match
       case Left(e) =>
         console.errorLine(s"could not resolve the plugins' dependencies: $e");
-        Left(DependencyResolver.ResolveSomeResultPart1(3))
+        Left(Resolver.ExitCode(3))
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
             conflicts.foreach(c => console.errorLine(s"refused: ${c.message}"))
-            Left(DependencyResolver.ResolveSomeResultPart1(2))
+            Left(Resolver.ExitCode(2))
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match
               case Left(e) =>
                 console.errorLine(s"could not resolve the plugins' dependencies: $e");
-                Left(DependencyResolver.ResolveSomeResultPart1(3))
+                Left(Resolver.ExitCode(3))
               case Right(joint) =>
                 val deps = Resolution.dependencies(joint, pluginKeys, server, Resolution.neededBy(perPlugin))
                 val provided = Resolution.provided(perPlugin.flatMap(_._2), pluginKeys, server)
                 Resolution.report(deps, provided).foreach(console.writeLine)
                 Right(deps)
 
-  private def serverModules(kit: Path): Either[DependencyResolver.ServerModulesResultPart1, ServerModules] =
+  private def serverModules(kit: Path): Either[Resolver.Problem, ServerModules] =
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
     if !Files.isRegularFile(modules) then
       Left(
-        DependencyResolver.ServerModulesResultPart1(
+        Resolver.Problem(
           s"no module list in the kit ($modules): this kit predates plugin dependencies"
         )
       )
@@ -182,7 +175,7 @@ object DependencyResolver:
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
   private def inputs(
       jars: List[Path]
-  ): List[(DependencyResolver.InputsResultPart1, DependencyResolver.InputsResultPart2)] =
+  ): List[(Resolver.FileName, Resolver.Sha256)] =
     jars
       .flatMap(j => j :: List(Pom.besideJar(j)).filter(Files.isRegularFile(_)))
       .map { p =>

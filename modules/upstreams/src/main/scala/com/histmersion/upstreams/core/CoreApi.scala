@@ -1,5 +1,7 @@
 package com.histmersion
 package upstreams.core
+
+import com.histmersion.plugin.Header
 import com.histmersion.plugin.UpstreamQuota
 import io.circe.Json
 
@@ -29,10 +31,10 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
       case Left(why) => Left(CoreFailure.Skipped(CoreFailure.Skipped.Why(why.value)))
       case Right(_)  =>
         http.fetch(
-          Plugin.Http.GetUrl(url.value),
+          Plugin.Http.Url(url.value),
           Map {
             val refactorTuple = "Authorization" -> s"Bearer $key";
-            (Plugin.Http.GetHeadersPart1(refactorTuple._1), Plugin.Http.GetHeadersPart2(refactorTuple._2))
+            (Header.Name(refactorTuple._1), Header.Value(refactorTuple._2))
           }
         ) match
           case Left(e)  => Left(CoreFailure.Failed(CoreFailure.Failed.Why(e.value)))

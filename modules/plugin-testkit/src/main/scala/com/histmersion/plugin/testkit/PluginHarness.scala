@@ -437,7 +437,7 @@ object PluginHarness:
       id: Plugin.Info.Id,
       config: String | Path = "",
       http: HttpMode = HttpMode.Offline,
-      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2] = Map.empty,
+      secrets: Map[Secret.Ref.ParseText, Secret.Resolved] = Map.empty,
       env: Map[String, String] = sys.env,
       histmersionConf: Option[Path] = None
   ): Either[Problem, PluginHarness] =
@@ -524,7 +524,7 @@ object PluginHarness:
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
   private def testVaults(
-      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]
+      secrets: Map[Secret.Ref.ParseText, Secret.Resolved]
   ): Either[Problem, Option[Plugin]] =
     val refs = secrets.toList
       .filterNot(_._1.value.startsWith(s"${Secret.Ref.EnvScheme}:"))

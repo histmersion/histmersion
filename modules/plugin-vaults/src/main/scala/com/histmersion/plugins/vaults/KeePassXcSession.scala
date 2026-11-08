@@ -29,7 +29,7 @@ object KeePassXcSession:
   /** Pure: the prompt the session prints once the database is open and after each answer (`<name>> `, the database's
     * name or file name) — the text after the last line break, once stdout ends in `> `.
     */
-  def prompt(out: Processes.Session.OutResult): Option[Prompt] =
+  def prompt(out: Processes.Result.Out): Option[Prompt] =
     Option.when(out.value.endsWith("> "))(Prompt(out.value.substring(out.value.lastIndexOf('\n') + 1)))
 
   /** Pure: can the entry and the attribute be sent as arguments of an interactive line? A line break would end the
@@ -51,7 +51,7 @@ object KeePassXcSession:
   /** Pure: what the session printed for the request sent when its output was `from` characters long, once it has
     * printed its prompt again: the text in between (`None` while it has not).
     */
-  def segment(out: Processes.Session.OutResult, from: SegmentFrom, prompt: Prompt): Option[Segment] =
+  def segment(out: Processes.Result.Out, from: SegmentFrom, prompt: Prompt): Option[Segment] =
     Option
       .when(out.value.length >= from.value + prompt.value.length && out.value.endsWith(prompt.value))(
         Segment(out.value.substring(from.value, out.value.length - prompt.value.length))
@@ -60,9 +60,9 @@ object KeePassXcSession:
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.
     */
-  def answer(segment: Segment, command: Command): Secret.Vault.ResolveResultPart2 =
+  def answer(segment: Segment, command: Command): Secret.Resolved =
     val body =
       List(command.value + "\r\n", command.value + "\n")
         .find(segment.value.startsWith)
         .fold(segment.value)(e => segment.value.drop(e.length))
-    Secret.Vault.ResolveResultPart2(Subprocess.value(Subprocess.ValueOut(body)).value)
+    Secret.Resolved(Subprocess.value(Subprocess.ValueOut(body)).value)

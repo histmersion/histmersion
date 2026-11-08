@@ -1,6 +1,10 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.plugin.Header
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -74,29 +78,29 @@ class PluginMediaImportSuite extends DbSuite:
     type Config = ZqPluginConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqPluginConfig, ctx: Plugin.Context) =
-      ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => Problem(e.value))
 
   private object ZqCollection extends MediaCollection:
-    val title = MediaCollection.TitleResult("Zq portal objects")
-    override val description = MediaCollection.DescriptionResult("A test fixture's collection")
-    val role = MediaCollection.RoleResult(MediaCollection.Object)
-    override val requestIntervalMs = MediaCollection.RequestIntervalMsResult(0)
+    val title = MediaCollection.Title("Zq portal objects")
+    override val description = MediaCollection.Description("A test fixture's collection")
+    val role = spi.MediaItem.Role(MediaCollection.Object)
+    override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     def search(place: MediaPlace, http: Plugin.Http) =
       // the plugin asks with its own User-Agent: the host's replaces it
       http
         .get(
-          Plugin.Http.GetUrl(s"https://zq.example/search?q=${place.label}"),
+          Plugin.Http.Url(s"https://zq.example/search?q=${place.label}"),
           Map(
-            Plugin.Http.GetHeadersPart1("User-Agent") -> Plugin.Http.GetHeadersPart2("zq-bot/1.0"),
-            Plugin.Http.GetHeadersPart1("Accept") -> Plugin.Http.GetHeadersPart2("application/json")
+            Header.Name("User-Agent") -> Header.Value("zq-bot/1.0"),
+            Header.Name("Accept") -> Header.Value("application/json")
           )
         )
         .left
-        .map(e => MediaCollection.SearchResultPart1(e.value))
+        .map(e => Problem(e.value))
         .map { _ =>
-          def item(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.GeographyPart2) =
+          def item(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.Geography.Value) =
             Right(
               spi.MediaItem(
                 key,
@@ -110,24 +114,24 @@ class PluginMediaImportSuite extends DbSuite:
                     credit = MediaRights.Credit(s"Zq bowl $key, Zq Museum, $licence")
                   )
                 ),
-                geography = List(spi.MediaItem.GeographyPart1("place_of_origin") -> where),
+                geography = List(spi.MediaItem.Geography.Field("place_of_origin") -> where),
                 period = Period.from(Year(-1400), Year(-1300)).toOption
               )
             )
           List(
-            item(spi.MediaItem.Key("by"), spi.Licence("CC BY 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
-            item(spi.MediaItem.Key("nc"), spi.Licence("CC BY-NC 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
+            item(spi.MediaItem.Key("by"), spi.Licence("CC BY 4.0"), spi.MediaItem.Geography.Value("Zqplenai")),
+            item(spi.MediaItem.Key("nc"), spi.Licence("CC BY-NC 4.0"), spi.MediaItem.Geography.Value("Zqplenai")),
             item(
               spi.MediaItem.Key("arr"),
               spi.Licence("All rights reserved"),
-              spi.MediaItem.GeographyPart2("Zqplenai")
+              spi.MediaItem.Geography.Value("Zqplenai")
             ),
             item(
               spi.MediaItem.Key("far"),
               spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"),
-              spi.MediaItem.GeographyPart2("Zqpl Nowhere")
+              spi.MediaItem.Geography.Value("Zqpl Nowhere")
             ),
-            Left(MediaCollection.SearchResultPart2Part1("a record the API could not describe"))
+            Left(Problem("a record the API could not describe"))
           )
         }
 

@@ -13,20 +13,20 @@ import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, Wikid
   * `media.commons.licences`, stores Commons' own renditions and links each picture to its target in its role.
   */
 final class WikidataPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
-  val title = MediaCollection.TitleResult("Wikidata pictures")
-  override val description = MediaCollection.DescriptionResult(
+  val title = MediaCollection.Title("Wikidata pictures")
+  override val description = MediaCollection.Description(
     "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), " +
       "licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, " +
       "most-cited sites first), batch by batch, and resumes where it stopped"
   )
-  val role = MediaCollection.RoleResult(MediaCollection.Image)
+  val role = MediaItem.Role(MediaCollection.Image)
   override def roles = (media.wikidata.placeRoles ++ media.wikidata.eventRoles).map(_._2).toSet + role
   override def matchRule = MediaMatchRule.Own
   override def asks = Set(MediaTarget.Places, MediaTarget.Events)
-  override def requestIntervalMs = MediaCollection.RequestIntervalMsResult(media.requestIntervalMs.value)
+  override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
   def search(place: MediaPlace, http: Plugin.Http) =
-    Left(MediaCollection.SearchResultPart1("the Wikidata pictures are found for a batch of targets at once"))
+    Left(Problem("the Wikidata pictures are found for a batch of targets at once"))
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
   final private case class Asked(
@@ -53,7 +53,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
     val answers = targets.map(_.qid).distinct.grouped(media.wikidata.batch.value.max(1)).toList.map { ids =>
       ids -> http
         .askJson(
-          Plugin.Http.GetUrl(
+          Plugin.Http.Url(
             WikidataEntities
               .url(
                 WikidataEntities.Api(media.wikidata.apiUrl.value),
@@ -107,7 +107,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
           items
             .get(WikidataItem.Id(t.qid.value))
             .flatMap(_.commonsCategory)
-            .map(c => (MediaFound.CategoriesPart1(t.target.id.value), MediaFound.CategoriesPart2(c.value)))
+            .map(c => (MediaFound.Category.Target(t.target.id.value), MediaFound.Category.Name(c.value)))
         )
     )
 

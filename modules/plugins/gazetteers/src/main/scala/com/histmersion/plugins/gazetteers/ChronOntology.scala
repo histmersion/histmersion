@@ -14,10 +14,10 @@ import io.circe.{Json, JsonObject}
   * and the time span as its period.
   */
 object ChronOntology extends DownloadedGazetteer:
-  val title = GazetteerSource.TitleResult("ChronOntology named periods")
+  val title = GazetteerSource.Title("ChronOntology named periods")
   override val description =
-    GazetteerSource.DescriptionResult("ChronOntology named periods (DAI, open access, ~14K periods)")
-  val url = Plugin.Http.GetUrl("https://chronontology.dainst.org/data/period?size=15000&from=0")
+    GazetteerSource.Description("ChronOntology named periods (DAI, open access, ~14K periods)")
+  val url = Plugin.Http.Url("https://chronontology.dainst.org/data/period?size=15000&from=0")
   val rights: GazetteerRights =
     GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 

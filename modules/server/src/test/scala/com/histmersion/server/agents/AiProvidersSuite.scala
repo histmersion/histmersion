@@ -59,8 +59,8 @@ class AiProvidersSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-      Left(Plugin.Http.GetResultPart1("offline"))
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
+      Left(Problem("offline"))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(
@@ -97,10 +97,10 @@ class AiProvidersSuite extends munit.FunSuite:
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
       answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
-      override val spendsPersonalPlan: AiProvider.SpendsPersonalPlanResult = AiProvider.SpendsPersonalPlanResult(false),
-      checked: Either[AiProvider.CheckResultPart1, Unit] = Right(())
+      override val spendsPersonalPlan: AiProvider.SpendsPersonalPlan = AiProvider.SpendsPersonalPlan(false),
+      checked: Either[Problem, Unit] = Right(())
   ) extends AiProvider:
-    val title = AiProvider.TitleResult("Scripted")
+    val title = AiProvider.Title("Scripted")
     val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
     override def check(model: AiProvider.CheckModel) = checked
     def turn(r: AiTurn.Request, http: AiHttp) =
@@ -114,9 +114,9 @@ class AiProvidersSuite extends munit.FunSuite:
       extends Plugin:
     type Config = HostProvided.NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: Config, ctx: Plugin.Context) =
-      ctx.aiProviders.add(name, provider).left.map(m => Plugin.RegisterResultPart1(m.value))
+      ctx.aiProviders.add(name, provider).left.map(m => Problem(m.value))
 
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 
@@ -289,14 +289,14 @@ class AiProvidersSuite extends munit.FunSuite:
       )
     assert(f(Scripted(Nil)).exists(_.isInstanceOf[PluginAiClient]))
     assertEquals(
-      f(Scripted(Nil, checked = Left(AiProvider.CheckResultPart1("no GEMINI key")))).left.toOption,
+      f(Scripted(Nil, checked = Left(Problem("no GEMINI key")))).left.toOption,
       Some("gemini:pro: no GEMINI key")
     )
     assert(
-      f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlanResult(true)), "0.0.0.0").left
+      f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlan(true)), "0.0.0.0").left
         .exists(_.value.contains("beyond loopback"))
     )
-    assert(f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlanResult(true))).isRight)
+    assert(f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlan(true))).isRight)
     // not registered (its plugin switched off since): refused, naming it
     assert(
       LlmClient
@@ -500,9 +500,9 @@ class AiProvidersSuite extends munit.FunSuite:
   /** A provider that asks for the loop's notes and verbatim failures, as the HTTP built-ins do. */
   final private class Wired(
       answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
-      checked: Either[AiProvider.CheckResultPart1, Unit]
+      checked: Either[Problem, Unit]
   ) extends AiProvider:
-    val title = AiProvider.TitleResult("Wired")
+    val title = AiProvider.Title("Wired")
     val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
     override def capabilities =
       AiCapabilities(
@@ -581,7 +581,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     val refused = PluginAiClient.client(
       ref,
-      Wired(Nil, Left(AiProvider.CheckResultPart1("no Gemini key — set GEMINI_KEY"))),
+      Wired(Nil, Left(Problem("no Gemini key — set GEMINI_KEY"))),
       AiHttp.Offline,
       PluginAiClient.Loopback(true)
     )

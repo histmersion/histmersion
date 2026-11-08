@@ -8,44 +8,44 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
     def get(
-        url: Plugin.Http.GetUrl,
-        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-    ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
+    ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
 
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
     def log = new Plugin.Log {
       def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
     }
-    def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-    def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(
-      Plugin.Context.SecretResultPart1("none")
+    def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+    def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
+      Problem("none")
     )
     def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
 
   /** A read-only collection with one item. */
   private object Shelf extends SourceCollection:
-    def title: SourceCollection.TitleResult = SourceCollection.TitleResult("Shelf")
+    def title: SourceCollection.Title = SourceCollection.Title("Shelf")
     private val one = CollectionItem(
       CollectionId("b1"),
       Some(CollectionItem.Title("A book")),
       List(CollectionItem.Authors("An Author"))
     )
-    def search(query: CollectionQuery): Either[SourceCollection.SearchResultPart1, List[CollectionItem]] = Right(
+    def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] = Right(
       List(one)
     )
-    def item(id: CollectionId): Either[SourceCollection.ItemResultPart1, Option[CollectionItem]] = Right(
+    def item(id: CollectionId): Either[Problem, Option[CollectionItem]] = Right(
       Option.when(id == one.id)(one)
     )
     def file(
         item: CollectionItem,
         format: Option[SourceCollection.FileFormat]
-    ): Either[SourceCollection.FileResultPart1, CollectionFile] = Left(SourceCollection.FileResultPart1("no files"))
+    ): Either[Problem, CollectionFile] = Left(Problem("no files"))
     def original(
         item: CollectionItem,
         file: CollectionFile
-    ): Either[SourceCollection.OriginalResultPart1, FetchedFile] = Left(
-      SourceCollection.OriginalResultPart1("no files")
+    ): Either[Problem, FetchedFile] = Left(
+      Problem("no files")
     )
 
   test("a context written before source collections refuses one, naming why"):
@@ -109,7 +109,7 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
           id,
           List {
             val refactorTuple = "title" -> "B";
-            (SourceCollection.SetFieldsPart1(refactorTuple._1), SourceCollection.SetFieldsPart2(refactorTuple._2))
+            (SourceCollection.FieldName(refactorTuple._1), SourceCollection.FieldValue(refactorTuple._2))
           }
         )
         .isLeft,

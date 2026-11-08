@@ -16,24 +16,24 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
       MuseumCollection.Provider("The Art Institute of Chicago"),
       MuseumCollection.Key("media.aic")
     ):
-  val title = MediaCollection.TitleResult("Art Institute of Chicago objects")
-  override val description = MediaCollection.DescriptionResult(
+  val title = MediaCollection.Title("Art Institute of Chicago objects")
+  override val description = MediaCollection.Description(
     "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
   )
-  val role = MediaCollection.RoleResult(MediaCollection.Object)
+  val role = MediaItem.Role(MediaCollection.Object)
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(
         ArtInstituteCollection
-          .searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
+          .searchUrl(Plugin.Http.Url(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
       )
       .left
-      .map(e => MediaCollection.SearchResultPart1(e))
-      .flatMap(ArtInstituteCollection.records(_, Plugin.Http.GetUrl(conf.imageUrl.value), conf.displayPx, thumbPx))
+      .map(e => Problem(e))
+      .flatMap(ArtInstituteCollection.records(_, Plugin.Http.Url(conf.imageUrl.value), conf.displayPx, thumbPx))
 
 object ArtInstituteCollection:
   type ImageId = ImageId.T
@@ -57,46 +57,46 @@ object ArtInstituteCollection:
   ).mkString(",")
 
   def searchUrl(
-      api: Plugin.Http.GetUrl,
+      api: Plugin.Http.Url,
       name: CollectionQuery.Text,
       limit: CollectionSettings.Candidates
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/artworks/search?q=${name.value.enc}&limit=${limit.value.max(1)}&fields=$Fields"
     )
 
-  def imageUrl(iiif: Plugin.Http.GetUrl, imageId: ImageId, width: Width): MediaItem.ImageUrl =
+  def imageUrl(iiif: Plugin.Http.Url, imageId: ImageId, width: Width): MediaItem.ImageUrl =
     MediaItem.ImageUrl(s"${iiif.value.stripSuffix("/")}/${imageId.value.enc}/full/${width.value.max(1)},/0/default.jpg")
 
   def records(
       json: Json,
-      iiif: Plugin.Http.GetUrl,
+      iiif: Plugin.Http.Url,
       displayPx: CollectionSettings.DisplayPx,
       thumbPx: ThumbPx
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer"))
+          Problem(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer"))
         )
       case Some(rows) => Right(rows.toList.map(r => record(r, iiif, displayPx, thumbPx)))
 
   def record(
       json: Json,
-      iiif: Plugin.Http.GetUrl,
+      iiif: Plugin.Http.Url,
       displayPx: CollectionSettings.DisplayPx,
       thumbPx: ThumbPx
-  ): Either[MediaCollection.SearchResultPart2Part1, MediaItem] =
+  ): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.long("id").toRight(MediaCollection.SearchResultPart2Part1("no id")).map { id =>
+    c.long("id").toRight(Problem("no id")).map { id =>
       val title = c.str("title").getOrElse(s"Artwork $id")
       val artist = c.str("artist_title")
       val credit = (List(Some(title), artist).flatten :+ "The Art Institute of Chicago" :+ "CC0").mkString(", ")
       val image = c.str("image_id")
       val rights =
         if !c.bool("is_public_domain").contains(true) then
-          Left(MediaItem.RightsPart1("not public domain (is_public_domain is false)"))
+          Left(Problem("not public domain (is_public_domain is false)"))
         else Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
       MediaItem(
         MediaItem.Key(id.toString),
@@ -109,7 +109,7 @@ object ArtInstituteCollection:
           image.map(i => MediaItem.OriginalUrl(s"${iiif.value.stripSuffix("/")}/${i.enc}/full/full/0/default.jpg")),
         geography = c
           .str("place_of_origin")
-          .map(p => (MediaItem.GeographyPart1("place_of_origin"), MediaItem.GeographyPart2(p)))
+          .map(p => (MediaItem.Geography.Field("place_of_origin"), MediaItem.Geography.Value(p)))
           .toList,
         period = Period.range(c.long("date_start"), c.long("date_end"))
       )

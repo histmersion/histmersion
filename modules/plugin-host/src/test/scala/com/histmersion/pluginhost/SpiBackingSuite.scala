@@ -21,8 +21,8 @@ class SpiBackingSuite extends munit.FunSuite:
     HostServices(
       () =>
         new Plugin.Http {
-          def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-            Left(Plugin.Http.GetResultPart1("offline"))
+          def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+            Left(Problem("offline"))
         },
       ConfigFactory.empty,
       (_, _, _) => (),
@@ -65,12 +65,12 @@ class SpiBackingSuite extends munit.FunSuite:
     val r =
       policy.plugin
         .fetch(
-          Plugin.Http.FetchUrl("https://core.example/v3/search"),
-          Map(Plugin.Http.FetchHeadersPart1("Authorization") -> Plugin.Http.FetchHeadersPart2("Bearer k"))
+          Plugin.Http.Url("https://core.example/v3/search"),
+          Map(Header.Name("Authorization") -> Header.Value("Bearer k"))
         )
         .fold(e => fail(e.value), identity)
     assertEquals(
-      (r.status, r.header(Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining")), String(r.body.value, "UTF-8")),
+      (r.status, r.header(Header.Name("X-RateLimit-Remaining")), String(r.body.value, "UTF-8")),
       (429, Some("0"), "slow down")
     )
     assertEquals(
@@ -81,7 +81,7 @@ class SpiBackingSuite extends munit.FunSuite:
     sent.clear()
     val retried =
       PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1"), wire, tries = PolicyHttp.Tries(2), sleep = _ => ()).plugin
-        .get(Plugin.Http.GetUrl("https://core.example/x"))
+        .get(Plugin.Http.Url("https://core.example/x"))
     assert(retried.isLeft && sent.size == 2, sent.toString)
 
   // ── SPI-2: Plugin.Context.quota ──────────────────────────────────────────────────────────────
@@ -104,11 +104,11 @@ class SpiBackingSuite extends munit.FunSuite:
     val core = new UpstreamQuota:
       def take(purpose: UpstreamQuota.TakePurpose) = {
         taken += purpose.value
-        if taken.size > 1 then Left(UpstreamQuota.TakeResultPart1("spent")) else Right(())
+        if taken.size > 1 then Left(Problem("spent")) else Right(())
       }
       def observe(
           status: UpstreamQuota.ObserveStatus,
-          headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]
+          headers: Map[Header.Name, Header.Value]
       ) = ()
     val p = Metered(Plugin.Context.QuotaUpstream("core"))
     val g = build(
@@ -136,7 +136,7 @@ class SpiBackingSuite extends munit.FunSuite:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) =
         List("oa-unpaywall", "oa-openalex").foreach(id =>
-          asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id)).value
+          asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id))
         )
         Fetch.Miss(Fetch.Miss.Why("nothing"))
     val (chain, _) =
@@ -180,7 +180,7 @@ class SpiBackingSuite extends munit.FunSuite:
       Plugin.Info(Plugin.Info.Id("zq-first"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     // what the plugin was given at registration
     var received: Option[Supplied] = None
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-first-defaults.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-first-defaults.conf")
     def register(c: Supplied, ctx: Plugin.Context) = { received = Some(c); Right(()) }
 
   private val supplied: Plugin.Info.Id => Config = id =>
@@ -228,13 +228,13 @@ class SpiBackingSuite extends munit.FunSuite:
     type Config = NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     def register(c: NoSettings, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(Registry.AddId("gvp"), Catalogue).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.eventCatalogues.add(Registry.AddId("gvp"), Catalogue).left.map(e => Problem(e.value))
 
   private object Catalogue extends EventCatalogue:
-    def title = EventCatalogue.TitleResult("Volcanoes")
+    def title = EventCatalogue.Title("Volcanoes")
     def licence = Licence("CC0-1.0")
-    def citation = EventCatalogue.CitationResult("Volcanoes")
-    def home = EventCatalogue.HomeResult("https://volcanoes.example")
+    def citation = EventCatalogue.Citation("Volcanoes")
+    def home = EventCatalogue.Home("https://volcanoes.example")
     def parts(query: CatalogueQuery) = Nil
     def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
@@ -262,11 +262,9 @@ class SpiBackingSuite extends munit.FunSuite:
     type Config = Keyed
     val info =
       Plugin.Info(Plugin.Info.Id("zq-keyed"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-keyed-defaults.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-keyed-defaults.conf")
     def register(c: Keyed, ctx: Plugin.Context) =
-      c.apiKey.fold[Either[Plugin.RegisterResultPart1, Unit]](Right(()))(s =>
-        ctx.secret(s).left.map(e => Plugin.RegisterResultPart1(e.value)).map(_ => ())
-      )
+      c.apiKey.fold[Either[Problem, Unit]](Right(()))(s => ctx.secret(s).left.map(e => Problem(e.value)).map(_ => ()))
 
   test("a generation gives the host a plugin's secret by its setting, as it resolved it — never another's"):
     val g = build(

@@ -16,7 +16,7 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
       KeyedCollection.Needs("an api.data.gov key"),
       KeyedCollection.Settings("media.smithsonian")
     ):
-  val title = MediaCollection.TitleResult("Smithsonian Open Access objects")
+  val title = MediaCollection.Title("Smithsonian Open Access objects")
   override val description = described(
     "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map " +
       "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
@@ -28,13 +28,13 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),
-        Map(Plugin.Http.GetHeadersPart1(Smithsonian.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value))
+        Map(Header.Name(Smithsonian.KeyHeader) -> Header.Value(apiKey.value))
       )
       .flatMap(j => Smithsonian.records(j, units).left.map(_.value))
       .left
-      .map(e => MediaCollection.SearchResultPart1(explain(KeyedCollection.Problem(e)).value))
-      .map(_.map(_.left.map(e => MediaCollection.SearchResultPart2Part1(e.value))))
+      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))
+      .map(_.map(_.left.map(e => Problem(e.value))))

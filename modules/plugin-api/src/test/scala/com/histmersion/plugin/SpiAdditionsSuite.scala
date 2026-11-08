@@ -9,14 +9,14 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
     def get(
-        url: Plugin.Http.GetUrl,
-        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-    ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] =
-      if (url).value.endsWith("/missing") then Left(Plugin.Http.GetResultPart1(s"$url: HTTP 404"))
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
+    ): Either[Problem, Plugin.HttpResponse.Body] =
+      if (url).value.endsWith("/missing") then Left(Problem(s"$url: HTTP 404"))
       else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
-    val r = Bodies.fetch(Plugin.Http.GetUrl("https://x.example/a")).fold(e => fail((e).value), identity)
+    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e).value), identity)
     assertEquals(
       ({
         val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8"));
@@ -32,7 +32,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     )
     assertEquals(
       (((Bodies
-        .fetch(Plugin.Http.GetUrl("https://x.example/missing"))
+        .fetch(Plugin.Http.Url("https://x.example/missing"))
         .map(_.status))
         .left
         .map(refactorError => (refactorError).value))
@@ -45,17 +45,17 @@ class SpiAdditionsSuite extends munit.FunSuite:
       Plugin.HttpResponse.Status(429),
       Map {
         val refactorTuple = "x-ratelimit-remaining" -> "0";
-        (Plugin.HttpResponse.HeadersKey(refactorTuple._1), Plugin.HttpResponse.HeadersValue(refactorTuple._2))
+        (Header.Name(refactorTuple._1), Header.Value(refactorTuple._2))
       },
       Plugin.HttpResponse.Body(Array.emptyByteArray)
     )
     assertEquals(
       ((r
-        .header(Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining")))
+        .header(Header.Name("X-RateLimit-Remaining")))
         .map(refactorValue7 => (refactorValue7).value): Option[String]),
       Some("0")
     )
-    assertEquals(r.header(Plugin.HttpResponse.HeaderName("Retry-After")), None)
+    assertEquals(r.header(Header.Name("Retry-After")), None)
 
   test("the unlimited quota lets every call go and keeps nothing"):
     val q = UpstreamQuota.Unlimited
@@ -64,7 +64,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
       UpstreamQuota.ObserveStatus(429),
       Map {
         val refactorTuple2 = "retry-after" -> "3600";
-        (UpstreamQuota.ObserveHeadersPart1(refactorTuple2._1), UpstreamQuota.ObserveHeadersPart2(refactorTuple2._2))
+        (Header.Name(refactorTuple2._1), Header.Value(refactorTuple2._2))
       }
     )
     assertEquals(q.take(UpstreamQuota.TakePurpose("search")), Right(()))
@@ -76,9 +76,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def log = new Plugin.Log {
       def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
     }
-    def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-    def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(
-      Plugin.Context.SecretResultPart1("none")
+    def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+    def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
+      Problem("none")
     )
     def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
 
@@ -95,20 +95,20 @@ class SpiAdditionsSuite extends munit.FunSuite:
       val log = new Plugin.Log {
         def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
       }
-    assert(!(ctx.registered(Fetch.Context.RegisteredPluginId("oa-unpaywall"))).value)
+    assert(!ctx.registered(Fetch.Context.RegisteredPluginId("oa-unpaywall")))
 
   /** A catalogue as one written before re-reading existed: it re-reads nothing, and its parts stay read. */
   private object Floods extends EventCatalogue:
-    def title: EventCatalogue.TitleResult = EventCatalogue.TitleResult("Floods")
+    def title: EventCatalogue.Title = EventCatalogue.Title("Floods")
     def licence = Licence("CC0-1.0")
-    def citation: EventCatalogue.CitationResult = EventCatalogue.CitationResult("Floods")
-    def home: EventCatalogue.HomeResult = EventCatalogue.HomeResult("https://floods.example")
-    def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] = List(EventCatalogue.PartsResult("all"))
+    def citation: EventCatalogue.Citation = EventCatalogue.Citation("Floods")
+    def home: EventCatalogue.Home = EventCatalogue.Home("https://floods.example")
+    def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] = List(EventCatalogue.ReadPart("all"))
     def read(
         part: EventCatalogue.ReadPart,
         query: CatalogueQuery,
         http: Plugin.Http
-    ): Either[EventCatalogue.ReadResultPart1, CataloguePage] = Right(CataloguePage(Nil))
+    ): Either[Problem, CataloguePage] = Right(CataloguePage(Nil))
 
   test("a catalogue re-reads nothing by default, and a part read once stays read"):
     val stored = CatalogueEvent(
@@ -134,7 +134,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
       (false, false)
     )
     val early = new AiProvider:
-      def title = AiProvider.TitleResult("Early")
+      def title = AiProvider.Title("Early")
       def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(AiFailure.Error.Message("none")))
     assertEquals(
       early.capabilities,
@@ -205,10 +205,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   /** A collection as a plugin of SPI 2's first release wrote it: a title, a role and a search. */
   private object Portal extends MediaCollection:
-    val title = MediaCollection.TitleResult("Portal objects")
+    val title = MediaCollection.Title("Portal objects")
     val role = MediaItem.Role(MediaCollection.Object)
     def search(place: MediaPlace, http: Plugin.Http) =
-      if place.label == MediaPlace.Label("Nowhere") then Left(MediaCollection.SearchResultPart1("offline"))
+      if place.label == MediaPlace.Label("Nowhere") then Left(Problem("offline"))
       else
         Right(
           List(
@@ -218,57 +218,25 @@ class SpiAdditionsSuite extends munit.FunSuite:
                 MediaItem.Title((place.label).value),
                 MediaItem.PageUrl("https://portal.example/1"),
                 None,
-                Left(MediaItem.RightsPart1("closed"))
+                Left(Problem("closed"))
               )
             ),
-            Left(MediaCollection.SearchResultPart2Part1("one record unreadable"))
+            Left(Problem("one record unreadable"))
           )
         )
 
-  test("an item built as SPI 2's first release built it has no role of its own and no rendition"):
-    val rights = Left("not open access")
-    val applied = MediaItem(
+  test("an item built from its required fields has no role of its own and no rendition"):
+    val item = MediaItem(
       MediaItem.Key("k"),
       MediaItem.Title("t"),
       MediaItem.PageUrl("https://p"),
       None,
-      (rights).left.map(refactorError2 => MediaItem.RightsPart1(refactorError2)),
-      None,
-      None,
-      Nil,
-      None,
-      Nil,
-      None
+      Left(Problem("not open access"))
     )
-    val constructed = new MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, Some("withheld"))
-    assertEquals((applied.role, applied.rendition), (None, None))
-    assertEquals(
-      ({
-        val refactorTuple6 = (constructed.role, constructed.rendition, constructed.withheld);
-        (
-          (refactorTuple6._1).map(refactorValue5 => (refactorValue5).value),
-          refactorTuple6._2,
-          (refactorTuple6._3).map(refactorValue6 => (refactorValue6).value)
-        )
-      }: (Option[String], Option[MediaRendition], Option[String])),
-      (None, None, Some("withheld"))
-    )
-    assertEquals(
-      applied,
-      MediaItem(
-        MediaItem.Key("k"),
-        MediaItem.Title("t"),
-        MediaItem.PageUrl("https://p"),
-        None,
-        (rights).left.map(refactorError3 => MediaItem.RightsPart1(refactorError3))
-      )
-    )
+    assertEquals((item.role, item.rendition, item.withheld, item.ids), (None, None, None, Nil))
 
-  test("a place described as SPI 2's first release described it carries no gazetteer ids"):
-    val applied = MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae"), None, None, None, None)
-    val constructed = new MediaPlace("p", "Mycenae", None, None, None, None)
-    assertEquals((applied.ids, constructed.ids), (Nil, Nil))
-    assertEquals(applied, MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae")))
+  test("a place described by its required fields carries no gazetteer ids"):
+    assertEquals(MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae")).ids, Nil)
 
   test("a collection's new members by default: its role alone, places, no events, always asked, refusals final"):
     assertEquals(
@@ -320,23 +288,23 @@ class SpiAdditionsSuite extends munit.FunSuite:
           MediaItem.Title("t"),
           MediaItem.PageUrl("https://p"),
           None,
-          Left(MediaItem.RightsPart1("x"))
+          Left(Problem("x"))
         ),
         MediaItem(
           MediaItem.Key("k2"),
           MediaItem.Title("t"),
           MediaItem.PageUrl("https://p"),
           None,
-          Left(MediaItem.RightsPart1("y"))
+          Left(Problem("y"))
         )
       )
     assertEquals(Portal.completeAll(items, Bodies), MediaCompleted(items.map(i => i.key -> i).toMap))
     val failing = new MediaCollection:
-      val title = MediaCollection.TitleResult("Failing")
+      val title = MediaCollection.Title("Failing")
       val role = MediaItem.Role(MediaCollection.Map)
       def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
       override def complete(item: MediaItem, http: Plugin.Http) =
-        if item.key == MediaItem.Key("k1") then Left(MediaCollection.CompleteResultPart1("gone")) else Right(item)
+        if item.key == MediaItem.Key("k1") then Left(Problem("gone")) else Right(item)
     assertEquals(
       failing.completeAll(items, Bodies),
       MediaCompleted(

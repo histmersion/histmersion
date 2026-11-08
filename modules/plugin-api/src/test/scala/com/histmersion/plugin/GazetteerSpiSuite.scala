@@ -10,21 +10,21 @@ class GazetteerSpiSuite extends munit.FunSuite:
   private object EarlyContext extends Plugin.Context:
     def http = new Plugin.Http {
       def get(
-          url: Plugin.Http.GetUrl,
-          headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-      ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+          url: Plugin.Http.Url,
+          headers: Map[Header.Name, Header.Value]
+      ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
     }
     def log = new Plugin.Log {
       def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
     }
-    def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-    def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(
-      Plugin.Context.SecretResultPart1("none")
+    def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+    def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
+      Problem("none")
     )
     def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
 
   private object Nowhere extends GazetteerSource:
-    def title = GazetteerSource.TitleResult("Nowhere")
+    def title = GazetteerSource.Title("Nowhere")
     def rights = GazetteerRights(Licence("CC0-1.0"), GazetteerRights.Credit("Nowhere atlas"))
     def fetch(http: Plugin.Http) = Right(
       List(

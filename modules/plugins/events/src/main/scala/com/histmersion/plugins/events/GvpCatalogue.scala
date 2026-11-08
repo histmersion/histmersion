@@ -18,50 +18,50 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   // volcano.si.edu (its terms page) did not answer on 2026-10-14; the Smithsonian's general Terms of
   // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
-  def title = EventCatalogue.TitleResult("Smithsonian Global Volcanism Program")
+  def title = EventCatalogue.Title("Smithsonian Global Volcanism Program")
   def licence = Licence("Smithsonian Terms of Use (non-commercial use with attribution)")
   def citation =
-    EventCatalogue.CitationResult(
+    EventCatalogue.Citation(
       "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
         "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
     )
-  def home = EventCatalogue.HomeResult("https://volcano.si.edu")
-  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
-    EventCatalogue.RequestIntervalMsResult(cfg.gvp.requestIntervalMs.value)
+  def home = EventCatalogue.Home("https://volcano.si.edu")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
+    EventCatalogue.RequestIntervalMs(cfg.gvp.requestIntervalMs.value)
   override def floorYear: Option[Year] = Dated.year(CatalogDating.HistoricalYear(cfg.gvp.floorYear.value))
 
-  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
+  def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
     GvpCatalogue
       .windows(
         GvpCatalogue.Year(query.from.fold(cfg.minYear.value)(_.value.toLong)),
         GvpCatalogue.Year(query.to.value.toLong),
         cfg.gvp.windowYears
       )
-      .map((a, b) => EventCatalogue.PartsResult(s"years:${a.value}..${b.value}"))
+      .map((a, b) => EventCatalogue.ReadPart(s"years:${a.value}..${b.value}"))
 
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  ): Either[plugin.Problem, CataloguePage] =
     part.value match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(
           GvpCatalogue.url(cfg.gvp.url, GvpCatalogue.Year(a.toLong), GvpCatalogue.Year(b.toLong), cfg.gvp.pageSize)
         ).left
-          .map(e => EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j => GvpCatalogue.parse(j).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
+          .map(e => plugin.Problem(e.value))
+          .flatMap(j => GvpCatalogue.parse(j).left.map(e => plugin.Problem(e.value)))
           .flatMap((rs, total) =>
             Either.cond(
               total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              EventCatalogue.ReadResultPart1(
+              plugin.Problem(
                 s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
               )
             )
           )
       case other =>
-        Left(EventCatalogue.ReadResultPart1(s"'$other' is no window of years of the GVP's"))
+        Left(plugin.Problem(s"'$other' is no window of years of the GVP's"))
 
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
@@ -88,9 +88,9 @@ object GvpCatalogue:
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive), unpaged. */
-  def url(base: GvpSettings.Url, from: Year, to: Year, max: GvpSettings.PageSize): Plugin.Http.GetUrl =
+  def url(base: GvpSettings.Url, from: Year, to: Year, max: GvpSettings.PageSize): Plugin.Http.Url =
     val cql = s"StartDateYear>=${from.value} AND StartDateYear<=${to.value}"
-    Plugin.Http.GetUrl(
+    Plugin.Http.Url(
       s"${base.value}?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
         s"&outputFormat=${enc("application/json")}&count=${max.value}&CQL_FILTER=${enc(cql)}"
     )

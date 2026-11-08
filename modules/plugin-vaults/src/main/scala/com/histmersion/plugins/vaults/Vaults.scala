@@ -46,31 +46,29 @@ object Vaults:
   private[vaults] def optional(
       s: Option[Secret],
       ctx: Plugin.Context
-  ): Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]] =
-    s.fold[Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]]](Right(None))(secret =>
-      ctx.secret(secret).map(Some(_))
-    )
+  ): Either[Problem, Option[Secret.Resolved]] =
+    s.fold[Either[Problem, Option[Secret.Resolved]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
 
   /** Pure: `~/x` against HOME. */
-  private[vaults] def expand(p: Path, home: Option[Plugin.Context.EnvResult]): Path =
+  private[vaults] def expand(p: Path, home: Option[EnvVar.Value]): Path =
     home.filter(_ => p == Path("~") || p.value.startsWith("~/")).fold(p)(h => Path(h.value + p.value.drop(1)))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
   private[vaults] def answer[E](
-      vault: Secret.Vault.NameResult,
+      vault: Secret.Vault.Name,
       ref: Secret.Vault.ResolveRef,
       r: Either[E, Subprocess.Result],
       classify: String => Option[String]
-  ): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
-    r.left.map(e => Secret.Vault.ResolveResultPart1(e.toString)).flatMap { res =>
+  ): Either[Problem, Secret.Resolved] =
+    r.left.map(e => Problem(e.toString)).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(Subprocess.ValueOut(res.out.value)).value
-        if v.isEmpty then Left(Secret.Vault.ResolveResultPart1(s"$vault: '$ref' has an empty value"))
-        else Right(Secret.Vault.ResolveResultPart2(v))
+        if v.isEmpty then Left(Problem(s"$vault: '$ref' has an empty value"))
+        else Right(Secret.Resolved(v))
       else
         val low = res.err.value.toLowerCase(java.util.Locale.ROOT)
         Left(
-          Secret.Vault.ResolveResultPart1(
+          Problem(
             classify(low).getOrElse(
               s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Subprocess.Problem(res.err.value))})"
             )

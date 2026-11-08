@@ -10,27 +10,27 @@ import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
 
 final class BitwardenVault(
-    val name: Secret.Vault.NameResult,
+    val name: Secret.Vault.Name,
     exe: Vaults.Path,
-    session: Option[Plugin.Context.SecretResultPart2],
+    session: Option[Secret.Resolved],
     field: Vaults.Field,
     timeout: FiniteDuration
 )(using processes: Processes)
     extends Secret.Vault:
-  def resolve(ref: Secret.Vault.ResolveRef): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
+  def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for
       i <- Subprocess
         .plain(Vaults.Operation("the item"), Subprocess.Text(item.value))
         .left
-        .map(e => Secret.Vault.ResolveResultPart1(e.value))
+        .map(e => Problem(e.value))
       g <- Subprocess
         .plain(Vaults.Operation("the field"), Subprocess.Text(f.value))
         .left
-        .map(e => Secret.Vault.ResolveResultPart1(e.value))
+        .map(e => Problem(e.value))
       argv = List(exe.value, "get", g.value, i.value, "--nointeraction").map(a => Processes.RunArgv(a))
-      env: Map[Subprocess.RunEnvPart1, Subprocess.RunEnvPart2] = session
-        .map(s => Map(Subprocess.RunEnvPart1("BW_SESSION") -> Subprocess.RunEnvPart2(s.value)))
+      env: Map[EnvVar.Name, EnvVar.Value] = session
+        .map(s => Map(EnvVar.Name("BW_SESSION") -> EnvVar.Value(s.value)))
         .getOrElse(Map.empty)
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(i.value))
     yield v

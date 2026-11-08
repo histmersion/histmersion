@@ -92,7 +92,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     assert(
       ClevelandCollection
         .searchUrl(
-          Plugin.Http.GetUrl("https://openaccess-api.clevelandart.org/api"),
+          Plugin.Http.Url("https://openaccess-api.clevelandart.org/api"),
           CollectionQuery.Text("Cyprus"),
           CollectionSettings.Candidates(20)
         )
@@ -106,7 +106,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     val rs = ArtInstituteCollection
       .records(
         fixture("aic-search.json"),
-        Plugin.Http.GetUrl("https://www.artic.edu/iiif/2"),
+        Plugin.Http.Url("https://www.artic.edu/iiif/2"),
         CollectionSettings.DisplayPx(843),
         ArtInstituteCollection.ThumbPx(330)
       )
@@ -136,7 +136,7 @@ class CollectionParsersSuite extends munit.FunSuite:
 
   test("LoC: item ids of a search; a map is public domain only with 'No known restrictions' AND a date by max-year"):
     assertEquals(LocCollection.results(fixture("loc-search.json")), Right(List("2007627513", "2010593001")))
-    assertEquals(LocCollection.itemId(Plugin.Http.GetUrl("http://www.loc.gov/item/2007627513/")), Some("2007627513"))
+    assertEquals(LocCollection.itemId(Plugin.Http.Url("http://www.loc.gov/item/2007627513/")), Some("2007627513"))
     val r =
       LocCollection
         .record(

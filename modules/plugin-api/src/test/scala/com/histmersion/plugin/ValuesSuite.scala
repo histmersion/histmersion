@@ -15,11 +15,11 @@ class ValuesSuite extends munit.FunSuite:
     assertEquals(
       ({
         val refactorTuple = (p.start.value, p.end.value, p.isPoint);
-        (refactorTuple._1, refactorTuple._2, (refactorTuple._3).value)
+        (refactorTuple._1, refactorTuple._2, refactorTuple._3)
       }: (Int, Int, Boolean)),
       (-1700, -1600, false)
     )
-    assert((Period.point(Year(-1600)).isPoint).value)
+    assert(Period.point(Year(-1600)).isPoint)
     assertEquals(
       ((Period
         .from(Year(-1600), Year(-1700)))

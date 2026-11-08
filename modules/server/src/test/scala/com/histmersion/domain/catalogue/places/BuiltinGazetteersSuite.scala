@@ -17,7 +17,7 @@ import scala.collection.immutable.ListMap
 class BuiltinGazetteersSuite extends munit.FunSuite:
 
   private object Elsewhere extends GazetteerSource:
-    def title = GazetteerSource.TitleResult("Elsewhere atlas")
+    def title = GazetteerSource.Title("Elsewhere atlas")
     def rights = GazetteerRights(Licence("CC0-1.0"), GazetteerRights.Credit("Elsewhere atlas"))
     def fetch(http: Plugin.Http) = Right(Nil)
 

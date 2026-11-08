@@ -159,17 +159,17 @@ class PluginGazetteersSuite extends munit.FunSuite:
     )
     assertEquals(refusal(null), Some("a place that is null"))
 
-  private def source(answer: => Either[GazetteerSource.FetchResultPart1, List[GazetteerPlace]]): GazetteerSource =
+  private def source(answer: => Either[Problem, List[GazetteerPlace]]): GazetteerSource =
     new GazetteerSource:
-      def title = GazetteerSource.TitleResult("Atlas")
+      def title = GazetteerSource.Title("Atlas")
       def rights = GazetteerRights(Licence("CC BY 4.0"), GazetteerRights.Credit("Atlas, CC BY 4.0"))
       def fetch(http: Plugin.Http) = answer
 
   private val offline = new Plugin.Http {
     def get(
-        url: Plugin.Http.GetUrl,
-        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-    ) = Left(Plugin.Http.GetResultPart1("offline"))
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
+    ) = Left(Problem("offline"))
   }
 
   test("a source's places in its order, the refused ones apart; its failure and what it throws are the import's"):
@@ -186,7 +186,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
       Right((List("zz_slice_-1650_-1401", "zz_other"), List("place 'zz_bad': no kind")))
     )
     assertEquals(
-      PluginGazetteers.places(source(Left(GazetteerSource.FetchResultPart1("HTTP 503 from x"))), offline),
+      PluginGazetteers.places(source(Left(Problem("HTTP 503 from x"))), offline),
       Left("HTTP 503 from x")
     )
     assertEquals(
@@ -207,7 +207,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
             HttpAnswer.Body("busy".getBytes("UTF-8"))
           )
         )
-    val r = PluginGazetteers.http(wire, HostLog.scribe).fetch(Plugin.Http.FetchUrl("https://data.example/x.zip"))
+    val r = PluginGazetteers.http(wire, HostLog.scribe).fetch(Plugin.Http.Url("https://data.example/x.zip"))
     assertEquals(r.map(_.status), Right(503))
     assertEquals(
       sent.toList,

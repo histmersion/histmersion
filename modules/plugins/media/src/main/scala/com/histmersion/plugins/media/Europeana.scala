@@ -76,8 +76,8 @@ object Europeana:
       name: MediaPlace.Label,
       rows: CollectionSettings.Candidates,
       ex: Exclusions = Exclusions.none
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/record/v2/search.json?query=${query(name, ex).value.enc}&reusability=open&media=true" +
         s"&thumbnail=true&qf=${"TYPE:IMAGE".enc}&profile=rich&rows=${rows.value.max(1).min(100)}"
     )
@@ -108,19 +108,19 @@ object Europeana:
     types.find(t => banned(letters(t.value)))
 
   /** Pure: the Record API URL of a Europeana id (`/2058611/_kimbl_3_1`), each segment encoded. */
-  def recordUrl(api: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl =
+  def recordUrl(api: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.Url =
     val path = id.value.split("/").toList.filter(_.nonEmpty).map(s => s.enc.replace("+", "%20")).mkString("/")
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/record/v2/$path.json")
+    Plugin.Http.Url(s"${api.value.stripSuffix("/")}/record/v2/$path.json")
 
   /** Pure: the Thumbnail API v3 URL of a media file at `width` (200 or 400). */
-  def thumbnailUrl(api: CollectionSettings.ApiUrl, media: Source, width: MediaRendition.Width): Plugin.Http.GetUrl =
+  def thumbnailUrl(api: CollectionSettings.ApiUrl, media: Source, width: MediaRendition.Width): Plugin.Http.Url =
     val md5 =
       java.security.MessageDigest
         .getInstance("MD5")
         .digest(media.value.getBytes(UTF_8))
         .map(b => f"${b & 0xff}%02x")
         .mkString
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/thumbnail/v3/${width.value}/$md5.jpg")
+    Plugin.Http.Url(s"${api.value.stripSuffix("/")}/thumbnail/v3/${width.value}/$md5.jpg")
 
   /** Pure: the media URL a search's `edmPreview` (a Thumbnail API v2 URL) was made from — its `uri` parameter — or
     * `None` when it is not one.
@@ -219,11 +219,11 @@ object Europeana:
       val spatial = values(c, Field("dctermsSpatial"))
       val geo = (spatial.filterNot(isUri).map(Spatial -> _) ++
         (values(c, Field("edmPlaceLabel")) ++ values(c, Field("edmPlaceLabelLangAware"))).distinct.map(Place -> _))
-        .map((k, v) => (MediaItem.GeographyPart1(k), MediaItem.GeographyPart2(v)))
+        .map((k, v) => (MediaItem.Geography.Field(k), MediaItem.Geography.Value(v)))
       val ids = (spatial.filter(isUri) ++ values(c, Field("edmPlace")))
         .flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u)))
         .distinct
-        .map((k, v) => (MediaItem.IdsPart1(k.value), MediaItem.IdsPart2(v.value)))
+        .map((k, v) => (GazetteerRef.Scheme(k.value), GazetteerRef.Id(v.value)))
       val years = values(c, Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => Period.span(years.min, years.max))
       MediaItem(
@@ -231,7 +231,7 @@ object Europeana:
         MediaItem.Title(title),
         MediaItem.PageUrl(s"https://www.europeana.eu/item$id"),
         media.map(m => MediaItem.ImageUrl(thumbnailUrl(api, Source(m), MediaRendition.Width(400)).value)),
-        rights.left.map(p => MediaItem.RightsPart1(p.value)),
+        rights.left.map(p => plugin.Problem(p.value)),
         thumbUrl = media.map(m => MediaItem.ThumbUrl(thumbnailUrl(api, Source(m), MediaRendition.Width(200)).value)),
         originalUrl = shownBy.map(MediaItem.OriginalUrl(_)),
         geography = geo,

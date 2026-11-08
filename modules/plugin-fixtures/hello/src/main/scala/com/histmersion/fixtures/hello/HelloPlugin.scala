@@ -14,7 +14,7 @@ final class HelloPlugin extends Plugin:
     _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version)
   )
 
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     scala.util
       .Try(
         Class
@@ -25,9 +25,7 @@ final class HelloPlugin extends Plugin:
       )
       .toEither
       .left
-      .map(e =>
-        Plugin.RegisterResultPart1(s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}")
-      )
+      .map(e => Problem(s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}"))
       .flatMap { greeter =>
         ctx.log.info(
           Plugin.Log.InfoMessage(
@@ -40,5 +38,5 @@ final class HelloPlugin extends Plugin:
             HelloFetcher(HelloFetcher.Mirrors(config.mirrors.size))
           )
           .left
-          .map(e => Plugin.RegisterResultPart1(e.value))
+          .map(e => Problem(e.value))
       }

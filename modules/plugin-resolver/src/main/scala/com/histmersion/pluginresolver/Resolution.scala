@@ -17,12 +17,7 @@ object Resolution:
 
   /** Orders two versions as Maven does: negative when the first is older. */
   export Resolver.{
-    FileName as ConflictsPlugin,
-    FileName as DependenciesNeededPart2,
-    FileName as InputsFileFilesPart1,
-    FileName as NeededByPerPluginPart1,
-    FileName as NeededByResultPart2,
-    Sha256 as InputsFileFilesPart2
+    FileName as ConflictsPlugin
   }
 
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
@@ -48,8 +43,8 @@ object Resolution:
   /** The plugin jars each module is there for: a module is needed by every plugin whose own resolution has it.
     */
   def neededBy(
-      perPlugin: List[(Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]
-  ): Map[ModuleKey, List[Resolution.NeededByResultPart2]] =
+      perPlugin: List[(Resolver.FileName, List[ModuleCoordinates])]
+  ): Map[ModuleKey, List[Resolver.FileName]] =
     perPlugin
       .flatMap((plugin, modules) => modules.map(_.key -> plugin))
       .groupMap(_._1)(_._2)
@@ -64,7 +59,7 @@ object Resolution:
       joint: List[(ModuleCoordinates, Option[Path])],
       plugins: Set[ModuleKey],
       server: ServerModules,
-      needed: Map[ModuleKey, List[Resolution.DependenciesNeededPart2]]
+      needed: Map[ModuleKey, List[Resolver.FileName]]
   ): List[Dependency] =
     joint
       .collect {
@@ -85,7 +80,7 @@ object Resolution:
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.
     */
-  def inputsFile(files: List[(Resolution.InputsFileFilesPart1, Resolution.InputsFileFilesPart2)]): InputsFile =
+  def inputsFile(files: List[(Resolver.FileName, Resolver.Sha256)]): InputsFile =
     InputsFile(files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString)
 
   /** The lines `plugin add` and the relink show. */

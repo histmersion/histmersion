@@ -26,9 +26,9 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
 
   private object Canned extends Plugin.Http:
     def get(
-        url: Plugin.Http.GetUrl,
-        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-    ): Either[Plugin.Http.GetResultPart1, Plugin.Http.GetResultPart2] =
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
+    ): Either[Problem, Plugin.HttpResponse.Body] =
       asked += url.value
       if url.value.contains("/advancedsearch.php") then
         Right(
@@ -42,7 +42,7 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
         answers
           .get(url.value)
           .map(a => Plugin.HttpResponse.Body(a.getBytes(UTF_8)))
-          .toRight(Plugin.Http.GetResultPart1(s"${url.value}: HTTP 404 not found"))
+          .toRight(Problem(s"${url.value}: HTTP 404 not found"))
 
   private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(Endpoint.Url("https://archive.org")), Canned))
 

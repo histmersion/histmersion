@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait DownloadedGazetteer extends GazetteerSource:
   /** The dataset's canonical address. */
-  def url: Plugin.Http.GetUrl
+  def url: Plugin.Http.Url
 
   /** Pure: the dataset's places from its text, in the order they are stored. */
   def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]]
@@ -49,8 +49,8 @@ trait DownloadedGazetteer extends GazetteerSource:
       .flatMap(_ => Period.from(Year(a.value.min(b.value).toInt), Year(a.value.max(b.value).toInt)).toOption)
 
 object DownloadedGazetteer:
-  type Problem = GazetteerSource.FetchResultPart1
-  val Problem: GazetteerSource.FetchResultPart1.type = GazetteerSource.FetchResultPart1
+  type Problem = plugin.Problem
+  val Problem: plugin.Problem.type = plugin.Problem
   type Slug = Slug.T
   object Slug extends Newtype[String, Pure]
   type Text = Text.T

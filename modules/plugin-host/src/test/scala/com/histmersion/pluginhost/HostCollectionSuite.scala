@@ -15,7 +15,7 @@ import org.ekrich.config.ConfigFactory
 class HostCollectionSuite extends munit.FunSuite:
 
   private object Shelf extends SourceCollection:
-    def title = SourceCollection.TitleResult("Shelf")
+    def title = SourceCollection.Title("Shelf")
     private val one = CollectionItem(
       CollectionId("b1"),
       Some(CollectionItem.Title("A book")),
@@ -30,7 +30,7 @@ class HostCollectionSuite extends munit.FunSuite:
       FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     )
     override def add(metadata: CollectionMetadata, file: FetchedFile) = Right(CollectionId("written"))
-    override def readOnlyReason = SourceCollection.ReadOnlyReasonResult("the shelf is full")
+    override def readOnlyReason = Problem("the shelf is full")
 
   final private case class NoSettings() derives ConfigReader
 
@@ -38,7 +38,7 @@ class HostCollectionSuite extends munit.FunSuite:
     type Config = NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     def register(c: NoSettings, ctx: Plugin.Context) =
-      ctx.sourceCollections.add(name, Shelf).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.sourceCollections.add(name, Shelf).left.map(e => Problem(e.value))
 
   private def build(p: Plugin, firstParty: Plugin.Info.Id => Boolean = _ => false) =
     PluginHost.build(
@@ -48,8 +48,8 @@ class HostCollectionSuite extends munit.FunSuite:
       HostServices(
         () =>
           new Plugin.Http {
-            def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-              Left(Plugin.Http.GetResultPart1("offline"))
+            def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+              Left(Problem("offline"))
           },
         ConfigFactory.empty,
         (_, _, _) => ()

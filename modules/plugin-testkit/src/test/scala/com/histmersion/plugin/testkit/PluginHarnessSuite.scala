@@ -65,7 +65,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       id: Plugin.Info.Id,
       config: String = "",
       http: HttpMode = HttpMode.Offline,
-      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2] = Map.empty,
+      secrets: Map[Secret.Ref.ParseText, Secret.Resolved] = Map.empty,
       env: Map[String, String] = Map.empty
   ): PluginHarness =
     PluginHarness.load(id, config, http, secrets, env).fold(e => fail(e.value), identity)
@@ -113,13 +113,13 @@ class PluginHarnessSuite extends munit.FunSuite:
       loaded(
         KitAi,
         "api-key = \"keepassxc:Models/key\"",
-        secrets = Map(Secret.Ref.ParseText("keepassxc:Models/key") -> Secret.Vault.ResolveResultPart2("k-1234"))
+        secrets = Map(Secret.Ref.ParseText("keepassxc:Models/key") -> Secret.Resolved("k-1234"))
       )
     assertEquals(viaVault.contributions.secretVaults, Nil, "the stand-in vault is not the plugin's")
     val viaEnv = loaded(
       KitAi,
       "api-key = \"env:KIT_KEY\"",
-      secrets = Map(Secret.Ref.ParseText("env:KIT_KEY") -> Secret.Vault.ResolveResultPart2("k-5678"))
+      secrets = Map(Secret.Ref.ParseText("env:KIT_KEY") -> Secret.Resolved("k-5678"))
     )
     val ai = ScriptedAiHttp(Right(AiHttp.Response(AiHttp.Response.Status(200), AiHttp.Response.Body("hello"))))
     assertEquals(

@@ -113,7 +113,7 @@ class FirstPartySettingsSuite extends munit.FunSuite:
     type Config = Contact
     val info =
       Plugin.Info(Plugin.Info.Id("oa-unpaywall"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-first-defaults.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-first-defaults.conf")
     def register(c: Contact, ctx: Plugin.Context) = Right(())
 
   test("another plugin's block is read as it is in effect: its defaults, the user's block, the environment"):

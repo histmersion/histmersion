@@ -43,8 +43,8 @@ object Smithsonian:
       name: MediaPlace.Label,
       rows: CollectionSettings.Candidates,
       excludedUnits: List[Unit] = Nil
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/search?q=${query(name, excludedUnits).value.enc}&rows=${rows.value.max(1).min(1000)}" +
         "&type=edanmdm&row_group=objects"
     )
@@ -180,10 +180,10 @@ object Smithsonian:
           MediaItem.Title(title),
           MediaItem.PageUrl(page),
           image.map(i => MediaItem.ImageUrl(i)),
-          rights.left.map(p => MediaItem.RightsPart1(p.value)),
+          rights.left.map(p => plugin.Problem(p.value)),
           thumbUrl = thumb.map(t => MediaItem.ThumbUrl(t)),
           originalUrl = original.map(o => MediaItem.OriginalUrl(o)),
-          geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
+          geography = geo.map((f, v) => (MediaItem.Geography.Field(f), MediaItem.Geography.Value(v))),
           period = period,
           withheld = excluded
         )

@@ -53,7 +53,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     AiHttp.Response(
       AiHttp.Response.Status(200),
       body,
-      Map(AiHttp.Response.HeadersKey("content-type") -> AiHttp.Response.HeadersValue("application/json"))
+      Map(Header.Name("content-type") -> Header.Value("application/json"))
     )
   )
 

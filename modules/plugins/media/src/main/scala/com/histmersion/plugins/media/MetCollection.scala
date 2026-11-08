@@ -17,15 +17,15 @@ final class MetCollection(conf: CollectionSettings)
       MuseumCollection.Provider("The Metropolitan Museum of Art"),
       MuseumCollection.Key("media.met")
     ):
-  val title = MediaCollection.TitleResult("Met objects")
+  val title = MediaCollection.Title("Met objects")
   override val description =
-    MediaCollection.DescriptionResult("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
-  val role = MediaCollection.RoleResult(MediaCollection.Object)
+    MediaCollection.Description("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
+  val role = MediaItem.Role(MediaCollection.Object)
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[plugin.Problem, List[Either[plugin.Problem, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => MetCollection.ids(j).left.map(_.value))
@@ -35,11 +35,11 @@ final class MetCollection(conf: CollectionSettings)
             .askJson(MetCollection.objectUrl(conf.apiUrl, id))
             .flatMap(j => MetCollection.record(j).left.map(_.value))
             .left
-            .map(e => MediaCollection.SearchResultPart2Part1(s"object $id: $e"))
+            .map(e => plugin.Problem(s"object $id: $e"))
         )
       )
       .left
-      .map(MediaCollection.SearchResultPart1(_))
+      .map(plugin.Problem(_))
 
 object MetCollection:
   type ObjectId = ObjectId.T
@@ -59,13 +59,13 @@ object MetCollection:
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
       limit: CollectionSettings.Candidates
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.value.enc}&q=${name.value.enc}&limit=${limit.value.max(1)}"
     )
 
-  def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1/objects/$id")
+  def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.Url =
+    Plugin.Http.Url(s"${api.value.stripSuffix("/")}/v1/objects/$id")
 
   /** Pure: the object ids of a search answer (`objectIDs` may be `null` when nothing matched). */
   def ids(json: Json): Either[Problem, List[ObjectId]] =
@@ -89,9 +89,9 @@ object MetCollection:
   def year(astronomical: Year): Year = if astronomical.value <= 0 then Year(astronomical.value - 1) else astronomical
 
   /** The geography fields, most specific first. */
-  val GeographyFields: List[MediaItem.GeographyPart1] =
+  val GeographyFields: List[MediaItem.Geography.Field] =
     List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country").map(
-      MediaItem.GeographyPart1(_)
+      MediaItem.Geography.Field(_)
     )
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
@@ -102,10 +102,10 @@ object MetCollection:
       val artist = c.str("artistDisplayName")
       val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
       val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
-      val rights: Either[MediaItem.RightsPart1, MediaRights] =
+      val rights: Either[plugin.Problem, MediaRights] =
         if c.bool("isPublicDomain").contains(true) then
           Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-        else Left(MediaItem.RightsPart1("not Open Access (isPublicDomain is false)"))
+        else Left(plugin.Problem("not Open Access (isPublicDomain is false)"))
       val period = Period
         .range(
           c.long("objectBeginDate").map(d => year(Year(d)).value),
@@ -119,7 +119,7 @@ object MetCollection:
         c.str("primaryImageSmall").orElse(c.str("primaryImage")).map(MediaItem.ImageUrl(_)),
         rights,
         originalUrl = c.str("primaryImage").map(MediaItem.OriginalUrl(_)),
-        geography = GeographyFields.flatMap(f => c.str(f.value).map(v => f -> MediaItem.GeographyPart2(v))),
+        geography = GeographyFields.flatMap(f => c.str(f.value).map(v => f -> MediaItem.Geography.Value(v))),
         period = period
       )
     }

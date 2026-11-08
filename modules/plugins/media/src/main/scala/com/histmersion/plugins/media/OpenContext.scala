@@ -39,27 +39,27 @@ object OpenContext:
     AttributesValue(List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(","))
 
   /** The record fields finer than a country: the context path below its first two levels. */
-  val Context: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("context")
-  val Region: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("region")
-  val Spatial: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("dc-terms:spatial")
+  val Context: MediaItem.Geography.Field = MediaItem.Geography.Field("context")
+  val Region: MediaItem.Geography.Field = MediaItem.Geography.Field("region")
+  val Spatial: MediaItem.Geography.Field = MediaItem.Geography.Field("dc-terms:spatial")
 
   def searchUrl(
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
       rows: CollectionSettings.Candidates
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${name.value.enc}&rows=${rows.value.max(1)}" +
         s"&attributes=${Attributes.value.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
     )
 
-  def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
+  def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.Url =
+    Plugin.Http.Url(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
 
   private val UuidPattern = """.*/media/([0-9a-fA-F-]{36})/?$""".r
 
   /** Pure: the uuid of a media URI (`http://opencontext.org/media/084e8977-…`). */
-  def uuidOf(uri: Plugin.Http.GetUrl): Option[Uuid] = uri.value.trim match
+  def uuidOf(uri: Plugin.Http.Url): Option[Uuid] = uri.value.trim match
     case UuidPattern(u) => Some(Uuid(u.toLowerCase(Locale.ROOT)))
     case _              => None
 
@@ -86,8 +86,8 @@ object OpenContext:
   def record(json: Json, licences: LicenceReader): Either[Problem, MediaItem] =
     val c = json.hcursor
     c.str("uri")
-      .flatMap(u => uuidOf(Plugin.Http.GetUrl(u)))
-      .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.GetUrl(u))))
+      .flatMap(u => uuidOf(Plugin.Http.Url(u)))
+      .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.Url(u))))
       .toRight(Problem("no media uri"))
       .map { uuid =>
         val title = c.str("label").getOrElse(uuid.value)
@@ -99,11 +99,11 @@ object OpenContext:
         val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
         val licUrl = c.strs("License [URI]").headOption
         val licLabel = c.strs("License").headOption.getOrElse("")
-        val rights: Either[MediaItem.RightsPart1, MediaRights] = licUrl match
-          case None    => Left(MediaItem.RightsPart1("no licence on the record"))
+        val rights: Either[plugin.Problem, MediaRights] = licUrl match
+          case None    => Left(plugin.Problem("no licence on the record"))
           case Some(u) =>
             val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
-            if lic.family.value == Licence.Read.Unknown then Left(MediaItem.RightsPart1(s"licence not readable ($u)"))
+            if lic.family.value == Licence.Read.Unknown then Left(plugin.Problem(s"licence not readable ($u)"))
             else
               Right(
                 MediaRights(
@@ -125,9 +125,9 @@ object OpenContext:
         val (regions, deeper) = segs.splitAt(2)
         // the site and its named parts; excavation units (`I`, `Lot 2631`, `Trench 94`, `2631.1`) name no place
         val geo =
-          deeper.filterNot(d => unitSegment(Segment(d))).reverse.map(d => Context -> MediaItem.GeographyPart2(d)) ++
-            regions.reverse.map(d => Region -> MediaItem.GeographyPart2(d)) ++
-            c.strs("Spatial Coverage").map(d => Spatial -> MediaItem.GeographyPart2(d))
+          deeper.filterNot(d => unitSegment(Segment(d))).reverse.map(d => Context -> MediaItem.Geography.Value(d)) ++
+            regions.reverse.map(d => Region -> MediaItem.Geography.Value(d)) ++
+            c.strs("Spatial Coverage").map(d => Spatial -> MediaItem.Geography.Value(d))
         val ids = c.strs("Spatial Coverage [URI]").flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u))).distinct
         val image = c.str("item category").forall(_.equalsIgnoreCase("Image media"))
         val withheld = Option.when(

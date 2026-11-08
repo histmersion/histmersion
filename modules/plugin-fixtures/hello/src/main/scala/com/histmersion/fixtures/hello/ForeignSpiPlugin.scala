@@ -13,4 +13,4 @@ final class ForeignSpiPlugin extends Plugin:
     _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"),
     _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version + 98)
   )
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] = Right(())
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problem, Unit] = Right(())

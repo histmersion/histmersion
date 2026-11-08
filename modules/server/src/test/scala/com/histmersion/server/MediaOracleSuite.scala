@@ -1,6 +1,8 @@
 package com.histmersion
 package server
 
+import com.histmersion.plugin.Problem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -920,19 +922,19 @@ class MediaOracleSuite extends DbSuite:
   final private class OwnPlugin extends Plugin:
     type Config = ZqOracleConfig
     val info = Plugin.Info(Plugin.Info.Id("zq-own"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: Plugin.Context) =
       ctx.mediaCollections
         .add(Registry.AddId("zq-own"), OwnCollection)
         .flatMap(_ => ctx.mediaCollections.add(Registry.AddId("zq-search"), Searched))
         .left
-        .map(why => Plugin.RegisterResultPart1(why.value))
+        .map(why => Problem(why.value))
 
   private object OwnCollection extends MediaCollection:
-    val title = MediaCollection.TitleResult("Zq own pictures")
-    override val description = MediaCollection.DescriptionResult("A fixture's collection of its targets' own pictures")
-    val role = MediaCollection.RoleResult(MediaCollection.Image)
-    override val requestIntervalMs = MediaCollection.RequestIntervalMsResult(0)
+    val title = MediaCollection.Title("Zq own pictures")
+    override val description = MediaCollection.Description("A fixture's collection of its targets' own pictures")
+    val role = MediaItem.Role(MediaCollection.Image)
+    override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     override val matchRule = MediaMatchRule.Own
     override val asks = Set(MediaTarget.Places, MediaTarget.Events)
     def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
@@ -955,7 +957,7 @@ class MediaOracleSuite extends DbSuite:
         events: List[MediaEvent],
         http: Plugin.Http
     ): MediaFound =
-      val _ = http.get(Plugin.Http.GetUrl("https://zq-own.example/batch"), Map.empty)
+      val _ = http.get(Plugin.Http.Url("https://zq-own.example/batch"), Map.empty)
       val placeUses = places.flatMap { p =>
         List(
           MediaUse(
@@ -1009,16 +1011,16 @@ class MediaOracleSuite extends DbSuite:
       )
 
   private object Searched extends MediaCollection:
-    val title = MediaCollection.TitleResult("Zq searched objects")
-    val role = MediaCollection.RoleResult(MediaCollection.Object)
-    override val requestIntervalMs = MediaCollection.RequestIntervalMsResult(0)
+    val title = MediaCollection.Title("Zq searched objects")
+    val role = MediaItem.Role(MediaCollection.Object)
+    override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     def search(place: MediaPlace, http: Plugin.Http) =
       http
-        .get(Plugin.Http.GetUrl(s"https://zq-search.example/q?label=${place.label}"), Map.empty)
+        .get(Plugin.Http.Url(s"https://zq-search.example/q?label=${place.label}"), Map.empty)
         .left
-        .map(e => MediaCollection.SearchResultPart1(e.value))
+        .map(e => Problem(e.value))
         .map { _ =>
-          def it(key: MediaItem.Key, licence: spi.Licence, where: MediaItem.GeographyPart2) =
+          def it(key: MediaItem.Key, licence: spi.Licence, where: MediaItem.Geography.Value) =
             Right(
               MediaItem(
                 key,
@@ -1032,15 +1034,15 @@ class MediaOracleSuite extends DbSuite:
                     credit = MediaRights.Credit(s"Zq object $key")
                   )
                 ),
-                geography = List(MediaItem.GeographyPart1("find_spot") -> where),
+                geography = List(MediaItem.Geography.Field("find_spot") -> where),
                 period = Period.from(Year(-1500), Year(-1300)).toOption
               )
             )
           List(
-            it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.GeographyPart2(place.label.value)),
-            it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.GeographyPart2(place.label.value)),
-            it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.GeographyPart2("Nowhere at all")),
-            Left(MediaCollection.SearchResultPart2Part1("an unreadable record"))
+            it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.Geography.Value(place.label.value)),
+            it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.Geography.Value(place.label.value)),
+            it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.Geography.Value("Nowhere at all")),
+            Left(Problem("an unreadable record"))
           )
         }
 

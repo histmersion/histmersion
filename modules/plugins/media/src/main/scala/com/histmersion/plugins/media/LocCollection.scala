@@ -15,14 +15,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
     extends MuseumCollection(conf, MuseumCollection.Provider("Library of Congress"), MuseumCollection.Key("media.loc")):
-  val title = MediaCollection.TitleResult("Library of Congress maps")
+  val title = MediaCollection.Title("Library of Congress maps")
   override val description =
-    MediaCollection.DescriptionResult(
+    MediaCollection.Description(
       "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
         "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
         "locations name"
     )
-  val role = MediaCollection.RoleResult(MediaCollection.Map)
+  val role = MediaItem.Role(MediaCollection.Map)
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
   private def explain(e: String): String =
@@ -33,7 +33,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[plugin.Problem, List[Either[plugin.Problem, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => LocCollection.results(j).left.map(_.value))
@@ -45,11 +45,11 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
             .askJson(LocCollection.itemUrl(conf.apiUrl, id))
             .flatMap(j => LocCollection.record(j, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx).left.map(_.value))
             .left
-            .map(e => MediaCollection.SearchResultPart2Part1(s"item $id: ${explain(e)}"))
+            .map(e => plugin.Problem(s"item $id: ${explain(e)}"))
         )
       )
       .left
-      .map(MediaCollection.SearchResultPart1(_))
+      .map(plugin.Problem(_))
 
 object LocCollection:
   type Date = Date.T
@@ -64,18 +64,18 @@ object LocCollection:
       base: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
       limit: CollectionSettings.Candidates
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}"
     )
 
-  def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
+  def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.Url =
+    Plugin.Http.Url(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
 
   private val ItemId = """.*/item/([^/?#]+)/?.*""".r
 
   /** Pure: the item id of a result's `id`/`url` (`http://www.loc.gov/item/2007627513/` → `2007627513`). */
-  def itemId(url: Plugin.Http.GetUrl): Option[MediaItem.Key] = url.value match
+  def itemId(url: Plugin.Http.Url): Option[MediaItem.Key] = url.value match
     case ItemId(id) => Some(MediaItem.Key(id))
     case _          => None
 
@@ -87,7 +87,7 @@ object LocCollection:
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
           val h = r.hcursor
-          (h.str("id").toList ++ h.str("url").toList).flatMap(u => itemId(Plugin.Http.GetUrl(u))).headOption
+          (h.str("id").toList ++ h.str("url").toList).flatMap(u => itemId(Plugin.Http.Url(u))).headOption
         }.distinct)
 
   /** Pure: the years in a date string (`1890`, `[ca. 1880]`, `1906-1910` → its range). */
@@ -113,8 +113,8 @@ object LocCollection:
       val c = item
       val id = c
         .str("id")
-        .flatMap(u => itemId(Plugin.Http.GetUrl(u)))
-        .orElse(c.str("url").flatMap(u => itemId(Plugin.Http.GetUrl(u))))
+        .flatMap(u => itemId(Plugin.Http.Url(u)))
+        .orElse(c.str("url").flatMap(u => itemId(Plugin.Http.Url(u))))
         .orElse(c.str("library_of_congress_control_number").map(MediaItem.Key(_)))
       id.toRight(Problem("no item id")).map { key =>
         val title = c.str("title").getOrElse(key.value)
@@ -147,13 +147,13 @@ object LocCollection:
           files.filter(_._2 <= displayPx.value).sortBy(-_._2).headOption.orElse(files.sortBy(_._2).headOption).map(_._1)
         val thumb = files.filter(_._2 >= thumbPx.value).sortBy(_._2).headOption.map(_._1)
         val original = files.sortBy(-_._2).headOption.map(_._1)
-        val rights: Either[MediaItem.RightsPart1, MediaRights] =
+        val rights: Either[plugin.Problem, MediaRights] =
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
-            Left(MediaItem.RightsPart1(if advisory.isEmpty then "no rights statement"
+            Left(plugin.Problem(if advisory.isEmpty then "no rights statement"
             else "rights not \"No known restrictions\""))
-          else if period.isEmpty then Left(MediaItem.RightsPart1("no date on the map"))
+          else if period.isEmpty then Left(plugin.Problem("no date on the map"))
           else if period.exists(_.end.value > maxYear.value) then
-            Left(MediaItem.RightsPart1(s"made after ${maxYear.value} (may be in copyright)"))
+            Left(plugin.Problem(s"made after ${maxYear.value} (may be in copyright)"))
           else
             Right(
               MediaRights.publicDomain(
@@ -170,7 +170,8 @@ object LocCollection:
           rights,
           thumbUrl = thumb.map(MediaItem.ThumbUrl(_)),
           originalUrl = original.map(MediaItem.OriginalUrl(_)),
-          geography = c.strs("location").map(l => MediaItem.GeographyPart1("location") -> MediaItem.GeographyPart2(l)),
+          geography =
+            c.strs("location").map(l => MediaItem.Geography.Field("location") -> MediaItem.Geography.Value(l)),
           period = period
         )
       }

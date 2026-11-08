@@ -31,26 +31,24 @@ final class HostAiHttp extends AiHttp:
   private def userAgent = HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (agents)"))
 
   def post(
-      url: AiHttp.PostUrl,
-      headers: Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2],
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
-      timeoutSeconds: AiHttp.PostTimeoutSeconds
-  ): Either[AiHttp.PostResultPart1, AiHttp.Response] =
+      timeoutSeconds: AiHttp.TimeoutSeconds
+  ): Either[Problem, AiHttp.Response] =
     send(
       url.value,
       headers.map((k, v) => k.value -> v.value),
       timeoutSeconds.value,
       _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.value, StandardCharsets.UTF_8))
-    ).left.map(m => AiHttp.PostResultPart1(m))
+    ).left.map(m => Problem(m))
 
   def get(
-      url: AiHttp.GetUrl,
-      headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2],
-      timeoutSeconds: AiHttp.GetTimeoutSeconds
-  ): Either[AiHttp.GetResultPart1, AiHttp.Response] =
-    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m =>
-      AiHttp.GetResultPart1(m)
-    )
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value],
+      timeoutSeconds: AiHttp.TimeoutSeconds
+  ): Either[Problem, AiHttp.Response] =
+    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m => Problem(m))
 
   private def send(
       url: String,
@@ -71,7 +69,7 @@ final class HostAiHttp extends AiHttp:
           AiHttp.Response.Body(r.body),
           r.headers.map.asScala.toMap.collect {
             case (k, v) if !v.isEmpty =>
-              AiHttp.Response.HeadersKey(k.toLowerCase(java.util.Locale.ROOT)) -> AiHttp.Response.HeadersValue(v.get(0))
+              Header.Name(k.toLowerCase(java.util.Locale.ROOT)) -> Header.Value(v.get(0))
           }
         )
       )

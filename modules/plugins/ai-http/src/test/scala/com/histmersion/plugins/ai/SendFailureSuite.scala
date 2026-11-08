@@ -1,13 +1,15 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Plugin
+
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.plugin.AiHttp
 
 /** A request without an answer, described as the providers always described it. */
 class SendFailureSuite extends munit.FunSuite:
 
-  private val url = AiHttp.GetUrl("http://127.0.0.1:1/v1/messages")
+  private val url = Plugin.Http.Url("http://127.0.0.1:1/v1/messages")
 
   test("connection, timeout and read failures name their kind, the method and the URL"):
     assertEquals(
@@ -40,7 +42,7 @@ class SendFailureSuite extends munit.FunSuite:
   test("a request the client refuses to make, or a report that names no exception, is described as it came"):
     assertEquals(
       SendFailure(SendFailure.Reported("IllegalArgumentException: URI with undefined scheme"))
-        .describe(SendFailure.Method("POST"), AiHttp.GetUrl("x")),
+        .describe(SendFailure.Method("POST"), Plugin.Http.Url("x")),
       "IllegalArgumentException: URI with undefined scheme"
     )
     assertEquals(SendFailure(SendFailure.Reported("offline")).describe(SendFailure.Method("POST"), url), "offline")

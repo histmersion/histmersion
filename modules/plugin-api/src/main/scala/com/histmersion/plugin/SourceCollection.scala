@@ -17,10 +17,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait SourceCollection:
   /** What the collection is called in answers: "Calibre", "archive.org". */
-  def title: SourceCollection.TitleResult
+  def title: SourceCollection.Title
 
   /** One sentence: what it holds and on what terms. */
-  def description: SourceCollection.DescriptionResult = SourceCollection.DescriptionResult("")
+  def description: SourceCollection.Description = SourceCollection.Description("")
 
   /** What the host may do with it; [[CollectionCapability.Read]] alone by default. */
   def capabilities: Set[CollectionCapability] = Set(CollectionCapability.Read)
@@ -28,21 +28,21 @@ trait SourceCollection:
   /** Why the collection does not write, for the host's refusal of a write it did not declare: the setting that turns
     * writing on, when there is one.
     */
-  def readOnlyReason: SourceCollection.ReadOnlyReasonResult = SourceCollection.ReadOnlyReasonResult("it is read-only")
+  def readOnlyReason: Problem = Problem("it is read-only")
 
   /** Whether the collection can be reached from here: `Left` says what is missing (the library's folder, a permission
     * the operating system has not granted, a mount). The host asks before it runs an operation and in its diagnostics.
     */
-  def reach: Either[SourceCollection.ReachResultPart1, Unit] = Right(())
+  def reach: Either[Problem, Unit] = Right(())
 
   /** The items a search answers, in the collection's order. */
-  def search(query: CollectionQuery): Either[SourceCollection.SearchResultPart1, List[CollectionItem]]
+  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]]
 
   /** One item by its id; `Right(None)` when the collection has no such item. */
-  def item(id: CollectionId): Either[SourceCollection.ItemResultPart1, Option[CollectionItem]]
+  def item(id: CollectionId): Either[Problem, Option[CollectionItem]]
 
   /** Whether `item`'s metadata is good enough to make a source of; `Left` says what to fix first. */
-  def admits(item: CollectionItem): Either[SourceCollection.AdmitsResultPart1, Unit] = Right(())
+  def admits(item: CollectionItem): Either[Problem, Unit] = Right(())
 
   /** The file of `item` an import takes: `format` when asked for and present, else the collection's own preference;
     * `Left` when the item has no file the host can convert. Reads nothing.
@@ -50,17 +50,17 @@ trait SourceCollection:
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[SourceCollection.FileResultPart1, CollectionFile]
+  ): Either[Problem, CollectionFile]
 
   /** The bytes of `file` of `item`. */
-  def original(item: CollectionItem, file: CollectionFile): Either[SourceCollection.OriginalResultPart1, FetchedFile]
+  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile]
 
   /** The cover the collection keeps for `item`, when it keeps one; `Right(None)` when it has none. */
-  def cover(item: CollectionItem): Either[SourceCollection.CoverResultPart1, Option[FetchedFile]] = Right(None)
+  def cover(item: CollectionItem): Either[Problem, Option[FetchedFile]] = Right(None)
 
   /** Add `file` as a new item described by `metadata`; the new item's id. */
-  def add(metadata: CollectionMetadata, file: FetchedFile): Either[SourceCollection.AddResultPart1, CollectionId] =
-    Left(SourceCollection.AddResultPart1(s"$title does not take new items: $readOnlyReason"))
+  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problem, CollectionId] =
+    Left(Problem(s"$title does not take new items: $readOnlyReason"))
 
   /** Replace the file of the same format in item `id` with `file` (the original of the host's source `key`), keeping
     * the item and every link to it; the format replaced.
@@ -69,15 +69,15 @@ trait SourceCollection:
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
-  ): Either[SourceCollection.ReplaceResultPart1, SourceCollection.ReplaceResultPart2] =
-    Left(SourceCollection.ReplaceResultPart1(s"$title does not take new files: $readOnlyReason"))
+  ): Either[Problem, SourceCollection.FileFormat] =
+    Left(Problem(s"$title does not take new files: $readOnlyReason"))
 
   /** Bring item `id` in line with `metadata`; the fields written (none when it already agrees). */
   def update(
       id: CollectionId,
       metadata: CollectionMetadata
-  ): Either[SourceCollection.UpdateResultPart1, List[CollectionChange]] =
-    Left(SourceCollection.UpdateResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
+  ): Either[Problem, List[CollectionChange]] =
+    Left(Problem(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Plan the update of every linked item at once (against one reading of the collection), and with `apply` write the
     * items that would change; one entry per item, in id order.
@@ -85,62 +85,32 @@ trait SourceCollection:
   def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
-  ): Either[SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
-    Left(SourceCollection.UpdateAllResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
+  ): Either[Problem, List[CollectionUpdateEntry]] =
+    Left(Problem(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Set named fields on item `id`, as `name -> value` pairs in the collection's own field names. */
   def set(
       id: CollectionId,
-      fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]
-  ): Either[SourceCollection.SetResultPart1, Unit] =
-    Left(SourceCollection.SetResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
+      fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
+  ): Either[Problem, Unit] =
+    Left(Problem(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Compare every linked item with the host's record of it; the items that disagree, in id order. */
-  def audit(records: List[CollectionRecord]): Either[SourceCollection.AuditResultPart1, List[CollectionFinding]] =
+  def audit(records: List[CollectionRecord]): Either[Problem, List[CollectionFinding]] =
     Right(Nil)
 
 object SourceCollection:
-  type TitleResult = TitleResult.T
-  object TitleResult extends Newtype[String, Pure]
-  type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends Newtype[String, Pure]
-  type ReadOnlyReasonResult = ReadOnlyReasonResult.T
-  object ReadOnlyReasonResult extends Newtype[String, Pure]
-  type ReachResultPart1 = ReachResultPart1.T
-  object ReachResultPart1 extends Newtype[String, Pure]
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends Newtype[String, Pure]
-  type ItemResultPart1 = ItemResultPart1.T
-  object ItemResultPart1 extends Newtype[String, Pure]
-  type AdmitsResultPart1 = AdmitsResultPart1.T
-  object AdmitsResultPart1 extends Newtype[String, Pure]
-  type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends Newtype[String, Pure]
+  type Title = Title.T
+  object Title extends Newtype[String, Pure]
+  type Description = Description.T
+  object Description extends Newtype[String, Pure]
   type FileFormat = FileFormat.T
   object FileFormat extends Newtype[String, Pure]
-  type OriginalResultPart1 = OriginalResultPart1.T
-  object OriginalResultPart1 extends Newtype[String, Pure]
-  type CoverResultPart1 = CoverResultPart1.T
-  object CoverResultPart1 extends Newtype[String, Pure]
-  type AddResultPart1 = AddResultPart1.T
-  object AddResultPart1 extends Newtype[String, Pure]
-  type ReplaceResultPart1 = ReplaceResultPart1.T
-  object ReplaceResultPart1 extends Newtype[String, Pure]
-  type ReplaceResultPart2 = ReplaceResultPart2.T
-  object ReplaceResultPart2 extends Newtype[String, Pure]
+  type FieldName = FieldName.T
+  object FieldName extends Newtype[String, Pure]
+  type FieldValue = FieldValue.T
+  object FieldValue extends Newtype[String, Pure]
   type ReplaceKey = ReplaceKey.T
   object ReplaceKey extends Newtype[String, Pure]
-  type UpdateResultPart1 = UpdateResultPart1.T
-  object UpdateResultPart1 extends Newtype[String, Pure]
-  type UpdateAllResultPart1 = UpdateAllResultPart1.T
-  object UpdateAllResultPart1 extends Newtype[String, Pure]
   type UpdateAllApply = UpdateAllApply.T
   object UpdateAllApply extends Newtype[Boolean, Pure]
-  type SetResultPart1 = SetResultPart1.T
-  object SetResultPart1 extends Newtype[String, Pure]
-  type SetFieldsPart1 = SetFieldsPart1.T
-  object SetFieldsPart1 extends Newtype[String, Pure]
-  type SetFieldsPart2 = SetFieldsPart2.T
-  object SetFieldsPart2 extends Newtype[String, Pure]
-  type AuditResultPart1 = AuditResultPart1.T
-  object AuditResultPart1 extends Newtype[String, Pure]

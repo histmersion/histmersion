@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
 
-import com.histmersion.plugin.AiHttp
+import com.histmersion.plugin.{AiHttp, Plugin}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A request that got no answer, as the host's client reported it (`<exception>: <message>`), described as these
@@ -14,7 +14,7 @@ final case class SendFailure(reported: SendFailure.Reported):
   def exception: SendFailure.Problem = SendFailure.Problem((reported).value.takeWhile(_ != ':').trim)
 
   /** The failure of `method` to `url`. */
-  def describe(method: SendFailure.Method, url: AiHttp.GetUrl): SendFailure.Problem =
+  def describe(method: SendFailure.Method, url: Plugin.Http.Url): SendFailure.Problem =
     SendFailure
       .kind(exception)
       .fold(SendFailure.Problem(reported.value))(k =>

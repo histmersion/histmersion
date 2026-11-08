@@ -1,6 +1,8 @@
 package com.histmersion
 package util.plugins
 
+import com.histmersion.plugin.Problem
+
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.PluginHost
 import hearth.kindlings.sconfigderivation.ConfigReader
@@ -11,12 +13,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final class HostProvided[C](
     id: Plugin.Info.Id,
-    contribute: (C, Plugin.Context) => Either[Plugin.RegisterResultPart1, Unit]
+    contribute: (C, Plugin.Context) => Either[Problem, Unit]
 )(using ConfigReader[C])
     extends Plugin:
   type Config = C
   val info: Plugin.Info = Plugin.Info(id, HostProvided.Release, PluginHost.SpiGeneration)
-  def register(config: C, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] = contribute(config, ctx)
+  def register(config: C, ctx: Plugin.Context): Either[Problem, Unit] = contribute(config, ctx)
 
 object HostProvided:
   /** The ids of the plugins the host supplies itself: the command-line AI runtimes. The relink tool keeps them from a
@@ -35,7 +37,7 @@ object HostProvided:
   /** A host-supplied plugin with no settings of its own beyond the host's `enabled`. */
   def apply(
       id: com.histmersion.util.plugins.Plugin.Id,
-      contribute: Plugin.Context => Either[Plugin.RegisterResultPart1, Unit]
+      contribute: Plugin.Context => Either[Problem, Unit]
   ): HostProvided[NoSettings] =
     new HostProvided[NoSettings](Plugin.Info.Id(id.value), (_, ctx) => contribute(ctx))
 

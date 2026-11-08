@@ -5,18 +5,18 @@ package plugin
 class SourceFetcherSuite extends munit.FunSuite:
 
   test("a WorkKey with no identifier is empty; title, authors, year and format identify nothing"):
-    assert((WorkKey().isEmpty).value)
+    assert(WorkKey().isEmpty)
     assert(
       (WorkKey(
         title = Some(WorkKey.Title("Black Athena")),
         authors = List(WorkKey.Authors("Martin Bernal")),
         year = Some(Year(1987)),
         format = Some(WorkKey.Format("pdf"))
-      ).isEmpty).value
+      ).isEmpty)
     )
-    assert(!(WorkKey(doi = Some(Doi("10.1038/nature14317"))).isEmpty).value)
-    assert(!(WorkKey(archive = Some(WorkKey.Archive("racesofeurope"))).isEmpty).value)
-    assert(!(WorkKey(pmcid = Some(WorkKey.Pmcid("PMC6091220"))).isEmpty).value)
+    assert(!(WorkKey(doi = Some(Doi("10.1038/nature14317"))).isEmpty))
+    assert(!(WorkKey(archive = Some(WorkKey.Archive("racesofeurope"))).isEmpty))
+    assert(!(WorkKey(pmcid = Some(WorkKey.Pmcid("PMC6091220"))).isEmpty))
 
   test("a refusing registry takes nothing and says why, naming the id"):
     val r = Registry.refusing[SourceFetcher](Registry.RefusingWhy("no chain here"))
@@ -32,16 +32,16 @@ class SourceFetcherSuite extends munit.FunSuite:
     val ctx = new Plugin.Context:
       def http = new Plugin.Http {
         def get(
-            url: Plugin.Http.GetUrl,
-            headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
-        ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+            url: Plugin.Http.Url,
+            headers: Map[Header.Name, Header.Value]
+        ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
       }
-      def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-      def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] =
-        Left(Plugin.Context.SecretResultPart1("none"))
+      def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+      def secret(s: Secret): Either[Problem, Secret.Resolved] =
+        Left(Problem("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
     val f = new SourceFetcher:
       val access = Access.Subscription
