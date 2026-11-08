@@ -514,7 +514,7 @@ final class Engine(
     val r = agents.runs.get(id)
     val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
     val (use, cost) = agents.runs.runSpend(Job.Id.assume(id.value))
-    RunBudget(
+    new RunBudget(
       cost,
       RunBudget.SpentTokens(use.budgeted(weight).value),
       r.map(x => BigDecimal(x.budgetUsd.value)).getOrElse(BigDecimal(0)),

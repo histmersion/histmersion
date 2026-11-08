@@ -153,7 +153,7 @@ object PluginAiClient:
       PluginAi.turn(provider, req, http) match
         case Right(t)                               => response(t, model)
         case Left(AiFailure.LimitReached(m, until)) =>
-          throw ModelLimitReached(
+          throw new ModelLimitReached(
             model,
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
             ModelLimitReached.Message(s"${model.wire}: $m".take(300))
