@@ -20,7 +20,7 @@ object Year extends Newtype[Int, Pure]
 type Heading = Heading.T
 object Heading extends Newtype[String, NonBlankCounted]
 
-enum SourceStatusView:
+enum SourceStatusView derives CanEqual:
   case Current
   case Contested(by: Citekey)
   case Superseded(by: Citekey)
