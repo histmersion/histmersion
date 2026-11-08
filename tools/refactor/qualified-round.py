@@ -16,6 +16,8 @@ ap.add_argument('compile')
 ap.add_argument('--modules', nargs='+', required=True)
 ap.add_argument('--projects', nargs='+', required=True)
 ap.add_argument('--rounds', type=int, default=8)
+ap.add_argument('--check-modules', nargs='*', default=[], help='modules only compared, never rewritten (dependants)')
+ap.add_argument('--check-projects', nargs='*', default=[])
 ap.add_argument('--no-pkg', action='store_true')
 a = ap.parse_args()
 
@@ -27,6 +29,7 @@ snap = os.path.join(work, 'snapshot')
 ledger = os.path.join(work, 'ledger.tsv')
 conf = os.path.join(work, 'rule.conf')
 mods = [m.rstrip('/') for m in a.modules]
+checked = mods + [m.rstrip('/') for m in a.check_modules]
 
 def sh(cmd, log=None, timeout=3000):
     with open(log, 'w') if log else open(os.devnull, 'w') as out:
@@ -35,12 +38,12 @@ def sh(cmd, log=None, timeout=3000):
 def take_snapshot():
     shutil.rmtree(snap, ignore_errors=True)
     for d in glob.glob('target/out/*/scala-3.10.0/*/*classes/META-INF/semanticdb'):
-        for m in mods:
+        for m in checked:
             src = os.path.join(d, m)
             if os.path.isdir(src):
                 shutil.copytree(src, os.path.join(snap, d.replace('target/out/', '', 1), m))
     os.makedirs(os.path.join(snap, 'src'), exist_ok=True)  # the committed sources, whatever the working tree holds
-    sh(f"git archive HEAD {' '.join(mods)} | tar -x -C {os.path.join(snap, 'src')}")
+    sh(f"git archive HEAD {' '.join(checked)} | tar -x -C {os.path.join(snap, 'src')}")
 
 def exclusions():
     if not os.path.exists(EXCL): return set()
@@ -54,14 +57,15 @@ def exclude(keys, reason):
     return new
 
 def write_conf():
-    cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}" }}',
+    scope = ', '.join(f'"{m}/"' for m in mods)
+    cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}", scope = [{scope}] }}',
            'g47': f'ShortenQualified {{ exclusions = "{EXCL}", ledger = "{ledger}", chainPackages = {"false" if a.no_pkg else "true"} }}'}[a.rule]
     open(conf, 'w').write(f'rules = ["file:tools/refactor/{RULE}.scala"]\n{cfg}\n')
 
 def run_rule(n):
     sh('git checkout -- ' + ' '.join(mods))
     if True:  # the rule, its index and the snapshot need SemanticDB of the committed sources (mostly sbt cache hits)
-        tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects)
+        tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects + a.check_projects)
         sh(f'{a.compile} {a.rule}-pristine-{n} {tasks}', log=os.path.join(work, f'pristine-{n}.summary'), timeout=3000)
     if os.path.exists(ledger): os.remove(ledger)
     write_conf()
@@ -130,12 +134,15 @@ def main():
         fr = by_file(rows)
         print(f'round {n}: {len(rows)} ledger rows in {len(fr)} files', flush=True)
         if not rows: return 0
-        tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects)
+        tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects + a.check_projects)
         clog = os.path.join(work, f'compile-{n}.log')
         sh(f'{a.compile} {a.rule}-{n} {tasks} > {clog}.summary 2>&1', timeout=3000)
         src_log = glob.glob(f'/private/tmp/claude-501/*/*/scratchpad/g47/compile-{a.rule}-{n}.log')
         clog = src_log[0] if src_log else clog
         errs = compile_errors(clog)
+        rcline = open(f'{os.path.join(work, f"compile-{n}.log")}.summary').read()
+        if not errs and 'rc=0' not in rcline:
+            print('  compile failed without a located error:\n' + rcline[:2000], flush=True); return 7
         if errs:
             keys, unmapped = [], []
             for (p, line, col) in errs:
@@ -149,6 +156,18 @@ def main():
                     k = [r[6] for r in rs] or fallback_keys(fr, p)
                 if not k or not fr.get(p): unmapped.append((p, line, col))
                 keys += k
+            if a.rule == 'g46' and unmapped:
+                # an export changes typing order (a lost case-class apply, a cycle) where no edit is: back off the exports
+                # whose owner path names an identifier of the failing line
+                for (p, line, col) in unmapped:
+                    try: src = open(p, encoding='utf-8').read().split('\n')[line - 1]
+                    except Exception: continue
+                    bare = set(re.findall(r'(?<![.\w])[A-Z][A-Za-z0-9_]*\b', src))
+                    for r in rows:
+                        owner = r[7].split(' ', 1)[1].split('.{')[0]
+                        segs = owner.split('.')
+                        if segs[-1][:1].islower(): continue  # a package owner: nothing in a typing order
+                        if segs[-1] in bare or re.search(r'\b' + re.escape('.'.join(segs[-2:])) + r'\b', src): keys.append(r[6])
             new = exclude(keys, f'compile error (round {n})')
             print(f'  {len(errs)} compile errors -> {len(new)} new exclusions; unmapped: {unmapped[:10]}', flush=True)
             if not new:

@@ -49,3 +49,14 @@ object Uses:
   def note: Article.NoteValue = Article.NoteValue.applyUnsafe("n")
   def same: Kind.FromStringS = Kind.FromStringS("concept")
   def obj: Article.KindValue.type = Article.KindValue
+
+// A8 REWRITE: an alias of an alias exports the object it finally names (an export forwarder cannot be re-exported)
+object Chained:
+  export com.histmersion.api.research.Coverage.Entry.Reason
+
+// A9 UNCHANGED: a kept pair has the singleton type of Alias, so Alias stays a val (the backend cannot emit a singleton type of a forwarder)
+object Pinned:
+  type Alias = com.histmersion.api.research.Coverage.Entry.Note
+  val Alias: _root_.com.histmersion.api.research.Coverage.Entry.Note.type = _root_.com.histmersion.api.research.Coverage.Entry.Note
+  type Again = com.histmersion.api.research.Pinned.Alias
+  val Again: _root_.com.histmersion.api.research.Pinned.Alias.type = _root_.com.histmersion.api.research.Pinned.Alias

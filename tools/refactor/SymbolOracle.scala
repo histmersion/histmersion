@@ -28,7 +28,12 @@ object SymbolOracle {
     b.toArray
   }
   def md5(bytes: Array[Byte]): String = java.security.MessageDigest.getInstance("MD5").digest(bytes).map(b => f"${b & 255}%02X").mkString
-  def norm(sym: String): String = if (sym == "scala/Predef.String#") "java/lang/String#" else sym
+  /** `scala.Predef.String` is `java.lang.String`; an export forwarder `X().` is the member `X.` it replaces (same owner,
+    * name and type: SemanticDB marks every forwarder as a method). */
+  def norm(sym: String): String =
+    if (sym == "scala/Predef.String#") "java/lang/String#"
+    else if (sym.endsWith("().") && !sym.startsWith("local")) sym.stripSuffix("().") + "."
+    else sym
 
   /** Ranges (start, end) of imports and package-clause references. */
   def ignoredRanges(text: String): List[(Int, Int)] =
@@ -61,20 +66,38 @@ object SymbolOracle {
     while (ha > lo && hb > lo && a(ha - 1) == b(hb - 1)) { ha -= 1; hb -= 1 }
     val ma = a.slice(lo, ha); val mb = b.slice(lo, hb)
     if (ma.isEmpty && mb.isEmpty) return (Nil, Nil)
-    if (ma.size.toLong * mb.size > 40000000L) return ((lo until ha).toList, (lo until hb).toList)
-    // plain LCS table on the (small) middle
-    val n = ma.size; val m = mb.size
-    val dp = Array.ofDim[Int](n + 1, m + 1)
-    for (i <- n - 1 to 0 by -1; j <- m - 1 to 0 by -1)
-      dp(i)(j) = if (ma(i) == mb(j)) dp(i + 1)(j + 1) + 1 else math.max(dp(i + 1)(j), dp(i)(j + 1))
-    var i = 0; var j = 0
-    val ua = List.newBuilder[Int]; val ub = List.newBuilder[Int]
-    while (i < n || j < m) {
-      if (i < n && j < m && ma(i) == mb(j)) { i += 1; j += 1 }
-      else if (j < m && (i == n || dp(i)(j + 1) >= dp(i + 1)(j))) { ub += lo + j; j += 1 }
-      else { ua += lo + i; i += 1 }
+    // Myers: shortest edit script, then walk it back to the unmatched indices
+    val n = ma.size; val m = mb.size; val max = n + m; val off = max
+    val v = Array.fill(2 * max + 2)(0)
+    val trace = scala.collection.mutable.ArrayBuffer.empty[Array[Int]]
+    var found = false; var d = 0
+    while (!found && d <= max) {
+      trace += v.clone()
+      var k = -d
+      while (!found && k <= d) {
+        var x = if (k == -d || (k != d && v(off + k - 1) < v(off + k + 1))) v(off + k + 1) else v(off + k - 1) + 1
+        var y = x - k
+        while (x < n && y < m && ma(x) == mb(y)) { x += 1; y += 1 }
+        v(off + k) = x
+        if (x >= n && y >= m) found = true
+        k += 2
+      }
+      if (!found) d += 1
     }
-    (ua.result(), ub.result())
+    val ua = List.newBuilder[Int]; val ub = List.newBuilder[Int]
+    var x = n; var y = m
+    var dd = d
+    while (dd > 0) {
+      val vp = trace(dd)
+      val k = x - y
+      val prevK = if (k == -dd || (k != dd && vp(off + k - 1) < vp(off + k + 1))) k + 1 else k - 1
+      val prevX = vp(off + prevK); val prevY = prevX - prevK
+      while (x > prevX && y > prevY) { x -= 1; y -= 1 }
+      if (x == prevX) ub += lo + prevY else ua += lo + prevX
+      x = prevX; y = prevY
+      dd -= 1
+    }
+    (ua.result().reverse, ub.result().reverse)
   }
 
   def main(args: Array[String]): Unit = args.toList match {
