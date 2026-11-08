@@ -99,7 +99,12 @@ def keys_at(rows, path, off):
     drops = [r for r in rs if r[1] == 'drop' and int(r[4]) <= off]
     if drops:
         best = max(drops, key=lambda r: int(r[4]))
-        if off - int(best[4]) < 400: return [best[6]]
+        if off - int(best[4]) < 400:
+            # an edit that needs an added import: the import is the likelier cause (cycles), back it off for the file
+            imported = {n for r in rs if r[1] in ('import', 'pkg') and '@import:' in r[6] for n in r[6].split('@import:', 1)[1].split(',')}
+            imported |= {n for r in rs if r[1] == 'import' for n in re.findall(r'import \S+\.([^.\s]+)', r[7].replace('\\n', '\n'))}
+            first = best[7].split('|', 1)[1].split(' ')[0].split('.')[0] if '|' in best[7] else ''
+            return [f'{path}@import:{first}'] if first in imported else [best[6]]
     return []
 
 def fallback_keys(rows, path):
@@ -145,17 +150,25 @@ def main():
             print('  compile failed without a located error:\n' + rcline[:2000], flush=True); return 7
         if errs:
             keys, unmapped = [], []
+            pending = {}  # file -> errors not at an edit nor on an edited line
             for (p, line, col) in errs:
                 if not os.path.exists(p): unmapped.append((p, line, col)); continue
                 ls = line_starts(p)
                 off = ls[line - 1] + col - 1 if line - 1 < len(ls) else 0
                 k = keys_at(fr, p, off)
                 if not k:
-                    # a problem not at an edit: on the edit's line, or the whole file's package/imports
                     rs = [r for r in fr.get(p, []) if ls[line - 1] <= int(r[4]) < (ls[line] if line < len(ls) else 10**9)]
-                    k = [r[6] for r in rs] or fallback_keys(fr, p)
-                if not k or not fr.get(p): unmapped.append((p, line, col))
+                    k = [r[6] for r in rs]
+                if not k: pending.setdefault(p, []).append((line, col))
                 keys += k
+            mapped_files = {k.split('@')[0] for k in keys}
+            for p, where in pending.items():
+                # cascades in a file where other errors were mapped wait for the next round; otherwise the package clause
+                # or the added imports are the likely cause
+                if p in mapped_files: continue
+                fk = fallback_keys(fr, p) if fr.get(p) else []
+                if not fk: unmapped += [(p, l, c) for (l, c) in where]
+                keys += fk
             if a.rule == 'g46' and unmapped:
                 # an export changes typing order (a lost case-class apply, a cycle) where no edit is: back off the exports
                 # whose owner path names an identifier of the failing line
