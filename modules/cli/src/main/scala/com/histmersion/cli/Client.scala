@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
@@ -480,8 +481,6 @@ object Client:
 
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Write = Write.T
   object Write extends Newtype[Boolean, Pure]
 

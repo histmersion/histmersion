@@ -1,6 +1,7 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.web.Auth
@@ -17,8 +18,6 @@ import com.histmersion.web.ErrorLine
 object KeysSection:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Reference = Reference.T
   object Reference extends Newtype[String, Pure]
   type State = State.T
@@ -117,7 +116,7 @@ object KeysSection:
       ),
       child <-- SettingsStore.current.map {
         case None            => p(cls := "muted", "Loading…")
-        case Some(Left(m))   => ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m"))
+        case Some(Left(m))   => ErrorLine.text(Problem(s"Could not read the settings: $m"))
         case Some(Right(pg)) =>
           val creds = pg.fields.filter(_.credential.isDefined)
           div(
@@ -249,5 +248,5 @@ object KeysSection:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m))))
+      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(m))))
     )

@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Palette, Wording}
 import com.histmersion.web.ui.{GraphLayout as GL, ThemeTokens}
@@ -52,13 +53,8 @@ object GraphPanel:
 
   private enum Load derives CanEqual:
     case Loading
-    case Failed(message: Load.Failed.Message)
+    case Failed(message: Problem)
     case Loaded(g: Source.Graph)
-
-  private object Load:
-    object Failed:
-      type Message = Message.T
-      object Message extends Newtype[String, Pure]
 
   def element(citekey: Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
@@ -76,7 +72,7 @@ object GraphPanel:
               UiLabels.Text(s"Citation graph · ${t.value}")
             )
           )
-      case scala.util.Failure(e) => state.set(Load.Failed(Load.Failed.Message(e.getMessage)))
+      case scala.util.Failure(e) => state.set(Load.Failed(Problem(e.getMessage)))
     }
     div(
       cls := "graph-panel",

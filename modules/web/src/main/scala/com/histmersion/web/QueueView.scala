@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Wording
@@ -36,8 +37,6 @@ object QueueView:
   object GroupCount extends Newtype[Int, Pure]
   type ItemIsTarget = ItemIsTarget.T
   object ItemIsTarget extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Writes = Writes.T
   object Writes extends Newtype[Boolean, Pure]
 
@@ -256,7 +255,7 @@ object QueueView:
   final case class AddDraft(
       text: AddDraft.Text = AddDraft.Text(""),
       topic: AddDraft.Topic = AddDraft.Topic(""),
-      reason: AddDraft.Reason = AddDraft.Reason("")
+      reason: Problem = Problem("")
   )
 
   object AddDraft:
@@ -264,8 +263,6 @@ object QueueView:
     object Text extends Newtype[String, Pure]
     type Topic = Topic.T
     object Topic extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
 
   private val EmptyText = "Write the item's text first."
 
@@ -590,7 +587,7 @@ object QueueView:
               placeholder := "optional — why it is wanted",
               controlled(
                 value <-- draft.signal.map(_.reason.value),
-                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(AddDraft.Reason(v))))
+                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(Problem(v))))
               )
             )
           )

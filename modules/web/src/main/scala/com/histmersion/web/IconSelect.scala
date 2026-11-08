@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
@@ -17,8 +18,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object IconSelect:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
 
   /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under, and what it
     * means (its tooltip), when the label alone does not say.
@@ -75,7 +74,7 @@ object IconSelect:
       field: Field[Option[String]],
       options: Signal[List[Opt]],
       disabled: Signal[Boolean] = Val(false),
-      why: Reason = Reason("")
+      why: Problem = Problem("")
   ): HtmlElement =
     seq += 1
     val id = s"isel-$seq"

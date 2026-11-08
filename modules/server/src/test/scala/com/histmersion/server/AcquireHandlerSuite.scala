@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.plugin.Problem
+import com.histmersion.api.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -121,7 +121,7 @@ class AcquireHandlerSuite extends DbSuite:
 
   private object NoPdf extends OaFetcher:
     def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[ArxivId]) = Left(
-      Problem("no legal open-access PDF found")
+      plugin.Problem("no legal open-access PDF found")
     )
 
   private class SomePdf(
@@ -140,7 +140,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
 
   private object NoWiki extends WikiClient:
-    def refs(url: WikiClient.ArticleUrl) = Left(Problem("not used here"))
+    def refs(url: WikiClient.ArticleUrl) = Left(api.Problem("not used here"))
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
   private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
@@ -168,9 +168,9 @@ class AcquireHandlerSuite extends DbSuite:
         i.files
           .find(_.name.value.endsWith(".epub"))
           .orElse(i.files.headOption)
-          .toRight(Problem("no file"))
+          .toRight(plugin.Problem("no file"))
       def original(i: CollectionItem, f: CollectionFile) = Left(
-        Problem("the chain downloads it")
+        plugin.Problem("the chain downloads it")
       )
     val library = new RefusingCollectionLibrary:
       override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest) = h.archiveImport(i, f, req)
@@ -330,7 +330,7 @@ class AcquireHandlerSuite extends DbSuite:
         List(
           Acquire.RetractionRow(
             Doi("10.1177/zzretracted"),
-            Some(Problem("+Duplication of Image")),
+            Some(api.Problem("+Duplication of Image")),
             Some(RetractionNotice.Date("12/15/2021 0:00")),
             Some(RetractionNotice.Nature("Retraction"))
           )
@@ -423,7 +423,7 @@ class AcquireHandlerSuite extends DbSuite:
           Acquire
             .RetractionRow(
               Doi("10.1177/zzretracted2"),
-              Some(Problem("+Duplication")),
+              Some(api.Problem("+Duplication")),
               Some(RetractionNotice.Date("12/15/2021 0:00")),
               Some(RetractionNotice.Nature("Retraction"))
             )
@@ -621,13 +621,13 @@ class AcquireHandlerSuite extends DbSuite:
     def answering(a: Fetch): SourceFetcher = new SourceFetcher:
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = a
-    val why = Problem(
+    val why = plugin.Problem(
       "an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
         "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
     )
     val chain = FetchChain(
       List(
-        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Problem("no open-access location"))),
+        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(plugin.Problem("no open-access location"))),
         FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(why))
       )
     )
@@ -674,7 +674,7 @@ class AcquireHandlerSuite extends DbSuite:
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal =
       handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(Problem(e.message.value))), legal.toString)
+    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(domain.Problem(e.message.value))), legal.toString)
     assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
     val text = items.head.text
     assert(
@@ -732,8 +732,8 @@ class AcquireHandlerSuite extends DbSuite:
       def fetch(w: WorkKey, c: Fetch.Context) = a
     val chain = FetchChain(
       List(
-        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Problem("no open-access location"))),
-        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(Problem("20.500.12657/23223: bot challenge")))
+        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(plugin.Problem("no open-access location"))),
+        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(plugin.Problem("20.500.12657/23223: bot challenge")))
       )
     )
     val r = handlers(oa = chain)
@@ -755,10 +755,10 @@ class AcquireHandlerSuite extends DbSuite:
     val asked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
-      def fetch(w: WorkKey, c: Fetch.Context) = { asked.incrementAndGet(); Fetch.Miss(Problem("stub")) }
+      def fetch(w: WorkKey, c: Fetch.Context) = { asked.incrementAndGet(); Fetch.Miss(plugin.Problem("stub")) }
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem("no open-access location"))
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(plugin.Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -970,7 +970,7 @@ class AcquireHandlerSuite extends DbSuite:
     val byIdentifier = new SourceFetcher:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) =
-        work.archive.fold(Fetch.Miss(Problem("no identifier")))(_ =>
+        work.archive.fold(Fetch.Miss(plugin.Problem("no identifier")))(_ =>
           Fetch.Found(
             FetchedFile(
               com.histmersion.plugin.FetchedFile.Source("archive_org"),
@@ -1074,7 +1074,7 @@ class AcquireHandlerSuite extends DbSuite:
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Right(Nil)
-      def meta(doi: com.histmersion.domain.library.Doi) = Left(Problem(s"$doi: HTTP 404"))
+      def meta(doi: com.histmersion.domain.library.Doi) = Left(api.Problem(s"$doi: HTTP 404"))
       def references(doi: com.histmersion.domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
       def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
     val h = handlers(blind)

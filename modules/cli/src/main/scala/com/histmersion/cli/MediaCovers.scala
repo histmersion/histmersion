@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.config.*
 
@@ -66,13 +67,9 @@ object MediaCovers:
   enum Outcome derives CanEqual:
     case Uploaded(line: MediaSourceLine)
     case AskOpenLibrary(citekey: Citekey, isbn: MediaCoversRequest.Isbn)
-    case Skipped(reason: Outcome.Skipped.Reason)
+    case Skipped(reason: Problem)
     case Failed(message: MediaCoversReport.Failed)
 
-  object Outcome:
-    object Skipped:
-      type Reason = Reason.T
-      object Reason extends Newtype[String, Pure]
 
   def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
     CoverChoice.choose(
@@ -108,8 +105,8 @@ object MediaCovers:
       case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
         Outcome.AskOpenLibrary(ck, MediaCoversRequest.Isbn(isbn.value))
       case Some(CoverChoice.Pick.OpenLibrary(_, _)) =>
-        Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre"))
-      case None => Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre, no ISBN"))
+        Outcome.Skipped(Problem("no cover file in Calibre"))
+      case None => Outcome.Skipped(Problem("no cover file in Calibre, no ISBN"))
 
   /** The Calibre step over the linked sources: what was uploaded, what Open Library is to be asked for (by the server),
     * and the counts.
@@ -144,7 +141,7 @@ object MediaCovers:
         val outcomes = links.take(cap).map { (ck, id) =>
           byId
             .get(id)
-            .fold[Outcome](Outcome.Skipped(Outcome.Skipped.Reason("Calibre id not in the library")))(
+            .fold[Outcome](Outcome.Skipped(Problem("Calibre id not in the library")))(
               one(c, ck, _, dryRun)
             )
         }

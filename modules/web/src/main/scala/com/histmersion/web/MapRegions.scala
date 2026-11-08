@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*

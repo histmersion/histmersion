@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -661,7 +662,7 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text(" re-run the lint \n"),
           QueueView.AddDraft.Topic("  "),
-          QueueView.AddDraft.Reason(" ")
+          Problem(" ")
         )
       ),
       Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None))
@@ -672,7 +673,7 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text("x"),
           QueueView.AddDraft.Topic(" Corpus hygiene "),
-          QueueView.AddDraft.Reason(" because ")
+          Problem(" because ")
         )
       ),
       Right(
@@ -689,7 +690,7 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text("ran the lint"),
           QueueView.AddDraft.Topic("2026-09-27"),
-          QueueView.AddDraft.Reason("ignored")
+          Problem("ignored")
         )
       ),
       Right(Queue.QueueAdd(QueueItem.Text("ran the lint"), Some(QueueItem.Topic("2026-09-27")), reason = None))

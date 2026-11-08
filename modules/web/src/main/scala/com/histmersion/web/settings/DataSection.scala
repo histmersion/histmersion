@@ -1,6 +1,7 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
 import com.raquo.laminar.api.L.*
@@ -70,7 +71,7 @@ object DataSection:
         Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("download or remove data")))
       ),
       child.maybe <-- starter.said.signal.map(_.map {
-        case Left(why) => ErrorLine.text(ErrorLine.Problem(why))
+        case Left(why) => ErrorLine.text(Problem(why))
         case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
       }),
       card("Downloading now", DownloadJobs.panel),

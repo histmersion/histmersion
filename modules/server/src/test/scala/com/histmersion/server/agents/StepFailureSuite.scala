@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.workflows.*
@@ -174,7 +174,7 @@ class StepFailureSuite extends munit.FunSuite:
         Vector.empty,
         Some(CliOutcome.FinalText("boom")),
         TokenUsage.Zero,
-        Some(Problem("crash")),
+        Some(api.Problem("crash")),
         CliOutcome.Turns(1)
       ),
       LlmCall.User("u"),

@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.scalajs.js

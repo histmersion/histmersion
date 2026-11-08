@@ -1,6 +1,7 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
@@ -156,7 +157,7 @@ object StartPlace:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m)))),
+      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(m)))),
       p(cls := "muted start-place-now", child.text <-- choice.signal.map(c => describe(c).value))
     )
 

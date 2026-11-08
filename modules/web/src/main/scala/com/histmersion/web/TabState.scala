@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import com.histmersion.api.RowCount
@@ -17,7 +18,7 @@ final case class TabState[Row](
     total: RowCount = RowCount(0),
     shown: RowCount = RowCount(0),
     loading: TabState.Loading = TabState.Loading(false),
-    error: Option[TabState.Error] = None,
+    error: Option[Problem] = None,
     loaded: TabState.Loaded = TabState.Loaded(false),
     extras: List[TabState.Extras] = Nil
 ):
@@ -41,15 +42,11 @@ final case class TabState[Row](
       )
 
 object TabState:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
 
   type Loading = Loading.T
   object Loading extends Newtype[Boolean, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
   type Loaded = Loaded.T
   object Loaded extends Newtype[Boolean, Pure]
   type Extras = TabPage.Extras
@@ -75,7 +72,7 @@ object TabState:
 
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   def failed[Row](s: TabState[Row], message: Problem): TabState[Row] =
-    s.copy(loading = Loading(false), error = Some(Error(message.value)), loaded = Loaded(true))
+    s.copy(loading = Loading(false), error = Some(Problem(message.value)), loaded = Loaded(true))
 
   /** "show more": reveal the next `page` loaded rows, or — when the loaded rows run out before the total —
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).

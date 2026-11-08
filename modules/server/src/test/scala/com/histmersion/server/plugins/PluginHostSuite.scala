@@ -1,7 +1,7 @@
 package com.histmersion
 package server.plugins
 
-import com.histmersion.api.Problem
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -64,7 +64,7 @@ final class MakerPlugin(
       val name = Secret.Vault.Name(c.vault)
       def resolve(ref: Secret.Vault.ResolveRef) =
         calls.incrementAndGet()
-        if ref.value == "missing" then Left(Problem(s"no entry '$ref'"))
+        if ref.value == "missing" then Left(plugin.Problem(s"no entry '$ref'"))
         else if ref.value == "boom" then throw new IllegalStateException("kaput")
         else Right(Secret.Resolved(s"v($ref)"))
     for
@@ -103,7 +103,7 @@ final class BatchVaultPlugin(
               .toMap
       )
       .left
-      .map(e => Problem(e.value))
+      .map(e => plugin.Problem(e.value))
 
 final case class ConsumerConfig(token: Secret, extra: List[Secret]) derives ConfigReader
 
@@ -142,7 +142,7 @@ class PluginHostSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(Problem("offline"))
+            Left(plugin.Problem("offline"))
         },
       ConfigFactory.empty,
       (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m",
@@ -331,7 +331,7 @@ class PluginHostSuite extends munit.FunSuite:
     val vault = new Secret.Vault {
       val name = Secret.Vault.Name("kp");
       def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Resolved("vx"))
-      else Left(Problem("locked"))
+      else Left(plugin.Problem("locked"))
     }
     val e = env("TOKEN" -> "t0k")
     assertEquals(PluginHost.resolve(Secret.Ref.Value(Secret.Ref.Value.Literal("lit")), e, Map.empty), Right("lit"))
@@ -642,7 +642,7 @@ class PluginHostSuite extends munit.FunSuite:
   test("a vault without resolveAll (an SPI-2 plugin compiled before it) is asked one reference at a time"):
     val default = new Secret.Vault {
       val name = Secret.Vault.Name("d");
-      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Problem("locked"))
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(plugin.Problem("locked"))
       else Right(Secret.Resolved(s"v($r)"))
     }
     assertEquals(

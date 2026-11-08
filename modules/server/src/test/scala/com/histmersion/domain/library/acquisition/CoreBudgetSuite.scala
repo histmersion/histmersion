@@ -172,7 +172,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = Access.Open
-        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem("nothing here either"))
+        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(plugin.Problem("nothing here either"))
       val chain = FetchChain(
         List(
           FetchChain.Step.Id("core") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("core")),

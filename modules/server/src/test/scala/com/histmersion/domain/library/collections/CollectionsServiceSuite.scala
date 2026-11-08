@@ -39,7 +39,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     override def capabilities =
       if writes then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
       else Set(CollectionCapability.Read)
-    override def readOnlyReason = Problem("write-back is off")
+    override def readOnlyReason = plugin.Problem("write-back is off")
     private val books = List(
       book(CollectionId("1"), CollectionItem.Title("One")),
       book(CollectionId("2"), CollectionItem.Title("Two")),

@@ -27,7 +27,6 @@ final case class MergeApplyJob(
       com.histmersion.api.json.Schema
 object MergeApplyJob:
 
-  type InterruptedText = Problem
   export com.histmersion.api.exchange.Bundle.Name as OfBundle
   export MergePlan.PlanHash as OfPlanHash
   type OfElapsedMs = ElapsedMs
@@ -41,7 +40,7 @@ object MergeApplyJob:
 
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 
-  val InterruptedText: InterruptedText =
+  val InterruptedText: Problem =
     Problem(
       "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
         "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +

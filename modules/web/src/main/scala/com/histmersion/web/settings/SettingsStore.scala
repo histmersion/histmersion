@@ -1,6 +1,7 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.web.{ApiClient, ApiFailure}
 import com.raquo.laminar.api.L.*
@@ -14,8 +15,6 @@ import com.histmersion.web.ErrorLine
   * after each change; and the change itself — written into the file by the server, then applied.
   */
 object SettingsStore:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type SaveLiteralConsent = SaveLiteralConsent.T
   object SaveLiteralConsent extends Newtype[Boolean, Pure]
@@ -67,7 +66,7 @@ object SettingsStore:
       cls := "settings-notice",
       role := "status",
       child.maybe <-- result.signal.map(_.map {
-        case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
+        case Left(why) => ErrorLine.text(Problem(why.value))
         case Right(w)  => written(w)
       })
     )
@@ -86,7 +85,7 @@ object SettingsStore:
       ),
       Option.when(w.restart.nonEmpty)(restartLine(w)),
       w.warnings.map(x => p(cls := "settings-warning", x.value)),
-      reloadErrors.map(e => ErrorLine.text(ErrorLine.Problem(s"The server did not take the change on: $e"))),
+      reloadErrors.map(e => ErrorLine.text(Problem(s"The server did not take the change on: $e"))),
       button(typ := "button", cls := "btn btn--ghost btn--sm", "Dismiss", onClick --> (_ => clearResult()))
     )
 
@@ -115,7 +114,7 @@ object SettingsStore:
             )
           ),
           child.maybe <-- restarting.signal.map(_.map {
-            case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
+            case Left(why) => ErrorLine.text(Problem(why.value))
             case Right(m)  => span(cls := "muted", m)
           })
         )

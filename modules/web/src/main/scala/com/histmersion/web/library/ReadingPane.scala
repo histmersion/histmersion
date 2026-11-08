@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.Problem
 import com.histmersion.api.YearFmt
 import com.histmersion.web.*
 import com.histmersion.web.map.{GeoBounds, TheMap}
@@ -152,7 +153,7 @@ object ReadingPane:
 
   private def sourcePane(ck: Citekey): HtmlElement =
     val row = LibraryLists.sources.now().rows.find(_.source.citekey == ck).map(_.source)
-    val reading = Var(Option.empty[Either[ErrorLine.Problem, SourceReading]])
+    val reading = Var(Option.empty[Either[Problem, SourceReading]])
     val page = SourceLink.href(ck)
     def showOnMap(): Unit =
       Router.go(Route.Explore)
@@ -201,7 +202,7 @@ object ReadingPane:
         },
         child <-- reading.signal.map {
           case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(ErrorLine.Problem(s"Could not read this source: $m"))
+          case Some(Left(m))  => ErrorLine.text(Problem(s"Could not read this source: $m"))
           case Some(Right(r)) =>
             div(findings(ck, r.source.findings), NoteList.on(ref0), sourceLinks(ck, r.counts))
         }
@@ -266,13 +267,13 @@ object ReadingPane:
 
   private def articlePane(slug: Article.Slug): HtmlElement =
     val row = LibraryLists.articles.now().rows.find(_.slug == slug)
-    val reading = Var(Option.empty[Either[ErrorLine.Problem, Article.View]])
+    val reading = Var(Option.empty[Either[Problem, Article.View]])
     val page = ArticleLink.href(slug)
     def showOnMap(): Unit =
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(Preview.Target.Article.Slug(slug.value)))
     val ref0 = ItemRef.article(slug, Title(row.map(_.title.value).getOrElse(slug.value)))
-    def refOf(v: Option[Either[ErrorLine.Problem, Article.View]]) =
+    def refOf(v: Option[Either[Problem, Article.View]]) =
       v.flatMap(_.toOption).fold(ref0)(a => ItemRef.article(slug, Title(a.article.title.value)))
     val ref = reading.signal.map(refOf).distinct
     div(
@@ -302,7 +303,7 @@ object ReadingPane:
         },
         child <-- reading.signal.map {
           case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(ErrorLine.Problem(s"Could not read this article: $m"))
+          case Some(Left(m))  => ErrorLine.text(Problem(s"Could not read this article: $m"))
           case Some(Right(v)) =>
             div(
               NoteList.on(ref0),
@@ -321,7 +322,7 @@ object ReadingPane:
       )
     )
 
-  private def refNow(reading: Var[Option[Either[ErrorLine.Problem, SourceReading]]], ref0: ItemRef): ItemRef =
+  private def refNow(reading: Var[Option[Either[Problem, SourceReading]]], ref0: ItemRef): ItemRef =
     reading
       .now()
       .flatMap(_.toOption)
@@ -329,5 +330,5 @@ object ReadingPane:
         ItemRef.source(ref0.target.itemKey.map(k => Citekey(k.value)).getOrElse(Citekey("")), r.source.source.title)
       )
 
-  private def message(e: Throwable): ErrorLine.Problem =
-    ErrorLine.Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))
+  private def message(e: Throwable): Problem =
+    Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))

@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -38,7 +39,7 @@ final class PolledList[A](
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
   val loaded: Var[PolledList.Loaded] = Var(PolledList.Loaded(false))
   val older: Var[PolledList.Older] = Var(PolledList.Older(false))
-  val failure: Var[Option[PolledList.Problem]] = Var(None)
+  val failure: Var[Option[Problem]] = Var(None)
 
   /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
   private val restarting: Var[Boolean] = Var(false)
@@ -88,7 +89,7 @@ final class PolledList[A](
       // the last row shown is gone (the server cannot page from there): start over
       case Failure(_) if upTo.isDefined => restart()
       case Failure(e)                   =>
-        failure.set(Some(PolledList.Problem(e.getMessage)))
+        failure.set(Some(Problem(e.getMessage)))
         // keep trying while the window is open, at the slowest pace
         schedule(Some(Poll.Revision(Poll.MaxMs)))
       case Success((rows, page)) =>
@@ -112,7 +113,7 @@ final class PolledList[A](
             older.set(PolledList.Older(false))
             r match
               case Failure(e) =>
-                failure.set(Some(PolledList.Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
+                failure.set(Some(Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
               case Success((rows, page)) =>
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, a => id(a).value))
@@ -135,13 +136,11 @@ final class PolledList[A](
 
   /** The error line: what the last request answered, `what` naming the list. */
   def errorLine(what: UiLabels.Text): HtmlElement =
-    div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(s"${what.value}: ${m.value}")))))
+    div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(Problem(s"${what.value}: ${m.value}")))))
 
 object PolledList:
   type ItemId = ItemId.T
   object ItemId extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type TimerId = TimerId.T
   object TimerId extends Newtype[Int, Pure]
 

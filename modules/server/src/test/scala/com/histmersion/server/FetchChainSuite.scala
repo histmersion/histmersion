@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.Problem
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.pluginhost.FetchChain
@@ -37,7 +37,7 @@ class FetchChainSuite extends munit.FunSuite:
       Access.Open,
       (_, _) => Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(s"https://$source.example/f")), bytes, ext))
     )
-  private def miss(access: Access = Access.Open) = Fake(access, (_, _) => Fetch.Miss(Problem("none")))
+  private def miss(access: Access = Access.Open) = Fake(access, (_, _) => Fetch.Miss(plugin.Problem("none")))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────
 
@@ -167,19 +167,19 @@ class FetchChainSuite extends munit.FunSuite:
     )
 
   test("a refusal is asked once, the chain goes on, and a failed fetch says who refused and why"):
-    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Problem("lending-only")))
+    val no = Fake(Access.Open, (_, _) => Fetch.Refused(plugin.Problem("lending-only")))
     val r = FetchChain(List(FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("a") -> miss()))
       .fetchLegal(Some(FetchedDoi), None)
     assertEquals(r, Left(s"${FetchChain.NoCopy} (no: lending-only)"))
     assertEquals(no.calls.get, 1)
 
   test("no copy: each fetcher that ran gives its answer, in chain order; a copy needs none"):
-    val no = Fake(Access.Open, (_, _) => Fetch.Refused(Problem("bot challenge")))
+    val no = Fake(Access.Open, (_, _) => Fetch.Refused(plugin.Problem("bot challenge")))
     val boom = Fake(Access.Open, (_, _) => throw new IllegalStateException("bang"))
-    val off = Fake(Access.Unauthorised, (_, _) => Fetch.Miss(Problem("never asked")))
+    val off = Fake(Access.Unauthorised, (_, _) => Fetch.Miss(plugin.Problem("never asked")))
     val got = FetchChain(
       List(
-        FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(Problem("no record"))),
+        FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(plugin.Problem("no record"))),
         FetchChain.Step.Id("no") -> no,
         FetchChain.Step.Id("boom") -> boom,
         FetchChain.Step.Id("u") -> off
@@ -231,7 +231,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   test("fetchWork hands every identifier to the fetchers; fetch/fetchLegal pass the DOI and the arXiv id"):
     val seen = scala.collection.mutable.ListBuffer.empty[WorkKey] // a test double's record of calls
-    val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(Problem("none")) })
+    val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(plugin.Problem("none")) })
     val chain = FetchChain(List(FetchChain.Step.Id("spy") -> spy))
     val _ = chain.fetch(Some(com.histmersion.domain.library.Doi("10.1/x")), Some(ArxivId("2101.00001")))
     val _ = chain.fetchWork(
@@ -251,7 +251,7 @@ class FetchChainSuite extends munit.FunSuite:
     def record(ctx: Fetch.Context) = ctx.memo(Fetch.Context.MemoKey("test:record:10.1234/x")) {
       computed.incrementAndGet(); Problem("rec")
     }
-    val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss(Problem("a")) })
+    val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss(plugin.Problem("a")) })
     val b = Fake(Access.Open, (_, ctx) => Fetch.Miss(record(ctx)))
     val chain = FetchChain(List(FetchChain.Step.Id("a") -> a, FetchChain.Step.Id("b") -> b))
     val _ = chain.fetch(Some(FetchedDoi), None)

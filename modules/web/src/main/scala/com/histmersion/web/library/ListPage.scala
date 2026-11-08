@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.Problem
 import com.histmersion.api.Offset
 import com.histmersion.api.RowCount
 import com.histmersion.web.ErrorLine
@@ -14,7 +15,7 @@ final case class ListPage[Row](
     total: RowCount = RowCount(0),
     loaded: Boolean = false,
     loading: Boolean = false,
-    error: Option[ErrorLine.Problem] = None
+    error: Option[Problem] = None
 ):
 
   def hasPrevious: Boolean = offset.value > 0

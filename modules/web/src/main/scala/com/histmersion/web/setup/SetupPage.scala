@@ -1,6 +1,7 @@
 package com.histmersion
 package web.setup
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Api, Wording}
 import com.histmersion.web.{ApiClient, Auth, Route, RouteLink, Router, SettingsSection}
@@ -67,7 +68,7 @@ object SetupPage:
 
   def element(ui: UiConfig): HtmlElement =
     val step = Var(SetupStep.Welcome)
-    val page = Var(Option.empty[Either[SettingsStore.Problem, ConfigEdit.Page]])
+    val page = Var(Option.empty[Either[Problem, ConfigEdit.Page]])
     val before = Var(SetupChoices())
     val choices = Var(SetupChoices())
     val free = Var(Option.empty[ByteCount])
@@ -177,7 +178,7 @@ object SetupPage:
           ),
           child <-- page.signal.combineWith(step.signal, finished.signal).map {
             case (None, _, _)              => p(cls := "muted", "Loading…")
-            case (Some(Left(m)), _, _)     => ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m"))
+            case (Some(Left(m)), _, _)     => ErrorLine.text(Problem(s"Could not read the settings: $m"))
             case (Some(Right(p)), s, done) =>
               div(
                 cls := "setup-body",
@@ -186,7 +187,7 @@ object SetupPage:
                 body(s, p, choices, start, free.signal, done, ui)
               )
           },
-          child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m)))),
+          child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(m)))),
           div(
             cls := "setup-bar",
             button(

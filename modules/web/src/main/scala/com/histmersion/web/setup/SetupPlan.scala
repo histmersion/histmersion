@@ -1,6 +1,7 @@
 package com.histmersion
 package web.setup
 
+import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.settings.ConfigEdit
 import io.github.iltotore.iron.constraint.any.Pure
@@ -8,8 +9,6 @@ import com.histmersion.web.settings.StartPlace
 
 /** The settings and the downloads a setup's choices come to. Pure. */
 object SetupPlan:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** An e-mail address that can be one (empty: none, which is allowed). */
 

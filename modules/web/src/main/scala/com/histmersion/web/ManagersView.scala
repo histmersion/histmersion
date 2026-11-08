@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Plural, Wording}
@@ -501,7 +502,7 @@ object ManagersView:
     )
 
   private def errorLine(message: Signal[Option[String]]): Modifier[HtmlElement] =
-    ErrorLine(message.map(_.map(ErrorLine.Problem(_))))
+    ErrorLine(message.map(_.map(Problem(_))))
 
   /** The focus: the active goals (why each was chosen, what it does or waits for, its pace), the queue in the order the
     * next become active, and why the others cannot use a slot; pin / unpin a goal and set the cap (each behind the

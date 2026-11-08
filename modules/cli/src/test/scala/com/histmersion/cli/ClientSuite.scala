@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.Problem
 /** What the CLI says when the server answers outside an endpoint's contract. */
 class ClientSuite extends munit.FunSuite:
 
@@ -21,7 +22,7 @@ class ClientSuite extends munit.FunSuite:
     )
     assertEquals(
       Client.unexpected(Client.HttpStatus(502), Client.ServerUrl("http://h:8000"), write = Client.Write(false)),
-      Client.Problem("unexpected answer from http://h:8000: HTTP 502")
+      Problem("unexpected answer from http://h:8000: HTTP 502")
     )
 
   // #819: a refused GET (a backup or original download) said "refused this write"
