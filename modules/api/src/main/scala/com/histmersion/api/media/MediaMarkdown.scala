@@ -5,8 +5,7 @@ import com.histmersion.api.{OffsetPage, Plural}
 
 object MediaMarkdown:
 
-  type MediaSamplesDryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
-  val MediaSamplesDryRun: _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun.type = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
+  export com.histmersion.api.library.RepairAcquire.RepairRequest.{DryRun as MediaSamplesDryRun}
 
   private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title = MediaProvider.title(MediaProvider.Id(p.value))
 

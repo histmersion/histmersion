@@ -42,8 +42,7 @@ object Correction:
   object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpstreamNow = UpstreamNow.T
   object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = com.histmersion.api.catalogue.CatalogRecord.Label
-  val Label: _root_.com.histmersion.api.catalogue.CatalogRecord.Label.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Label
+  export com.histmersion.api.catalogue.CatalogRecord.Label
   type CreatedAt = CreatedAt.T
   object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckedAt = CheckedAt.T

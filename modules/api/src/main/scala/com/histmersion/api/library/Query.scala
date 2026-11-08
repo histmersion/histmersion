@@ -29,16 +29,12 @@ object Query:
 
 
   type StatementsSql = String
-  type MarkdownTableColumns = _root_.com.histmersion.api.library.Query.QueryResult.Columns
-  val MarkdownTableColumns: _root_.com.histmersion.api.library.Query.QueryResult.Columns.type = _root_.com.histmersion.api.library.Query.QueryResult.Columns
-  type MarkdownTableRows = _root_.com.histmersion.api.library.Query.QueryResult.Rows
-  val MarkdownTableRows: _root_.com.histmersion.api.library.Query.QueryResult.Rows.type = _root_.com.histmersion.api.library.Query.QueryResult.Rows
+  export com.histmersion.api.library.Query.QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
   final case class QueryRequest(sql: QueryRequest.Sql) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueryRequest:
-    type Sql = com.histmersion.api.library.Query.Statement
-    val Sql: _root_.com.histmersion.api.library.Query.Statement.type = _root_.com.histmersion.api.library.Query.Statement
+    export com.histmersion.api.library.Query.{Statement as Sql}
 
 
   final case class QueryResult(

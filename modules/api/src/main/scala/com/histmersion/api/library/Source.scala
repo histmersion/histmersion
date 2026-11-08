@@ -112,8 +112,7 @@ object Source:
         com.histmersion.api.json.Schema
 
   object Alias:
-    type Value = com.histmersion.api.library.Citekey
-    val Value: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    export com.histmersion.api.library.{Citekey as Value}
 
   final case class Candidate(
       id: Candidate.Id,
@@ -137,8 +136,7 @@ object Source:
   object Candidate:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = com.histmersion.api.research.ReviewGoal.Slug
-    val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
     type AbstractText = AbstractText.T
     object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsOa = IsOa.T
@@ -164,8 +162,7 @@ object Source:
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type CalibreLineCalibreId = _root_.com.histmersion.api.library.Source.CalibreId
-    val CalibreLineCalibreId: _root_.com.histmersion.api.library.Source.CalibreId.type = _root_.com.histmersion.api.library.Source.CalibreId
+    export com.histmersion.api.library.Source.{CalibreId as CalibreLineCalibreId}
 
     def calibreLine(calibreId: Option[com.histmersion.api.library.Source.Delete.CalibreLineCalibreId], check: Option[CalibreEntryCheck]): com.histmersion.api.library.Source.Delete.CalibreLine =
       calibreId match
@@ -257,8 +254,7 @@ object Source:
   final case class DeleteRequest(apply: DeleteRequest.Apply = _root_.com.histmersion.api.Api.Apply(false)) derives KindlingsSchema, com.histmersion.api.json.Schema
   object DeleteRequest:
 
-    type Apply = com.histmersion.api.Api.Apply
-    val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
+    export com.histmersion.api.Api.Apply
 
     given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
 
@@ -284,8 +280,7 @@ object Source:
 
   object Deletion:
 
-    type Title = com.histmersion.api.library.Title
-    val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
+    export com.histmersion.api.library.Title
     type Applied = Applied.T
     object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Aliases = Aliases.T
@@ -326,10 +321,7 @@ object Source:
         com.histmersion.api.json.Schema
 
   object Detail:
-    type OcrMarkdown = com.histmersion.api.library.Source.OcrMarkdown
-    val OcrMarkdown: _root_.com.histmersion.api.library.Source.OcrMarkdown.type = _root_.com.histmersion.api.library.Source.OcrMarkdown
-    type UpdatedAt = com.histmersion.api.library.Source.UpdatedAt
-    val UpdatedAt: _root_.com.histmersion.api.library.Source.UpdatedAt.type = _root_.com.histmersion.api.library.Source.UpdatedAt
+    export com.histmersion.api.library.Source.{OcrMarkdown, UpdatedAt}
 
   final case class Graph(
       root: Graph.Root,
@@ -343,8 +335,7 @@ object Source:
   object Graph:
     type DepthCount = DepthCount.T
     object DepthCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Root = com.histmersion.api.library.Citekey
-    val Root: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    export com.histmersion.api.library.{Citekey as Root}
     type Depth = com.histmersion.api.library.Source.Graph.DepthCount
     val Depth: _root_.com.histmersion.api.library.Source.Graph.DepthCount.type = _root_.com.histmersion.api.library.Source.Graph.DepthCount
 
@@ -416,8 +407,7 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Match:
-    type Line = com.histmersion.api.exchange.PlanMatchKind.MatchLine
-    val Line: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine
+    export com.histmersion.api.exchange.PlanMatchKind.{MatchLine as Line}
 
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
 

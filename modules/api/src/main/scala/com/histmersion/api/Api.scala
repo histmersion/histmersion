@@ -171,18 +171,10 @@ object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
-  type SourceViewPart3 = com.histmersion.api.library.Source.View
-  val SourceViewPart3: _root_.com.histmersion.api.library.Source.View.type = _root_.com.histmersion.api.library.Source.View
-  type ExportSourcePart3 = com.histmersion.api.library.Source.Export
-  val ExportSourcePart3: _root_.com.histmersion.api.library.Source.Export.type = _root_.com.histmersion.api.library.Source.Export
-  type ExportArticlePart3 = com.histmersion.api.research.Article.Export
-  val ExportArticlePart3: _root_.com.histmersion.api.research.Article.Export.type = _root_.com.histmersion.api.research.Article.Export
-  type JobPart1 = com.histmersion.api.SpatialHierarchyResult.Job.Id
-  val JobPart1: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
-  type JobControlPart1Part1 = com.histmersion.api.SpatialHierarchyResult.Job.Id
-  val JobControlPart1Part1: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
-  type JobsPart1Part4 = com.histmersion.api.Jobs.Filter
-  val JobsPart1Part4: _root_.com.histmersion.api.Jobs.Filter.type = _root_.com.histmersion.api.Jobs.Filter
+  export com.histmersion.api.library.Source.{View as SourceViewPart3, Export as ExportSourcePart3}
+  export com.histmersion.api.research.Article.{Export as ExportArticlePart3}
+  export com.histmersion.api.SpatialHierarchyResult.Job.{Id as JobPart1, Id as JobControlPart1Part1}
+  export com.histmersion.api.Jobs.{Filter as JobsPart1Part4}
 
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
@@ -278,8 +270,7 @@ object Api:
   object SourceViewQuery:
     type FullText = FullText.T
     object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Section = com.histmersion.api.library.Source.Section.Wire
-    val Section: _root_.com.histmersion.api.library.Source.Section.Wire.type = _root_.com.histmersion.api.library.Source.Section.Wire
+    export com.histmersion.api.library.Source.Section.{Wire as Section}
     type Heading = Heading.T
     object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       type Text = Text.T
@@ -633,8 +624,7 @@ object Api:
   )
 
   object ArticleQuery:
-    type Kind = com.histmersion.api.research.Article.Kind.Wire
-    val Kind: _root_.com.histmersion.api.research.Article.Kind.Wire.type = _root_.com.histmersion.api.research.Article.Kind.Wire
+    export com.histmersion.api.research.Article.Kind.{Wire as Kind}
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -929,18 +919,15 @@ object Api:
   )
 
   object PlacesGeoQuery:
-    type Kind = com.histmersion.api.catalogue.Place.Kind.Wire
-    val Kind: _root_.com.histmersion.api.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Place.Kind.Wire
-    type AsOf = com.histmersion.api.Api.AggregateQuery.AsOf
-    val AsOf: _root_.com.histmersion.api.Api.AggregateQuery.AsOf.type = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
+    export com.histmersion.api.catalogue.Place.Kind.{Wire as Kind}
+    export com.histmersion.api.Api.AggregateQuery.AsOf
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pick = com.histmersion.api.GeoPick.Wire
-    val Pick: _root_.com.histmersion.api.GeoPick.Wire.type = _root_.com.histmersion.api.GeoPick.Wire
+    export com.histmersion.api.GeoPick.{Wire as Pick}
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.PlacesGeo.Json, Any] =
     (base.get
@@ -1276,8 +1263,7 @@ object Api:
   )
 
   object GoalQuery:
-    type Status = com.histmersion.api.automation.Goal.StatusValue
-    val Status: _root_.com.histmersion.api.automation.Goal.StatusValue.type = _root_.com.histmersion.api.automation.Goal.StatusValue
+    export com.histmersion.api.automation.Goal.{StatusValue as Status}
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -1502,16 +1488,14 @@ object Api:
   )
 
   object MediaGeoQuery:
-    type Kind = com.histmersion.api.media.MediaItem.Kind
-    val Kind: _root_.com.histmersion.api.media.MediaItem.Kind.type = _root_.com.histmersion.api.media.MediaItem.Kind
+    export com.histmersion.api.media.MediaItem.Kind
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Provider = com.histmersion.api.media.MediaProvider.Id
-    val Provider: _root_.com.histmersion.api.media.MediaProvider.Id.type = _root_.com.histmersion.api.media.MediaProvider.Id
+    export com.histmersion.api.media.MediaProvider.{Id as Provider}
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1540,14 +1524,11 @@ object Api:
   )
 
   object MediaQuery:
-    type Provider = com.histmersion.api.media.MediaProvider.Id
-    val Provider: _root_.com.histmersion.api.media.MediaProvider.Id.type = _root_.com.histmersion.api.media.MediaProvider.Id
+    export com.histmersion.api.media.MediaProvider.{Id as Provider}
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Place = com.histmersion.api.catalogue.Place.Id
-    val Place: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
-    type Event = com.histmersion.api.catalogue.Event.Id
-    val Event: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
+    export com.histmersion.api.catalogue.Place.{Id as Place}
+    export com.histmersion.api.catalogue.Event.{Id as Event}
     type Q = Q.T
     object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T

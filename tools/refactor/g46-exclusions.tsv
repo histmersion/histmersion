@@ -1,0 +1,8 @@
+modules/api/src/main/scala/com/histmersion/api/automation/AgentScheduler.scala@1881	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/automation/AgentScheduler.scala@3838	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/automation/AgentScheduler.scala@6741	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala@12509	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/jobs/JobInfo.scala@2292	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/jobs/JobKindEntry.scala@772	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/jobs/JobKindEntry.scala@1353	compile error (round 1)
+modules/api/src/main/scala/com/histmersion/api/UiLabels.scala@591	compile error (round 1)

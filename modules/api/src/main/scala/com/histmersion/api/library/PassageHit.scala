@@ -15,5 +15,4 @@ object PassageHit:
   object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Heading = Heading.T
   object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = com.histmersion.api.library.Passage.Excerpt
-  val Text: _root_.com.histmersion.api.library.Passage.Excerpt.type = _root_.com.histmersion.api.library.Passage.Excerpt
+  export com.histmersion.api.library.Passage.{Excerpt as Text}

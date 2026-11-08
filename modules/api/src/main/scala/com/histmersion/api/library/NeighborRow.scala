@@ -16,5 +16,4 @@ final case class NeighborRow(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object NeighborRow:
-  type Direction = com.histmersion.api.library.ContradictionRow.Direction.Wire
-  val Direction: _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire.type = _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire
+  export com.histmersion.api.library.ContradictionRow.Direction.{Wire as Direction}

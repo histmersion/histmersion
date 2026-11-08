@@ -50,8 +50,7 @@ object Note:
   type Text = Text.T
 
   object Text extends RefinedType[String, Pure]:
-    type TidyResultPart1 = com.histmersion.api.personal.Note.Problem
-    val TidyResultPart1: _root_.com.histmersion.api.personal.Note.Problem.type = _root_.com.histmersion.api.personal.Note.Problem
+    export com.histmersion.api.personal.Note.{Problem as TidyResultPart1}
 
     val MaxChars = 50000
 

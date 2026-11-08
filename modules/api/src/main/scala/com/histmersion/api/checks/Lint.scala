@@ -47,10 +47,7 @@ object Lint:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object LintRuleReport:
-    type Rule = com.histmersion.api.checks.Lint.Rule.Name
-    val Rule: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
-    type Description = com.histmersion.api.checks.Lint.Rule.Description
-    val Description: _root_.com.histmersion.api.checks.Lint.Rule.Description.type = _root_.com.histmersion.api.checks.Lint.Rule.Description
+    export com.histmersion.api.checks.Lint.Rule.{Name as Rule, Description}
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

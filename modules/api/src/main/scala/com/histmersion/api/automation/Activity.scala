@@ -93,8 +93,7 @@ object Activity:
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Key = Key.T
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = com.histmersion.api.automation.Activity.EntryKind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Activity.EntryKind.Wire.type = _root_.com.histmersion.api.automation.Activity.EntryKind.Wire
+    export com.histmersion.api.automation.Activity.EntryKind.{Wire as Kind}
     type At = At.T
     object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type State = State.T
@@ -107,14 +106,11 @@ object Activity:
     object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type EndedAt = EndedAt.T
     object EndedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Job = com.histmersion.api.SpatialHierarchyResult.Job.Id
-    val Job: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
+    export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
     type By = By.T
     object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Article = com.histmersion.api.research.ReviewGoal.Slug
-    val Article: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
-    type QueueItem = com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber
-    val QueueItem: _root_.com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber.type = _root_.com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber
+    export com.histmersion.api.research.ReviewGoal.{Slug as Article}
+    export com.histmersion.api.automation.Goal.Plans.GoalLink.{QueueNumber as QueueItem}
     type QueueList = QueueList.T
     object QueueList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Approval = Approval.T
@@ -141,8 +137,7 @@ object Activity:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Page:
-    type Next = com.histmersion.api.Paging.Cursor
-    val Next: _root_.com.histmersion.api.Paging.Cursor.type = _root_.com.histmersion.api.Paging.Cursor
+    export com.histmersion.api.Paging.{Cursor as Next}
 
 
   val MaxLimit = 200

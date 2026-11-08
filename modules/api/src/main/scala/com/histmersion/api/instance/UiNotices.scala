@@ -83,8 +83,7 @@ object UiNotices:
   final case class SeenMark(at: Option[SeenMark.At] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object SeenMark:
-    type At = com.histmersion.api.instance.UiNotices.Counter.Seen
-    val At: _root_.com.histmersion.api.instance.UiNotices.Counter.Seen.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
+    export com.histmersion.api.instance.UiNotices.Counter.{Seen as At}
 
 
   def fresh(latest: Option[com.histmersion.api.instance.UiNotices.Counter.Latest], seen: Option[com.histmersion.api.instance.UiNotices.Counter.Seen]): Boolean =

@@ -17,13 +17,6 @@ final case class ConvertedImage(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ConvertedImage:
-  type Name = com.histmersion.api.exchange.Bundle.Asset.FileName
-  val Name: _root_.com.histmersion.api.exchange.Bundle.Asset.FileName.type = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
-  type Mime = com.histmersion.api.exchange.Bundle.Asset.MimeText
-  val Mime: _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText.type = _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText
-  type Base64 = com.histmersion.api.media.AssetInput.Base64
-  val Base64: _root_.com.histmersion.api.media.AssetInput.Base64.type = _root_.com.histmersion.api.media.AssetInput.Base64
-  type Width = com.histmersion.api.media.ImageSize.Width
-  val Width: _root_.com.histmersion.api.media.ImageSize.Width.type = _root_.com.histmersion.api.media.ImageSize.Width
-  type Height = com.histmersion.api.media.ImageSize.Height
-  val Height: _root_.com.histmersion.api.media.ImageSize.Height.type = _root_.com.histmersion.api.media.ImageSize.Height
+  export com.histmersion.api.exchange.Bundle.Asset.{FileName as Name, MimeText as Mime}
+  export com.histmersion.api.media.AssetInput.Base64
+  export com.histmersion.api.media.ImageSize.{Width, Height}

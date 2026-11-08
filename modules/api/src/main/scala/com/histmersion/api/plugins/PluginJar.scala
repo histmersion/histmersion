@@ -10,5 +10,4 @@ final case class PluginJar(file: PluginJar.File, sha256: com.histmersion.api.Sha
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object PluginJar:
-  type File = com.histmersion.api.automation.ProviderKind.Plugin.FilePath
-  val File: _root_.com.histmersion.api.automation.ProviderKind.Plugin.FilePath.type = _root_.com.histmersion.api.automation.ProviderKind.Plugin.FilePath
+  export com.histmersion.api.automation.ProviderKind.Plugin.{FilePath as File}

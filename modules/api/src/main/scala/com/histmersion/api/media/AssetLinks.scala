@@ -24,16 +24,11 @@ object AssetLinks:
   val NormalizeBodyTitle: _root_.com.histmersion.api.media.AssetLinks.Title.type = _root_.com.histmersion.api.media.AssetLinks.Title
   type ToWebMd = _root_.com.histmersion.api.media.AssetLinks.Body
   val ToWebMd: _root_.com.histmersion.api.media.AssetLinks.Body.type = _root_.com.histmersion.api.media.AssetLinks.Body
-  type ToWebCitekey = _root_.com.histmersion.api.library.Citekey
-  val ToWebCitekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+  export com.histmersion.api.library.{Citekey as ToWebCitekey}
   type ToAbsoluteMd = _root_.com.histmersion.api.media.AssetLinks.Body
   val ToAbsoluteMd: _root_.com.histmersion.api.media.AssetLinks.Body.type = _root_.com.histmersion.api.media.AssetLinks.Body
-  type ToAbsoluteCitekey = _root_.com.histmersion.api.library.Citekey
-  val ToAbsoluteCitekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
-  type UrlCitekey = _root_.com.histmersion.api.library.Citekey
-  val UrlCitekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
-  type UrlName = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
-  val UrlName: _root_.com.histmersion.api.exchange.Bundle.Asset.FileName.type = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
+  export com.histmersion.api.library.{Citekey as ToAbsoluteCitekey, Citekey as UrlCitekey}
+  export com.histmersion.api.exchange.Bundle.Asset.{FileName as UrlName}
 
   private val ImageLink = """!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(\s+"[^"]*")?\s*\)""".r
 

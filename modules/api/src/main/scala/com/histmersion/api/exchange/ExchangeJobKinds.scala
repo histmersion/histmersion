@@ -9,8 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
   */
 object ExchangeJobKinds:
   type PlanHash = PlanHashValue
-  type PlanHashValue = com.histmersion.api.exchange.MergePlan.PlanHash
-  val PlanHashValue: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
+  export com.histmersion.api.exchange.MergePlan.{PlanHash as PlanHashValue}
 
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),

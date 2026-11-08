@@ -755,8 +755,7 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ManagerCreate:
-    type Kind = com.histmersion.api.automation.Manager.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Manager.Kind.Wire.type = _root_.com.histmersion.api.automation.Manager.Kind.Wire
+    export com.histmersion.api.automation.Manager.Kind.{Wire as Kind}
     type Paused = Paused.T
     object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Cron = Cron.T
@@ -777,8 +776,7 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object EnqueueRequest:
-    type Kind = com.histmersion.api.automation.Managers.EnqueueKind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire.type = _root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire
+    export com.histmersion.api.automation.Managers.EnqueueKind.{Wire as Kind}
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Priority = Priority.T

@@ -15,5 +15,4 @@ final case class GraphNode(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object GraphNode:
-  type Depth = com.histmersion.api.library.Source.Graph.DepthCount
-  val Depth: _root_.com.histmersion.api.library.Source.Graph.DepthCount.type = _root_.com.histmersion.api.library.Source.Graph.DepthCount
+  export com.histmersion.api.library.Source.Graph.{DepthCount as Depth}

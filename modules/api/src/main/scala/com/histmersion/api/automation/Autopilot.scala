@@ -25,8 +25,7 @@ object Autopilot:
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type State = com.histmersion.api.automation.ItemStatus.Wire
-    val State: _root_.com.histmersion.api.automation.ItemStatus.Wire.type = _root_.com.histmersion.api.automation.ItemStatus.Wire
+    export com.histmersion.api.automation.ItemStatus.{Wire as State}
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -48,14 +47,11 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object GoalProgress:
-    type Slug = com.histmersion.api.research.ReviewGoal.Slug
-    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
-    type Title = com.histmersion.api.automation.Goal.Title
-    val Title: _root_.com.histmersion.api.automation.Goal.Title.type = _root_.com.histmersion.api.automation.Goal.Title
+    export com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.automation.Goal.Title
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Parent = com.histmersion.api.research.ReviewGoal.Slug
-    val Parent: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.research.ReviewGoal.{Slug as Parent}
     type Sources = Sources.T
     object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Articles = Articles.T
@@ -77,10 +73,8 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ApprovalRule:
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
-    type Mode = com.histmersion.api.automation.Approval.Mode.Wire
-    val Mode: _root_.com.histmersion.api.automation.Approval.Mode.Wire.type = _root_.com.histmersion.api.automation.Approval.Mode.Wire
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
+    export com.histmersion.api.automation.Approval.Mode.{Wire as Mode}
     type Cap = Cap.T
     object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -102,10 +96,8 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object FocusGoal:
-    type Slug = com.histmersion.api.research.ReviewGoal.Slug
-    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
-    type Title = com.histmersion.api.automation.Goal.Title
-    val Title: _root_.com.histmersion.api.automation.Goal.Title.type = _root_.com.histmersion.api.automation.Goal.Title
+    export com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.automation.Goal.Title
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Stage = Stage.T
@@ -133,8 +125,7 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object FocusWaiting:
-    type Slug = com.histmersion.api.research.ReviewGoal.Slug
-    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.research.ReviewGoal.Slug
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T

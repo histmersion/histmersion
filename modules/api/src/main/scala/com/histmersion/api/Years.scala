@@ -22,8 +22,7 @@ object Years:
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type ShiftH = _root_.com.histmersion.api.catalogue.Year
-  val ShiftH: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.{Year as ShiftH}
   type NoYearZero = NoYearZeroValue
   type NoYearZeroValue = com.histmersion.api.Years.Problem
   val NoYearZeroValue: _root_.com.histmersion.api.Years.Problem.type = _root_.com.histmersion.api.Years.Problem

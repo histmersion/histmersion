@@ -34,8 +34,7 @@ object Critiques:
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = com.histmersion.api.text.WikiLinks.Body
-    val Text: _root_.com.histmersion.api.text.WikiLinks.Body.type = _root_.com.histmersion.api.text.WikiLinks.Body
+    export com.histmersion.api.text.WikiLinks.{Body as Text}
 
   def units(body: com.histmersion.api.research.Article.Body): List[Block] =
     val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector

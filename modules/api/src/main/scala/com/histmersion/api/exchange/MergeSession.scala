@@ -13,7 +13,6 @@ final case class MergeSession(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MergeSession:
-  type Bundle = com.histmersion.api.exchange.Bundle.Name
-  val Bundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name
+  export com.histmersion.api.exchange.Bundle.{Name as Bundle}
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

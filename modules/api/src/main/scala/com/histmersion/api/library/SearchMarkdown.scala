@@ -5,8 +5,7 @@ import com.histmersion.api.Markdown.*
 object SearchMarkdown:
 
   /** `ts_headline` marks hits with `**` already. */
-  type TreeUnit = _root_.com.histmersion.api.library.Histogram.Unit
-  val TreeUnit: _root_.com.histmersion.api.library.Histogram.Unit.type = _root_.com.histmersion.api.library.Histogram.Unit
+  export com.histmersion.api.library.Histogram.{Unit as TreeUnit}
 
   private def yearLabel(v: Long): String = fmtYear(com.histmersion.api.catalogue.Year(v))
 
@@ -141,12 +140,7 @@ object SearchMarkdown:
   final case class CollapsedBucket(start: CollapsedBucket.Start, end: CollapsedBucket.End, count: CollapsedBucket.Count, merged: CollapsedBucket.Merged)
 
   object CollapsedBucket:
-    type Start = com.histmersion.api.library.TimeBucket.Start
-    val Start: _root_.com.histmersion.api.library.TimeBucket.Start.type = _root_.com.histmersion.api.library.TimeBucket.Start
-    type End = com.histmersion.api.library.TimeBucket.End
-    val End: _root_.com.histmersion.api.library.TimeBucket.End.type = _root_.com.histmersion.api.library.TimeBucket.End
-    type Count = com.histmersion.api.library.TimeBucket.Count
-    val Count: _root_.com.histmersion.api.library.TimeBucket.Count.type = _root_.com.histmersion.api.library.TimeBucket.Count
+    export com.histmersion.api.library.TimeBucket.{Start, End, Count}
     type Merged = Merged.T
     object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

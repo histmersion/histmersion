@@ -12,8 +12,7 @@ object Write:
   type ListItem = ListItem.T
   object ListItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type InvalidMessage = _root_.com.histmersion.api.Api.Error.Problem
-  val InvalidMessage: _root_.com.histmersion.api.Api.Error.Problem.type = _root_.com.histmersion.api.Api.Error.Problem
+  export com.histmersion.api.Api.Error.{Problem as InvalidMessage}
 
   private[api] def blankToNone(v: Option[String]): Option[String] = (v.map((_).trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
 

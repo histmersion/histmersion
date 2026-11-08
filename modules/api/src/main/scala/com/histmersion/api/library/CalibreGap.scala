@@ -23,8 +23,7 @@ final case class CalibreGap(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CalibreGap:
-  type Title = com.histmersion.api.library.Title
-  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
+  export com.histmersion.api.library.Title
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Summary = Summary.T

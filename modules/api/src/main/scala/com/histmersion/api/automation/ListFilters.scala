@@ -91,17 +91,13 @@ object ListFilters:
         n.decidedBy.map(d => entry("decided-by", Some(d.value)))
 
   object ApprovalFilter:
-    type OptionsResultPart2 = com.histmersion.api.automation.ListFilters.OptionLabel
-    val OptionsResultPart2: _root_.com.histmersion.api.automation.ListFilters.OptionLabel.type = _root_.com.histmersion.api.automation.ListFilters.OptionLabel
+    export com.histmersion.api.automation.ListFilters.{OptionLabel as OptionsResultPart2}
 
-    type State = com.histmersion.api.automation.Approval.State.Wire
-    val State: _root_.com.histmersion.api.automation.Approval.State.Wire.type = _root_.com.histmersion.api.automation.Approval.State.Wire
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
+    export com.histmersion.api.automation.Approval.State.{Wire as State}
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
     object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DecidedBy = com.histmersion.api.automation.Approval.DecidedBy.Wire
-    val DecidedBy: _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire.type = _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire
+    export com.histmersion.api.automation.Approval.DecidedBy.{Wire as DecidedBy}
 
   final case class RunFilter(
       status: List[RunFilter.Status] = Nil,
@@ -138,8 +134,7 @@ object ListFilters:
         n.origin.map(v => entry("origin", Some(v.value))) ++ List(entry("since", n.since.map(_.value)), entry("until", n.until.map(_.value)), entry("subject", n.subject.map(_.value)))
 
   object RunFilter:
-    type OptionsResultPart2 = com.histmersion.api.automation.ListFilters.OptionLabel
-    val OptionsResultPart2: _root_.com.histmersion.api.automation.ListFilters.OptionLabel.type = _root_.com.histmersion.api.automation.ListFilters.OptionLabel
+    export com.histmersion.api.automation.ListFilters.{OptionLabel as OptionsResultPart2}
 
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -151,8 +146,7 @@ object ListFilters:
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Provider = Provider.T
     object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Origin = com.histmersion.api.automation.Agents.Origin.Wire
-    val Origin: _root_.com.histmersion.api.automation.Agents.Origin.Wire.type = _root_.com.histmersion.api.automation.Agents.Origin.Wire
+    export com.histmersion.api.automation.Agents.Origin.{Wire as Origin}
     type Since = Since.T
     object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Until = Until.T
@@ -185,11 +179,9 @@ object ListFilters:
       )
 
   object JobFilter:
-    type OptionsResultPart2 = com.histmersion.api.automation.ListFilters.OptionLabel
-    val OptionsResultPart2: _root_.com.histmersion.api.automation.ListFilters.OptionLabel.type = _root_.com.histmersion.api.automation.ListFilters.OptionLabel
+    export com.histmersion.api.automation.ListFilters.{OptionLabel as OptionsResultPart2}
 
-    type Status = com.histmersion.api.jobs.JobState.Wire
-    val Status: _root_.com.histmersion.api.jobs.JobState.Wire.type = _root_.com.histmersion.api.jobs.JobState.Wire
+    export com.histmersion.api.jobs.JobState.{Wire as Status}
     type Kind = com.histmersion.api.jobs.JobKinds.Wire
     val Kind: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
     type Since = Since.T

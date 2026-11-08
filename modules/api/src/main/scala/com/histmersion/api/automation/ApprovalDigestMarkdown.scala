@@ -3,8 +3,7 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ApprovalDigestMarkdown:
-  type DeciderDecidedBy = _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire
-  val DeciderDecidedBy: _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire.type = _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire
+  export com.histmersion.api.automation.Approval.DecidedBy.{Wire as DeciderDecidedBy}
 
   import ApprovalDigest.*
 

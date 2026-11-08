@@ -29,8 +29,7 @@ object PluginSet:
 
   type Digest = Digest.T
   object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiVersion = com.histmersion.api.plugins.PluginDescription.SpiVersion
-  val SpiVersion: _root_.com.histmersion.api.plugins.PluginDescription.SpiVersion.type = _root_.com.histmersion.api.plugins.PluginDescription.SpiVersion
+  export com.histmersion.api.plugins.PluginDescription.SpiVersion
   type Mode = Mode.T
   object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kit = Kit.T

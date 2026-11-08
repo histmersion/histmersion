@@ -14,8 +14,7 @@ final case class ConvertedDoc(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ConvertedDoc:
-  type Markdown = com.histmersion.api.library.Source.OcrMarkdown
-  val Markdown: _root_.com.histmersion.api.library.Source.OcrMarkdown.type = _root_.com.histmersion.api.library.Source.OcrMarkdown
+  export com.histmersion.api.library.Source.{OcrMarkdown as Markdown}
   type Pages = Pages.T
   object Pages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Filename = Filename.T

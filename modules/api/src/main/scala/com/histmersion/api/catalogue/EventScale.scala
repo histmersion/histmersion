@@ -12,10 +12,7 @@ object EventScale:
   object LocalKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegionalKinds = RegionalKinds.T
   object RegionalKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfKindKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
-  val OfKindKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
-  type EffectiveKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
-  val EffectiveKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  export com.histmersion.api.catalogue.EventSummary.{Kind as OfKindKind, Kind as EffectiveKind}
 
   val Local = "local"
   val Regional = "regional"

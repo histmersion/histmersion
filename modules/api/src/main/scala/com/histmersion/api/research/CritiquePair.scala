@@ -29,7 +29,5 @@ object CritiquePair:
 
   type Kinds = Kinds.T
   object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reason = com.histmersion.api.research.CritiqueReason.Reason
-  val Reason: _root_.com.histmersion.api.research.CritiqueReason.Reason.type = _root_.com.histmersion.api.research.CritiqueReason.Reason
-  type ReasonBy = com.histmersion.api.automation.Activity.Actor
-  val ReasonBy: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
+  export com.histmersion.api.research.CritiqueReason.Reason
+  export com.histmersion.api.automation.Activity.{Actor as ReasonBy}

@@ -16,7 +16,6 @@ object MergeResolution:
   type Issue = Issue.T
   object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type Decision = com.histmersion.api.exchange.MergeDecision.Kind.Wire
-  val Decision: _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire.type = _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire
+  export com.histmersion.api.exchange.MergeDecision.Kind.{Wire as Decision}
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

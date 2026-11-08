@@ -19,19 +19,12 @@ final case class PluginStatus(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object PluginStatus:
-  type Id = com.histmersion.api.plugins.PluginDescription.Id
-  val Id: _root_.com.histmersion.api.plugins.PluginDescription.Id.type = _root_.com.histmersion.api.plugins.PluginDescription.Id
-  type Version = com.histmersion.api.plugins.PluginDescription.Version
-  val Version: _root_.com.histmersion.api.plugins.PluginDescription.Version.type = _root_.com.histmersion.api.plugins.PluginDescription.Version
-  type SpiVersion = com.histmersion.api.plugins.PluginDescription.SpiVersion
-  val SpiVersion: _root_.com.histmersion.api.plugins.PluginDescription.SpiVersion.type = _root_.com.histmersion.api.plugins.PluginDescription.SpiVersion
+  export com.histmersion.api.plugins.PluginDescription.{Id, Version, SpiVersion}
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type State = State.T
   object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provides = com.histmersion.api.plugins.PluginDescription.Provides
-  val Provides: _root_.com.histmersion.api.plugins.PluginDescription.Provides.type = _root_.com.histmersion.api.plugins.PluginDescription.Provides
+  export com.histmersion.api.plugins.PluginDescription.Provides
   type Warnings = Warnings.T
   object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Error = com.histmersion.api.plugins.PluginDescription.Error
-  val Error: _root_.com.histmersion.api.plugins.PluginDescription.Error.type = _root_.com.histmersion.api.plugins.PluginDescription.Error
+  export com.histmersion.api.plugins.PluginDescription.Error

@@ -31,14 +31,12 @@ object ApprovalDigest:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object KindGroup:
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Oldest = Oldest.T
     object Oldest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DecidedBy = com.histmersion.api.automation.Approval.DecidedBy.Wire
-    val DecidedBy: _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire.type = _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire
+    export com.histmersion.api.automation.Approval.DecidedBy.{Wire as DecidedBy}
     type Ids = Ids.T
     object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -81,14 +79,12 @@ object ApprovalDigest:
   object BulkDecide:
     type Decision = Decision.T
     object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
     object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Ids = Ids.T
     object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Note = com.histmersion.api.automation.Approval.Note
-    val Note: _root_.com.histmersion.api.automation.Approval.Note.type = _root_.com.histmersion.api.automation.Approval.Note
+    export com.histmersion.api.automation.Approval.Note
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
@@ -139,8 +135,7 @@ object ApprovalDigest:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
     object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)

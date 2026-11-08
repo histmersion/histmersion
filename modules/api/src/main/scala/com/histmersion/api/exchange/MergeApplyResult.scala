@@ -30,8 +30,7 @@ object MergeApplyResult:
 
   type Applied = Applied.T
   object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanHash = com.histmersion.api.exchange.MergePlan.PlanHash
-  val PlanHash: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
+  export com.histmersion.api.exchange.MergePlan.PlanHash
   type Backup = Backup.T
   object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Reviews = Reviews.T

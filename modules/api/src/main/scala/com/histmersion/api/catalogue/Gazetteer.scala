@@ -32,21 +32,18 @@ object Gazetteer:
 
 
   type ImportedSources = ImportedSourcesValue
-  type ImportedSourcesValue = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-  val ImportedSourcesValue: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
+  export com.histmersion.api.catalogue.Gazetteer.SourceInfo.{Key as ImportedSourcesValue}
   type DefaultOpenStartWindowYears = DefaultOpenStartWindowYearsValue
   type DefaultOpenStartWindowYearsValue = com.histmersion.api.catalogue.Gazetteer.OpenStartWindowYears
   val DefaultOpenStartWindowYearsValue: _root_.com.histmersion.api.catalogue.Gazetteer.OpenStartWindowYears.type = _root_.com.histmersion.api.catalogue.Gazetteer.OpenStartWindowYears
-  type ValiditySourceKey = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-  val ValiditySourceKey: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
+  export com.histmersion.api.catalogue.Gazetteer.SourceInfo.{Key as ValiditySourceKey}
   type ValidityWindowYears = ValidityWindowYears.T
   object ValidityWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
   type DefaultPointAreaKindsValue = com.histmersion.api.catalogue.Gazetteer.PointAreaKinds
   val DefaultPointAreaKindsValue: _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaKinds.type = _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaKinds
   type PointAreaSources = PointAreaSourcesValue
-  type PointAreaSourcesValue = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-  val PointAreaSourcesValue: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
+  export com.histmersion.api.catalogue.Gazetteer.SourceInfo.{Key as PointAreaSourcesValue}
   type FromFeatureDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
   val FromFeatureDataset: _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName.type = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
   type FromTsvRowDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
@@ -350,8 +347,7 @@ object Gazetteer:
   object Extract:
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type File = com.histmersion.api.catalogue.Gazetteer.SourceInfo.File
-    val File: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.File.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.File
+    export com.histmersion.api.catalogue.Gazetteer.SourceInfo.File
     type Sha256 = Sha256.T
     object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Bytes = Bytes.T
@@ -360,10 +356,7 @@ object Gazetteer:
     object Features extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Version = Version.T
     object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title
-    val Title: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title
-    type Licence = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence
-    val Licence: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence
+    export com.histmersion.api.catalogue.Gazetteer.SourceInfo.{Title, Licence}
     type Attribution = Attribution.T
     object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Url = Url.T
@@ -454,10 +447,7 @@ object Gazetteer:
 
   object LoadCounts:
 
-    type Source = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-    val Source: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-    type Version = com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion
-    val Version: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion
+    export com.histmersion.api.catalogue.Gazetteer.SourceInfo.{Key as Source, ImportedVersion as Version}
     type Records = Records.T
     object Records extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Created = Created.T

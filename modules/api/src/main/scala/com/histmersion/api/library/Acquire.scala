@@ -65,8 +65,7 @@ object Acquire:
     List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   object Verdicts:
-    type Wire = com.histmersion.api.library.Assessment.Verdict
-    val Wire: _root_.com.histmersion.api.library.Assessment.Verdict.type = _root_.com.histmersion.api.library.Assessment.Verdict
+    export com.histmersion.api.library.Assessment.{Verdict as Wire}
 
     val Retracted: Wire = Wire("retracted")
     val Corrected: Wire = Wire("corrected")
@@ -252,12 +251,7 @@ object Acquire:
   final case class RetractionRow(doi: com.histmersion.api.library.Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
 
   object RetractionRow:
-    type Reason = com.histmersion.api.library.RetractionNotice.Reason
-    val Reason: _root_.com.histmersion.api.library.RetractionNotice.Reason.type = _root_.com.histmersion.api.library.RetractionNotice.Reason
-    type Date = com.histmersion.api.library.RetractionNotice.Date
-    val Date: _root_.com.histmersion.api.library.RetractionNotice.Date.type = _root_.com.histmersion.api.library.RetractionNotice.Date
-    type Nature = com.histmersion.api.library.RetractionNotice.Nature
-    val Nature: _root_.com.histmersion.api.library.RetractionNotice.Nature.type = _root_.com.histmersion.api.library.RetractionNotice.Nature
+    export com.histmersion.api.library.RetractionNotice.{Reason, Date, Nature}
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
@@ -421,8 +415,7 @@ object Acquire:
 
       type All = All.T
       object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type UpTo = com.histmersion.api.Plural.Count
-      val UpTo: _root_.com.histmersion.api.Plural.Count.type = _root_.com.histmersion.api.Plural.Count
+      export com.histmersion.api.Plural.{Count as UpTo}
       type Since = Since.T
       object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type By = By.T
@@ -479,8 +472,7 @@ object Acquire:
       object NextPass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Note = Note.T
       object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Job = com.histmersion.api.SpatialHierarchyResult.Job.Id
-      val Job: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
+      export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
 
 
     val Closed = "closed"
