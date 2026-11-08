@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 /** How a job's work keeps the generation (database, settings) the code that started it was on, when it runs on a thread
   * of its own: the composition root's hot graph pins it; without one, work runs as it is.

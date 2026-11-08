@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,14 +14,19 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.automation.{Agents, Goal}
 import com.histmersion.api.research.{ReviewGoal, ReviewState}
 import com.histmersion.api.research.Article
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** An article's review state and history over every surface: the badge on each `GET /api/articles` row (derived from
   * the review manager's item and the ledger counted in SQL), `GET /api/articles/{slug}/review` (the history from the
   * ledger, the goals linking the article, the approvals waiting), the `/article/{slug}` page and the `article_review`
   * MCP tool. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ArticleReviewHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
@@ -40,7 +46,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
   private val RunB = "zzrev-run-b"
 
   private def finding(id: Finding.Id, r: Reviewer, s: Severity, problem: Finding.Problem) =
-    Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), problem, com.histmersion.domain.ReviewArticle.Finding.Fix(""))
+    Finding(id, r, s, Finding.Kind("undefined-term"), Finding.Where("Background"), Finding.Quote(""), problem, Finding.Fix(""))
 
   private val ledger = Ledger(
     Ledger.Slug.applyUnsafe(Running),
@@ -48,18 +54,18 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
       Entry(
         finding(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Problem("a decorative citation")),
         Entry.Run.assume(RunA),
-        com.histmersion.domain.ReviewLedger.Entry.Round(1),
+        Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), Closure.Run.assume(RunA), com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
+        closed = Some(Closure(Closure.By("fixer"), Closure.Round(1), Closure.Run.assume(RunA), Closure.Note("the record supports the sentence")))
       ),
       Entry(
         finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
         Entry.Run.assume(RunA),
-        com.histmersion.domain.ReviewLedger.Entry.Round(1),
+        Entry.Round(1),
         Status.Fixed,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), Closure.Run.assume(RunA)))
+        closed = Some(Closure(Closure.By("cold-reader"), Closure.Round(2), Closure.Run.assume(RunA)))
       ),
-      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run.assume(RunB), com.histmersion.domain.ReviewLedger.Entry.Round(1))
+      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run.assume(RunB), Entry.Round(1))
     )
   )
 
@@ -76,7 +82,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
   private def fixtures(cfg: AppConfig): Unit =
     import com.augustnagro.magnum.*
     val ds = testPool(cfg.db)
-    com.histmersion.domain.research.workflows.ReviewLedgerFixtures.put(ds, ledger)
+    ReviewLedgerFixtures.put(ds, ledger)
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
             ($RunA, ${Agents.JobKind}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
@@ -94,9 +100,9 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
 
   test("review state on the list, the history over REST, the page and MCP; an article with none is not reviewed"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         clean(url, cfg)
@@ -130,7 +136,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         )
         assertEquals(r.rounds.head.startedAt, Some("2026-10-01T10:00:00Z"))
         assertEquals(r.rounds.head.findings.head.note, "the record supports the sentence")
-        assertEquals(r.goals, List(ReviewGoal(ReviewGoal.Slug(Goal), com.histmersion.api.research.ReviewGoal.Title("Zz review goal"), com.histmersion.api.research.ReviewGoal.Status("compiled"))))
+        assertEquals(r.goals, List(ReviewGoal(ReviewGoal.Slug(Goal), ReviewGoal.Title("Zz review goal"), ReviewGoal.Status("compiled"))))
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
         val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get

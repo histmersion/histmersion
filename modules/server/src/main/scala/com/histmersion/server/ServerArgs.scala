@@ -1,14 +1,18 @@
-package com.histmersion.server
+package com.histmersion
+package server
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object ServerArgs:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type Usage = UsageValue
   type UsageValue = UsageValue.T
-  object UsageValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UsageValue extends RefinedType[String, Pure]
 
-  val Usage: com.histmersion.server.ServerArgs.Usage =
+  val Usage: Usage =
     UsageValue("""usage: histmersion-server [--self-check | --help]
       |
       |  (no arguments)  run the server: config from reference.conf < histmersion.conf < the environment
@@ -19,7 +23,7 @@ object ServerArgs:
       |  --help, -h      this text""".stripMargin)
 
   /** Pure: the mode, or the usage error. */
-  def parse(args: List[String]): Either[com.histmersion.server.ServerArgs.Problem, ServerMode] =
+  def parse(args: List[String]): Either[Problem, ServerMode] =
     args match
       case Nil                   => Right(ServerMode.Serve)
       case List("--self-check")  => Right(ServerMode.SelfCheck)

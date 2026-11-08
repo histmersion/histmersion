@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.{Api, Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Place as ApiPlace}
@@ -40,7 +41,7 @@ object PlacesRoutes:
         places.search(
           q.map(t => PlaceService.SearchQ(t.value)),
           year(asOf),
-          limit.flatMap(l => com.histmersion.PageSize.option(l.value))
+          limit.flatMap(l => PageSize.option(l.value))
         )
       ),
       Api.placesGeo.serverLogic[Identity](q => places.shapes(q)),

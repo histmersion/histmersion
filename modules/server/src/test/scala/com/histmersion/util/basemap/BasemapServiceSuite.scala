@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -20,22 +21,26 @@ import com.histmersion.util.storage.Reservation
 import java.nio.file.{Files, Path}
 import com.histmersion.api.basemap.{Basemap, BasemapMarkdown, BaseMapSource}
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.util.jobs.Job
 
 /** The fetch JOB end to end, with a fake provider (a local archive behind [[BasemapFixtures.LocalRange]]) and a fake
   * disk: a dry run, a fetch that writes both layers, the free-space refusal, the provider's list of builds. Job rows
   * need a test database (gated on HISTMERSION_TEST_DB_URL).
   */
-class BasemapServiceSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class BasemapServiceSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private def await(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
+  private def await(id: SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
     val j = Transactor(ds)
-      .read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(id.value)))
+      .read(JobRepo.get(Job.Id.applyUnsafe(id.value)))
       .getOrElse(fail(s"no job $id"))
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
@@ -88,7 +93,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
   test("a dry run reads directories only and reports the sizes; nothing is written"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir)
-    val j = await(svc.fetch(Basemap.FetchQuery(dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     assert(j.progress.exists(p => p.value.contains("would download") && p.value.contains("20261019.pmtiles")), j.progress.toString)
     // the size of each zoom (#3760): a download ahead can stop at a cheaper zoom
@@ -125,29 +130,29 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(names.attribution.value.contains("Natural Earth"), names.attribution)
     // the Pindus, its name in the tile of zoom 5 that holds 21°E 40°N (it shows from zoom 6)
     val (nb, _, nenc, _, ncode) =
-      svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("labels"), com.histmersion.api.basemap.Basemap.Zoom(5), Basemap.tileX(com.histmersion.api.catalogue.Longitude(21), com.histmersion.api.basemap.Basemap.Zoom(5)), Basemap.tileY(com.histmersion.api.catalogue.Latitude(40), com.histmersion.api.basemap.Basemap.Zoom(5))).fold(e => fail(e.message.value), identity)
+      svc.tile(Basemap.Layer.Wire("labels"), Basemap.Zoom(5), Basemap.tileX(Longitude(21), Basemap.Zoom(5)), Basemap.tileY(Latitude(40), Basemap.Zoom(5))).fold(e => fail(e.message.value), identity)
     assertEquals((ncode.code, nenc), (200, Some("gzip")))
-    assertEquals(Mvt.kinds(plain(nb), com.histmersion.util.basemap.Mvt.LayerName("physical")), Right(List("range")))
-    assertEquals(Mvt.kinds(plain(nb), com.histmersion.util.basemap.Mvt.LayerName("rivers")), Right(List("river")))
+    assertEquals(Mvt.kinds(plain(nb), Mvt.LayerName("physical")), Right(List("range")))
+    assertEquals(Mvt.kinds(plain(nb), Mvt.LayerName("rivers")), Right(List("river")))
     assertEquals(st.layers.head.source, Some("20261019.pmtiles"))
     assert(!Files.exists(dir.resolve(".vector.part")), "the parts are removed once assembled")
-    val (bytes, mime, enc, _, code) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(9), com.histmersion.api.basemap.Basemap.Tile.Row(6)).fold(e => fail(e.message.value), identity)
+    val (bytes, mime, enc, _, code) = svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6)).fold(e => fail(e.message.value), identity)
     assertEquals((mime, enc, code.code), ("application/vnd.mapbox-vector-tile", Some("gzip"), 200))
     val layers = Mvt.layerNames(plain(bytes)).toOption.get
     assert(!layers.contains(Mvt.LayerName("roads")) && !layers.contains(Mvt.LayerName("places")), layers.toString)
     // outside the region: read on demand (#3760; switched off it is a 204 — the on-demand test)
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).map(_._5.code), Right(200))
+    assertEquals(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).map(_._5.code), Right(200))
     // a subset: only the layers and geometries a style draws — the sea's name without the polygons
     val (sb, _, senc, _, scode) =
-      svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(9), com.histmersion.api.basemap.Basemap.Tile.Row(6), Some(com.histmersion.api.basemap.Basemap.Subset.Spec("water:p,earth"))).fold(e => fail(e.message.value), identity)
+      svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6), Some(Basemap.Subset.Spec("water:p,earth"))).fold(e => fail(e.message.value), identity)
     assertEquals((scode.code, senc), (200, Some("gzip")))
     val st4 = plain(sb)
     assertEquals(Mvt.layerNames(st4), Right(List("earth", "water")))
-    assertEquals(Mvt.kinds(st4, com.histmersion.util.basemap.Mvt.LayerName("water")), Right(List("sea")))
+    assertEquals(Mvt.kinds(st4, Mvt.LayerName("water")), Right(List("sea")))
     assert(sb.value.length < bytes.value.length, s"${sb.value.length} < ${bytes.value.length}")
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(9), com.histmersion.api.basemap.Basemap.Tile.Row(6), Some(com.histmersion.api.basemap.Basemap.Subset.Spec("roads"))).map(_._5.code), Right(204), "nothing left: no content")
-    assert(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(9), com.histmersion.api.basemap.Basemap.Tile.Row(6), Some(com.histmersion.api.basemap.Basemap.Subset.Spec("water:q"))).isLeft)
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("terrain"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(4), com.histmersion.api.basemap.Basemap.Tile.Row(3), Some(com.histmersion.api.basemap.Basemap.Subset.Spec("water"))).map(_._3), Right(None), "an image is never cut")
+    assertEquals(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6), Some(Basemap.Subset.Spec("roads"))).map(_._5.code), Right(204), "nothing left: no content")
+    assert(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6), Some(Basemap.Subset.Spec("water:q"))).isLeft)
+    assertEquals(svc.tile(Basemap.Layer.Wire("terrain"), Basemap.Zoom(3), Basemap.Tile.Column(4), Basemap.Tile.Row(3), Some(Basemap.Subset.Spec("water"))).map(_._3), Right(None), "an image is never cut")
     val gone = svc.remove(Basemap.RemoveQuery()).fold(e => fail(e.message.value), identity)
     // the four layers, and the map cache the tile outside the region filled
     assertEquals(
@@ -159,7 +164,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
   test("an extract without the names: the status says a fetch of the labels adds them, and that fetch adds only them"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir)
-    assert(await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
     val before = svc.status
     // the names' hint, beside Readable's (the default download leaves its roads, places and borders out)
     assertEquals(before.hints.size, 2, before.hints.toString)
@@ -167,10 +172,10 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val readable = before.hints.filter(_.value.startsWith("Readable needs"))
     assertEquals(readable.size, 1, before.hints.toString)
     val downloads = v.downloads.get
-    val dry = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("labels"), dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
+    val dry = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels"), dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
     assert(dry.progress.exists(_.value.contains("would download 2 files")), dry.progress.toString)
     assert(!Files.exists(dir.resolve("labels.pmtiles")))
-    val j = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("labels"))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels"))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     assert(j.progress.exists(_.value.contains("labels (Natural Earth): 2 names in")), j.progress.toString)
     assertEquals(v.downloads.get, downloads, "the vector extract is not downloaded again")
@@ -186,12 +191,12 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val old = svc.status
     assert(old.layers.head.kept.exists(_.value.contains("before the drop list")), old.layers.head.toString)
     assert(old.hints.exists(_.value.contains("histmersion basemap fetch --layer vector")), old.hints.toString)
-    val j = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"), keepAll = com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll(true))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     val st = svc.status
     assertEquals(st.layers.head.kept, Some("everything (unfiltered)"))
     assert(!st.hints.exists(_.value.contains("--layer vector")), st.hints.toString)
-    val (bytes, _, _, _, _) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), com.histmersion.api.basemap.Basemap.Tile.Column(9), com.histmersion.api.basemap.Basemap.Tile.Row(6)).fold(e => fail(e.message.value), identity)
+    val (bytes, _, _, _, _) = svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6)).fold(e => fail(e.message.value), identity)
     assert(Mvt.layerNames(plain(bytes)).toOption.get.contains(Mvt.LayerName("roads")))
 
   test(
@@ -204,32 +209,32 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       Nil,
       "nothing downloaded: nothing said to be missing (the whole map is)"
     )
-    assert(await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
     val st = svc.status
     assertEquals(st.layers.head.dropped, List("boundaries", "buildings", "places", "roads", "transit"))
-    assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
-    assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("physical")), Nil, "Physical is whole with the default download")
+    assertEquals(st.missing(Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
+    assertEquals(st.missing(Basemap.StyleState.Id("physical")), Nil, "Physical is whole with the default download")
     val hint = st.hints.find(_.value.contains("--keep-all")).map(_.value).getOrElse(fail(st.hints.toString))
     assert(hint.startsWith("Readable needs boundaries, places and roads"), hint)
     assert(hint.contains("histmersion basemap fetch --layer vector --keep-all"), hint)
-    assertEquals(BaseMapSource.resolve(com.histmersion.api.basemap.BaseMapSource.Wire("auto"), st), "local", "auto: Physical can be drawn whole")
+    assertEquals(BaseMapSource.resolve(BaseMapSource.Wire("auto"), st), "local", "auto: Physical can be drawn whole")
     assert(
       BasemapMarkdown.status(st).contains("Readable (lacks boundaries, places, roads)"),
       BasemapMarkdown.status(st)
     )
     assert(
-      await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"), keepAll = com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll(true))).fold(e => fail(e.message.value), _.id)).succeeded
+      await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))).fold(e => fail(e.message.value), _.id)).succeeded
     )
     val all = svc.status
     assertEquals((all.layers.head.dropped, all.styles.flatMap(_.missing)), (Nil, Nil))
     assert(!all.hints.exists(_.value.contains("--keep-all")), all.hints.toString)
-    assertEquals(BaseMapSource.resolve(com.histmersion.api.basemap.BaseMapSource.Wire("auto"), all), "local")
-    assertEquals(BaseMapSource.resolve(com.histmersion.api.basemap.BaseMapSource.Wire("online"), all), "online")
+    assertEquals(BaseMapSource.resolve(BaseMapSource.Wire("auto"), all), "local")
+    assertEquals(BaseMapSource.resolve(BaseMapSource.Wire("online"), all), "online")
 
   test("refused when the disk would be left with less than basemap.min-free-gb"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir, free = ByteCount(1000))
-    val j = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id))
     assert(!j.succeeded)
     assert(j.error.exists(e => e.value.contains("refused") && e.value.contains("min-free-gb")), j.error.toString)
     assertEquals(v.downloads.get, 0)
@@ -237,14 +242,14 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
   test("the relief deeper than the extract: a focus region kept apart, the rest read on demand and cached; rm of each"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, _, t) = service(dir)
-    assert(await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("terrain"))).fold(e => fail(e.message.value), _.id)).succeeded)
     val base = svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
     assertEquals((base.maxZoom, base.deepest, base.onDemand.map(_.tiles)), (Some(3), Some(5), Some(0L)))
     // a focus region (named in the config): zooms 4–5 only, beside the extract, which stays as it was
     val dry =
-      await(svc.fetch(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")), dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
+      await(svc.fetch(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")), dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
     assert(dry.progress.exists(p => p.value.contains("focus 'crete'") && p.value.contains("would download")), dry.progress.toString)
-    val j = await(svc.fetch(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     val st = svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
     assertEquals(st.maxZoom, Some(3), "the extract is not replaced")
@@ -252,23 +257,23 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     // a tile of the focus region: from its archive, the provider not asked
     val asked = t.requests.get
     val (fb, fmime, _, _, fcode) =
-      svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("terrain"), com.histmersion.api.basemap.Basemap.Zoom(5), Basemap.tileX(Longitude(24.5), com.histmersion.api.basemap.Basemap.Zoom(5)), Basemap.tileY(Latitude(35.2), com.histmersion.api.basemap.Basemap.Zoom(5))).fold(e => fail(e.message.value), identity)
+      svc.tile(Basemap.Layer.Wire("terrain"), Basemap.Zoom(5), Basemap.tileX(Longitude(24.5), Basemap.Zoom(5)), Basemap.tileY(Latitude(35.2), Basemap.Zoom(5))).fold(e => fail(e.message.value), identity)
     assertEquals(
       (fcode.code, fmime, String(fb.value)),
-      (200, "image/webp", s"RIFF5/${Basemap.tileX(Longitude(24.5), com.histmersion.api.basemap.Basemap.Zoom(5))}/${Basemap.tileY(Latitude(35.2), com.histmersion.api.basemap.Basemap.Zoom(5))}")
+      (200, "image/webp", s"RIFF5/${Basemap.tileX(Longitude(24.5), Basemap.Zoom(5))}/${Basemap.tileY(Latitude(35.2), Basemap.Zoom(5))}")
     )
     assertEquals(t.requests.get, asked)
     // elsewhere at zoom 5: read now from the provider, then cached
-    val (ob, _, _, _, ocode) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("terrain"), com.histmersion.api.basemap.Basemap.Zoom(5), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).fold(e => fail(e.message.value), identity)
+    val (ob, _, _, _, ocode) = svc.tile(Basemap.Layer.Wire("terrain"), Basemap.Zoom(5), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).fold(e => fail(e.message.value), identity)
     assertEquals((ocode.code, String(ob.value)), (200, "RIFF5/0/0"))
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.onDemand.map(_.tiles), Some(1L))
     // deeper than on-demand goes: none
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("terrain"), com.histmersion.api.basemap.Basemap.Zoom(6), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).map(_._5.code), Right(204))
+    assertEquals(svc.tile(Basemap.Layer.Wire("terrain"), Basemap.Zoom(6), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).map(_._5.code), Right(204))
     // a regional relief fetch deeper than the extract becomes a focus region of its own
     assert(
       await(
         svc
-          .fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(4)), bbox = Some(com.histmersion.api.BBox.Text("22.5,37.4,23.2,37.9"))))
+          .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(Basemap.Focus.MaxZoom(4)), bbox = Some(BBox.Text("22.5,37.4,23.2,37.9"))))
           .fold(e => fail(e.message.value), _.id)
       ).succeeded
     )
@@ -277,35 +282,35 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       List("bbox-22p5-37p4-23p2-37p9", "crete")
     )
     assert(
-      svc.fetch(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")), terrainMaxZoom = Some(com.histmersion.api.basemap.Basemap.FetchQuery.TerrainMaxZoom(3)))).isLeft,
+      svc.fetch(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")), terrainMaxZoom = Some(Basemap.FetchQuery.TerrainMaxZoom(3)))).isLeft,
       "not deeper than the extract"
     )
-    val f = svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")))).fold(e => fail(e.message.value), identity)
+    val f = svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete")))).fold(e => fail(e.message.value), identity)
     assertEquals(f.removed.map(r => java.nio.file.Path.of(r.value).getFileName.toString), List("crete.pmtiles"))
-    val c = svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), cache = com.histmersion.api.basemap.Basemap.RemoveQuery.Cache(true))).fold(e => fail(e.message.value), identity)
+    val c = svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true))).fold(e => fail(e.message.value), identity)
     assertEquals(c.removed.size, 1)
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.onDemand.map(_.tiles), Some(0L))
     assert(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.present.value, "the extract stays")
-    assert(svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("nowhere")))).isLeft)
+    assert(svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("nowhere")))).isLeft)
 
   test(
     "the sea floor: one GET a tile of the region, those the bucket has kept; a status entry, its tiles served; resumed, not read again"
   ):
     val dir = Files.createTempDirectory("basemap")
     val (svc, _, _) = service(dir)
-    val dry = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("bathymetry"), dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
+    val dry = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
     assert(dry.progress.exists(_.value.contains("bathymetry (zoom 0–3): would download")), dry.progress.toString)
     val before = BasemapServiceSuite.seaGets.get
-    val j = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     val asked = BasemapServiceSuite.seaGets.get - before
-    assertEquals(asked.toLong, Basemap.tileCount(BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(35), com.histmersion.api.catalogue.Longitude(29), com.histmersion.api.catalogue.Latitude(41)), com.histmersion.api.basemap.Basemap.Zoom(0), com.histmersion.api.basemap.Basemap.Zoom(3)))
+    assertEquals(asked.toLong, Basemap.tileCount(BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41)), Basemap.Zoom(0), Basemap.Zoom(3)))
     val sea = svc.status.layers.find(_.layer == Basemap.Layer.Wire("bathymetry")).get
     assertEquals((sea.present, sea.maxZoom, sea.tileType), (true, Some(3), Some("image/png")))
     assert(sea.attribution.value.contains("ETOPO1"), sea.attribution)
-    val (b, mime, _, _, code) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(4), com.histmersion.api.basemap.Basemap.Tile.Row(3)).fold(e => fail(e.message.value), identity)
+    val (b, mime, _, _, code) = svc.tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(4), Basemap.Tile.Row(3)).fold(e => fail(e.message.value), identity)
     assertEquals((code.code, mime, String(b.value)), (200, "image/png", "PNG3/4/3"))
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), com.histmersion.api.basemap.Basemap.Zoom(0), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).map(_._5.code), Right(204), "the bucket had none")
+    assertEquals(svc.tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(0), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).map(_._5.code), Right(204), "the bucket had none")
     assert(!Files.exists(dir.resolve(".bathymetry.part")), "the parts are removed once written")
 
   test(
@@ -317,7 +322,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     Files.write(tif, GeoTiffSuite.tiff(PixelCount(360), PixelCount(360), west = Degrees(0), north = Degrees(90), step = Degrees.PerPixel(0.25), value = (r, _) => (-r).toShort))
     val grid = BasemapFixtures.LocalRange(tif)
     val etopoAsked = java.util.concurrent.atomic.AtomicInteger(0)
-    val outside = TerrariumPng.encode(Array.fill(256 * 256)(-42f), com.histmersion.util.basemap.TerrariumPng.TileSize(256))
+    val outside = TerrariumPng.encode(Array.fill(256 * 256)(-42f), TerrariumPng.TileSize(256))
     val router = new RangeHttp:
       private def mine(url: RangeHttp.Url) =
         Either.cond(url.value == "fake://gebco/n90.0_s0.0_w0.0_e90.0.tif", grid, RangeHttp.Problem(s"${url.value}: unexpected"))
@@ -334,7 +339,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       )
     )
     val svc = BasemapWiring.service(Deps(cfg, ds, ds, clock = java.time.Clock.fixed(java.time.Instant.parse("2000-01-02T03:04:05Z"), java.time.ZoneOffset.UTC)), () => router)
-    val dry = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("bathymetry"), dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
+    val dry = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.value), _.id))
     assert(dry.succeeded, dry.toString)
     // rows 196–219 (latitudes 41–35) of 720 bytes, in requests of at most 1 MB: one
     assert(
@@ -347,7 +352,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       dry.progress.toString
     )
     assertEquals(grid.downloads.get, 0)
-    val j = await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id))
     assert(j.succeeded, j.toString)
     assertEquals(grid.downloads.get, 1)
     val sea = svc.status.layers.find(_.layer == Basemap.Layer.Wire("bathymetry")).get
@@ -359,7 +364,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       sea.attribution
     )
     def elevation(z: Basemap.Zoom, x: Basemap.Tile.Column, y: Basemap.Tile.Row, px: Int, py: Int): Float =
-      val (b, mime, _, _, code) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), z, x, y).fold(e => fail(e.message.value), identity)
+      val (b, mime, _, _, code) = svc.tile(Basemap.Layer.Wire("bathymetry"), z, x, y).fold(e => fail(e.message.value), identity)
       assertEquals((code.code, mime), (200, "image/png"))
       val (m, w) = TerrariumPng.decode(Png.PngBytes(b.value)).fold(e => fail(e.value), identity)
       m(py * w.value + px)
@@ -367,7 +372,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     // row 208); pixel (2, 254), near 0°N 0°E, far outside it (ETOPO1's tile)
     assertEqualsDouble(elevation(Basemap.Zoom(3), Basemap.Tile.Column(4), Basemap.Tile.Row(3), 142, 22).toDouble, -208.0, 1.5)
     assertEqualsDouble(elevation(Basemap.Zoom(3), Basemap.Tile.Column(4), Basemap.Tile.Row(3), 2, 254).toDouble, -42.0, 0.01)
-    assert(etopoAsked.get > 0 && etopoAsked.get <= Basemap.tileCount(BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(35), com.histmersion.api.catalogue.Longitude(29), com.histmersion.api.catalogue.Latitude(41)), com.histmersion.api.basemap.Basemap.Zoom(0), com.histmersion.api.basemap.Basemap.Zoom(3)).value)
+    assert(etopoAsked.get > 0 && etopoAsked.get <= Basemap.tileCount(BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41)), Basemap.Zoom(0), Basemap.Zoom(3)).value)
     assert(!Files.exists(dir.resolve(".bathymetry.part")), "the rows read are removed once the tiles are written")
 
   test(
@@ -375,8 +380,8 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
   ):
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir)
-    assert(await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
-    assert(await(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"))).fold(e => fail(e.message.value), _.id)).succeeded)
     val vec = svc.status.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
     assertEquals(
       (vec.maxZoom, vec.deepest, vec.onDemand.map(o => (o.enabled, o.tiles))),
@@ -384,36 +389,36 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     )
     // a tile far outside the region (x 0 at zoom 3 is the Pacific): from the build the extract came from, thinned
     val asked = v.requests.get
-    val (b, mime, enc, _, code) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).fold(e => fail(e.message.value), identity)
+    val (b, mime, enc, _, code) = svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(3), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).fold(e => fail(e.message.value), identity)
     assertEquals((code.code, mime, enc), (200, "application/vnd.mapbox-vector-tile", Some("gzip")))
     val text = String(plain(b).value, "ISO-8859-1")
     assert(text.contains("earth") && !text.contains("highway"), "thinned as the download is: the roads dropped")
     assert(v.requests.get > asked, "read from the provider")
     // again: from the cache, nothing asked; deeper than the extract inside the region too
     val again = v.requests.get
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).map(_._5.code), Right(200))
+    assertEquals(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(3), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).map(_._5.code), Right(200))
     assertEquals(v.requests.get, again)
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(5), Basemap.tileX(Longitude(24.5), com.histmersion.api.basemap.Basemap.Zoom(5)), Basemap.tileY(Latitude(37.5), com.histmersion.api.basemap.Basemap.Zoom(5))).map(_._5.code), Right(200))
+    assertEquals(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(5), Basemap.tileX(Longitude(24.5), Basemap.Zoom(5)), Basemap.tileY(Latitude(37.5), Basemap.Zoom(5))).map(_._5.code), Right(200))
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("vector")).get.onDemand.map(_.tiles), Some(2L))
     // inside the region at its zooms: the extract's own tile, the provider not asked
     val inside = v.requests.get
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(4), Basemap.tileX(Longitude(24.5), com.histmersion.api.basemap.Basemap.Zoom(4)), Basemap.tileY(Latitude(37.5), com.histmersion.api.basemap.Basemap.Zoom(4))).map(_._5.code), Right(200))
+    assertEquals(svc.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.tileX(Longitude(24.5), Basemap.Zoom(4)), Basemap.tileY(Latitude(37.5), Basemap.Zoom(4))).map(_._5.code), Right(200))
     assertEquals(v.requests.get, inside)
     // the sea floor outside the region: one GET, then cached
     val gets = BasemapServiceSuite.seaGets.get
-    val (sb, smime, _, _, scode) = svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(1), com.histmersion.api.basemap.Basemap.Tile.Row(1)).fold(e => fail(e.message.value), identity)
+    val (sb, smime, _, _, scode) = svc.tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(1), Basemap.Tile.Row(1)).fold(e => fail(e.message.value), identity)
     assertEquals((scode.code, smime, String(sb.value)), (200, "image/png", "PNG3/1/1"))
-    assertEquals(svc.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(1), com.histmersion.api.basemap.Basemap.Tile.Row(1)).map(_._5.code), Right(200))
+    assertEquals(svc.tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(1), Basemap.Tile.Row(1)).map(_._5.code), Right(200))
     assertEquals(BasemapServiceSuite.seaGets.get - gets, 1)
     // the caches are removed with the others
-    val c = svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), cache = com.histmersion.api.basemap.Basemap.RemoveQuery.Cache(true))).fold(e => fail(e.message.value), identity)
+    val c = svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true))).fold(e => fail(e.message.value), identity)
     assertEquals(c.removed.map(r => Path.of(r.value).getFileName.toString).sorted, List("sea-cache", "vector-cache"))
     // switched off: nothing outside the region
     val dir2 = Files.createTempDirectory("basemap")
     val (off, v2, _) = service(dir2, seaAndMap = false)
-    assert(await(off.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
+    assert(await(off.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"))).fold(e => fail(e.message.value), _.id)).succeeded)
     val n = v2.requests.get
-    assertEquals(off.tile(com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), com.histmersion.api.basemap.Basemap.Zoom(3), com.histmersion.api.basemap.Basemap.Tile.Column(0), com.histmersion.api.basemap.Basemap.Tile.Row(0)).map(_._5.code), Right(204))
+    assertEquals(off.tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(3), Basemap.Tile.Column(0), Basemap.Tile.Row(0)).map(_._5.code), Right(204))
     assertEquals(v2.requests.get, n)
 
   test("#3760: --bbox world plans the whole world, its size given zoom by zoom"):
@@ -421,7 +426,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val (svc, _, _) = service(dir)
     val j = await(
       svc
-        .fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("vector"), bbox = Some(com.histmersion.api.BBox.Text("world")), maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(2)), dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true)))
+        .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), bbox = Some(BBox.Text("world")), maxZoom = Some(Basemap.Focus.MaxZoom(2)), dryRun = Basemap.FetchQuery.DryRun(true)))
         .fold(e => fail(e.message.value), _.id)
     )
     assert(j.succeeded, j.toString)
@@ -433,9 +438,9 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
 
   test("bad options are refused before a job starts"):
     val (svc, _, _) = service(Files.createTempDirectory("basemap"))
-    assert(svc.fetch(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("roads"))).isLeft)
-    assert(svc.fetch(Basemap.FetchQuery(bbox = Some(com.histmersion.api.BBox.Text("10,10,5,5")))).isLeft)
-    assert(svc.fetch(Basemap.FetchQuery(maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(15)))).isLeft)
+    assert(svc.fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("roads"))).isLeft)
+    assert(svc.fetch(Basemap.FetchQuery(bbox = Some(BBox.Text("10,10,5,5")))).isLeft)
+    assert(svc.fetch(Basemap.FetchQuery(maxZoom = Some(Basemap.Focus.MaxZoom(15)))).isLeft)
 
 object BasemapServiceSuite:
   val seaGets = java.util.concurrent.atomic.AtomicInteger(0)

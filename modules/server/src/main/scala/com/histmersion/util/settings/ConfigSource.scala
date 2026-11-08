@@ -1,9 +1,12 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import ox.{forkDiscard, useInScope}
 
 import scala.concurrent.duration.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where a reload reads the config again and how it fits it to this process.
   *
@@ -23,8 +26,8 @@ final case class ConfigSource(
 
 object ConfigSource:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = com.histmersion.util.settings.ConfigSource.Problem
-  val ReadResultPart1: _root_.com.histmersion.util.settings.ConfigSource.Problem.type = _root_.com.histmersion.util.settings.ConfigSource.Problem
-  type PrepareResultPart1 = com.histmersion.util.settings.ConfigSource.Problem
-  val PrepareResultPart1: _root_.com.histmersion.util.settings.ConfigSource.Problem.type = _root_.com.histmersion.util.settings.ConfigSource.Problem
+  object Problem extends RefinedType[String, Pure]
+  type ReadResultPart1 = Problem
+  val ReadResultPart1: Problem.type = Problem
+  type PrepareResultPart1 = Problem
+  val PrepareResultPart1: Problem.type = Problem

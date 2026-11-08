@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,12 +14,15 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** `/api/about` and `/api/config` report the plugins the server started with — their state and their settings, a secret
   * as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class PluginsHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -46,9 +50,9 @@ class PluginsHttpSuite extends munit.FunSuite:
 
   test("about and config list the plugins; a secret shows as its reference, never as its value"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = generation()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = generation()).start()
       try
         val url = s"http://127.0.0.1:${b.port}"
         for path <- List("/api/about", "/api/config") do

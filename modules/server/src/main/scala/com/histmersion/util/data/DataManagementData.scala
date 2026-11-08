@@ -1,4 +1,5 @@
-package com.histmersion.util.data
+package com.histmersion
+package util.data
 
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.maintenance.{CacheEvent, CacheHolding, CacheName, CacheSpec}

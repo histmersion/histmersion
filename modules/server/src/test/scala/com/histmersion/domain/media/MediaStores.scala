@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.media.covers.CoverService

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.automation.Goal
@@ -9,11 +10,14 @@ import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.database.Transactor
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.automation.goals.GoalService
 
 /** A contract of the acquisition's services, run once in memory and once on the database (a scratch database per test,
   * gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone.
   */
-abstract class AcquisitionStoreSuite extends com.histmersion.db.DbSuite:
+abstract class AcquisitionStoreSuite extends DbSuite:
   protected def fresh(test: String): Option[AcquisitionStores]
 
   protected def stest(title: String)(body: AcquisitionStores => Unit): Unit =
@@ -39,7 +43,7 @@ object AcquisitionStoreSuite:
 
   /** The services on a scratch database of their own per test. */
   trait OnDatabase extends AcquisitionStoreSuite:
-    private val testDb = com.histmersion.db.TestDb.url
+    private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
     private lazy val scratch =
       ScratchDatabases(
@@ -59,7 +63,6 @@ object AcquisitionStoreSuite:
           val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings)
           val queues = QueueService(db)
           def goal(slug: String) =
-            val _ = com.histmersion.domain.automation.goals
-              .GoalService(db)
+            val _ = GoalService(db)
               .put(Goal.Slug.applyUnsafe(slug), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug")))
       }

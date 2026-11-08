@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -13,6 +14,8 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.automation.Agents
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.api.automation.Queue
 
 /** Drain mode (#3762 proposal 4): `histmersion agent autopilot drain` stops the central scheduler from admitting
   * anything new — and the managers' tick from deciding approvals by code (a decision wakes a waiting run) and from
@@ -29,7 +32,7 @@ final class DrainService(
 
   private val agentKind: Job.Kind = Job.Kind.assume(Agents.JobKind)
 
-  private def occupied: com.histmersion.RowCount =
+  private def occupied: RowCount =
     agents.jobRuns.count(
       agentKind,
       (RunRow.Status(Agents.RunState.Queued.wire.value), RunRow.Status(Agents.RunState.Running.wire.value))
@@ -59,8 +62,8 @@ final class DrainService(
       .drain()
       .map((since, by, _) =>
         SchedulerPolicy.Block(
-          com.histmersion.domain.SchedulerPolicy.Block.Code("drain"),
-          com.histmersion.domain.SchedulerPolicy.Block.Why(
+          SchedulerPolicy.Block.Code("drain"),
+          SchedulerPolicy.Block.Why(
             s"draining since ${since.value}${if by.value.nonEmpty then s" (by ${by.value})" else ""}: nothing new starts until it is lifted " +
               "(histmersion agent autopilot undrain)"
           )
@@ -103,5 +106,5 @@ final class DrainService(
     agents.autopilot.status(now).copy(changes = List(EngineStatus.Changes(line)))
 
   private def log(line: String): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text(line.take(1000))))
+    val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
     scribe.info(line)

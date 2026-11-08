@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -14,7 +15,7 @@ import scala.jdk.CollectionConverters.*
 object Trace:
 
 
-  def messages(h: ConversationHistory, latencies: Vector[com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs], max: Int): List[AgentRepo.MessageRecord] =
+  def messages(h: ConversationHistory, latencies: Vector[AgentRepo.MessageRecord.LatencyMs], max: Int): List[AgentRepo.MessageRecord] =
     def cut(s: String) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
     // an assistant entry closes one LLM call: hand it that call's latency, in order
     val lat = latencies.iterator

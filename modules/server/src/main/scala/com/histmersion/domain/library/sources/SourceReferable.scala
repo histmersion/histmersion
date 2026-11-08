@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.domain.ItemKind
 import com.histmersion.util.database.Transactor
@@ -13,9 +14,9 @@ object SourceReferable:
   val Table: RecordTable =
     RecordTable(
       Kind,
-      com.histmersion.util.identity.RecordTable.Table("sources"),
-      com.histmersion.util.identity.RecordTable.Key("t.citekey"),
-      com.histmersion.util.identity.RecordTable.Title("t.title"),
-      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
-      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("source_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("citekey")))
+      RecordTable.Table("sources"),
+      RecordTable.Key("t.citekey"),
+      RecordTable.Title("t.title"),
+      Some(RecordTable.Uid("t.uid")),
+      Some(AliasColumns(AliasColumns.Table("source_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("citekey")))
     )

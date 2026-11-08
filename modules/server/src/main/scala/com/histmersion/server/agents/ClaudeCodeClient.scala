@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.{AgentDef, AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached, ToolUse}
 
@@ -11,6 +12,8 @@ import sttp.apispec.circe.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 /** The `claude-code` provider: ONE `claude -p` process per LLM step attempt, run as the step's agent from the GENERATED
   * headless plugin (docs/research-agent-runtimes.md §2.4, §3a):
@@ -39,7 +42,7 @@ import java.nio.file.Files
 final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: CliRuntime) extends LlmClient:
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
+    CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
       val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value))).flatten
       try
         val mcp = grant.map(g =>
@@ -104,7 +107,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         }
         val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
         // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
-        pool.foreach(p => p.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, o.readings))
+        pool.foreach(p => p.record(PlanQuota.PoolId.ClaudePlan, o.readings))
         val guard = stopped
           .get()
           .map(_.value)
@@ -112,7 +115,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         guard match
           case Some(why) =>
             val until = pool
-              .flatMap(_.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, Some(com.histmersion.domain.automation.agents.AgentsControllers.ModelName(model.model.value))))
+              .flatMap(_.blocked(PlanQuota.PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(i => java.time.Instant.ofEpochMilli(i.value))
             throw ModelLimitReached(model, until, ModelLimitReached.Message(s"claude -p stopped by the quota guard: $why"))

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
@@ -32,6 +33,10 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, For
 import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.api.text.WikiLinks
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.research.articles.ArticleSummaryRow
+import com.histmersion.domain.library.sources.SourceNote
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *
@@ -64,14 +69,14 @@ object MarkdownLint:
 
   object Context:
     type Article = Article.T
-    object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Article extends RefinedType[Boolean, Pure]
 
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T
-  object Repair extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Repair extends RefinedType[String, Pure]
 
   /** One text replacement on the STORED text: `[start, end)` becomes `replacement`. */
   final case class Edit(start: Int, end: Int, replacement: String)
@@ -107,7 +112,7 @@ object MarkdownLint:
     */
   def ofArticle(
       body: Scan.Text,
-      summary: Option[com.histmersion.domain.research.articles.ArticleSummaryRow.Summary],
+      summary: Option[ArticleSummaryRow.Summary],
       links: WikiLinks.Occurrence.Target => Option[LinkTarget]
   ): List[FormatIssue] =
     issues(body, FormatField.Body, resolving(links, article = true)) ++
@@ -116,7 +121,7 @@ object MarkdownLint:
   /** A source's summary and notes — the two texts an agent writes about one source. */
   def ofSource(
       summary: Option[com.histmersion.domain.library.Source.Summary],
-      notes: Option[com.histmersion.domain.library.sources.SourceNote.Text],
+      notes: Option[SourceNote.Text],
       links: WikiLinks.Occurrence.Target => Option[LinkTarget]
   ): List[FormatIssue] =
     summary.toList.flatMap(s => issues(Scan.Text(s.value), FormatField.Summary, resolving(links, article = false))) ++
@@ -1374,4 +1379,4 @@ object MarkdownLint:
 
   object Scan:
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]

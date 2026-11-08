@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.aliases.AliasKinds
 
@@ -11,6 +12,16 @@ import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobActions, JobDetail, JobInfo}
 import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.library.Acquire
+import com.histmersion.api.exchange.ExchangeJobKinds
+import com.histmersion.api.exchange.MergePlan
+import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.api.RegisteredJobKinds
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.exchange.Bundle
 
 /** Every job kind and every alias table the server registers, written as text to `src/test/resources/oracle/` and
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and
@@ -35,39 +46,39 @@ class RegistriesOracleSuite extends munit.FunSuite:
 
   private val details: List[(String, JobDetail)] = List(
     "none" -> JobDetail.empty,
-    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), periodPresets = com.histmersion.api.exchange.InitPlan.PeriodPresets(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("land"))))),
-    "plan" -> com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(com.histmersion.api.exchange.MergePlan.PlanHash("abc123"))),
-    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = com.histmersion.api.maintenance.VacuumPlan.Analyze(true), tables = List(com.histmersion.api.maintenance.Vacuum.Request.Tables("sources"), com.histmersion.api.maintenance.Vacuum.Request.Tables("places"))))),
-    "media" -> com.histmersion.api.media.ImportJobKinds.Media(Some(com.histmersion.api.jobs.JobKinds.Subject("pictures of 3 places"))),
-    "events" -> com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some(com.histmersion.api.jobs.JobKinds.Subject("gvp: 10 parts"))),
-    "about" -> JobDetail.Purpose(Some(com.histmersion.api.jobs.JobKinds.Subject("the vector map of crete"))),
+    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), periodPresets = InitPlan.PeriodPresets(true), fetch = List(InitPlan.Fetch("land"))))),
+    "plan" -> ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash("abc123"))),
+    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(Vacuum.Request.Tables("sources"), Vacuum.Request.Tables("places"))))),
+    "media" -> ImportJobKinds.Media(Some(JobKinds.Subject("pictures of 3 places"))),
+    "events" -> EventsJobKinds.Catalogue(Some(JobKinds.Subject("gvp: 10 parts"))),
+    "about" -> JobDetail.Purpose(Some(JobKinds.Subject("the vector map of crete"))),
     "recheck" -> Acquire.Checks.RecheckJob.Detail(
-      Some(Acquire.Checks.RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), upTo = com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(7), since = com.histmersion.api.library.Acquire.Checks.RecheckJob.Since("2026-10-01")))
+      Some(Acquire.Checks.RecheckJob(all = Acquire.Checks.RecheckJob.All(true), upTo = Acquire.Checks.RecheckJob.UpTo(7), since = Acquire.Checks.RecheckJob.Since("2026-10-01")))
     )
   )
 
   test("job-kinds.txt: every job kind, its name, its controls and its subjects"):
-    val lines = com.histmersion.api.RegisteredJobKinds.all.kinds.flatMap { k =>
+    val lines = RegisteredJobKinds.all.kinds.flatMap { k =>
       val head = s"${k.value}\t${Wording.jobKindOf(k)}\tstoppable=${JobActions.Stoppable.contains(k)}"
       val subjects = details.map { (name, d) =>
-        val j = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = com.histmersion.api.jobs.JobInfo.Status("done"), detail = Some(d))
+        val j = JobInfo(id = SpatialHierarchyResult.Job.Id("j"), kind = JobKinds.Wire(k.value), status = JobInfo.Status("done"), detail = Some(d))
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"
       }
-      val withCitekey = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = com.histmersion.api.jobs.JobInfo.Status("done"), citekey = (Some("hattusa_1990")).map(com.histmersion.api.library.Citekey.apply))
+      val withCitekey = JobInfo(id = SpatialHierarchyResult.Job.Id("j"), kind = JobKinds.Wire(k.value), status = JobInfo.Status("done"), citekey = (Some("hattusa_1990")).map(Citekey.apply))
       head :: subjects ::: List(s"  citekey\t${JobDetail.subject(withCitekey).getOrElse("-")}")
     }
-    val unknown = s"unknown\t${Wording.jobKindOf(com.histmersion.api.jobs.JobKinds.Wire("some-new-kind"))}\tstoppable=${JobActions.Stoppable
-        .contains(com.histmersion.api.jobs.JobKinds.Wire("some-new-kind"))}"
+    val unknown = s"unknown\t${Wording.jobKindOf(JobKinds.Wire("some-new-kind"))}\tstoppable=${JobActions.Stoppable
+        .contains(JobKinds.Wire("some-new-kind"))}"
     check("job-kinds.txt", (lines :+ unknown).mkString("", "\n", "\n"))
 
   test("alias-tables.txt: every alias table, its words and its columns"):
     val lines = Deps.aliasTables.tables.map { t =>
       val k = t.kind
       s"${k.noun}\t${k.idWord}\t${t.table}.${t.idColumn}\t${t.aliasTable}.alias -> ${t.targetColumn}\n" +
-        s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, com.histmersion.api.aliases.Aliases.Id("old_one"), com.histmersion.api.aliases.Aliases.Id("new_one")).getOrElse("-")}"
+        s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, Aliases.Id("old_one"), Aliases.Id("new_one")).getOrElse("-")}"
     }
     val bundles =
-      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(b =>
+      Bundle.Kind.values.toList.map(b =>
         s"bundle $b\t${AliasKinds.of(b).fold("-")(_.noun)}"
       )
     check("alias-tables.txt", (lines ++ bundles).mkString("", "\n", "\n"))

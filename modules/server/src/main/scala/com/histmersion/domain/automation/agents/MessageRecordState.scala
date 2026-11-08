@@ -1,12 +1,16 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.agents.AgentRepo
 
 import java.time.Instant
+import com.histmersion.util.jobs.Job
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One traced message of a step's attempt as [[RunService.InMemory]] holds it. */
 final case class MessageRecordState(
-    jobId: com.histmersion.util.jobs.Job.Id,
+    jobId: Job.Id,
     seq: MessageRecordState.Seq,
     attempt: MessageRecordState.Attempt,
     message: AgentRepo.MessageRecord,
@@ -15,6 +19,6 @@ final case class MessageRecordState(
 
 object MessageRecordState:
   type Seq = Seq.T
-  object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Seq extends RefinedType[Int, Pure]
   type Attempt = Attempt.T
-  object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attempt extends RefinedType[Int, Pure]

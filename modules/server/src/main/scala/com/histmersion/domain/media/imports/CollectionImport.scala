@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import hearth.kindlings.optics.syntax.*
 
@@ -11,6 +12,13 @@ import com.histmersion.domain.media.assets.{AssetService, ProviderAsset, Rights}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.upstreams.media.MediaText
 import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaItem, MediaProvider, MediaSample, MediaTarget}
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.catalogue.places.ExternalIds
+import com.histmersion.api.library.RepairAcquire
+import com.histmersion.plugin.WorkKey
+import com.histmersion.util.ocr.Pixels
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
@@ -25,13 +33,13 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   final private case class Judged(target: Target, rec: MediaRecord, decision: Either[MediaMatch.Refusal, MediaMatch.Basis])
 
   /** The role a record's picture plays: its own, else the collection's. */
-  private def roleOf(rec: MediaRecord): com.histmersion.domain.media.MediaRole.Wire = rec.role.map(r => MediaRole.Wire(r.value)).getOrElse(col.role)
+  private def roleOf(rec: MediaRecord): MediaRole.Wire = rec.role.map(r => MediaRole.Wire(r.value)).getOrElse(col.role)
 
   private def providerTitle: String = MediaProvider.title(MediaProvider.Id(col.provider.value)).value
 
-  private def placeId(t: Target): com.histmersion.domain.catalogue.Place.Id = com.histmersion.domain.catalogue.Place.Id.assume(t.id.value)
+  private def placeId(t: Target): Place.Id = Place.Id.assume(t.id.value)
 
-  def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.CollectionImport.DryRun, refresh: com.histmersion.domain.media.imports.CollectionImport.Refresh, store: MediaStore): MediaImportReport =
+  def run(targets: List[Target], dryRun: CollectionImport.DryRun, refresh: CollectionImport.Refresh, store: MediaStore): MediaImportReport =
     val failed = List.newBuilder[String]
     val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
     val places = targets.filter(_.targetType == ImportRepo.Place)
@@ -72,8 +80,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     val (own, byId) =
       if !col.usesIds then
         (
-          Map.empty[com.histmersion.domain.catalogue.Place.Id, Set[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.catalogue.places.ExternalIds.ExternalId)]],
-          Map.empty[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.catalogue.places.ExternalIds.ExternalId), List[PlaceFacts]]
+          Map.empty[Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]],
+          Map.empty[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]]
         )
       else
         (
@@ -119,7 +127,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     }
     val base = MediaImportReport(
       provider = MediaItem.Provider(col.provider.value),
-      dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(dryRun.value),
+      dryRun = RepairAcquire.RepairRequest.DryRun(dryRun.value),
       targets = MediaImportReport.Targets(places.size),
       items = MediaImportReport.Items(records.size),
       statements = MediaImportReport.Statements(kept.size),
@@ -142,7 +150,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       kept: List[Judged],
       judged: List[Judged],
       asked: List[Target],
-      refresh: com.histmersion.domain.media.imports.CollectionImport.Refresh,
+      refresh: CollectionImport.Refresh,
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]]
   ): MediaImportReport =
@@ -192,7 +200,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
               val a = ProviderAsset(
                 ProviderAsset.Provider(col.provider.value),
                 ProviderAsset.Key(rec.key.value),
-                ProviderAsset.Name(MediaText.safeName(com.histmersion.plugin.WorkKey.Title(s"${col.provider}-${rec.key}-${rec.title}")).value),
+                ProviderAsset.Name(MediaText.safeName(WorkKey.Title(s"${col.provider}-${rec.key}-${rec.title}")).value),
                 mime,
                 bytes,
                 size.map(s => ProviderAsset.Width(s._1.value)),
@@ -248,13 +256,13 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   private def download(
       rec: MediaRecord
   ): Either[String, (ProviderAsset.Bytes, ProviderAsset.Mime, Option[(ProviderAsset.Thumb, ProviderAsset.ThumbMime, Option[ProviderAsset.ThumbWidth], Option[ProviderAsset.ThumbHeight])])] =
-    rec.imageUrl.toRight("no image").flatMap(u => fetch.file(HttpTransport.Url(u.value), com.histmersion.pluginhost.Polite.Mime("image/jpeg")).left.map(_.value)).flatMap { (bytes, mime) =>
+    rec.imageUrl.toRight("no image").flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(_.value)).flatMap { (bytes, mime) =>
       if bytes.value.length.toLong > cfg.maxBytes.value then
         Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
       else if !mime.value.startsWith("image/") then Left(s"not an image ($mime)")
       else
         val own = rec.thumbUrl.flatMap { u =>
-          fetch.file(HttpTransport.Url(u.value), com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
+          fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")) match
             case Right((tb, tm)) if tm.value.startsWith("image/") =>
               val s = ImageSize.of(ImageSize.Bytes(tb.value))
               Some((ProviderAsset.Thumb(tb.value), ProviderAsset.ThumbMime(tm.value), s.map(x => ProviderAsset.ThumbWidth(x._1.value)), s.map(x => ProviderAsset.ThumbHeight(x._2.value))))
@@ -264,8 +272,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         val made = own.orElse(
           converter.thumbnail(
             ConverterClient.DocumentBytes(bytes.value),
-            ConverterClient.Filename(MediaText.safeName(com.histmersion.plugin.WorkKey.Title(rec.key.value)).value + ".jpg"),
-            com.histmersion.util.ocr.Pixels(cfg.thumbPx.value)
+            ConverterClient.Filename(MediaText.safeName(WorkKey.Title(rec.key.value)).value + ".jpg"),
+            Pixels(cfg.thumbPx.value)
           ) match
             case Right(t) =>
               Some((ProviderAsset.Thumb(t.bytes.value), ProviderAsset.ThumbMime(t.mime.value), Some(t.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)), Some(t.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_))))
@@ -276,6 +284,6 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
 
 object CollectionImport:
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.autopilot
+package com.histmersion
+package domain.automation.autopilot
 
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.AutomationState
@@ -7,6 +8,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.automation.Managers
 
 /** The autopilot's one row, as the engine's other features reach it: the switch and the managers it paused, when it
   * last ensured the goals' managers and kept house, a person's scheduler strategy, the approval digest's day and the
@@ -16,7 +18,7 @@ trait AutopilotRowService:
   def row(): AutopilotRepo.Row
 
   /** Switch it; `paused` = the managers it paused. True = it changed. */
-  def set(enabled: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, paused: List[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused]): Boolean
+  def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean
   def ensured(now: Instant): Unit
 
   /** Ensure again at the next tick. */
@@ -25,14 +27,14 @@ trait AutopilotRowService:
   def linted(now: Instant): Unit
 
   /** A paused manager it resumed. */
-  def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit
+  def unpaused(managerId: Managers.ManagerInfo.Id): Unit
 
   /** A person's scheduler strategy: (name, by, at). */
   def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)]
 
   /** Set (Some) or clear (None) the person's strategy. */
-  def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit
-  def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest]
+  def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit
+  def lastDigest(): Option[AutopilotRepo.Digest]
   def digested(now: Instant): Unit
 
   /** Draining: since when, by whom, when it was first seen drained. */
@@ -49,16 +51,16 @@ object AutopilotRowService:
 
   final private class Implementation(db: Transactor) extends AutopilotRowService:
     def row(): AutopilotRepo.Row = db.transact(AutopilotRepo.get())
-    def set(enabled: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, paused: List[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused]): Boolean =
+    def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean =
       db.transact(AutopilotRepo.set(enabled, by, paused))
     def ensured(now: Instant): Unit = db.transact(AutopilotRepo.ensured(now))
     def ensureSoon(): Unit = db.transact(AutopilotRepo.ensureSoon())
     def backedUp(now: Instant): Unit = db.transact(AutopilotRepo.backedUp(now))
     def linted(now: Instant): Unit = db.transact(AutopilotRepo.linted(now))
-    def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
+    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] = db.transact(AutopilotRepo.strategy())
-    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit = db.transact(AutopilotRepo.setStrategy(name, by))
-    def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] = db.transact(AutopilotRepo.lastDigest())
+    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit = db.transact(AutopilotRepo.setStrategy(name, by))
+    def lastDigest(): Option[AutopilotRepo.Digest] = db.transact(AutopilotRepo.lastDigest())
     def digested(now: Instant): Unit = db.transact(AutopilotRepo.digested(now))
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] = db.transact(AutopilotRepo.drain())
     def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
@@ -92,7 +94,7 @@ object AutopilotRowService:
         r.lastBackupAt.map(at => AutopilotRepo.Row.LastBackupAt(text(at))),
         r.lastLintAt.map(at => AutopilotRepo.Row.LastLintAt(text(at)))
       )
-    def set(enabled: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, paused: List[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused]): Boolean =
+    def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean =
       change(_.enabled.value != enabled.value)(
         _.modify(_.enabled)
           .setTo(AutopilotRowState.Enabled(enabled.value))
@@ -109,7 +111,7 @@ object AutopilotRowService:
     def ensureSoon(): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
     def backedUp(now: Instant): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
     def linted(now: Instant): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
-    def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit = always(_.modify(_.paused).using(_.filterNot(_.value == managerId.value)))
+    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = always(_.modify(_.paused).using(_.filterNot(_.value == managerId.value)))
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
       val r = current()
       r.strategy.map(n =>
@@ -119,7 +121,7 @@ object AutopilotRowService:
           AutopilotRepo.Row.ChangedAt(r.strategyAt.fold("")(text))
         )
       )
-    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
+    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
       always(
         _.modify(_.strategy)
           .setTo(name.map(n => AutopilotRowState.Strategy(n.value)))
@@ -128,7 +130,7 @@ object AutopilotRowService:
           .modify(_.strategyAt)
           .setTo(Some(now))
       )
-    def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] =
+    def lastDigest(): Option[AutopilotRepo.Digest] =
       current().lastDigestAt.map(at => AutopilotRepo.Digest(text(at)))
     def digested(now: Instant): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,8 @@ import com.histmersion.util.jobs.{Job, RunRow}
 import java.time.Instant
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
+import com.histmersion.util.database.Jsonb
+import com.histmersion.domain.library.Citekey
 
 /** The contract the approvals keep: a source's open proposal is not doubled; a run's step approval opens once; a
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's
@@ -31,11 +34,11 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       st: ApprovalState = ApprovalState.Open,
       result: Option[ApprovalRecord.Result] = None
   ) =
-    s.sourceApprovals.record(None, p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(current), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target, com.histmersion.util.database.Jsonb.write(p), st, result)
+    s.sourceApprovals.record(None, p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(current), io.scalaland.chimney.Transformer.derive[Option[Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target, Jsonb.write(p), st, result)
   private def before(s: EngineStores, p: Proposal) =
-    s.sourceApprovals.proposedBefore(p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[com.histmersion.api.library.Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target)
-  private val status = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey("zz2020_a"), Some(Source.Status.Contested), evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("e"))
-  private val edge = Proposal(ApprovalKind.Edge, com.histmersion.domain.library.Citekey("zz2020_a"), None, Some(Edge.Kind.Refutes), Some(com.histmersion.domain.library.Citekey("zz2021_b")))
+    s.sourceApprovals.proposedBefore(p.kind, p.citekey, io.scalaland.chimney.Transformer.derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]].transform(p.status), io.scalaland.chimney.Transformer.derive[Option[Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]].transform(p.edgeKind), p.target)
+  private val status = Proposal(ApprovalKind.StatusChange, Citekey("zz2020_a"), Some(Source.Status.Contested), evidence = Proposal.Evidence("e"))
+  private val edge = Proposal(ApprovalKind.Edge, Citekey("zz2020_a"), None, Some(Edge.Kind.Refutes), Some(Citekey("zz2021_b")))
 
   stest("a source's open proposal is not doubled; once decided, it may be proposed again; ever proposed is known") {
     s =>
@@ -46,31 +49,31 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       )
       assertEquals(propose(s, status, None), None, "identical and open")
       assert(propose(s, edge, None).isDefined, "another change")
-      assertEquals(a(s).payload(idOf(first)).map(p => com.histmersion.util.database.Jsonb.JsonText(p.value)).flatMap(com.histmersion.util.database.Jsonb.read[Proposal]), Some(status))
+      assertEquals(a(s).payload(idOf(first)).map(p => Jsonb.JsonText(p.value)).flatMap(Jsonb.read[Proposal]), Some(status))
       assert(before(s, status))
-      assert(!before(s, status.modify(_.citekey).setTo(com.histmersion.domain.library.Citekey("zz2020_z"))))
+      assert(!before(s, status.modify(_.citekey).setTo(Citekey("zz2020_z"))))
       val auto = propose(s, status, None, ApprovalState.Approved, Some(ApprovalRecord.Result("applied automatically"))).get
       assertEquals(
         (auto.state, auto.result, auto.decidedAt.isDefined),
         ("approved", Some("applied automatically"), true)
       )
-      assert(a(s).decide(idOf(first), ApprovalState.Rejected, Some(com.histmersion.domain.automation.Approval.Note("no")), None))
+      assert(a(s).decide(idOf(first), ApprovalState.Rejected, Some(Approval.Note("no")), None))
       assert(!a(s).decide(idOf(first), ApprovalState.Approved, None, None), "decided once")
       assert(propose(s, status, None).isDefined, "proposed again once decided")
-      a(s).settle(idOf(auto), ApprovalState.Failed, com.histmersion.domain.automation.Approval.Outcome("it failed"))
+      a(s).settle(idOf(auto), ApprovalState.Failed, Approval.Outcome("it failed"))
       assertEquals(a(s).approval(idOf(auto)).map(x => (x.state, x.result)), Some(("failed", Some("it failed"))))
-      assertEquals(a(s).approval(com.histmersion.domain.automation.Approval.Id(-1)), None)
+      assertEquals(a(s).approval(Approval.Id(-1)), None)
   }
 
   stest("a run's step approval opens once; its approvals oldest first; a cancelled run's open step ones rejected") {
     s =>
       val run = Job.Id.assume(s.run(RunRow.Target("zz2020_a"), goal = Some(RunRow.Goal("zz-goal"))).value)
-      val plan = a(s).openForStep(run, com.histmersion.domain.automation.agents.ApprovalService.StepSeq(2), ApprovalKind.GoalPlan, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-goal"), com.histmersion.domain.automation.agents.ApprovalService.Payload("""{"goal":"zz-goal"}"""))
-      assertEquals(a(s).openForStep(run, com.histmersion.domain.automation.agents.ApprovalService.StepSeq(2), ApprovalKind.GoalPlan, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-goal"), com.histmersion.domain.automation.agents.ApprovalService.Payload("{}")).id, plan.id, "once per step")
-      assertEquals(a(s).forStep(run, com.histmersion.domain.automation.agents.ApprovalService.StepSeq(2)).map(_.id), Some(plan.id))
-      assertEquals(a(s).forStep(run, com.histmersion.domain.automation.agents.ApprovalService.StepSeq(3)), None)
-      val filter = a(s).openSubject(Some(run), ApprovalKind.ArticleFilter, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-art"), com.histmersion.domain.automation.agents.ApprovalService.Payload("""{"filter":"x"}"""))
-      val again = a(s).openSubject(Some(run), ApprovalKind.ArticleFilter, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-art"), com.histmersion.domain.automation.agents.ApprovalService.Payload("""{"filter":"x"}"""))
+      val plan = a(s).openForStep(run, ApprovalService.StepSeq(2), ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-goal"), ApprovalService.Payload("""{"goal":"zz-goal"}"""))
+      assertEquals(a(s).openForStep(run, ApprovalService.StepSeq(2), ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-goal"), ApprovalService.Payload("{}")).id, plan.id, "once per step")
+      assertEquals(a(s).forStep(run, ApprovalService.StepSeq(2)).map(_.id), Some(plan.id))
+      assertEquals(a(s).forStep(run, ApprovalService.StepSeq(3)), None)
+      val filter = a(s).openSubject(Some(run), ApprovalKind.ArticleFilter, ApprovalQuery.Subject("zz-art"), ApprovalService.Payload("""{"filter":"x"}"""))
+      val again = a(s).openSubject(Some(run), ApprovalKind.ArticleFilter, ApprovalQuery.Subject("zz-art"), ApprovalService.Payload("""{"filter":"x"}"""))
       assertNotEquals(filter.id, again.id, "a subject's proposal is not deduplicated")
       assertEquals(a(s).approvalsOf(run).map(_.id), List(plan.id, filter.id, again.id))
       assertEquals(a(s).approvalsOf(run, Some(ApprovalKind.GoalPlan)).map(_.id), List(plan.id))
@@ -85,32 +88,32 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       assertEquals(a(s).openCount(ApprovalKind.ArticleFilter), 2)
       assertEquals(a(s).openBySubject(), Map("zz-goal" -> 1, "zz-art" -> 2))
       assertEquals(
-        a(s).openOfKinds(List(ApprovalKind.GoalPlan, ApprovalKind.ArticleFilter), com.histmersion.domain.automation.approvals.ApprovalQuery.Limit(2)).map(_.id),
+        a(s).openOfKinds(List(ApprovalKind.GoalPlan, ApprovalKind.ArticleFilter), ApprovalQuery.Limit(2)).map(_.id),
         List(plan.id, filter.id)
       )
-      assertEquals(a(s).closeForRun(run, com.histmersion.domain.automation.agents.AgentRepo.CloseReason("rejected: the run was cancelled")), 1, "only the step's")
+      assertEquals(a(s).closeForRun(run, AgentRepo.CloseReason("rejected: the run was cancelled")), 1, "only the step's")
       assertEquals(
         a(s).approval(idOf(plan)).map(x => (x.state, x.result)),
         Some(("rejected", Some("rejected: the run was cancelled")))
       )
-      assertEquals(a(s).closeForRun(run, com.histmersion.domain.automation.agents.AgentRepo.CloseReason("again")), 0)
+      assertEquals(a(s).closeForRun(run, AgentRepo.CloseReason("again")), 0)
   }
 
   stest("what the autopilot approved since a moment, and who decided each") { s =>
     val since = Instant.parse("2020-01-01T00:00:00Z")
-    val p1 = a(s).openSubject(None, ApprovalKind.GoalPlan, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-g1"), com.histmersion.domain.automation.agents.ApprovalService.Payload("{}"))
-    val p2 = a(s).openSubject(None, ApprovalKind.GoalPlan, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-g2"), com.histmersion.domain.automation.agents.ApprovalService.Payload("{}"))
-    val p3 = a(s).openSubject(None, ApprovalKind.GoalPlan, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-g3"), com.histmersion.domain.automation.agents.ApprovalService.Payload("{}"))
+    val p1 = a(s).openSubject(None, ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-g1"), ApprovalService.Payload("{}"))
+    val p2 = a(s).openSubject(None, ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-g2"), ApprovalService.Payload("{}"))
+    val p3 = a(s).openSubject(None, ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-g3"), ApprovalService.Payload("{}"))
     val p4 = a(s).openSubject(
       None,
       ApprovalKind.GoalPlan,
-      com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("zz-g4"),
-      com.histmersion.domain.automation.agents.ApprovalService.Payload("{}"),
+      ApprovalQuery.Subject("zz-g4"),
+      ApprovalService.Payload("{}"),
       ApprovalState.Approved,
-      Some(com.histmersion.domain.automation.agents.ApprovalService.OpenSubjectResult("applied automatically: x"))
+      Some(ApprovalService.OpenSubjectResult("applied automatically: x"))
     )
-    assert(a(s).decide(idOf(p1), ApprovalState.Approved, Some(com.histmersion.domain.automation.Approval.Note("autopilot: approved (checks pass)")), None))
-    assert(a(s).decide(idOf(p2), ApprovalState.Approved, Some(com.histmersion.domain.automation.Approval.Note("looks right")), None))
+    assert(a(s).decide(idOf(p1), ApprovalState.Approved, Some(Approval.Note("autopilot: approved (checks pass)")), None))
+    assert(a(s).decide(idOf(p2), ApprovalState.Approved, Some(Approval.Note("looks right")), None))
     assertEquals(a(s).autoApprovedSince(ApprovalKind.GoalPlan, since).map(_.id), List(p1.id))
     assertEquals(a(s).autoApprovedSince(ApprovalKind.GoalPlan, Instant.parse("2099-01-01T00:00:00Z")), Nil)
     val (_, facets) = a(s).approvalFacets(ApprovalQuery())
@@ -120,13 +123,13 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       Right(List(p4.id))
     )
     assertEquals(a(s).approvalCounts(), List("approved" -> 3, "open" -> 1))
-    assertEquals(a(s).approvals(Some(ApprovalState.Open), com.histmersion.domain.automation.approvals.ApprovalQuery.Limit(10)).map(_.id), List(p3.id))
+    assertEquals(a(s).approvals(Some(ApprovalState.Open), ApprovalQuery.Limit(10)).map(_.id), List(p3.id))
   }
 
   stest("pages newest first, with cursors; filters by kind, text (the run's goal and manager too), goal; facets") { s =>
     val run = Job.Id.assume(s.run(RunRow.Target("zz2020_x"), goal = Some(RunRow.Goal("zz-tin")), manager = Some(RunRow.ManagerId("watch:zz-tin"))).value)
-    val ids = (1 to 5).toList.map(i => a(s).openSubject(None, ApprovalKind.ArticlePlan, ApprovalQuery.Subject(s"zz-subj-$i"), com.histmersion.domain.automation.agents.ApprovalService.Payload("{}")).id)
-    val src = s.sourceApprovals.record(Some(run), ApprovalKind.Edge, com.histmersion.domain.library.Citekey("zz2020_x"), None, None, Some(com.histmersion.domain.library.Edge.Kind.Refutes), Some(com.histmersion.domain.library.Citekey("zz2019_y")), com.histmersion.util.database.Jsonb.JsonText("{}"), ApprovalState.Open, None)
+    val ids = (1 to 5).toList.map(i => a(s).openSubject(None, ApprovalKind.ArticlePlan, ApprovalQuery.Subject(s"zz-subj-$i"), ApprovalService.Payload("{}")).id)
+    val src = s.sourceApprovals.record(Some(run), ApprovalKind.Edge, Citekey("zz2020_x"), None, None, Some(com.histmersion.domain.library.Edge.Kind.Refutes), Some(Citekey("zz2019_y")), Jsonb.JsonText("{}"), ApprovalState.Open, None)
       .get
     val Right((first, more)) = a(s).approvalPage(None, ApprovalQuery.Limit(2), None, None): @unchecked
     assertEquals((first.map(_.id), more), (List(src.id, ids(4)), true))
@@ -140,12 +143,12 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
     assert(a(s).approvalPage(None, ApprovalQuery.Limit(2), Some(ApprovalQuery.Cursor("999999")), None).isLeft)
     def page(q: ApprovalQuery) = a(s).approvalPage(q, ApprovalQuery.Limit(50), None, None).map(_._1.map(_.id))
     assertEquals(page(ApprovalQuery(kinds = List(ApprovalKind.Edge))), Right(List(src.id)))
-    assertEquals(page(ApprovalQuery(subject = Some(com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("SUBJ-2")))), Right(List(ids(1))))
-    assertEquals(page(ApprovalQuery(subject = Some(com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("Tin")))), Right(List(src.id)), "the run's goal")
-    assertEquals(page(ApprovalQuery(subject = Some(com.histmersion.domain.automation.approvals.ApprovalQuery.Subject("watch:")))), Right(List(src.id)), "the run's manager")
-    assertEquals(page(ApprovalQuery(goal = Some(com.histmersion.domain.automation.approvals.ApprovalQuery.Goal("zz-tin")))), Right(List(src.id)))
-    assertEquals(page(ApprovalQuery(goal = Some(com.histmersion.domain.automation.approvals.ApprovalQuery.Goal("zz-subj-3")))), Right(List(ids(2))))
-    assert(a(s).decide(Approval.Id(ids(0).value), ApprovalState.Rejected, Some(com.histmersion.domain.automation.Approval.Note("no")), None))
+    assertEquals(page(ApprovalQuery(subject = Some(ApprovalQuery.Subject("SUBJ-2")))), Right(List(ids(1))))
+    assertEquals(page(ApprovalQuery(subject = Some(ApprovalQuery.Subject("Tin")))), Right(List(src.id)), "the run's goal")
+    assertEquals(page(ApprovalQuery(subject = Some(ApprovalQuery.Subject("watch:")))), Right(List(src.id)), "the run's manager")
+    assertEquals(page(ApprovalQuery(goal = Some(ApprovalQuery.Goal("zz-tin")))), Right(List(src.id)))
+    assertEquals(page(ApprovalQuery(goal = Some(ApprovalQuery.Goal("zz-subj-3")))), Right(List(ids(2))))
+    assert(a(s).decide(Approval.Id(ids(0).value), ApprovalState.Rejected, Some(Approval.Note("no")), None))
     val (states, facets) =
       a(s).approvalFacets(ApprovalQuery(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.ArticlePlan)))
     assertEquals(states, List("open" -> 4, "rejected" -> 1))

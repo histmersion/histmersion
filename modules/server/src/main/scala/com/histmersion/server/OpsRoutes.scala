@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
@@ -7,6 +8,9 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.views.WorkListView
 import com.histmersion.util.data.checks.CheckRule
+import com.histmersion.domain.automation.Goal
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.automation.worklists.WorkListControllers
 
 /** REST wiring for stream 2.8 — lint (the registered checks), the work lists (the automation's, a listing as its view
   * shows it) and the goals' export, each route delegating to the one controller MCP calls too. Appended to
@@ -33,11 +37,11 @@ object OpsRoutes:
     OpsApi.queueImport.serverLogic[Identity]((list, req) => w.workLists.importText(Queue.Kind.Label(list.value), req)),
     OpsApi.queueList.serverLogic[Identity]((list, all, goal, job) =>
       for
-        g <- scoped(goal, "goal slug")(com.histmersion.domain.automation.Goal.Slug.either(_))
-        j <- scoped(job, "job id")(com.histmersion.util.jobs.Job.Id.either(_))
-        r <- w.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(list.value), WorkListView.IncludeAll(all), g, j)
+        g <- scoped(goal, "goal slug")(Goal.Slug.either(_))
+        j <- scoped(job, "job id")(Job.Id.either(_))
+        r <- w.workListView.list(WorkListControllers.KindOfList(list.value), WorkListView.IncludeAll(all), g, j)
       yield r
     ),
-    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName(list.value), in)),
+    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(WorkListControllers.ListName(list.value), in)),
     OpsApi.goalsExport.serverLogicSuccess[Identity](_ => com.histmersion.api.automation.Goal.Export(w.goals.exportText()))
   )

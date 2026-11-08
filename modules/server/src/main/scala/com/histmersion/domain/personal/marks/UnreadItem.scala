@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.marks
+package com.histmersion
+package domain.personal.marks
 
 import com.histmersion.domain.ItemKey
 import com.histmersion.domain.{AuthorName, Title}

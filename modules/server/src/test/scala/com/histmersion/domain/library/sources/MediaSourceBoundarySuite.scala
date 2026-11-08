@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,7 @@ import com.histmersion.domain.media.{MediaState, MediaStoreSuite}
 import com.histmersion.domain.media.assets.{AssetService, AssetsControllers}
 import com.histmersion.util.data.maintenance.WriteGate
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.library.Citekey
 
 class MediaSourceBoundarySuite extends munit.FunSuite:
   private def controllers() =
@@ -19,11 +21,11 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
   test("invalid source identifiers fail before absence is considered"):
     val c = controllers()
     List("", "Not A Key", "../escape", null).foreach { raw =>
-      assertEquals(c.putFiguresAsked(com.histmersion.api.library.Citekey(raw), Nil).left.map(_.code), Left(Some(Write.CodeInvalid)))
+      assertEquals(c.putFiguresAsked(Citekey(raw), Nil).left.map(_.code), Left(Some(Write.CodeInvalid)))
     }
 
   test("source parser errors reach the media boundary unchanged"):
-    assertEquals(controllers().putFiguresAsked(com.histmersion.api.library.Citekey("../escape"), Nil).left.map(_.message),
+    assertEquals(controllers().putFiguresAsked(Citekey("../escape"), Nil).left.map(_.message),
       Left("invalid citekey '../escape' — it may not contain '..'"))
 
   test("a valid absent source is not found"):
@@ -31,4 +33,4 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
 
   test("lookup and missing-source errors retain the original input"):
     val raw = "  missing2026_source  "
-    assertEquals(controllers().putFiguresAsked(com.histmersion.api.library.Citekey(raw), Nil), Left(Write.notFound(com.histmersion.api.library.Citekey(raw))))
+    assertEquals(controllers().putFiguresAsked(Citekey(raw), Nil), Left(Write.notFound(Citekey(raw))))

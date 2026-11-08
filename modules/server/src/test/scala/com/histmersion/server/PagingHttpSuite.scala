@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,12 +13,15 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.library.GeoHitPage
 import com.histmersion.api.automation.Goal
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
   * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.
   */
 class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -41,9 +45,9 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

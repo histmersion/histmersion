@@ -1,4 +1,5 @@
-package com.histmersion.util.identity
+package com.histmersion
+package util.identity
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid, RecordState}
@@ -8,6 +9,8 @@ import com.histmersion.domain.Title
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How an owner's table names its records, so that references to them are resolved and described in one place: the
   * table (aliased `t` in the expressions), the expression of a record's key and title, its uid column where the kind
@@ -111,7 +114,7 @@ final case class RecordTable(
         .map((u, at) => u -> Instant.parse(at))
         .toMap
 
-  def resolve(k: ItemKey)(using DbCon): Either[com.histmersion.util.identity.RecordTable.Problem, ItemRef] =
+  def resolve(k: ItemKey)(using DbCon): Either[RecordTable.Problem, ItemRef] =
     byKeys(List(k)).headOption
       .map((_, u, _) => ItemRef(kind, k, u))
       .orElse(byAliases(List(k)).get(k).map((_, u, _) => ItemRef(kind, k, u)))
@@ -152,16 +155,16 @@ final case class RecordTable(
 
 object RecordTable:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** How many merges in a row are followed. */
 
   type Table = Table.T
-  object Table extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Table extends RefinedType[String, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uid extends RefinedType[String, Pure]
 
   val MaxHops = 16

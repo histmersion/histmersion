@@ -1,4 +1,5 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
@@ -10,6 +11,9 @@ import com.histmersion.util.jobs.{BackgroundJob, WorkCarrier}
 import javax.sql.DataSource
 import scala.annotation.tailrec
 import com.histmersion.api.Api
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.ByteCount
+import com.histmersion.api.maintenance.Storage
 
 /** `POST /api/maintenance/vacuum`: VACUUM of registered tables as a [[BackgroundJob]] (kind `vacuum`) — a vacuum of
   * `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion
@@ -44,7 +48,7 @@ final class VacuumJobs(
       Vacuum.plan(in, defaults(), vacuumable).flatMap { plan =>
         BackgroundJob.start(
           ds,
-          com.histmersion.util.jobs.Job.Kind.applyUnsafe(Vacuum.JobKind),
+          Job.Kind.applyUnsafe(Vacuum.JobKind),
           Some(VacuumPlan.Detail(Some(plan))),
           slot,
           BackgroundJob.Work("a vacuum job"),
@@ -81,9 +85,9 @@ final class VacuumJobs(
                 Vacuum.Table(name),
                 Vacuum.DeadRows(before.deadRows.value),
                 Vacuum.DeadRows(after.deadRows.value),
-                com.histmersion.api.ByteCount(before.bytes.value),
-                com.histmersion.api.ByteCount(after.bytes.value),
-                com.histmersion.api.maintenance.Storage.Report.DurationMillis(ms)
+                ByteCount(before.bytes.value),
+                ByteCount(after.bytes.value),
+                Storage.Report.DurationMillis(ms)
               )
               scribe.info(s"[vacuum] $line")
               loop(tail, lines :+ line)

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -29,6 +30,22 @@ import com.histmersion.server.hot.Pin
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.Transactor
+import com.histmersion.server.agents.EngineContributions
+import com.histmersion.domain.library.workflows.AgentUpstream
+import com.histmersion.domain.automation.agents.AgentsTools
+import com.histmersion.domain.automation.agents.RunTokenGate
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.server.views.WorkListView
+import com.histmersion.domain.library.ingest.Upload
+import com.histmersion.domain.media.assets.AssetService
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.upstreams.openalex.OpenAlexCrossref
+import com.histmersion.util.plugins.Plugins
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
@@ -40,7 +57,7 @@ object Composition:
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
-  def server(cfg: AppConfig, host: com.histmersion.config.ServerConfig.Host, port: com.histmersion.config.ServerConfig.Port)(using Ox): NettySyncServer =
+  def server(cfg: AppConfig, host: ServerConfig.Host, port: ServerConfig.Port)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, host, port, None)
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document through a fake
@@ -49,8 +66,8 @@ object Composition:
     */
   def server(
       cfg: AppConfig,
-      host: com.histmersion.config.ServerConfig.Host,
-      port: com.histmersion.config.ServerConfig.Port,
+      host: ServerConfig.Host,
+      port: ServerConfig.Port,
       converter: ConverterClient,
       autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
@@ -110,8 +127,8 @@ object Composition:
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
-      host: com.histmersion.config.ServerConfig.Host,
-      port: com.histmersion.config.ServerConfig.Port,
+      host: ServerConfig.Host,
+      port: ServerConfig.Port,
       converter: Option[ConverterClient],
       autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
@@ -126,7 +143,7 @@ object Composition:
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     selectedCore.persistTo(
-      CoreQuotaStore.of(UpstreamQuotaService(com.histmersion.util.database.Transactor(sg.ds)))
+      CoreQuotaStore.of(UpstreamQuotaService(Transactor(sg.ds)))
     )
     val deps = sg.deps(WriteGate(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
@@ -137,9 +154,9 @@ object Composition:
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
-    com.histmersion.server.agents.EngineContributions
+    EngineContributions
       .work(h.agents)
-      .attach(com.histmersion.domain.library.workflows.AgentUpstream.of(acq.controllers))
+      .attach(AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
     val mcp = McpTools(h, acq.controllers, collections)
     h.agents.attachTools(mcp.toolNames.flatMap(n => ToolName.option(n))) // what the generated definitions' placeholders may name
@@ -175,7 +192,7 @@ object Composition:
       )
       .addEndpoint(mcp.endpoint)
       .addEndpoints(
-        com.histmersion.domain.automation.agents.AgentsTools.agentEndpoints(h.agents)
+        AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
     if cfg.auth.apiKey.value.nonEmpty then
@@ -200,7 +217,7 @@ object Composition:
           pipeline.addAfter(
             codec,
             "histmersion-run-token",
-            com.histmersion.domain.automation.agents.RunTokenGate(h.agents.tokens)
+            RunTokenGate(h.agents.tokens)
           )
       }
     }
@@ -238,7 +255,7 @@ object Composition:
       .node[AcquireClients](
         Hot.Graph.Def.Name(ServerGraph.Acquisition),
         deps = List(sg.plugins),
-        keys = List(com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.acquire"), com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds"))
+        keys = List(Hot.Graph.Def.Keys("histmersion.acquire"), Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds"))
       ) { ctx =>
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
@@ -253,17 +270,17 @@ object Composition:
       deps: Deps,
       h: ServerWiring,
       acq: AcquisitionControllers
-  ): com.histmersion.domain.library.collections.CollectionsControllers =
+  ): CollectionsControllers =
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
-      def source(citekey: com.histmersion.domain.library.Citekey) = h.library.sources.get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
-      def create(citekey: com.histmersion.domain.library.Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
-      def patch(citekey: com.histmersion.domain.library.Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
-      def pushMeta(citekey: com.histmersion.domain.library.Citekey) = h.calibreGaps.pushMeta(citekey)
+      def source(citekey: Citekey) = h.library.sources.get(citekey, body = SourcesControllers.GetBody(false))
+      def create(citekey: Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
+      def patch(citekey: Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
+      def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
       def gaps(limit: Option[CollectionLibrary.Limit]) = h.calibreGaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
-      def original(citekey: com.histmersion.domain.library.Citekey) =
+      def original(citekey: Citekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
             .Try(file.bytes())
@@ -275,20 +292,20 @@ object Composition:
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
-            com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
-            all = com.histmersion.server.views.WorkListView.IncludeAll(true)
+            WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
+            all = WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))
       def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes) =
         h.ingest.controllers.ingest(
           params,
-          com.histmersion.domain.library.ingest.Upload.inline(
-            com.histmersion.domain.library.ingest.Upload.InlineName(params.filename.map(_.value).getOrElse("original")),
-            com.histmersion.domain.library.ingest.Upload.Bytes(bytes.value)
+          Upload.inline(
+            Upload.InlineName(params.filename.map(_.value).getOrElse("original")),
+            Upload.Bytes(bytes.value)
           )
         )
       def putCover(params: SourceCoverParams, bytes: CollectionLibrary.Bytes) =
-        h.media.covers.putCover(params, com.histmersion.domain.media.assets.AssetService.Bytes(bytes.value))
+        h.media.covers.putCover(params, AssetService.Bytes(bytes.value))
       def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
       def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
         acq.archiveImport(item, file, req)
@@ -312,11 +329,10 @@ object Composition:
     // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
     val tls = OutboundTls.configure(cfg.tls)
     tls.foreach((_, line) => scribe.info(line.value))
-    val http = SttpHttp(cfg, maxRetryAfterSeconds = com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds(app.media.maxRetryAfterSeconds.value), tls = tls.map(_._1), clock = () => clock.instant())
+    val http = SttpHttp(cfg, maxRetryAfterSeconds = HttpPolicy.MaxRetryAfterSeconds(app.media.maxRetryAfterSeconds.value), tls = tls.map(_._1), clock = () => clock.instant())
     val openalex =
       OpenAlexDiscovery(
-        com.histmersion.upstreams.openalex
-          .OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
+        OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
       )
     val (chain, notes) = FetchChain.of(
       ListMap.from(
@@ -331,7 +347,7 @@ object Composition:
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
-    val coreKey = com.histmersion.util.plugins.Plugins.coreKey(plugins, cfg.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value)))
+    val coreKey = Plugins.coreKey(plugins, cfg.core.key.map(k => Plugins.CoreKey(k.value)))
     val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
     val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(

@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
@@ -16,6 +17,8 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend recorded before this
   * step plus this step's own calls reaches the run's cap (cost or tokens), the loop is told to finish, and the engine
@@ -42,7 +45,7 @@ final private[automation] class RunBudget(
 
 object RunBudget:
   type SpentTokens = SpentTokens.T
-  object SpentTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTokens = com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
-  val CapTokens: _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens.type = _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
+  object SpentTokens extends RefinedType[Long, Pure]
+  type CapTokens = AgentsControllers.BudgetTokens
+  val CapTokens: AgentsControllers.BudgetTokens.type = AgentsControllers.BudgetTokens
 

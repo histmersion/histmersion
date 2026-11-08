@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import hearth.kindlings.optics.syntax.*
 

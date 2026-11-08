@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.api.automation.Agents.ModelRef
@@ -10,6 +11,8 @@ import sttp.ai.core.model.{AIModel, Capability}
 import sttp.apispec.circe.*
 import sttp.client4.Backend
 import sttp.shared.Identity
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
@@ -27,9 +30,9 @@ final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHt
 
 object PluginAiClient:
   type Loopback = Loopback.T
-  object Loopback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Loopback extends RefinedType[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
   private[automation] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub
@@ -37,7 +40,7 @@ object PluginAiClient:
   /** The client for `ref`, or why it cannot be used here: a provider that spends the person's own plan beyond loopback,
     * or one whose own check says no (no key, no URL).
     */
-  def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: com.histmersion.domain.automation.agents.PluginAiClient.Loopback): Either[com.histmersion.domain.automation.agents.PluginAiClient.Problem, LlmClient] =
+  def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Loopback): Either[Problem, LlmClient] =
     if provider.spendsPersonalPlan.value && !loopback.value then
       Left(
         Problem(

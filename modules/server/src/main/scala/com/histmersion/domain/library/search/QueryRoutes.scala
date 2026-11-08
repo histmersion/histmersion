@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.OpsApi
 import sttp.shared.Identity

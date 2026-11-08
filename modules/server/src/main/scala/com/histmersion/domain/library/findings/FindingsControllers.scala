@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
@@ -21,7 +22,7 @@ final class FindingsControllers(findings: FindingService, filters: SearchFilters
     val ceiling = limits.findings.value
     findings.feed(
       f.modify(_.limit)
-        .setTo(Filter.Limit(limits.page(com.histmersion.PageSize.option(f.limit.value), com.histmersion.PageSize.applyUnsafe(math.max(1, ceiling))).value.min(ceiling))),
+        .setTo(Filter.Limit(limits.page(PageSize.option(f.limit.value), PageSize.applyUnsafe(math.max(1, ceiling))).value.min(ceiling))),
       filters.scope(f)
     )
 

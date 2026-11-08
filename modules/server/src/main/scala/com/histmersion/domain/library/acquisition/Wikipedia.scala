@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
@@ -17,7 +18,7 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
           .json(
             Url(
               Http.Url(cfg.wikipedia.url.value),
-              com.histmersion.upstreams.http.Url.UrlPath(""),
+              Url.UrlPath(""),
               "action" -> "parse",
               "page" -> page.value,
               "prop" -> "wikitext",

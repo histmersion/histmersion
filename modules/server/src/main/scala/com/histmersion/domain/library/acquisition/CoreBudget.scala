@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota
@@ -7,6 +8,8 @@ import com.histmersion.pluginhost.HostServices
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import scala.util.control.NonFatal
+import com.histmersion.plugin.UpstreamQuota
+import com.histmersion.domain.library.acquisition.CoreQuotaLend
 
 /** The server's ONE budget for CORE ([[CoreQuota]]): the acquisition chain's `core` step and the new-source search's
   * `core` index both call CORE through it, across every plugin generation and config reload of the process — so a
@@ -23,8 +26,8 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
   def state: CoreQuota.State = current.get
 
   /** This budget as the plugin SPI lends it (`ctx.quota("core")`), under `limits`. */
-  def lend(limits: CoreQuota.Limits): com.histmersion.plugin.UpstreamQuota =
-    com.histmersion.domain.library.acquisition.CoreQuotaLend(this, limits)
+  def lend(limits: CoreQuota.Limits): UpstreamQuota =
+    CoreQuotaLend(this, limits)
 
   /** Keep the budget in `s` from now on, starting from what it holds: the same day's spending and a block that has not
     * ended are kept (the larger count, the later block, when both sides have one).
@@ -94,7 +97,7 @@ object CoreBudget:
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
   def quotas(core: CoreBudget, limits: CoreQuota.Limits): HostServices.Quotas =
-    name => if name == Upstream.value then core.lend(limits) else com.histmersion.plugin.UpstreamQuota.Unlimited
+    name => if name == Upstream.value then core.lend(limits) else UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
   def limits(c: CoreServiceConfig): CoreQuota.Limits =

@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.PluginHost
@@ -8,6 +9,9 @@ import org.ekrich.config.{Config, ConfigValueFactory}
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import com.histmersion.util.process.ProcessLaunch
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Plugin ids that were SPLIT, and how their settings are still honoured (docs/research-plugins.md §20.2).
   *
@@ -41,14 +45,14 @@ object LegacyPlugins:
   val All: List[Split] = List(OaIndex)
 
   /** The former ids: no plugin may take one (its settings would be read as the successors'). */
-  def ids: Set[com.histmersion.util.plugins.Plugin.Id] = All.map(_.id).toSet
+  def ids: Set[Plugin.Id] = All.map(_.id).toSet
 
   /** The plugins a key of `id` concerns: the successors of a former id, else the id itself. */
-  def expand(id: com.histmersion.util.plugins.Plugin.Id): List[com.histmersion.util.plugins.Plugin.Id] = All.find(_.id == id).fold(List(id))(_.into)
+  def expand(id: Plugin.Id): List[Plugin.Id] = All.find(_.id == id).fold(List(id))(_.into)
 
   /** The environment variable the host reads for a plugin's `enabled` (its defaults declare it). */
-  def enabledEnv(id: com.histmersion.util.plugins.Plugin.Id): com.histmersion.util.process.ProcessLaunch.EnvironmentKey =
-    com.histmersion.util.process.ProcessLaunch.EnvironmentKey(
+  def enabledEnv(id: Plugin.Id): ProcessLaunch.EnvironmentKey =
+    ProcessLaunch.EnvironmentKey(
       s"HISTMERSION_PLUGIN_${id.value.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
     )
 
@@ -56,7 +60,7 @@ object LegacyPlugins:
 
   object Migrated:
     type Warnings = Warnings.T
-    object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Warnings extends RefinedType[String, Pure]
 
   /** Map every former id's settings onto its successors. `known(id)`: the keys of plugin `id`'s defaults (`enabled`
     * aside), which decide where a key other than `enabled` goes.
@@ -74,7 +78,7 @@ object LegacyPlugins:
   private def has(c: Config, p: String): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
 
   /** The former block's keys onto the successors; the block itself removed. */
-  private def block(user: Config, split: Split, known: Plugin.Id => Set[SettingsService.ConfigPath]): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
+  private def block(user: Config, split: Split, known: Plugin.Id => Set[SettingsService.ConfigPath]): (Config, List[Migrated.Warnings]) =
     val from = path(split.id)
     if !has(user, from) then (user, Nil)
     else
@@ -112,7 +116,7 @@ object LegacyPlugins:
           )
 
   /** `order`: the former id replaced in place by its successors not listed already. */
-  private def order(user: Config, env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
+  private def order(user: Config, env: Config, split: Split): (Config, List[Migrated.Warnings]) =
     val at = s"${PluginHost.Root}.${PluginHost.OrderKey}"
     val listed = Try(user.withFallback(env).resolve().getStringList(at).asScala.toList.map(_.trim)).toOption
     listed match
@@ -126,7 +130,7 @@ object LegacyPlugins:
       case _ => (user, Nil)
 
   /** The former `enabled` variable for each successor's that is not set. */
-  private def environment(env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
+  private def environment(env: Config, split: Split): (Config, List[Migrated.Warnings]) =
     val old = enabledEnv(split.id).value
     Option(env.root.get(old)) match
       case None    => (env, Nil)

@@ -1,24 +1,28 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.DeepTime
+import com.histmersion.domain.media.MediaRole
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to a place
   * ([[MediaMatch]]). The import around it is [[CollectionImport]]; a plugin's is a [[PluginCollection]].
   */
 trait SearchedCollection:
   /** The asset provider and the `media_checks` name. */
-  def provider: com.histmersion.domain.media.imports.ImportService.Provider
+  def provider: ImportService.Provider
 
   /** The role its pictures play for a place, unless a record names its own: `object` (a museum's) or `map`. */
-  def role: com.histmersion.domain.media.MediaRole.Wire
+  def role: MediaRole.Wire
   def conf: MediaCollectionConfig
 
   /** The records a search for the place's name answers; one record may be unreadable on its own. */
-  def search(fetch: Polite, place: PlaceFacts): Either[com.histmersion.domain.media.imports.SearchedCollection.Problem, List[Either[com.histmersion.domain.media.imports.SearchedCollection.Problem, MediaRecord]]]
+  def search(fetch: Polite, place: PlaceFacts): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]]
 
   /** Why a record is tied to the place, or why not. */
   def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve): Either[MediaMatch.Refusal, MediaMatch.Basis] =
@@ -40,15 +44,15 @@ trait SearchedCollection:
   /** A record about to be stored, completed by the request a search does not answer (Open Context's media item: the
     * files, and the licence read again); a `Left` refuses it. Only stored records pay for it.
     */
-  def complete(fetch: Polite, rec: MediaRecord): Either[com.histmersion.domain.media.imports.SearchedCollection.Problem, MediaRecord] = Right(rec)
+  def complete(fetch: Polite, rec: MediaRecord): Either[SearchedCollection.Problem, MediaRecord] = Right(rec)
 
 object SearchedCollection:
   type DistanceKm = DistanceKm.T
-  object DistanceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DistanceKm extends RefinedType[Double, Pure]
   type LicenceKey = LicenceKey.T
-  object LicenceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LicenceKey extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   private def infoId(p: PlaceFacts): MediaMatch.PlaceInfo.Id = MediaMatch.PlaceInfo.Id(p.id.value)
 
@@ -77,7 +81,7 @@ object SearchedCollection:
       (for la <- a.lat; oa <- a.lon; lb <- b.lat; ob <- b.lon yield distanceKm(la, oa, lb, ob).value <= km.value).getOrElse(false)
 
   /** Pure: great-circle distance in km. */
-  def distanceKm(lat1: com.histmersion.Latitude, lon1: com.histmersion.Longitude, lat2: com.histmersion.Latitude, lon2: com.histmersion.Longitude): com.histmersion.domain.media.imports.SearchedCollection.DistanceKm =
+  def distanceKm(lat1: Latitude, lon1: Longitude, lat2: Latitude, lon2: Longitude): DistanceKm =
     val r = 6371.0
     val (p1, p2) = (math.toRadians(lat1.value), math.toRadians(lat2.value))
     val dp = p2 - p1
@@ -86,4 +90,4 @@ object SearchedCollection:
     DistanceKm(2 * r * math.asin(math.sqrt(a.min(1.0))))
 
   /** Pure: a record's licence key for the counts — its SPDX id, or why it has none. */
-  def licenceKey(rec: MediaRecord): com.histmersion.domain.media.imports.SearchedCollection.LicenceKey = rec.rights.fold(_ => com.histmersion.domain.media.imports.SearchedCollection.LicenceKey("not open access"), r => LicenceKey(r.licence.id.value))
+  def licenceKey(rec: MediaRecord): LicenceKey = rec.rights.fold(_ => LicenceKey("not open access"), r => LicenceKey(r.licence.id.value))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.bookmarks
+package com.histmersion
+package domain.personal.bookmarks
 
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.Referables

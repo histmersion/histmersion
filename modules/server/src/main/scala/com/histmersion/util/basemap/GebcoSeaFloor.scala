@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.{BBox, Plural}
@@ -10,6 +11,8 @@ import com.histmersion.util.storage.Store
 import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sea floor from the GEBCO grid (15 arc-seconds, ~460 m; public domain), made into Terrarium tiles here: GEBCO
   * publishes the grid as eight 90° GeoTIFFs of uncompressed rows, so the rows a region needs are read by range, kept
@@ -148,25 +151,25 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
 
 object GebcoSeaFloor:
   type Column = Column.T
-  object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Column extends RefinedType[Int, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Elevation = Elevation.T
-  object Elevation extends _root_.io.github.iltotore.iron.RefinedType[Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Elevation extends RefinedType[Short, Pure]
   type GridSize = GridSize.T
-  object GridSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GridSize extends RefinedType[Int, Pure]
   type Note = BasemapFetch.Note
   val Note: BasemapFetch.Note.type = BasemapFetch.Note
   type PixelX = PixelX.T
-  object PixelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PixelX extends RefinedType[Int, Pure]
   type PixelY = PixelY.T
-  object PixelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PixelY extends RefinedType[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Row = Row.T
-  object Row extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Row extends RefinedType[Int, Pure]
   type SampledElevation = SampledElevation.T
-  object SampledElevation extends _root_.io.github.iltotore.iron.RefinedType[Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SampledElevation extends RefinedType[Float, Pure]
   type TileKey = GebcoPlan.TileKey
   val TileKey: GebcoPlan.TileKey.type = GebcoPlan.TileKey
   type TileX = GebcoPlan.TileX
@@ -174,7 +177,7 @@ object GebcoSeaFloor:
   type TileY = GebcoPlan.TileY
   val TileY: GebcoPlan.TileY.type = GebcoPlan.TileY
   type WholeDegrees = WholeDegrees.T
-  object WholeDegrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WholeDegrees extends RefinedType[Int, Pure]
   type Zoom = GebcoPlan.Zoom
   val Zoom: GebcoPlan.Zoom.type = GebcoPlan.Zoom
 

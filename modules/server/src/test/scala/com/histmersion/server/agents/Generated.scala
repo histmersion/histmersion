@@ -1,17 +1,21 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentGenerator, Prompts}
 import com.histmersion.domain.automation.workflows.ToolName
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
 
 /** Test helpers for the generated trees. */
 object Generated:
   /** Every tool the bundled definitions name by placeholder, plus the agent tools: what a pure test hands the generator
     * as "known" (the HTTP suite checks the placeholders against the live `/mcp`).
     */
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   def known(defs: AgentDefinitions): Set[ToolName] =
     val texts = defs.agents.toOption.toList.flatten.map(_.body.value) ++
       defs.fragments.toOption.toList.flatMap(_.values.map(_.value)) ++

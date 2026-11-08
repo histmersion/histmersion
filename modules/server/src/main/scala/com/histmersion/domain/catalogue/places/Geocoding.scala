@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.util.database.Transactor
@@ -8,7 +9,7 @@ import com.histmersion.util.database.Transactor
   * surface, a shape cut to a compass part — with no in-memory twin.
   */
 trait Geocoding:
-  def resolve(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin): Option[Geocode.Resolution]
+  def resolve(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin): Option[Geocode.Resolution]
 
 object Geocoding:
   def apply(db: Transactor): Geocoding = Implementation(db)
@@ -18,6 +19,6 @@ object Geocoding:
         name: Geocode.Attempt.Name,
         hint: Geocode.KindHint,
         at: Option[Period],
-        placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin
+        placeholderMin: GeocodeSettings.PlaceholderMin
     ): Option[Geocode.Resolution] =
       db.read(Geocoder.resolve(name, hint, at, placeholderMin))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.domain.personal.seen.SeenBoard
 

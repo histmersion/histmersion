@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,11 @@ import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.{Finding, Source as ApiSource}
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.library.Confidence
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.automation.Agents
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -83,8 +89,8 @@ final class EnrichSourcePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(ck: com.histmersion.domain.library.Citekey): Either[String, Loaded] =
-    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).left.map(_.message.value).flatMap { sw =>
+  private def load(ck: Citekey): Either[String, Loaded] =
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(_.message.value).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
@@ -94,7 +100,7 @@ final class EnrichSourcePipeline(
             citekey = Citekey.assume(s.citekey.value),
             title = Loaded.Title(s.title.value),
             authors = s.authors.map(a => AuthorName(a.value)),
-            year = s.year.map(y => com.histmersion.Year(y.value.toInt)),
+            year = s.year.map(y => Year(y.value.toInt)),
             venue = s.venue.map(v => Loaded.Venue(v.value)),
             status = s.status.wire,
             hasSummary = Loaded.HasSummary(s.summary.exists(_.value.trim.nonEmpty)),
@@ -108,7 +114,7 @@ final class EnrichSourcePipeline(
             head = Loaded.Head(body.take(lib.enrich.headChars.value)),
             windows = windows(SourceBody(body), WindowChars(lib.enrich.windowChars.value), MaxWindows(lib.enrich.maxWindows.value)),
             tags = s.tags.map(t => Tag(t.value)),
-            doi = s.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value))
+            doi = s.doi.flatMap(d => Doi.option(d.value))
           )
         )
     }
@@ -181,13 +187,13 @@ final class EnrichSourcePipeline(
         periodEnd = f.end,
         periodName = f.periodName.map(n => Finding.PeriodName(n.value)),
         tags = f.tags.map(t => Finding.Tags(t.value)),
-        confidence = Some(com.histmersion.api.library.Confidence.Wire(f.confidence.value))
+        confidence = Some(Confidence.Wire(f.confidence.value))
       )
       val choice = f.place.map(p =>
         GeocodeChoice(
           GeocodeChoice.Claim(f.claim.value),
           GeocodeChoice.Asked(p.value),
-          hit.map(h => com.histmersion.domain.catalogue.Place.Id.assume(h.placeId.value)),
+          hit.map(h => Place.Id.assume(h.placeId.value)),
           hit.map(h => GeocodeChoice.Label(h.label.value)),
           hit.filter(_.isApproximate).map(h => GeocodeChoice.Approximate(h.approximate.map(_.describe).mkString("; ")))
         )
@@ -200,14 +206,14 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(s, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(s: Citekey): Boolean = site.sources.get(s, body = SourcesControllers.GetBody(false)).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
     */
   private def write(
       ctx: RunCtx,
-      ck: com.histmersion.domain.library.Citekey,
+      ck: Citekey,
       l: Loaded,
       c: Classified,
       fs: List[Finding.Input],
@@ -311,7 +317,7 @@ final class EnrichSourcePipeline(
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
     * `assess` outranks any proposal.
     */
-  private def status(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
+  private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
     if p.fieldsSet.contains(Patched.FieldsSet("status")) then StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
     else if c.status == ApiSource.Status.Unassessed then StatusRouted(None, None, StatusRouted.Note("no status proposed"))
     else if a.retracted.value then StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
@@ -338,11 +344,11 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
-  private def close(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, p: Patched, r: StatusRouted): Either[String, Closed] =
+  private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted): Either[String, Closed] =
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.toList.flatMap { s =>
+      site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.toList.flatMap { s =>
         closeLint(FindingCount(s.findings.size), Loaded.HasPeriod(s.source.periodStart.isDefined), s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
@@ -361,7 +367,7 @@ final class EnrichSourcePipeline(
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
     */
-  private def tickOff(id: Queue.QueueItem.Id, ck: com.histmersion.domain.library.Citekey, runId: com.histmersion.api.automation.Agents.RunInfo.Id): String =
+  private def tickOff(id: Queue.QueueItem.Id, ck: Citekey, runId: Agents.RunInfo.Id): String =
     Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>

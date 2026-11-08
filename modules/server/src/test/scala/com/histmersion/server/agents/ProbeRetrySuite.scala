@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -21,6 +22,19 @@ import java.nio.file.Files
 import com.histmersion.db.*
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.Source
+import com.histmersion.db.DbSuite
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.db.TestDb
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.automation.Agents
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.config.AgentsConfig
+import com.histmersion.config.AgentEnrichConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.config.ClaudeCodeConfig
 
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
   * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —
@@ -28,25 +42,25 @@ import com.histmersion.api.library.Source
   * claude-code:haiku) is asked again the same way — through the real `claude-code` client on a fake `claude`. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+class ProbeRetrySuite extends DbSuite with RunTranscripts:
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private val testDb = com.histmersion.db.TestDb.url
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
-  private val Ck = com.histmersion.domain.library.Citekey("zzprobe1956_catalogue")
+  private val Ck = Citekey("zzprobe1956_catalogue")
   private val ApiCk = com.histmersion.api.library.Citekey("zzprobe1956_catalogue")
-  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("zzProbe"))
+  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzProbe"))
   private val ProbeModel = ProbeRequest.Model(Model.wire.value)
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
 
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("zzProbe=0/0"))).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
+      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("zzProbe=0/0"))).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(cfg.db)
@@ -66,7 +80,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: ScriptedClient): AgentsControllers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
@@ -92,7 +106,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   // ── #915: claude-code answering in prose ─────────────────────────────────────────────────────────
 
-  private val Haiku = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
+  private val Haiku = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("haiku"))
   private def result(text: String, structured: String) =
     s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json
         .fromString(text)
@@ -109,12 +123,12 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,
-      cfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString)).modify(_.timeoutSeconds).setTo(com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds(30)),
+      cfg.agents.providers.claudeCode.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)).modify(_.timeoutSeconds).setTo(ClaudeCodeConfig.TimeoutSeconds(30)),
       rt
     )
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(PickFailure.Problem(s"no client for ${ref.wire}"))

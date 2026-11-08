@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.library.acquisition.*
@@ -11,6 +12,7 @@ import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.Location
 
 import javax.sql.DataSource
+import com.histmersion.domain.research.articles.ArticleService
 
 /** The library's acquisition as the server wires it, over one test's `deps` and its own upstream fakes. */
 object AcquisitionTesting:
@@ -46,7 +48,7 @@ object AcquisitionTesting:
       deps.maintenance,
       deps.pins,
       GoalService(deps.transactor),
-      ArticleCitedSources(com.histmersion.domain.research.articles.ArticleService(deps.transactor)),
+      ArticleCitedSources(ArticleService(deps.transactor)),
       discovery,
       citations,
       oa,

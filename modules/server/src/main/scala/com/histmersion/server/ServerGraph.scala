@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -20,6 +21,9 @@ import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 import javax.sql.DataSource
 import scala.concurrent.duration.*
 import scala.util.control.NonFatal
+import com.histmersion.domain.library.acquisition.CoreBudget
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
   *
@@ -38,10 +42,10 @@ final class ServerGraph private (
     val graph: Hot.Graph[HotConfig],
     source: Option[ConfigSource],
     val pool: Hot[DataSource],
-    val migrations: Hot[com.histmersion.util.database.Migrate.Version],
+    val migrations: Hot[Migrate.Version],
     val queryPool: Hot[ReadOnlyPool],
     val plugins: Hot[Generation],
-    val core: com.histmersion.domain.library.acquisition.CoreBudget
+    val core: CoreBudget
 ):
 
   val ds: DataSource = Hot.DataSource(pool)(identity)
@@ -139,7 +143,7 @@ final class ServerGraph private (
     * so turning `watch` on or off is itself a reload, and the watcher stops with its scope. Off without a file to
     * watch.
     */
-  private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.Problem, Hot[Boolean]] =
+  private[server] def addWatch(): Either[ServerGraph.Problem, Hot[Boolean]] =
     graph
       .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) { ctx =>
         val c = ctx.config.app.config
@@ -169,7 +173,7 @@ final class ServerGraph private (
 
 object ServerGraph:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   val Pool = "pool"
   val Migrations = "migrations"
@@ -187,8 +191,8 @@ object ServerGraph:
       initial: HotConfig,
       source: Option[ConfigSource],
       plugins: Option[Generation],
-      core: com.histmersion.domain.library.acquisition.CoreBudget
-  ): Either[com.histmersion.server.ServerGraph.Problem, ServerGraph] =
+      core: CoreBudget
+  ): Either[Problem, ServerGraph] =
     val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
     val built =
@@ -206,7 +210,7 @@ object ServerGraph:
               _ <- Db.canConnect(p).left.map(e => Hot.Graph.Problem(s"cannot connect to ${redact(db.url.value)}: $e"))
             yield p
           }
-        mig <- graph.node[com.histmersion.util.database.Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
+        mig <- graph.node[Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
           val p = ctx(pool)
           try
             val v = Migrate.run(p)

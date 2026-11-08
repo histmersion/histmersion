@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.domain.library.sources.SourcesData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable, TableName}
@@ -11,12 +12,13 @@ import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.data.mirror.Mirror
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
 
 /** What the library says about the data it owns: its tables, the originals, the spool and the corpus folder it keeps
   * files in, the sources a restore must not drop unasked, what a bundle carries of it and how a merge treats it, the
   * sources' notes in the mirror, the rebuild of their chunks, its counts and its checks.
   */
-final class LibraryData(referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers) extends DataContribution:
+final class LibraryData(referrers: SourceReferrers) extends DataContribution:
   val owner: DataOwner = LibraryData.owner
 
   val tables: List[OwnedTable] = OwnedTable.all(
@@ -40,7 +42,7 @@ final class LibraryData(referrers: com.histmersion.domain.library.sources.referr
   override val stores: List[Location] = List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
 
   /** A restore that would drop sources is refused unless asked. */
-  override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), com.histmersion.util.data.backup.GuardedTable.Noun("source"))))
+  override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), GuardedTable.Noun("source"))))
 
   /** The sources and what they own. */
   override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)

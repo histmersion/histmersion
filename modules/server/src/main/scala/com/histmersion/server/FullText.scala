@@ -1,7 +1,10 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a source page shows the whole OCR'd paper. */
 enum FullText:
@@ -12,4 +15,4 @@ enum FullText:
 object FullText:
   object Shown:
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -12,6 +13,7 @@ import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.catalogue.Year
 
 /** `event_links` for agents: the sources that may discuss an event, their confirmation (an attestation from a passage
   * that names it), and the leads catalogue events raise.
@@ -24,8 +26,8 @@ object EventLinksTools:
       recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
       confirm: List[EventLinksRequest.Confirm] = Nil,
       reject: List[EventLinksRequest.Reject] = Nil,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
       kind: Option[Api.EventQuery.Kind] = None,
       limit: Option[Filter.Limit] = None
   ) derives KindlingsCodecAsObject

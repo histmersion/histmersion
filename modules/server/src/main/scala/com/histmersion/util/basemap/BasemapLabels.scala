@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.BBox
@@ -11,6 +12,8 @@ import io.circe.Json
 import scala.collection.mutable
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Label
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The base maps' physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's label layers — public
   * domain — read from their GeoJSON, cut to the region, and written as a small vector archive the page labels from
@@ -24,27 +27,27 @@ import com.histmersion.api.library.Label
   */
 object BasemapLabels:
   type Area = Area.T
-  object Area extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Area extends RefinedType[Double, Pure]
   type Buffer = Buffer.T
-  object Buffer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Buffer extends RefinedType[Double, Pure]
   type FeatureClass = FeatureClass.T
-  object FeatureClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FeatureClass extends RefinedType[String, Pure]
   type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileName extends RefinedType[String, Pure]
   type Language = Language.T
-  object Language extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Language extends RefinedType[String, Pure]
   type Margin = Margin.T
-  object Margin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Margin extends RefinedType[Double, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Tolerance = Tolerance.T
-  object Tolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tolerance extends RefinedType[Double, Pure]
   type WorldX = WorldX.T
-  object WorldX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WorldX extends RefinedType[Double, Pure]
   type WorldY = WorldY.T
-  object WorldY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WorldY extends RefinedType[Double, Pure]
 
   /** One name to place: a point (`line` empty) or a river's line (`line` its parts, lon/lat), shown from map zoom
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
@@ -62,17 +65,17 @@ object BasemapLabels:
 
   object Label:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Lon = Lon.T
-    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lon extends RefinedType[Double, Pure]
     type Lat = Lat.T
-    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lat extends RefinedType[Double, Pure]
     type MinZoom = MinZoom.T
-    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinZoom extends RefinedType[Int, Pure]
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxZoom extends RefinedType[Int, Pure]
     type Elevation = Elevation.T
-    object Elevation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Elevation extends RefinedType[Long, Pure]
 
   /** Natural Earth's feature classes, lower-cased → the `kind` a style selects; `None` = not kept. */
   def kindOf(featureClass: FeatureClass): Option[Label.Kind] =

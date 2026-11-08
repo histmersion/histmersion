@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.api.Api
 import com.histmersion.api.library.{Citekey as ApiCitekey, Facet, Filter, Source}
@@ -51,7 +52,7 @@ object LibraryRoutes:
               SourcesControllers.MarkdownFullText(q.fullText.value),
               q.section,
               q.heading.map(h => SourceService.Heading(h.value)),
-              q.offset.map(o => com.histmersion.Offset.option(o.value).getOrElse(com.histmersion.Offset.Start)),
+              q.offset.map(o => Offset.option(o.value).getOrElse(Offset.Start)),
               q.chars.map(c => SourcesControllers.Chars(c.value))
             )
             .map(md => Source.View(md.value))

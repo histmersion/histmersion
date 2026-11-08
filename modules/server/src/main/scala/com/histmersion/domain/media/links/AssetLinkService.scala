@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.links
+package com.histmersion
+package domain.media.links
 
 import com.histmersion.api.Write
 import com.histmersion.api.media.AssetLink
@@ -9,27 +10,36 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.media.assets.AssetService
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.media.assets.MediaItemRow
+import com.histmersion.domain.media.imports.Target
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.media.assets.AssetInfoRow
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
   */
 trait AssetLinkService:
   def list(
-      citekey: Option[com.histmersion.domain.library.Citekey],
-      asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
-      targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
-      targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
+      citekey: Option[Citekey],
+      asset: Option[AssetService.AssetUid],
+      targetType: Option[AssetService.TargetType],
+      targetId: Option[AssetService.TargetId]
   ): AssetLink.List
 
   /** A link made; refused when the figure it names is not stored. */
   def create(in: AssetLink.Put): Either[Api.Error, AssetLink]
 
   /** Whether there was a link `id` to remove. */
-  def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean
+  def delete(id: AssetLinkService.LinkId): Boolean
 
 object AssetLinkService:
   type LinkId = LinkId.T
-  object LinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkId extends RefinedType[Long, Pure]
 
   def apply(db: Transactor): AssetLinkService = Implementation(db)
 
@@ -43,39 +53,39 @@ object AssetLinkService:
 
   final private class Implementation(db: Transactor) extends AssetLinkService:
     def list(
-        citekey: Option[com.histmersion.domain.library.Citekey],
-        asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
-        targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
-        targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
+        citekey: Option[Citekey],
+        asset: Option[AssetService.AssetUid],
+        targetType: Option[AssetService.TargetType],
+        targetId: Option[AssetService.TargetId]
     ): AssetLink.List =
       val rows = db.read(
         AssetLinkRepo.list(
-          named(citekey.map(_.value)).map(com.histmersion.domain.library.Citekey.assume(_)),
-          named(asset.map(_.value)).map(com.histmersion.domain.media.assets.MediaItemRow.Uid(_)),
-          named(targetType.map(_.value)).map(com.histmersion.domain.media.imports.Target.TargetType(_)),
-          named(targetId.map(_.value)).map(com.histmersion.domain.media.imports.Target.Id(_))
+          named(citekey.map(_.value)).map(Citekey.assume(_)),
+          named(asset.map(_.value)).map(MediaItemRow.Uid(_)),
+          named(targetType.map(_.value)).map(Target.TargetType(_)),
+          named(targetId.map(_.value)).map(Target.Id(_))
         )
       )
-      AssetLink.List.of(com.histmersion.api.RowCount(rows.size), rows, com.histmersion.api.personal.UnreadPage.Offset(0))
+      AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       db.transact:
-        val exists = com.histmersion.domain.library.Citekey
+        val exists = Citekey
           .option(in.citekey.value)
-          .exists(ck => AssetLinkRepo.figureExists(ck, com.histmersion.domain.media.assets.AssetInfoRow.Name(in.assetName.value)))
+          .exists(ck => AssetLinkRepo.figureExists(ck, AssetInfoRow.Name(in.assetName.value)))
         if !exists then Left(noFigure(in))
         else Right(AssetLinkRepo.insert(in))
 
-    def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean = db.transact(AssetLinkRepo.delete(AssetLink.Id(id.value)))
+    def delete(id: LinkId): Boolean = db.transact(AssetLinkRepo.delete(AssetLink.Id(id.value)))
 
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
     def list(
-        citekey: Option[com.histmersion.domain.library.Citekey],
-        asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
-        targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
-        targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
+        citekey: Option[Citekey],
+        asset: Option[AssetService.AssetUid],
+        targetType: Option[AssetService.TargetType],
+        targetId: Option[AssetService.TargetId]
     ): AssetLink.List =
       val (ck, an, tt, ti) =
         (named(citekey.map(_.value)), named(asset.map(_.value)), named(targetType.map(_.value)), named(targetId.map(_.value)))
@@ -86,7 +96,7 @@ object AssetLinkService:
         )
         .sortBy[Long](_.id.value)
         .toList
-      AssetLink.List.of(com.histmersion.api.RowCount(rows.size), rows, com.histmersion.api.personal.UnreadPage.Offset(0))
+      AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a => a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value) then Left(noFigure(in))
@@ -98,7 +108,7 @@ object AssetLinkService:
         }
         Right(after.assetLinks.last)
 
-    def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean =
+    def delete(id: LinkId): Boolean =
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id.value == id.value)))
       before.assetLinks.exists(_.id.value == id.value)
 

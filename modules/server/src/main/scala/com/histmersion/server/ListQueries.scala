@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
@@ -6,6 +7,8 @@ import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, Ru
 
 import java.time.Instant
 import com.histmersion.api.Api
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.automation.agents.RunQuery
 
 /** The engine's list filters a client sent (core [[ListFilters]]: the approvals' and the runs'; the jobs' are
   * `util.jobs.JobListing.query`), checked and turned into the repos' queries: a value outside a closed vocabulary (a
@@ -24,7 +27,7 @@ object ListQueries:
       .map(_.map(_.value))
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
-  def approvals(f: ApprovalFilter): Either[Api.Error, com.histmersion.domain.automation.approvals.ApprovalQuery] =
+  def approvals(f: ApprovalFilter): Either[Api.Error, ApprovalQuery] =
     val n = f.normalized
     for
       state <- n.state match
@@ -37,15 +40,15 @@ object ListQueries:
             .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire.value) :+ "all").mkString(", ")})"))
       kinds <- known("kind", n.kind.map(_.value), ApprovalKind.values.map(_.wire.value).toSeq)
       by <- known("decidedBy", n.decidedBy.map(_.value), DecidedBy.values.map(_.wire.value).toSeq)
-    yield com.histmersion.domain.automation.approvals.ApprovalQuery(
+    yield ApprovalQuery(
       state,
       kinds.flatMap(k => ApprovalKind.parse(ApprovalKind.Wire(k))),
-      n.subject.map(s => com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(s.value)),
-      n.goal.map(g => com.histmersion.domain.automation.approvals.ApprovalQuery.Goal(g.value)),
+      n.subject.map(s => ApprovalQuery.Subject(s.value)),
+      n.goal.map(g => ApprovalQuery.Goal(g.value)),
       by.flatMap(b => DecidedBy.parse(DecidedBy.Wire(b)))
     )
 
-  def runs(f: RunFilter, now: Instant): Either[Api.Error, com.histmersion.domain.automation.agents.RunQuery] =
+  def runs(f: RunFilter, now: Instant): Either[Api.Error, RunQuery] =
     import com.histmersion.domain.automation.agents.RunQuery
     val n = f.normalized
     for

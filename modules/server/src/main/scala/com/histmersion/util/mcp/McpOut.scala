@@ -1,4 +1,5 @@
-package com.histmersion.util.mcp
+package com.histmersion
+package util.mcp
 
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.Api

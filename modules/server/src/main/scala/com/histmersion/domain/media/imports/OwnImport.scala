@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import hearth.kindlings.optics.syntax.*
 
@@ -14,6 +15,8 @@ import com.histmersion.plugin.*
 import com.histmersion.upstreams.media.MediaText
 
 import scala.util.control.NonFatal
+import com.histmersion.plugin.MediaTarget
+import com.histmersion.domain.media.MediaRole
 
 /** The import of a collection of its targets' own pictures ([[MediaMatchRule.Own]]: a Wikidata item's statements, the
   * files a gazetteer record or a depiction search names): the collection is asked about the whole batch at once
@@ -41,11 +44,11 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     */
   final private case class Verdict(licence: Option[String], decision: Either[String, (MediaItem, Rights)])
 
-  private def idOf(t: Target): com.histmersion.plugin.MediaTarget.Id =
-    com.histmersion.plugin.MediaTarget
+  private def idOf(t: Target): MediaTarget.Id =
+    MediaTarget
       .Id(
         if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places,
-        com.histmersion.plugin.MediaTarget.Id.Value(t.id.value)
+        MediaTarget.Id.Value(t.id.value)
       )
 
   /** A use's Wikidata statement as the host checks it: one that is no item is left out, with a warning. */
@@ -54,12 +57,12 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     why.foreach(w => scribe.warn(s"media import: ${u.item.key}: $w, left out"))
     q
 
-  private def typeOf(t: com.histmersion.plugin.MediaTarget.Id): Target.TargetType = t.kind match
+  private def typeOf(t: MediaTarget.Id): Target.TargetType = t.kind match
     case MediaTarget.Events => ImportRepo.Event
     case MediaTarget.Places => ImportRepo.Place
 
-  private def roleOf(u: MediaUse): com.histmersion.domain.media.MediaRole.Wire =
-    com.histmersion.domain.media.MediaRole.Wire(
+  private def roleOf(u: MediaUse): MediaRole.Wire =
+    MediaRole.Wire(
       u.item.role.map(_.value.trim).filter(_.nonEmpty).getOrElse(col.role.value)
     )
 
@@ -189,7 +192,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]],
       categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)],
-      byId: Map[com.histmersion.plugin.MediaTarget.Id, Target]
+      byId: Map[MediaTarget.Id, Target]
   ): MediaImportReport =
     val known = db.known(ImportService.Provider(provider), verdicts.keys.toList.map(providerKey))
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)

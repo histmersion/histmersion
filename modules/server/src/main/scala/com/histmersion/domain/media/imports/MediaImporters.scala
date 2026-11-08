@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Registries}
 
@@ -9,20 +10,24 @@ import com.histmersion.util.ocr.ConverterClient
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 import com.histmersion.api.media.MediaProvider
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Title
+import com.histmersion.config.MediaPluginCollectionsConfig
 
 /** The collections `media import` can run, from the plugins' registry of the calling thread's generation: the
   * first-party ones and a third party's alike.
   */
 object MediaImporters:
   type ImporterKey = ImporterKey.T
-  object ImporterKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImporterKey extends RefinedType[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refusal extends RefinedType[String, Pure]
 
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.
     */
-  def lookup(asked: com.histmersion.domain.media.imports.MediaImporters.ImporterKey, collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]): Either[com.histmersion.domain.media.imports.MediaImporters.Refusal, (MediaImporter.ImporterName, MediaCollection)] =
+  def lookup(asked: ImporterKey, collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]): Either[Refusal, (MediaImporter.ImporterName, MediaCollection)] =
     val name = BuiltinMedia.canonical(BuiltinMedia.CanonicalAsked(asked.value)).value
     collections
       .get(Registries.MediaCollectionsKey(name))
@@ -41,14 +46,14 @@ object MediaImporters:
     * the allowlist the host keeps for it ([[BuiltinMedia.licencesFor]]).
     */
   def resolve(
-      asked: com.histmersion.domain.media.imports.MediaImporters.ImporterKey,
+      asked: ImporterKey,
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection],
       imports: ImportService,
       store: MediaStore,
       cfg: () => MediaConfig,
       http: HttpTransport,
       converter: ConverterClient
-  ): Either[com.histmersion.domain.media.imports.MediaImporters.Refusal, MediaImporter] =
+  ): Either[Refusal, MediaImporter] =
     lookup(asked, collections).flatMap { (name, c) =>
       PluginMedia
         .guard(c.check)
@@ -58,7 +63,7 @@ object MediaImporters:
           MediaImporter.of(
             name,
             c,
-            PluginMedia.guard(Right(c.title)).fold(_ => com.histmersion.domain.Title(name.value), t => com.histmersion.domain.Title(t.value)),
+            PluginMedia.guard(Right(c.title)).fold(_ => Title(name.value), t => Title(t.value)),
             imports,
             store,
             cfg,
@@ -74,7 +79,7 @@ object MediaImporters:
   def infos(
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection],
       pluginOf: Registries.MediaCollectionsKey => Plugin.Info.Id,
-      allowFor: Registries.MediaCollectionsKey => com.histmersion.config.MediaPluginCollectionsConfig.Licences
+      allowFor: Registries.MediaCollectionsKey => MediaPluginCollectionsConfig.Licences
   ): List[MediaProvider.Info] =
     ordered(collections.keys.toList).flatMap(n => collections.get(n).map(n -> _)).map { (n, c) =>
       // a reserved name is registered by its first-party plugin alone

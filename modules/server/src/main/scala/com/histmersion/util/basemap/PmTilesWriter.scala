@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.util.storage.{ByteSource, Reservation, Store}
 import com.histmersion.{ByteCount, ByteOffset}
@@ -8,6 +9,8 @@ import io.circe.Json
 import java.io.{BufferedOutputStream, IOException, OutputStream}
 import java.security.MessageDigest
 import scala.collection.mutable
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Writes a clustered PMTiles v3 archive: tiles are [[add]]ed in ascending tile-id order, identical contents are stored
   * once (a sea of identical ocean tiles costs one tile), consecutive ids that share a content become one run, and
@@ -54,7 +57,7 @@ final class PmTilesWriter(out: Reservation):
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
     * centre; the offsets and counts are this writer's.
     */
-  def finish(template: PmTiles.Header, metadata: Json): com.histmersion.ByteCount =
+  def finish(template: PmTiles.Header, metadata: Json): ByteCount =
     val ic = PmTiles.Compression.Gzip
     val (root, leaves) = PmTilesWriter.directories(entries.toVector, ic)
     val meta = PmTiles.compress(PmTiles.PlainBytes(metadata.noSpaces.getBytes("UTF-8")), ic)
@@ -81,7 +84,7 @@ final class PmTilesWriter(out: Reservation):
 
 object PmTilesWriter:
   type EntriesPerLeaf = EntriesPerLeaf.T
-  object EntriesPerLeaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EntriesPerLeaf extends RefinedType[Int, Pure]
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
   def apply(store: Store, key: Store.Key): PmTilesWriter =

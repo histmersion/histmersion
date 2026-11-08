@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.util.database.Transactor
 
@@ -10,6 +11,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -27,7 +30,7 @@ import com.histmersion.api.Api
   */
 object BackgroundJob:
   type Work = Work.T
-  object Work extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Work extends RefinedType[String, Pure]
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
 
@@ -37,15 +40,15 @@ object BackgroundJob:
   object Outcome:
 
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Error = Error.T
-    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Error extends RefinedType[String, Pure]
 
-    def done(summary: com.histmersion.util.jobs.BackgroundJob.Outcome.Summary): Outcome = Outcome(Some(summary))
-    def failed(why: com.histmersion.util.jobs.BackgroundJob.Outcome.Error): Outcome = Outcome(None, Some(why))
+    def done(summary: Summary): Outcome = Outcome(Some(summary))
+    def failed(why: Error): Outcome = Outcome(None, Some(why))
 
     /** The `Right(summary)` / `Left(why)` the catalogue and gazetteer runs answer. */
-    def of(r: Either[com.histmersion.util.jobs.BackgroundJob.Outcome.Error, com.histmersion.util.jobs.BackgroundJob.Outcome.Summary]): Outcome = r.fold(failed, done)
+    def of(r: Either[Error, Summary]): Outcome = r.fold(failed, done)
 
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
@@ -53,8 +56,8 @@ object BackgroundJob:
   final class Slot(held: AtomicReference[Option[Work]] = AtomicReference[Option[Work]](None)):
     def isRunning: Boolean = held.get().isDefined
     def current: Option[Work] = held.get()
-    private[BackgroundJob] def claim(what: com.histmersion.util.jobs.BackgroundJob.Work): Boolean = held.compareAndSet(None, Some(what))
-    private[BackgroundJob] def note(what: com.histmersion.util.jobs.BackgroundJob.Work): Unit = held.set(Some(what))
+    private[BackgroundJob] def claim(what: Work): Boolean = held.compareAndSet(None, Some(what))
+    private[BackgroundJob] def note(what: Work): Unit = held.set(Some(what))
     private[BackgroundJob] def free(): Unit = held.set(None)
 
 

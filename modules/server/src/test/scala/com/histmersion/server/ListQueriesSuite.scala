@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,12 @@ import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
 
 import java.time.Instant
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Agents
+import com.histmersion.server.views.JobListView
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.jobs.JobKinds
 
 /** The list filters a client sent, checked and turned into the repos' queries (no database). */
 class ListQueriesSuite extends munit.FunSuite:
@@ -14,15 +21,15 @@ class ListQueriesSuite extends munit.FunSuite:
 
   test("approvals: no state is the open ones, `all` every state; kinds and deciders are checked"):
     assertEquals(ListQueries.approvals(ApprovalFilter()).map(_.state), Right(Some(ApprovalState.Open)))
-    assertEquals(ListQueries.approvals(ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("all")))).map(_.state), Right(None))
+    assertEquals(ListQueries.approvals(ApprovalFilter(state = Some(Approval.State.Wire("all")))).map(_.state), Right(None))
     val q = ListQueries
       .approvals(
         ApprovalFilter(
-          state = Some(com.histmersion.api.automation.Approval.State.Wire("rejected")),
-          kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan,edge")),
-          subject = Some(com.histmersion.api.automation.ListFilters.ApprovalFilter.Subject(" tin ")),
-          goal = Some(com.histmersion.api.automation.Goal.Slug("g")),
-          decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("autopilot"))
+          state = Some(Approval.State.Wire("rejected")),
+          kind = List(Approval.Kind.Wire("goal-plan,edge")),
+          subject = Some(ApprovalFilter.Subject(" tin ")),
+          goal = Some(Goal.Slug("g")),
+          decidedBy = List(Approval.DecidedBy.Wire("autopilot"))
         )
       )
       .toOption
@@ -39,19 +46,19 @@ class ListQueriesSuite extends munit.FunSuite:
     )
     assert(
       ListQueries
-        .approvals(ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("pending"))))
+        .approvals(ApprovalFilter(state = Some(Approval.State.Wire("pending"))))
         .left
         .exists(_.message.value.contains("unknown state 'pending'"))
     )
     assert(
       ListQueries
-        .approvals(ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan"), com.histmersion.api.automation.Approval.Kind.Wire("bogus"))))
+        .approvals(ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("bogus"))))
         .left
         .exists(_.message.value.contains("unknown kind 'bogus'"))
     )
     assert(
       ListQueries
-        .approvals(ApprovalFilter(decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("robot"))))
+        .approvals(ApprovalFilter(decidedBy = List(Approval.DecidedBy.Wire("robot"))))
         .left
         .exists(_.message.value.contains("person, autopilot, auto"))
     )
@@ -60,15 +67,15 @@ class ListQueriesSuite extends munit.FunSuite:
     val q = ListQueries
       .runs(
         RunFilter(
-          status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed")),
-          pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")),
-          manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:x")),
-          model = List(com.histmersion.api.automation.ListFilters.RunFilter.Model("codex:gpt-6")),
-          provider = List(com.histmersion.api.automation.ListFilters.RunFilter.Provider("Codex")),
-          origin = List(com.histmersion.api.automation.Agents.Origin.Wire("manager")),
-          since = Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("7d")),
-          until = Some(com.histmersion.api.automation.ListFilters.RunFilter.Until("2026-10-23")),
-          subject = Some(com.histmersion.api.automation.ListFilters.RunFilter.Subject("tin"))
+          status = List(RunFilter.Status("failed")),
+          pipeline = List(RunFilter.Pipeline("review-article")),
+          manager = List(RunFilter.Manager("seed:x")),
+          model = List(RunFilter.Model("codex:gpt-6")),
+          provider = List(RunFilter.Provider("Codex")),
+          origin = List(Agents.Origin.Wire("manager")),
+          since = Some(RunFilter.Since("7d")),
+          until = Some(RunFilter.Until("2026-10-23")),
+          subject = Some(RunFilter.Subject("tin"))
         ),
         now
       )
@@ -90,23 +97,23 @@ class ListQueriesSuite extends munit.FunSuite:
       (q.since, q.until),
       (Some(Instant.parse("2026-10-16T12:00:00Z")), Some(Instant.parse("2026-10-24T00:00:00Z")))
     )
-    assert(ListQueries.runs(RunFilter(status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("stuck"))), now).left.exists(_.message.value.contains("unknown status")))
+    assert(ListQueries.runs(RunFilter(status = List(RunFilter.Status("stuck"))), now).left.exists(_.message.value.contains("unknown status")))
     assert(
       ListQueries
-        .runs(RunFilter(pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("write-novel"))), now)
+        .runs(RunFilter(pipeline = List(RunFilter.Pipeline("write-novel"))), now)
         .left
         .exists(_.message.value.contains("unknown pipeline"))
     )
-    assert(ListQueries.runs(RunFilter(origin = List(com.histmersion.api.automation.Agents.Origin.Wire("cron"))), now).left.exists(_.message.value.contains("unknown origin")))
-    assert(ListQueries.runs(RunFilter(since = Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("last week"))), now).left.exists(_.message.value.startsWith("since:")))
+    assert(ListQueries.runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now).left.exists(_.message.value.contains("unknown origin")))
+    assert(ListQueries.runs(RunFilter(since = Some(RunFilter.Since("last week"))), now).left.exists(_.message.value.startsWith("since:")))
 
   test("jobs: states are checked, any kind passes (plugins add their own)"):
-    val q = com.histmersion.server.views.JobListView
-      .query(JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("done,failed")), kind = List(com.histmersion.api.jobs.JobKinds.Wire("basemap-fetch"))), now)
+    val q = JobListView
+      .query(JobFilter(status = List(JobState.Wire("done,failed")), kind = List(JobKinds.Wire("basemap-fetch"))), now)
       .toOption
       .get
     assertEquals((q.status, q.kinds), (List("done", "failed"), List("basemap-fetch")))
     // an agent run is a job too: its states filter the jobs list
-    assert(com.histmersion.server.views.JobListView.query(JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("waiting"))), now).isRight)
-    assert(com.histmersion.server.views.JobListView.query(JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("stuck"))), now).isLeft)
-    assert(com.histmersion.server.views.JobListView.query(JobFilter(until = Some(com.histmersion.api.automation.ListFilters.JobFilter.Until("tomorrow"))), now).isLeft)
+    assert(JobListView.query(JobFilter(status = List(JobState.Wire("waiting"))), now).isRight)
+    assert(JobListView.query(JobFilter(status = List(JobState.Wire("stuck"))), now).isLeft)
+    assert(JobListView.query(JobFilter(until = Some(JobFilter.Until("tomorrow"))), now).isLeft)

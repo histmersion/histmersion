@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}

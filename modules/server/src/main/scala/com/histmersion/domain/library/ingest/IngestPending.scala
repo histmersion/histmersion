@@ -1,15 +1,17 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
 
 import com.histmersion.api.library.Ingest
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.storage.Store
+import com.histmersion.domain.library.Citekey
 
 /** The part of a queued job that lives in memory: the stored original and the metadata the uploader supplied. */
 final case class IngestPending(
     params: Ingest.Params,
-    citekey: com.histmersion.domain.library.Citekey,
+    citekey: Citekey,
     file: Store.Key,
-    sha256: com.histmersion.Sha256,
+    sha256: Sha256,
     kind: Job.Kind = IngestPending.IngestKind
 )
 

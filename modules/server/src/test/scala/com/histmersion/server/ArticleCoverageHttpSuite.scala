@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,14 +14,18 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.research.{ArticleMarkdown, Coverage, CritiqueState, DriftKind}
 import com.histmersion.api.library.{Citekey, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),
   * the `/article/{slug}` page, the export (and the import that drops them again), the `article_coverage` MCP tool, and
   * the 404 of an article that records no filter. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ArticleCoverageHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
@@ -87,9 +92,9 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
 
   test("coverage over REST, get_article, the page, the export, MCP; drift; no filter = 404"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         clean(url, cfg)
@@ -134,8 +139,8 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy[String](_._1.value)
         )
         assertEquals(c.citedOutside, List(Outside))
-        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, com.histmersion.api.StatusCount.Count(4)), StatusCount(Source.Status.Contested, com.histmersion.api.StatusCount.Count(1))))
-        assertEquals(c.edges, List(Coverage.Edge(Critic, com.histmersion.api.research.Coverage.Edge.Kind("challenges"), Cited2)))
+        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, StatusCount.Count(4)), StatusCount(Source.Status.Contested, StatusCount.Count(1))))
+        assertEquals(c.edges, List(Coverage.Edge(Critic, Coverage.Edge.Kind("challenges"), Cited2)))
         assertEquals(c.searches.map(s => (s.query, s.cited)), List(("synoikism", List(Outside))))
         assertEquals(
           c.drift,
@@ -157,7 +162,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         assert(md.contains(s"- [[$NoWhy]], [[$Dispute]] (contested) — not yet assessed"), md)
         assert(md.contains("The filter returns 5 sources. 2 of them are cited above; the other 3 are listed"), md)
         assert(md.contains(s"[[$Critic]] challenges [[$Cited2]]"), md)
-        assertEquals(ArticleMarkdown.article(view, List(com.histmersion.api.research.Article.Part("coverage"))), Article.Coverage.sections(c))
+        assertEquals(ArticleMarkdown.article(view, List(Article.Part("coverage"))), Article.Coverage.sections(c))
         // the "Sources cited" footer lists what the body cites — not the generated list
         assert(!view.sourcesCited.exists(_.citekey == NoWhy), view.sourcesCited)
 

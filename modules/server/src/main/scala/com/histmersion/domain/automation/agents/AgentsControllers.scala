@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import io.scalaland.chimney.dsl.*
 
@@ -30,6 +31,31 @@ import com.histmersion.domain.automation.agents.ModelSettingsRepo
 import com.histmersion.api.automation.{Agents, ListFilters, Managers, ModelChains, PlanQuota, RunCompare}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.managers.ManagerService
+import com.histmersion.domain.automation.goals.FocusService
+import com.histmersion.domain.automation.autopilot.AutopilotRowService
+import com.histmersion.domain.automation.workflows.AutomationHost
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.util.jobs.JobRuns
+import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.util.jobs.Pinning
+import com.histmersion.util.jobs.JobStops
+import com.histmersion.util.time.Timer
+import com.histmersion.util.time.Pause
+import com.histmersion.domain.automation.approvals.ApprovalEffects
+import com.histmersion.plugin.AiHttp
+import com.histmersion.util.plugins.Plugin
+import com.histmersion.domain.automation.managers.SweepAcquireItem
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.server.ListQueries
+import com.histmersion.api.library.Filter
+import com.histmersion.api.library.Facet
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.Title
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -66,57 +92,57 @@ final class AgentsControllers(
   def config: AgentsConfig = cfg
 
   /** How many sources a goal gathers before its articles are planned (the site's, read at each use). */
-  def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesCount = site.sourcesToPlan
+  def sourcesToPlan: AgentsControllers.SourcesCount = site.sourcesToPlan
 
   /** The most panel rounds a run or a manager may ask a review for ([[EngineSite.roundsCap]]). */
-  def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCap = site.roundsCap
+  def roundsCap: AgentsControllers.RoundsCap = site.roundsCap
   private val ds = site.ds
 
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
-  val goals: com.histmersion.domain.automation.goals.GoalService =
-    com.histmersion.domain.automation.goals.GoalService(Transactor(ds))
+  val goals: GoalService =
+    GoalService(Transactor(ds))
 
   /** The agent runs and their steps, as the engine's features read them. */
   val runs: RunService = RunService(Transactor(ds))
 
   /** The process managers, their items and events, as the engine's other features reach them. */
-  val managerStore: com.histmersion.domain.automation.managers.ManagerService =
-    com.histmersion.domain.automation.managers.ManagerService(Transactor(ds))
+  val managerStore: ManagerService =
+    ManagerService(Transactor(ds))
 
   /** What the focus records of every goal, and its reads over them. */
-  val focusStore: com.histmersion.domain.automation.goals.FocusService =
-    com.histmersion.domain.automation.goals.FocusService(Transactor(ds))
+  val focusStore: FocusService =
+    FocusService(Transactor(ds))
 
   /** The approvals: what runs proposed for a person to decide. */
-  val approvalStore: com.histmersion.domain.automation.agents.ApprovalService =
-    com.histmersion.domain.automation.agents.ApprovalService(Transactor(ds), site.clock)
+  val approvalStore: ApprovalService =
+    ApprovalService(Transactor(ds), site.clock)
 
   /** The autopilot's row: its switch, housekeeping times, the scheduler's strategy, the digest's day, the drain. */
-  val autopilotRow: com.histmersion.domain.automation.autopilot.AutopilotRowService =
-    com.histmersion.domain.automation.autopilot.AutopilotRowService(Transactor(ds))
+  val autopilotRow: AutopilotRowService =
+    AutopilotRowService(Transactor(ds))
 
   /** What the engine asks of the rest of the server (goals, the housekeeping) until the owners offer services. */
-  val host: com.histmersion.domain.automation.workflows.AutomationHost = site.host(this)
+  val host: AutomationHost = site.host(this)
 
   /** The work lists' operations as a person's go: the worklog lines of the engine's services. */
-  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers = site.workLists
+  val workLists: WorkListControllers = site.workLists
 
   /** The runs' rows, recorded through the jobs area that owns the `jobs` table. */
-  val jobRuns: com.histmersion.util.jobs.JobRuns = com.histmersion.util.jobs.JobRuns(Transactor(ds))
+  val jobRuns: JobRuns = JobRuns(Transactor(ds))
 
   /** The work lists' kernel (the runs' log lines, the review's tasks). */
-  val queues: com.histmersion.domain.automation.worklists.QueueService = site.queues
+  val queues: QueueService = site.queues
 
   /** How the engine, the managers and their threads keep work on the generation it started on. */
-  val pins: com.histmersion.util.jobs.Pinning = site.pins
+  val pins: Pinning = site.pins
 
   /** A person's pause and cancel of the server's long background jobs. */
-  val jobStops: com.histmersion.util.jobs.JobStops = site.jobStops
+  val jobStops: JobStops = site.jobStops
 
   /** The time the managers' tick, the autopilot, the scheduler and the digest decide by. */
   val clock: java.time.Clock = site.clock
-  val timer: com.histmersion.util.time.Timer = site.timer
-  val pause: com.histmersion.util.time.Pause = site.pause
+  val timer: Timer = site.timer
+  val pause: Pause = site.pause
 
   /** What the daily approval digest also reads the hour on ([[EngineSite.digestClock]]). */
   val digestClock: Option[java.time.Clock] = site.digestClock
@@ -131,7 +157,7 @@ final class AgentsControllers(
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
     * reference to [[managing]] is safe).
     */
-  val approvals: Approvals = Approvals(approvalStore, cfg, site.approvalEffects, p => managing.applyProposal(p).left.map(com.histmersion.domain.automation.approvals.ApprovalEffects.Problem(_)))
+  val approvals: Approvals = Approvals(approvalStore, cfg, site.approvalEffects, p => managing.applyProposal(p).left.map(ApprovalEffects.Problem(_)))
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
     * workflows with one identifier, a tool nobody contributes) stops the server here.
@@ -321,7 +347,7 @@ final class AgentsControllers(
       .getOrElse(Right(PlanQuota.PoolId.values.toList))
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
-        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = com.histmersion.server.agents.PlanPools.Force(true)))
+        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force(true)))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
         // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
         val still = picker.cooldowns().map(_._1).toSet
@@ -401,9 +427,9 @@ final class AgentsControllers(
     * besides the host's own (docs/research-plugins.md §22).
     */
   /** The client plugin AI providers' doctor checks and model listings go through. */
-  private val aiHttp: com.histmersion.plugin.AiHttp = HostAiHttp()
+  private val aiHttp: AiHttp = HostAiHttp()
 
-  def knownProviders: Set[com.histmersion.util.plugins.Plugin.Id] = BuiltinAi.known(site.aiProviders())
+  def knownProviders: Set[Plugin.Id] = BuiltinAi.known(site.aiProviders())
 
   private def knownPluginNames: Set[ProviderKind.Plugin.Name] =
     knownProviders.map(id => ProviderKind.Plugin.Name(id.value))
@@ -631,7 +657,7 @@ final class AgentsControllers(
           BigDecimal(pr.usd.value),
           pr.tokens,
           tweak(pr.params),
-          req.acquireItem.map(i => com.histmersion.domain.automation.managers.SweepAcquireItem.Item(i.value)),
+          req.acquireItem.map(i => SweepAcquireItem.Item(i.value)),
           pr.goal,
           parent.map(p => DomainRun.Id.assume(p.id.value)),
           origin,
@@ -688,7 +714,7 @@ final class AgentsControllers(
         case (acc, (role, ref)) =>
           acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Api.Error.Message(e.value))))
       }
-      _ <- host.runOptions(p, req, com.histmersion.domain.automation.managers.ManagerContext.ItemTarget(target.value), com.histmersion.domain.automation.workflows.AutomationHost.RunOptionsRoundsCap(roundsCap.value))
+      _ <- host.runOptions(p, req, ManagerContext.ItemTarget(target.value), AutomationHost.RunOptionsRoundsCap(roundsCap.value))
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)).map(_.value))
       usd <- positive(
         PositiveAmount(
@@ -773,7 +799,7 @@ final class AgentsControllers(
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
   private def targetOf(p: Pipeline, raw: AgentsControllers.Target): Either[Api.Error, AgentsControllers.Target] =
     host
-      .runTarget(p, com.histmersion.domain.automation.workflows.AutomationHost.RunTargetRaw(raw.value))
+      .runTarget(p, AutomationHost.RunTargetRaw(raw.value))
       .map(_.map(t => AgentsControllers.Target(t.value)))
       .getOrElse(
         managerStore
@@ -851,7 +877,7 @@ final class AgentsControllers(
       upTo: Option[Paging.Cursor]
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     for
-      q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
+      q <- ListQueries.runs(f, java.time.Instant.now(clock))
       page <- runs
         .page(
           q,
@@ -869,12 +895,12 @@ final class AgentsControllers(
         Paging.Page.filtered(
           counts.map((state, n) => (Paging.Page.CountState(state.value), Paging.Count(n.value))),
           q.status.map(st => Paging.Page.CountState(st.value)),
-          Option.when(more)(com.histmersion.api.library.Filter.Last(rows.last.id.value)),
+          Option.when(more)(Filter.Last(rows.last.id.value)),
           facets.map((name, values) =>
             (
-              com.histmersion.api.library.Facet.Name(name),
+              Facet.Name(name),
               values.map((v, n) =>
-                (com.histmersion.api.library.Facet.Value(v), com.histmersion.api.library.Facet.Count(n.value))
+                (Facet.Value(v), Facet.Count(n.value))
               )
             )
           )
@@ -888,7 +914,7 @@ final class AgentsControllers(
     runs
       .get(id)
       .toRight(notFound(s"No agent run '$id'"))
-      .map(r => RunDetail(r, runs.steps(com.histmersion.util.jobs.Job.Id.assume(id.value), AgentRepo.OutputChars(cfg.trace.maxToolResultChars.value)), runs.messages(com.histmersion.util.jobs.Job.Id.assume(id.value))))
+      .map(r => RunDetail(r, runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(cfg.trace.maxToolResultChars.value)), runs.messages(Job.Id.assume(id.value))))
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
@@ -902,7 +928,7 @@ final class AgentsControllers(
           runs
             .get(id)
             .toRight(notFound(s"No agent run '$id'"))
-            .map(r => rs :+ RunDetail(r, runs.steps(com.histmersion.util.jobs.Job.Id.assume(id.value), AgentRepo.OutputChars(Int.MaxValue)), Nil))
+            .map(r => rs :+ RunDetail(r, runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(Int.MaxValue)), Nil))
         )
       }
       compared = runs.map(CompareRunsViews.run)
@@ -1011,8 +1037,8 @@ final class AgentsControllers(
     for
       _ <- host.goal(slug)
       r <- in.kind match
-        case LinkKind.Source    => host.linkRef(LinkKind.Source, com.histmersion.domain.automation.workflows.AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
-        case LinkKind.Article   => host.linkRef(LinkKind.Article, com.histmersion.domain.automation.workflows.AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
+        case LinkKind.Source    => host.linkRef(LinkKind.Source, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
+        case LinkKind.Article   => host.linkRef(LinkKind.Article, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
         case LinkKind.QueueItem =>
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
@@ -1097,7 +1123,7 @@ final class AgentsControllers(
   def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
     for
       _ <- enabled
-      ck <- com.histmersion.domain.library.Citekey
+      ck <- Citekey
         .either(req.citekey.value)
         .left
         .map(_ => notFound(s"No source '${req.citekey}'"))
@@ -1169,7 +1195,7 @@ final class AgentsControllers(
                 answer = answer,
                 rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
                 matchesRecord = ProbeResult.MatchesRecord(
-                  problems.isEmpty && answer.exists(a => host.sameTitle(com.histmersion.domain.Title(a.title.value), com.histmersion.domain.Title(src.title.value)) && a.year == src.year)
+                  problems.isEmpty && answer.exists(a => host.sameTitle(Title(a.title.value), Title(src.title.value)) && a.year == src.year)
                 ),
                 toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
                 iterations = ProbeResult.Iterations(res.iterations),
@@ -1185,21 +1211,21 @@ final class AgentsControllers(
 
 object AgentsControllers:
   type BudgetTokens = BudgetTokens.T
-  object BudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BudgetTokens extends RefinedType[Long, Pure]
   type BudgetUsd = BudgetUsd.T
-  object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BudgetUsd extends RefinedType[Double, Pure]
   type ModelName = ModelName.T
-  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ModelName extends RefinedType[String, Pure]
   type Offline = Offline.T
-  object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Offline extends RefinedType[Boolean, Pure]
   type PositiveAmount = PositiveAmount.T
-  object PositiveAmount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PositiveAmount extends RefinedType[Double, Pure]
   type RoundsCap = RoundsCap.T
-  object RoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RoundsCap extends RefinedType[Int, Pure]
   type SourcesCount = SourcesCount.T
-  object SourcesCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesCount extends RefinedType[Int, Pure]
   type Target = Target.T
-  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Target extends RefinedType[String, Pure]
   /** A run id a request names: one that is not a run id names no run. */
   def runId(raw: String): Either[Api.Error, DomainRun.Id] =
     DomainRun.Id

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 /** One write of an import that may fail on its own: logged and listed, never the end of the run. */
 object MediaStep:

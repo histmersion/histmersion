@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.numeric.Positive

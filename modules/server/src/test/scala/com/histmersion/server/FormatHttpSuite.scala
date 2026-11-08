@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,10 @@ import com.histmersion.api.checks.{FormatField, FormatReport, FormatRule, Lint}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,
@@ -23,8 +28,8 @@ import com.histmersion.api.research.Article
   * rendered page — and `POST /api/places/{id}/rename` (#890), whose old id keeps resolving. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
-  private val testDb = com.histmersion.db.TestDb.url
+class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -70,9 +75,9 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -198,21 +203,21 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zz_fmt_place_a"),
-              com.histmersion.api.catalogue.Place.Label("Fmt A"),
+              Place.Id("zz_fmt_place_a"),
+              Place.Label("Fmt A"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[30.0,39.0]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt A")))
+            List(Place.Name(Place.Name.Value("Fmt A")))
           ),
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zz_fmt_place_other"),
-              com.histmersion.api.catalogue.Place.Label("Fmt Other"),
+              Place.Id("zz_fmt_place_other"),
+              Place.Label("Fmt Other"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[31.0,39.0]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt Other")))
+            List(Place.Name(Place.Name.Value("Fmt Other")))
           )
         )
       )
@@ -220,7 +225,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")
       assertEquals(rs, 200, rb)
-      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, com.histmersion.api.aliases.LabelRenamed.From("zz_fmt_place_a"), com.histmersion.api.aliases.LabelRenamed.To("zz_fmt_place_b")))
+      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, LabelRenamed.From("zz_fmt_place_a"), LabelRenamed.To("zz_fmt_place_b")))
       val (gs, gb) = get(s"$url/api/places/zz_fmt_place_a")
       assertEquals(gs, 200, gb)
       assert(gb.contains("\"zz_fmt_place_b\""), gb)

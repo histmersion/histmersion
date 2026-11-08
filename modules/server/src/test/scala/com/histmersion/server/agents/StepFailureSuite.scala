@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,11 @@ import com.histmersion.domain.automation.agents.{AnswerSchemas, Engine, Prompt}
 import com.histmersion.domain.automation.managers.Zero
 
 import sttp.ai.core.agent.*
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.agents.LlmCall
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 /** How a step reads an attempt that did not produce its typed answer: an answer over the output cap (#1450, a
   * configuration error), and an answer that did not decode (#941, the decoder's path and message, for the record and
@@ -15,25 +21,25 @@ import sttp.ai.core.agent.*
   */
 class StepFailureSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val OverCap =
     """{"type":"result","subtype":"success","is_error":true,"num_turns":1,"result":"API Error: Claude's response exceeded """ +
       """the 4096 output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.",""" +
       """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
 
   private def claudeResult(lines: CliProcess.Run.Lines*) =
-    ClaudeCode.result(ClaudeCode.parse(lines.toList), com.histmersion.domain.automation.agents.LlmCall.User("u"), LibraryAnswers.notes).toOption.get
+    ClaudeCode.result(ClaudeCode.parse(lines.toList), LlmCall.User("u"), LibraryAnswers.notes).toOption.get
 
   test("#1450 Claude Code's output-cap error is recognised, with the cap it names"):
     val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(OverCap))
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
-    val msg = Engine.outputCapMessage("cold-reader-1", com.histmersion.domain.automation.agents.Engine.OutputCapLimit(4096), com.histmersion.domain.automation.agents.Engine.Count(4096), com.histmersion.domain.automation.agents.AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(false)).value)
+    val msg = Engine.outputCapMessage("cold-reader-1", Engine.OutputCapLimit(4096), Engine.Count(4096), AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(Engine.CapKeyOverridden(false)).value)
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
-    assert(Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(true)).value.contains("fixer-max-tokens"))
+    assert(Engine.capKey(Engine.CapKeyOverridden(true)).value.contains("fixer-max-tokens"))
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =
@@ -104,10 +110,10 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
     assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""{"notes": "abc""")).exists(_.message.nonEmpty))
-    assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("I could not find it.")).exists(_.message.contains("no JSON object")))
-    assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
+    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("I could not find it.")).exists(_.message.contains("no JSON object")))
+    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
     assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""```json\n{"notes":"x"}\n```""")), None)
-    assertEquals(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("  ")), None)
+    assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
       io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
@@ -124,8 +130,8 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
     val cli = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText("no json")), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)),
-      com.histmersion.domain.automation.agents.LlmCall.User("u"),
+      CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText("no json")), TokenUsage.Zero, None, CliOutcome.Turns(1)),
+      LlmCall.User("u"),
       LibraryAnswers.notes,
       None
     )
@@ -137,8 +143,8 @@ class StepFailureSuite extends munit.FunSuite:
     )
     // an error result is not a parse problem: no cause, as before
     val failed = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText("boom")), TokenUsage.Zero, Some(com.histmersion.server.agents.CliOutcome.Error("crash")), com.histmersion.server.agents.CliOutcome.Turns(1)),
-      com.histmersion.domain.automation.agents.LlmCall.User("u"),
+      CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText("boom")), TokenUsage.Zero, Some(CliOutcome.Error("crash")), CliOutcome.Turns(1)),
+      LlmCall.User("u"),
       LibraryAnswers.notes,
       None
     )

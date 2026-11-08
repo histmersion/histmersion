@@ -1,4 +1,5 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
@@ -9,6 +10,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Citekey
 
 /** One row of the merged list, in the order of [[ActivityRepo.Merged]]'s columns. */
 final private[activity] case class ActivityRow(
@@ -20,10 +23,10 @@ final private[activity] case class ActivityRow(
     text: Entry.Text,
     error: Option[Entry.Error],
     endedAt: Option[Entry.EndedAt],
-    goal: Option[com.histmersion.api.automation.Goal.Slug],
+    goal: Option[Goal.Slug],
     job: Option[Entry.Job],
     by: Option[Entry.By],
-    citekey: Option[com.histmersion.api.library.Citekey],
+    citekey: Option[Citekey],
     article: Option[Entry.Article],
     queueItem: Option[Entry.QueueItem],
     queueList: Option[Entry.QueueList],

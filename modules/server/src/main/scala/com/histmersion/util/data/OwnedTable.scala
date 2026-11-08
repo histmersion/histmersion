@@ -1,4 +1,5 @@
-package com.histmersion.util.data
+package com.histmersion
+package util.data
 
 /** A table one owner holds: only its repositories write it, and data management sizes, vacuums and checks it as that
   * owner's.

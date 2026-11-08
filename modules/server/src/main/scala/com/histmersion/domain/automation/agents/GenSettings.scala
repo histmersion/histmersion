@@ -1,8 +1,11 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 
 import io.circe.syntax.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional
   * parts to write.
@@ -26,27 +29,27 @@ final case class GenSettings(
     version: GenSettings.Version,
     /** The Codex home's `tool_output_token_limit` (`agents.providers.codex.tool-output-tokens`); 0 = the model's own.
       */
-    codexToolOutputTokens: GenSettings.CodexToolOutputTokens = com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(0),
+    codexToolOutputTokens: GenSettings.CodexToolOutputTokens = GenSettings.CodexToolOutputTokens(0),
     /** The Codex home carries Histmersion's own base prompt ([[AgentGenerator.CodexBaseFile]]) instead of Codex's
       * built-in one (`agents.providers.codex.base-instructions = lean`).
       */
-    codexLeanBase: GenSettings.CodexLeanBase = com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(false)
+    codexLeanBase: GenSettings.CodexLeanBase = GenSettings.CodexLeanBase(false)
 )
 
 object GenSettings:
   type AgentMcpUrl = AgentMcpUrl.T
-  object AgentMcpUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AgentMcpUrl extends RefinedType[String, Pure]
   type McpUrl = McpUrl.T
-  object McpUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object McpUrl extends RefinedType[String, Pure]
   type QuotaUrl = QuotaUrl.T
-  object QuotaUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QuotaUrl extends RefinedType[String, Pure]
   type ClaudeMod = ClaudeMod.T
-  object ClaudeMod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClaudeMod extends RefinedType[Boolean, Pure]
   type InteractiveMod = InteractiveMod.T
-  object InteractiveMod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InteractiveMod extends RefinedType[Boolean, Pure]
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[String, Pure]
   type CodexToolOutputTokens = CodexToolOutputTokens.T
-  object CodexToolOutputTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CodexToolOutputTokens extends RefinedType[Int, Pure]
   type CodexLeanBase = CodexLeanBase.T
-  object CodexLeanBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CodexLeanBase extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -26,12 +27,51 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.exchange.MergePlan
 import com.histmersion.api.maintenance.Vacuum
+import com.histmersion.domain.library.acquisition.AcquisitionControllers
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.api.Write
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.ingest.ToolFiles
+import com.histmersion.domain.library.ingest.IngestControllers
+import com.histmersion.api.library.Ingest
+import com.histmersion.domain.Title
+import com.histmersion.domain.library.ingest.IngestMeta
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.acquisition.AcquireCheckRow
+import com.histmersion.util.jobs.Job
+import com.histmersion.util.jobs.JobAction
+import com.histmersion.api.automation.Activity
+import com.histmersion.domain.activity.ActivityQuery
+import com.histmersion.domain.activity.ActivityCursor
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.util.settings.SettingsService
+import com.histmersion.domain.automation.agents.AgentStateRecord
+import com.histmersion.util.data.exchange.MergeRepo
+import com.histmersion.api.aliases.LabelRenamed
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.library.LibraryTools
+import com.histmersion.domain.library.LibraryData
+import com.histmersion.util.data.mirror.MirrorPlacement
+import com.histmersion.domain.research.articles.ArticleTools
+import com.histmersion.domain.catalogue.places.PlacesTools
+import com.histmersion.domain.catalogue.periods.PeriodsTools
+import com.histmersion.server.views.EventCardTools
+import com.histmersion.domain.catalogue.evidence.AttestationsTools
+import com.histmersion.domain.media.MediaTools
+import com.histmersion.domain.personal.PersonalTools
+import com.histmersion.domain.catalogue.evidence.EventLinksTools
+import com.histmersion.domain.catalogue.events.CorrectionsTools
+import com.histmersion.domain.automation.agents.AgentsTools
+import com.histmersion.server.agents.EngineContributions
+import com.histmersion.domain.library.acquisition.AcquisitionTools
+import com.histmersion.domain.library.collections.CollectionsTools
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(
     h: ServerWiring,
-    acquire: com.histmersion.domain.library.acquisition.AcquisitionControllers,
-    collections: com.histmersion.domain.library.collections.CollectionsControllers
+    acquire: AcquisitionControllers,
+    collections: CollectionsControllers
 ):
   import McpTools.*
 
@@ -39,10 +79,10 @@ final class McpTools(
     Api.Error(Api.Error.Message(s"invalid $what '$raw'"), Some(Api.Error.Code(code)))
 
   private def invalidValue(what: String, raw: String): Api.Error =
-    refusedValue(what, raw, com.histmersion.api.Write.CodeInvalid)
+    refusedValue(what, raw, Write.CodeInvalid)
 
   private def noSuchJob(raw: String): Api.Error =
-    Api.Error(Api.Error.Message(s"No job '$raw'"), Some(Api.Error.Code(com.histmersion.api.Write.CodeNotFound)))
+    Api.Error(Api.Error.Message(s"No job '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private val ping =
     tool("ping")
@@ -69,23 +109,23 @@ final class McpTools(
       )
       .input[IngestInput]
       .handle { in =>
-        com.histmersion.domain.library.Citekey
+        Citekey
           .parse(in.citekey)
           .left
-          .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(com.histmersion.api.Write.CodeInvalid))))
+          .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
           .flatMap(ck =>
             h.ingest.controllers.fromTool(
               ck,
-              in.path.map(com.histmersion.domain.library.ingest.ToolFiles.Path(_)),
-              in.base64.map(com.histmersion.domain.library.ingest.IngestControllers.Base64(_)),
-              in.filename.map(com.histmersion.api.library.Ingest.Params.Filename(_)),
-              com.histmersion.api.library.Ingest.Params.Quality(in.quality),
-              com.histmersion.api.library.Ingest.Params.Force(in.force),
-              in.title.map(com.histmersion.domain.Title(_)),
-              in.authors.map(com.histmersion.domain.library.ingest.IngestMeta.Authors(_)),
-              in.year.map(com.histmersion.Year(_)),
-              in.doi.flatMap(com.histmersion.domain.library.Doi.normalize),
-              in.acquireItem.map(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item(_))
+              in.path.map(ToolFiles.Path(_)),
+              in.base64.map(IngestControllers.Base64(_)),
+              in.filename.map(Ingest.Params.Filename(_)),
+              Ingest.Params.Quality(in.quality),
+              Ingest.Params.Force(in.force),
+              in.title.map(Title(_)),
+              in.authors.map(IngestMeta.Authors(_)),
+              in.year.map(Year(_)),
+              in.doi.flatMap(Doi.normalize),
+              in.acquireItem.map(AcquireCheckRow.Item(_))
             )
           ) match
           case Right(a) =>
@@ -106,7 +146,7 @@ final class McpTools(
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
           case Some(id) =>
-            com.histmersion.util.jobs.Job.Id
+            Job.Id
               .either(id)
               .left
               .map(_ => noSuchJob(id))
@@ -120,8 +160,8 @@ final class McpTools(
                 .page(
                   f,
                   java.time.Instant.now(h.clock),
-                  in.limit.flatMap(com.histmersion.PageSize.option(_)),
-                  in.before.map(com.histmersion.api.Paging.Cursor(_)),
+                  in.limit.flatMap(PageSize.option(_)),
+                  in.before.map(Paging.Cursor(_)),
                   None
                 )
                 .fold(
@@ -130,8 +170,8 @@ final class McpTools(
                     IngestMarkdown.jobs(
                       js.toVector,
                       page,
-                      f.qualifier.map(q => com.histmersion.api.library.Ingest.JobStatus(q.value)),
-                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")).map(t => com.histmersion.api.library.Ingest.JobAge(t.value))
+                      f.qualifier.map(q => Ingest.JobStatus(q.value)),
+                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")).map(t => Ingest.JobAge(t.value))
                     )
                 )
             )
@@ -148,11 +188,11 @@ final class McpTools(
       )
       .input[JobControlInput]
       .handle(in =>
-        com.histmersion.util.jobs.Job.Id
+        Job.Id
           .either(in.id.trim)
           .left
           .map(_ => noSuchJob(in.id))
-          .flatMap(h.jobControl.control(_, com.histmersion.util.jobs.JobAction.Wire(in.action)))
+          .flatMap(h.jobControl.control(_, JobAction.Wire(in.action)))
           .fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
       )
 
@@ -169,11 +209,11 @@ final class McpTools(
       .handle { in =>
         h.activity
           .page(
-            in.show.map(com.histmersion.api.automation.Activity.Show.Wire(_)),
+            in.show.map(Activity.Show.Wire(_)),
             in.since.map(ListFilters.TimeBound(_)),
-            in.goal.map(com.histmersion.domain.activity.ActivityQuery.Goal(_)),
-            in.limit.map(com.histmersion.domain.activity.ActivityQuery.Limit(_)),
-            in.before.map(com.histmersion.domain.activity.ActivityCursor.Wire(_))
+            in.goal.map(ActivityQuery.Goal(_)),
+            in.limit.map(ActivityQuery.Limit(_)),
+            in.before.map(ActivityCursor.Wire(_))
           )
           .fold(
             McpOut.error,
@@ -208,9 +248,9 @@ final class McpTools(
       )
       .input[ConfigInput]
       .handle { in =>
-        def page(f: com.histmersion.api.settings.ConfigEdit.Page => String, prefix: Option[String]) =
+        def page(f: ConfigEdit.Page => String, prefix: Option[String]) =
           h.settings
-            .page(prefix.map(com.histmersion.util.settings.SettingsService.ConfigPath(_)))
+            .page(prefix.map(SettingsService.ConfigPath(_)))
             .fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
           case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
@@ -219,7 +259,7 @@ final class McpTools(
               case Some(k) =>
                 page(
                   p =>
-                    p.field(com.histmersion.api.settings.ConfigEdit.Field.Key(k))
+                    p.field(ConfigEdit.Field.Key(k))
                       .fold(s"No setting called $k.")(ConfigEditMarkdown.field),
                   Some(k)
                 )
@@ -231,14 +271,14 @@ final class McpTools(
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
                   .write(
-                    com.histmersion.api.settings.ConfigEdit.Write(
+                    ConfigEdit.Write(
                       List(
-                        com.histmersion.api.settings.ConfigEdit.Change(
-                          com.histmersion.api.settings.ConfigEdit.Field.Key(k),
-                          value.map(com.histmersion.api.settings.ConfigEdit.Change.Value(_))
+                        ConfigEdit.Change(
+                          ConfigEdit.Field.Key(k),
+                          value.map(ConfigEdit.Change.Value(_))
                         )
                       ),
-                      literalConsent = com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent(in.literalConsent.getOrElse(false))
+                      literalConsent = ConfigEdit.Write.LiteralConsent(in.literalConsent.getOrElse(false))
                     )
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
@@ -297,7 +337,7 @@ final class McpTools(
             com.histmersion.domain.automation.Goal.Slug
               .either(slug)
               .left
-              .map(_ => refusedValue("goal", slug, com.histmersion.api.Write.CodeNotFound))
+              .map(_ => refusedValue("goal", slug, Write.CodeNotFound))
               .flatMap(h.agents.goalView) match
               case Right(v) => ToolResult.text(AgentsMarkdown.goalView(v))
               case Left(e)  => McpOut.error(e)
@@ -387,13 +427,13 @@ final class McpTools(
             in.value.map(_.trim).filter(_.nonEmpty) match
               case Some(v) =>
                 h.agentState.set(
-                  com.histmersion.domain.automation.agents.AgentStateRecord.Key(key),
+                  AgentStateRecord.Key(key),
                   AgentStatePut(AgentStatePut.Value(v))
                 ) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
               case None =>
-                h.agentState.get(com.histmersion.domain.automation.agents.AgentStateRecord.Key(key)) match
+                h.agentState.get(AgentStateRecord.Key(key)) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
           case None =>
@@ -405,7 +445,7 @@ final class McpTools(
       .description("Delete an agent state key.")
       .input[DeleteAgentStateInput]
       .handle { in =>
-        h.agentState.delete(com.histmersion.domain.automation.agents.AgentStateRecord.Key(in.key)) match
+        h.agentState.delete(AgentStateRecord.Key(in.key)) match
           case Right(d) => ToolResult.text(s"Deleted agent state key '${d.key}'.")
           case Left(e)  => McpOut.error(e)
       }
@@ -458,13 +498,13 @@ final class McpTools(
           case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit.map(Api.Merge.Limit(_)))))
           case Some(MergesAction.Show) =>
             in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
-              h.bundles.mergeDetail(com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix(id)).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
+              h.bundles.mergeDetail(MergeRepo.MergeIdOrPrefix(id)).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
             )
           case Some(MergesAction.Ledger) =>
             h.bundles
               .mergeLedger(
-                in.uid.map(com.histmersion.util.data.exchange.MergeRepo.UidText(_)),
-                in.id.map(com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix(_)),
+                in.uid.map(MergeRepo.UidText(_)),
+                in.id.map(MergeRepo.MergeIdOrPrefix(_)),
                 in.limit.map(Api.Merge.Limit(_))
               )
               .fold(McpOut.error, l => ToolResult.text(MergeMarkdown.ledger(l)))
@@ -485,19 +525,19 @@ final class McpTools(
       .input[RenameLabelInput]
       .handle { in =>
         val req = LabelRename(LabelRename.To(in.to))
-        def renamed[A](parsed: Either[String, A], what: String)(rename: A => Either[Api.Error, com.histmersion.api.aliases.LabelRenamed]) =
+        def renamed[A](parsed: Either[String, A], what: String)(rename: A => Either[Api.Error, LabelRenamed]) =
           Right(parsed.left.map(_ => invalidValue(what, in.from)).flatMap(rename))
         val r = in.kind.trim.toLowerCase(java.util.Locale.ROOT) match
           case "article" =>
-            renamed(com.histmersion.domain.research.Slug.parse(in.from).left.map(_.value), "slug")(
+            renamed(Slug.parse(in.from).left.map(_.value), "slug")(
               h.research.articles.rename(_, req)
             )
           case "event" =>
-            renamed(com.histmersion.domain.catalogue.Event.Id.either(in.from.trim), "event id")(h.events.renamed(_, req))
+            renamed(Event.Id.either(in.from.trim), "event id")(h.events.renamed(_, req))
           case "goal" =>
             renamed(com.histmersion.domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(h.goals.rename(_, req))
           case "place" =>
-            renamed(com.histmersion.domain.catalogue.Place.Id.either(in.from.trim), "place id")(h.places.renamed(_, req))
+            renamed(Place.Id.either(in.from.trim), "place id")(h.places.renamed(_, req))
           case other     => Left(s"_kind '$other' is not article, event, goal or place_")
         r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
@@ -506,22 +546,22 @@ final class McpTools(
   val server = McpServer(tools =
     List(
       ping
-    ) ++ com.histmersion.domain.library.LibraryTools(
+    ) ++ LibraryTools(
       h.library.search,
       h.library.labels,
       h.library.sources,
       h.library.findings,
       h.library.citations,
-      ck => h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId(ck.value))
+      ck => h.mirror.note(LibraryData.SourceNotes, MirrorPlacement.RecordId(ck.value))
     ) ++ List(
       backup,
       configTool,
       vacuumTool
-    ) ++ com.histmersion.domain.research.articles.ArticleTools(h.research.articles) ++
-      com.histmersion.domain.catalogue.places.PlacesTools(h.places) ++
-      com.histmersion.domain.catalogue.periods.PeriodsTools(h.periods) ++
-      com.histmersion.server.views.EventCardTools(h.events, h.eventCard) ++
-      com.histmersion.domain.catalogue.evidence.AttestationsTools(h.attestations) ++ List(
+    ) ++ ArticleTools(h.research.articles) ++
+      PlacesTools(h.places) ++
+      PeriodsTools(h.periods) ++
+      EventCardTools(h.events, h.eventCard) ++
+      AttestationsTools(h.attestations) ++ List(
         goalsToolRead,
         putGoalTool,
         patchGoalTool,
@@ -531,7 +571,7 @@ final class McpTools(
         jobStatus,
         jobControlTool,
         activityTool
-      ) ++ com.histmersion.domain.media.MediaTools(
+      ) ++ MediaTools(
         h.media.assets,
         h.media.links,
         ck => h.library.sources.get(ck).isRight
@@ -541,25 +581,25 @@ final class McpTools(
         renameLabel
       )
       ++ OpsTools(h) // stream 2.8: lint · queue · query
-      ++ com.histmersion.domain.personal.PersonalTools(h.personal) // the person's bookmarks and notes, read only
-      ++ com.histmersion.domain.catalogue.evidence.EventLinksTools(h.eventLinks) // event_links (proposed links, leads)
-      ++ com.histmersion.domain.catalogue.events.CorrectionsTools(h.eventImports) // event_corrections
-      ++ com.histmersion.domain.automation.agents.AgentsTools( // embedded agents: start and follow runs
+      ++ PersonalTools(h.personal) // the person's bookmarks and notes, read only
+      ++ EventLinksTools(h.eventLinks) // event_links (proposed links, leads)
+      ++ CorrectionsTools(h.eventImports) // event_corrections
+      ++ AgentsTools( // embedded agents: start and follow runs
         h.agents,
         dry =>
           Right(
             RepairAcquire.markdown(
-              com.histmersion.server.agents.EngineContributions
+              EngineContributions
                 .work(h.agents)
                 .oaBacklog
-                .repair(RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(com.histmersion.api.automation.Activity.Actor("mcp"))))
+                .repair(RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp"))))
             ).value
           ),
         st => h.autopilot.page(st).markdown
       )
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
-      ++ com.histmersion.domain.library.acquisition.AcquisitionTools(acquire, collections).tools
-      ++ com.histmersion.domain.library.collections.CollectionsTools(collections) // the Calibre library, archive.org
+      ++ AcquisitionTools(acquire, collections).tools
+      ++ CollectionsTools(collections) // the Calibre library, archive.org
   )
 
   val endpoint = server.endpoint(List("mcp"))

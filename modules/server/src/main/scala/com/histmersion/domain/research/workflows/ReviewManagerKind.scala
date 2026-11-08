@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -28,6 +29,15 @@ import java.time.Instant
 import scala.collection.mutable.Builder
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.Api
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.automation.goals.GoalRow
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.api.research.Articles
+import com.histmersion.api.research.Article
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
@@ -85,7 +95,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
-    val run = com.histmersion.domain.automation.Run.Id.assume(item.runId.get.value)
+    val run = Run.Id.assume(item.runId.get.value)
     val slug = Slug.assume(item.target.value)
     val itemId = ManagerContext.ItemId(item.id.value)
     val manager = ManagerLight.Id(m.id.value)
@@ -112,7 +122,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       Next.Retry.Failures(item.failures.value),
       item.state,
       run,
-      st.transformInto[com.histmersion.domain.automation.Run.State],
+      st.transformInto[Run.State],
       error,
       facts,
       task,
@@ -169,19 +179,19 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case None       =>
         site.workLists
           .add(
-            com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
+            WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
             QueueAdd(Queue.QueueItem.Text(text.value), topic = Some(Queue.QueueItem.Topic("agent review")))
           )
           .toOption
           .map(_.id)
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
+  def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     lazy val progress = c.progress(run)
     item.kind.value match
       case InferFilter =>
         c.approvalFacts(
           run,
-          com.histmersion.domain.automation.Approval.Kind.ArticleFilter,
+          Approval.Kind.ArticleFilter,
           ManagerPolicy.ItemOutcome(s"no filter proposed — $progress")
         )
       case ArticleExtend =>
@@ -189,14 +199,14 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           case Some(w) if w.written.value => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why})"))
           case Some(w)                    => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why}"))
           case None                       => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing to extend — $progress"))
-      case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
+      case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 
   /** An extended article is reviewed again. */
   override def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
       item: ManagerItem,
-      run: Option[com.histmersion.domain.automation.Run.Id],
+      run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
     if item.kind.value == ArticleExtend && run.flatMap(CompileArticlePipeline.written(c, _)).exists(_.written.value) then
@@ -212,11 +222,11 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** The saved include-tags and include-goal of a manager as the selection queries take them; None when the goal it
     * names is no goal slug (nothing can match it).
     */
-  private def scopeOf(m: ManagerInfo): Option[(List[com.histmersion.domain.automation.goals.GoalRow.Tags], Option[com.histmersion.domain.automation.Goal.Slug])] =
-    val tags = m.config.includeTags.getOrElse(Nil).map(t => com.histmersion.domain.automation.goals.GoalRow.Tags(t.value))
+  private def scopeOf(m: ManagerInfo): Option[(List[GoalRow.Tags], Option[Goal.Slug])] =
+    val tags = m.config.includeTags.getOrElse(Nil).map(t => GoalRow.Tags(t.value))
     m.config.includeGoal.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Some((tags, None))
-      case Some(g) => com.histmersion.domain.automation.Goal.Slug.option(g).map(slug => (tags, Some(slug)))
+      case Some(g) => Goal.Slug.option(g).map(slug => (tags, Some(slug)))
 
   /** Below the low water: the selection — articles with open MAJORs (most first), never-reviewed ones, then stale ones
     * — with an infer-filter item before the review of an article that records no filter, and the standing prioritise
@@ -258,7 +268,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .find((slug, _, item) => p.kind == ManagerPolicy.ItemKind.ArticleReview && slug == p.target && item.isDefined)
           .flatMap(_._3) match
           case Some(itemId) =>
-            Option.when(c.restale(itemId, prio, com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason(p.why.value)))(s"${p.target} (${p.why}$boost)")
+            Option.when(c.restale(itemId, prio, ManagerRepo.RestaleReason(p.why.value)))(s"${p.target} (${p.why}$boost)")
           case None =>
             val (_, isNew) = c.upsert(manager, p.kind, ManagerContext.ItemTarget(p.target.value), ItemOrigin.Selection, prio, reopen = ManagerContext.UpsertReopen(false))
             val label = if p.kind == ManagerPolicy.ItemKind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
@@ -270,7 +280,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           None,
           None,
           ManagerContext.EventFeed(Feed.Evaluated),
-          ManagerContext.EventText(s"selected ${Plural.count(Plural.CountN(added.size.toLong), com.histmersion.api.Plural.CountSingular("item"))}: ${added.mkString(", ")}".take(2000))
+          ManagerContext.EventText(s"selected ${Plural.count(Plural.CountN(added.size.toLong), Plural.CountSingular("item"))}: ${added.mkString(", ")}".take(2000))
         )
         out += ManagerContext.TickLine(s"${m.id}: selected ${added.size}")
     extensions(c, m, now, out)
@@ -324,8 +334,8 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       c: ManagerContext,
       m: ManagerInfo,
       s: ReviewSettings,
-      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      tags: List[GoalRow.Tags],
+      goal: Option[Goal.Slug],
       room: Int,
       now: Instant
   ): List[(Slug, ReviewManagerPolicy.Pick.Why, Option[ManagerContext.ItemId])] =
@@ -373,7 +383,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         Slug
           .parse(raw.value.trim)
           .left
-          .map(_ => com.histmersion.api.research.Articles.notFound(com.histmersion.api.research.Article.Slug(raw.value.trim)))
+          .map(_ => Articles.notFound(Article.Slug(raw.value.trim)))
           .flatMap(site.articles.get(_))
           .map(v => ManagerContext.ItemTarget(v.article.slug.value))
       case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))

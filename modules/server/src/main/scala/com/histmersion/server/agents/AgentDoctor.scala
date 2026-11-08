@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import io.scalaland.chimney.dsl.*
 
@@ -17,6 +18,14 @@ import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.Agents
 import com.histmersion.util.process.{ProcessLaunch, ProcessResult}
+import com.histmersion.server.HttpDownload
+import com.histmersion.plugin.AiProvider
+import com.histmersion.plugin.AiHttp
+import com.histmersion.config.UserPaths
+import com.histmersion.domain.automation.agents.AgentTrees
+import com.histmersion.plugin.AiCheck
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md §15). Per
   * provider: whether a role's chain uses it, its key (never shown), its base URL, the free model listing (`GET
@@ -30,17 +39,17 @@ final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
     resolve: ModelRef => Either[AgentDoctor.Problem, (LlmClient, Billing)],
-    listModels: (com.histmersion.server.HttpDownload.Url, List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
+    listModels: (HttpDownload.Url, List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
     runCommand: (List[ProcessLaunch.Command], Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)] =
       AgentDoctor.runCommand,
     /** The AI-provider registry of the pinned plugin generation (docs/research-plugins.md §22): a host provider whose
       * plugin is off says so, and each plugin provider gets its own section. None: every host provider is taken as on,
       * and there is no plugin provider (a test's doctor).
       */
-    registry: Option[scala.collection.immutable.ListMap[AgentDoctor.RegistryKey, com.histmersion.plugin.AiProvider]] = None,
-    aiHttp: com.histmersion.plugin.AiHttp = com.histmersion.plugin.AiHttp.Offline,
+    registry: Option[scala.collection.immutable.ListMap[AgentDoctor.RegistryKey, AiProvider]] = None,
+    aiHttp: AiHttp = AiHttp.Offline,
     /** The process environment the entry point read (none: a test's doctor). */
-    paths: com.histmersion.config.UserPaths = com.histmersion.domain.automation.agents.AgentTrees.NoEnvironment
+    paths: UserPaths = AgentTrees.NoEnvironment
 ):
 
   private val cfg = app.agents
@@ -111,8 +120,8 @@ final class AgentDoctor(
           catch case scala.util.control.NonFatal(e) => orElse(s"$what threw ${e.getClass.getSimpleName}")
         val own = safe(
           "its doctor",
-          p.doctor(com.histmersion.plugin.AiProvider.DoctorOnline(online), aiHttp),
-          why => List(com.histmersion.plugin.AiCheck(com.histmersion.plugin.AiCheck.Name("doctor"), com.histmersion.plugin.AiCheck.Level("fail"), com.histmersion.plugin.AiCheck.Detail(why)))
+          p.doctor(AiProvider.DoctorOnline(online), aiHttp),
+          why => List(AiCheck(AiCheck.Name("doctor"), AiCheck.Level("fail"), AiCheck.Detail(why)))
         )
           .map(c => DoctorCheck(DoctorCheck.Name(c.name.value), CheckLevel.parse(CheckLevel.Wire(c.level.value)).getOrElse(CheckLevel.Warn), DoctorCheck.Detail(c.detail.value)))
         val (listing, upstream) =
@@ -199,7 +208,7 @@ final class AgentDoctor(
                 .when(p.apiKey.value.nonEmpty)(AgentDoctor.HeaderName("Authorization") -> AgentDoctor.HeaderText(s"Bearer ${p.apiKey.value}"))
                 .toList
             )
-        listModels(com.histmersion.server.HttpDownload.Url(endpoint), headers, cfg.doctorTimeoutSeconds) match
+        listModels(HttpDownload.Url(endpoint), headers, cfg.doctorTimeoutSeconds) match
           case Left(why) =>
             (List(key, urlCheck, (if used then fail else warn) ("models listing", s"GET $endpoint: ${why.value}")), Nil)
           case Right(ids) =>
@@ -363,16 +372,16 @@ final class AgentDoctor(
 
 object AgentDoctor:
   type HeaderName = HeaderName.T
-  object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeaderName extends RefinedType[String, Pure]
   type HeaderText = HeaderText.T
-  object HeaderText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeaderText extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** What a local command printed. */
   type Output = Output.T
-  object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Output extends RefinedType[String, Pure]
   type RegistryKey = RegistryKey.T
-  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegistryKey extends RefinedType[String, Pure]
 
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.
@@ -395,7 +404,7 @@ object AgentDoctor:
     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build()
 
   /** `GET <url>` with `headers`; `data[].id` of an OpenAI- or Anthropic-style model listing. */
-  def listModels(url: com.histmersion.server.HttpDownload.Url, headers: List[(HeaderName, HeaderText)], timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds): Either[Problem, List[ModelRef.Model]] =
+  def listModels(url: HttpDownload.Url, headers: List[(HeaderName, HeaderText)], timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds): Either[Problem, List[ModelRef.Model]] =
     try
       val req = headers
         .foldLeft(

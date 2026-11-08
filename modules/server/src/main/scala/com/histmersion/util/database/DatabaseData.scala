@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable}
 import com.histmersion.util.data.diagnostics.DataFigures

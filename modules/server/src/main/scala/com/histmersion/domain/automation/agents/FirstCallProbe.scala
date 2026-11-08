@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
@@ -18,9 +19,9 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
   // set once per step attempt: by the first response, or by a CLI client's report (which wins)
   private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[AgentRepo.StepRecord.FirstCallTokens]]](None)
 
-  def tokens: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens] = state.get().flatten
+  def tokens: Option[AgentRepo.StepRecord.FirstCallTokens] = state.get().flatten
 
-  def report(tokens: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens]): Unit = state.set(Some(tokens))
+  def report(tokens: Option[AgentRepo.StepRecord.FirstCallTokens]): Unit = state.set(Some(tokens))
 
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     val r = next
@@ -30,5 +31,5 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
 private[histmersion] object FirstCallProbe:
   /** A command-line client's reading of its first model call, to every probe among `interceptors`. */
 
-  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens]): Unit =
+  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[AgentRepo.StepRecord.FirstCallTokens]): Unit =
     interceptors.foreach { case p: FirstCallProbe => p.report(tokens); case _ => () }

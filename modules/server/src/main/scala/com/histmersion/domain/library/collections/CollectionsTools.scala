@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -17,6 +18,10 @@ import com.histmersion.api.library.{
   CollectionsMarkdown,
   CollectionUpdateOne
 }
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
@@ -27,7 +32,7 @@ object CollectionsTools:
       name: Option[CollectionInput.Name] = None,
       query: Option[CollectionInput.Query] = None,
       id: Option[CollectionInput.Id] = None,
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       format: Option[CollectionInput.Format] = None,
       limit: Option[CollectionInput.Limit] = None,
       unlinked: CollectionInput.Unlinked = CollectionInput.Unlinked(false),
@@ -40,32 +45,32 @@ object CollectionsTools:
 
   object CollectionInput:
     type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Action extends RefinedType[String, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Query = com.histmersion.domain.library.search.Search.Query
-    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+    val Query: com.histmersion.domain.library.search.Search.Query.type = com.histmersion.domain.library.search.Search.Query
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Format = Format.T
-    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Format extends RefinedType[String, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
     type Unlinked = Unlinked.T
-    object Unlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unlinked extends RefinedType[Boolean, Pure]
     type Convert = Convert.T
-    object Convert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Convert extends RefinedType[Boolean, Pure]
     type Replace = Replace.T
-    object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Replace extends RefinedType[Boolean, Pure]
     type Apply = Apply.T
-    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Apply extends RefinedType[Boolean, Pure]
     type Fields = Fields.T
-    object Fields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fields extends RefinedType[String, Pure]
 
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => String) =
+    def answer[A](r: Either[Api.Error, A])(f: A => String) =
       ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")

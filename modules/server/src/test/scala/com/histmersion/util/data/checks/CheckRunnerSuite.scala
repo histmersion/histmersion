@@ -1,4 +1,5 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,8 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
+import com.histmersion.api.library.Citekey
+import com.histmersion.util.time.SystemTimer
 
 /** The lint runner over registered rules, without a database: the stated order whatever the registration order, the
   * selection and its refusal, one run per report, and the fixes — every call's and the named ones — summed in fix
@@ -29,7 +32,7 @@ class CheckRunnerSuite extends munit.FunSuite:
       Lint.report(
         rule,
         List.tabulate(items)(i =>
-          LintItem(com.histmersion.api.library.Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))
+          LintItem(Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))
         ),
         Lint.ItemLimit(maxItems.value)
       )
@@ -56,7 +59,7 @@ class CheckRunnerSuite extends munit.FunSuite:
       )
     )
 
-  private val order = CheckOrder(List(com.histmersion.api.checks.Lint.Rule.Name("a"), com.histmersion.api.checks.Lint.Rule.Name("b"), com.histmersion.api.checks.Lint.Rule.Name("c")))
+  private val order = CheckOrder(List(Rule.Name("a"), Rule.Name("b"), Rule.Name("c")))
   private val registered = List(
     Fake(Rule.Name("b"), 1, fixing(LintFixResult.Applied("b fixed"), LintFixResult.EdgesResolved(2), FixWhen.WhenNamed, FixRank(3))),
     Fake(Rule.Name("z"), 0),
@@ -64,21 +67,21 @@ class CheckRunnerSuite extends munit.FunSuite:
     Fake(Rule.Name("c"), 0, fixing(LintFixResult.Applied("c fixed"), LintFixResult.EdgesResolved(4), FixWhen.WhenNamed, FixRank(1)))
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
-  private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new com.histmersion.util.time.SystemTimer)
+  private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new SystemTimer)
 
   test("the rules in the stated order, an unordered one last"):
     assertEquals(runner.names, List("a", "b", "c", "z"))
 
   test("selection: all, the named ones in the order named and once, an unknown name refused with the known ones"):
     assertEquals(runner.select(Nil).map(_.map(_.rule.name)), Right(List("a", "b", "c", "z")))
-    assertEquals(runner.select(List(com.histmersion.util.data.checks.CheckRule.Name(" c"), com.histmersion.util.data.checks.CheckRule.Name(""), com.histmersion.util.data.checks.CheckRule.Name("A"), com.histmersion.util.data.checks.CheckRule.Name("c"))).map(_.map(_.rule.name)), Right(List("c", "a")))
+    assertEquals(runner.select(List(CheckRule.Name(" c"), CheckRule.Name(""), CheckRule.Name("A"), CheckRule.Name("c"))).map(_.map(_.rule.name)), Right(List("c", "a")))
     assertEquals(
-      runner.select(List(com.histmersion.util.data.checks.CheckRule.Name("a"), com.histmersion.util.data.checks.CheckRule.Name("nope"))).map(_.map(_.rule.name)),
+      runner.select(List(CheckRule.Name("a"), CheckRule.Name("nope"))).map(_.map(_.rule.name)),
       Left("unknown lint rule(s): nope — known rules: a, b, c, z")
     )
 
   test("the report of the selected rules, capped per rule, counted in full"):
-    val rep = runner.report(runner.rules, context, com.histmersion.util.data.checks.CheckRule.MaxItems(2))
+    val rep = runner.report(runner.rules, context, CheckRule.MaxItems(2))
     assertEquals(
       rep.rules.map(r => (r.rule, r.count, r.items.size)),
       List(("a", 3, 2), ("b", 1, 1), ("c", 0, 0), ("z", 0, 0))
@@ -87,8 +90,8 @@ class CheckRunnerSuite extends munit.FunSuite:
     assertEquals(rep.fixed, Nil)
 
   test("the fixes: every call's always, the named ones only when named, in fix order, summed"):
-    assertEquals(runner.fix(Nil, context), LintFixResult(List(com.histmersion.api.checks.Lint.LintFixResult.Applied("a fixed")), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(1), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(1), findingsPlaced = com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced(1)))
+    assertEquals(runner.fix(Nil, context), LintFixResult(List(LintFixResult.Applied("a fixed")), LintFixResult.EdgesResolved(1), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(1), findingsPlaced = LintFixResult.FindingsPlaced(1)))
     assertEquals(
-      runner.fix(List(com.histmersion.util.data.checks.CheckRule.Name(" B "), com.histmersion.util.data.checks.CheckRule.Name("C"), com.histmersion.util.data.checks.CheckRule.Name("unknown")), context),
-      LintFixResult(List(com.histmersion.api.checks.Lint.LintFixResult.Applied("c fixed"), com.histmersion.api.checks.Lint.LintFixResult.Applied("a fixed"), com.histmersion.api.checks.Lint.LintFixResult.Applied("b fixed")), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(7), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(7), findingsPlaced = com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced(7))
+      runner.fix(List(CheckRule.Name(" B "), CheckRule.Name("C"), CheckRule.Name("unknown")), context),
+      LintFixResult(List(LintFixResult.Applied("c fixed"), LintFixResult.Applied("a fixed"), LintFixResult.Applied("b fixed")), LintFixResult.EdgesResolved(7), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(7), findingsPlaced = LintFixResult.FindingsPlaced(7))
     )

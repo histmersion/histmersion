@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import hearth.kindlings.optics.syntax.*
 
@@ -49,7 +50,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
       agent: AgentDef,
       home: java.nio.file.Path
   ): AgentResult[Either[AgentFailure, Out]] =
-    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-codex-")) { dir =>
+    CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-codex-")) { dir =>
       val timeout = CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)
       val grant = rt.grant(call, Some(agent), timeout)
       try

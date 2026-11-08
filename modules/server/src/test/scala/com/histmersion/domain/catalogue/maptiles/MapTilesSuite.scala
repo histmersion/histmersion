@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,15 +7,16 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.{Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Year
 
 /** The tile service's pure half: what a request's key reads (and what it leaves out), its ETag and the browser's
   * revalidation, and the cache's bound.
   */
 class MapTilesSuite extends munit.FunSuite:
 
-  private val c = TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(4), com.histmersion.domain.catalogue.maptiles.TileCoord.X(9), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(5), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(11)).toOption.get
-  private def q(f: Filter = Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1000)))), layer: TilesApi.TileQuery.Layer = TilesApi.TileQuery.Layer("sites")) =
-    TilesApi.TileQuery(layer, com.histmersion.api.catalogue.TilesApi.TileQuery.Z(4), com.histmersion.api.catalogue.TilesApi.TileQuery.X(9), com.histmersion.api.catalogue.TilesApi.TileQuery.Y(5), f)
+  private val c = TileCoord.of(TileCoord.Z(4), TileCoord.X(9), TileCoord.Y(5), TileCoord.Z(11)).toOption.get
+  private def q(f: Filter = Filter(period = Some(Period(Year(-1500), Year(-1000)))), layer: TilesApi.TileQuery.Layer = TilesApi.TileQuery.Layer("sites")) =
+    TilesApi.TileQuery(layer, TilesApi.TileQuery.Z(4), TilesApi.TileQuery.X(9), TilesApi.TileQuery.Y(5), f)
   private val v = Map(
     TileRepo.GroupName("places") -> UndatedBuild.Version(3L),
     TileRepo.GroupName("corpus") -> UndatedBuild.Version(1L),
@@ -43,24 +45,24 @@ class MapTilesSuite extends munit.FunSuite:
     assertNotEquals(MapTiles.key(TileLayer.Sites, c, q().modify(_.siteType).setTo(Some(TilesApi.TileQuery.SiteType("burial"))), v), k)
 
   test("an ETag is the key's, quoted; If-None-Match names it, weak or in a list"):
-    val t = MapTiles.etag(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("a"))
+    val t = MapTiles.etag(MapTiles.TileKey("a"))
     assert(t.value.startsWith("\"") && t.value.endsWith("\"") && t.value.length == 26, t)
-    assertEquals(MapTiles.etag(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("a")), t)
-    assertNotEquals(MapTiles.etag(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("b")), t)
+    assertEquals(MapTiles.etag(MapTiles.TileKey("a")), t)
+    assertNotEquals(MapTiles.etag(MapTiles.TileKey("b")), t)
     assert(MapTiles.matches(Some(t), t))
     assert(MapTiles.matches(Some(MapTiles.Etag(s"W/$t")), t))
     assert(MapTiles.matches(Some(MapTiles.Etag(s"\"x\", $t")), t))
-    assert(MapTiles.matches(Some(com.histmersion.domain.catalogue.maptiles.MapTiles.Etag("*")), t))
-    assert(!MapTiles.matches(Some(com.histmersion.domain.catalogue.maptiles.MapTiles.Etag("\"x\"")), t))
+    assert(MapTiles.matches(Some(MapTiles.Etag("*")), t))
+    assert(!MapTiles.matches(Some(MapTiles.Etag("\"x\"")), t))
     assert(!MapTiles.matches(None, t))
 
   test("the cache keeps at most its bytes, the least recently asked for going first"):
-    val cache = TileCache(() => com.histmersion.ByteCount(10L))
-    cache.put(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("a"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
-    cache.put(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("b"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
-    assert(cache.get(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("a")).isDefined) // a is now the most recent
-    cache.put(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("c"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
-    assertEquals((cache.get(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("a")).isDefined, cache.get(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("b")).isDefined, cache.get(com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey("c")).isDefined), (true, false, true))
+    val cache = TileCache(() => ByteCount(10L))
+    cache.put(MapTiles.TileKey("a"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
+    cache.put(MapTiles.TileKey("b"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
+    assert(cache.get(MapTiles.TileKey("a")).isDefined) // a is now the most recent
+    cache.put(MapTiles.TileKey("c"), VectorTileWriter.VectorTile(Array.fill(4)(0)))
+    assertEquals((cache.get(MapTiles.TileKey("a")).isDefined, cache.get(MapTiles.TileKey("b")).isDefined, cache.get(MapTiles.TileKey("c")).isDefined), (true, false, true))
     assertEquals(cache.stats, (2, 8L))
     cache.clear()
     assertEquals(cache.stats, (0, 0L))

@@ -1,10 +1,15 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.domain.research.articles.ArticleTools
 
 /** Everything a `/source/{citekey}` page shows, typed. Built by [[PageBuilder]], rendered by [[Pages.source]] —
   * Markdown bodies stay Markdown until rendering, so the page model is testable without flexmark in the way.
@@ -30,20 +35,20 @@ final case class SourcePage(
 
 object SourcePage:
   type Venue = Venue.T
-  object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends RefinedType[String, Pure]
   type PeriodStart = PeriodStart.T
-  object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodStart extends RefinedType[Long, Pure]
   type PeriodEnd = PeriodEnd.T
-  object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodEnd extends RefinedType[Long, Pure]
   type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends RefinedType[String, Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Summary = com.histmersion.domain.library.Source.Summary
-  val Summary: _root_.com.histmersion.domain.library.Source.Summary.type = _root_.com.histmersion.domain.library.Source.Summary
-  type Notes = com.histmersion.domain.library.sources.SourceNote.Text
-  val Notes: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
-  type Query = com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
-  val Query: _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+  val Summary: com.histmersion.domain.library.Source.Summary.type = com.histmersion.domain.library.Source.Summary
+  type Notes = SourceNote.Text
+  val Notes: SourceNote.Text.type = SourceNote.Text
+  type Query = ArticleTools.ListArticlesInput.Query
+  val Query: ArticleTools.ListArticlesInput.Query.type = ArticleTools.ListArticlesInput.Query

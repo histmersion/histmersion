@@ -1,16 +1,22 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.*
+import com.histmersion.db.DbSuite
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.library.Citekey
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status
   * transitions and the insertion order the export depends on —, a done item keeps its first done time, and every scope
   * reads in id order.
   */
-abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbSuite:
+abstract class QueueServiceContract(name: String) extends DbSuite:
 
   /** A new, empty kernel; None when this run has no such store. */
   protected def fresh(test: String): Option[QueueService]
@@ -70,7 +76,7 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   // ── CRUD ─────────────────────────────────────────────────────────────────────────────────────
 
   qtest("add → list → done → list: an item leaves the open list when it is closed") { q =>
-    val item = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("enrich heggarty2023"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Backlog"))))
+    val item = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("enrich heggarty2023"), Some(QueueItem.Topic("Backlog"))))
     assertEquals(item.list, "tasks")
     assertEquals(item.status, Open)
     assertEquals(item.topic, Some("Backlog"))
@@ -85,15 +91,15 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   }
 
   qtest("an item marked done keeps its first done time when patched again") { q =>
-    val t = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("read Cline 2014")))
+    val t = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("read Cline 2014")))
     val done = q.patch(id(t), QueuePatch(status = Some(status(Done)))).toOption.get
-    val again = q.patch(id(t), QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("read Cline 2014, ch. 3")))).toOption.get
+    val again = q.patch(id(t), QueuePatch(text = Some(QueueItem.Text("read Cline 2014, ch. 3")))).toOption.get
     assertEquals(again.doneAt, done.doneAt)
     assertEquals(open(q, Kind.Tasks), Nil)
   }
 
   qtest("reopening an item clears its completion date") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x")))
+    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("x")))
     val _ = q.patch(id(i), QueuePatch(status = Some(status(Done))))
     val reopened = q.patch(id(i), QueuePatch(status = Some(status(Open)))).toOption.get
     assertEquals(reopened.status, Open)
@@ -101,28 +107,28 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   }
 
   qtest("an item made done is stamped done at once") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("already done"), status = Some(status(Done))))
+    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("already done"), status = Some(status(Done))))
     assert(i.doneAt.isDefined, i)
   }
 
   qtest("patch changes only what it carries") { q =>
-    val i = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("a book"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Books"))))
-    val p = q.patch(id(i), QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("a better book")))).toOption.get
+    val i = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("a book"), Some(QueueItem.Topic("Books"))))
+    val p = q.patch(id(i), QueuePatch(text = Some(QueueItem.Text("a better book")))).toOption.get
     assertEquals(p.text, "a better book")
     assertEquals(p.topic, Some("Books"))
     assertEquals(p.status, Open)
   }
 
   qtest("a blank topic or reason in a patch clears it; the rest of the row stays") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("tidy up"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Chores")), reason = Some(com.histmersion.api.automation.Queue.QueueItem.Reason("why not"))))
-    val p = q.patch(id(i), QueuePatch(topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("")), reason = Some(com.histmersion.api.automation.Queue.QueueItem.Reason(" ")))).toOption.get
+    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(QueueItem.Reason("why not"))))
+    val p = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(QueueItem.Reason(" ")))).toOption.get
     assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))
-    val r = q.patch(id(i), QueuePatch(topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Chores > Later")))).toOption.get
+    val r = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("Chores > Later")))).toOption.get
     assertEquals(r.topic, Some("Chores > Later"))
   }
 
   qtest("delete removes the row and returns what was removed") { q =>
-    val i = q.add(Kind.Log, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("did a thing")))
+    val i = q.add(Kind.Log, QueueAdd(QueueItem.Text("did a thing")))
     assertEquals(q.delete(id(i)).map(_.text), Right("did a thing"))
     assertEquals(q.get(id(i)), None)
   }
@@ -141,18 +147,18 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   }
 
   qtest("byIds: any list and status, by id; an unknown id is left out") { q =>
-    val a = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("a")))
-    val b = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("b"), status = Some(status(Done))))
+    val a = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("a")))
+    val b = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("b"), status = Some(status(Done))))
     assertEquals(q.byIds(List(id(b), QueueItemId(987654321), id(a))).map(_.id), List(a.id, b.id))
     assertEquals(q.byIds(Nil), Nil)
   }
 
   qtest("naming: the items of a list whose text names the DOI, any status") { q =>
-    val a = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/XYZ.1")))
-    val _ = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/xyz.1")))
-    val _ = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/xyz.10")))
-    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi.assume(" 10.1000/XYZ.1 ")).map(_.id), List(a.id))
-    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi.assume("")), Nil)
+    val a = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/XYZ.1")))
+    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.1")))
+    val _ = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.10")))
+    assertEquals(q.naming(Kind.Acquire, Doi.assume(" 10.1000/XYZ.1 ")).map(_.id), List(a.id))
+    assertEquals(q.naming(Kind.Acquire, Doi.assume("")), Nil)
   }
 
   // ── import / export ──────────────────────────────────────────────────────────────────────────
@@ -192,7 +198,7 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   qtest("an item added after an import lands in its topic group and re-exports cleanly") { q =>
     val _ = importFile(q, Kind.Acquire, acquireFile)
     val topic = QueueItem.Topic(s"🟡 Outstanding${Sep}Historiography$Sep**Highest value**")
-    val _ = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("**J.Z. Smith**, *Drudgery Divine* (1990)"), Some(topic)))
+    val _ = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("**J.Z. Smith**, *Drudgery Divine* (1990)"), Some(topic)))
     val out = exported(q, Kind.Acquire)
     assertEquals(out.value.linesIterator.count(_ == "**Highest value**"), 1, out)
     assert(out.value.contains("- [ ] **Ronald Hutton**, *The Triumph of the Moon* (1999)\n- [ ] **J.Z. Smith**"), out)
@@ -205,22 +211,22 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   qtest(
     "an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"
   ) { q =>
-    val added = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012"), goal = Some(com.histmersion.api.automation.Goal.Slug("zz-links-goal")), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("zz-run-1"))))
+    val added = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012"), goal = Some(Goal.Slug("zz-links-goal")), job = Some(SpatialHierarchyResult.Job.Id("zz-run-1"))))
     assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
     val done =
-      q.patch(id(added), Queue.fulfil(added, com.histmersion.api.library.Citekey("drake2012"), Some(com.histmersion.api.automation.Queue.QueueItem.ClosedBy("zz-job-9")))).fold(e => fail(e.message), identity)
+      q.patch(id(added), Queue.fulfil(added, Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9")))).fold(e => fail(e.message), identity)
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
     assertEquals(q.patch(id(added), QueuePatch(status = Some(status(Open)))).map(_.closedBy), Right(None))
   }
 
   qtest("a goal's items: its own, and those its links name; open only unless done ones are asked for") { q =>
-    val own = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("own item"), goal = Some(com.histmersion.api.automation.Goal.Slug("zz-links-goal"))))
-    val linked = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("linked item")))
+    val own = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("own item"), goal = Some(Goal.Slug("zz-links-goal"))))
+    val linked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("linked item")))
     val other = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("someone else's")))
-    val closed = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("closed item"), goal = Some(com.histmersion.api.automation.Goal.Slug("zz-links-goal")), status = Some(status(Done))))
-    val _ = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("a note"), goal = Some(com.histmersion.api.automation.Goal.Slug("zz-links-goal")), status = Some(status(Note))))
+    val closed = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("closed item"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Done))))
+    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("a note"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Note))))
     def forGoal(k: Kind, withDone: QueueScope.ForGoal.WithDone) =
-      q.list(k, QueueScope.ForGoal(com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Goal("zz-links-goal"), Set(QueueScope.ForGoal.Linked(linked.id.toString), com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Linked("not-an-id")), withDone)).map(_.id)
+      q.list(k, QueueScope.ForGoal(QueueScope.ForGoal.Goal("zz-links-goal"), Set(QueueScope.ForGoal.Linked(linked.id.toString), QueueScope.ForGoal.Linked("not-an-id")), withDone)).map(_.id)
     assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(false)), List(own.id, linked.id))
     assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)), List(own.id, linked.id, closed.id))
     assert(!forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)).contains(other.id))
@@ -228,9 +234,9 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
   }
 
   qtest("a run's or job's items: those it wrote and those it ticked off") { q =>
-    val wrote = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("wrote"), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("zz-run-7"))))
-    val ticked = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("ticked")))
+    val wrote = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("wrote"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-7"))))
+    val ticked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("ticked")))
     val _ = q.patch(id(ticked), QueuePatch(status = Some(status(Done)), closedBy = Some(QueuePatch.ClosedBy("zz-run-7"))))
-    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("another run's"), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("zz-run-8"))))
-    assertEquals(q.list(Kind.Tasks, QueueScope.ForJob(com.histmersion.domain.automation.worklists.QueueScope.ForJob.Job("zz-run-7"))).map(_.id), List(wrote.id, ticked.id))
+    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("another run's"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-8"))))
+    assertEquals(q.list(Kind.Tasks, QueueScope.ForJob(QueueScope.ForJob.Job("zz-run-7"))).map(_.id), List(wrote.id, ticked.id))
   }

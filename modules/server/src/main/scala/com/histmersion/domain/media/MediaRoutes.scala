@@ -1,4 +1,5 @@
-package com.histmersion.domain.media
+package com.histmersion
+package domain.media
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.library.Citekey as ApiCitekey

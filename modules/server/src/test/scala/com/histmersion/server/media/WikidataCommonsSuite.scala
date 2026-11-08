@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -74,9 +75,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
   }
 
   private val targets = List(
-    Target(com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("pleiades_570491"), com.histmersion.domain.media.imports.Target.Qid("Q132564"), com.histmersion.domain.media.imports.Target.Label("Mycenae")),
-    Target(com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("x_site"), com.histmersion.domain.media.imports.Target.Qid("Q999"), com.histmersion.domain.media.imports.Target.Label("X")),
-    Target(com.histmersion.domain.media.imports.Target.TargetType("event"), com.histmersion.domain.media.imports.Target.Id("fall_of_x"), com.histmersion.domain.media.imports.Target.Qid("Q404"), com.histmersion.domain.media.imports.Target.Label("Fall of X"))
+    Target(Target.TargetType("place"), Target.Id("pleiades_570491"), Target.Qid("Q132564"), Target.Label("Mycenae")),
+    Target(Target.TargetType("place"), Target.Id("x_site"), Target.Qid("Q999"), Target.Label("X")),
+    Target(Target.TargetType("event"), Target.Id("fall_of_x"), Target.Qid("Q404"), Target.Label("Fall of X"))
   )
 
   private def run(
@@ -89,7 +90,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
       settings: String = ""
   ): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
-    OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("wikidata"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("wikidata"), settings), polite, cfg).run(ts, dryRun, refresh, store)
+    OwnImport(MediaImporter.ImporterName("wikidata"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("wikidata"), settings), polite, cfg).run(ts, dryRun, refresh, store)
 
   private val DryOn = MediaImporter.DryRun(true)
   private val DryOff = MediaImporter.DryRun(false)
@@ -104,15 +105,15 @@ class WikidataCommonsSuite extends munit.FunSuite:
     assertEquals(
       r.byLicence,
       List(
-        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-4.0"), com.histmersion.api.media.MediaCount.N(1)),
-        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-NC-SA-4.0"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false)),
-        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-SA-2.5"), com.histmersion.api.media.MediaCount.N(1)),
-        MediaCount(com.histmersion.api.media.MediaCount.Key("all-rights-reserved"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false))
+        MediaCount(MediaCount.Key("CC-BY-4.0"), MediaCount.N(1)),
+        MediaCount(MediaCount.Key("CC-BY-NC-SA-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed(false)),
+        MediaCount(MediaCount.Key("CC-BY-SA-2.5"), MediaCount.N(1)),
+        MediaCount(MediaCount.Key("all-rights-reserved"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
       )
     )
     assertEquals(
       r.byRole,
-      List(MediaCount(com.histmersion.api.media.MediaCount.Key("image"), com.histmersion.api.media.MediaCount.N(2)), MediaCount(com.histmersion.api.media.MediaCount.Key("aerial-view"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("plan"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("route-map"), com.histmersion.api.media.MediaCount.N(1)))
+      List(MediaCount(MediaCount.Key("image"), MediaCount.N(2)), MediaCount(MediaCount.Key("aerial-view"), MediaCount.N(1)), MediaCount(MediaCount.Key("plan"), MediaCount.N(1)), MediaCount(MediaCount.Key("route-map"), MediaCount.N(1)))
     )
     assertEquals(
       r.rejected.map(_.key.value).sorted,

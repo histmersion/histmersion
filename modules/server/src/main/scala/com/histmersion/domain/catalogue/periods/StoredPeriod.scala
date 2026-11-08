@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.HistoricalPeriod

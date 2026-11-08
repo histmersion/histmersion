@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode, QuotaGuard}
 
@@ -91,7 +92,7 @@ object AgentGenerator:
   val ClaudeAnswerTool = "StructuredOutput"
 
   /** Claude Code's turns for an agent's `max-turns`: one more for the [[ClaudeAnswerTool]] call. */
-  def claudeTurns(maxTurns: com.histmersion.domain.automation.agents.AgentDef.MaxTurns): com.histmersion.domain.automation.agents.AgentDef.MaxTurns =
+  def claudeTurns(maxTurns: AgentDef.MaxTurns): AgentDef.MaxTurns =
     AgentDef.MaxTurns(math.max(1, maxTurns.value) + 1)
 
   /** A headless agent: the role's MCP tools and the answer tool, nothing else; the prompt with its includes and skills
@@ -180,7 +181,7 @@ object AgentGenerator:
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
   def repoPlugin(d: Defs): Map[String, String] =
-    val s = GenSettings(com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl(""), None, com.histmersion.domain.automation.agents.GenSettings.QuotaUrl(""), claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false), interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false), com.histmersion.domain.automation.agents.GenSettings.Version(PluginVersion))
+    val s = GenSettings(GenSettings.AgentMcpUrl(""), None, GenSettings.QuotaUrl(""), claudeMod = GenSettings.ClaudeMod(false), interactiveMod = GenSettings.InteractiveMod(false), GenSettings.Version(PluginVersion))
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
 

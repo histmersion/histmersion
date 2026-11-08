@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,12 +19,17 @@ import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import scala.collection.concurrent.TrieMap
 import com.histmersion.domain.automation.Goal
+import com.histmersion.db.DbSuite
+import com.histmersion.domain.library.workflows.SourceApprovalService
+import com.histmersion.domain.automation.agents.AgentStateService
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
 
 /** A contract of the engine's services, run once on the in-memory stores and once on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with no such
   * store.
   */
-abstract class EngineStoreSuite extends com.histmersion.db.DbSuite:
+abstract class EngineStoreSuite extends DbSuite:
   protected def fresh(test: String): Option[EngineStores]
 
   protected def stest(title: String)(body: EngineStores => Unit): Unit =
@@ -75,12 +81,12 @@ object EngineStoreSuite:
         val autopilot = AutopilotRowService.InMemory(state, clock)
         val goals = GoalService.InMemory(state, clock, targets)
         val approvals = ApprovalService.InMemory(state, jobs, clock)
-        val sourceApprovals = com.histmersion.domain.library.workflows.SourceApprovalService.InMemory(state, approvals, clock)
+        val sourceApprovals = SourceApprovalService.InMemory(state, approvals, clock)
         val runs = jobs
         val agentRuns = RunService.InMemory(state, jobs, clock)
         val managers = ManagerService.InMemory(state, jobs, clock)
         val focus = FocusService.InMemory(state, clock)
-        val agentState = com.histmersion.domain.automation.agents.AgentStateService.InMemory(state, clock)
+        val agentState = AgentStateService.InMemory(state, clock)
         def article(slug: Slug, title: Title): Unit =
           titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.TitleResult(title.value))
         def source(citekey: Citekey, title: Title): Unit =
@@ -89,12 +95,12 @@ object EngineStoreSuite:
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends EngineStoreSuite:
-    private val testDb = com.histmersion.db.TestDb.url
+    private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s7c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get))
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -106,12 +112,12 @@ object EngineStoreSuite:
           val autopilot = AutopilotRowService(db)
           val goals = GoalService(db)
           val approvals = ApprovalService(db, Clock.systemUTC())
-          val sourceApprovals = com.histmersion.domain.library.workflows.SourceApprovalService(db, approvals, Clock.systemUTC())
+          val sourceApprovals = SourceApprovalService(db, approvals, Clock.systemUTC())
           val runs = JobRuns(db)
           val agentRuns = RunService(db)
           val managers = ManagerService(db)
           val focus = FocusService(db)
-          val agentState = com.histmersion.domain.automation.agents.AgentStateService(db)
+          val agentState = AgentStateService(db)
           def article(slug: Slug, title: Title): Unit =
             connect(ds)(
               sql"INSERT INTO articles (slug, title, kind, body) VALUES (${slug.value}, ${title.value}, 'concept', '')".update.run()

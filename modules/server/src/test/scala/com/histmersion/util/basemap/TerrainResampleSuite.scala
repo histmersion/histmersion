@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -58,7 +59,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     val f = fixture.getOrElse(fail("the browser fixture is not in the repository"))
     val pm = BasemapFixtures.open(f).fold(e => fail(e.value), identity)
     try
-      val zero = pm.tile(com.histmersion.util.basemap.PmTiles.Zoom(0), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)).fold(e => fail(e.value), identity).getOrElse(fail("no tile 0/0/0"))
+      val zero = pm.tile(PmTiles.Zoom(0), PmTiles.TileColumn(0), PmTiles.TileRow(0)).fold(e => fail(e.value), identity).getOrElse(fail("no tile 0/0/0"))
       assertEquals(
         rgbDigest(Vp8l.decode(zero).fold(e => fail(e.value), identity)),
         "aaf149389ba79323fb5bfe65cc6c4fd4b9f39ec6a2c6cddb2ae3a9d6e6019a72"
@@ -94,7 +95,7 @@ class TerrainResampleSuite extends munit.FunSuite:
   test("terrarium encodes and decodes metres, to 1/256 m") {
     for m <- List(-10994.0, -0.5, 0.0, 1.25, 431.7, 8848.86).map(TerrainResample.Metres(_)) do
       assertEqualsDouble(TerrainResample.metres(TerrainResample.encode(m)).value, m.value, 1.0 / 256)
-    assertEquals(TerrainResample.encode(com.histmersion.util.basemap.TerrainResample.Metres(0)).value & 0xffffff, 0x800000)
+    assertEquals(TerrainResample.encode(TerrainResample.Metres(0)).value & 0xffffff, 0x800000)
   }
 
   test("a deeper tile is its ancestor's quarter resampled in metres, continuous where the high byte rolls over") {
@@ -104,7 +105,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     val src = Png.Pixels(
       Array.tabulate(n * n)(i => TerrainResample.encode(TerrainResample.Metres(-2 + 1.5 * (i % n) + 0.25 * (i / n))).value)
     )
-    val out = TerrainResample.resample(src, side, com.histmersion.util.basemap.TerrainResample.ZoomDelta(1), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(0)) // the north-east quarter, one zoom deeper
+    val out = TerrainResample.resample(src, side, TerrainResample.ZoomDelta(1), PmTiles.TileColumn(1), PmTiles.TileRow(0)) // the north-east quarter, one zoom deeper
     val m = out.value.map(px => TerrainResample.metres(TerrainResample.Pixel(px)).value)
     // monotone along a row, inside the source's range, nothing near ±256 m (a byte-wise blend's error)
     for j <- 0 until n do
@@ -116,7 +117,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     for dz <- 1 to 5 do
       assert(
         TerrainResample
-          .resample(flat, side, TerrainResample.ZoomDelta(dz), com.histmersion.util.basemap.PmTiles.TileColumn(3), com.histmersion.util.basemap.PmTiles.TileRow(7))
+          .resample(flat, side, TerrainResample.ZoomDelta(dz), PmTiles.TileColumn(3), PmTiles.TileRow(7))
           .value
           .forall(p => math.abs(TerrainResample.metres(TerrainResample.Pixel(p)).value - 123.5) < 1.0 / 256)
       )

@@ -1,8 +1,12 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.domain.DeepTime
 
 /** The contract the refinement of site types keeps: the Wikidata sites on the map not asked yet, by id, with their item
   * and class; asked ones left out, unless refreshed and asked before the run began.
@@ -15,13 +19,13 @@ abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
     s.site("wikidata_q3", onMap = false, None)
     s.site("pleiades_1", onMap = true, None)
     assertEquals(
-      t.sitesToType(com.histmersion.PageSize(10), refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None),
+      t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh(false), None),
       List(("wikidata_q1", "Q1", None), ("wikidata_q2", "Q2", Some("Q123")))
     )
-    assertEquals(t.sitesToType(com.histmersion.PageSize(1), refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q1"))
-    assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None), 2)
-    t.setSiteTypes(List(com.histmersion.domain.catalogue.Place.Id("wikidata_q1") -> Some(com.histmersion.api.catalogue.SiteTypes.SiteType.Id("palace"))))
-    assertEquals(t.sitesToType(com.histmersion.PageSize(10), refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q2"))
-    assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(true), None), 2, "a refresh asks every one")
-    assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(true), Some(com.histmersion.domain.DeepTime.SignedYear(0L))), 1, "asked since the run began: not again")
+    assertEquals(t.sitesToType(PageSize(1), refresh = SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q1"))
+    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(false), None), 2)
+    t.setSiteTypes(List(Place.Id("wikidata_q1") -> Some(SiteTypes.SiteType.Id("palace"))))
+    assertEquals(t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q2"))
+    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(true), None), 2, "a refresh asks every one")
+    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(true), Some(DeepTime.SignedYear(0L))), 1, "asked since the run began: not again")
   }

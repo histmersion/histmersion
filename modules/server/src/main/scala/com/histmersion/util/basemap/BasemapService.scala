@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,10 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.{Basemap, BasemapApi, BaseStyles}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.basemap.BasemapJobKinds
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.
@@ -1059,15 +1064,15 @@ final class BasemapService(
 
 object BasemapService:
   type BuildName = BuildName.T
-  object BuildName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BuildName extends RefinedType[String, Pure]
   type JsonText = JsonText.T
-  object JsonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JsonText extends RefinedType[String, Pure]
   type NameCount = NameCount.T
-  object NameCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NameCount extends RefinedType[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileKeys = TileKeys.T
-  object TileKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TileKeys extends RefinedType[String, Pure]
 
   private def invalid(message: String): Api.Error =
     Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeInvalid)))
@@ -1216,8 +1221,8 @@ object BasemapService:
       )
     )
 
-  val JobKind: com.histmersion.util.jobs.Job.Kind =
-    com.histmersion.util.jobs.Job.Kind.applyUnsafe(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value)
+  val JobKind: Job.Kind =
+    Job.Kind.applyUnsafe(BasemapJobKinds.BasemapFetch.kind.value)
 
   /** Where the focus regions' relief archives are, in the base map's store. */
   val FocusDir: Store.Key = Store.Key.applyUnsafe("terrain-focus")

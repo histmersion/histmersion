@@ -1,14 +1,18 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.util.storage.{Location, Resources, Store, Stores}
 import java.nio.file.Path
+import com.histmersion.util.storage.SafePath
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, resources: Resources):
-  private[agents] def bundledText(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] = resources.text(Resources.ResourceName(s"agents/${rel.value}")).left.map(p => Prompts.Problem(p.value)).map(_.value)
+  private[agents] def bundledText(rel: SafePath.Candidate): Either[Prompts.Problem, String] = resources.text(Resources.ResourceName(s"agents/${rel.value}")).left.map(p => Prompts.Problem(p.value)).map(_.value)
   private val dir: Option[Path] =
     Option(overrideDir.value).map(_.trim).filter(_.nonEmpty).map(d => Path.of(d).toAbsolutePath.normalize())
 
-  def load(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] =
+  def load(rel: SafePath.Candidate): Either[Prompts.Problem, String] =
     val local = dir.flatMap { root =>
       val path = root.resolve(rel.value).normalize()
       Option.when(path.startsWith(root))((root, path))
@@ -23,9 +27,9 @@ final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, reso
 
 object Prompts:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type OverrideDir = OverrideDir.T
-  object OverrideDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OverrideDir extends RefinedType[String, Pure]
 
 
-  def bundled(using Stores, Resources): List[com.histmersion.domain.automation.agents.AgentDefinitions.ResourcePath] = AgentDefinitions(Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")), AgentRoster.none).index
+  def bundled(using Stores, Resources): List[AgentDefinitions.ResourcePath] = AgentDefinitions(Prompts(OverrideDir("")), AgentRoster.none).index

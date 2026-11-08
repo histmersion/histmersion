@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.PoolSink
 
@@ -7,6 +8,8 @@ import com.histmersion.api.automation.PlanQuota.{PoolId, Reading}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.domain.automation.agents.PlanQuotaRepo
+import com.histmersion.domain.automation.agents.AgentsControllers
 
 /** A fake CLI (`claude`, `codex`, `opencode`): a shell script that records what it was given — its arguments one per
   * line, its stdin, the `--output-schema` file, the environment values a test asserts on, whether its working directory
@@ -123,9 +126,9 @@ object FakeCli:
     )
 
   /** A pool sink in memory: records readings and blocks while `block` says so. */
-  final class Sink(var block: Option[(PoolSink.BlockedReason, Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis])] = None) extends PoolSink:
+  final class Sink(var block: Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] = None) extends PoolSink:
     val recorded = java.util.concurrent.ConcurrentLinkedQueue[(PoolId, Reading)]()
     @volatile var refreshed = 0 // how often a client asked for a fresh read
     def record(p: PoolId, rs: List[Reading]): Unit = rs.foreach(r => recorded.add(p -> r))
-    def blocked(p: PoolId, model: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName]): Option[(PoolSink.BlockedReason, Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis])] = block
-    def refresh(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Unit = refreshed += 1
+    def blocked(p: PoolId, model: Option[AgentsControllers.ModelName]): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] = block
+    def refresh(now: PlanQuotaRepo.EpochMillis): Unit = refreshed += 1

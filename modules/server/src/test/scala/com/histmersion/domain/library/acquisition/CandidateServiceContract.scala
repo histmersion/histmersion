@@ -1,10 +1,12 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.{AuthorName, CandidateCount, CandidateWatch, Doi, Title}
 import com.histmersion.api.library.Source
+import com.histmersion.domain.automation.Goal
 
 /** What the new-source search's store answers, the same on the database and in memory: a watch read keeps its watermark
   * when a read failed, a candidate found again keeps its state and gathers every watch that found it, a page in id
@@ -29,16 +31,16 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
   stest("a watch keeps its watermark when a read fails, and is listed by kind, subject and index") { s =>
     s.goal("zq-goal")
-    val w = CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("zq-goal"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("zq tin"), com.histmersion.api.library.CandidateWatch.Index("openalex"))
-    s.candidates.recordWatch(w, Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-01")), None, com.histmersion.api.library.CandidateWatch.LastFound(3))
-    s.candidates.recordWatch(w, None, Some(com.histmersion.api.library.CandidateWatch.LastError("HTTP 503")), com.histmersion.api.library.CandidateWatch.LastFound(0))
+    val w = CandidateWatch(CandidateWatch.Goal("zq-goal"), CandidateWatch.Kind("query"), CandidateWatch.Subject("zq tin"), CandidateWatch.Index("openalex"))
+    s.candidates.recordWatch(w, Some(CandidateWatch.Watermark("2026-10-01")), None, CandidateWatch.LastFound(3))
+    s.candidates.recordWatch(w, None, Some(CandidateWatch.LastError("HTTP 503")), CandidateWatch.LastFound(0))
     s.candidates.recordWatch(
-      CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("zq-goal"), com.histmersion.api.library.CandidateWatch.Kind("citing"), com.histmersion.api.library.CandidateWatch.Subject("10.5555/zq.x"), com.histmersion.api.library.CandidateWatch.Index("openalex")),
-      Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-02")),
+      CandidateWatch(CandidateWatch.Goal("zq-goal"), CandidateWatch.Kind("citing"), CandidateWatch.Subject("10.5555/zq.x"), CandidateWatch.Index("openalex")),
+      Some(CandidateWatch.Watermark("2026-10-02")),
       None,
-      com.histmersion.api.library.CandidateWatch.LastFound(1)
+      CandidateWatch.LastFound(1)
     )
-    val got = s.candidates.watches(com.histmersion.domain.automation.Goal.Slug("zq-goal"))
+    val got = s.candidates.watches(Goal.Slug("zq-goal"))
     assertEquals(
       got.map(w => (w.kind, w.subject, w.watermark, w.lastError, w.lastFound)),
       List(
@@ -47,7 +49,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
       )
     )
     assert(got.forall(_.lastRun.isDefined))
-    assertEquals(s.candidates.watches(com.histmersion.domain.automation.Goal.Slug("zq-other")), Nil)
+    assertEquals(s.candidates.watches(Goal.Slug("zq-other")), Nil)
   }
 
   stest("a candidate found again keeps its state, gathers its watches; pages, counts and marks") { s =>
@@ -57,25 +59,25 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
     assert(s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.b"), Source.Candidate.FoundBy("crossref query"))))
     assert(s.candidates.upsert(candidate(Source.Candidate.Goal("zq-two"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("openalex query"))))
     assert(!s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("crossref query"))))
-    assertEquals(s.candidates.dois(com.histmersion.domain.automation.Goal.Slug("zq-goal")), Set("10.5555/zq.a", "10.5555/zq.b"))
-    val page = s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0))
+    assertEquals(s.candidates.dois(Goal.Slug("zq-goal")), Set("10.5555/zq.a", "10.5555/zq.b"))
+    val page = s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0))
     assertEquals(page.map(_.doi), List("10.5555/zq.a", "10.5555/zq.b"))
     assertEquals(page.head.foundBy.sortBy(_.value), List("crossref query", "openalex query"))
-    assertEquals(s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(1), com.histmersion.Offset(1)).map(_.doi), List("10.5555/zq.b"))
-    assertEquals(s.candidates.list(None, com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).size, 3)
-    assertEquals(s.candidates.mark(List(page.head.id), com.histmersion.api.library.Source.Candidate.State("seen")), 1)
-    assertEquals(s.candidates.mark(Nil, com.histmersion.api.library.Source.Candidate.State("seen")), 0)
-    assertEquals(s.candidates.markDois(com.histmersion.domain.automation.Goal.Slug("zq-goal"), List(com.histmersion.domain.library.Doi("10.5555/zq.b")), com.histmersion.api.library.Source.Candidate.State("dismissed")), 1)
+    assertEquals(s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(1), Offset(1)).map(_.doi), List("10.5555/zq.b"))
+    assertEquals(s.candidates.list(None, Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0)).size, 3)
+    assertEquals(s.candidates.mark(List(page.head.id), Source.Candidate.State("seen")), 1)
+    assertEquals(s.candidates.mark(Nil, Source.Candidate.State("seen")), 0)
+    assertEquals(s.candidates.markDois(Goal.Slug("zq-goal"), List(com.histmersion.domain.library.Doi("10.5555/zq.b")), Source.Candidate.State("dismissed")), 1)
     assertEquals(
-      s.candidates.counts(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal"))),
-      List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("dismissed"), com.histmersion.api.library.CandidateCount.Count(1)))
+      s.candidates.counts(Some(Goal.Slug("zq-goal"))),
+      List(CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1)))
     )
     assertEquals(
       s.candidates.counts(None),
-      List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("dismissed"), com.histmersion.api.library.CandidateCount.Count(1)))
+      List(CandidateCount(Source.Candidate.State("new"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1)))
     )
     assert(!s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("europepmc query"))))
-    assertEquals(s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).map(_.doi), List("10.5555/zq.a"))
+    assertEquals(s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("seen"), CandidateService.ListLimit(10), Offset(0)).map(_.doi), List("10.5555/zq.a"))
   }
 
 class CandidateServiceInMemorySuite extends CandidateServiceContract with AcquisitionStoreSuite.InMemory

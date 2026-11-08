@@ -1,4 +1,8 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that
   * neither the extract, a focus region nor the on-demand relief has is cut from its nearest ancestor that exists and
@@ -10,13 +14,13 @@ package com.histmersion.util.basemap
   */
 object TerrainResample:
   type Metres = Metres.T
-  object Metres extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Metres extends RefinedType[Double, Pure]
   type Pixel = Pixel.T
-  object Pixel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pixel extends RefinedType[Int, Pure]
   type Problem = Vp8l.Problem
   val Problem: Vp8l.Problem.type = Vp8l.Problem
   type ZoomDelta = ZoomDelta.T
-  object ZoomDelta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoomDelta extends RefinedType[Int, Pure]
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
   def metres(p: Pixel): Metres = Metres(metresOf(p.value))

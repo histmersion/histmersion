@@ -1,10 +1,13 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.config.{AppConfig, ConfigProblem, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The settings file — read and changed. Settings live there and nowhere else (never in the database), so a person can
   * repair them with a text editor while the server, the database or this page is broken.
@@ -27,7 +30,7 @@ trait SettingsService:
 
 object SettingsService:
   type ConfigPath = ConfigPath.T
-  object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConfigPath extends RefinedType[String, Pure]
 
   /** The settings file of `loaded` — the one the server read, `file` (`None`: it read none) — with the environment it
     * read it with.
@@ -116,7 +119,7 @@ object SettingsService:
       env: Config = ConfigFactory.empty,
       val schema: ConfigSchema = ConfigSchema.reference
   ) extends SettingsService:
-    val path: SettingsSnapshot.File = SettingsSnapshot.File(SettingsService.InMemory.FileName)
+    val path: SettingsSnapshot.File = SettingsSnapshot.File(InMemory.FileName)
 
     def current: Option[ConfigFileState.Text] = text.get
 

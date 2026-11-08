@@ -1,4 +1,5 @@
-package com.histmersion.util.process
+package com.histmersion
+package util.process
 
 import com.histmersion.util.storage.HandedFile
 
@@ -7,29 +8,31 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Store
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Launching child processes (the bundled database's tools, the converter, dumps): the one place a process is started.
   * Working directories and log files are store handles.
   */
 trait Processes:
   /** Start the process; `Left` with why it could not be. */
-  def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess]
+  def start(launch: ProcessLaunch): Either[Processes.Problem, RunningProcess]
 
   /** Start the process, read its output and wait for it to end. */
-  def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult]
+  def run(launch: ProcessLaunch): Either[Processes.Problem, ProcessResult]
 
 object Processes:
   type Pid = Pid.T
-  object Pid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pid extends RefinedType[Long, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type WaitTimeout = WaitTimeout.T
-  object WaitTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WaitTimeout extends RefinedType[Long, Pure]
 
   def apply(): Processes = Implementation()
 
   final private class Implementation extends Processes:
-    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess] =
+    def start(launch: ProcessLaunch): Either[Problem, RunningProcess] =
       for
         dir <- directory(launch)
         out <- log(launch)
@@ -44,11 +47,11 @@ object Processes:
           catch case e: IOException => Left(Problem(e.getMessage))
       yield started
 
-    private def directory(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[HandedFile]] = launch.workingStore match
+    private def directory(launch: ProcessLaunch): Either[Problem, Option[HandedFile]] = launch.workingStore match
       case None    => Right(None)
       case Some(s) => s.onDiskFile(Store.Key.Root).left.map(e => Problem(e.message.value)).map(Some(_))
 
-    private def log(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[ProcessBuilder.Redirect]] = launch.output match
+    private def log(launch: ProcessLaunch): Either[Problem, Option[ProcessBuilder.Redirect]] = launch.output match
       case ProcessOutput.Piped            => Right(None)
       case ProcessOutput.Discarded        => Right(Some(ProcessBuilder.Redirect.DISCARD))
       case ProcessOutput.AppendTo(s, key) =>
@@ -56,7 +59,7 @@ object Processes:
       case ProcessOutput.WriteTo(s, key) =>
         s.onDiskFile(key).left.map(e => Problem(e.message.value)).map(f => Some(ProcessBuilder.Redirect.to(f)))
 
-    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
+    def run(launch: ProcessLaunch): Either[Problem, ProcessResult] =
       start(launch).map { p =>
         val lines = scala.io.Source.fromInputStream(p.output).getLines().toList
         ProcessResult(p.waitFor(), lines.map(ProcessResult.Lines(_)))
@@ -64,12 +67,12 @@ object Processes:
 
 
   final private class OsProcess(p: Process) extends RunningProcess:
-    def pid: com.histmersion.util.process.Processes.Pid = Pid(p.pid)
+    def pid: Pid = Pid(p.pid)
     def isAlive: Boolean = p.isAlive
     def output: InputStream = p.getInputStream
     def input: OutputStream = p.getOutputStream
-    def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = ProcessResult.ExitCode(p.waitFor())
-    def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout.value, unit)
+    def waitFor(): ProcessResult.ExitCode = ProcessResult.ExitCode(p.waitFor())
+    def waitFor(timeout: WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout.value, unit)
     def destroy(): Unit = p.destroy()
     def destroyForcibly(): Unit =
       val _ = p.destroyForcibly()
@@ -82,20 +85,20 @@ object Processes:
     /** The launches asked for, in order. */
     def launches: List[ProcessLaunch] = launched.get.reverse
 
-    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess] =
+    def start(launch: ProcessLaunch): Either[Problem, RunningProcess] =
       launched.updateAndGet(launch :: _)
       val r = answer(launch)
       Right(new RunningProcess:
-        def pid: com.histmersion.util.process.Processes.Pid = Pid(0L)
+        def pid: Pid = Pid(0L)
         def isAlive: Boolean = false
         val output: InputStream = ByteArrayInputStream(r.lines.map(_.value + "\n").mkString.getBytes("UTF-8"))
         val input: OutputStream = ByteArrayOutputStream()
-        def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = r.exitCode
-        def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = true
+        def waitFor(): ProcessResult.ExitCode = r.exitCode
+        def waitFor(timeout: WaitTimeout, unit: TimeUnit): Boolean = true
         def destroy(): Unit = ()
         def destroyForcibly(): Unit = ())
 
-    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
+    def run(launch: ProcessLaunch): Either[Problem, ProcessResult] =
       start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList.map(ProcessResult.Lines(_))))
 
 

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.mcp.McpOut
 import chimp.server.*
@@ -14,6 +15,15 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, Lint}
 import com.histmersion.api.library.AcquireChecksMarkdown
 import com.histmersion.api.library.Acquire
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.data.checks.CheckRule
+import com.histmersion.util.data.checks.CheckControllers
+import com.histmersion.domain.library.search.QueryTools
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.server.views.WorkListView
+import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.server.agents.EngineContributions
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
@@ -48,7 +58,7 @@ object OpsTools:
           val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
           subject match
             case (Some(raw), _, _) =>
-              com.histmersion.domain.research.Slug
+              Slug
                 .parse(raw)
                 .fold(
                   p => ToolResult.text(McpOut.refusal(p.value)),
@@ -57,7 +67,7 @@ object OpsTools:
                       .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
                 )
             case (_, Some(raw), _) =>
-              com.histmersion.domain.library.Citekey
+              Citekey
                 .parse(raw)
                 .fold(
                   p => ToolResult.text(McpOut.refusal(p.value)),
@@ -74,8 +84,8 @@ object OpsTools:
               )
             case _ =>
               h.checks.lintWithFix(
-                in.rules.map(com.histmersion.util.data.checks.CheckRule.Name(_)),
-                com.histmersion.util.data.checks.CheckControllers.ApplyFix(in.fix)
+                in.rules.map(CheckRule.Name(_)),
+                CheckControllers.ApplyFix(in.fix)
               ) match
                 case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
                 case Left(e)    => McpOut.error(e)
@@ -113,14 +123,14 @@ object OpsTools:
             case Left(e)     => McpOut.error(e)
         }
 
-    List(lint, queue) ++ com.histmersion.domain.library.search.QueryTools(h.library.query) ++ List(backups)
+    List(lint, queue) ++ QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
   private def runQueue(h: ServerWiring, in: QueueInput): String =
     def render(list: String) =
       h.workListView.list(
-        com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(list),
-        com.histmersion.server.views.WorkListView.IncludeAll(in.all)
+        WorkListControllers.KindOfList(list),
+        WorkListView.IncludeAll(in.all)
       ) match
         case Right(l) =>
           l.markdown.map(_.value).getOrElse(s"_unknown list ${l.list}_")
@@ -133,7 +143,7 @@ object OpsTools:
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
             val added = h.workLists.add(
-              com.histmersion.domain.automation.worklists.WorkListControllers.ListName(list),
+              WorkListControllers.ListName(list),
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
@@ -148,14 +158,14 @@ object OpsTools:
         in.id match
           case Some(id) =>
             h.workLists.patch(
-              com.histmersion.domain.automation.worklists.QueueItemId(id),
+              QueueItemId(id),
               QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
             ) match
               case Right(i) => s"done **#${i.id}**: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        com.histmersion.server.agents.EngineContributions
+        EngineContributions
           .work(h.agents)
           .acquireRecheck
           .run(

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.diagnostics
+package com.histmersion
+package util.data.diagnostics
 
 import com.histmersion.api.{Plural, TableSize}
 import com.histmersion.api.backup.{Backup, BackupsUsage}
@@ -10,6 +11,7 @@ import com.histmersion.util.storage.{Blob, Location, MeasureBudget, Storage, Sto
 
 import java.time.Instant
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.ByteCount
 
 /** The Storage part of About, from the registry: an entry for every store an owner registered and every place of the
   * install, where `storage` puts them, each measured with a bounded walk (`MeasureBudget`); the database's size and its
@@ -71,20 +73,20 @@ final class StorageFigures(registry: DataContributions):
     named ++ caches ++ rest
 
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */
-  private def basemapDetail(store: Store, budget: MeasureBudget): Option[com.histmersion.util.data.diagnostics.StorageSpot.Detail] =
+  private def basemapDetail(store: Store, budget: MeasureBudget): Option[StorageSpot.Detail] =
     val parts = Basemap.Layer.values.toList.flatMap { l =>
       val file = Store.Key.applyUnsafe(l.file.value)
       val part = Store.Key.applyUnsafe(s".${l.wire}.part")
       Option.when(store.isFile(file))(
-        s"${l.wire} ${Backup.humanBytes(com.histmersion.api.ByteCount(scala.util.Try(store.get(file).fold(0L)(_.size.value)).getOrElse(0L)))}"
+        s"${l.wire} ${Backup.humanBytes(ByteCount(scala.util.Try(store.get(file).fold(0L)(_.size.value)).getOrElse(0L)))}"
       ) ++
         Option.when(store.isDirectory(part))(
-          s"${l.wire} download unfinished ${Backup.humanBytes(com.histmersion.api.ByteCount(store.sub(part).measure(budget).bytes.value))}"
+          s"${l.wire} download unfinished ${Backup.humanBytes(ByteCount(store.sub(part).measure(budget).bytes.value))}"
         )
     }
     val caches = registry.caches.collect {
       case CacheSpec(_, _, label, CacheHolding.InStore(Location.Basemap, key), _) if store.isDirectory(key) =>
-        s"$label ${Backup.humanBytes(com.histmersion.api.ByteCount(store.sub(key).measure(budget).bytes.value))}"
+        s"$label ${Backup.humanBytes(ByteCount(store.sub(key).measure(budget).bytes.value))}"
     }
     Option.when(parts.nonEmpty || caches.nonEmpty)(StorageSpot.Detail((parts ++ caches).mkString(" · ")))
 
@@ -112,7 +114,7 @@ final class StorageFigures(registry: DataContributions):
         label = StorageReports.Entry.Label(spot.label.value),
         group = StorageReports.Entry.Group(spot.group.value),
         path = spot.path.map(p => StorageReports.Entry.Path(p.value)),
-        bytes = (Option.when(exists)(results.map(_.bytes.value).sum)).map(com.histmersion.api.ByteCount.apply),
+        bytes = (Option.when(exists)(results.map(_.bytes.value).sum)).map(ByteCount.apply),
         files = (Option.when(exists)(results.map(_.files.value).sum)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
         exists = StorageReports.Entry.Exists(exists),
         partial = StorageReports.Entry.Partial(results.exists(_.partial.value)),
@@ -131,7 +133,7 @@ final class StorageFigures(registry: DataContributions):
       .map(_.head)
       .toList
       .sortBy(_.id.value)
-      .map(v => com.histmersion.api.maintenance.Storage.Volume(com.histmersion.api.maintenance.Storage.Volume.Id(v.id.value), com.histmersion.api.ByteCount(v.total.value), com.histmersion.api.ByteCount(v.usable.value)))
+      .map(v => com.histmersion.api.maintenance.Storage.Volume(com.histmersion.api.maintenance.Storage.Volume.Id(v.id.value), ByteCount(v.total.value), ByteCount(v.usable.value)))
     val (dbEntry, tables) =
       database.fold((Option.empty[com.histmersion.api.maintenance.Storage.Entry], List.empty[TableSize])) { d =>
         val size = scala.util.Try(d.databaseSize).toEither.left.map(e => s"database size: ${e.getMessage}")
@@ -148,7 +150,7 @@ final class StorageFigures(registry: DataContributions):
               StorageReports.Entry.Key("database"),
               StorageReports.Entry.Label("database (Postgres)"),
               StorageReports.Entry.Group("database"),
-              bytes = (size.toOption.map(_._2.value)).map(com.histmersion.api.ByteCount.apply),
+              bytes = (size.toOption.map(_._2.value)).map(ByteCount.apply),
               exists = StorageReports.Entry.Exists(size.isRight),
               within = Option.when(measured.exists(e => e.key.value == ShownStore.DatabaseCluster.key.value && e.exists.value))(
                 StorageReports.Entry.Key(ShownStore.DatabaseCluster.key.value)
@@ -168,7 +170,7 @@ final class StorageFigures(registry: DataContributions):
       listed.toOption.map(bs =>
         BackupsUsage(
           BackupsUsage.Count(bs.size),
-          com.histmersion.api.ByteCount(bs.map(_.bytes.value).sum),
+          ByteCount(bs.map(_.bytes.value).sum),
           bs.headOption.map(b => BackupsUsage.Newest(b.file.value)),
           BackupsUsage.Keep(settings.backups.keep.value)
         )
@@ -180,7 +182,7 @@ final class StorageFigures(registry: DataContributions):
       tables = tables,
       volumes = volumes,
       backups = usage,
-      lowFreeBytes = com.histmersion.api.ByteCount(settings.storage.lowFreeBytes.value),
+      lowFreeBytes = ByteCount(settings.storage.lowFreeBytes.value),
       problems = (problems.result() ++
         Option
           .when(budget.exhausted)(

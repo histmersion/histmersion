@@ -1,8 +1,12 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.{AppConfig, UserPaths}
 
 import java.nio.file.{Files, Path}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.agents.AgentTrees
 
 /** Where the gazetteer's files are, resolved from the config: the pinned extracts (a CACHE, rebuilt or copied, pinned
   * by sha256: the XDG cache directory), the Linked Places drop folder, the manifest of the pins, and `legacy`, where
@@ -17,17 +21,17 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
 
 object GazetteerPaths:
   type ConfiguredPath = ConfiguredPath.T
-  object ConfiguredPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConfiguredPath extends RefinedType[String, Pure]
   type EnvName = EnvName.T
-  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvName extends RefinedType[String, Pure]
   type EnvText = EnvText.T
-  object EnvText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvText extends RefinedType[String, Pure]
   type OsName = OsName.T
-  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OsName extends RefinedType[String, Pure]
   type ManifestText = ManifestText.T
-  object ManifestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ManifestText extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
 
@@ -41,7 +45,7 @@ object GazetteerPaths:
       Option(configured)
         .map(_.trim)
         .filter(_.nonEmpty)
-        .map(p => Path.of(com.histmersion.domain.automation.agents.AgentTrees.expandIn(p, env)))
+        .map(p => Path.of(AgentTrees.expandIn(p, env)))
         .getOrElse(fallback)
     val extracts = or(cfg.places.sources.dir.value, cache)
     GazetteerPaths(

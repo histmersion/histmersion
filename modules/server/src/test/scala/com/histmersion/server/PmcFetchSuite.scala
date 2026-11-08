@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,9 @@ import io.circe.Json
 
 import java.nio.file.Files
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.ArxivId
+import com.histmersion.util.storage.Blob
 
 /** The Europe PMC / PMC Article Datasets step of the OA chain (#1523), against a fake upstream that answers from the
   * responses captured on 2026-10-11 — no network.
@@ -41,7 +45,7 @@ class PmcFetchSuite extends munit.FunSuite:
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Problem(e.getMessage)))
 
-  private def cfg = AppConfig.load().acquire.copy(contactEmail = com.histmersion.config.AcquireConfig.ContactEmail("someone@example.org"))
+  private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))
 
   private def routes(
       c: AcquireConfig,
@@ -66,10 +70,10 @@ class PmcFetchSuite extends munit.FunSuite:
     val md5 = OaFetch.md5(OaFetch.Bytes(bytes)).getOrElse(fail("no MD5 in this runtime"))
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
-  private def fetch(c: AcquireConfig, http: Http, doi: com.histmersion.domain.library.Doi, arxiv: Option[com.histmersion.domain.library.ArxivId] = None) =
-    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), arxiv)
+  private def fetch(c: AcquireConfig, http: Http, doi: Doi, arxiv: Option[ArxivId] = None) =
+    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), arxiv)
 
-  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+  private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
   test("Europe PMC's PDF link is a challenge page → the PMC dataset PDF, verified, provenance pmc"):
@@ -82,7 +86,7 @@ class PmcFetchSuite extends munit.FunSuite:
       }.orElse(routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf)))
     )
     val got =
-      fetch(c, http, com.histmersion.domain.library.Doi("10.1038/nature25778")).fold(e => fail(s"$e\n" + http.asked.map(_._1).mkString("\n")), identity)
+      fetch(c, http, Doi("10.1038/nature25778")).fold(e => fail(s"$e\n" + http.asked.map(_._1).mkString("\n")), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "pdf")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6091220.1/PMC6091220.1.pdf"))
@@ -96,7 +100,7 @@ class PmcFetchSuite extends munit.FunSuite:
   test("the PMC hosts see the project's public User-Agent and never the contact e-mail"):
     val c = cfg
     val http = FakeUpstream(c, routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf)))
-    val _ = fetch(c, http, com.histmersion.domain.library.Doi("10.1038/nature25778"))
+    val _ = fetch(c, http, Doi("10.1038/nature25778"))
     val pmc = http.asked.filter((u, _) =>
       u.value.startsWith(c.europepmc.url.value) || u.value.startsWith(c.pmcDataset.url.value) ||
         u.value.startsWith("https://europepmc.org")
@@ -111,7 +115,7 @@ class PmcFetchSuite extends munit.FunSuite:
   test("Europe PMC's search asks for the exact DOI, core result type, JSON"):
     val c = cfg
     val http = FakeUpstream(c, routes(c, "europepmc_none.json", "pmc_dataset_oa.json", Right(Pdf)))
-    assert(fetch(c, http, com.histmersion.domain.library.Doi("10.15184/aqy.2017.21")).isLeft)
+    assert(fetch(c, http, Doi("10.15184/aqy.2017.21")).isLeft)
     val search = http.asked.map(_._1.value).find(_.startsWith(c.europepmc.url.value)).getOrElse(fail("no search"))
     assert(
       search.contains("query=DOI:%2210.15184/aqy.2017.21%22") || search.contains(
@@ -126,7 +130,7 @@ class PmcFetchSuite extends munit.FunSuite:
   test("a PDF whose MD5 does not match the record is not taken"):
     val c = cfg
     val http = FakeUpstream(c, routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf), xml = Left("gone")))
-    assertEquals(fetch(c, http, com.histmersion.domain.library.Doi("10.1038/nature25778")).map(_.source), Left("no legal open-access PDF found"))
+    assertEquals(fetch(c, http, Doi("10.1038/nature25778")).map(_.source), Left("no legal open-access PDF found"))
 
   test("an author manuscript with no PDF: arXiv is tried first, then the JATS full text is the copy"):
     val c = cfg
@@ -137,7 +141,7 @@ class PmcFetchSuite extends munit.FunSuite:
         case u if u.startsWith(c.pmcDataset.url.value + "/metadata/") => Right(record.getBytes("UTF-8"))
       }.orElse(routes(c, "europepmc_free.json", "pmc_dataset_manuscript.json", Left("no pdf")))
     )
-    val got = fetch(c, http, com.histmersion.domain.library.Doi("10.1126/science.aar7711"), arxiv = Some(com.histmersion.domain.library.ArxivId("1805.00001"))).fold(e => fail(e.value), identity)
+    val got = fetch(c, http, Doi("10.1126/science.aar7711"), arxiv = Some(ArxivId("1805.00001"))).fold(e => fail(e.value), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "xml")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6748862.1/PMC6748862.1.xml"))
@@ -163,7 +167,7 @@ class PmcFetchSuite extends munit.FunSuite:
           )
       }.orElse(routes(c, "europepmc_free.json", "pmc_dataset_manuscript.json", Left("no pdf"), xml = Right(bogus)))
     )
-    assert(fetch(c, http, com.histmersion.domain.library.Doi("10.1126/science.aar7711")).isLeft)
+    assert(fetch(c, http, Doi("10.1126/science.aar7711")).isLeft)
 
   test("an earlier source that answers wins: the PMC hosts are not asked"):
     val c = cfg
@@ -175,7 +179,7 @@ class PmcFetchSuite extends munit.FunSuite:
         case "https://repo.example.org/a.pdf" => Right(Pdf)
       }.orElse(routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf)))
     )
-    assertEquals(fetch(c, http, com.histmersion.domain.library.Doi("10.1038/nature25778")).map(_.source), Right("unpaywall"))
+    assertEquals(fetch(c, http, Doi("10.1038/nature25778")).map(_.source), Right("unpaywall"))
     assert(!http.asked.exists(_._1.value.startsWith(c.europepmc.url.value)))
 
   test("the fetch step names the host a copy came from"):
@@ -190,10 +194,10 @@ class PmcFetchSuite extends munit.FunSuite:
 
   final private class Sidecar extends ConverterClient:
     var calls: List[ConverterClient.Filename] = Nil // a test double: which files reached the sidecar
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       calls = calls :+ filename
-      Right(ConvertedDoc(com.histmersion.api.ocr.ConvertedDoc.Markdown("from the sidecar"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(3)))
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
+      Right(ConvertedDoc(ConvertedDoc.Markdown("from the sidecar"), pages = ConvertedDoc.Pages(3)))
+    def health = Right(ConverterClient.HealthSummary("ok"))
 
   test("a JATS original is rendered to Markdown without the sidecar; anything else goes to it"):
     val dir = Files.createTempDirectory("jats-conv")
@@ -203,15 +207,15 @@ class PmcFetchSuite extends munit.FunSuite:
       val other = Files.write(dir.resolve("list.xml"), "<?xml version=\"1.0\"?><ListBucketResult/>".getBytes("UTF-8"))
       val side = Sidecar()
       val conv = JatsConverter(side)
-      val doc = conv.convert(OfflineConverter.blob(xml), com.histmersion.util.ocr.ConverterClient.Filename("paper.xml"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).fold(e => fail(e.value), identity)
+      val doc = conv.convert(OfflineConverter.blob(xml), ConverterClient.Filename("paper.xml"), quality = ConverterClient.HighQuality(false)).fold(e => fail(e.value), identity)
       assert(doc.markdown.value.startsWith("# The first horse herders"), doc.markdown.value.take(200))
       assertEquals(doc.images, Nil)
       assertEquals(
-        conv.convert(OfflineConverter.blob(pdf), com.histmersion.util.ocr.ConverterClient.Filename("paper.pdf"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).map(_.markdown),
+        conv.convert(OfflineConverter.blob(pdf), ConverterClient.Filename("paper.pdf"), quality = ConverterClient.HighQuality(false)).map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(
-        conv.convert(OfflineConverter.blob(other), com.histmersion.util.ocr.ConverterClient.Filename("list.xml"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).map(_.markdown),
+        conv.convert(OfflineConverter.blob(other), ConverterClient.Filename("list.xml"), quality = ConverterClient.HighQuality(false)).map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(side.calls, List("paper.pdf", "list.xml"))

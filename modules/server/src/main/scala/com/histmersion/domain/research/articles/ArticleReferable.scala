@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.domain.ItemKind
 import com.histmersion.util.database.Transactor
@@ -13,9 +14,9 @@ object ArticleReferable:
   val Table: RecordTable =
     RecordTable(
       Kind,
-      com.histmersion.util.identity.RecordTable.Table("articles"),
-      com.histmersion.util.identity.RecordTable.Key("t.slug"),
-      com.histmersion.util.identity.RecordTable.Title("t.title"),
-      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
-      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("article_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("slug")))
+      RecordTable.Table("articles"),
+      RecordTable.Key("t.slug"),
+      RecordTable.Title("t.title"),
+      Some(RecordTable.Uid("t.uid")),
+      Some(AliasColumns(AliasColumns.Table("article_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("slug")))
     )

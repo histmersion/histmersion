@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.library.citations.CitationService
@@ -8,12 +9,14 @@ import com.histmersion.util.database.Transactor
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
 
 /** A contract of the library's services, run once on the in-memory stores and once on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone: no referrer is registered, as no
   * other domain's records are there. [[fresh]] gives each test empty stores, or none on a run with no such store.
   */
-abstract class LibraryStoreSuite extends com.histmersion.db.DbSuite:
+abstract class LibraryStoreSuite extends DbSuite:
   protected def fresh(test: String): Option[LibraryStores]
 
   protected def stest(title: String)(body: LibraryStores => Unit): Unit =
@@ -40,7 +43,7 @@ object LibraryStoreSuite:
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends LibraryStoreSuite:
-    private val testDb = com.histmersion.db.TestDb.url
+    private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
     private lazy val scratch =
       ScratchDatabases(

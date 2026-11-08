@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,13 +10,20 @@ import com.histmersion.config.AppConfig
 import com.histmersion.api.instance.UiNotices.Counters
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.instance.UiNotices
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
   * `POST /api/ui/seen/{board}` marks a window read — without the API key, which every other write still needs — and the
   * mark only moves forward. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class UiNoticesHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -40,7 +48,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      lock = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get))).getConnection
+      lock = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))).getConnection
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") }
       finally st.close()
@@ -55,12 +63,12 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("counts, news, marking read without the key, and the mark only moving forward"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey("s3cret")))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("s3cret")))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
-      var added = Option.empty[com.histmersion.api.automation.Queue.QueueItem.Id]
+      var added = Option.empty[Queue.QueueItem.Id]
       try
         val (s0, b0) = get(s"$url/ui/counters")
         assertEquals(s0, 200, b0)
@@ -78,9 +86,9 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""")._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
-        added = io.circe.parser.decode[com.histmersion.api.automation.Queue.QueueItem](ab).toOption.map(_.id)
+        added = io.circe.parser.decode[Queue.QueueItem](ab).toOption.map(_.id)
         val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key.value == "tasks").get
-        assertEquals(after.count, tasks0.count.map(c => com.histmersion.api.instance.UiNotices.Counter.Count(c.value + 1)))
+        assertEquals(after.count, tasks0.count.map(c => UiNotices.Counter.Count(c.value + 1)))
         assert(after.fresh.value, after.toString)
         val latest = after.latest.getOrElse(fail("no latest"))
 

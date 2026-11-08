@@ -1,10 +1,13 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.ByteCount
 import com.histmersion.util.storage.{ByteSource, Store}
 
 import java.io.IOException
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A store of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a file
   * `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for again.
@@ -47,7 +50,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
       val _ = store.delete(file(e.getKey, absent = true))
 
   /** `Some(Some(bytes))` a cached tile, `Some(None)` one known to be missing, `None` not cached. */
-  def get(key: com.histmersion.util.basemap.DiskLru.Key): Option[Option[ByteSource.Content]] = synchronized {
+  def get(key: DiskLru.Key): Option[Option[ByteSource.Content]] = synchronized {
     load()
     if !index.containsKey(key.value) then None
     else
@@ -64,7 +67,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
   /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
     * is within its ceiling.
     */
-  def put(key: com.histmersion.util.basemap.DiskLru.Key, bytes: Option[ByteSource.Content]): Unit = synchronized {
+  def put(key: DiskLru.Key, bytes: Option[ByteSource.Content]): Unit = synchronized {
     load()
     done(store.put(file(key.value, bytes.isEmpty), bytes.getOrElse(ByteSource.Content(Array.emptyByteArray))))
     Option(index.put(key.value, bytes.fold(0L)(_.value.length.toLong))).foreach(total -= _)
@@ -72,11 +75,11 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
     evict()
   }
 
-  def entries: com.histmersion.util.basemap.DiskLru.EntryCount = synchronized { load(); DiskLru.EntryCount(index.size.toLong) }
-  def bytes: com.histmersion.ByteCount = synchronized { load(); ByteCount.applyUnsafe(total) }
+  def entries: DiskLru.EntryCount = synchronized { load(); DiskLru.EntryCount(index.size.toLong) }
+  def bytes: ByteCount = synchronized { load(); ByteCount.applyUnsafe(total) }
 
   /** Everything removed; answers the bytes it held. */
-  def clear(): com.histmersion.ByteCount = synchronized {
+  def clear(): ByteCount = synchronized {
     val was = store.deleteTree(Store.Key.Root).fold(0L)(_.value)
     index.clear(); total = 0; loaded = false
     ByteCount.applyUnsafe(was)
@@ -86,11 +89,11 @@ object DiskLru:
   type Bytes = ByteSource.Content
   val Bytes: ByteSource.Content.type = ByteSource.Content
   type MaxBytes = MaxBytes.T
-  object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxBytes extends RefinedType[Long, Pure]
   type EntryCount = EntryCount.T
-  object EntryCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EntryCount extends RefinedType[Long, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Ext = Ext.T
-  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ext extends RefinedType[String, Pure]
 

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.domain.library.acquisition.wire
 
@@ -10,16 +11,18 @@ import com.histmersion.domain.*
 
 import java.time.LocalDate
 import com.histmersion.api.library.{Candidates, WorkRef}
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.Doi
 
 /** OpenAlex: search by publication date, `cites:` and `authorships.author.id:` filters. */
 final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex with CitationAlerts:
-  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("openalex")
-  private def works(filter: String, limit: Int, search: Option[com.histmersion.domain.library.search.Search.Query]): Either[String, List[WorkRef]] =
+  val name = ScholarlyIndex.Name("openalex")
+  private def works(filter: String, limit: Int, search: Option[Search.Query]): Either[String, List[WorkRef]] =
     http
       .json(
         Url(
           Http.Url(cfg.openalex.url.value),
-          com.histmersion.upstreams.http.Url.UrlPath("/works"),
+          Url.UrlPath("/works"),
           (search.map(q => "search" -> q.value).toList ++ List(
             "filter" -> filter,
             "per-page" -> math.max(1, math.min(limit, 50)).toString,
@@ -34,15 +37,15 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .map(_.value)
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
+  def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left.map(ScholarlyIndex.Problem(_))
 
-  private def work(doi: com.histmersion.domain.library.Doi): Either[String, io.circe.Json] =
+  private def work(doi: Doi): Either[String, io.circe.Json] =
     http
       .json(
         Url(
           Http.Url(s"${cfg.openalex.url}/works/https://doi.org/$doi"),
-          com.histmersion.upstreams.http.Url.UrlPath(""),
+          Url.UrlPath(""),
           "select" -> "id,authorships",
           "mailto" -> cfg.mailto.value
         )
@@ -50,7 +53,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .left
       .map(_.value)
 
-  def citing(doi: com.histmersion.domain.library.Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
+  def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
     work(doi)
       .flatMap(j => j.hcursor.get[String]("id").left.map(_.getMessage))
       .map(_.split("/").last)
@@ -58,7 +61,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .left
       .map(CitationAlerts.Problem(_))
 
-  def authors(doi: com.histmersion.domain.library.Doi) =
+  def authors(doi: Doi) =
     work(doi).map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value))).left.map(CitationAlerts.Problem(_))
 
   def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) =

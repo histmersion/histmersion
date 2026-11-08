@@ -1,4 +1,5 @@
-package com.histmersion.server.views
+package com.histmersion
+package server.views
 
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.views.PlaceDetail
@@ -7,6 +8,8 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Api
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place's page as the gazetteer, the corpus and the pictures show it together (the web UI's map hover card): the
   * gazetteer's `place` (the row, its geometry and the hierarchy around it), and — with `counts` — what `place=<id>`
@@ -31,7 +34,7 @@ final class PlaceCardView(
 
 object PlaceCardView:
   type PlaceId = com.histmersion.domain.catalogue.Place.Id
-  val PlaceId: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  val PlaceId: com.histmersion.domain.catalogue.Place.Id.type = com.histmersion.domain.catalogue.Place.Id
 
   type WithCounts = WithCounts.T
-  object WithCounts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WithCounts extends RefinedType[Boolean, Pure]

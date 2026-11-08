@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaProvider}
+import com.histmersion.domain.media.imports.MediaImporter
+import com.histmersion.domain.media.imports.ImportService
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons — the `media-depicts` plugin's collection,
   * as the host builds it, run by the host's import of a collection of its targets' own pictures: P1299 works' images
@@ -20,7 +23,7 @@ import com.histmersion.api.media.{MediaCount, MediaProvider}
   */
 class CommonsDepictionsSuite extends munit.FunSuite:
 
-  private val kadesh = Target(com.histmersion.domain.media.imports.Target.TargetType("event"), com.histmersion.domain.media.imports.Target.Id("battle_of_kadesh"), com.histmersion.domain.media.imports.Target.Qid("Q203729"), com.histmersion.domain.media.imports.Target.Label("Battle of Kadesh"))
+  private val kadesh = Target(Target.TargetType("event"), Target.Id("battle_of_kadesh"), Target.Qid("Q203729"), Target.Label("Battle of Kadesh"))
 
   /** Commons' imageinfo answers every title asked with a CC BY-SA file (the No-author one refused). */
   private def info(titles: List[String], width: String): String =
@@ -67,15 +70,15 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val http = provider()
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
-      dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(true),
-      refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun(true),
+      refresh = ImportService.Refresh(false),
       store
     )
     assertEquals(r.provider, MediaProvider.CommonsDepicts)
     assertEquals(r.statements, 3, "media.depicts.per-event")
-    assertEquals(r.byRole, List(MediaCount(MediaCount.Key(MediaRole.Depiction), com.histmersion.api.media.MediaCount.N(3))))
+    assertEquals(r.byRole, List(MediaCount(MediaCount.Key(MediaRole.Depiction), MediaCount.N(3))))
     assertEquals(
       r.samples.map(_.basis),
       List("P1299 depicted by Q203729", "P180 depicts Q203729", "P180 depicts Q203729")
@@ -87,10 +90,10 @@ class CommonsDepictionsSuite extends munit.FunSuite:
   test("real run: stored as Commons pictures, linked as depictions, checked under the depictions' name"):
     val (polite, _) = FakeMediaHttp.polite(provider(), cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
-      dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false),
-      refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun(false),
+      refresh = ImportService.Refresh(false),
       store
     )
     assertEquals((r.stored, r.linked), (3, 3))
@@ -107,15 +110,15 @@ class CommonsDepictionsSuite extends munit.FunSuite:
 
   test("a failed search leaves the event unrecorded, so it is asked again"):
     val http = FakeMediaHttp { url =>
-      if url.contains("list=search") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+      if url.contains("list=search") then Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
       else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
     }
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
-      dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false),
-      refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun(false),
+      refresh = ImportService.Refresh(false),
       store
     )
     assert(r.failed.exists(_.value.contains("Commons search for battle_of_kadesh")), r.failed.toString)

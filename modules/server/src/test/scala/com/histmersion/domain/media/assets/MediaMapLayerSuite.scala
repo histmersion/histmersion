@@ -1,6 +1,12 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TilePoint, TileValue}
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.media.MediaItem
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.domain.media.MediaState
 
 /** The pictures' layer of the map: how a drawn picture reads. */
 class MediaMapLayerSuite extends munit.FunSuite:
@@ -12,35 +18,35 @@ class MediaMapLayerSuite extends munit.FunSuite:
     import com.histmersion.api.catalogue.TileProps as P
     val h = MediaGeoHit(
       None,
-      com.histmersion.api.exchange.Bundle.Asset.FileName("Lions_Gate.jpg"),
-      Some(com.histmersion.api.media.MediaItem.Kind("photo")),
-      com.histmersion.api.catalogue.Latitude(37.7),
-      com.histmersion.api.catalogue.Longitude(22.7),
+      Bundle.Asset.FileName("Lions_Gate.jpg"),
+      Some(MediaItem.Kind("photo")),
+      Latitude(37.7),
+      Longitude(22.7),
       None,
       None,
       None,
-      com.histmersion.api.media.MediaItem.Uid("u1"),
-      Some(com.histmersion.api.media.MediaItem.Provider("wikimedia-commons")),
-      Some(com.histmersion.api.media.MediaItem.License("CC-BY-SA-3.0")),
-      Some(com.histmersion.api.media.MediaItem.Credit("Ann, via Commons")),
-      Some(com.histmersion.api.media.MediaItem.ThumbUrl("/media/u1/thumb")),
-      fileUrl = Some(com.histmersion.api.media.MediaItem.FileUrl("/media/u1/file")),
-      sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg")),
-      licenseUrl = Some(com.histmersion.api.media.MediaItem.LicenseUrl("https://creativecommons.org/licenses/by-sa/3.0/")),
-      author = Some(com.histmersion.api.media.MediaItem.Author("Ann"))
+      MediaItem.Uid("u1"),
+      Some(MediaItem.Provider("wikimedia-commons")),
+      Some(MediaItem.License("CC-BY-SA-3.0")),
+      Some(MediaItem.Credit("Ann, via Commons")),
+      Some(MediaItem.ThumbUrl("/media/u1/thumb")),
+      fileUrl = Some(MediaItem.FileUrl("/media/u1/file")),
+      sourceUrl = Some(MediaItem.SourceUrl("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg")),
+      licenseUrl = Some(MediaItem.LicenseUrl("https://creativecommons.org/licenses/by-sa/3.0/")),
+      author = Some(MediaItem.Author("Ann"))
     )
     val props = MediaMapLayer(
       AssetService.InMemory(
-        java.util.concurrent.atomic.AtomicReference(com.histmersion.domain.media.MediaState.empty),
+        java.util.concurrent.atomic.AtomicReference(MediaState.empty),
         java.time.Clock.systemUTC()
       )
     )
-      .feature(h)(TileCell(com.histmersion.domain.catalogue.maptiles.TileCell.Key("u1"), com.histmersion.domain.catalogue.maptiles.TileCell.X(10), com.histmersion.domain.catalogue.maptiles.TileCell.Y(20), com.histmersion.domain.catalogue.maptiles.TileCell.N(1), None, None, TileCell.West(22.7), TileCell.South(37.7), TileCell.East(22.7), TileCell.North(37.7)))
+      .feature(h)(TileCell(TileCell.Key("u1"), TileCell.X(10), TileCell.Y(20), TileCell.N(1), None, None, TileCell.West(22.7), TileCell.South(37.7), TileCell.East(22.7), TileCell.North(37.7)))
       .props
       .toMap
-    assertEquals(props.get(TilePoint.PropKey(P.SourceUrl)), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"))))
-    assertEquals(props.get(TilePoint.PropKey(P.LicenseUrl)), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("https://creativecommons.org/licenses/by-sa/3.0/"))))
-    assertEquals(props.get(TilePoint.PropKey(P.Author)), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("Ann"))))
+    assertEquals(props.get(TilePoint.PropKey(P.SourceUrl)), Some(TileValue.Text(TileValue.Text.Value("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"))))
+    assertEquals(props.get(TilePoint.PropKey(P.LicenseUrl)), Some(TileValue.Text(TileValue.Text.Value("https://creativecommons.org/licenses/by-sa/3.0/"))))
+    assertEquals(props.get(TilePoint.PropKey(P.Author)), Some(TileValue.Text(TileValue.Text.Value("Ann"))))
     // the full size is the uid's own file: the map makes its URL, the tile does not carry one per picture
-    assertEquals(props.get(TilePoint.PropKey(P.ThumbUrl)), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("/media/u1/thumb"))))
-    assert(!props.values.exists(_ == TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("/media/u1/file"))))
+    assertEquals(props.get(TilePoint.PropKey(P.ThumbUrl)), Some(TileValue.Text(TileValue.Text.Value("/media/u1/thumb"))))
+    assert(!props.values.exists(_ == TileValue.Text(TileValue.Text.Value("/media/u1/file"))))

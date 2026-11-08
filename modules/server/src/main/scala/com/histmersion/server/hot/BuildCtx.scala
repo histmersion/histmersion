@@ -1,4 +1,5 @@
-package com.histmersion.server.hot
+package com.histmersion
+package server.hot
 
 import com.histmersion.util.jobs.{Carried, Pinning}
 
@@ -31,7 +32,7 @@ final class BuildCtx[C, A] private[hot] (
     dep(h.name).asInstanceOf[B]
 
 object BuildCtx:
-  type Changed = com.histmersion.server.hot.Hot.Graph.Def.Name
-  val Changed: _root_.com.histmersion.server.hot.Hot.Graph.Def.Name.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Name
-  type DepArg1 = com.histmersion.server.hot.Hot.Graph.Def.Name
-  val DepArg1: _root_.com.histmersion.server.hot.Hot.Graph.Def.Name.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Name
+  type Changed = Hot.Graph.Def.Name
+  val Changed: Hot.Graph.Def.Name.type = Hot.Graph.Def.Name
+  type DepArg1 = Hot.Graph.Def.Name
+  val DepArg1: Hot.Graph.Def.Name.type = Hot.Graph.Def.Name

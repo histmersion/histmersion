@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.{BuiltinAi, ClaudeCode, CliRuntime, Codex, HostAiProvider, Opencode}
 
@@ -10,6 +11,9 @@ import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
 import sttp.shared.Identity
+import com.histmersion.util.plugins.Plugin
+import com.histmersion.plugin.AiProvider
+import com.histmersion.plugin.AiHttp
 
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the loop (sttp-ai's) and its
   * builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches few files.
@@ -47,8 +51,8 @@ object LlmClient:
     */
   def factory(
       rt: CliRuntime,
-      providers: () => scala.collection.immutable.ListMap[com.histmersion.util.plugins.Plugin.Id, com.histmersion.plugin.AiProvider],
-      http: com.histmersion.plugin.AiHttp = HostAiHttp()
+      providers: () => scala.collection.immutable.ListMap[Plugin.Id, AiProvider],
+      http: AiHttp = HostAiHttp()
   ): Factory =
     (cfg, ref) =>
       BuiltinAi.lookup(ref.provider, providers()).left.map(why => ModelPicker.Problem(s"${ref.wire}: $why")).flatMap {
@@ -78,7 +82,7 @@ object LlmClient:
     * `model`, claude -p's `modelUsage` keys), the busiest (most output tokens) first, joined by ` + ` when several
     * served it (Claude Code may hand side work to a smaller model). None when no call named one.
     */
-  def servedBy(calls: Seq[LlmCallUsage]): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel] =
+  def servedBy(calls: Seq[LlmCallUsage]): Option[AgentRepo.StepRecord.ActualModel] =
     val out = calls
       .flatMap(c => c.model.map(_.trim).filter(_.nonEmpty).map(_ -> c.usage.outputTokens.value))
       .groupMapReduce(_._1)(_._2)(_ + _)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef}
@@ -22,12 +23,12 @@ final class ArticleReadable(db: Transactor) extends Readable:
 
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
-      val rows = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT i.slug, i.title, lower(i.period), upper(i.period) - 1")) ++ notRead(read) ++
-        Sql.of(com.histmersion.util.database.Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
+      val rows = (Sql.raw(Sql.Text("SELECT i.slug, i.title, lower(i.period), upper(i.period) - 1")) ++ notRead(read) ++
+        Sql.of(Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
         .query[(String, String, Option[Long], Option[Long])]
         .run()
         .toList
-      val total = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
+      val total = (Sql.raw(Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
       UnreadItems(
         rows.map((slug, title, start, end) =>
           UnreadItem(

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
@@ -21,7 +22,7 @@ import com.histmersion.api.Api
 final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: WorkCarrier = WorkCarrier.none):
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
-  def start(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash)(
+  def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
       run: () => Either[MergeApplyRuns.Failure, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {

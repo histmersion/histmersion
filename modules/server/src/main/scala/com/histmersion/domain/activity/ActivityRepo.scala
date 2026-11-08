@@ -1,4 +1,5 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
@@ -7,6 +8,7 @@ import com.histmersion.util.database.{Param, Sql}
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import com.histmersion.domain.automation.approvals.ApprovalQuery
 
 /** The activity list in SQL: the jobs (agent runs among them), the worklog and a person's decisions as one relation,
   * filtered and cut into pages by the rules of [[ActivityRules]]. Takes the connection it runs on.
@@ -42,7 +44,7 @@ private[activity] object ActivityRepo:
                 NULL::timestamptz, coalesce(rj.goal_slug, CASE WHEN a.kind = 'goal-plan' THEN a.subject END), a.job_id,
                 NULL, a.citekey, CASE WHEN a.kind IN ('article-publish', 'article-filter') THEN a.subject END,
                 NULL, NULL, a.id, a.target, NULL
-           FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${com.histmersion.domain.automation.approvals.ApprovalQuery.decidedByExpr} = 'person') a
+           FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${ApprovalQuery.decidedByExpr} = 'person') a
            LEFT JOIN jobs rj ON rj.id = a.job_id) m"""
 
   private val Projection: String =
@@ -64,8 +66,8 @@ private[activity] object ActivityRepo:
 
   private def where(q: ActivityQuery): Sql =
     Sql.raw(Sql.Text(s" WHERE ${showSql(q.show)}")) ++
-      q.goal.fold(Sql.empty)(g => Sql.of(com.histmersion.util.database.Sql.Text(" AND goal = ?"), Param.S(Param.S.V(g.value)))) ++
-      q.since.fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.Text(" AND t >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
+      q.goal.fold(Sql.empty)(g => Sql.of(Sql.Text(" AND goal = ?"), Param.S(Param.S.V(g.value)))) ++
+      q.since.fold(Sql.empty)(s => Sql.of(Sql.Text(" AND t >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
       q.before.fold(Sql.empty)(c =>
         Sql.of(
           Sql.Text(""" AND (t < ?::timestamptz OR (t = ?::timestamptz AND (kind || ':' || rid) COLLATE "C" < ?))"""),

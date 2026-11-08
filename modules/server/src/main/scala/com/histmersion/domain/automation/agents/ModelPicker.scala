@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import io.scalaland.chimney.dsl.*
 
@@ -15,6 +16,10 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 import com.histmersion.api.automation.PlanQuota
+import com.histmersion.domain.automation.AgentRole
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.ModelChains
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):
@@ -58,7 +63,7 @@ final class ModelPicker(
   /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later reading of its plan
     * pool lifts ([[ModelPicker.lifts]]), is dropped here.
     */
-  private def cooling(model: ModelRef, now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis] =
+  private def cooling(model: ModelRef, now: PlanQuotaRepo.EpochMillis): Option[PlanQuotaRepo.EpochMillis] =
     Option(cooldown.get(model.wire)).flatMap { (until, since) =>
       val lifted = until > now.value && pools.poolOf(model).exists { p =>
         ModelPicker.lifts(
@@ -92,7 +97,7 @@ final class ModelPicker(
   // ── what is in effect ──────────────────────────────────────────────────────────────────────────
 
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. */
-  def chain(role: Role): Either[com.histmersion.domain.automation.agents.ModelPicker.Problem, (List[ModelRef], SettingSource)] =
+  def chain(role: Role): Either[ModelPicker.Problem, (List[ModelRef], SettingSource)] =
     Transactor(ds).read(ModelSettingsRepo.chains).get(ModelSettingsRepo.ChainRole(role.wire.value)) match
       case Some(ms) =>
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
@@ -100,13 +105,13 @@ final class ModelPicker(
           .left
           .map(m => ModelPicker.Problem(s"the saved chain of ${role.wire}: $m"))
       case None =>
-        parseChain(Chain.Spec(cfg.role(role.transformInto[com.histmersion.domain.automation.AgentRole])), known())
+        parseChain(Chain.Spec(cfg.role(role.transformInto[AgentRole])), known())
           .map(_ -> SettingSource.Config)
           .left
           .map(m => ModelPicker.Problem(s"agents.roles.${role.wire}: $m"))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
-  def chainFor(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName]): Either[com.histmersion.domain.automation.agents.ModelPicker.Problem, List[ModelRef]] =
+  def chainFor(role: Role, overrideRef: Option[AgentsControllers.ModelName]): Either[ModelPicker.Problem, List[ModelRef]] =
     overrideRef.map(_.value.trim).filter(_.nonEmpty) match
       case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(p => ModelPicker.Problem(p.value))
       case None      =>
@@ -202,17 +207,17 @@ final class ModelPicker(
 
   object ModelState:
     type Usable = Usable.T
-    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Usable extends RefinedType[Boolean, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type PlanBlocked = PlanBlocked.T
-    object PlanBlocked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlanBlocked extends RefinedType[Boolean, Pure]
     type Unavailable = Unavailable.T
-    object Unavailable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unavailable extends RefinedType[Boolean, Pure]
     type Refreshed = Refreshed.T
-    object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refreshed extends RefinedType[String, Pure]
     type Cooling = Cooling.T
-    object Cooling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cooling extends RefinedType[Boolean, Pure]
 
   /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading, or was never
     * read, takes a fresh one first ([[PlanPools.decide]]); None = just looking.
@@ -301,7 +306,7 @@ final class ModelPicker(
     */
   def pick(
       role: Role,
-      overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName],
+      overrideRef: Option[AgentsControllers.ModelName],
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis()),
       refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
       onRefresh: ModelState.Refreshed => Unit = _ => ()
@@ -387,12 +392,12 @@ final class ModelPicker(
         case Right((ms, src)) =>
           val entries = ms.map { m =>
             resolve(m) match
-              case Left(why)           => ChainEntry(ChainEntry.Model(m.wire.value), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(false), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false), Some(ChainEntry.Problem(why.value)))
+              case Left(why)           => ChainEntry(ChainEntry.Model(m.wire.value), ready = ModelChains.ChainEntry.Ready(false), usable = ModelChains.ChainEntry.Usable(false), Some(ChainEntry.Problem(why.value)))
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
-                  ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true),
+                  ready = ModelChains.ChainEntry.Ready(true),
                   ChainEntry.Usable(st.usable.value),
                   st.why.map(w => ChainEntry.Problem(w.value)),
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
@@ -417,9 +422,9 @@ final class ModelPicker(
         AllowanceStatus(
           AllowanceStatus.Target(t.value),
           AllowanceStatus.Source(src.wire.value),
-          com.histmersion.api.automation.ModelChains.AllowanceStatus.ReservePct(0),
+          ModelChains.AllowanceStatus.ReservePct(0),
           Nil,
-          usable = com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(false),
+          usable = ModelChains.AllowanceStatus.Usable(false),
           None,
           Some(AllowanceStatus.Note(s"cannot be read, so it blocks what it covers: $why"))
         )
@@ -459,7 +464,7 @@ object ModelPicker:
 
   /** Whether the plan pool a model draws on is usable for it, as its newest verdict says. */
   type PoolUsable = PoolUsable.T
-  object PoolUsable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolUsable extends RefinedType[Boolean, Pure]
 
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.
@@ -494,5 +499,5 @@ object ModelPicker:
   /** The role a `plan-quota`/`allowance` pause names (the [[PickFailure.Exhausted]] message says "all models for role
     * <role> are …"), so a paused run can be asked about just that role again.
     */
-  def pausedRole(error: com.histmersion.domain.automation.agents.ModelPicker.Problem): Option[Role] =
+  def pausedRole(error: Problem): Option[Role] =
     "for role ([a-z-]+) are".r.findFirstMatchIn(error.value).flatMap(m => Role.parse(Role.Wire(m.group(1))))

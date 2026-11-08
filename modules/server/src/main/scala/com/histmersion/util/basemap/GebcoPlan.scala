@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.api.BBox
 
@@ -12,7 +13,7 @@ final case class GebcoPlan(
     tiles: Vector[(GebcoPlan.TileKey, (GebcoPlan.Zoom, GebcoPlan.TileX, GebcoPlan.TileY))],
     edge: Set[(GebcoPlan.Zoom, GebcoPlan.TileX, GebcoPlan.TileY)]
 ):
-  def readBytes: com.histmersion.ByteCount = com.histmersion.ByteCount.applyUnsafe(parts.map(_.bytes.value).sum)
+  def readBytes: ByteCount = ByteCount.applyUnsafe(parts.map(_.bytes.value).sum)
 
 object GebcoPlan:
   type TileKey = PmTiles.Entry.TileId

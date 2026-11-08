@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.plugins.PluginStatus
@@ -8,6 +9,7 @@ import com.histmersion.domain.library.acquisition.{CoreBudget, HttpPlugin, SttpH
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.util.plugins.Plugins
 import org.ekrich.config.ConfigFactory
+import com.histmersion.config.ConfigReload
 
 /** The server's plugin generations: [[Plugins]] with what this host supplies — the command-line AI runtimes it still
   * runs itself ([[BuiltinAi]]), the one acquisition client every plugin of a generation is lent, and the CORE budget
@@ -21,7 +23,7 @@ object ServerPlugins:
   def load(
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
-      changed: List[com.histmersion.config.ConfigReload.ChangedKey] = Nil,
+      changed: List[ConfigReload.ChangedKey] = Nil,
       core: CoreBudget,
       transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =

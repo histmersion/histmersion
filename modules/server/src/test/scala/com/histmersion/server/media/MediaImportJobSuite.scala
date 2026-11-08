@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -26,6 +27,12 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.EventPut
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.server.ServerPlugins
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.catalogue.Year
+import com.histmersion.config.ServerConfig
 
 /** #1491: a media import over a few hundred places/events is a JOB, through the real server — the request answers at
   * once with the job, the job reports `n/total` as it goes, a picture that cannot be fetched is a line in its summary
@@ -34,8 +41,8 @@ import com.histmersion.api.jobs.JobInfo
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). Fixtures: events `0zqmj_*` (sorting before every other event, so a
   * `limit` job takes exactly these), pictures `File:Zqmj *`.
   */
-class MediaImportJobSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class MediaImportJobSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val N = 300
@@ -137,7 +144,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
     )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
-  private lazy val plugins = com.histmersion.server.ServerPlugins.offlineWith(
+  private lazy val plugins = ServerPlugins.offlineWith(
     Nil,
     org.ekrich.config.ConfigFactory.parseString(
       s"""histmersion.media {
@@ -165,7 +172,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         EventFixtures.put(
           ds,
           id(i),
-          EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zqmj event $i"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
+          EventPut(EventSummary.Label(s"Zqmj event $i"), EventSummary.Kind("battle"), TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190))))
         )
       )
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
@@ -187,7 +194,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job

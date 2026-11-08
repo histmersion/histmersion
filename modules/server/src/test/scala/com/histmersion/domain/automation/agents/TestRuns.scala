@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.*
 
@@ -17,14 +18,15 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.augustnagro.magnum.DbCon
 
 import javax.sql.DataSource
+import com.histmersion.server.ServerWiring
 
 /** How the agent suites set up runs by hand: through the jobs area, as the engine records them. */
 object TestRuns:
   private def runs(ds: DataSource): JobRuns = JobRuns(Transactor(ds))
 
   /** The approvals over `ds`, as the engine records them. */
-  def approvals(ds: DataSource): com.histmersion.domain.automation.agents.ApprovalService =
-    com.histmersion.domain.automation.agents.ApprovalService(Transactor(ds), java.time.Clock.systemUTC())
+  def approvals(ds: DataSource): ApprovalService =
+    ApprovalService(Transactor(ds), java.time.Clock.systemUTC())
 
   /** The clock the time-of-day suites run on: noon UTC of the day it is made, moving with the wall clock — after the
     * approval digest's hour, and hours away from a watcher's weekly cron at 22:30 and from midnight, whenever they run.
@@ -49,7 +51,7 @@ object TestRuns:
       dryRun: RunService.DryRun = RunService.DryRun(false)
   ): RunInfo =
     val id = runs(ds).create(
-      com.histmersion.domain.automation.agents.RunService
+      RunService
         .row(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
     )
     connect(ds)(AgentRepo.get(RunInfo.Id(id.value))).get
@@ -71,7 +73,7 @@ object TestRuns:
       managerItem: Option[FocusRepo.WorkRow.Id] = None
   )(using DbCon): Run.Id =
     runs(ds).createIn(
-      com.histmersion.domain.automation.agents.RunService.row(
+      RunService.row(
         p,
         target,
         model,
@@ -114,8 +116,8 @@ object TestRuns:
 
   /** The library's routing of a source's proposals, as the composition builds it for engine `a`. */
   def proposals(
-      a: com.histmersion.domain.automation.agents.AgentsControllers,
-      h: com.histmersion.server.ServerWiring,
+      a: AgentsControllers,
+      h: ServerWiring,
       ds: DataSource
   ): SourceProposals =
     new SourceProposals(

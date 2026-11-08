@@ -1,4 +1,5 @@
-package com.histmersion.server.plugins
+package com.histmersion
+package server.plugins
 
 import java.nio.charset.StandardCharsets.UTF_8
 

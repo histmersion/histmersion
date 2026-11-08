@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import com.histmersion.{ByteCount, ByteOffset, Sha256}
 
@@ -10,6 +11,9 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 
 import hearth.kindlings.optics.syntax.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.basemap.PmTiles
 
 /** A store in memory, for tests of the code that is given one: the same keys, the same answers, no disk. Its files
   * cannot be handed to another program.
@@ -39,7 +43,7 @@ final class MemoryStore private (
   private def ancestors(k: Store.Key): List[Store.Key] =
     k.segments.inits.toList.drop(1).filter(_.nonEmpty).map(s => Store.Key.applyUnsafe(s.mkString("/")))
 
-  def where(key: Store.Key): com.histmersion.util.storage.Blob.Location = Blob.Location(s"$name/${full(key).value}")
+  def where(key: Store.Key): Blob.Location = Blob.Location(s"$name/${full(key).value}")
 
   def sub(prefix: Store.Key): Store = MemoryStore(location, name, state, full(prefix))
 
@@ -75,15 +79,15 @@ final class MemoryStore private (
       .collect { case (k, e) if k.within(p) => Stored(local(k), Stored.Kind.File, e.size, e.modified) }
       .sortBy(_.key.value)
 
-  private def store(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Stored =
+  private def store(key: Store.Key, bytes: ByteSource.Content): Stored =
     val e = Entry(ByteSource.Content(bytes.value.clone()), now)
     state.updateAndGet(_.modify(_.files).using(_.updated(full(key), e)))
     Stored(key, Stored.Kind.File, e.size, e.modified)
 
-  def put(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] = Right(store(key, bytes))
-  def write(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] = Right(store(key, bytes))
+  def put(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = Right(store(key, bytes))
+  def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = Right(store(key, bytes))
 
-  def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.Store.ThroughLink): Either[Store.Error, Reservation] =
+  def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] =
     Right(MemoryStore.MemoryReservation(key, where(key), (k, b) => store(k, b)))
 
   def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] =
@@ -91,7 +95,7 @@ final class MemoryStore private (
       state.updateAndGet(_.modify(_.files).using(_.removed(full(from)).updated(full(to), e))): Unit
     }
 
-  def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Unit] =
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] =
     state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
       val copied = if keepAttributes.value then e else e.modify(_.modified).setTo(now)
       state.updateAndGet(_.modify(_.files).using(_.updated(full(to), copied))): Unit
@@ -135,7 +139,7 @@ final class MemoryStore private (
 
   def volume: Option[Store.Volume] = None
 
-  def names(prefix: Store.Key): List[com.histmersion.util.storage.Store.EntryName] = list(prefix).map(_.key.name)
+  def names(prefix: Store.Key): List[Store.EntryName] = list(prefix).map(_.key.name)
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 
@@ -147,7 +151,7 @@ object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
 
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
 
 
   private val ticks = java.util.concurrent.atomic.AtomicLong()
@@ -161,22 +165,22 @@ object MemoryStore:
     def size: ByteCount = entry.size
     def modified: Instant = entry.modified
     def open(): InputStream = ByteArrayInputStream(entry.bytes.value)
-    def bytes(): com.histmersion.util.storage.ByteSource.Content = ByteSource.Content(entry.bytes.value.clone())
-    def text(): com.histmersion.util.storage.Blob.Text = Blob.Text(String(entry.bytes.value, UTF_8))
+    def bytes(): ByteSource.Content = ByteSource.Content(entry.bytes.value.clone())
+    def text(): Blob.Text = Blob.Text(String(entry.bytes.value, UTF_8))
     def sha256(): Sha256 =
       Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes.value).map(b => f"${b & 0xff}%02x").mkString)
-    def readAt(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = reader().read(offset, length)
+    def readAt(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = reader().read(offset, length)
     def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes.value).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
-      def where: com.histmersion.util.storage.Blob.Location = MemoryBlob.this.where
+      def where: Blob.Location = MemoryBlob.this.where
       def size: ByteCount = entry.size
-      def read(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content =
+      def read(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content =
         val held = entry.bytes.value
         val len = length.value
         if offset.value + len > held.length then
           throw java.io.EOFException(s"$where ends before byte ${offset.value + len}")
         ByteSource.Content(java.util.Arrays.copyOfRange(held, offset.value.toInt, offset.value.toInt + len))
-      def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content =
+      def readUpTo(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content =
         val held = entry.bytes.value
         val from = math.min(offset.value, held.length.toLong).toInt
         ByteSource.Content(java.util.Arrays.copyOfRange(held, from, math.min(held.length, from + length.value)))
@@ -185,8 +189,8 @@ object MemoryStore:
   object MemoryBlob:
 
 
-    type Where = com.histmersion.util.storage.Blob.Location
-    val Where: _root_.com.histmersion.util.storage.Blob.Location.type = _root_.com.histmersion.util.storage.Blob.Location
+    type Where = Blob.Location
+    val Where: Blob.Location.type = Blob.Location
 
 
   final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, ByteSource.Content) => Stored)
@@ -199,7 +203,7 @@ object MemoryStore:
         super.close()
         written.set(toByteArray)
 
-    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.ByteSource.Content): Unit =
+    def writeAt(offset: ByteOffset, bytes: ByteSource.Content): Unit =
       val _ = written.updateAndGet { now =>
         val data = bytes.value
         val out = java.util.Arrays.copyOf(now, math.max(now.length, offset.value.toInt + data.length))
@@ -209,7 +213,7 @@ object MemoryStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(written.get.length.toLong)
 
-    def commit(keepPermissions: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Stored] =
+    def commit(keepPermissions: Store.KeepPermissions): Either[Store.Error, Stored] =
       done = true
       Right(commitTo(key, ByteSource.Content(written.get)))
 
@@ -219,6 +223,6 @@ object MemoryStore:
 
   object MemoryReservation:
 
-    type Where = com.histmersion.util.storage.Blob.Location
-    val Where: _root_.com.histmersion.util.storage.Blob.Location.type = _root_.com.histmersion.util.storage.Blob.Location
+    type Where = Blob.Location
+    val Where: Blob.Location.type = Blob.Location
 

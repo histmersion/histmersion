@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
@@ -21,6 +22,11 @@ import scala.annotation.tailrec
 import com.histmersion.api.library.{CalibreGap, Citekey as ApiCitekey, DeleteCount, DeletePart, Edge, Rename, Source, TocEntry}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Finding
+import com.histmersion.domain.library.Doi
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.catalogue.places.FindingPlacement
+import com.histmersion.api.catalogue.Place
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
@@ -28,179 +34,179 @@ import com.histmersion.api.library.Finding
 trait SourceService:
 
   /** The citekey a source has now: `id` itself, or the source an old citekey was renamed to. */
-  def current(id: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
+  def current(id: Citekey): Option[Citekey]
 
   /** The source `citekey` was renamed to, when it is an old citekey. */
-  def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
+  def aliasOf(citekey: Citekey): Option[Citekey]
 
   /** The old citekeys that name `citekey` now. */
-  def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey]
+  def aliasesOf(citekey: Citekey): Set[Citekey]
 
   /** Every old citekey and the source it names now, by old citekey. */
   def aliases: List[Source.Alias]
 
-  def citekeys: List[com.histmersion.domain.library.Citekey]
+  def citekeys: List[Citekey]
 
   /** `citekey -> its last write` in epoch milliseconds, for the seed's staleness guard. */
-  def updatedAtMillis: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis]
+  def updatedAtMillis: Map[Citekey, CitekeyMillis.Millis]
 
-  def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId]
+  def calibreId(citekey: Citekey): Option[FullSourceRow.CalibreId]
 
   /** A source as read: the record and its findings, in id order. */
-  def get(citekey: com.histmersion.domain.library.Citekey): Option[(Source.Detail, List[Finding.Row])]
+  def get(citekey: Citekey): Option[(Source.Detail, List[Finding.Row])]
 
   /** A source as written: the record with its findings and edges. */
-  def load(citekey: com.histmersion.domain.library.Citekey): Option[Source]
+  def load(citekey: Citekey): Option[Source]
 
   /** The citation-link view of the stored sources among `citekeys`, in citekey order. */
-  def refs(citekeys: List[com.histmersion.domain.library.Citekey]): List[Source.Ref]
+  def refs(citekeys: List[Citekey]): List[Source.Ref]
 
   /** The citekey each wikilink target names: exact, an old citekey, or the one source a short form fits. */
-  def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, com.histmersion.domain.library.Citekey]
+  def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey]
 
-  def toc(citekey: com.histmersion.domain.library.Citekey): List[TocEntry]
-  def bodyText(citekey: com.histmersion.domain.library.Citekey): FullSourceRow.OcrMarkdown
-  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Heading): FullSourceRow.OcrMarkdown
-  def bodyChunks(citekey: com.histmersion.domain.library.Citekey): List[Chunk]
+  def toc(citekey: Citekey): List[TocEntry]
+  def bodyText(citekey: Citekey): FullSourceRow.OcrMarkdown
+  def bodyUnderHeading(citekey: Citekey, heading: SourceService.Heading): FullSourceRow.OcrMarkdown
+  def bodyChunks(citekey: Citekey): List[Chunk]
 
   /** The source's converted text as stored, where its figures are linked from. */
-  def markdown(citekey: com.histmersion.domain.library.Citekey): FullSourceRow.OcrMarkdown
+  def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown
 
   /** Replace everything under `source.citekey`; the new last-write token. */
   def put(source: Source, caller: Caller): Source.UpdatedAt
 
   /** Merge `patch` into the source `requested` names (an old citekey follows); the new last-write token. */
-  def patch(requested: com.histmersion.domain.library.Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt]
+  def patch(requested: Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt]
 
-  def rename(from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, caller: Caller): Either[Api.Error, Rename.Counts]
+  def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts]
 
   /** What deleting the source would do; nothing is changed. */
-  def deletion(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan]
+  def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan]
 
   /** Delete the source unless something refuses it; `files` names its stored originals, `day` is the log's topic. */
   def delete(
-      citekey: com.histmersion.domain.library.Citekey,
-      day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
+      citekey: Citekey,
+      day: SourceReferrers.Day,
       files: SourceDeletePlan => List[Source.Deletion.Files],
       caller: Caller
   ): Either[Api.Error, SourceDeletePlan]
 
   /** Promote the parked edges whose target now names one stored source; how many. */
-  def resolveEdges(caller: Caller): com.histmersion.RowCount
+  def resolveEdges(caller: Caller): RowCount
 
   // ── what acquisition, ingest and the collections read and write of a source ───────────────
 
-  def exists(citekey: com.histmersion.domain.library.Citekey): Boolean
+  def exists(citekey: Citekey): Boolean
 
   /** `lower(doi) -> citekey` for the whole corpus. */
-  def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey]
+  def doiIndex: Map[Doi, Citekey]
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
-  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey]
+  def citekeyOfDoi(doi: Doi): Option[Citekey]
 
   /** Store edges routed by their target (one to a source not stored yet is parked); how many were new. */
-  def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount
+  def addEdges(edges: List[Edge], caller: Caller): RowCount
 
   /** The digest of the source's stored original. */
-  def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.Sha256]
+  def original(citekey: Citekey): Option[Sha256]
 
   /** The source that holds an original with this digest. */
-  def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey]
+  def holderOf(sha256: Sha256): Option[Citekey]
 
   /** The digests of the stored originals of those of `citekeys` that have one. */
-  def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.Sha256]
+  def originals(citekeys: List[Citekey]): Map[Citekey, Sha256]
 
-  def setOriginal(citekey: com.histmersion.domain.library.Citekey, sha256: com.histmersion.Sha256, caller: Caller): Unit
+  def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit
 
   /** The licence the source is published under, classified as it is read (Q26). */
-  def licence(citekey: com.histmersion.domain.library.Citekey): Option[Licence]
+  def licence(citekey: Citekey): Option[Licence]
 
   /** `licence` recorded as the source's when it has none; `true` when it was written. */
-  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean
+  def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean
 
   /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
-  def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap]
+  def calibreGaps(limit: Option[PageSize]): List[CalibreGap]
 
   /** What a push of the source into Calibre names it by. */
-  def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap]
+  def calibrePushMeta(citekey: Citekey): Option[CalibreGap]
 
   /** The Calibre id written back after a push. */
-  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit]
+  def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit]
 
 object SourceService:
   type Heading = Heading.T
-  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Heading extends RefinedType[String, Pure]
 
   def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings): SourceService =
     Implementation(db, referrers, settings)
 
   final private class Implementation(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings)
       extends SourceService:
-    def current(id: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.canonical(id))
-    def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasOf(citekey))
-    def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasesOf(citekey))
+    def current(id: Citekey): Option[Citekey] = db.read(SourceRepo.canonical(id))
+    def aliasOf(citekey: Citekey): Option[Citekey] = db.read(SourceRepo.aliasOf(citekey))
+    def aliasesOf(citekey: Citekey): Set[Citekey] = db.read(SourceRepo.aliasesOf(citekey))
     def aliases: List[Source.Alias] = db.read(SourceRepo.aliases)
-    def citekeys: List[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeys()).toList
-    def updatedAtMillis: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis] = db.read(SourceRepo.updatedAtMillis())
-    def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] = db.read(SourceRepo.calibreId(citekey))
-    def get(citekey: com.histmersion.domain.library.Citekey): Option[(Source.Detail, List[Finding.Row])] =
+    def citekeys: List[Citekey] = db.read(SourceRepo.citekeys()).toList
+    def updatedAtMillis: Map[Citekey, CitekeyMillis.Millis] = db.read(SourceRepo.updatedAtMillis())
+    def calibreId(citekey: Citekey): Option[FullSourceRow.CalibreId] = db.read(SourceRepo.calibreId(citekey))
+    def get(citekey: Citekey): Option[(Source.Detail, List[Finding.Row])] =
       db.read(SourceRepo.get(citekey)).map((s, fs) => (s, fs.toList))
-    def load(citekey: com.histmersion.domain.library.Citekey): Option[Source] = db.read(SourceRepo.load(citekey))
-    def refs(citekeys: List[com.histmersion.domain.library.Citekey]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
-    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, com.histmersion.domain.library.Citekey] = db.read(SourceRepo.resolveAliases(targets))
-    def toc(citekey: com.histmersion.domain.library.Citekey): List[TocEntry] = db.read(SourceRepo.toc(citekey))
-    def bodyText(citekey: com.histmersion.domain.library.Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.bodyText(citekey))
-    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Heading): FullSourceRow.OcrMarkdown =
+    def load(citekey: Citekey): Option[Source] = db.read(SourceRepo.load(citekey))
+    def refs(citekeys: List[Citekey]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
+    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] = db.read(SourceRepo.resolveAliases(targets))
+    def toc(citekey: Citekey): List[TocEntry] = db.read(SourceRepo.toc(citekey))
+    def bodyText(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.bodyText(citekey))
+    def bodyUnderHeading(citekey: Citekey, heading: Heading): FullSourceRow.OcrMarkdown =
       db.read(SourceRepo.bodyUnderHeading(citekey, FilterSql.SnippetRow.Heading(heading.value)))
-    def bodyChunks(citekey: com.histmersion.domain.library.Citekey): List[Chunk] = db.read(SourceRepo.bodyChunks(citekey))
-    def markdown(citekey: com.histmersion.domain.library.Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.markdown(citekey))
+    def bodyChunks(citekey: Citekey): List[Chunk] = db.read(SourceRepo.bodyChunks(citekey))
+    def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.markdown(citekey))
 
     def put(source: Source, caller: Caller): Source.UpdatedAt =
       val s = settings()
       db.transact(SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
 
-    def patch(requested: com.histmersion.domain.library.Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt] =
+    def patch(requested: Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt] =
       val s = settings()
       db.transact(SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
 
-    private def toleranceKm(s: SourceSettings): com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm =
-      com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
+    private def toleranceKm(s: SourceSettings): FindingPlacement.Implementation.ToleranceKm =
+      FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
 
-    def rename(from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
+    def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
       db.transact(SourceRepo.rename(from, Citekeys.RenameToNewRaw(to.value), referrers))
 
-    def deletion(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan] =
+    def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan] =
       db.read(SourceDeleteRepo.planIn(citekey, referrers))
 
     def delete(
-        citekey: com.histmersion.domain.library.Citekey,
-        day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
+        citekey: Citekey,
+        day: SourceReferrers.Day,
         files: SourceDeletePlan => List[Source.Deletion.Files],
         caller: Caller
     ): Either[Api.Error, SourceDeletePlan] =
       db.transact(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
 
-    def resolveEdges(caller: Caller): com.histmersion.RowCount = db.transact(SourceRepo.resolveEdges())
+    def resolveEdges(caller: Caller): RowCount = db.transact(SourceRepo.resolveEdges())
 
-    def exists(citekey: com.histmersion.domain.library.Citekey): Boolean = db.read(SourceRepo.exists(citekey))
-    def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] = db.read(SourceRepo.doiIndex())
-    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
-    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
-      if edges.isEmpty then com.histmersion.RowCount(0) else db.transact(SourceRepo.insertEdges(edges))
-    def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.Sha256] = db.read(SourceRepo.sha256Of(citekey))
-    def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
-    def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.Sha256] =
+    def exists(citekey: Citekey): Boolean = db.read(SourceRepo.exists(citekey))
+    def doiIndex: Map[Doi, Citekey] = db.read(SourceRepo.doiIndex())
+    def citekeyOfDoi(doi: Doi): Option[Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
+    def addEdges(edges: List[Edge], caller: Caller): RowCount =
+      if edges.isEmpty then RowCount(0) else db.transact(SourceRepo.insertEdges(edges))
+    def original(citekey: Citekey): Option[Sha256] = db.read(SourceRepo.sha256Of(citekey))
+    def holderOf(sha256: Sha256): Option[Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
+    def originals(citekeys: List[Citekey]): Map[Citekey, Sha256] =
       if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
-    def setOriginal(citekey: com.histmersion.domain.library.Citekey, sha256: com.histmersion.Sha256, caller: Caller): Unit =
+    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit =
       db.transact(SourceRepo.setSha256(citekey, sha256))
-    def licence(citekey: com.histmersion.domain.library.Citekey): Option[Licence] =
+    def licence(citekey: Citekey): Option[Licence] =
       db.read(SourceRepo.licenceOf(citekey)).map(l => Licence.Id(l.value.trim)).filter(_.value.nonEmpty).map(Licence.classify)
-    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean =
+    def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, Licence.Id(v)))
-    def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
-    def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
-    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
+    def calibreGaps(limit: Option[PageSize]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
+    def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
+    def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       db.transact:
         if SourceRepo.setCalibreId(citekey, calibreId).value == 0 then Left(Write.notFound(ApiCitekey(citekey.value))) else Right(())
 
@@ -268,7 +274,7 @@ object SourceService:
         val findings = s.findings.sortBy[String](_.id.value).map { f =>
           Finding.Row(
             f.claim,
-            f.region.map(r => com.histmersion.api.catalogue.Place.Region(r.value)),
+            f.region.map(r => Place.Region(r.value)),
             f.geo.map(_.lon),
             f.geo.map(_.lat),
             f.period.map(_.start),
@@ -602,7 +608,7 @@ object SourceService:
           val d = Source.Deletion(
             citekey = apiKey(ck),
             title = x.source.title,
-            applied = com.histmersion.api.library.Source.Deletion.Applied(false),
+            applied = Source.Deletion.Applied(false),
             counts = counts,
             aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),
             edgesIn = edgesIn,
@@ -612,7 +618,7 @@ object SourceService:
             SourceDeletePlan(
               d,
               None,
-              com.histmersion.domain.library.sources.SourceDeletePlan.ShaShared(false),
+              SourceDeletePlan.ShaShared(false),
               (ck :: aliases).map(k => SourceDeletePlan.Keys(k.value)),
               DeleteReport(counts = counts)
             )
@@ -622,7 +628,7 @@ object SourceService:
 
     def delete(
         citekey: Citekey,
-        day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
+        day: SourceReferrers.Day,
         files: SourceDeletePlan => List[Source.Deletion.Files],
         caller: Caller
     ): Either[Api.Error, SourceDeletePlan] =
@@ -650,7 +656,7 @@ object SourceService:
       }
       answer
 
-    def resolveEdges(caller: Caller): com.histmersion.RowCount =
+    def resolveEdges(caller: Caller): RowCount =
       var moved = 0
       val _ = state.updateAndGet { st =>
         val targets = resolveIn(st, st.parked.toList.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
@@ -663,32 +669,32 @@ object SourceService:
           .modify(_.parked)
           .using(_ -- moves.map(_._1))
       }
-      com.histmersion.RowCount(moved)
+      RowCount(moved)
 
     // ── what acquisition, ingest and the collections read and write of a source ─────────────
 
     def exists(citekey: Citekey): Boolean = state.get.sources.contains(sk(citekey))
 
-    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[Citekey] =
+    def citekeyOfDoi(doi: Doi): Option[Citekey] =
       val d = doi.value.trim.toLowerCase
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
         case (ck, x) if x.source.doi.exists(_.value.toLowerCase == d) => held(ck.value)
       }
 
-    def doiIndex: Map[com.histmersion.domain.library.Doi, Citekey] =
+    def doiIndex: Map[Doi, Citekey] =
       state.get.sources.toList
         .sortBy[String](_._1.value)
         .flatMap((ck, x) =>
           x.source.doi
             .filter(_.value.nonEmpty)
-            .flatMap(d => com.histmersion.domain.library.Doi.option(d.value.toLowerCase))
+            .flatMap(d => Doi.option(d.value.toLowerCase))
             .map(_ -> held(ck.value))
         )
         .toMap
 
-    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
+    def addEdges(edges: List[Edge], caller: Caller): RowCount =
       val es = edges.distinct
-      if es.isEmpty then com.histmersion.RowCount(0)
+      if es.isEmpty then RowCount(0)
       else
         var added = 0
         val _ = state.updateAndGet { st =>
@@ -696,16 +702,16 @@ object SourceService:
           added = (inserted.edges -- st.edges).size + (inserted.parked -- st.parked).size
           inserted
         }
-        com.histmersion.RowCount(added)
+        RowCount(added)
 
     private def stored(citekey: Citekey): Option[LibraryState.Stored] = state.get.sources.get(sk(citekey))
 
-    def original(citekey: Citekey): Option[com.histmersion.Sha256] = stored(citekey).flatMap(_.sha256)
+    def original(citekey: Citekey): Option[Sha256] = stored(citekey).flatMap(_.sha256)
 
-    def holderOf(sha256: com.histmersion.Sha256): Option[Citekey] =
+    def holderOf(sha256: Sha256): Option[Citekey] =
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst { case (ck, x) if x.sha256.contains(sha256) => held(ck.value) }
 
-    def originals(citekeys: List[Citekey]): Map[Citekey, com.histmersion.Sha256] =
+    def originals(citekeys: List[Citekey]): Map[Citekey, Sha256] =
       citekeys.flatMap(ck => original(ck).map(ck -> _)).toMap
 
     private def updated(citekey: Citekey)(f: LibraryState.Stored => LibraryState.Stored): Boolean =
@@ -714,7 +720,7 @@ object SourceService:
       )
       before.sources.contains(sk(citekey))
 
-    def setOriginal(citekey: Citekey, sha256: com.histmersion.Sha256, caller: Caller): Unit =
+    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit =
       val _ = updated(citekey)(_.modify(_.sha256).setTo(Some(sha256)))
 
     def licence(citekey: Citekey): Option[Licence] =
@@ -742,7 +748,7 @@ object SourceService:
         s.calibreId.filter(_.value.nonEmpty)
       )
 
-    def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap] =
+    def calibreGaps(limit: Option[PageSize]): List[CalibreGap] =
       state.get.sources.toList
         .sortBy[String](_._1.value)
         .map(_._2)

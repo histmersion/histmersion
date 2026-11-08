@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import hearth.kindlings.optics.syntax.*
 
@@ -34,6 +35,13 @@ import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.{Goal as DomainGoal, Run as DomainRun}
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.agents.RunQuery
+import com.histmersion.domain.automation.agents.RunService
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.ScheduleKind
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -51,9 +59,9 @@ final class ManagersControllers(
   private def mcfg = cfg.managers
 
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
-  def runs(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: Option[com.histmersion.PageSize]): List[RunInfo] =
+  def runs(id: ManagerLight.Id, status: Option[Run.State.Wire], limit: Option[PageSize]): List[RunInfo] =
     val st = status.map(_.value.trim).filter(_.nonEmpty)
-    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = com.histmersion.domain.automation.agents.RunQuery.Limit(limits.page(limit, com.histmersion.PageSize(50)).value)).toList.filter(r => st.forall(_ == r.status.value))
+    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = RunQuery.Limit(limits.page(limit, PageSize(50)).value)).toList.filter(r => st.forall(_ == r.status.value))
 
   private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
   private def notFound(what: String) = Api.Error(Api.Error.Message(what), Some(Api.Error.Code(Write.CodeNotFound)))
@@ -108,7 +116,7 @@ final class ManagersControllers(
         m,
         withRuns(connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Active))),
         Transactor(ds).read(ManagerRepo.hints(m.id, live = true)),
-        connect(ds)(ManagerRepo.events(m.id, None, limits.page(None, com.histmersion.PageSize(20))))
+        connect(ds)(ManagerRepo.events(m.id, None, limits.page(None, PageSize(20))))
       )
     }
 
@@ -161,11 +169,11 @@ final class ManagersControllers(
       case Some(Kind.Review) if goal.isDefined =>
         Left(error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
       case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
-      case Some(Kind.Enrich) if goal.isDefined => Left(Api.Error(com.histmersion.api.Api.Error.Message("the enrich manager is library-wide: give no goal")))
+      case Some(Kind.Enrich) if goal.isDefined => Left(Api.Error(Api.Error.Message("the enrich manager is library-wide: give no goal")))
       case Some(Kind.Enrich)                   => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
       case Some(Kind.Seed)                     =>
         for
-          g <- goal.toRight(Api.Error(com.histmersion.api.Api.Error.Message("a seeding manager is for one research area: give its goal")))
+          g <- goal.toRight(Api.Error(Api.Error.Message("a seeding manager is for one research area: give its goal")))
           slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
           gl <- host.goal(slug)
           m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
@@ -174,7 +182,7 @@ final class ManagersControllers(
         yield out
       case Some(Kind.Watch) =>
         for
-          g <- goal.toRight(Api.Error(com.histmersion.api.Api.Error.Message("a watcher is for one research area: give its goal")))
+          g <- goal.toRight(Api.Error(Api.Error.Message("a watcher is for one research area: give its goal")))
           slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
           gl <- host.goal(slug)
           m <- make(
@@ -235,7 +243,7 @@ final class ManagersControllers(
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
   private def checkCron(k: Kind, text: ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
-      Left(Api.Error(com.histmersion.api.Api.Error.Message("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
+      Left(Api.Error(Api.Error.Message("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
     else
       ManagerPolicy
         .checkCron(Cron.Text(text.value), now, cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes])
@@ -279,7 +287,7 @@ final class ManagersControllers(
       Removed(Removed.Value(Transactor(ds).transact(ManagerRepo.delete(m.id))))
     }
 
-  private def inFlight(id: ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = com.histmersion.domain.automation.agents.RunService.Active(true)).toList
+  private def inFlight(id: ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = RunService.Active(true)).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its
@@ -325,7 +333,7 @@ final class ManagersControllers(
         case "stop" =>
           agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
-          val items = Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, com.histmersion.domain.automation.managers.ManagerRepo.CancelReason("the manager was stopped")))
+          val items = Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, ManagerRepo.CancelReason("the manager was stopped")))
           record(
             m.id,
             None,
@@ -339,7 +347,7 @@ final class ManagersControllers(
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
-  def items(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[com.histmersion.Offset], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ItemPage] =
+  def items(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[Offset], limit: Option[PageSize]): Either[Api.Error, ItemPage] =
     for
       m <- manager(id)
       st <- status.map(_.value.trim).filter(_.nonEmpty) match
@@ -350,7 +358,7 @@ final class ManagersControllers(
             .toRight(error(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
         case None => Right(None)
     yield
-      val (off, lim) = (offset.getOrElse(com.histmersion.Offset(0)), limits.page(limit, com.histmersion.PageSize(25)))
+      val (off, lim) = (offset.getOrElse(Offset(0)), limits.page(limit, PageSize(25)))
       val (rows, total) = Transactor(ds).read(ManagerRepo.itemPage(m.id, st, off, lim))
       ItemPage(withRuns(rows), ItemPage.Total(total.value), ItemPage.Offset(off.value), ItemPage.Limit(lim.value))
 
@@ -488,7 +496,7 @@ final class ManagersControllers(
               record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
             )
         case "priority" =>
-          in.priority.toRight(Api.Error(com.histmersion.api.Api.Error.Message("give `priority`"))).map { p =>
+          in.priority.toRight(Api.Error(Api.Error.Message("give `priority`"))).map { p =>
             Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
             record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
@@ -614,12 +622,12 @@ final class ManagersControllers(
     else if a == HintEffect.Config then
       e.config
         .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
-        .toRight(Api.Error(com.histmersion.api.Api.Error.Message("a config action names the settings it changes")))
+        .toRight(Api.Error(Api.Error.Message("a config action names the settings it changes")))
         .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Action(a))))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
       Left(error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-      Left(Api.Error(com.histmersion.api.Api.Error.Message("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
+      Left(Api.Error(Api.Error.Message("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
     else if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) then
       Left(error(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant"))
     else
@@ -684,7 +692,7 @@ final class ManagersControllers(
     )
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
-        val (tags, goals) = com.histmersion.domain.research.Slug
+        val (tags, goals) = Slug
           .option(i.target.value)
           .fold((Nil, Nil))(slug => Transactor(ds).read(ManagerRepo.articleFacets(slug)))
         ManagerPolicy.matches(
@@ -748,7 +756,7 @@ final class ManagersControllers(
       .list()
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.exists(_.value == g.value)))
       .flatMap(m =>
-        WatchSchedules.view(m, Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(20)))._1)
+        WatchSchedules.view(m, Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(20)))._1)
       ) ++ agents.goals.schedules(goal)
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — since phase 3 a goal's schedule is a sweep of its watcher
@@ -805,13 +813,13 @@ final class ManagersControllers(
           )
       _ = agents.goals.removeSchedule(
         goal,
-        kind.transformInto[com.histmersion.domain.automation.ScheduleKind]
+        kind.transformInto[ScheduleKind]
       ) // a row the managers had not moved yet is replaced
       m <- manager(id.transformInto[ManagerLight.Id])
     yield
       supervisor.nudge()
       WatchSchedules
-        .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, com.histmersion.Offset(0), com.histmersion.PageSize(20)))._1)
+        .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, Offset(0), PageSize(20)))._1)
         .find(_.kind == kind)
         .getOrElse(
           Goal.Plans.GoalSchedule(
@@ -827,7 +835,7 @@ final class ManagersControllers(
     * watcher itself stays.
     */
   def removeSchedule(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
-    val legacy = agents.goals.removeSchedule(goal, kind.transformInto[com.histmersion.domain.automation.ScheduleKind])
+    val legacy = agents.goals.removeSchedule(goal, kind.transformInto[ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher = agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
       val rest = Sweep.of(m.config).filterNot(_ == sw)
@@ -866,7 +874,7 @@ final class ManagersControllers(
   def focus: Autopilot.FocusInfo = agents.focus.info()
 
   /** `GET /api/agents/scheduler[?limit=]` — readable with agents off (a dry pass). */
-  def scheduler(limit: Option[com.histmersion.PageSize]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
+  def scheduler(limit: Option[PageSize]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
@@ -914,9 +922,9 @@ final class ManagersControllers(
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
-  def events(id: ManagerLight.Id, before: Option[ManagerRepo.EventCursor], limit: Option[com.histmersion.PageSize]): Either[Api.Error, EventPage] =
+  def events(id: ManagerLight.Id, before: Option[ManagerRepo.EventCursor], limit: Option[PageSize]): Either[Api.Error, EventPage] =
     manager(id).map { m =>
-      val lim = limits.page(limit, com.histmersion.PageSize(50))
+      val lim = limits.page(limit, PageSize(50))
       val es = connect(ds)(ManagerRepo.events(m.id, before, lim))
       EventPage(es, Option.when(es.size == lim.value)(EventPage.Before(es.last.id.value)))
     }
@@ -925,6 +933,6 @@ object ManagersControllers:
 
   /** What a person does to a manager: `pause`, `resume` or `stop`. */
   type Action = Action.T
-  object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Action extends RefinedType[String, Pure]
 
   def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

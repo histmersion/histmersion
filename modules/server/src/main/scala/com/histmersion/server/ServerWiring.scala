@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -20,6 +21,88 @@ import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Filter, ResolvedSource, UpstreamQuota}
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
+import com.histmersion.domain.library.workflows.LibrarySite
+import com.histmersion.domain.research.workflows.ResearchSite
+import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Queue
+import com.histmersion.server.agents.EngineContributions
+import com.histmersion.domain.library.ingest.IngestQueue
+import com.histmersion.domain.catalogue.periods.PeriodsControllers
+import com.histmersion.util.basemap.BasemapService
+import com.histmersion.util.data.exchange.BundleControllers
+import com.histmersion.util.jobs.MergeApplyRuns
+import com.histmersion.domain.automation.worklists.WorkListMergeFollowUps
+import com.histmersion.util.data.exchange.BundleImporter
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.automation.agents.AgentsControllers
+import com.histmersion.server.agents.ServerEngineSite
+import com.histmersion.domain.activity.ActivityControllers
+import com.histmersion.domain.activity.ActivityService
+import com.histmersion.util.jobs.JobControlControllers
+import com.histmersion.util.jobs.Job
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.sources.SourceReferable
+import com.histmersion.domain.research.articles.ArticleReferable
+import com.histmersion.domain.catalogue.CatalogueReferable
+import com.histmersion.domain.media.assets.PictureReferable
+import com.histmersion.domain.automation.goals.GoalReferable
+import com.histmersion.domain.personal.PersonalControllers
+import com.histmersion.domain.library.sources.SourceReadable
+import com.histmersion.domain.research.articles.ArticleReadable
+import com.histmersion.domain.personal.seen.SeenService
+import com.histmersion.util.settings.SettingsControllers
+import com.histmersion.server.views.ResolveView
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.util.identity.AliasTable
+import com.histmersion.domain.library.sources.SourceMirrorNote
+import com.histmersion.domain.research.articles.ArticleMirrorNote
+import com.histmersion.domain.library.Citekey
+import com.histmersion.pluginhost.JavaHttpTransport
+import com.histmersion.pluginhost.HttpTransport
+import com.histmersion.domain.research.articles.lint.SourceTextFormatting
+import com.histmersion.domain.library.ingest.StoredOriginals
+import com.histmersion.util.storage.Location
+import com.histmersion.domain.library.collections.CalibreGapControllers
+import com.histmersion.server.views.JobListView
+import com.histmersion.util.jobs.JobListing
+import com.histmersion.domain.catalogue.events.EventService
+import com.histmersion.domain.catalogue.events.EventImportsControllers
+import com.histmersion.domain.catalogue.evidence.EventLinksControllers
+import com.histmersion.domain.catalogue.places.SiteTypesControllers
+import com.histmersion.domain.catalogue.events.EventsControllers
+import com.histmersion.server.views.EventCardView
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.events.GeoTolerance
+import com.histmersion.domain.catalogue.evidence.AttestationsControllers
+import com.histmersion.domain.catalogue.evidence.AttestationService
+import com.histmersion.domain.catalogue.places.PlacesControllers
+import com.histmersion.domain.catalogue.places.GazetteerControllers
+import com.histmersion.domain.catalogue.maptiles.MapTileService
+import com.histmersion.domain.catalogue.maptiles.UndatedSites
+import com.histmersion.domain.catalogue.maptiles.UndatedBuild
+import com.histmersion.server.views.PlaceCardView
+import com.histmersion.domain.automation.goals.GoalsControllers
+import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.Goal
+import com.histmersion.api.aliases.AliasKinds
+import com.histmersion.domain.automation.agents.AgentStateControllers
+import com.histmersion.domain.automation.agents.AgentStateService
+import com.histmersion.server.views.WorkListView
+import com.histmersion.domain.library.acquisition.AcquireCheckService
+import com.histmersion.util.data.checks.CheckControllers
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.research.Article
+import com.histmersion.domain.research.articles.BArticleRow
+import com.histmersion.server.views.FormatView
+import com.histmersion.server.instance.MaintenanceControllers
+import com.histmersion.server.instance.SeedControllers
+import com.histmersion.server.instance.InstanceControllers
+import com.histmersion.server.views.AutopilotView
+import com.histmersion.domain.library.acquisition.UpstreamQuotaService
+import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.domain.research.ResearchData
+import com.histmersion.util.data.mirror.MirrorPlacement
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
@@ -50,17 +133,17 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val maintenance: WriteGate = deps.maintenance
 
   /** What the library's workflows are given. */
-  lazy val librarySite: com.histmersion.domain.library.workflows.LibrarySite = LibraryWorkflowSite(this, deps)
+  lazy val librarySite: LibrarySite = LibraryWorkflowSite(this, deps)
 
   /** What research's workflows are given. */
-  lazy val researchSite: com.histmersion.domain.research.workflows.ResearchSite = ResearchWorkflowSite(this, deps)
+  lazy val researchSite: ResearchSite = ResearchWorkflowSite(this, deps)
 
   /** The work lists' kernel. */
-  val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
+  val queues: QueueService = deps.queues
 
   /** The first acquisition item (any status) whose text names `doi`. */
-  def acquisitionItemNaming(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.api.automation.Queue.QueueItem.Id] =
-    queues.naming(com.histmersion.api.automation.Queue.Kind.Acquire, doi).headOption.map(_.id)
+  def acquisitionItemNaming(doi: Doi): Option[Queue.QueueItem.Id] =
+    queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
     * Thumbnails come from the converter.
@@ -78,26 +161,25 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       Option(
         List(
           media.covers.afterIngest(ck).map(_.value),
-          com.histmersion.server.agents.EngineContributions.enrich(agents).autoEnrich(ck).map(_.value)
+          EngineContributions.enrich(agents).autoEnrich(ck).map(_.value)
         ).flatten
-      ).filter(_.nonEmpty).map(notes => com.histmersion.domain.library.ingest.IngestQueue.Note(notes.mkString(" · ")))
+      ).filter(_.nonEmpty).map(notes => IngestQueue.Note(notes.mkString(" · ")))
   )
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
 
   /** The named periods' operations. */
-  val periods: com.histmersion.domain.catalogue.periods.PeriodsControllers =
-    com.histmersion.domain.catalogue.periods
-      .PeriodsControllers(bootstrap.periods, bootstrap.periodImports, deps.maintenance)
+  val periods: PeriodsControllers =
+    PeriodsControllers(bootstrap.periods, bootstrap.periodImports, deps.maintenance)
 
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the tiles the web page
     * draws — same arrangement.
     */
-  val basemap: com.histmersion.util.basemap.BasemapService = BasemapWiring.service(deps)
+  val basemap: BasemapService = BasemapWiring.service(deps)
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
-  val bundles: com.histmersion.util.data.exchange.BundleControllers =
+  val bundles: BundleControllers =
     import com.histmersion.util.data.exchange.{
       BundleControllers,
       BundleService,
@@ -106,7 +188,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       MergeRuleSet
     }
     val applyJobs = MergeApplyJobs(
-      com.histmersion.util.jobs.MergeApplyRuns(deps.ds),
+      MergeApplyRuns(deps.ds),
       deps.cfg.merge.applyWaitSeconds.value,
       deps.pins
     )
@@ -119,12 +201,12 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           deps.clock,
           CarriedKinds(Deps.data.carried),
           MergeRuleSet(Deps.data.mergeRules),
-          com.histmersion.domain.automation.worklists.WorkListMergeFollowUps,
+          WorkListMergeFollowUps,
           applyJobs,
           () =>
             backups
               .create(Instant.now(deps.clock))
-              .map(r => com.histmersion.util.data.exchange.BundleImporter.BackupFile(r.file.value))
+              .map(r => BundleImporter.BackupFile(r.file.value))
         )
       ),
       deps.maintenance
@@ -134,23 +216,22 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * nothing; `Main` starts its run pool after the OCR pool.
     */
   /** The work lists' operations (the pipelines' worklog lines). */
-  def workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
+  def workLists: WorkListControllers = deps.workLists
 
-  val agents: com.histmersion.domain.automation.agents.AgentsControllers =
-    com.histmersion.domain.automation.agents.AgentsControllers(
-      com.histmersion.server.agents.ServerEngineSite(deps, this)
+  val agents: AgentsControllers =
+    AgentsControllers(
+      ServerEngineSite(deps, this)
     )
 
   /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
-  val activity: com.histmersion.domain.activity.ActivityControllers =
-    com.histmersion.domain.activity
-      .ActivityControllers(com.histmersion.domain.activity.ActivityService(ds), () => Instant.now(deps.clock))
+  val activity: ActivityControllers =
+    ActivityControllers(ActivityService(ds), () => Instant.now(deps.clock))
 
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
-  lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
+  lazy val jobControl: JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: com.histmersion.util.jobs.Job.Id, a: JobAction): Either[Api.Error, Unit] =
-      com.histmersion.domain.automation.Run.Id
+    def run(id: Job.Id, a: JobAction): Either[Api.Error, Unit] =
+      Run.Id
         .either(id.value)
         .left
         .map(_ => Api.Error(Api.Error.Message(s"'${id.value}' is not an agent run")))
@@ -168,24 +249,24 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     val db = deps.transactor
     Referables(
       List(
-        com.histmersion.domain.library.sources.SourceReferable(db),
-        com.histmersion.domain.research.articles.ArticleReferable(db),
-        com.histmersion.domain.catalogue.CatalogueReferable(db),
-        com.histmersion.domain.media.assets.PictureReferable(db),
-        com.histmersion.domain.automation.goals.GoalReferable(db)
+        SourceReferable(db),
+        ArticleReferable(db),
+        CatalogueReferable(db),
+        PictureReferable(db),
+        GoalReferable(db)
       )
     )
 
   /** A person's bookmarks, notes and read marks (the one local user's while the server runs for one person). */
-  lazy val personal: com.histmersion.domain.personal.PersonalControllers =
+  lazy val personal: PersonalControllers =
     import com.histmersion.domain.personal.PersonalControllers
     import com.histmersion.domain.personal.bookmarks.BookmarkService
     import com.histmersion.domain.personal.notes.NoteService
     import com.histmersion.domain.personal.reading.ReadingService
     val db = deps.transactor
     val readables = List(
-      com.histmersion.domain.library.sources.SourceReadable(db),
-      com.histmersion.domain.research.articles.ArticleReadable(db)
+      SourceReadable(db),
+      ArticleReadable(db)
     )
     PersonalControllers(
       BookmarkService(db, referables),
@@ -196,13 +277,13 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     )
 
   /** How far the person has seen each window's news (the toolbar's notices). */
-  lazy val seenMarks: com.histmersion.domain.personal.seen.SeenService =
-    com.histmersion.domain.personal.seen.SeenService(deps.transactor)
+  lazy val seenMarks: SeenService =
+    SeenService(deps.transactor)
 
   /** Settings: the settings file read and changed (never the database), reloaded into this server; the restart for what
     * only a restart applies.
     */
-  lazy val settings: com.histmersion.util.settings.SettingsControllers =
+  lazy val settings: SettingsControllers =
     import com.histmersion.util.settings.{RestartService, SettingsControllers, SettingsService}
     SettingsControllers(
       SettingsService(() => deps.loaded, () => StorageLocations.settingsFile(deps.loaded, deps.storage)),
@@ -222,10 +303,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   private def scopeOf(f: Filter): PlaceScope = library.filters.scope(f)
 
   /** `GET /api/resolve/{id}`: a source of the library, else an article of research. */
-  lazy val resolveView = com.histmersion.server.views.ResolveView(
+  lazy val resolveView = ResolveView(
     id =>
       library.sources
-        .get(id, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
+        .get(id, body = SourcesControllers.GetBody(false))
         .toOption
         .map(s =>
           ResolvedSource(
@@ -244,14 +325,14 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * an old one resolves to where it went. Every read AND every write resolves here first, so a put, patch, delete or
     * rename naming an old id goes to the current record.
     */
-  def current(k: AliasKind, id: com.histmersion.util.identity.AliasTable.Id): com.histmersion.util.identity.AliasTable.Id = Deps.aliasTables.current(ds, k, id)
+  def current(k: AliasKind, id: AliasTable.Id): AliasTable.Id = Deps.aliasTables.current(ds, k, id)
 
   /** The Markdown mirror over the registered kinds, each note rendered by its owner. */
   lazy val mirror = Mirror(
     Deps.data.mirror,
     List(
-      com.histmersion.domain.library.sources.SourceMirrorNote(library.sources),
-      com.histmersion.domain.research.articles.ArticleMirrorNote(research.articles)
+      SourceMirrorNote(library.sources),
+      ArticleMirrorNote(research.articles)
     )
   )
 
@@ -259,8 +340,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
-  private def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourcesControllers.Markdown =
-    com.histmersion.domain.library.sources.SourcesControllers.Markdown(research.articles.mentionedIn(citekey))
+  private def mentionedIn(citekey: Citekey): SourcesControllers.Markdown =
+    SourcesControllers.Markdown(research.articles.mentionedIn(citekey))
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
@@ -268,8 +349,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val catalogue: CatalogueWiring =
     CatalogueWiring(
       deps,
-      com.histmersion.pluginhost.JavaHttpTransport(
-        com.histmersion.pluginhost.HttpTransport.TimeoutSeconds(cfg.events.timeoutSeconds.value)
+      JavaHttpTransport(
+        HttpTransport.TimeoutSeconds(cfg.events.timeoutSeconds.value)
       ),
       () => DeepTime.SignedYear(java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong),
       resolve,
@@ -284,7 +365,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       deps,
       media.assets,
       catalogue.placeStore,
-      com.histmersion.domain.research.articles.lint.SourceTextFormatting(targets =>
+      SourceTextFormatting(targets =>
         research.articles.pageLinks(targets)
       ),
       mentionedIn,
@@ -292,15 +373,15 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     )
 
   /** The files the server keeps of the sources' originals: the uploads and the acquisition spool. */
-  lazy val storedOriginals: com.histmersion.domain.library.ingest.StoredOriginals =
-    com.histmersion.domain.library.ingest.StoredOriginals(
-      () => deps.storage.store(com.histmersion.util.storage.Location.IngestOriginals),
-      () => deps.storage.store(com.histmersion.util.storage.Location.Spool)
+  lazy val storedOriginals: StoredOriginals =
+    StoredOriginals(
+      () => deps.storage.store(Location.IngestOriginals),
+      () => deps.storage.store(Location.Spool)
     )
 
   /** The sources not in Calibre yet, a push's metadata, the Calibre id written back. */
-  lazy val calibreGaps: com.histmersion.domain.library.collections.CalibreGapControllers =
-    com.histmersion.domain.library.collections.CalibreGapControllers(
+  lazy val calibreGaps: CalibreGapControllers =
+    CalibreGapControllers(
       library.sourceStore,
       storedOriginals,
       () => deps.cfg,
@@ -308,45 +389,45 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     )
 
   /** The jobs and the runs as `GET /api/jobs` filters them. */
-  lazy val jobList: com.histmersion.server.views.JobListView = com.histmersion.server.views.JobListView(jobs)
+  lazy val jobList: JobListView = JobListView(jobs)
 
   /** The time this server's decisions read (the composition's clock). */
   def clock: java.time.Clock = deps.clock
 
   /** The background jobs as they are listed. */
-  val jobs: com.histmersion.util.jobs.JobListing = com.histmersion.util.jobs.JobListing(ds, () => deps.cfg)
+  val jobs: JobListing = JobListing(ds, () => deps.cfg)
 
   /** The events' store. */
-  def eventStore: com.histmersion.domain.catalogue.events.EventService = catalogue.eventStore
+  def eventStore: EventService = catalogue.eventStore
 
   /** The event catalogues: the import, the re-derivation, the corrections by hand. */
-  def eventImports: com.histmersion.domain.catalogue.events.EventImportsControllers = catalogue.eventImports
+  def eventImports: EventImportsControllers = catalogue.eventImports
 
   /** The links of events to the corpus, the leads, an event's card and an article's catalogue leads. */
-  def eventLinks: com.histmersion.domain.catalogue.evidence.EventLinksControllers = catalogue.eventLinks
+  def eventLinks: EventLinksControllers = catalogue.eventLinks
 
   /** The refinement of the Wikidata sites' types. */
-  def siteTypes: com.histmersion.domain.catalogue.places.SiteTypesControllers = catalogue.siteTypes
+  def siteTypes: SiteTypesControllers = catalogue.siteTypes
 
   /** The events' operations; an event's card joins the articles citing its sources. */
-  lazy val events: com.histmersion.domain.catalogue.events.EventsControllers =
-    com.histmersion.domain.catalogue.events.EventsControllers(
+  lazy val events: EventsControllers =
+    EventsControllers(
       eventStore,
-      com.histmersion.server.views.EventCardView.cited(
+      EventCardView.cited(
         eventLinks.context,
         (citekeys, limit) =>
           research.articles.store.citing(citekeys, limit)
       ),
       (k, id) =>
-        com.histmersion.domain.catalogue.Event.Id
-          .either(current(k, com.histmersion.util.identity.AliasTable.Id(id.value)).value)
+        Event.Id
+          .either(current(k, AliasTable.Id(id.value)).value)
           .getOrElse(id),
       resolve,
       scopeOf,
       () =>
         (
           PageSize.applyUnsafe(math.max(1, cfg.ui.events.mapLimit.value)),
-          com.histmersion.domain.catalogue.events.GeoTolerance(cfg.ui.events.outlineToleranceDeg.value)
+          GeoTolerance(cfg.ui.events.outlineToleranceDeg.value)
         ),
       maintenance
     )
@@ -354,13 +435,13 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
   /** What attests a data point: the attestations' operations. */
-  lazy val attestations: com.histmersion.domain.catalogue.evidence.AttestationsControllers =
-    com.histmersion.domain.catalogue.evidence.AttestationsControllers(
-      com.histmersion.domain.catalogue.evidence.AttestationService(deps.transactor),
+  lazy val attestations: AttestationsControllers =
+    AttestationsControllers(
+      AttestationService(deps.transactor),
       deps.passages,
       (k, id) =>
-        com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias(
-          current(k, com.histmersion.util.identity.AliasTable.Id(id.value)).value
+        AttestationsControllers.Alias(
+          current(k, AliasTable.Id(id.value)).value
         ),
       limit => cfg.limits.page(limit, PageSize.applyUnsafe(math.max(1, cfg.limits.search.value))),
       maintenance
@@ -369,10 +450,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
   /** The gazetteer's operations. */
-  def places: com.histmersion.domain.catalogue.places.PlacesControllers = catalogue.places
+  def places: PlacesControllers = catalogue.places
 
   /** The gazetteer's background work: a plugin's source or the land fetched, the hierarchy built. */
-  def gazetteer: com.histmersion.domain.catalogue.places.GazetteerControllers = catalogue.gazetteer
+  def gazetteer: GazetteerControllers = catalogue.gazetteer
 
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. `None` =
     * unknown.
@@ -381,15 +462,15 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
-  val tiles: com.histmersion.domain.catalogue.maptiles.MapTileService =
-    com.histmersion.domain.catalogue.maptiles.MapTileService(
+  val tiles: MapTileService =
+    MapTileService(
       deps.transactor,
       () => cfg.ui.mapTiles,
       () => DeepTime.SignedYear(cfg.places.modernFrom.value),
       f => scopeOf(f),
-      com.histmersion.domain.catalogue.maptiles.UndatedSites(
+      UndatedSites(
         deps.transactor,
-        () => com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(cfg.ui.mapTiles.undatedKeptZoom.value),
+        () => UndatedBuild.MaxZoom(cfg.ui.mapTiles.undatedKeptZoom.value),
         run => { val _ = Thread.ofVirtual().name("histmersion-undated-sites").start(() => run()) }
       ),
       eventStore,
@@ -401,11 +482,11 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * what the corpus holds for it and its pictures (the web UI's map hover card).
     */
   /** An event's page: the catalogue's event with its pictures. */
-  lazy val eventCard: com.histmersion.server.views.EventCardView =
-    com.histmersion.server.views.EventCardView(events, media.assets.eventThumbs)
+  lazy val eventCard: EventCardView =
+    EventCardView(events, media.assets.eventThumbs)
 
-  lazy val placeCard: com.histmersion.server.views.PlaceCardView =
-    com.histmersion.server.views.PlaceCardView(places.get, places.placeId, placeCounts, media.assets.placeThumbs)
+  lazy val placeCard: PlaceCardView =
+    PlaceCardView(places.get, places.placeId, placeCounts, media.assets.placeThumbs)
 
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
@@ -417,16 +498,16 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── the goals and the agents' state (plan §1.5) ────────────────────────────────────────────
 
   /** The goals' operations; an old slug answers as the goal it was renamed to (#1799). */
-  lazy val goals: com.histmersion.domain.automation.goals.GoalsControllers =
-    com.histmersion.domain.automation.goals.GoalsControllers(
-      com.histmersion.domain.automation.goals.GoalService(deps.transactor),
+  lazy val goals: GoalsControllers =
+    GoalsControllers(
+      GoalService(deps.transactor),
       deps.queues,
       slug =>
-        com.histmersion.domain.automation.Goal.Slug
+        Goal.Slug
           .either(
             current(
-              com.histmersion.api.aliases.AliasKinds.GoalRecords,
-              com.histmersion.util.identity.AliasTable.Id(slug.value)
+              AliasKinds.GoalRecords,
+              AliasTable.Id(slug.value)
             ).value
           )
           .getOrElse(slug),
@@ -435,25 +516,25 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     )
 
   /** The agents' scratch state. */
-  lazy val agentState: com.histmersion.domain.automation.agents.AgentStateControllers =
-    com.histmersion.domain.automation.agents.AgentStateControllers(
-      com.histmersion.domain.automation.agents.AgentStateService(deps.transactor),
+  lazy val agentState: AgentStateControllers =
+    AgentStateControllers(
+      AgentStateService(deps.transactor),
       maintenance
     )
 
   /** A work list as it is listed, with its items' goals and the ACQUIRE list's checks. */
-  lazy val workListView: com.histmersion.server.views.WorkListView =
-    com.histmersion.server.views.WorkListView(
+  lazy val workListView: WorkListView =
+    WorkListView(
       deps.workLists,
       deps.queues,
-      com.histmersion.domain.automation.goals.GoalService(deps.transactor),
-      com.histmersion.domain.library.acquisition.AcquireCheckService(deps.transactor)
+      GoalService(deps.transactor),
+      AcquireCheckService(deps.transactor)
     )
 
   // ── checks, upkeep and this instance ─────────────────────────────────────────────────────────
 
   /** The registered checks, reported in `Lint.names`' order and fixed by their ranks. */
-  lazy val checks: com.histmersion.util.data.checks.CheckControllers =
+  lazy val checks: CheckControllers =
     import com.histmersion.util.data.checks.{CheckControllers, CheckOrder, CheckRunner}
     CheckControllers(
       CheckRunner(Deps.data.checks, CheckOrder(Lint.names), deps.transactor),
@@ -470,25 +551,25 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             )
           ),
       (record, text, token) =>
-        com.histmersion.domain.research.Slug
+        Slug
           .either(record.value)
           .exists(slug =>
             research.articles.writeRepairedBody(
               slug,
-              com.histmersion.api.research.Article.Body(text.value),
-              token.map(t => com.histmersion.domain.research.articles.BArticleRow.UpdatedAt(t.value))
+              Article.Body(text.value),
+              token.map(t => BArticleRow.UpdatedAt(t.value))
             )
           ),
       maintenance
     )(using deps.timer)
 
   /** Markdown that is not stored yet, checked as the field it is about to be. */
-  lazy val formats: com.histmersion.server.views.FormatView =
-    com.histmersion.server.views.FormatView(research.articles, library.sources)
+  lazy val formats: FormatView =
+    FormatView(research.articles, library.sources)
 
   /** The backups, the restore, the vacuum and the reindex of this server. */
-  lazy val upkeep: com.histmersion.server.instance.MaintenanceControllers =
-    com.histmersion.server.instance.MaintenanceControllers(
+  lazy val upkeep: MaintenanceControllers =
+    MaintenanceControllers(
       deps,
       backups,
       () => ingest.queue.pause(),
@@ -497,12 +578,12 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     )
 
   /** An exported tree of notes on this server's disk read back. */
-  lazy val seeding: com.histmersion.server.instance.SeedControllers =
-    com.histmersion.server.instance.SeedControllers(deps, ingest.seed)
+  lazy val seeding: SeedControllers =
+    SeedControllers(deps, ingest.seed)
 
   /** This server: its version, health, About, the web page's settings and counters, the config reload. */
-  lazy val instance: com.histmersion.server.instance.InstanceControllers =
-    com.histmersion.server.instance.InstanceControllers(
+  lazy val instance: InstanceControllers =
+    InstanceControllers(
       deps,
       () => ingest.queue.converterHealth,
       diagnostics,
@@ -518,13 +599,13 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           )
         ),
       upstreamQuotas,
-      now => Some(com.histmersion.server.agents.EngineContributions.work(agents).acquireRecheck.status(now)),
+      now => Some(EngineContributions.work(agents).acquireRecheck.status(now)),
       () => settings.setupDue
     )
 
   /** The autopilot's page: the automation's status with the library's upstreams and its acquisition list's re-check. */
-  lazy val autopilot: com.histmersion.server.views.AutopilotView =
-    com.histmersion.server.agents.EngineContributions.autopilot(agents)
+  lazy val autopilot: AutopilotView =
+    EngineContributions.autopilot(agents)
 
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none
     * before CORE was first asked, and none when the database cannot be read (`about` says that elsewhere).
@@ -532,15 +613,14 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   def upstreamQuotas(now: Instant = Instant.now(deps.clock)): List[UpstreamQuota] =
     scala.util
       .Try(
-        com.histmersion.domain.library.acquisition
-          .UpstreamQuotaService(deps.transactor)
-          .load(com.histmersion.domain.library.acquisition.CoreBudget.Upstream)
+        UpstreamQuotaService(deps.transactor)
+          .load(CoreBudget.Upstream)
       )
       .toOption
       .flatten
       .map(s =>
-        com.histmersion.domain.CoreQuota
-          .view(s, com.histmersion.domain.library.acquisition.CoreBudget.limits(cfg.acquire.core), now)
+        CoreQuota
+          .view(s, CoreBudget.limits(cfg.acquire.core), now)
       )
       .toList
 
@@ -554,7 +634,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
       slug =>
         mirror.note(
-          com.histmersion.domain.research.ResearchData.ArticleNotes,
-          com.histmersion.util.data.mirror.MirrorPlacement.RecordId(slug.value)
+          ResearchData.ArticleNotes,
+          MirrorPlacement.RecordId(slug.value)
         ).map(n => com.histmersion.domain.research.Article.Note(n.value))
     )

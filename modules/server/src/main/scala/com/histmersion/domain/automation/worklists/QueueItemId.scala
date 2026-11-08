@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure

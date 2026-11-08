@@ -1,4 +1,5 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*

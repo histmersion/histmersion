@@ -1,9 +1,12 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One CLI process per step attempt: in an empty temporary working directory (no project `AGENTS.md`, `.codex/`,
   * `.claude/` or `opencode.json` is read), the user message on stdin, stdout read LINE BY LINE as it arrives (a quota
@@ -22,32 +25,32 @@ object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
   type CannotStartHint = CannotStartHint.T
-  object CannotStartHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CannotStartHint extends RefinedType[String, Pure]
   type RunStdin = RunStdin.T
-  object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunStdin extends RefinedType[String, Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
-  object RunTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunHint = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
-  val RunHint: _root_.com.histmersion.server.agents.CliProcess.CannotStartHint.type = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
+  object RunTimeoutSeconds extends RefinedType[Int, Pure]
+  type RunHint = CannotStartHint
+  val RunHint: CannotStartHint.type = CannotStartHint
   type WithDirPrefix = WithDirPrefix.T
-  object WithDirPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WithDirPrefix extends RefinedType[String, Pure]
   type PrivateFileText = PrivateFileText.T
-  object PrivateFileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PrivateFileText extends RefinedType[String, Pure]
 
   final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
 
   object Run:
     type Lines = Lines.T
-    object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lines extends RefinedType[String, Pure]
     type Exit = Exit.T
-    object Exit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Exit extends RefinedType[Int, Pure]
     type Stderr = Stderr.T
-    object Stderr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stderr extends RefinedType[String, Pure]
     type Stopped = Stopped.T
-    object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stopped extends RefinedType[String, Pure]
 
   /** Raised when the executable cannot be started at all. */
-  def cannotStart(command: com.histmersion.server.agents.ClaudeCode.Argument, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
+  def cannotStart(command: ClaudeCode.Argument, e: java.io.IOException, hint: CannotStartHint): java.io.IOException =
     java.io.IOException(s"cannot run '$command' (${e.getMessage}) — $hint")
 
   /** What the engine watches of a step's processes (the stall watchdog): every process a step starts is registered
@@ -90,7 +93,7 @@ object CliProcess:
       .getOrElse(Nil)
 
   /** `command` resolved the way `execvp` would against `path` (None: not found, or not executable). */
-  private[agents] def resolve(command: com.histmersion.server.agents.ClaudeCode.Argument, path: Option[String], dir: Path): Option[Path] =
+  private[agents] def resolve(command: ClaudeCode.Argument, path: Option[String], dir: Path): Option[Path] =
     if command.value.contains('/') then Option(dir.resolve(command.value)).filter(Files.isExecutable)
     else
       path.toList
@@ -139,12 +142,12 @@ object CliProcess:
       case _: Exception            => () // no `kill` (or the group is gone): the per-process kills above still ran
 
   def run(
-      argv: List[com.histmersion.server.agents.ClaudeCode.Argument],
+      argv: List[ClaudeCode.Argument],
       dir: Path,
       env: java.util.Map[String, String] => Unit,
-      stdin: com.histmersion.server.agents.CliProcess.RunStdin,
-      timeoutSeconds: com.histmersion.server.agents.CliProcess.RunTimeoutSeconds,
-      hint: com.histmersion.server.agents.CliProcess.RunHint,
+      stdin: RunStdin,
+      timeoutSeconds: RunTimeoutSeconds,
+      hint: RunHint,
       onLine: Run.Lines => Option[Run.Stopped] = _ => None
   ): Run =
     val pb = ProcessBuilder().directory(dir.toFile)
@@ -232,7 +235,7 @@ object CliProcess:
   def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
-  def withDir[A](prefix: com.histmersion.server.agents.CliProcess.WithDirPrefix)(f: Path => A): A =
+  def withDir[A](prefix: WithDirPrefix)(f: Path => A): A =
     val dir = Files.createTempDirectory(prefix.value)
     try f(dir)
     finally
@@ -244,7 +247,7 @@ object CliProcess:
       finally files.close()
 
   /** An owner-only file (it may carry a run token). */
-  def privateFile(f: Path, text: com.histmersion.server.agents.CliProcess.PrivateFileText): Path =
+  def privateFile(f: Path, text: PrivateFileText): Path =
     Files.writeString(f, text.value, StandardCharsets.UTF_8)
     try {
       val _ = Files.setPosixFilePermissions(f, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"))

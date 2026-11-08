@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}

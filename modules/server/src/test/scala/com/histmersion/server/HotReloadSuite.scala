@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,10 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}
 import javax.sql.DataSource
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.config.DbConfig
+import com.histmersion.util.storage.Blob
+import com.histmersion.config.ServerConfig
+import com.histmersion.domain.library.acquisition.CoreBudget
 
 /** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
   * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and
@@ -33,7 +38,7 @@ class HotReloadSuite extends DbSuite:
   private val DbB = "histmersion_hotb_test"
 
   private lazy val base = AppConfig.load()
-  private lazy val admin = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val admin = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private def urlOf(name: String) = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -144,11 +149,11 @@ class HotReloadSuite extends DbSuite:
   final private class GatedConverter extends ConverterClient:
     val entered = java.util.concurrent.Semaphore(0)
     val gate = CountDownLatch(1)
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+    def health = Right(ConverterClient.HealthSummary("ok"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
-      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown(s"# Converted\n\n$filename\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
+      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown(s"# Converted\n\n$filename\n"), pages = ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
 
   private def pdf(marker: String): Path =
     val p = Files.createTempFile(dir, "hot-", ".pdf")
@@ -170,7 +175,7 @@ class HotReloadSuite extends DbSuite:
     val conv = GatedConverter()
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv, source = Some((l, source))).start()
+      val b = Composition.server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbA)
 
@@ -231,7 +236,7 @@ class HotReloadSuite extends DbSuite:
     write(DbB)
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), source = Some((l, source))).start()
+      val b = Composition.server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbB)
 
@@ -262,11 +267,11 @@ class HotReloadSuite extends DbSuite:
   test("a plugin block rebuilds that plugin only; a hot key applies; a restart-only key is reported, not applied"):
     write(DbB)
     val l = loaded
-    val gen = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val gen = ServerPlugins.load(l, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     supervised {
       val b =
         Composition
-          .server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       write(DbB, "plugins.pmc.enabled = false\n  limits.search = 7\n  server.port = 1")
@@ -292,11 +297,11 @@ class HotReloadSuite extends DbSuite:
   test("an AI provider switched off by a reload is out of every chain at once; switched on again, it is back"):
     write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
     val l = loaded
-    val gen = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val gen = ServerPlugins.load(l, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     supervised {
       val b =
         Composition
-          .server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"

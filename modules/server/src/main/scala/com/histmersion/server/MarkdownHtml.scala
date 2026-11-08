@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -9,4 +10,4 @@ object MarkdownHtml:
 
   private val renderer = HtmlRenderer.builder(MarkdownFlavor.options).build()
 
-  def render(md: com.histmersion.server.FullText.Shown.Markdown): com.histmersion.server.HtmlRender.Html = HtmlRender.Html(renderer.render(MarkdownFlavor.parser.parse(md.value)))
+  def render(md: FullText.Shown.Markdown): HtmlRender.Html = HtmlRender.Html(renderer.render(MarkdownFlavor.parser.parse(md.value)))

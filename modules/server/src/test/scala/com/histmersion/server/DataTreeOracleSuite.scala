@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,6 +24,22 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.basemap.PmTiles
+import com.histmersion.config.BasemapConfig
+import com.histmersion.config.BasemapVectorConfig
+import com.histmersion.config.BasemapOnDemandConfig
+import com.histmersion.config.BasemapTerrainConfig
+import com.histmersion.config.BasemapLabelsConfig
+import com.histmersion.config.BasemapBathymetryConfig
+import com.histmersion.config.BasemapGebcoConfig
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.BBox
+import com.histmersion.domain.library.acquisition.Spool
+import com.histmersion.util.storage.Storage
+import com.histmersion.util.storage.Location
+import com.histmersion.domain.library.Citekey
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
   * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories
@@ -100,8 +117,8 @@ class DataTreeOracleSuite extends DbSuite:
       val b = Composition
         .server(
           l.config,
-          com.histmersion.config.ServerConfig.Host("127.0.0.1"),
-          com.histmersion.config.ServerConfig.Port(0),
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
           OfflineConverter(),
           source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => ConfigSource.Problem(p.value)))))
         )
@@ -130,19 +147,19 @@ class DataTreeOracleSuite extends DbSuite:
   private def basemapRun(): Unit =
     val src = Files.createTempDirectory("histmersion-data-tree-src")
     val v = BasemapFixtures.LocalRange(
-      BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)),
+      BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), PmTiles.Zoom(5)),
       builds = RangeHttp.ResponseText("""[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
     )
-    val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)))
+    val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), PmTiles.Zoom(5)))
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
     val cfg = base.modify(
       _.basemap).setTo(base.basemap.modify(
-        _.requestGapMs).setTo(com.histmersion.config.BasemapConfig.RequestGapMs(0)).modify(_.bbox).setTo(com.histmersion.config.BasemapConfig.Bbox("22,35,29,41")).modify(_.vector).setTo(base.basemap.vector.modify(
-          _.url).setTo(com.histmersion.config.BasemapVectorConfig.Url("fake://v/{build}")).modify(_.maxZoom).setTo(com.histmersion.config.BasemapVectorConfig.MaxZoom(4)).modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(com.histmersion.config.BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(com.histmersion.config.BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(com.histmersion.config.BasemapOnDemandConfig.RequestsPerSecond((1000: _root_.scala.Double)))
+        _.requestGapMs).setTo(BasemapConfig.RequestGapMs(0)).modify(_.bbox).setTo(BasemapConfig.Bbox("22,35,29,41")).modify(_.vector).setTo(base.basemap.vector.modify(
+          _.url).setTo(BasemapVectorConfig.Url("fake://v/{build}")).modify(_.maxZoom).setTo(BasemapVectorConfig.MaxZoom(4)).modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
         )).modify(_.terrain).setTo(base.basemap.terrain.modify(
-          _.url).setTo(com.histmersion.config.BasemapTerrainConfig.Url("fake://t")).modify(_.maxZoom).setTo(com.histmersion.config.BasemapTerrainConfig.MaxZoom(3)).modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.maxZoom).setTo(com.histmersion.config.BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(com.histmersion.config.BasemapOnDemandConfig.RequestsPerSecond((1000: _root_.scala.Double)))).modify(_.focusRegions).setTo(List(com.histmersion.config.BasemapTerrainConfig.FocusRegions("crete 23,34.8,26.5,35.7"))
-        )).modify(_.labels).setTo(base.basemap.labels.modify(_.url).setTo(com.histmersion.config.BasemapLabelsConfig.Url("fake://ne/{file}.geojson")).modify(_.files).setTo(List("ranges", "rivers").map(com.histmersion.config.BasemapLabelsConfig.Files(_))).modify(_.maxZoom).setTo(com.histmersion.config.BasemapLabelsConfig.MaxZoom(6))).modify(_.bathymetry).setTo(base.basemap.bathymetry.modify(
-          _.url).setTo(com.histmersion.config.BasemapBathymetryConfig.Url("fake://sea/{z}/{x}/{y}.png")).modify(_.maxZoom).setTo(com.histmersion.config.BasemapGebcoConfig.MaxZoom(3)).modify(_.requestGapMs).setTo(com.histmersion.config.BasemapBathymetryConfig.RequestGapMs(0)).modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(com.histmersion.config.BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(com.histmersion.config.BasemapOnDemandConfig.MaxZoom(3)).modify(_.requestsPerSecond).setTo(com.histmersion.config.BasemapOnDemandConfig.RequestsPerSecond((1000: _root_.scala.Double)))
+          _.url).setTo(BasemapTerrainConfig.Url("fake://t")).modify(_.maxZoom).setTo(BasemapTerrainConfig.MaxZoom(3)).modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))).modify(_.focusRegions).setTo(List(BasemapTerrainConfig.FocusRegions("crete 23,34.8,26.5,35.7"))
+        )).modify(_.labels).setTo(base.basemap.labels.modify(_.url).setTo(BasemapLabelsConfig.Url("fake://ne/{file}.geojson")).modify(_.files).setTo(List("ranges", "rivers").map(BasemapLabelsConfig.Files(_))).modify(_.maxZoom).setTo(BasemapLabelsConfig.MaxZoom(6))).modify(_.bathymetry).setTo(base.basemap.bathymetry.modify(
+          _.url).setTo(BasemapBathymetryConfig.Url("fake://sea/{z}/{x}/{y}.png")).modify(_.maxZoom).setTo(BasemapGebcoConfig.MaxZoom(3)).modify(_.requestGapMs).setTo(BasemapBathymetryConfig.RequestGapMs(0)).modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(3)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
         )
       )
     )
@@ -162,16 +179,16 @@ class DataTreeOracleSuite extends DbSuite:
     val ds =
       val d = testPool(cfg.db)
       Migrate.run(d); d
-    def await(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
-      val j = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(id.value))).getOrElse(fail(s"no job $id"))
+    def await(id: SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
+      val j = Transactor(ds).read(JobRepo.get(Job.Id.applyUnsafe(id.value))).getOrElse(fail(s"no job $id"))
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
     val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => ByteCount.applyUnsafe(Long.MaxValue / 4))
     def fetched(q: Basemap.FetchQuery): Unit =
       val j = await(svc.fetch(q).fold(e => fail(e.message.value), _.id))
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
-    fetched(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete"))))
-    fetched(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(4)), bbox = Some(com.histmersion.api.BBox.Text("22.5,37.4,23.2,37.9"))))
+    fetched(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete"))))
+    fetched(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(Basemap.Focus.MaxZoom(4)), bbox = Some(BBox.Text("22.5,37.4,23.2,37.9"))))
     List(
       (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9L), Basemap.Tile.Row(6L)),
       (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(0L), Basemap.Tile.Row(0L)),
@@ -181,17 +198,17 @@ class DataTreeOracleSuite extends DbSuite:
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
     assert(svc.status.available.value)
-    assert(svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")))).isRight)
+    assert(svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete")))).isRight)
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
     assert(
-      _root_.com.histmersion.domain.library.acquisition.Spool(
-          com.histmersion.util.storage.Storage
-            .at(com.histmersion.util.storage.Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
+      Spool(
+          Storage
+            .at(Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
         )
-        .write(com.histmersion.domain.library.Citekey("zz_data_tree"), com.histmersion.domain.library.acquisition.Spool.Extension("pdf"), com.histmersion.domain.library.acquisition.Spool.Bytes("%PDF-1.4 spooled".getBytes(UTF_8)))
+        .write(Citekey("zz_data_tree"), Spool.Extension("pdf"), Spool.Bytes("%PDF-1.4 spooled".getBytes(UTF_8)))
         .isRight
     )
 

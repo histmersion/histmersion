@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceService
@@ -32,7 +33,7 @@ final class LibraryWiring(
     figures: AssetsControllers,
     places: PlaceService,
     formatting: SourceFormatting,
-    mentions: com.histmersion.domain.library.Citekey => SourcesControllers.Markdown,
+    mentions: Citekey => SourcesControllers.Markdown,
     originals: SourceOriginals
 ):
   private val cfg: () => AppConfig = () => deps.cfg

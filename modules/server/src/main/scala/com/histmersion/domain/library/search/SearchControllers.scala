@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.library.Tree
 
@@ -26,7 +27,7 @@ final class SearchControllers(
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered search and dropping
     * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
     */
-  def search(q: Option[com.histmersion.domain.library.search.Search.Query], limit: Option[Filter.Limit]): List[SearchHit] =
+  def search(q: Option[Search.Query], limit: Option[Filter.Limit]): List[SearchHit] =
     sources(Filter(q = q.map(_.value.trim).filter(_.nonEmpty).map(Filter.Q(_)), limit = limit.getOrElse(Filter.Limit(0)))).hits.map(_.source)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */

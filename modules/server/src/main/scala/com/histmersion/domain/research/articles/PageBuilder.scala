@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.domain.Highlight
 import com.histmersion.domain.research.Slug
@@ -11,6 +12,11 @@ import com.histmersion.server.{ArticleHtml, ArticlePage, Citation, FullText, Pag
 import com.histmersion.api.library.{Label, NeighborRow, NeighborTarget}
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.Title
+import com.histmersion.domain.library.Edge
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.
@@ -23,7 +29,7 @@ final class PageBuilder(
 ):
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
-  def source(ck: com.histmersion.domain.library.Citekey, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmersion.domain.library.search.Search.Query]): Option[(com.histmersion.domain.Title, HtmlRender.Html)] =
+  def source(ck: Citekey, full: PageBuilder.SourceFull, q: Option[Search.Query]): Option[(Title, HtmlRender.Html)] =
     sources.get(ck).toOption.map { sw =>
       val s = sw.source
       val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
@@ -38,10 +44,10 @@ final class PageBuilder(
         .toMap
       def entry(r: NeighborRow): Option[Citation] = r.target match
         case NeighborTarget.Source     =>
-          refs.get(r.citekey.value).map(Citation.ToSource(_, com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
-        case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value))))
+          refs.get(r.citekey.value).map(Citation.ToSource(_, Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+        case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value))))
         case NeighborTarget.Unresolved =>
-          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
       val citingArticles = articles
         .sourceArticles(ck)
         .getOrElse(Nil)
@@ -81,11 +87,11 @@ final class PageBuilder(
         List(s.summary.map(_.value), s.notes.map(_.value), if full.value then s.ocrMarkdown.map(_.value) else None).flatten
           .mkString("\n\n")
       val links = articles.pageLinks(Article.Links.targets(WikiLinks.Body(md)))
-      (com.histmersion.domain.Title(s.title.value), highlighted(Pages.source(page, ck => links(WikiLinks.Occurrence.Target(ck.value))), term))
+      (Title(s.title.value), highlighted(Pages.source(page, ck => links(WikiLinks.Occurrence.Target(ck.value))), term))
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
-  def article(slug: com.histmersion.domain.research.Slug, q: Option[com.histmersion.domain.library.search.Search.Query]): Option[(com.histmersion.domain.Title, HtmlRender.Html)] =
+  def article(slug: Slug, q: Option[Search.Query]): Option[(Title, HtmlRender.Html)] =
     articles.get(slug).toOption.map { v =>
       val generated = v.coverage.fold(List.empty[WikiLinks.Occurrence.Target])(c =>
         Article.Links.targets(WikiLinks.Body(Article.Coverage.sections(c).value))
@@ -106,7 +112,7 @@ final class PageBuilder(
         ),
         s => links(WikiLinks.Occurrence.Target(s.value))
       )
-      (com.histmersion.domain.Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
+      (Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
     }
 
   private def highlighted(html: HtmlRender.Html, term: Option[String]): HtmlRender.Html = term match
@@ -117,4 +123,4 @@ final class PageBuilder(
 
 object PageBuilder:
   type SourceFull = SourceFull.T
-  object SourceFull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceFull extends RefinedType[Boolean, Pure]

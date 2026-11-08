@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A Wikidata site as the in-memory catalogue keeps it for the refinement of its type: whether it is on the map (a
   * finding or a picture is placed there), the class its import kept, the type refined and when it was asked (epoch ms).
@@ -13,12 +17,12 @@ final case class HeldSite(
 
 object HeldSite:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type OnMap = OnMap.T
-  object OnMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OnMap extends RefinedType[Boolean, Pure]
   type ImportClass = ImportClass.T
-  object ImportClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportClass extends RefinedType[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SiteType extends RefinedType[String, Pure]
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CheckedAt extends RefinedType[Long, Pure]

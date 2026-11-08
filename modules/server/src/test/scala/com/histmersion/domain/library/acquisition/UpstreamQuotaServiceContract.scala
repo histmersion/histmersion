@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,20 +13,20 @@ import java.time.{Instant, LocalDate}
 abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
 
   stest("a budget is read back as it was saved but its call slots; the next save replaces it") { s =>
-    assertEquals(s.quotas.load(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("zq")), None)
+    assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), None)
     val st = CoreQuota.State(
       LocalDate.of(2026, 10, 26),
-      com.histmersion.domain.CoreQuota.State.LookupTokens(5),
-      com.histmersion.domain.CoreQuota.State.SearchTokens(2),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), com.histmersion.domain.CoreQuota.Block.Why("HTTP 429"))),
-      Some(CoreQuota.Window(Some(com.histmersion.domain.CoreQuota.Window.Limit(25)), Some(com.histmersion.domain.CoreQuota.Window.Remaining(3)), Instant.parse("2026-10-26T18:50:00Z")))
+      CoreQuota.State.LookupTokens(5),
+      CoreQuota.State.SearchTokens(2),
+      Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), CoreQuota.Block.Why("HTTP 429"))),
+      Some(CoreQuota.Window(Some(CoreQuota.Window.Limit(25)), Some(CoreQuota.Window.Remaining(3)), Instant.parse("2026-10-26T18:50:00Z")))
     )
-    s.quotas.save(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("zq"), st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z"))))
-    assertEquals(s.quotas.load(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("zq")), Some(st))
-    val next = CoreQuota.State(LocalDate.of(2026, 10, 27), com.histmersion.domain.CoreQuota.State.LookupTokens(0), com.histmersion.domain.CoreQuota.State.SearchTokens(0), None, None)
-    s.quotas.save(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("zq"), next)
-    assertEquals(s.quotas.load(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("zq")), Some(next))
-    assertEquals(s.quotas.load(com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream("other")), None)
+    s.quotas.save(UpstreamQuotaService.Upstream("zq"), st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z"))))
+    assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), Some(st))
+    val next = CoreQuota.State(LocalDate.of(2026, 10, 27), CoreQuota.State.LookupTokens(0), CoreQuota.State.SearchTokens(0), None, None)
+    s.quotas.save(UpstreamQuotaService.Upstream("zq"), next)
+    assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), Some(next))
+    assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("other")), None)
   }
 
 class UpstreamQuotaServiceInMemorySuite extends UpstreamQuotaServiceContract with AcquisitionStoreSuite.InMemory

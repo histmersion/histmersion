@@ -1,4 +1,5 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.Location

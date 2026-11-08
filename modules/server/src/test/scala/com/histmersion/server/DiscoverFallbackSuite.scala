@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,18 +12,25 @@ import com.histmersion.domain.library.acquisition.*
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpAnswer
 import io.circe.Json
+import com.histmersion.config.AcquireConfig
+import com.histmersion.upstreams.openalex.OpenAlexCrossref
+import com.histmersion.pluginhost.upstreamSettings
+import com.histmersion.pluginhost.HostLog
+import com.histmersion.domain.library.search.Search
+import com.histmersion.domain.library.acquisition.DiscoveryClient
+import com.histmersion.domain.library.Doi
 
 /** OpenAlex pauses anonymous search under heavy load (HTTP 503, 2026-09-27): discovery must not go dark with it. The
   * search falls back to Crossref's keyless `works?query=`.
   */
 class DiscoverFallbackSuite extends munit.FunSuite:
 
-  private def discovery(c: com.histmersion.config.AcquireConfig, http: Http): OpenAlexDiscovery =
+  private def discovery(c: AcquireConfig, http: Http): OpenAlexDiscovery =
     OpenAlexDiscovery(
-      com.histmersion.upstreams.openalex.OpenAlexCrossref(
-        com.histmersion.pluginhost.upstreamSettings(c),
+      OpenAlexCrossref(
+        upstreamSettings(c),
         HttpPlugin(http),
-        com.histmersion.pluginhost.HostLog.scribe.plugin
+        HostLog.scribe.plugin
       )
     )
 
@@ -41,7 +49,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   test("when OpenAlex search is down, Crossref answers with the same kinds of work, from the same year"):
     val http = OpenAlexDown()
-    val r = discovery(cfg, http).search(com.histmersion.domain.library.search.Search.Query("Mycenaean religion"), Some(com.histmersion.Year(2023)), None, com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit(5))
+    val r = discovery(cfg, http).search(Search.Query("Mycenaean religion"), Some(Year(2023)), None, DiscoveryClient.SearchLimit(5))
     assertEquals(r.map(_.size), Right(3))
     val asked = http.urls.find(_.value.startsWith(cfg.crossref.url.value)).getOrElse(fail("Crossref was not asked")).value
     assert(asked.contains("from-pub-date%3A2023-01-01") || asked.contains("from-pub-date:2023-01-01"), asked)
@@ -52,7 +60,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem(s"$url: HTTP 503"))
       def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
-    val r = discovery(cfg, dead).search(com.histmersion.domain.library.search.Search.Query("x"), None, None, com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit(5))
+    val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
     assert(r.left.exists(e => e.value.contains("openalex") && e.value.contains("Crossref")), r.toString)
 
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
@@ -74,7 +82,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       .get
 
   /** OpenAlex answers 503 (rate-limited); Crossref and Unpaywall answer. */
-  final private class OpenAlexBusy(c: com.histmersion.config.AcquireConfig) extends Http:
+  final private class OpenAlexBusy(c: AcquireConfig) extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       urls = urls :+ url
@@ -85,9 +93,9 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
   test("meta through the Crossref fallback still knows a gold-OA work is open access"):
-    val withContact = cfg.modify(_.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail("librarian@example.org"))
+    val withContact = cfg.modify(_.contactEmail).setTo(AcquireConfig.ContactEmail("librarian@example.org"))
     val http = OpenAlexBusy(withContact)
-    val w = discovery(withContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
+    val w = discovery(withContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
     assert(w.isOa.value, w.toString)
     assertEquals(w.oaStatus, Some("gold"))
@@ -95,9 +103,9 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     assert(http.urls.exists(_.value.startsWith(withContact.unpaywall.url.value)), http.urls.toString)
 
   test("meta through the Crossref fallback without a contact leaves the access UNKNOWN, not closed"):
-    val noContact = cfg.modify(_.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail(""))
+    val noContact = cfg.modify(_.contactEmail).setTo(AcquireConfig.ContactEmail(""))
     val http = OpenAlexBusy(noContact)
-    val w = discovery(noContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
+    val w = discovery(noContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
     assert(!w.isOa.value)
     assertEquals(w.oaStatus, None) // rendered as "OA status unknown", never "no OA copy known"
     assert(!http.urls.exists(_.value.startsWith(noContact.unpaywall.url.value)), "Unpaywall refuses a request without an e-mail")

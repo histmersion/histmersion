@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,13 +7,17 @@ import ox.supervised
 import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.TestDb
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The write gate as the web UI meets it, in both modes: `/api/config` tells the page whether writes need a key (and
   * never carries the key), reads stay open, and every write — a JSON PATCH, a queue edit, a raw-body upload — is
   * refused with 401 until it carries `Authorization: Bearer <key>`. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class AuthHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -52,17 +57,17 @@ class AuthHttpSuite extends munit.FunSuite:
   /** The accepted upload's job converts through this stub, never the live sidecar on :8100. */
   private val converter = OfflineConverter()
 
-  private def withServer(apiKey: com.histmersion.config.AuthConfig.ApiKey)(body: String => Unit): Unit =
+  private def withServer(apiKey: AuthConfig.ApiKey)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), converter).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), converter).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
 
   test("no key configured: the page is told writes are open, and a write needs no header"):
-    withServer(com.histmersion.config.AuthConfig.ApiKey("")) { url =>
+    withServer(AuthConfig.ApiKey("")) { url =>
       val (cs, cb) = get(s"$url/api/config")
       assertEquals(cs, 200)
       assert(cb.contains("\"writeKeyRequired\":false"), cb)
@@ -74,7 +79,7 @@ class AuthHttpSuite extends munit.FunSuite:
     }
 
   test("a key configured: config says so without leaking it; reads stay open; writes need the key"):
-    withServer(com.histmersion.config.AuthConfig.ApiKey("s3cret")) { url =>
+    withServer(AuthConfig.ApiKey("s3cret")) { url =>
       val (cs, cb) = get(s"$url/api/config")
       assertEquals(cs, 200)
       assert(cb.contains("\"writeKeyRequired\":true"), cb)

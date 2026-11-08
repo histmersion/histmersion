@@ -1,10 +1,13 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 private[places] object GazetteerImport:
   def session(
@@ -50,5 +53,5 @@ private[places] object GazetteerImport:
 
   object Session:
     type Pruned = Pruned.T
-    object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pruned extends RefinedType[Long, Pure]
 

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.library.Tree
 
@@ -13,25 +14,25 @@ import com.histmersion.api.catalogue.Place
   * scope), so it has no in-memory twin; the SQL is the filter's builders' (`FilterSql`, `AggregateRepo`).
   */
 trait SearchService:
-  def sources(filter: Filter, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, scope: PlaceScope): SearchResult
-  def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
-  def unlocated(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
+  def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope): SearchResult
+  def count(filter: Filter, scope: PlaceScope): RowCount
+  def unlocated(filter: Filter, scope: PlaceScope): RowCount
   def selectionCounts(filter: Filter, scope: PlaceScope): Place.Counts
-  def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row]
-  def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow]
+  def periods(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row]
+  def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow]
 
 object SearchService:
   def apply(db: Transactor): SearchService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends SearchService:
-    def sources(filter: Filter, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, scope: PlaceScope): SearchResult =
+    def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope): SearchResult =
       db.read(SearchRepo.sources(filter, snippetWords, scope))
-    def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(SearchRepo.count(filter, scope))
-    def unlocated(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(SearchRepo.unlocated(filter, scope))
+    def count(filter: Filter, scope: PlaceScope): RowCount = db.read(SearchRepo.count(filter, scope))
+    def unlocated(filter: Filter, scope: PlaceScope): RowCount = db.read(SearchRepo.unlocated(filter, scope))
     def selectionCounts(filter: Filter, scope: PlaceScope): Place.Counts =
       db.read(SearchRepo.selectionCounts(filter, scope))
-    def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row] =
+    def periods(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row] =
       db.read(AggregateRepo.periods(unit, filter, scope)).toList
-    def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
+    def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
       db.read(AggregateRepo.treeRows(unit, filter, scope)).toList
 

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentDefinitions
 import com.histmersion.domain.automation.agents.Halt

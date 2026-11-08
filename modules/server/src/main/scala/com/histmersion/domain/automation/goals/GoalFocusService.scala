@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import io.scalaland.chimney.dsl.*
 
@@ -24,6 +25,9 @@ import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal as ApiGoal
 import com.histmersion.domain.automation.Goal
+import com.histmersion.api.automation.Approval
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.api.automation.Queue
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
@@ -95,7 +99,7 @@ final class GoalFocusService(
     * same rule as [[AutoApprovals.checked]])?
     */
   private def byPerson(kind: Option[FocusRepo.WorkRow.ApprovalKind], autoApprove: Option[FocusRepo.WorkRow.AutoApprove]): Boolean =
-    kind.flatMap(k => ApprovalKind.parse(com.histmersion.api.automation.Approval.Kind.Wire(k.value))) match
+    kind.flatMap(k => ApprovalKind.parse(Approval.Kind.Wire(k.value))) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
           .flatMap(_.value.toBooleanOption)
@@ -107,7 +111,7 @@ final class GoalFocusService(
       work: List[FocusRepo.WorkRow],
       titles: Map[Goal.Slug, FocusRepo.GoalRow.Title],
       left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[FocusRepo.GoalRow.LeftWhy])],
-      openPlans: com.histmersion.RowCount
+      openPlans: RowCount
   )
 
   private def read(): Read =
@@ -268,7 +272,7 @@ final class GoalFocusService(
         val recent = Transactor(ds).read(
           FocusRepo.recentTargets(
             FocusRepo.WorkRow.ManagerId(m.id.value),
-            com.histmersion.PageSize.assume(math.max(1, ratio.value))
+            PageSize.assume(math.max(1, ratio.value))
           )
         )
         val goalsOf = agents.focusStore.goalsOf(
@@ -434,5 +438,5 @@ final class GoalFocusService(
     }
 
   private def log(line: String): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text(line.take(1000))))
+    val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
     scribe.info(line)

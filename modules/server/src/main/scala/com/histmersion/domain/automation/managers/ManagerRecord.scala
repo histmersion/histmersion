@@ -1,15 +1,19 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.automation.Managers.ManagerConfig
 
 import java.time.Instant
+import com.histmersion.domain.automation.Manager
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager as [[ManagerService.InMemory]] holds it. */
 final case class ManagerRecord(
     id: ManagerRecord.Id,
-    kind: com.histmersion.domain.automation.Manager.Kind,
+    kind: Manager.Kind,
     goal: Option[ManagerRecord.Goal],
-    state: com.histmersion.domain.automation.Manager.State,
+    state: Manager.State,
     pauseRuns: ManagerRecord.PauseRuns,
     config: ManagerConfig,
     statusNote: Option[ManagerRecord.StatusNote],
@@ -21,12 +25,12 @@ final case class ManagerRecord(
 
 object ManagerRecord:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
   type PauseRuns = PauseRuns.T
-  object PauseRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PauseRuns extends RefinedType[Boolean, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusNote extends RefinedType[String, Pure]
   type Cron = Cron.T
-  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cron extends RefinedType[String, Pure]

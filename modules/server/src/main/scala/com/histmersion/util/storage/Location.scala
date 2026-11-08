@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 /** The server's named places on disk. Configuration decides where each lives; the composition root works the
   * directories out from today's settings, so no install changes. The pictures, their thumbnails and the figures are

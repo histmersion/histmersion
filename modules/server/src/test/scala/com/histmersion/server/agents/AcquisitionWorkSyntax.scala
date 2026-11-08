@@ -1,8 +1,12 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.AgentsControllers
+import com.histmersion.api.automation.Autopilot
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.AutoEnrich
 
 /** The library's parts of the engine (the watch kind's acquisition work, the enrich kind's auto-enrich) as the agent
   * suites reach them: through the engine they built.
@@ -11,7 +15,7 @@ extension (a: AgentsControllers)
   def attach(u: AgentUpstream): Unit = EngineContributions.work(a).attach(u)
   def acquireRecheck: AcquireRecheckService = EngineContributions.work(a).acquireRecheck
   def oaBacklog: OaBacklog = EngineContributions.work(a).oaBacklog
-  def autopilotPage(st: com.histmersion.api.automation.Autopilot.EngineStatus): String =
+  def autopilotPage(st: Autopilot.EngineStatus): String =
     EngineContributions.autopilot(a).page(st).markdown
-  def autoEnrich(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.AutoEnrich.Note] =
+  def autoEnrich(citekey: Citekey): Option[AutoEnrich.Note] =
     EngineContributions.enrich(a).autoEnrich(citekey)

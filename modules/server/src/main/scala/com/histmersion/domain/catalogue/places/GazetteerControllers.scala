@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
@@ -9,6 +10,9 @@ import com.histmersion.util.jobs.{BackgroundJob, Job, WorkCarrier}
 import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.PlacesJobKinds
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
   * fetched, the hierarchy built from spatial containment — one at a time (each rewrites places the others read), each a
@@ -39,7 +43,7 @@ final class GazetteerControllers(
     * reasonable HTTP timeout).
     */
   def fetch(caller: Caller, source: Api.ExternalPlaces.Source, dryRun: Api.Apply): Either[Api.Error, Place.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/fetch")):
+    maintenance.guard(WriteGate.OperationName("places/fetch")):
       val name = source.value.trim.toLowerCase
       if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(dryRun.value))
       else
@@ -56,7 +60,7 @@ final class GazetteerControllers(
             if dryRun.value then
               imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
             else
-              job(Job.Kind.assume(com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
+              job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
                 imports
                   .fetch(src, dryRun = GazetteerControllers.DryRun(false))
                   .left
@@ -74,7 +78,7 @@ final class GazetteerControllers(
   private def land(dryRun: GazetteerControllers.DryRun): Either[Api.Error, Place.ImportResult] =
     if dryRun.value then imports.land(dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
     else
-      job(Job.Kind.assume(com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(
+      job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(
         imports
           .land(dryRun = GazetteerControllers.DryRun(false))
           .left
@@ -96,9 +100,9 @@ final class GazetteerControllers(
     * across thousands of polygons is slow): the answer carries its id, the finished job's summary the counts.
     */
   def buildHierarchy(caller: Caller): Either[Api.Error, SpatialHierarchyResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/build-hierarchy")):
+    maintenance.guard(WriteGate.OperationName("places/build-hierarchy")):
       job(
-        Job.Kind.assume(com.histmersion.api.catalogue.PlacesJobKinds.PlacesHierarchy.kind.value),
+        Job.Kind.assume(PlacesJobKinds.PlacesHierarchy.kind.value),
         "build the spatial hierarchy"
       ) {
         val r = geometry.buildHierarchy()
@@ -114,4 +118,4 @@ final class GazetteerControllers(
 
 object GazetteerControllers:
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]

@@ -1,6 +1,9 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** That a provider was asked about a place, an event or a source, as the in-memory store holds it (`media_checks`). */
 final case class HeldCheck(
@@ -14,12 +17,12 @@ final case class HeldCheck(
 
 object HeldCheck:
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type TargetType = TargetType.T
-  object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetType extends RefinedType[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetId extends RefinedType[String, Pure]
   type Found = Found.T
-  object Found extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Found extends RefinedType[Int, Pure]
   type Qid = Qid.T
-  object Qid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Qid extends RefinedType[String, Pure]

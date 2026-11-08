@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *
@@ -53,10 +54,10 @@ object NaturalEarthLand:
       )
       _ <- if geoms.isEmpty then Left(GazetteerImports.Problem("no land polygons in the download")) else Right(())
     yield
-      if dryRun.value then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"dry run: ${geoms.size} land polygons")))
+      if dryRun.value then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"dry run: ${geoms.size} land polygons")))
       else
         scribe.info(s"[import] land: storing ${geoms.size} polygons…")
         val pieces = geometry.replaceLand(geoms)
         scribe.info(s"[import] land: $pieces pieces; clipping polities…")
         val clipped = geometry.reclip()
-        Place.ImportResult(Place.ImportResult.Places(clipped.value), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"$pieces land pieces from ${geoms.size} polygons")))
+        Place.ImportResult(Place.ImportResult.Places(clipped.value), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"$pieces land pieces from ${geoms.size} polygons")))

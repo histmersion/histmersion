@@ -1,6 +1,11 @@
-package com.histmersion.domain.catalogue.evidence.passages
+package com.histmersion
+package domain.catalogue.evidence.passages
 
 import com.histmersion.api.catalogue.MatchSpan
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.Title
 
 /** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
   */
@@ -12,17 +17,17 @@ object Passage:
     * now (an old citekey resolves to it), and the passages of its text. The library implements it.
     */
   type Offset = Offset.T
-  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Offset extends RefinedType[Int, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   trait Source:
     /** The citekey the source named `citekey` has now; `None` when no source has it. */
-    def canonical(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
+    def canonical(citekey: Citekey): Option[Citekey]
 
     /** The sources whose text names `name` as a phrase, those naming it most often first, at most `limit`. */
-    def naming(name: com.histmersion.domain.Title, limit: com.histmersion.PageSize): List[com.histmersion.domain.library.Citekey]
+    def naming(name: Title, limit: PageSize): List[Citekey]
 
     /** A reader of one source's text, read once however many searches are made in it. */
-    def reader(citekey: com.histmersion.domain.library.Citekey): PassageReader
+    def reader(citekey: Citekey): PassageReader
 

@@ -1,4 +1,5 @@
-package com.histmersion.server.instance
+package com.histmersion
+package server.instance
 
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.instance.UiNotices

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import com.histmersion.util.database.Transactor
 

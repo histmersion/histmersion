@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,6 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.research.ReviewState
+import com.histmersion.api.automation.Goal
 
 /** The colour tokens the code names ([[Palette]]) are defined in the stylesheet it ships. A token the stylesheet lacks
   * renders as nothing at all — a transparent dot, an invisible edge — and no other test would notice. Reads the served
@@ -14,7 +16,7 @@ import com.histmersion.api.research.ReviewState
   */
 class CssTokensSuite extends munit.FunSuite:
 
-  private val css: String = Static.read(com.histmersion.server.Static.ReadPath("web/style.css")).value
+  private val css: String = Static.read(Static.ReadPath("web/style.css")).value
 
   /** `--name: value` declarations in the `:root` blocks. */
   private val rootTokens: Map[String, String] =
@@ -380,7 +382,7 @@ class CssTokensSuite extends munit.FunSuite:
     assert(!seeding.contains("danger") && !seeding.contains("health-down"), seeding)
 
   /** The colours a goal stage's badge is drawn with: its ground, its word and its mark, from its rules. */
-  private def stageLook(stage: com.histmersion.api.automation.Goal.Status.All): (String, String, String) =
+  private def stageLook(stage: Goal.Status.All): (String, String, String) =
     def rule(sel: String) = ("""(?s)""" + java.util.regex.Pattern.quote(sel) + """ \{([^}]*)\}""").r
       .findFirstMatchIn(css)
       .map(_.group(1))
@@ -397,16 +399,16 @@ class CssTokensSuite extends munit.FunSuite:
     val looks = Palette.goalStages.map(s => s -> stageLook(s)).toMap
     assertEquals(looks.values.map(_._1).toSet.size, Palette.goalStages.size, s"grounds: $looks")
     assertEquals(looks.values.map(_._2).toSet.size, Palette.goalStages.size, s"words: $looks")
-    assertNotEquals(looks(com.histmersion.api.automation.Goal.Status.All("seeding")), looks(com.histmersion.api.automation.Goal.Status.All("compiled")))
+    assertNotEquals(looks(Goal.Status.All("seeding")), looks(Goal.Status.All("compiled")))
     // the shape: a dashed ring, a half-filled circle, a square, a diamond, a dot
-    assert(looks(com.histmersion.api.automation.Goal.Status.All("planned"))._3.contains("dashed"), looks(com.histmersion.api.automation.Goal.Status.All("planned"))._3)
-    assert(looks(com.histmersion.api.automation.Goal.Status.All("seeding"))._3.contains("linear-gradient"), looks(com.histmersion.api.automation.Goal.Status.All("seeding"))._3)
+    assert(looks(Goal.Status.All("planned"))._3.contains("dashed"), looks(Goal.Status.All("planned"))._3)
+    assert(looks(Goal.Status.All("seeding"))._3.contains("linear-gradient"), looks(Goal.Status.All("seeding"))._3)
     assert(
-      looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3.contains("border-radius:1px") && !looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3.contains("rotate"),
-      looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3
+      looks(Goal.Status.All("compiled"))._3.contains("border-radius:1px") && !looks(Goal.Status.All("compiled"))._3.contains("rotate"),
+      looks(Goal.Status.All("compiled"))._3
     )
-    assert(looks(com.histmersion.api.automation.Goal.Status.All("reviewed"))._3.contains("rotate(45deg)"), looks(com.histmersion.api.automation.Goal.Status.All("reviewed"))._3)
-    assert(looks(com.histmersion.api.automation.Goal.Status.All("done"))._3.contains("var(--stage-done)"), looks(com.histmersion.api.automation.Goal.Status.All("done"))._3)
+    assert(looks(Goal.Status.All("reviewed"))._3.contains("rotate(45deg)"), looks(Goal.Status.All("reviewed"))._3)
+    assert(looks(Goal.Status.All("done"))._3.contains("var(--stage-done)"), looks(Goal.Status.All("done"))._3)
     for (name, theme) <- List("light" -> light, "dark" -> dark); s <- Palette.goalStages do
       val (bg, fg, _) = looks(s)
       def tokenOf(v: String) = v.stripPrefix("var(").stripSuffix(")")

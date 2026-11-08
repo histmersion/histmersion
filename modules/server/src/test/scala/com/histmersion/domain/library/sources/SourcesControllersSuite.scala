@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,6 +19,8 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatS
 import com.histmersion.api.library.NoteImport
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
+import com.histmersion.util.time.SystemTimer
+import com.histmersion.api.library.Title
 
 /** A source's controllers over the in-memory services: a citekey that is not one, a strict write refused by the
   * formatting check, an old citekey followed, a section that is not one, passages of a source not there, a delete's dry
@@ -31,7 +34,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       (summary.map(_.value).toList ++ notes.map(_.value).toList)
         .filter(_.contains("<div>"))
         .map(_ =>
-          FormatIssue(FormatRule.HtmlTag, FormatSeverity.Error, FormatField.Notes, com.histmersion.api.checks.FormatIssue.Line(1), com.histmersion.api.checks.FormatIssue.Column(1), com.histmersion.api.checks.FormatIssue.Excerpt("<div>"), com.histmersion.api.checks.FormatIssue.Message("never closed"))
+          FormatIssue(FormatRule.HtmlTag, FormatSeverity.Error, FormatField.Notes, FormatIssue.Line(1), FormatIssue.Column(1), FormatIssue.Excerpt("<div>"), FormatIssue.Message("never closed"))
         )
     def fix(text: com.histmersion.domain.library.Source.Text, field: FormatField): (com.histmersion.domain.library.Source.Text, List[com.histmersion.domain.library.Source.Text]) =
       if text.value.contains("  ") then
@@ -72,10 +75,10 @@ class SourcesControllersSuite extends munit.FunSuite:
       () => AppConfig.load(),
       gate,
       Clock.fixed(Instant.parse("2026-11-01T12:00:00Z"), ZoneOffset.UTC)
-    )(using new com.histmersion.util.time.SystemTimer)
+    )(using new SystemTimer)
 
   private val put =
-    Source.Put(title = com.histmersion.api.library.Title("Walls"), body = Some(com.histmersion.api.library.Source.OcrMarkdown("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n")), notes = Some(com.histmersion.api.library.Source.Notes("ok")))
+    Source.Put(title = Title("Walls"), body = Some(Source.OcrMarkdown("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n")), notes = Some(Source.Notes("ok")))
 
   private val Walls90 = Citekey("zqa1990_walls")
   private val Walls91 = com.histmersion.api.library.Citekey("zqa1991_walls")
@@ -104,7 +107,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense"))).left.exists(_.message.value.startsWith("unknown section")))
     assertEquals(c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate"))).map(_.matches), Right(1))
     assertEquals(c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqnone2000_x"), Api.PassagesQuery.Q("gate"))).left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.aliases, List(Source.Alias(com.histmersion.api.library.Source.Alias.Value("zqa1990_walls"), Walls91)))
+    assertEquals(c.aliases, List(Source.Alias(Source.Alias.Value("zqa1990_walls"), Walls91)))
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):
     val c = controllers()
@@ -124,7 +127,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     val gate = WriteGate()
     val c = controllers(gate)
     val _ = c.put(Walls90, put)
-    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
+    val held = gate.exclusively(WriteGate.OperationName("restore"))(
       Right(
         List(
           c.put(Cove, put).isLeft,

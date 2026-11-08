@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,13 +7,20 @@ import com.histmersion.config.AppConfig
 import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.config.UiSettings
+import com.histmersion.config.UiTimeSettings
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.CorpusConfig
 
 /** The hardening fixes, asserted through the wire because that is where they have to hold: citekey/slug validation, the
   * unbounded aggregation window, the inverted half-open range, and the page-size cap. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
 class HardeningHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -46,9 +54,9 @@ class HardeningHttpSuite extends munit.FunSuite:
 
   private def withServer(f: (String, AppConfig) => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try f(s"http://127.0.0.1:${b.port}", cfg)
       finally b.stop()
     }
@@ -147,10 +155,10 @@ class HardeningHttpSuite extends munit.FunSuite:
     // cap exists for, since the clamp above bounds everything a caller can ask for.
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.ui).setTo(base.ui.modify(_.maxBuckets).setTo(com.histmersion.config.UiSettings.MaxBuckets(5)).modify(_.time).setTo(base.ui.time.modify(_.min).setTo(com.histmersion.config.UiTimeSettings.Min((-1000000L: _root_.scala.Long))).modify(_.max).setTo(com.histmersion.config.UiTimeSettings.Max((1000000L: _root_.scala.Long))))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.ui).setTo(base.ui.modify(_.maxBuckets).setTo(UiSettings.MaxBuckets(5)).modify(_.time).setTo(base.ui.time.modify(_.min).setTo(UiTimeSettings.Min((-1000000L: Long))).modify(_.max).setTo(UiTimeSettings.Max((1000000L: Long))))
     )
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()
@@ -197,12 +205,12 @@ class HardeningHttpSuite extends munit.FunSuite:
   test("/api/health answers promptly even with a dead converter"):
     val base = AppConfig.load()
     val cfg = base.copy(
-      db = base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)),
+      db = base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)),
       // a black-hole address: connecting to it hangs rather than being refused
-      converter = base.converter.modify(_.url).setTo(com.histmersion.config.ConverterConfig.Url("http://192.0.2.1:1"))
+      converter = base.converter.modify(_.url).setTo(ConverterConfig.Url("http://192.0.2.1:1"))
     )
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), ConverterWiring.client(cfg.converter)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), ConverterWiring.client(cfg.converter)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()
@@ -226,9 +234,9 @@ class HardeningHttpSuite extends munit.FunSuite:
   test("with corpus.dir configured, `seed {dir}` cannot read outside it"):
     val corpus = java.nio.file.Files.createTempDirectory("histmersion-corpus-test")
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo(com.histmersion.config.CorpusConfig.Dir(corpus.toString)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo(CorpusConfig.Dir(corpus.toString)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // …inside is fine (an empty corpus seeds nothing, which is a 200)

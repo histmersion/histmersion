@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,10 @@ import com.histmersion.api.aliases.AliasKind
 import java.util.Locale
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.evidence.passages.Passage
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
   * event, a place, a source, an article) names it by its identifier now — `current` resolves an old one; a finding id
@@ -53,7 +58,7 @@ final class AttestationsControllers(
     val keys =
       citekey.map(c => Citekey.option(current(AliasKinds.SourceRecords, AttestationsControllers.Alias(c.value)).value))
     if keys.contains(None) then
-      Attestation.List.of(com.histmersion.api.RowCount(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(0))
+      Attestation.List.of(RowCount(0), Nil, UnreadPage.Offset(0))
     else attestations.list(keys.flatten, targetType, target.orElse(targetId), page(limit), offset.getOrElse(Offset.Start))
 
   def get(id: Attestation.Id): Either[Api.Error, Attestation] =
@@ -63,7 +68,7 @@ final class AttestationsControllers(
     * both with a 500.
     */
   def create(caller: Caller, in: Attestation.Put): Either[Api.Error, Attestation] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("create_attestation")):
+    maintenance.guard(WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value
       for
         wire <- AttestationTarget.check(AttestationTarget.Wire(in.targetType.value)).left.map(p => invalid(p.value))
@@ -83,14 +88,14 @@ final class AttestationsControllers(
       )
 
   def patch(caller: Caller, id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_attestation"))(attestations.patch(id, p))
+    maintenance.guard(WriteGate.OperationName("patch_attestation"))(attestations.patch(id, p))
 
   def delete(caller: Caller, id: Attestation.Id): Either[Api.Error, Attestation.Deleted] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_attestation")):
-      if attestations.delete(id) then Right(Attestation.Deleted(id, com.histmersion.api.catalogue.Attestation.Deleted.Value(true)))
+    maintenance.guard(WriteGate.OperationName("delete_attestation")):
+      if attestations.delete(id) then Right(Attestation.Deleted(id, Attestation.Deleted.Value(true)))
       else Left(notFound(id))
 
 object AttestationsControllers:
   /** An identifier an alias table reads: the text of a record's old or current name. */
   type Alias = Alias.T
-  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Alias extends RefinedType[String, Pure]

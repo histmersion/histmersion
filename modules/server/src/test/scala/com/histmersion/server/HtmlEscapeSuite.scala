@@ -1,35 +1,40 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.AppConfig
 import ox.supervised
+import com.histmersion.db.TestDb
+import com.histmersion.domain.Title
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
   * agent-supplied string into it were unescaped. These are the regression tests.
   */
 class HtmlEscapeSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private val payload = com.histmersion.domain.Title("""<script>alert(1)</script>""")
+  private val payload = Title("""<script>alert(1)</script>""")
 
   test("ArticleHtml.page escapes the title into <title> (pure)"):
-    val html = ArticleHtml.page(payload, com.histmersion.server.HtmlRender.Html("<p>body</p>"), PageKind.Source).value
+    val html = ArticleHtml.page(payload, HtmlRender.Html("<p>body</p>"), PageKind.Source).value
     // the page's own <head> script (the reader's theme) is not the payload
     assert(!html.contains(payload.value) && !html.contains("<script>alert"), html.take(300))
     assert(html.contains("&lt;script&gt;alert(1)&lt;/script&gt; · Histmersion"), html.take(300))
     assert(html.contains("<p>body</p>"), "the body is already HTML and stays as it is")
 
   test("a page title with quotes and ampersands survives escaping"):
-    val html = ArticleHtml.page(com.histmersion.domain.Title("""Sea "Peoples" & Co"""), com.histmersion.server.HtmlRender.Html(""), PageKind.Article).value
+    val html = ArticleHtml.page(Title("""Sea "Peoples" & Co"""), HtmlRender.Html(""), PageKind.Article).value
     assert(html.contains("Sea &quot;Peoples&quot; &amp; Co"), html.take(300))
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       def get(u: String): (Int, String) =
         val c = java.net.http.HttpClient.newHttpClient()

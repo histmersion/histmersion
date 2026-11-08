@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.settings.ConfigSource
 
@@ -56,8 +57,8 @@ class SettingsHttpSuite extends DbSuite:
       val b = Composition
         .server(
           l.config,
-          com.histmersion.config.ServerConfig.Host("127.0.0.1"),
-          com.histmersion.config.ServerConfig.Port(0),
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
           OfflineConverter(),
           source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(e => ConfigSource.Problem(e.value)))))
         )

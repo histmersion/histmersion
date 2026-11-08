@@ -1,4 +1,9 @@
-package com.histmersion.domain.library.ingest
+package com.histmersion
+package domain.library.ingest
+
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The seam between an acquisition and the ingest's job queue.
   *
@@ -11,8 +16,8 @@ trait IngestJobs:
     *   the acquired file in the acquisition spool, or `None` when no PDF was found (the source is still created from
     *   metadata, so it can be enriched and queued)
     */
-  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.IngestJobs.Problem, IngestOutcome]
+  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome]
 
 object IngestJobs:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import io.circe.{Json, JsonObject}
 
@@ -7,6 +8,7 @@ import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import javax.sql.DataSource
 import scala.collection.mutable
+import com.histmersion.db.TestDb
 
 /** The record of what each test of a scripted-model suite left in the database, compared with the one written on the
   * code before the automation engine moved: every row a test inserted or updated (its transaction id at or after the
@@ -32,7 +34,7 @@ trait RunTranscripts extends munit.FunSuite:
     * invocation only, `server/testOnly com.histmersion.server.agents.*`, the one it was written under.
     */
   protected def transcriptOn: Boolean =
-    com.histmersion.db.TestDb.url.isDefined && sys.env.get("HISTMERSION_ORACLE_RUNS").contains("1")
+    TestDb.url.isDefined && sys.env.get("HISTMERSION_ORACLE_RUNS").contains("1")
   private def suiteName = getClass.getSimpleName
   private def recorded = Path.of(s"modules/server/src/test/resources/oracle/automation/runs/$suiteName.txt")
   private def actual = Path.of(s"target/oracle-actual/automation/runs/$suiteName.txt")

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.collections
+package com.histmersion
+package domain.library.collections
 
 import com.histmersion.api.library.CollectionsApi
 import com.histmersion.domain.Caller

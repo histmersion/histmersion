@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.catalogue.{CatalogRecord, SiteTypes}
 import com.histmersion.domain.DeepTime
@@ -9,6 +10,8 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The refined types of the Wikidata sites on the map (those a finding or a picture is placed at): which are still to
   * be asked, and what each was found to be.
@@ -17,24 +20,24 @@ trait SiteTypeService:
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine: never asked, or
     * (`refresh`) asked before `before` (epoch ms), by id.
     */
-  def sitesToType(limit: com.histmersion.PageSize, refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])]
+  def sitesToType(limit: PageSize, refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])]
 
-  def countSitesToType(refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): com.histmersion.RowCount
+  def countSitesToType(refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): RowCount
 
   /** Record the refined types (`None` = asked, none of the curated classes), asked now. */
   def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit
 
 object SiteTypeService:
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[Boolean, Pure]
 
   def apply(db: Transactor): SiteTypeService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends SiteTypeService:
-    def sitesToType(limit: com.histmersion.PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
+    def sitesToType(limit: PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
       db.read(SiteTypeRepo.sitesToType(PlaceRepo.Limit(limit.value), SiteTypeRepo.Refresh(refresh.value), before))
         .map((id, item, cls) => (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value))))
-    def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): com.histmersion.RowCount =
+    def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
       db.transact(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
@@ -51,7 +54,7 @@ object SiteTypeService:
         case _                => s.checkedAt.isEmpty
       WikidataSite.matches(s.id.value) && s.onMap.value && asked
 
-    def sitesToType(limit: com.histmersion.PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
+    def sitesToType(limit: PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
       state.get.sites
         .filter(toType(refresh, before))
         .sortBy(_.id.value)
@@ -63,8 +66,8 @@ object SiteTypeService:
         )
         .toList
 
-    def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): com.histmersion.RowCount =
-      com.histmersion.RowCount(state.get.sites.count(toType(refresh, before)))
+    def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
+      RowCount(state.get.sites.count(toType(refresh, before)))
 
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
       val at = now()

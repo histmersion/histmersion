@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,13 +17,18 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.instance.UiConfig
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AuthConfig
+import com.histmersion.config.ServerConfig
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
   * stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an unknown layer, the fetch's
   * refusals, and the removal (behind the API key, as every write). Skipped without HISTMERSION_TEST_DB_URL.
   */
-class BasemapHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class BasemapHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -37,7 +43,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey("k3y"))).modify(_.basemap).setTo(base.basemap.copy(
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("k3y"))).modify(_.basemap).setTo(base.basemap.copy(
         dir = BasemapConfig.Dir(dir.toString),
         terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(onDemand && base.basemap.terrain.onDemand.enabled.value))
         ),
@@ -47,7 +53,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       )
     )
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
       finally b.stop()
     }
@@ -62,8 +68,8 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(s0.dir, dir.toString)
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 404)
 
-      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3))
-      BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(2))
+      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = PmTiles.Zoom(3))
+      BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = PmTiles.Zoom(2))
       val s1 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(s1.available.value, s1.toString)
       val v = s1.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
@@ -110,19 +116,19 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(source(), "online", "nothing downloaded")
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
-        maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3),
+        maxZoom = PmTiles.Zoom(3),
         io.circe.Json.obj(
           "histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))
         )
       )
       val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
-      assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("physical")), Nil)
+      assertEquals(st.missing(Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
+      assertEquals(st.missing(Basemap.StyleState.Id("physical")), Nil)
       assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
       Thread.sleep(5) // a new stamp: the archive is opened again
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
-        maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3),
+        maxZoom = PmTiles.Zoom(3),
         io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True))
       )
       assertEquals(source(), "local", "a --keep-all extract: the page asks no other host")
@@ -132,7 +138,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       val fs = Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.value), identity)
       assert(
         fs.nonEmpty && fs.forall((l, g, p) =>
-          l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p.get(Mvt.PropKey("kind")).contains(Mvt.PropText("sea")) && p.keySet.subsetOf(Set(com.histmersion.util.basemap.Mvt.PropKey("kind"), com.histmersion.util.basemap.Mvt.PropKey("name")))
+          l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p.get(Mvt.PropKey("kind")).contains(Mvt.PropText("sea")) && p.keySet.subsetOf(Set(Mvt.PropKey("kind"), Mvt.PropKey("name")))
         ),
         fs.toString
       )

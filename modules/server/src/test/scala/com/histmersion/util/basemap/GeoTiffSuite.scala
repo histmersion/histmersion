@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -64,14 +65,14 @@ class GeoTiffSuite extends munit.FunSuite:
 
   test("the window of a box, half-open on the east and south; none for a box that only touches the grid"):
     val g = parsed(tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))).fold(e => fail(e.value), identity)
-    assertEquals(g.window(BBox(Longitude(10.6), Latitude(48.1), Longitude(11.4), Latitude(49.9))), Some(GridWindow(com.histmersion.util.basemap.GridWindow.First(0), com.histmersion.util.basemap.GridWindow.Last(3), com.histmersion.util.basemap.GridWindow.FirstCol(1), com.histmersion.util.basemap.GridWindow.LastCol(2))))
-    assertEquals(g.window(BBox(Longitude(0), Latitude(0), Longitude(100), Latitude(80))), Some(GridWindow(com.histmersion.util.basemap.GridWindow.First(0), com.histmersion.util.basemap.GridWindow.Last(5), com.histmersion.util.basemap.GridWindow.FirstCol(0), com.histmersion.util.basemap.GridWindow.LastCol(7))))
+    assertEquals(g.window(BBox(Longitude(10.6), Latitude(48.1), Longitude(11.4), Latitude(49.9))), Some(GridWindow(GridWindow.First(0), GridWindow.Last(3), GridWindow.FirstCol(1), GridWindow.LastCol(2))))
+    assertEquals(g.window(BBox(Longitude(0), Latitude(0), Longitude(100), Latitude(80))), Some(GridWindow(GridWindow.First(0), GridWindow.Last(5), GridWindow.FirstCol(0), GridWindow.LastCol(7))))
     assertEquals(g.window(BBox(Longitude(14), Latitude(40), Longitude(20), Latitude(45))), None)
     assertEquals(g.window(BBox(Longitude(0), Latitude(50), Longitude(20), Latitude(60))), None)
 
   test("row runs: whole rows that follow each other share a request, at most the size asked"):
     val g = parsed(tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))).fold(e => fail(e.value), identity)
-    val w = GridWindow(com.histmersion.util.basemap.GridWindow.First(1), com.histmersion.util.basemap.GridWindow.Last(5), com.histmersion.util.basemap.GridWindow.FirstCol(2), com.histmersion.util.basemap.GridWindow.LastCol(3))
+    val w = GridWindow(GridWindow.First(1), GridWindow.Last(5), GridWindow.FirstCol(2), GridWindow.LastCol(3))
     assertEquals(
       g.runs(w, ByteCount.applyUnsafe(1L << 20)).map(r => (r.firstRow, r.rows, r.offset.value, r.length)),
       List((1, 5, DataAt + 16L, 80L))

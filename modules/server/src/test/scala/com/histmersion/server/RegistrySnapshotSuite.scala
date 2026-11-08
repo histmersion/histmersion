@@ -1,9 +1,18 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.api.aliases.AliasKinds
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import com.histmersion.util.data.checks.CheckOrder
+import com.histmersion.api.checks.Lint
+import com.histmersion.config.AppConfig
+import com.histmersion.domain.automation.agents.OutputComparison
+import com.histmersion.server.agents.ServerEngineSite
+import com.histmersion.domain.library.collections.CollectionsControllers
+import com.histmersion.domain.library.collections.CollectionsService
+import com.histmersion.domain.library.collections.RefusingCollectionLibrary
 
 /** What the composition registers, written as text to `src/test/resources/oracle/registries/` and compared byte for
   * byte, recorded on the code before the transition adapters and `Handlers` went (slice 12, part 2): every owner's data
@@ -51,13 +60,13 @@ class RegistrySnapshotSuite extends munit.FunSuite:
         s"  check\t${r.rule.name}\tfix=${r.fix.isDefined}"
       )
     }
-    val order = com.histmersion.util.data.checks.CheckOrder(com.histmersion.api.checks.Lint.names)
+    val order = CheckOrder(Lint.names)
     val fixes = order.fixing(data.checks).filter(_.fix.isDefined).map(_.rule.name)
     val lint = List(s"lint report\t${order.report.mkString(",")}", s"lint fixes\t${fixes.mkString(",")}")
-    val aliases = com.histmersion.api.aliases.AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
+    val aliases = AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
     check("data.txt", (owners ++ lint ++ aliases).mkString("", "\n", "\n"))
 
-  private val loaded = com.histmersion.config.AppConfig
+  private val loaded = AppConfig
     .loadWithUserText(org.ekrich.config.ConfigFactory.empty, "")
     .fold(e => throw AssertionError(e), identity)
 
@@ -67,7 +76,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
     val reg = h.agents.workflows
     val workflows = reg.definitions.map { d =>
       val tools = d.roles.map(r => s"${r.wire}:${d.allowedTools(r).toList.map(_.value).sorted.mkString("+")}")
-      val outputs = d.outputs != com.histmersion.domain.automation.agents.OutputComparison.none
+      val outputs = d.outputs != OutputComparison.none
       s"workflow\t${d.id.value}\tv${d.version}\t${d.target.wire}\t${tools.mkString(",")}\toutputs=$outputs"
     }
     val tools = reg.tools.map(t => s"tool\t${t.name.value}")
@@ -75,8 +84,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
       s"manager kind\t${k.kind.wire}\titems=${k.items.mkString(",")}\tcron=${k.cron.getOrElse("-")}"
     )
     val objectives = s"objectives\t${reg.objectives.size}"
-    val effects = com.histmersion.server.agents
-      .ServerEngineSite(deps, h)
+    val effects = ServerEngineSite(deps, h)
       .approvalEffects
       .subjectKinds
       .toList
@@ -102,12 +110,12 @@ class RegistrySnapshotSuite extends munit.FunSuite:
       retractionWatch = ???,
       jobs = AcquisitionTesting.skeleton(deps)
     )
-    val collections = com.histmersion.domain.library.collections.CollectionsControllers(
-      com.histmersion.domain.library.collections.CollectionsService.InMemory(
+    val collections = CollectionsControllers(
+      CollectionsService.InMemory(
         java.util.concurrent.atomic.AtomicReference(Nil),
-        com.histmersion.domain.library.collections.RefusingCollectionLibrary(),
+        RefusingCollectionLibrary(),
         () => scala.collection.immutable.ListMap.empty,
-        com.histmersion.domain.library.collections.CollectionsService.Limit(8)
+        CollectionsService.Limit(8)
       ),
       deps.maintenance
     )

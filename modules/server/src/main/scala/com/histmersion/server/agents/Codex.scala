@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
@@ -17,22 +18,26 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ByteCount
+import com.histmersion.api.backup.Backup
 
 object Codex:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SchemaJson = SchemaJson.T
-  object SchemaJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaJson extends RefinedType[String, Pure]
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
 
 
-  def schemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJson = SchemaJson(schema(s).noSpaces)
+  def schemaJson(s: ResponseSchema[?]): SchemaJson = SchemaJson(schema(s).noSpaces)
 
   /** The `--output-schema` file: the derived schema in OpenAI's strict form, the only one Codex's structured output
     * accepts ([[StrictJsonSchema]] says why and how).
     */
-  def outputSchemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJson = SchemaJson(StrictJsonSchema(schema(s)).noSpaces)
+  def outputSchemaJson(s: ResponseSchema[?]): SchemaJson = SchemaJson(StrictJsonSchema(schema(s)).noSpaces)
 
   private def schema(s: ResponseSchema[?]): Json =
     s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema"))
@@ -47,7 +52,7 @@ object Codex:
       schemaFile: Path,
       cwd: Path,
       lastFile: Path
-  ): List[com.histmersion.server.agents.ClaudeCode.Argument] =
+  ): List[ClaudeCode.Argument] =
     List(
       cfg.command.value,
       "exec",
@@ -64,7 +69,7 @@ object Codex:
       "-o",
       lastFile.toString,
       "-"
-    ).map(com.histmersion.server.agents.ClaudeCode.Argument(_))
+    ).map(ClaudeCode.Argument(_))
 
   /** The CLI's environment: its own CODEX_HOME (its login, never a copied `auth.json`), the run token the MCP server
     * config names, and no API key unless asked (a key bills the API).
@@ -134,7 +139,7 @@ object Codex:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
-  def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Codex.Problem, LlmClient] =
+  def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Codex then Left(Problem(s"${ref.wire} is not a codex model"))
     else if !rt.loopback then
       Left(Problem("codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"))
@@ -151,11 +156,11 @@ object Codex:
     */
   object Home:
     type Argument = Argument.T
-    object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Argument extends RefinedType[String, Pure]
     type ExitCode = ExitCode.T
-    object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExitCode extends RefinedType[Int, Pure]
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends RefinedType[String, Pure]
 
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
@@ -176,34 +181,34 @@ object Codex:
     final case class Report(
         skipped: Option[Report.Skipped] = None,
         deleted: Report.Deleted = Report.Deleted(0),
-        freedBytes: com.histmersion.api.ByteCount = com.histmersion.api.ByteCount(0L),
-        vacuumed: List[(Report.VacuumedFile, com.histmersion.api.ByteCount, com.histmersion.api.ByteCount)] = Nil,
+        freedBytes: ByteCount = ByteCount(0L),
+        vacuumed: List[(Report.VacuumedFile, ByteCount, ByteCount)] = Nil,
         problems: List[Report.Problem] = Nil
     ):
       def summary: Report.Summary = Report.Summary(skipped.fold {
         val v = vacuumed.map((n, b, a) =>
-          s"$n ${com.histmersion.api.backup.Backup.humanBytes(b)} → ${com.histmersion.api.backup.Backup.humanBytes(a)}"
+          s"$n ${Backup.humanBytes(b)} → ${Backup.humanBytes(a)}"
         )
         (List(
-          s"${Plural.count(Plural.Count(deleted.value.toLong), Plural.Noun.Singular("transcript"))} deleted (${com.histmersion.api.backup.Backup.humanBytes(freedBytes)})"
+          s"${Plural.count(Plural.Count(deleted.value.toLong), Plural.Noun.Singular("transcript"))} deleted (${Backup.humanBytes(freedBytes)})"
         ) ++
           Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems.map(_.value)).mkString("; ")
       }(_.value))
 
     object Report:
       type Problem = Problem.T
-      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Problem extends RefinedType[String, Pure]
       type SkipReason = SkipReason.T
-      object SkipReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object SkipReason extends RefinedType[String, Pure]
       type Summary = Summary.T
-      object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Summary extends RefinedType[String, Pure]
       type VacuumedFile = VacuumedFile.T
-      object VacuumedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object VacuumedFile extends RefinedType[String, Pure]
 
-      type Skipped = com.histmersion.server.agents.Codex.Home.Report.SkipReason
-      val Skipped: _root_.com.histmersion.server.agents.Codex.Home.Report.SkipReason.type = _root_.com.histmersion.server.agents.Codex.Home.Report.SkipReason
+      type Skipped = SkipReason
+      val Skipped: SkipReason.type = SkipReason
       type Deleted = Deleted.T
-      object Deleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Deleted extends RefinedType[Int, Pure]
 
     /** Every regular file under `dir` (none when it is missing), relative to `home`. */
     private def filesUnder(home: Path, dir: Path): List[FileInfo] =
@@ -255,14 +260,14 @@ object Codex:
                 val before = Files.size(f)
                 run(List(Argument(cfg.sqlite.value), Argument(f.toString), Argument("VACUUM;"))) match
                   case Right(c) if c.value == 0 =>
-                    Some((Report.VacuumedFile(n.value), com.histmersion.api.ByteCount(before), com.histmersion.api.ByteCount(Files.size(f))))
+                    Some((Report.VacuumedFile(n.value), ByteCount(before), ByteCount(Files.size(f))))
                   case Right(c) => problems += Report.Problem(s"$n: ${cfg.sqlite} exit $c"); None
                   case Left(e)  => problems += Report.Problem(s"$n: $e"); None
               }
           Report(
             None,
             Report.Deleted(gone.size),
-            com.histmersion.api.ByteCount(gone.map(_.bytes.value).sum),
+            ByteCount(gone.map(_.bytes.value).sum),
             vacuumed,
             problems.result()
           )

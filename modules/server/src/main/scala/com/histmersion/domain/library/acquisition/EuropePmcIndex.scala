@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.upstreams.http.Url
 
@@ -7,16 +8,17 @@ import com.histmersion.domain.*
 
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
+import com.histmersion.domain.library.search.Search
 
 /** Europe PMC: first publication since, newest first. */
 final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
-  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("europepmc")
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
+  val name = ScholarlyIndex.Name("europepmc")
+  def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     http
       .json(
         Url(
           Http.Url(cfg.europepmc.url.value),
-          com.histmersion.upstreams.http.Url.UrlPath("/search"),
+          Url.UrlPath("/search"),
           "query" -> s"($query) AND FIRST_PDATE:[$since TO 3000-12-31]",
           "format" -> "json",
           "resultType" -> "core",

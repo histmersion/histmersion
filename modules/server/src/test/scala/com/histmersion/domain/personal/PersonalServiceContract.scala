@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal
+package com.histmersion
+package domain.personal
 
 import com.histmersion.api.personal.MapZoom
 import com.histmersion.api.ItemKind as MarkKind
@@ -19,12 +20,14 @@ import com.augustnagro.magnum.*
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
 
 /** The contract a service of the person's keeps: it behaves the same in memory and in the database (a scratch database
   * of the suite's own, gated on HISTMERSION_TEST_DB_URL) — each scenario runs over both, the collection's sources
   * changing under the marks as a rename, a merge or a deletion changes them.
   */
-abstract class PersonalServiceContract(prefix: String) extends com.histmersion.db.DbSuite:
+abstract class PersonalServiceContract(prefix: String) extends DbSuite:
 
   protected val t0 = Instant.parse("2026-10-30T12:00:00.123456789Z")
   protected def at(min: Int): MarkTime = MarkTime.at(t0.plusSeconds(min * 60L))
@@ -68,7 +71,7 @@ abstract class PersonalServiceContract(prefix: String) extends com.histmersion.d
       ck => { sources.delete(ItemKey(ck), t0); readable.remove(ItemKey(ck)) }
     )
 
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   private lazy val scratch = ScratchDatabases(prefix, AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 

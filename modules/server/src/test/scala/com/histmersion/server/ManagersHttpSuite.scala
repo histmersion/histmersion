@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,14 +12,22 @@ import com.histmersion.api.automation.Managers
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.Migrate
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.api.automation.AgentScheduler
+import com.histmersion.api.automation.ApprovalDigest
+import com.histmersion.api.automation.Stalls
 
 /** The managers' phase 2 over real HTTP and MCP (agents off: managing works without them, nothing runs): a seeding
   * manager is created paused with its first propose item, `/api/agents/enqueue` routes review / extend / enrich / seed,
   * a bad kind is a 400, and the `manager` tool creates and enqueues through the same handlers. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class ManagersHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ManagersHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -41,7 +50,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
 
   private def clean(cfg: AppConfig): Unit =
     val ds = testPool(cfg.db)
-    com.histmersion.util.database.Migrate.run(ds)
+    Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()
       sql"DELETE FROM articles WHERE slug LIKE 'zqmgr%'".update.run()
@@ -51,10 +60,10 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
 
   test("create seed, enqueue every kind, refusals; the manager tool over MCP"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     clean(cfg)
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/goals/$Goal", """{"title":"Zq tin"}""")._1, 200)
@@ -120,7 +129,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         // the central scheduler: its status (a dry pass with agents off), why one item waits, the live switch
         val (ss, sb) = get(s"$url/api/agents/scheduler?limit=5")
         assertEquals(ss, 200, sb)
-        val st = decode[com.histmersion.api.automation.AgentScheduler.SchedulerStatus](sb)
+        val st = decode[AgentScheduler.SchedulerStatus](sb)
           .fold(e => fail(s"$e: $sb"), identity)
         assertEquals((st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config"))
         assert(st.strategies.map(_.name).contains("goal-first"), st.strategies)
@@ -144,7 +153,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         // the approval digest and a group decision
         val (ds_, db_) = get(s"$url/api/agents/approvals/digest")
         assertEquals(ds_, 200, db_)
-        assert(decode[com.histmersion.api.automation.ApprovalDigest.Digest](db_).isRight, db_)
+        assert(decode[ApprovalDigest.Digest](db_).isRight, db_)
         assertEquals(
           post(s"$url/api/agents/approvals/decide", """{"decision":"approve"}""")._1,
           400,
@@ -163,7 +172,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         val (ss2, sb2) = get(s"$url/api/agents/stalls?days=0")
         assertEquals(ss2, 200, sb2)
         assert(
-          decode[com.histmersion.api.automation.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug.value == Goal)),
+          decode[Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug.value == Goal)),
           sb2
         )
         val (dr, drb) = post(s"$url/api/agents/autopilot/drain", """{"on":true,"by":"test"}""")

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.zaxxer.hikari.HikariDataSource
 

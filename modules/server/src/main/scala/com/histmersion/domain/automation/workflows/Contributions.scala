@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.managers.ManagerKindDefinition

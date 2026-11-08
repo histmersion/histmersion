@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,9 @@ import com.histmersion.api.research.CoverageSearch
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Filter
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own
@@ -19,7 +23,7 @@ import com.histmersion.api.research.Coverage
   */
 class MarkdownLintSuite extends munit.FunSuite:
 
-  private val article = Context(article = com.histmersion.server.MarkdownLint.Context.Article(true))
+  private val article = Context(article = Context.Article(true))
   private def body(md: Scan.Text, ctx: Context = article) = MarkdownLint.issues(md, FormatField.Body, ctx)
   private def rules(md: Scan.Text, ctx: Context = article): List[FormatRule] = body(md, ctx).map(_.rule)
   private def fixed(md: Scan.Text, ctx: Context = article): Scan.Text = MarkdownLint.fix(md, FormatField.Body, ctx)._1
@@ -325,7 +329,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       rules(Scan.Text("![map]() and ![map](/Users/me/map.png) [[cline2014_year]].\n")),
       List(FormatRule.Image, FormatRule.Image)
     )
-    assertEquals(MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("![Fig. 1](figures/fig1.png)\n"), FormatField.Notes), Nil)
+    assertEquals(MarkdownLint.issues(Scan.Text("![Fig. 1](figures/fig1.png)\n"), FormatField.Notes), Nil)
 
   test("bare URLs are not clickable — wrapped by --fix; autolinks and links are fine"):
     val md = Scan.Text("Data at https://doi.org/10.1038/nature14317. and <https://example.org> [x](https://e.org).\n")
@@ -354,10 +358,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(MarkdownLint.fix(out, FormatField.Body, article), (out, Nil))
 
   test("the summary and notes fields are checked the same way and say so"):
-    val is = MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("A ** bad** summary."), FormatField.Summary)
+    val is = MarkdownLint.issues(Scan.Text("A ** bad** summary."), FormatField.Summary)
     assertEquals(is.map(i => (i.rule, i.field)), List((FormatRule.Emphasis, FormatField.Summary)))
     // a source's notes have no generated Sources cited footer: the heading is fine there
-    assertEquals(MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("## Sources cited\n\n- x\n"), FormatField.Notes), Nil)
+    assertEquals(MarkdownLint.issues(Scan.Text("## Sources cited\n\n- x\n"), FormatField.Notes), Nil)
 
   test("the wire spellings round-trip and every rule is documented"):
     FormatRule.values.foreach { r =>
@@ -365,7 +369,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       assert(r.description.value.nonEmpty && !r.wire.value.contains("_"), r.wire)
     }
     val i =
-      FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, com.histmersion.api.checks.FormatIssue.Line(3), com.histmersion.api.checks.FormatIssue.Column(1), com.histmersion.api.checks.FormatIssue.Excerpt("| a |"), com.histmersion.api.checks.FormatIssue.Message("m"), Some(com.histmersion.api.checks.FormatIssue.Fix("f")))
+      FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, FormatIssue.Line(3), FormatIssue.Column(1), FormatIssue.Excerpt("| a |"), FormatIssue.Message("m"), Some(FormatIssue.Fix("f")))
     val j = io.circe.parser.decode[FormatIssue](io.circe.syntax.EncoderOps(i).asJson.noSpaces)
     assertEquals(j, Right(i))
     assert(io.circe.syntax.EncoderOps(i).asJson.noSpaces.contains("\"rule\":\"table-not-rendered\""))
@@ -374,7 +378,7 @@ class MarkdownLintSuite extends munit.FunSuite:
 
   test("the page notice: folded, counted, one line per problem, escaped; nothing when clean"):
     val is = body(Scan.Text("Intro [[cline2014_year]]:\n| A | B |\n|---|---|\n| 1 | 2 |\n\nThe ** x** <b>bold</b> here.\n"))
-    val html = Pages.formatNotice(is, "This article", Some(com.histmersion.api.research.Article.Slug("sea_peoples"))).value
+    val html = Pages.formatNotice(is, "This article", Some(Article.Slug("sea_peoples"))).value
     assert(
       html.startsWith(
         """<details class="format-notice has-errors"><summary>This article may not display correctly: 2 formatting problems</summary>"""
@@ -392,10 +396,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(Pages.formatNotice(Nil, "This article", None).value, "")
     // on the article page it sits under the meta line, above the prose
     val row = Article.Row(
-      com.histmersion.api.research.Article.Slug("sea_peoples"),
-      com.histmersion.api.research.Article.Title("Sea Peoples"),
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
-      com.histmersion.api.research.Article.Body("# Sea Peoples\n\nThe ** x** here."),
+      Article.Slug("sea_peoples"),
+      Article.Title("Sea Peoples"),
+      Article.Kind.Wire("concept"),
+      Article.Body("# Sea Peoples\n\nThe ** x** here."),
       None,
       Nil,
       Nil,
@@ -412,28 +416,28 @@ class MarkdownLintSuite extends munit.FunSuite:
   test(
     "#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"
   ):
-    val src = (ck: com.histmersion.api.library.Citekey, st: Source.Status) =>
-      Coverage.Source(ck, com.histmersion.api.library.Title(ck.value), Some(com.histmersion.api.catalogue.Year(2000)), st)
+    val src = (ck: Citekey, st: Source.Status) =>
+      Coverage.Source(ck, com.histmersion.api.library.Title(ck.value), Some(Year(2000)), st)
     val c = Article.Coverage.compute(
-      com.histmersion.api.research.Article.Coverage.ComputeSlug("tin"),
-      Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin_trade *x*")), topics = List(com.histmersion.api.library.Filter.Topics("bronze_age"))),
-      com.histmersion.api.research.Article.Coverage.ComputeTotal(812),
+      Article.Coverage.ComputeSlug("tin"),
+      Article.Filter(query = Some(Filter.Q("tin_trade *x*")), topics = List(Filter.Topics("bronze_age"))),
+      Article.Coverage.ComputeTotal(812),
       List(
-        src(com.histmersion.api.library.Citekey("knapp2016_tin"), Source.Status.Current),
-        src(com.histmersion.api.library.Citekey("egypt2001_old"), Source.Status.Contested),
-        src(com.histmersion.api.library.Citekey("iso2024_new"), Source.Status.Current)
+        src(Citekey("knapp2016_tin"), Source.Status.Current),
+        src(Citekey("egypt2001_old"), Source.Status.Contested),
+        src(Citekey("iso2024_new"), Source.Status.Current)
       ),
-      Set(com.histmersion.api.library.Citekey("knapp2016_tin")),
-      List(com.histmersion.api.library.Citekey("knapp2016_tin"), com.histmersion.api.library.Citekey("other2020_x")),
-      Map(com.histmersion.api.library.Citekey("egypt2001_old") -> Coverage.Entry.Reason("About Egypt, not the Aegean")),
-      List(Coverage.Edge(com.histmersion.api.library.Citekey("crit2022_x"), com.histmersion.api.research.Coverage.Edge.Kind("superseded_by"), com.histmersion.api.library.Citekey("knapp2016_tin"))),
-      List(CoverageSearch(com.histmersion.api.research.CoverageSearch.Query("synoikism"), com.histmersion.api.research.CoverageSearch.Total(3), Nil))
+      Set(Citekey("knapp2016_tin")),
+      List(Citekey("knapp2016_tin"), Citekey("other2020_x")),
+      Map(Citekey("egypt2001_old") -> Coverage.Entry.Reason("About Egypt, not the Aegean")),
+      List(Coverage.Edge(Citekey("crit2022_x"), Coverage.Edge.Kind("superseded_by"), Citekey("knapp2016_tin"))),
+      List(CoverageSearch(CoverageSearch.Query("synoikism"), CoverageSearch.Total(3), Nil))
     )
     val md = Scan.Text("# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + Article.Coverage.sections(c))
     assertEquals(body(md), Nil)
     val page = Pages.article(
       ArticlePage(
-        Article.Row(com.histmersion.api.research.Article.Slug("tin"), com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("# Tin\n\nTin moved [[knapp2016_tin]]."), None, Nil, Nil, None, None),
+        Article.Row(Article.Slug("tin"), Article.Title("Tin"), Article.Kind.Wire("concept"), Article.Body("# Tin\n\nTin moved [[knapp2016_tin]]."), None, Nil, Nil, None, None),
         Nil,
         Nil,
         Nil,

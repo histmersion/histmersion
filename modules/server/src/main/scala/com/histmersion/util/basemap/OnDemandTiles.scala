@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.config.BasemapOnDemandConfig
@@ -10,6 +11,8 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 import com.histmersion.api.basemap.Basemap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
@@ -298,11 +301,11 @@ final class OnDemandTiles(
 
 object OnDemandTiles:
   type Instant = Instant.T
-  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Instant extends RefinedType[Long, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type UrlTemplate = UrlTemplate.T
-  object UrlTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UrlTemplate extends RefinedType[String, Pure]
 
   private val Tiles = Store.Key.applyUnsafe("tiles")
   private val Remote = Store.Key.applyUnsafe("remote")

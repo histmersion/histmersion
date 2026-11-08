@@ -1,4 +1,5 @@
-package com.histmersion.util.data
+package com.histmersion
+package util.data
 
 import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
@@ -6,6 +7,8 @@ import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
 import com.histmersion.util.storage.Location
 import com.histmersion.util.data.mirror.Mirror
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The registry: every owner's contribution, in the order they were registered, which is the order every operation runs
   * them in. An owner contributes once and a table has one owner.
@@ -30,10 +33,10 @@ final class DataContributions private (val all: List[DataContribution]):
 
 object DataContributions:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** The registry, or what makes it inconsistent: an owner registered twice, a table claimed by two owners. */
 
-  def of(contributions: List[DataContribution]): Either[List[com.histmersion.util.data.DataContributions.Problem], DataContributions] =
+  def of(contributions: List[DataContribution]): Either[List[Problem], DataContributions] =
     val owners = contributions.map(_.owner.value)
     val twice = owners.diff(owners.distinct).distinct.map(o => Problem(s"owner $o is registered twice"))
     val claims = contributions.flatMap(c => c.tables.map(t => t.name.value -> c.owner.value))

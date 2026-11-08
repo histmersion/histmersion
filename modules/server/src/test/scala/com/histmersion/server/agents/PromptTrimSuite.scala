@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,9 @@ import com.histmersion.domain.automation.agents.{
   StepAgent,
   ToolStyle
 }
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
 
 /** What a headless step is sent every turn, and that trimming it lost no rule (2026-10-09): the audience markers, the
   * reviewers' edition of the writing guide, and a ceiling per review role so the prompt does not grow back unnoticed.
@@ -19,10 +23,10 @@ import com.histmersion.domain.automation.agents.{
   */
 class PromptTrimSuite extends munit.FunSuite:
 
-  private given com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
+  private given Stores = Stores.disk
+  private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
-  private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
   private def headless(s: StepAgent) = d.system(agent(s), ToolStyle.Claude)
@@ -34,27 +38,27 @@ class PromptTrimSuite extends munit.FunSuite:
   // ── the markers ────────────────────────────────────────────────────────────────────────────────
 
   test("a marked part reaches only its audience, without its markers or a run of blank lines"):
-    val t = com.histmersion.domain.automation.agents.AgentDef.Body(
+    val t = AgentDef.Body(
       "a\n\n<!-- only:interactive -->\nrun it in Bash\n<!-- /only:interactive -->\n\nb\n<!-- only:headless -->\ncall the tool\n<!-- /only:headless -->\nc\n"
     )
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Headless)), "a\n\nb\ncall the tool\nc\n")
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Interactive)), "a\n\nrun it in Bash\n\nb\nc\n")
     assertEquals(
-      AgentDefinitions.forAudience(com.histmersion.domain.automation.agents.AgentDef.Body("no markers\n\n\n"), Set()),
+      AgentDefinitions.forAudience(AgentDef.Body("no markers\n\n\n"), Set()),
       "no markers\n\n\n",
       "unmarked text is untouched"
     )
 
   test("markers that do not pair up, nest or name an audience are reported"):
-    assertEquals(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer -->x<!-- /only:writer -->")), Nil)
-    assert(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer -->x")).exists(_.contains("never closed")))
-    assert(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing")))
+    assertEquals(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x<!-- /only:writer -->")), Nil)
+    assert(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x")).exists(_.contains("never closed")))
+    assert(AgentDefinitions.markerProblems(AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing")))
     assert(
-      AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer --><!-- only:headless -->")).exists(_.contains("opens inside"))
+      AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer --><!-- only:headless -->")).exists(_.contains("opens inside"))
     )
     assert(
       AgentDefinitions
-        .markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:people -->x<!-- /only:people -->"))
+        .markerProblems(AgentDef.Body("<!-- only:people -->x<!-- /only:people -->"))
         .exists(_.contains("names no audience"))
     )
     assertEquals(

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -28,6 +29,18 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.research.Article
 import com.histmersion.api.Api
 import com.histmersion.api.library.DeleteBlocker
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.domain.library.Citekey
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.AcquireConfig
+import com.histmersion.util.storage.Blob
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.domain.library.sources.Citekeys
+import com.histmersion.util.data.maintenance.WriteGate
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing
@@ -35,15 +48,15 @@ import com.histmersion.api.library.DeleteBlocker
   * it, drops its old citekeys, leaves a tombstone, logs itself, keeps Calibre's id in the answer and removes the stored
   * originals after the commit. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class SourceDeleteSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class SourceDeleteSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Prefix = "zzdel"
-  private val OldCk = com.histmersion.domain.library.Citekey("zzdel2019_book") // the citekey it had before a rename: an alias
-  private val DelCk = com.histmersion.domain.library.Citekey("zzdel2020_book")
-  private val OtherCk = com.histmersion.domain.library.Citekey("zzdelb2021_other")
-  private val TwinCk = com.histmersion.domain.library.Citekey("zzdelc2022_twin") // holds the same file as Del in one test
+  private val OldCk = Citekey("zzdel2019_book") // the citekey it had before a rename: an alias
+  private val DelCk = Citekey("zzdel2020_book")
+  private val OtherCk = Citekey("zzdelb2021_other")
+  private val TwinCk = Citekey("zzdelc2022_twin") // holds the same file as Del in one test
   private val Old: String = OldCk.value
   private val Del: String = DelCk.value
   private val Other: String = OtherCk.value
@@ -60,7 +73,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(spool.toString))).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(acquire.toString))
+      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(acquire.toString))
     )
   private lazy val deps =
     val ds = testPool(cfg.db)
@@ -72,13 +85,13 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   private object NoConverter extends ConverterClient:
     def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
     def convert(
-        file: com.histmersion.util.storage.Blob,
+        file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(ConverterClient.Problem("not used"))
 
   private def source(
-      ck: com.histmersion.domain.library.Citekey,
+      ck: Citekey,
       edges: List[Edge] = Nil,
       findings: Int = 0,
       calibre: Option[Source.CalibreId] = None
@@ -87,9 +100,9 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     title = com.histmersion.api.library.Title(s"Title $ck"),
     authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
-    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    year = (Some(2020)).map(Year.apply),
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Current,
+    status = Source.Status.Current,
     topics = Nil,
     regions = Nil,
     tags = Nil,
@@ -105,9 +118,9 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         Finding.Id(s"$ck#$i"),
         com.histmersion.api.library.Citekey(ck.value),
         Finding.Claim(s"claim $i"),
-        Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(32.0), com.histmersion.api.catalogue.Latitude(39.0))),
-        Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200))),
+        Some(Finding.Region("Anatolia")),
+        Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
+        Some(Period(Year(-1300), Year(-1200))),
         None,
         Nil,
         Some(Confidence.High)
@@ -146,12 +159,12 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         OldCk,
         findings = 2,
         calibre = Some(Source.CalibreId("1693")),
-        edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Edge.Kind.Challenges), Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey("zzdelmissing2001_x"), com.histmersion.api.library.Edge.Kind.References))
+        edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), Edge.Kind.Challenges), Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey("zzdelmissing2001_x"), Edge.Kind.References))
       )
     )
     put(source(OtherCk, edges = Nil))
-    SourceFixtures.rename(ds, OldCk, com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw(Del)).fold(e => fail(e.message.value), _ => ())
-    put(source(OtherCk, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), com.histmersion.api.library.Edge.Kind.References))))
+    SourceFixtures.rename(ds, OldCk, Citekeys.RenameToNewRaw(Del)).fold(e => fail(e.message.value), _ => ())
+    put(source(OtherCk, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References))))
     connect(ds):
       sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Del".update.run()
       sql"INSERT INTO places (id, label, kind) VALUES ($Place, 'Zz place', 'site')".update.run()
@@ -179,8 +192,8 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       ds,
       Article(
         Article.Slug(Slug),
-        com.histmersion.api.research.Article.Title("Zz"),
-        com.histmersion.api.research.Article.KindValue("concept"),
+        Article.Title("Zz"),
+        Article.KindValue("concept"),
         Article.Body(s"# Zz\n\nOnly [[$Other]]."),
         None,
         Nil,
@@ -234,7 +247,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     )
     assert(d.count(Chunks).value > 0 && d.count(FindingPlaces).value >= 1)
     assertEquals(d.aliases, List(Old))
-    assertEquals(d.edgesIn, List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), com.histmersion.api.library.Edge.Kind.References)))
+    assertEquals(d.edgesIn, List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References)))
     assertEquals(d.coverage, List(Slug))
     assertEquals(d.calibreId, Some("1693"))
     assertEquals(d.mentions.size, 1)
@@ -257,11 +270,11 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     seed()
     List(s"See [[$Del]].", s"See [[$Old|the book]].", s"See [[zzdel2020]] (short).").zipWithIndex.foreach { (body, i) =>
       val slug = Article.Slug(s"${Slug}_cites$i")
-      val _ = ArticleFixtures.put(ds, Article(slug, Article.Title(s"Cites $i"), com.histmersion.api.research.Article.KindValue("concept"), Article.Body(s"# C\n\n$body"), None, Nil, Nil, None))
+      val _ = ArticleFixtures.put(ds, Article(slug, Article.Title(s"Cites $i"), Article.KindValue("concept"), Article.Body(s"# C\n\n$body"), None, Nil, Nil, None))
       val dry = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
       assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlocker.Kind.Article, slug)), body)
       val e = h.library.sources
-        .delete(DelCk,Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true)))
+        .delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(e.message.value.contains(s"cited by article $slug") && e.message.value.contains("no override"), e.message)
@@ -276,7 +289,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
     val d = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlocker.Kind.Event, DeleteBlocker.Kind.Job))
-    assert(h.library.sources.delete(DelCk,Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true))).isLeft)
+    assert(h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft)
     assert(SourceFixtures.load(ds, DelCk).isDefined)
 
   test(
@@ -286,7 +299,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     assertEquals(h.library.sources.delete(OldCk, Source.DeleteRequest()).map(_.citekey), Right(Del))
     assert(
       h.library.sources
-        .delete(com.histmersion.domain.library.Citekey("zzdel1999_nothing"), Source.DeleteRequest())
+        .delete(Citekey("zzdel1999_nothing"), Source.DeleteRequest())
         .left
         .exists(_.code.exists(_.value == Write.CodeNotFound))
     )
@@ -297,7 +310,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   ):
     seed()
     val theUid = uid(Del)
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
     assert(d.applied.value && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
@@ -359,16 +372,16 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     seed()
     put(source(TwinCk))
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
     assert(!d.files.map(_.value).contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
 
   test("the delete is a write: refused while a restore holds the maintenance lock; the dry run is not"):
     seed()
-    var out: Either[Api.Error, Source.Deletion] = Left(Api.Error(com.histmersion.api.Api.Error.Message("never ran"))) // set inside the lock, read after it
-    var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(com.histmersion.api.Api.Error.Message("never ran")))
-    val _ = h.maintenance.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("test-restore")) {
-      out = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true)))
+    var out: Either[Api.Error, Source.Deletion] = Left(Api.Error(Api.Error.Message("never ran"))) // set inside the lock, read after it
+    var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(Api.Error.Message("never ran")))
+    val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) {
+      out = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
       dry = h.library.sources.delete(DelCk,Source.DeleteRequest())
       Right(())
     }

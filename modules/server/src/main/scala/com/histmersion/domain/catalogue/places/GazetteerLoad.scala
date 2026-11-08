@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
@@ -17,6 +18,10 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.catalogue.places.GazetteerImports.Problem
 import com.histmersion.server.{GazetteerPaths, HttpDownload}
 import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ByteCount
+import com.histmersion.api.catalogue.Year
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).
@@ -43,7 +48,7 @@ object GazetteerLoad:
     */
 
   type LoadApply = LoadApply.T
-  object LoadApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LoadApply extends RefinedType[Boolean, Pure]
 
   final case class Stores(
       extracts: Store,
@@ -55,7 +60,7 @@ object GazetteerLoad:
 
   object Stores:
     type ManifestAt = ManifestAt.T
-    object ManifestAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ManifestAt extends RefinedType[String, Pure]
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
   def locate(p: Stores, file: Gazetteer.SourceInfo.File): Option[(Store, Store.Key)] =
@@ -125,7 +130,7 @@ object GazetteerLoad:
       val f = Store.Key.of(x.file.value).toOption.fold(p.extracts.where())(p.extracts.where(_))
       Problem(
         s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
-          s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(com.histmersion.api.ByteCount(x.bytes.value))} — copied from " +
+          s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(ByteCount(x.bytes.value))} — copied from " +
           s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
           s"places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, " +
           s"$$XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
@@ -208,7 +213,7 @@ object GazetteerLoad:
   final private class Batcher(size: Int, sink: List[GazRecord] => Gazetteer.LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
-    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source(""), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("")) // the running sum
+    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[Gazetteer.Problem, GazRecord]): Unit = r match
@@ -243,13 +248,13 @@ object GazetteerLoad:
 
   object Settings:
     type Batch = Batch.T
-    object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Batch extends RefinedType[Int, Pure]
     type MaxLpfBytes = MaxLpfBytes.T
-    object MaxLpfBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxLpfBytes extends RefinedType[Long, Pure]
     type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
-    object DownloadTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DownloadTimeoutSeconds extends RefinedType[Int, Pure]
     type Rebuild = Rebuild.T
-    object Rebuild extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rebuild extends RefinedType[Boolean, Pure]
 
   def settings(cfg: AppConfig, stores: Stores): Settings =
     Settings(
@@ -358,7 +363,7 @@ object GazetteerLoad:
   private def sidecar(dir: Store, f: Blob): Option[JsonObject] =
     val name = f.key.name.value.replaceAll("(?i)\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
     dir
-      .get(f.key.parent.child(com.histmersion.util.storage.Store.EntryName(name + ".meta.json")))
+      .get(f.key.parent.child(Store.EntryName(name + ".meta.json")))
       .flatMap(m => io.circe.parser.parse(m.text().value).toOption.flatMap(_.asObject))
 
   private def loadLpf(
@@ -485,8 +490,8 @@ object GazetteerLoad:
             links = Some(Gazetteer.SourceInfo.Links(r.links.value)),
             licence = i.licence.orElse(r.licence.map(l => Gazetteer.SourceInfo.Licence(l.value))),
             citation = i.citation.orElse(r.citation.map(q => Gazetteer.SourceInfo.Citation(q.value))),
-            periodStart = r.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
-            periodEnd = r.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
+            periodStart = r.periodStart.map(y => Year(y.value.toLong)),
+            periodEnd = r.periodEnd.map(y => Year(y.value.toLong))
           )
         )
     val pinned = manifest(s.stores).toOption.toList.flatMap(_.extracts).flatMap { x =>
@@ -508,7 +513,7 @@ object GazetteerLoad:
     }
     val lpf = lpfFiles(s.stores.lpf).map { f =>
       val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(f.key.name.value))))
-      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, Gazetteer.SourceInfo.Title(f.key.name.value), Some(Gazetteer.SourceInfo.File(f.where.value)), present = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(true), None)
+      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, Gazetteer.SourceInfo.Title(f.key.name.value), Some(Gazetteer.SourceInfo.File(f.where.value)), present = Gazetteer.SourceInfo.Present(true), None)
     }
     val onDisk = (pinned ++ lpf).map(_.key).toSet
     val gone = stored.filterNot((k, _) => onDisk.contains(k)).values.toList.sortBy(_.key.value).flatMap { r =>

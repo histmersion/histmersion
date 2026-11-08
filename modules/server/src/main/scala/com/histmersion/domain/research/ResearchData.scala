@@ -1,4 +1,5 @@
-package com.histmersion.domain.research
+package com.histmersion
+package domain.research
 
 import com.histmersion.domain.research.articles.ArticlesData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable}
@@ -36,7 +37,7 @@ object ResearchData extends DataContribution:
   /** The articles' notes (each with its generated coverage sections, `ArticleNotes`), by their kind. */
   override val mirror: List[Mirror.Export] = List(new Mirror.Export:
     val owner: DataOwner = ResearchData.owner
-    val records: Mirror.Records = ResearchData.ArticleNotes
+    val records: Mirror.Records = ArticleNotes
     val placement: MirrorPlacement = MirrorPlacement.ArticleFiles)
 
   override val checks: List[CheckRule] = ArticlesData.checks(owner)

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.jobs.BackgroundJob
 
@@ -23,6 +24,8 @@ import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.catalogue.Period
+import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.domain.catalogue.places.GazetteerControllers
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -104,7 +107,7 @@ final class Bootstrap(
     * `fetch`, the network sources in `init.fetch-sources`.
     */
   def init(fetch: Boolean): Either[Api.Error, JobInfo] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = false)))
+    maintenance.guard(WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = false)))
 
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
 
@@ -116,7 +119,7 @@ final class Bootstrap(
     * do (the default), or the import itself.
     */
   def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply): Either[Api.Error, JobInfo] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/load")):
+    maintenance.guard(WriteGate.OperationName("places/load")):
       Gazetteer.Kind
         .parse(source)
         .toRight(
@@ -143,7 +146,7 @@ final class Bootstrap(
       Bootstrap.JobKind,
       Some(InitPlan.Detail(Some(p))),
       slot,
-      com.histmersion.util.jobs.BackgroundJob.Work("an init job"),
+      BackgroundJob.Work("an init job"),
       pins = deps.pins,
       stops = Some(deps.jobStops)
     )((job, note) => run(Job.Id.assume(job.id.value), p, note))
@@ -230,7 +233,7 @@ final class Bootstrap(
           .map(r => s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}${skippedNote(r)}")
       case NaturalEarthLand.name =>
         gazetteerImports
-          .land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false))
+          .land(dryRun = GazetteerControllers.DryRun(false))
           .left
           .map(_.value)
           .map(r => s"${r.places} polit(y/ies) clipped")
@@ -241,7 +244,7 @@ final class Bootstrap(
             BuiltinGazetteers.Entry.Name(other),
             GazetteerImports.Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
           )
-          .flatMap(src => gazetteerImports.fetch(src, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false)))
+          .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun(false)))
           .left
           .map(_.value)
           .map(r => s"${r.places} place(s)")

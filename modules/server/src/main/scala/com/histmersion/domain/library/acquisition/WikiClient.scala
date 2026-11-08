@@ -1,14 +1,17 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 trait WikiClient:
-  def refs(articleUrl: com.histmersion.domain.library.acquisition.WikiClient.ArticleUrl): Either[com.histmersion.domain.library.acquisition.WikiClient.Problem, WikirefsResult]
+  def refs(articleUrl: WikiClient.ArticleUrl): Either[WikiClient.Problem, WikirefsResult]
 
 object WikiClient:
   type ArticleUrl = ArticleUrl.T
-  object ArticleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticleUrl extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]

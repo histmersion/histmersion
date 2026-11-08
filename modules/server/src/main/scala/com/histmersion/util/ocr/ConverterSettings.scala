@@ -1,4 +1,5 @@
-package com.histmersion.util.ocr
+package com.histmersion
+package util.ocr
 
 /** What the converter client is told by the settings: where the converter is, how a document is rasterised, and how
   * long a conversion may run — in all, and per page of text, per page on the quality path and per scanned page.

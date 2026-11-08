@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,6 +10,8 @@ import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The work lists' operations as REST, MCP and the CLI reach them: the list named by its word, the inputs checked, a
   * write refused during maintenance. A LOG item given no topic joins today's entry (`## 2026-08-25`, the UTC date of
@@ -20,7 +23,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     Kind.parse(Kind.Label(list.value)).toRight(WorkListControllers.bad(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
   def add(list: WorkListControllers.ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/add")):
+    maintenance.guard(WriteGate.OperationName("queue/add")):
       kindOf(WorkListControllers.KindOfList(list.value)).flatMap { k =>
         if in.text.value.trim.isEmpty then Left(WorkListControllers.bad("queue item text is empty"))
         else
@@ -37,7 +40,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       }
 
   def patch(id: QueueItemId, p: QueuePatch): Either[Api.Error, QueueItem] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/patch")):
+    maintenance.guard(WriteGate.OperationName("queue/patch")):
       val checked =
         for
           status <- Queue.statusOf(p.status)
@@ -46,14 +49,14 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       checked.left.map(p => WorkListControllers.bad(p.value)).flatMap(c => queues.patch(id, c).left.map(WorkListControllers.error))
 
   def delete(id: QueueItemId): Either[Api.Error, QueueItem] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/delete"))(queues.delete(id).left.map(WorkListControllers.error))
+    maintenance.guard(WriteGate.OperationName("queue/delete"))(queues.delete(id).left.map(WorkListControllers.error))
 
   /** The list rendered as its `meta/<FILE>.md`. Notes are included — they ARE the file's prose. */
   def exportText(list: Kind.Label): Either[Api.Error, Queue.RenderResult] =
     kindOf(WorkListControllers.KindOfList(list.value)).map(k => Queue.render(k, queues.list(k, QueueScope.All)))
 
   def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/import")):
+    maintenance.guard(WriteGate.OperationName("queue/import")):
       kindOf(WorkListControllers.KindOfList(list.value)).map { k =>
         val rows = Queue.parse(k, Queue.FileText(req.text.value))
         val counts = queues.replace(k, rows, ImportMode.of(req.replace.value))
@@ -67,9 +70,9 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
 
 object WorkListControllers:
   type ListName = ListName.T
-  object ListName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ListName extends RefinedType[String, Pure]
   type KindOfList = KindOfList.T
-  object KindOfList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KindOfList extends RefinedType[String, Pure]
 
   private def bad(message: String): Api.Error = Api.Error(Api.Error.Message(message))
 

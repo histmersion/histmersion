@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import io.scalaland.chimney.dsl.*
 
@@ -14,13 +15,19 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.checks.FormatReport
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.library.Edge
 
 /** PURE rendering of the typed page models to HTML. Wikilinks resolve through `links` (one lookup for the whole page,
   * done by [[PageBuilder]]) into the [[HtmlRender]] anchors.
   */
 object Pages:
   type Anchor = Anchor.T
-  object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Anchor extends RefinedType[String, Pure]
 
   private def esc(s: String): String = HtmlRender.esc(HtmlRender.Text(s)).value
 
@@ -44,7 +51,7 @@ object Pages:
   /** Markdown with every `[[wikilink]]` replaced by its typed anchor (raw inline HTML, which flexmark passes through).
     * `number` appends the citation number to a source reference.
     */
-  def linkProse(md: com.histmersion.server.FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget], number: com.histmersion.api.library.Citekey => Option[Int] = _ => None): com.histmersion.server.HtmlRender.Html =
+  def linkProse(md: FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget], number: Citekey => Option[Int] = _ => None): HtmlRender.Html =
     html(
       Article.Links
         .rewriteLinks(WikiLinks.Body(md.value)) { (t, explicit, written) =>
@@ -68,7 +75,7 @@ object Pages:
   private val NotUsed = """(?im)^#{1,6}\s*not used\b.*$""".r
 
   /** Citation numbers by first appearance in `md` (the argument part of an article). */
-  def numbering(md: com.histmersion.server.FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Map[com.histmersion.api.library.Citekey, Int] =
+  def numbering(md: FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Map[Citekey, Int] =
     Article.Links
       .targets(WikiLinks.Body(md.value))
       .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
@@ -83,7 +90,7 @@ object Pages:
     * where, what goes wrong, the offending text. Unobtrusive on purpose (a reader came for the article); nothing at all
     * when the text is clean.
     */
-  def formatNotice(issues: List[FormatIssue], what: String, slug: Option[Article.Slug]): com.histmersion.server.HtmlRender.Html =
+  def formatNotice(issues: List[FormatIssue], what: String, slug: Option[Article.Slug]): HtmlRender.Html =
     if issues.isEmpty then html("")
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
@@ -108,17 +115,17 @@ object Pages:
       html(
         s"""<details class="format-notice $level"><summary>$what may not display correctly: """ +
           s"""${FormatMarkdown.problems(
-              com.histmersion.api.checks.FormatReport.IssueCount(issues.size)
+              FormatReport.IssueCount(issues.size)
             )}</summary><ul class="format-issues">${items.mkString}</ul>$tip</details>"""
       )
 
   // ── source page ──────────────────────────────────────────────────────────────────────────────
 
-  def source(p: SourcePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): com.histmersion.server.HtmlRender.Html =
+  def source(p: SourcePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): HtmlRender.Html =
     val r = p.ref
     val period = YearFmt.period(
-      p.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value)),
-      p.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value))
+      p.periodStart.map(y => Year(y.value)),
+      p.periodEnd.map(y => Year(y.value))
     )
     val byline = List(
       chips(ChipField.Author, r.authors.map(_.value)),
@@ -137,12 +144,12 @@ object Pages:
     // images) runs over every Markdown part of a source, as it did when the page was one document
     def rendered(md: String): String =
       val linked = AssetLinks.numberFigures(
-        AssetLinks.fromFigures(AssetLinks.Body(linkProse(com.histmersion.server.FullText.Shown.Markdown(md), links).value))
+        AssetLinks.fromFigures(AssetLinks.Body(linkProse(FullText.Shown.Markdown(md), links).value))
       )
       AssetLinks
         .lazyImages(
           AssetLinks.Html(
-            MarkdownHtml.render(com.histmersion.server.FullText.Shown.Markdown(AssetLinks.toWeb(linked, r.citekey).value)).value
+            MarkdownHtml.render(FullText.Shown.Markdown(AssetLinks.toWeb(linked, r.citekey).value)).value
           )
         )
         .value
@@ -184,19 +191,19 @@ object Pages:
     )
 
   /** "Cites" and "Cited by", each omitted when empty — and nothing at all when both are. */
-  def citations(cites: List[Citation], citedBy: List[Citation]): com.histmersion.server.HtmlRender.Html =
-    def block(anchor: com.histmersion.server.Pages.Anchor, title: String, cs: List[Citation]) =
+  def citations(cites: List[Citation], citedBy: List[Citation]): HtmlRender.Html =
+    def block(anchor: Anchor, title: String, cs: List[Citation]) =
       if cs.isEmpty then ""
       else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(c => citation(c).value).mkString}</ul>"""
     html(
-      block(com.histmersion.server.Pages.Anchor("cites"), "Cites", cites) +
-        block(com.histmersion.server.Pages.Anchor("cited-by"), "Cited by", citedBy)
+      block(Anchor("cites"), "Cites", cites) +
+        block(Anchor("cited-by"), "Cited by", citedBy)
     )
 
-  private def kindLabel(kind: com.histmersion.domain.library.Edge.Kind.Wire): String =
+  private def kindLabel(kind: Edge.Kind.Wire): String =
     s"""<span class="edge-kind">${esc(display(kind.value))}</span> """
 
-  def citation(c: Citation): com.histmersion.server.HtmlRender.Html = c match
+  def citation(c: Citation): HtmlRender.Html = c match
     case Citation.ToSource(r, kind) =>
       html(
         s"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${esc(r.title.value)}</i> """ +
@@ -204,14 +211,14 @@ object Pages:
       )
     case Citation.ToArticle(a, kind) =>
       html(
-        s"""<li>${kindLabel(kind.getOrElse(com.histmersion.domain.library.Edge.Kind.Wire("article")))}${HtmlRender.articleRef(a).value}</li>"""
+        s"""<li>${kindLabel(kind.getOrElse(Edge.Kind.Wire("article")))}${HtmlRender.articleRef(a).value}</li>"""
       )
     case Citation.Unresolved(id, kind) =>
       html(s"""<li>${kindLabel(kind)}${dangling(id.value)} <span class="muted">not in the corpus yet</span></li>""")
 
   // ── article page ─────────────────────────────────────────────────────────────────────────────
 
-  def article(p: ArticlePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): com.histmersion.server.HtmlRender.Html =
+  def article(p: ArticlePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): HtmlRender.Html =
     val a = p.article
     val body0 = a.body.value.trim
     val heading = Articles.heading(Article.Body(body0))
@@ -222,14 +229,14 @@ object Pages:
     val (argument, notUsed) = NotUsed.findFirstMatchIn(body) match
       case Some(m) => (body.take(m.start), body.drop(m.start))
       case None    => (body, "")
-    val numbers = numbering(com.histmersion.server.FullText.Shown.Markdown(argument), links)
+    val numbers = numbering(FullText.Shown.Markdown(argument), links)
     // the generated sections (#958) follow the body; like a hand-written Not used, their links get no number
     val generated = p.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c).value)
     val prose = MarkdownHtml
       .render(
-        com.histmersion.server.FullText.Shown.Markdown(
-          linkProse(com.histmersion.server.FullText.Shown.Markdown(argument), links, numbers.get).value +
-            linkProse(com.histmersion.server.FullText.Shown.Markdown(notUsed + generated), links).value
+        FullText.Shown.Markdown(
+          linkProse(FullText.Shown.Markdown(argument), links, numbers.get).value +
+            linkProse(FullText.Shown.Markdown(notUsed + generated), links).value
         )
       )
       .value
@@ -253,7 +260,7 @@ object Pages:
   // ── review ───────────────────────────────────────────────────────────────────────────────────
 
   /** An article's review state as a badge, its meaning on hover. */
-  def reviewBadge(b: ReviewBadge): com.histmersion.server.HtmlRender.Html =
+  def reviewBadge(b: ReviewBadge): HtmlRender.Html =
     html(
       s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail.value)}">${esc(
           Wording.capitalize(b.label.value)
@@ -263,7 +270,7 @@ object Pages:
   /** A research goal's stage as the goals list draws it, linked to the goal's page (in the web UI a plain click opens
     * its window).
     */
-  def goalBadgeLink(g: ReviewGoal): com.histmersion.server.HtmlRender.Html =
+  def goalBadgeLink(g: ReviewGoal): HtmlRender.Html =
     val status = g.status.value
     val meaning =
       Goal.Stages.meaning(Goal.Stage(status)).fold("")(m => s""" title="${esc(s"$status: ${m.value}")}"""")
@@ -281,7 +288,7 @@ object Pages:
     case other                       => other
 
   /** Under the title: the review badge, and the research goals that link the article. */
-  def reviewLine(r: Article.ReviewView): com.histmersion.server.HtmlRender.Html =
+  def reviewLine(r: Article.ReviewView): HtmlRender.Html =
     val goals = if r.goals.isEmpty then ""
     else
       s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
@@ -291,14 +298,14 @@ object Pages:
   /** Every finding the review panel raised, run by run and round by round, with what became of it; collapsed, its
     * summary saying how many there were and how many are open.
     */
-  def reviewHistory(r: Article.ReviewView): com.histmersion.server.HtmlRender.Html =
+  def reviewHistory(r: Article.ReviewView): HtmlRender.Html =
     if r.rounds.isEmpty then html("")
     else
       val all = r.rounds.flatMap(_.findings)
       val runs = r.rounds.map(_.run).distinct.size
       val open = all.count(_.outcome.value == "open")
       val summary =
-        s"Review history: ${Plural.count(Plural.CountN(all.size.toLong), com.histmersion.api.Plural.CountSingular("finding"))} over ${Plural.count(Plural.CountN(runs.toLong), com.histmersion.api.Plural.CountSingular("run"))}" +
+        s"Review history: ${Plural.count(Plural.CountN(all.size.toLong), Plural.CountSingular("finding"))} over ${Plural.count(Plural.CountN(runs.toLong), Plural.CountSingular("run"))}" +
           (if open > 0 then s", $open still open" else ", none open")
       val rounds = r.rounds.map { rd =>
         val when = rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t.value))}</span>""")
@@ -323,7 +330,7 @@ object Pages:
     */
   def citedEntries(
       cited: List[CitedSource],
-      numbers: Map[com.histmersion.api.library.Citekey, Int],
+      numbers: Map[Citekey, Int],
       links: WikiLinks.Occurrence.Target => Option[LinkTarget]
   ): List[CitedEntry] =
     val byCk = cited.map(c => c.citekey -> c).toMap
@@ -369,7 +376,7 @@ object Pages:
       )
     numbered ++ rest
 
-  def sourcesCited(entries: List[CitedEntry]): com.histmersion.server.HtmlRender.Html =
+  def sourcesCited(entries: List[CitedEntry]): HtmlRender.Html =
     if entries.isEmpty then html("")
     else
       val items = entries.map { e =>
@@ -383,7 +390,7 @@ object Pages:
                 e.year.fold("")(_.toString)
               ).filter(_.nonEmpty).mkString(" ")
             val status =
-              e.status.fold("")(s => " " + HtmlRender.statusBadge(s.transformInto[com.histmersion.api.library.Source.Status]).value)
+              e.status.fold("")(s => " " + HtmlRender.statusBadge(s.transformInto[Source.Status]).value)
             val ident = HtmlRender.identifier(e.citekey, e.doi).value
             s"""<li$id>${HtmlRender
                 .sourceLink(e.citekey, e.doi, HtmlRender.Label(if byline.nonEmpty then byline else t.value))
@@ -396,14 +403,14 @@ object Pages:
         s"""<h2 id="sources-cited">Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
       )
 
-  def backlinks(rows: List[Backlink]): com.histmersion.server.HtmlRender.Html =
+  def backlinks(rows: List[Backlink]): HtmlRender.Html =
     if rows.isEmpty then html("")
     else
       val items = rows.map { b =>
         val label = b.title.map(_.value).filter(_.trim.nonEmpty).getOrElse(display(b.id.value))
         val link =
           if b.kind.value == Article.Links.TargetSource then
-            HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey(b.id.value), None, label)
+            HtmlAtoms.sourceLink(Citekey(b.id.value), None, label)
           else HtmlAtoms.articleLink(ReviewGoal.Slug(b.id.value), label)
         s"<li>$link</li>"
       }

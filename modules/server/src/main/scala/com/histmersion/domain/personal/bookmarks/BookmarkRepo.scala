@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.bookmarks
+package com.histmersion
+package domain.personal.bookmarks
 
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.util.database.{Param, Sql}
@@ -10,11 +11,13 @@ import com.histmersion.{PageSize, UserId}
 import com.augustnagro.magnum.*
 
 import scala.util.chaining.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `bookmarks` table. Takes the connection it runs on; a removed bookmark stays as its tombstone. */
 private[bookmarks] object BookmarkRepo:
   type RowsChanged = RowsChanged.T
-  object RowsChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RowsChanged extends RefinedType[Int, Pure]
 
 
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
@@ -27,8 +30,8 @@ private[bookmarks] object BookmarkRepo:
   /** Newest first; every one when no `size` is given. */
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
     (Sql.of(Sql.Text(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(com.histmersion.util.database.Sql.Text(" AND b.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
-      Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY b.created_at DESC, b.id DESC")) ++
+      kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND b.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
+      Sql.raw(Sql.Text(" ORDER BY b.created_at DESC, b.id DESC")) ++
       size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag.query[Bookmark.Row].run().toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
@@ -70,12 +73,12 @@ private[bookmarks] object BookmarkRepo:
       id: com.histmersion.api.personal.Bookmark.Id,
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       at: MarkTime
-  )(using DbCon): com.histmersion.domain.personal.bookmarks.BookmarkRepo.RowsChanged =
+  )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET label = $label, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
 
-  def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.bookmarks.BookmarkRepo.RowsChanged =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.jobs.BackgroundJob
 
@@ -21,6 +22,7 @@ import com.histmersion.util.storage.Store
 import java.net.http.HttpClient
 import java.time.{Duration, Instant}
 import com.histmersion.api.Api
+import com.histmersion.util.jobs.Job
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
@@ -30,7 +32,7 @@ object BasemapWiring:
   def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
-  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.ByteCount = _.usableSpace): BasemapService =
+  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => ByteCount = _.usableSpace): BasemapService =
     BasemapService(
       () => deps.cfg.basemap,
       deps.storage,
@@ -100,7 +102,7 @@ object BasemapWiring:
       BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.value)))
 
     def start(
-        kind: com.histmersion.util.jobs.Job.Kind,
+        kind: Job.Kind,
         about: BasemapJobs.Description,
         what: BasemapJobs.Target,
         busyCode: Option[BasemapJobs.Reason]

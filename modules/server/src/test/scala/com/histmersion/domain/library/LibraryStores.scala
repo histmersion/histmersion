@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.domain.library.citations.CitationService
 import com.histmersion.domain.library.sources.SourceService

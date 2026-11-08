@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable}
 import com.histmersion.util.data.diagnostics.DataFigures

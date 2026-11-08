@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
@@ -7,6 +8,7 @@ import com.histmersion.util.database.Transactor
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.library.Doi
 
 /** The work lists' kernel: one table of items, a list per owner — ACQUIRE (the library's), TASKS and LOG (the
   * engine's). Each owner adds its own rules on top (a log item's dated topic, an acquisition item's DOI); the kernel
@@ -20,7 +22,7 @@ trait QueueService:
   def byIds(ids: List[QueueItemId]): List[QueueItem]
 
   /** The items of `list` (any status) whose text names `doi`, by id. */
-  def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem]
+  def naming(list: Kind, doi: Doi): List[QueueItem]
 
   /** A new item of `list`, as stored (its status checked by the caller). */
   def add(list: Kind, item: QueueAdd): QueueItem
@@ -49,7 +51,7 @@ object QueueService:
 
     def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(QueueRepo.QueueItemId(id.value)))
     def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
-    def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
+    def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] = db.transact:
@@ -84,7 +86,7 @@ object QueueService:
       val wanted = ids.map(_.value: Int).toSet
       state.get.items.filter(i => wanted(i.id.value)).toList
 
-    def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = state.get.naming(list, doi).toList
+    def naming(list: Kind, doi: Doi): List[QueueItem] = state.get.naming(list, doi).toList
     def add(list: Kind, item: QueueAdd): QueueItem = state.updateAndGet(_.added(list, item, now)).items.last
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] =

@@ -1,10 +1,15 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.config.AgentsConfig
 
 import java.time.Instant
 import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.agents.AgentRepo
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a manager kind's checks of an approval its items wait for are given ([[AutoApprovals]] is one): what was
   * approved by code since a moment, the output a run's step recorded, the caps.
@@ -13,19 +18,19 @@ trait ApprovalChecks:
   def config: AgentsConfig
 
   /** Whether an article with this slug exists (as stored). */
-  def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.Slug): Boolean
+  def slugExists(slug: ApprovalChecks.Slug): Boolean
 
   /** The approvals of `kind` decided by code since `since`. */
   def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo]
 
   /** The output the last finished `step` of `run` recorded. */
-  def checkpoint(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[String]
+  def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String]
 
   /** How many article drafts the checks may publish today. */
-  def publishCap: com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCap
+  def publishCap: ApprovalChecks.PublishCap
 
 object ApprovalChecks:
   type PublishCap = PublishCap.T
-  object PublishCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublishCap extends RefinedType[Int, Pure]
   type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Slug extends RefinedType[String, Pure]

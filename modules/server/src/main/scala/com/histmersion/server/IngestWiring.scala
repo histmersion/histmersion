@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.library.ingest.{IngestControllers, IngestQueue, QueuedIngest, SeedImport, Upload}
 import com.histmersion.domain.library.sources.SourceService
@@ -7,6 +8,7 @@ import com.histmersion.util.jobs.JobRecords
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Store}
+import com.histmersion.domain.library.Citekey
 
 /** The library's ingest over one server's `deps`: the job queue over the converter and the originals' store, the ingest
   * surface, the hand-over an acquisition's fetched copy takes, and the seed. The figures are media's.
@@ -16,7 +18,7 @@ final class IngestWiring(
     converter: ConverterClient,
     sources: SourceService,
     figures: AssetService,
-    afterStore: com.histmersion.domain.library.Citekey => Option[IngestQueue.Note]
+    afterStore: Citekey => Option[IngestQueue.Note]
 ):
   private def originals: Store = deps.storage.store(Location.IngestOriginals)
 

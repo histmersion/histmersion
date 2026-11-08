@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.managers.Zero
@@ -17,14 +18,15 @@ import sttp.shared.Identity
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.time.Timer
 
 /** Times each LLM call of a step and holds one of the server-wide `max-llm-calls-in-flight` slots while it runs, so
   * parallel steps and concurrent runs together never exceed the cap.
   */
-final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () => Unit = () => ())(using timer: com.histmersion.util.time.Timer)
+final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () => Unit = () => ())(using timer: Timer)
     extends AgentInterceptor[Identity]:
   /** Per-call latencies, in call order. A `var` local to one step's interceptor instance. */
-  @volatile var millis: Vector[com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs] = Vector.empty
+  @volatile var millis: Vector[AgentRepo.MessageRecord.LatencyMs] = Vector.empty
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     // waiting for a slot behind other runs' calls is not a stall: beat while waiting
     while !slots.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat()

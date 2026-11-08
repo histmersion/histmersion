@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
 
@@ -43,7 +44,7 @@ object FakeMediaHttp:
 
   /** The default media config with no pause between requests. */
   lazy val cfg: MediaConfig =
-    AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = com.histmersion.config.MediaConfig.RequestIntervalMs(0))
+    AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(0))
 
   /** A [[Polite]] over `http` whose sleeps are recorded, not slept, on a clock that sleeping advances. */
   def polite(

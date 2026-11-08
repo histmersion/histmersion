@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.worklists
+package com.histmersion
+package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem}
@@ -11,6 +12,8 @@ import scala.annotation.tailrec
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
+import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Goal
 
 /** The work lists held in memory: every item in id order, and the last id handed out. The rules are the database's: an
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times
@@ -34,7 +37,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
   def get(id: QueueItemId): Option[QueueItem] = items.find(_.id.value == id.value)
 
   /** The items of `kind` whose text names `doi`, as the database's `strpos` and the DOI rule find them. */
-  def naming(kind: Kind, doi: com.histmersion.domain.library.Doi): Vector[QueueItem] =
+  def naming(kind: Kind, doi: Doi): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
@@ -86,7 +89,7 @@ object WorkListState:
       in.reason,
       Some(QueueItem.CreatedAt(stamp(in.createdAt.map(c => Instant.parse(c.value)).getOrElse(now)))),
       Option.when(status == Queue.Done)(QueueItem.DoneAt(stamp(now))),
-      in.goal.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.automation.Goal.Slug(_)),
+      in.goal.map(_.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)),
       in.job.map(_.value.trim).filter(_.nonEmpty).map(QueueItem.CreatedBy(_)),
       None
     )

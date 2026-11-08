@@ -1,7 +1,10 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Just enough of the Mapbox Vector Tile protobuf (https://github.com/mapbox/vector-tile-spec) to thin a tile WITHOUT
   * decoding its geometry: keep the named layers, and inside them drop the features whose `kind` is listed. Everything
@@ -12,33 +15,33 @@ import java.nio.charset.StandardCharsets
   */
 object Mvt:
   type GeomType = GeomType.T
-  object GeomType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeomType extends RefinedType[Int, Pure]
   type GeometryCommand = GeometryCommand.T
-  object GeometryCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeometryCommand extends RefinedType[Int, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type LayerBytes = LayerBytes.T
-  object LayerBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LayerBytes extends RefinedType[Array[Byte], Pure]
   type LayerName = LayerName.T
-  object LayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LayerName extends RefinedType[String, Pure]
   type Others = Others.T
-  object Others extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Others extends RefinedType[Boolean, Pure]
   type PointX = PointX.T
-  object PointX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointX extends RefinedType[Int, Pure]
   type PointY = PointY.T
-  object PointY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointY extends RefinedType[Int, Pure]
   type Problem = RangeHttp.Problem
   val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type PropKey = PropKey.T
-  object PropKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PropKey extends RefinedType[String, Pure]
   type PropText = PropText.T
-  object PropText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PropText extends RefinedType[String, Pure]
   type SignedNumber = SignedNumber.T
-  object SignedNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SignedNumber extends RefinedType[Long, Pure]
   type TileBytes = PmTiles.PlainBytes
   val TileBytes: PmTiles.PlainBytes.type = PmTiles.PlainBytes
   type Varint = Varint.T
-  object Varint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Varint extends RefinedType[Long, Pure]
 
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
@@ -130,15 +133,15 @@ object Mvt:
   object Rule:
 
     type Keep = Keep.T
-    object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Keep extends RefinedType[String, Pure]
     type Drop = Drop.T
-    object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Drop extends RefinedType[String, Pure]
     type Empty = Empty.T
-    object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Empty extends RefinedType[Boolean, Pure]
     type Geoms = Geoms.T
-    object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Geoms extends RefinedType[Int, Pure]
     type Props = Props.T
-    object Props extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Props extends RefinedType[String, Pure]
 
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.

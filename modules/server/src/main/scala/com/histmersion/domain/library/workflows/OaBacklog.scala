@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -26,6 +27,16 @@ import com.histmersion.domain.library.workflows.OaBacklog.Snapshot
 
 import java.time.Instant
 import com.histmersion.api.automation.Queue
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Manager
+import com.histmersion.api.library.WorkRef
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Source
+import com.histmersion.domain.automation.worklists.QueueItemId
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -58,8 +69,8 @@ final class OaBacklog(
     * goal added), or a new entry of `managerId` — nothing when the corpus has it or this watcher settled an entry for
     * it before (a person skipped it).
     */
-  def add(managerId: ManagerInfo.Id, goal: com.histmersion.domain.automation.Goal.Slug, w: OaWork): Placement =
-    val doi = com.histmersion.domain.library.Doi.assume(w.doi.value)
+  def add(managerId: ManagerInfo.Id, goal: Goal.Slug, w: OaWork): Placement =
+    val doi = Doi.assume(w.doi.value)
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     val open = agents.managerStore.backlogOpenFor(doi)
     val settled = agents.managerStore
@@ -78,7 +89,7 @@ final class OaBacklog(
           agents.goals.link(
             goal,
             io.scalaland.chimney.Transformer
-              .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
             Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why}".take(500)))
@@ -89,7 +100,7 @@ final class OaBacklog(
         val _ = agents.goals.link(
           goal,
           io.scalaland.chimney.Transformer
-            .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+            .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
             .transform(LinkKind.QueueItem),
           GoalLink.Ref(id.value.toString),
           Some(GoalLink.Note(doi.value))
@@ -131,7 +142,7 @@ final class OaBacklog(
           agents.managerStore.event(
             managerId,
             Some(id),
-            w.foundBy.map(r => com.histmersion.domain.automation.Run.Id.assume(r.value)),
+            w.foundBy.map(r => Run.Id.assume(r.value)),
             ManagerEvent.Kind(Feed.Evaluated),
             ManagerEvent.Text(
               s"$doi (ingest backlog): ${w.title.value.take(200)} — legal open access, waits for a day's ingest allowance"
@@ -251,7 +262,7 @@ final class OaBacklog(
         val goalOf = agents.managerStore.light().map(m => m.id.value -> m.goal).toMap
         val results = picks
           .flatMap(e => byId.get(ManagerItem.Id(e.id.value)))
-          .map(i => one(i, goalOf.get(i.managerId.value).flatten.map(g => com.histmersion.domain.automation.Goal.Slug.assume(g.value)), now))
+          .map(i => one(i, goalOf.get(i.managerId.value).flatten.map(g => Goal.Slug.assume(g.value)), now))
         val ingested = results.collect { case Drained.Ingested(ck) => ck }
         val queued = results.collect { case Drained.Queued(id) => id }
         val known = results.count(_ == Drained.Known)
@@ -264,20 +275,20 @@ final class OaBacklog(
              else "") +
             (if known > 0 then s", $known in the corpus already" else "") +
             (if retried > 0 then s", $retried to try again later" else "") + s"; $waiting waiting"
-        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+        val _ = site.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
         List(line)
 
   private enum Drained:
-    case Ingested(citekey: com.histmersion.domain.library.Citekey)
+    case Ingested(citekey: Citekey)
     case Queued(item: Queue.QueueItem.Id)
     case Known
     case Retried
     case Lost
 
-  private def one(i: ManagerItem, holderGoal: Option[com.histmersion.domain.automation.Goal.Slug], now: Instant): Drained =
-    val doi = com.histmersion.domain.library.Doi.assume(i.target.value)
+  private def one(i: ManagerItem, holderGoal: Option[Goal.Slug], now: Instant): Drained =
+    val doi = Doi.assume(i.target.value)
     val w = i.state.oa.getOrElse(OaWork(com.histmersion.api.library.Doi(doi.value)))
-    val goals = (w.goals.map(g => com.histmersion.domain.automation.Goal.Slug.assume(g.value)) ++ holderGoal.toList).distinct
+    val goals = (w.goals.map(g => Goal.Slug.assume(g.value)) ++ holderGoal.toList).distinct
     def settle(status: ItemStatus, outcome: String, kind: String, text: String, d: Drained): Drained =
       if agents.managerStore.settle(i.id, status, ManagerItem.Outcome(outcome), List(ItemStatus.Pending)) then
         agents.managerStore.event(
@@ -295,7 +306,7 @@ final class OaBacklog(
           agents.goals.link(
             g,
             io.scalaland.chimney.Transformer
-              .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
             Some(GoalLink.Note(s"found by a watcher sweep: ${w.why}".take(500)))
@@ -315,7 +326,7 @@ final class OaBacklog(
               agents.goals.link(
                 g,
                 io.scalaland.chimney.Transformer
-                  .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+                  .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
                   .transform(LinkKind.Source),
                 GoalLink.Ref(r.citekey.value),
                 Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why}".take(500)))
@@ -327,7 +338,7 @@ final class OaBacklog(
               Feed.Ingested,
               s"[[${r.citekey}]] ingested from the backlog (legal open access, ${r.pdf.fold("no file")(_.source.value)}): " +
                 s"${if w.title.value.nonEmpty then w.title.value else doi.value} — https://doi.org/$doi",
-              Drained.Ingested(com.histmersion.domain.library.Citekey.assume(r.citekey.value))
+              Drained.Ingested(Citekey.assume(r.citekey.value))
             )
           case Left(m) =>
             val s = settingsOf(i.managerId)
@@ -371,12 +382,12 @@ final class OaBacklog(
 
   private def settingsOf(managerId: ManagerInfo.Id): ManagerPolicy.ReviewSettings =
     val c = agents.managerStore.get(managerId).map(_.config).getOrElse(ManagerConfig())
-    ManagerPolicy.ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Watch, c, managerDefaults)
+    ManagerPolicy.ReviewSettings.forKind(Manager.Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
     */
-  private def acquireOnce(goals: List[com.histmersion.domain.automation.Goal.Slug], doi: com.histmersion.domain.library.Doi, w: OaWork): Option[Queue.QueueItem.Id] =
+  private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork): Option[Queue.QueueItem.Id] =
     val existing = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption
@@ -393,7 +404,7 @@ final class OaBacklog(
                     w.year,
                     w.authors,
                     w.venue,
-                    isOa = com.histmersion.api.library.WorkRef.IsOa(true), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query(""), None
+                    isOa = WorkRef.IsOa(true), AcquisitionSweepRules.Candidate.Query(""), None
                   ),
                   g,
                   AcquisitionSweepRules.Pick.Why(w.why.value)
@@ -405,7 +416,7 @@ final class OaBacklog(
       text.flatMap(t =>
         site.workLists
           .add(
-            com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
+            WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
             QueueAdd(
               t,
               topic = goal.map(g => Queue.QueueItem.Topic(s"goal $g")),
@@ -421,7 +432,7 @@ final class OaBacklog(
         agents.goals.link(
           g,
           io.scalaland.chimney.Transformer
-            .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+            .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
             .transform(LinkKind.QueueItem),
           GoalLink.Ref(i.value.toString),
           Some(GoalLink.Note(doi.value))
@@ -447,7 +458,7 @@ final class OaBacklog(
     val items = rows.groupBy(_.item).toList.sortBy[Int](_._1.value)
     val out = items.map { (item, rs) =>
       val first = rs.find(_.isOa.value).getOrElse(rs.head)
-      val goals = rs.map(_.goal).distinct.map(g => com.histmersion.domain.automation.Goal.Slug.assume(g.value))
+      val goals = rs.map(_.goal).distinct.map(g => Goal.Slug.assume(g.value))
       val w = light.get(first.managerId.value)
       val watcher = ManagerInfo.Id(first.managerId.value)
       val apiGoals = goals.map(g => com.histmersion.api.automation.Goal.Slug(g.value))
@@ -478,7 +489,7 @@ final class OaBacklog(
               agents.goals.link(
                 g,
                 io.scalaland.chimney.Transformer
-                  .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+                  .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
                   .transform(LinkKind.Source),
                 GoalLink.Ref(ck.value),
                 Some(GoalLink.Note("found by a watcher sweep"))
@@ -490,9 +501,9 @@ final class OaBacklog(
           val work = OaWork(
             com.histmersion.api.library.Doi(first.doi.value),
             first.title.fold(com.histmersion.api.library.Title(""))(t => com.histmersion.api.library.Title(t.value)),
-            first.year.map(y => com.histmersion.api.catalogue.Year(y.value)),
+            first.year.map(y => Year(y.value)),
             first.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
-            first.venue.map(v => com.histmersion.api.library.Source.Venue(v.value)),
+            first.venue.map(v => Source.Venue(v.value)),
             apiGoals,
             first.why.fold(OaWork.Why(""))(w => OaWork.Why(w.value)),
             Some(OaWork.FoundBy(first.job.value)),
@@ -509,7 +520,7 @@ final class OaBacklog(
                 agents.managerStore.event(
                   watcher,
                   Some(id),
-                  Some(com.histmersion.domain.automation.Run.Id.assume(first.job.value)),
+                  Some(Run.Id.assume(first.job.value)),
                   ManagerEvent.Kind(Feed.Evaluated),
                   ManagerEvent.Text(
                     s"${first.doi} (ingest backlog): moved from acquisition item #$item by repair-acquire ($by)"
@@ -540,7 +551,7 @@ final class OaBacklog(
     )
     if !dryRun && (result.moved.value > 0 || result.removed.value > 0) then
       val _ = site.workLists.add(
-        com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
+        WorkListControllers.ListName("log"),
         QueueAdd(
           Queue.QueueItem.Text(
             (s"repair-acquire ($by): ${result.moved} legal open-access work(s) moved from the " +
@@ -556,7 +567,7 @@ final class OaBacklog(
     * `managerId` settled one for it before (a person's skip is not undone).
     */
   private def addMoved(managerId: ManagerInfo.Id, w: OaWork): Option[ManagerItem.Id] =
-    val doi = com.histmersion.domain.library.Doi.assume(w.doi.value)
+    val doi = Doi.assume(w.doi.value)
     agents.managerStore.backlogOpenFor(doi).map(_.id).orElse {
       val (id, isNew) = agents.managerStore.upsert(
         managerId,
@@ -571,7 +582,7 @@ final class OaBacklog(
       Option.when(isNew)(id)
     }
 
-  private def joinGoal(itemId: ManagerItem.Id, goal: com.histmersion.domain.automation.Goal.Slug): Unit =
+  private def joinGoal(itemId: ManagerItem.Id, goal: Goal.Slug): Unit =
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     agents.managerStore.item(itemId).foreach { i =>
       val st = i.state.oa.getOrElse(OaWork(com.histmersion.api.library.Doi(i.target.value)))
@@ -583,10 +594,10 @@ final class OaBacklog(
         )
     }
 
-  private def removeAcquire(item: SweepAcquireItem.Item, goals: List[com.histmersion.domain.automation.Goal.Slug]): Unit =
-    val _ = site.workLists.delete(com.histmersion.domain.automation.worklists.QueueItemId(item.value))
+  private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug]): Unit =
+    val _ = site.workLists.delete(QueueItemId(item.value))
     goals.foreach(g =>
-      agents.goals.unlink(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString))
+      agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString))
     )
 
 object OaBacklog:

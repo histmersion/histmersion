@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 /** A temporary store, removed with everything in it when it closes. */
 trait Scratch extends AutoCloseable:

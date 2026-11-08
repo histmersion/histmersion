@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -26,6 +27,9 @@ import com.histmersion.plugin.MediaCollection
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{AssetKind, MediaCount, MediaImportReport, MediaProvider}
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.util.storage.Blob
+import com.histmersion.util.ocr.Pixels
+import com.histmersion.domain.DeepTime
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]]) extends MediaStore:
@@ -81,34 +85,34 @@ class CollectionsSuite extends munit.FunSuite:
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[ConverterClient.Filename]
     def convert(
-        file: com.histmersion.util.storage.Blob,
+        file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
       ConverterClient.Problem("not used")
     )
     def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: com.histmersion.util.ocr.Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
       calls += filename
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg ++ Array[Byte](42)), com.histmersion.util.ocr.ConverterClient.Thumb.Mime("image/jpeg"), com.histmersion.util.ocr.ConverterClient.Thumb.Width(330), com.histmersion.util.ocr.ConverterClient.Thumb.Height(250)))
+      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg ++ Array[Byte](42)), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(330), ConverterClient.Thumb.Height(250)))
 
   private def fx(name: String) = FakeMediaHttp.fixture(name)
 
   private val mycenae = PlaceFacts(
-    com.histmersion.domain.media.imports.PlaceFacts.Id("pleiades_570491"),
-    com.histmersion.domain.media.imports.PlaceFacts.Label("Mycenae"),
-    Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("mycenae")),
-    Some((com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L))),
-    Some(com.histmersion.domain.media.imports.Target.Qid("Q132564")),
-    Some(com.histmersion.Latitude(37.73)),
-    Some(com.histmersion.Longitude(22.756))
+    PlaceFacts.Id("pleiades_570491"),
+    PlaceFacts.Label("Mycenae"),
+    Set(PlaceFacts.Keys("mycenae")),
+    Some((DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L))),
+    Some(Target.Qid("Q132564")),
+    Some(Latitude(37.73)),
+    Some(Longitude(22.756))
   )
   private val mycenaeGn =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_mycenae"), com.histmersion.domain.media.imports.PlaceFacts.Label("Mykines"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("mycenae"), com.histmersion.domain.media.imports.PlaceFacts.Keys("mykines")), None, None, Some(com.histmersion.Latitude(37.731)), Some(com.histmersion.Longitude(22.757)))
+    PlaceFacts(PlaceFacts.Id("geonames_mycenae"), PlaceFacts.Label("Mykines"), Set(PlaceFacts.Keys("mycenae"), PlaceFacts.Keys("mykines")), None, None, Some(Latitude(37.731)), Some(Longitude(22.757)))
   private val greece =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_390903"), com.histmersion.domain.media.imports.PlaceFacts.Label("Greece"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("greece")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q41")), Some(com.histmersion.Latitude(39.0)), Some(com.histmersion.Longitude(22.0)))
+    PlaceFacts(PlaceFacts.Id("geonames_390903"), PlaceFacts.Label("Greece"), Set(PlaceFacts.Keys("greece")), Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))), Some(Target.Qid("Q41")), Some(Latitude(39.0)), Some(Longitude(22.0)))
   private val cyprus =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_146669"), com.histmersion.domain.media.imports.PlaceFacts.Label("Cyprus"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("cyprus")), Some((com.histmersion.domain.DeepTime.SignedYear(-1200L), com.histmersion.domain.DeepTime.SignedYear(-300L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q229")), Some(com.histmersion.Latitude(35.0)), Some(com.histmersion.Longitude(33.0)))
+    PlaceFacts(PlaceFacts.Id("geonames_146669"), PlaceFacts.Label("Cyprus"), Set(PlaceFacts.Keys("cyprus")), Some((DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-300L))), Some(Target.Qid("Q229")), Some(Latitude(35.0)), Some(Longitude(33.0)))
   private val facts = List(mycenae, greece, cyprus).map(f => Place.Id.assume(f.id.value) -> f).toMap
   // Pleiades' and GeoNames' Mycenae are one site (3 km): the name resolves to it once
   private val named = Map(
@@ -116,7 +120,7 @@ class CollectionsSuite extends munit.FunSuite:
     ImportService.PlaceKey("greece") -> List(greece),
     ImportService.PlaceKey("cyprus") -> List(cyprus)
   )
-  private def target(f: PlaceFacts) = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), Target.Id(f.id.value), com.histmersion.domain.media.imports.Target.Qid(""), Target.Label(f.label.value))
+  private def target(f: PlaceFacts) = Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
   private val cfg = FakeMediaHttp.cfg
 
@@ -136,7 +140,7 @@ class CollectionsSuite extends munit.FunSuite:
       conv: ThumbConverter = ThumbConverter()
   ): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value)))
-    CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = com.histmersion.domain.media.imports.CollectionImport.Refresh(false), store)
+    CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = CollectionImport.Refresh(false), store)
 
   // ── the Met ──────────────────────────────────────────────────────────────────────────────────
 
@@ -150,7 +154,7 @@ class CollectionsSuite extends munit.FunSuite:
       metObject(248284, _.replace("\"isPublicDomain\": true", "\"isPublicDomain\": false"))
     else if url.endsWith("/v1/objects/252447") then
       metObject(252447, _.replace("\"excavation\": \"Mycenae\"", "\"excavation\": \"Argos\""))
-    else if url.contains("/v1/objects/") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+    else if url.contains("/v1/objects/") then Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
     else if url.startsWith("https://images.metmuseum.org/") then
       FakeMediaHttp.bytes(jpeg ++ url.getBytes("UTF-8"), "image/jpeg")
     else Left(s"unexpected $url")
@@ -170,7 +174,7 @@ class CollectionsSuite extends munit.FunSuite:
       r.rejected.map(_.key.value).sorted,
       List("names another place on the map", "not Open Access (isPublicDomain is false)")
     )
-    assertEquals(r.byLicence, List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(2)), MediaCount(com.histmersion.api.media.MediaCount.Key("not open access"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false))))
+    assertEquals(r.byLicence, List(MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)), MediaCount(MediaCount.Key("not open access"), MediaCount.N(1), allowed = MediaCount.Allowed(false))))
     assertEquals(r.failed.size, 2, "the two objects the stand-in has no record of are lines, not the end")
     assert(store.saved.isEmpty && store.links.isEmpty && store.checks.isEmpty)
     assert(http.requests.forall(_._1.startsWith("https://collectionapi.metmuseum.org/")), "documented API only")
@@ -182,7 +186,7 @@ class CollectionsSuite extends munit.FunSuite:
   ):
     val http = FakeMediaHttp { url =>
       if url.contains("/v1.1/search?") then FakeMediaHttp.json(fx("met-search.json"))
-      else if url.endsWith("/v1/objects/248284") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(403), Map.empty, HttpAnswer.Body("Forbidden".getBytes("UTF-8"))))
+      else if url.endsWith("/v1/objects/248284") then Right(HttpAnswer(HttpAnswer.Code(403), Map.empty, HttpAnswer.Body("Forbidden".getBytes("UTF-8"))))
       else if url.contains("/v1/objects/") then metObject(252448)
       else Left(s"unexpected $url")
     }
@@ -226,13 +230,13 @@ class CollectionsSuite extends munit.FunSuite:
 
   test("a place whose search fails is not recorded as asked (the next run asks again)"):
     val store = CollStore(facts, named)
-    val http = FakeMediaHttp(_ => Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(500), Map.empty, HttpAnswer.Body(Array.emptyByteArray))))
+    val http = FakeMediaHttp(_ => Right(HttpAnswer(HttpAnswer.Code(500), Map.empty, HttpAnswer.Body(Array.emptyByteArray))))
     val c = cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(0))
     val (polite, _) = FakeMediaHttp.polite(http, c)
     val r = CollectionImport(FakeMediaHttp.builtin(Met), polite, c, ThumbConverter()).run(
       List(target(mycenae)),
-      com.histmersion.domain.media.imports.CollectionImport.DryRun(false),
-      com.histmersion.domain.media.imports.CollectionImport.Refresh(false),
+      CollectionImport.DryRun(false),
+      CollectionImport.Refresh(false),
       store
     )
     assert(r.failed.exists(_.value.contains("search for pleiades_570491")), r.failed.toString)
@@ -301,7 +305,7 @@ class CollectionsSuite extends munit.FunSuite:
     "LoC: loc.gov's bot challenge (403) ends the search with that reason — not worked around, not recorded as asked"
   ):
     val http = FakeMediaHttp(_ =>
-      Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(403), Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")), HttpAnswer.Body("Just a moment...".getBytes("UTF-8"))))
+      Right(HttpAnswer(HttpAnswer.Code(403), Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")), HttpAnswer.Body("Just a moment...".getBytes("UTF-8"))))
     )
     val store = CollStore(facts, named)
     val r = run(FakeMediaHttp.builtin(Loc), http, List(target(mycenae), target(greece)), dryRun = DryOff, store)
@@ -312,14 +316,14 @@ class CollectionsSuite extends munit.FunSuite:
   // ── equivalents ──────────────────────────────────────────────────────────────────────────────
 
   test("a name naming the place's equivalents (same item, or within same-site-km) is not ambiguous; another place is"):
-    val far = PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("other_mycenae"), com.histmersion.domain.media.imports.PlaceFacts.Label("Mycenae"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("mycenae")), None, None, Some(com.histmersion.Latitude(10.0)), Some(com.histmersion.Longitude(10.0)))
+    val far = PlaceFacts(PlaceFacts.Id("other_mycenae"), PlaceFacts.Label("Mycenae"), Set(PlaceFacts.Keys("mycenae")), None, None, Some(Latitude(10.0)), Some(Longitude(10.0)))
     val keyed = named.map((k, v) => MediaMatch.PlaceInfo.Keys(k.value) -> v)
     val r1 = SearchedCollection.resolveFor(mycenae, keyed, MediaConfig.SameSiteKm(3.0))(MediaMatch.PlaceInfo.Keys("mycenae"))
     assertEquals(r1, Set("pleiades_570491"))
     val r2 =
       SearchedCollection.resolveFor(mycenae, keyed.updated(MediaMatch.PlaceInfo.Keys("mycenae"), List(mycenae, mycenaeGn, far)), MediaConfig.SameSiteKm(3.0))(MediaMatch.PlaceInfo.Keys("mycenae"))
     assertEquals(r2, Set("pleiades_570491", "other_mycenae"))
-    assert(SearchedCollection.distanceKm(com.histmersion.Latitude(37.73), com.histmersion.Longitude(22.756), com.histmersion.Latitude(37.731), com.histmersion.Longitude(22.757)).value < 0.2)
+    assert(SearchedCollection.distanceKm(Latitude(37.73), Longitude(22.756), Latitude(37.731), Longitude(22.757)).value < 0.2)
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 

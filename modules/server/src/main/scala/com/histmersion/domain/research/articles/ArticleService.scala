@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
@@ -17,6 +18,8 @@ import scala.annotation.tailrec
 import com.histmersion.api.catalogue.EventArticleRef
 import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource, CritiqueReason}
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Goal
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and
@@ -46,10 +49,10 @@ trait ArticleService:
   def refs(slugs: List[Slug]): List[Article.Ref]
 
   /** The articles that cite a source, by title. */
-  def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink]
+  def backlinksForSource(citekey: Citekey): List[Backlink]
 
   /** The articles citing any of `citekeys` (each once, with its first cited key), at most `limit`. */
-  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef]
+  def citing(citekeys: List[Citekey], limit: PageSize): List[EventArticleRef]
 
   /** The sources the article cites, a dangling citekey with no title. */
   def sourcesCited(slug: Slug): List[CitedSource]
@@ -66,7 +69,7 @@ trait ArticleService:
   def critiqueReasons(slug: Slug): List[CritiqueReason]
 
   /** Every goal's linked articles that exist: goal → slugs. */
-  def articlesByGoal: Map[com.histmersion.domain.automation.Goal.Slug, List[Slug]]
+  def articlesByGoal: Map[Goal.Slug, List[Slug]]
 
   /** Replace everything under `article.slug`; the new last-write token. */
   def put(article: Article, caller: Caller): Article.UpdatedAt
@@ -90,15 +93,15 @@ object ArticleService:
     def slugs: List[Slug] = db.read(ArticleRepo.slugs).toList
     def updatedAtMillis: Map[Slug, CitekeyMillis.Millis] = db.read(ArticleRepo.updatedAtMillis)
     def refs(slugs: List[Slug]): List[Article.Ref] = db.read(ArticleRepo.refs(slugs))
-    def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink] = db.read(ArticleRepo.backlinksForSource(citekey))
-    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef] =
+    def backlinksForSource(citekey: Citekey): List[Backlink] = db.read(ArticleRepo.backlinksForSource(citekey))
+    def citing(citekeys: List[Citekey], limit: PageSize): List[EventArticleRef] =
       if citekeys.isEmpty then Nil else db.read(ArticleRepo.citing(citekeys, limit))
     def sourcesCited(slug: Slug): List[CitedSource] = db.read(ArticleRepo.sourcesCited(slug))
     def versions(slug: Slug): List[Article.Version] = db.read(ArticleRepo.listVersions(slug))
     def version(slug: Slug, id: ArticleRepo.VersionId): Option[Article.VersionFull] = db.read(ArticleRepo.getVersion(slug, id))
     def latestVersion(slug: Slug): Option[ArticleRepo.VersionId] = db.read(ArticleRepo.latestVersion(slug))
     def critiqueReasons(slug: Slug): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
-    def articlesByGoal: Map[com.histmersion.domain.automation.Goal.Slug, List[Slug]] = db.read(ArticleRepo.articlesByGoal)
+    def articlesByGoal: Map[Goal.Slug, List[Slug]] = db.read(ArticleRepo.articlesByGoal)
     def put(article: Article, caller: Caller): Article.UpdatedAt = db.transact(ArticleRepo.put(article))
     def patch(slug: Slug, patch: Article.Patch, caller: Caller): Either[Api.Error, Article.UpdatedAt] =
       db.transact(ArticleRepo.patch(slug, patch))
@@ -154,7 +157,7 @@ object ArticleService:
           .filter(o => o.article.slug.value != slug.value && o.links.exists(_.value == slug.value))
           .map(o =>
             Backlink(
-              com.histmersion.api.research.Backlink.Kind("article"),
+              Backlink.Kind("article"),
               Backlink.Id(o.article.slug.value),
               Some(Backlink.Title(o.article.title.value))
             )
@@ -176,8 +179,8 @@ object ArticleService:
           st.articles.get(articleKey(s)).map(o => Article.Ref(Article.Slug(s.value), o.article.title, o.article.summary))
         )
 
-    def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink] = Nil
-    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef] = Nil
+    def backlinksForSource(citekey: Citekey): List[Backlink] = Nil
+    def citing(citekeys: List[Citekey], limit: PageSize): List[EventArticleRef] = Nil
     def sourcesCited(slug: Slug): List[CitedSource] = Nil
 
     def versions(slug: Slug): List[Article.Version] =
@@ -219,7 +222,7 @@ object ArticleService:
       state.get.versions.filter(_.slug.value == slug.value).map(_.id.value).maxOption.map(ArticleRepo.VersionId(_))
 
     def critiqueReasons(slug: Slug): List[CritiqueReason] = state.get.critiques.getOrElse(critiqueKey(slug), Nil)
-    def articlesByGoal: Map[com.histmersion.domain.automation.Goal.Slug, List[Slug]] = Map.empty
+    def articlesByGoal: Map[Goal.Slug, List[Slug]] = Map.empty
 
     /** The write path: the previous body and summary kept as a version, the row replaced, its links recomputed. */
     private def written(st: ResearchState, a: Article, now: Instant): ResearchState =

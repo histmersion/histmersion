@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -41,6 +42,26 @@ import com.histmersion.api.library.MetadataPatch
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.api.automation.Agents
+import com.histmersion.config.DbConfig
+import com.histmersion.config.AgentsConfig
+import com.histmersion.config.AgentRolesConfig
+import com.histmersion.config.AgentApprovalsConfig
+import com.histmersion.config.AutoApprovalsConfig
+import com.histmersion.config.AgentAutopilotConfig
+import com.histmersion.config.AgentSeedConfig
+import com.histmersion.config.AgentReviewConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.AutopilotPolicy
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.ReviewLedger
+import com.histmersion.api.views.AutopilotStatus
+import com.histmersion.domain.automation.managers.ManagersControllers
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.library.Filter
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the autopilot"): one switch
   * carries a planned goal through plan → sources → articles → review to `reviewed` with the checked auto approvals on —
@@ -50,8 +71,8 @@ import com.histmersion.api.research.Coverage
   * ([[ScriptedClient]]), a review run is settled by hand; no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscripts:
-  private val testDb = com.histmersion.db.TestDb.url
+class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
@@ -74,7 +95,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val SweepKind = ManagerItem.Kind(AcquisitionSweep)
   private val NewTarget = ManagerItem.Target("zzagent_new")
   private val IngestedKind = ManagerRepo.EventKind(Feed.Ingested)
-  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-19T12:00:00Z")
 
@@ -85,17 +106,17 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(20)).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))).modify(_.approvals).setTo(b.agents.approvals.modify(
-          _.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("checked")).modify(_.articlePlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")).modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")).modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(com.histmersion.config.AutoApprovalsConfig.PublishMinSources(2))
-        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(2))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(com.histmersion.config.AgentSeedConfig.MinSources(2)))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(com.histmersion.config.AgentReviewConfig.SpotChecks(0)))
+      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(AgentsConfig.MaxConcurrentRuns(20)).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(AgentRolesConfig.Writer(m.value))).modify(_.approvals).setTo(b.agents.approvals.modify(
+          _.articlePublish).setTo(AgentApprovalsConfig.Gate("checked")).modify(_.articlePlan).setTo(AgentApprovalsConfig.Gate("auto")).modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("auto")).modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(AutoApprovalsConfig.PublishMinSources(2))
+        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(AgentAutopilotConfig.IngestPerDay(2))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(AgentSeedConfig.MinSources(2)))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(0)))
     )
 
   /** The same with every approval a person's (the shipped defaults). */
   private lazy val manualCfg =
-    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual")).modify(_.articlePlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual")).modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual"))
+    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo(AgentApprovalsConfig.Gate("manual")).modify(_.articlePlan).setTo(AgentApprovalsConfig.Gate("manual")).modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual"))
       )
     )
 
@@ -137,12 +158,12 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .put(
           Ck,
-          com.histmersion.api.library.Source.Put(
+          Source.Put(
             title = com.histmersion.api.library.Title("Bronze Age tin"),
-            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
-            topics = List(com.histmersion.api.library.Source.Topics("zzagent_tin")),
+            year = (Some(2019)).map(Year.apply),
+            topics = List(Source.Topics("zzagent_tin")),
             status = Some(Source.Status.Current),
-            summary = Some(com.histmersion.api.library.Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
+            summary = Some(Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
             body = Some(
               Source.OcrMarkdown("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
             )
@@ -154,10 +175,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .put(
           Ck2,
-          com.histmersion.api.library.Source.Put(
+          Source.Put(
             title = com.histmersion.api.library.Title("Tin isotopes"),
-            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
-            topics = List(com.histmersion.api.library.Source.Topics("zzagent_tin")),
+            year = (Some(2024)).map(Year.apply),
+            topics = List(Source.Topics("zzagent_tin")),
             body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
           )
         )
@@ -167,7 +188,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       h.library.sources
         .patch(
           Ck2,
-          com.histmersion.api.library.Source
+          Source
             .Patch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested))))
         )
         .isRight
@@ -220,7 +241,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     ).get
 
   private def why(r: RunInfo): String =
-    (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
+    (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
@@ -231,7 +252,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   /** The watchers' sweeps need no model (offline: nothing found): run what they queued. */
   private def drainWatchers(a: AgentsControllers): Unit =
-    connect(ds)(AgentRepo.list(Some(com.histmersion.domain.automation.Run.State.Wire("queued")), com.histmersion.PageSize(200)))
+    connect(ds)(AgentRepo.list(Some(Run.State.Wire("queued")), PageSize(200)))
       .filter(_.managerId.exists(_.value.startsWith("watch:")))
       .foreach(r => a.engine.execute(ApiIds.run(r.id)))
 
@@ -255,7 +276,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     a.managing
       .update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal("zzagent-apgoal"))))))
       .fold(e => fail(e.message.value), identity)
-    val on = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
+    val on = a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
     assert(on.on.value)
     assert(
       on.changes.contains(s"${seedId(ref(Goal))} created") && on.changes.contains(s"${watchId(ref(Goal))} created") &&
@@ -264,7 +285,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).get
-    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
+    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).map(m => (m.state, m.config.autoIngest)),
       Some(("active", Some(true)))
@@ -272,7 +293,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(item(seedId(ref(Goal)), PlanGoalKind, itemTarget(Goal)).priority, 1)
     assert(on.goals.exists(g => g.slug.value == Goal.value && g.managers.size == 2), on.goals)
     // again: nothing more to do
-    assertEquals(a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).toOption.get.changes, List("already on"))
+    assertEquals(a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).toOption.get.changes, List("already on"))
 
     // 1. plan-goal first (the proposal waits for it); its plan is approved by the checks, the run applies it
     c.scripts += Seq(text(planJson))
@@ -291,7 +312,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(exec(a, plan.id).status, "done", why(connect(ds)(AgentRepo.get(plan.id)).get))
     assertEquals(Transactor(ds).read(GoalLinkRepo.refsIn(Goal, LinkKind.Query)), List("Bronze Age tin isotopes"))
     assert(
-      connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, com.histmersion.PageSize(100)))
+      connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, PageSize(100)))
         .exists(e => e.kind.value == Feed.Approval && e.text.value.contains("approved by the autopilot"))
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: goal-plan")))
@@ -309,7 +330,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     clock.tick(a)
     val ap = a
-      .approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), None)
+      .approvalsList(Some(ApprovalQuery.State("all")), None)
       .toOption
       .get
       .find(a => a.kind.value == "article-plan" && a.subject.contains(GoalSubject))
@@ -324,7 +345,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(exec(a, comp.id).status, "waiting", why(connect(ds)(AgentRepo.get(comp.id)).get))
     clock.tick(a)
     val pub = a
-      .approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), None)
+      .approvalsList(Some(ApprovalQuery.State("all")), None)
       .toOption
       .get
       .find(a => a.kind.value == "article-publish" && a.subject.contains(ApprovalInfo.Subject("zzagent_new")))
@@ -332,7 +353,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(pub.state, "approved")
     assert(pub.note.exists(_.value.startsWith("autopilot: approved — filter 2 sources")), pub.note)
     assertEquals(exec(a, comp.id).status, "done", why(connect(ds)(AgentRepo.get(comp.id)).get))
-    assert(h.research.articles.get(com.histmersion.domain.research.Slug("zzagent_new")).isRight)
+    assert(h.research.articles.get(Slug("zzagent_new")).isRight)
     clock.tick(a)
     assertEquals(item(seedId(ref(Goal)), CompileKind, NewTarget).status, "done")
     clock.tick(a)
@@ -345,14 +366,14 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // 4. the review (settled by hand: it converged) → the goal is reviewed
     val rev = runOf(Review, ReviewKind, NewTarget)
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Queued, RunState.Running).isDefined)
-    ReviewLedgerFixtures.put(ds, absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_new")), Nil, ApiIds.run(rev.id), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1)
+    ReviewLedgerFixtures.put(ds, absorb(Ledger(Ledger.Slug("zzagent_new")), Nil, ApiIds.run(rev.id), ReviewLedger.Closure.Round(1))._1)
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Running, RunState.Done).isDefined)
     clock.tick(a)
     assertEquals(item(Review, ReviewKind, NewTarget).status, "done")
     clock.tick(a)
     assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Reviewed)
     assert(
-      connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, com.histmersion.PageSize(200)))
+      connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, PageSize(200)))
         .exists(e => e.kind.value == Feed.Autopilot && e.text.value.contains("compiled → reviewed"))
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.contains(s"goal $Goal: compiled → reviewed")))
@@ -366,13 +387,13 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(g.doneLast7.value >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
-    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(com.histmersion.api.views.AutopilotStatus.CronsEnabled(false))).contains("crons are off"))
+    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(AutopilotStatus.CronsEnabled(false))).contains("crons are off"))
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c, manualCfg); seed(h)
     a.managers.ensureDefaults()
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     c.scripts += Seq(text(planJson))
     val clock = Clock()
     clock.tick(a)
@@ -439,7 +460,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .isRight
     )
     a.managers.ensureDefaults()
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     List(Goal, ChildGoal, GrandGoal).foreach { g =>
       assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(g)))).map(_.state), Some("active"), g)
       assertEquals(connect(ds)(ManagerRepo.get(watchId(ref(g)))).map(_.state), Some("active"), g)
@@ -457,8 +478,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       "depth 2: no sub-goals"
     )
     // a person pauses one watcher; off pauses the others it runs, on resumes those only
-    a.managing.action(ApiIds.manager(watchId(ref(ChildGoal))), com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), None).fold(e => fail(e.message.value), identity)
-    val off = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(false))).fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(watchId(ref(ChildGoal))), ManagersControllers.Action("pause"), None).fold(e => fail(e.message.value), identity)
+    val off = a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(false))).fold(e => fail(e.message.value), identity)
     assert(!off.on.value)
     assert(off.changes.exists(_.value.contains("paused 5 managers")), off.changes)
     assert(
@@ -466,7 +487,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("active"), "the library-wide ones stay")
     assertEquals(Clock().tick(a).filter(_.value.startsWith("goal")), Nil, "off: nothing ensured")
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(ChildGoal)))).map(_.state),
       Some("paused"),
@@ -483,9 +504,9 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(connect(ds)(ManagerRepo.get(seedId(com.histmersion.api.automation.Goal.Ref("zzagent-aplate")))).map(_.state), Some("active"))
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
     assert(h.goals.put(DomainGoal.Slug("zzagent-apform"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz form"))).isRight)
-    assertEquals(a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")))).map(_.state), Right("active"))
+    assertEquals(a.managing.create(ManagerCreate(Managers.ManagerCreate.Kind("watch"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")))).map(_.state), Right("active"))
     assertEquals(
-      a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("seed"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")), paused = Some(com.histmersion.api.automation.Managers.ManagerCreate.Paused(true)))).map(_.state),
+      a.managing.create(ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")), paused = Some(Managers.ManagerCreate.Paused(true)))).map(_.state),
       Right("paused")
     )
 
@@ -500,11 +521,11 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         )
         .isRight
     )
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))), None)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron),
-      Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id.watch(Goal)))
+      Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id.watch(Goal)))
     )
 
   // ── caps ───────────────────────────────────────────────────────────────────────────────────────
@@ -512,7 +533,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test(
     "article-plan cap: the area's daily cap leaves a second plan for a person; a manager that says no is never decided"
   ):
-    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(com.histmersion.config.AutoApprovalsConfig.ArticlesPerGoalPerDay(2)))
+    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(AutoApprovalsConfig.ArticlesPerGoalPerDay(2)))
       )
     )
     val (a, h) = handlers(ScriptedClient(Model), capped); seed(h)
@@ -521,7 +542,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       GoalPlanGoal,
       Article.Plans.ArticlePlan.Rationale("r"),
       slugs.toList.map(s =>
-        Article.Plans.ProposedArticle(s, Article.Title(s"Zz $s"), Article.Kind.Wire("concept"), Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin"))))
+        Article.Plans.ProposedArticle(s, Article.Title(s"Zz $s"), Article.Kind.Wire("concept"), Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
       )
     )
     val p1 =
@@ -555,7 +576,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
               Article.Plans.ArticlePlan.Rationale("r"),
               List(
                 Article.Plans
-                  .ProposedArticle(Article.Slug("zzagent_p4"), Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("zzagent nothing at all"))))
+                  .ProposedArticle(Article.Slug("zzagent_p4"), Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Filter(query = Some(Filter.Q("zzagent nothing at all"))))
               )
             )
             .asJson
@@ -572,7 +593,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("older approvals a person decides never crowd the code-decided ones out of a tick"):
     val personPlans =
-      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual"))))
+      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual"))))
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
     import io.circe.syntax.*
     val waiting =
@@ -594,7 +615,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
                     Article.Slug("zzagent_crowded"),
                     Article.Title("Zz crowded"),
                     Article.Kind.Wire("concept"),
-                    Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin")))
+                    Article.Filter(topics = List(Filter.Topics("zzagent_tin")))
                   )
               )
             )
@@ -608,7 +629,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     transact(ds)(ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_a]] ingested")))
     val now = Instant.now(suiteClock)
     // the goal's plan-goal run starts beside it: a sweep does not wait for it
@@ -630,31 +651,31 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(
       h.research.articles
         .put(
-          com.histmersion.domain.research.Slug("zzagent_x"),
+          Slug("zzagent_x"),
           Article.Put(
             Article.Title("Zz tin"),
             Article.Kind.Wire("concept"),
             Article.Body(s"Tin [[$Ck]]."),
             tags = List(Article.Put.Tags("zzx")),
-            filter = Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin"))))
+            filter = Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
           )
         )
         .isRight
     )
-    assertEquals(h.research.articles.newFilterSources(com.histmersion.domain.research.Slug("zzagent_x")), Some(1))
+    assertEquals(h.research.articles.newFilterSources(Slug("zzagent_x")), Some(1))
     a.managers.ensureDefaults()
     // no selection (refill batch 0): only the extension
     a.managing.update(
       ApiIds.manager(Review),
       ManagerUpdate(Some(ManagerConfig(extendMinNew = Some(ManagerConfig.ExtendMinNew(1)), refillBatch = Some(ManagerConfig.RefillBatch(0)), includeTags = Some(List(ManagerConfig.IncludeTags("zzx"))))))
     )
-    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
     val out = a.managers.tick(t0)
     assert(out.exists(_.value.contains("1 to extend")), out)
     val x = item(Review, ExtendKind, ManagerItem.Target("zzagent_x"))
     assertEquals(x.origin, "selection")
     assert(
-      connect(ds)(ManagerRepo.events(Review, None, com.histmersion.PageSize(20)))
+      connect(ds)(ManagerRepo.events(Review, None, PageSize(20)))
         .exists(_.text.value.contains("1 source it neither cites nor gives a reason for"))
     )
     // settled: within the cooldown it is not extended again
@@ -665,18 +686,18 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // a reason for the source: nothing new
     assert(
       h.research.articles
-        .patch(com.histmersion.domain.research.Slug("zzagent_x"), Article.Patch(reasons = List(Coverage.Reason(ApiCk2, Coverage.Entry.Reason("a later study, cited elsewhere")))))
+        .patch(Slug("zzagent_x"), Article.Patch(reasons = List(Coverage.Reason(ApiCk2, Coverage.Entry.Reason("a later study, cited elsewhere")))))
         .isRight
     )
-    assertEquals(h.research.articles.newFilterSources(com.histmersion.domain.research.Slug("zzagent_x")), Some(0))
+    assertEquals(h.research.articles.newFilterSources(Slug("zzagent_x")), Some(0))
 
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 
   test("housekeeping: the safe lint repairs run on their cadence, recorded and logged; off, nothing runs"):
-    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(24))))
+    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(AgentAutopilotConfig.LintHours(24))))
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     val out = a.autopilot.tick(t0)
     assert(out.contains("lint --fix started"), out)
     assert(transact(ds)(AutopilotRepo.get()).lastLintAt.isDefined)

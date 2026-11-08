@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.workflows
+package com.histmersion
+package domain.automation.workflows
 
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity

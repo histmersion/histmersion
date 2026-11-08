@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,8 +19,8 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     MergeApplyResult(
       UUID.randomUUID(),
       com.histmersion.api.exchange.Bundle.Instance(UUID.randomUUID(), None),
-      applied = com.histmersion.api.exchange.MergeApplyResult.Applied(true),
-      com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc")
+      applied = MergeApplyResult.Applied(true),
+      MergeApplyResult.PlanHash("abc")
     )
 
   private def sha(c: Char): Sha256 = Sha256.applyUnsafe(c.toString * 64)

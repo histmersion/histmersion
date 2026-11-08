@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -10,6 +11,18 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.{Lpf, Period, Place}
 import com.histmersion.api.instance.{About, Version}
 import com.histmersion.api.library.CorrespondingSource
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.api.catalogue.Year
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.config.RuntimeConfig
+import com.histmersion.config.BackupsConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.BundlesConfig
+import com.histmersion.config.BasemapConfig
+import com.histmersion.config.PlaceSourcesConfig
+import com.histmersion.config.StorageConfig
 
 /** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it back through every
   * route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
@@ -18,8 +31,8 @@ import com.histmersion.api.library.CorrespondingSource
   * and the db-module suites (which may run in another JVM against the same test database) assert on it.
   * `PlaceRepoSuite` covers the rebuild.
   */
-class PlacesHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class PlacesHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val client = java.net.http.HttpClient.newHttpClient()
@@ -47,41 +60,41 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzh_world"), com.histmersion.api.catalogue.Place.Label("Zzh World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzh World")))
+        Place(Place.Id("zzh_world"), Place.Label("Zzh World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        List(Place.Name(Place.Name.Value("Zzh World")))
       ),
       Place.Input(
         Place(
-          com.histmersion.api.catalogue.Place.Id("zzh_land"),
-          com.histmersion.api.catalogue.Place.Label("Zzh Land"),
+          Place.Id("zzh_land"),
+          Place.Label("Zzh Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}""")
           ),
-          Some(Period(com.histmersion.api.catalogue.Year(-3000), com.histmersion.api.catalogue.Year(0)))
+          Some(Period(Year(-3000), Year(0)))
         ),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzh Land")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzhland"), com.histmersion.api.catalogue.Place.Name.Lang("xx"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzh_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzh_world")))
+        List(Place.Name(Place.Name.Value("Zzh Land")), Place.Name(Place.Name.Value("Zzhland"), Place.Name.Lang("xx"))),
+        List(Place.Relation(Place.Relation.ChildId("zzh_land"), Place.Relation.ParentId("zzh_world")))
       ),
       Place.Input(
         Place(
-          com.histmersion.api.catalogue.Place.Id("zzh_polity"),
-          com.histmersion.api.catalogue.Place.Label("Zzh Polity"),
+          Place.Id("zzh_polity"),
+          Place.Label("Zzh Polity"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
           Some(Place.Geometry("""{"type":"Point","coordinates":[105.0,15.0]}""")),
-          Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200)))
+          Some(Period(Year(-1400), Year(-1200)))
         ),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzh Polity"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzh_polity"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzh_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200)))))
+        List(Place.Name(Place.Name.Value("Zzh Polity"))),
+        List(Place.Relation(Place.Relation.ChildId("zzh_polity"), Place.Relation.ParentId("zzh_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1400), Year(-1200)))))
       )
     )
   )
 
   test("import → search → detail → children → tree, all as of a year"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       val (is, ib) = post(s"$url/api/places/import", doc.value)
@@ -123,9 +136,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("a place id in the filter reaches sources through finding_places; an unknown one is a name"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       // no findings were ever materialised into zzh_land, so filtering by it must return nothing —
       // and must NOT fall back to matching the id as a region-name substring
@@ -152,29 +165,29 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val countsDoc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzc_world"), com.histmersion.api.catalogue.Place.Label("Zzc World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzc World")))
+        Place(Place.Id("zzc_world"), Place.Label("Zzc World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        List(Place.Name(Place.Name.Value("Zzc World")))
       ),
       Place.Input(
         Place(
-          com.histmersion.api.catalogue.Place.Id("zzc_land"),
-          com.histmersion.api.catalogue.Place.Label("Zzc Land"),
+          Place.Id("zzc_land"),
+          Place.Label("Zzc Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry("""{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}""")
           )
         ),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzc Land"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzc_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzc_world")))
+        List(Place.Name(Place.Name.Value("Zzc Land"))),
+        List(Place.Relation(Place.Relation.ChildId("zzc_land"), Place.Relation.ParentId("zzc_world")))
       )
     )
   )
 
   test("#716: counts=true says what place=<id> selects — the place and its descendants"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc.value)._1, 200)
       // a source write materialises its findings into the places that cover them (odd years: the
@@ -202,9 +215,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#718: /api/about reports the build, health, job queue and store counts"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc.value)._1, 200)
       val (as, ab) = get(s"$url/api/about")
@@ -232,10 +245,10 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     java.nio.file.Files.createDirectories(d.resolve("backups"))
     java.nio.file.Files.write(d.resolve("backups/histmersion-20261001T100000Z.dump"), Array.fill[Byte](2048)(1))
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(d.resolve("data").toString))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(d.resolve("backups").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(d.resolve("uploads").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(d.resolve("bundles").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(d.resolve("basemap").toString))).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(com.histmersion.config.PlaceSourcesConfig.Dir(d.resolve("gazetteer").toString)))).modify(_.storage).setTo(base.storage.modify(_.waitMillis).setTo(com.histmersion.config.StorageConfig.WaitMillis(30000))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(d.resolve("backups").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(d.resolve("uploads").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(d.resolve("bundles").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(d.resolve("basemap").toString))).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir(d.resolve("gazetteer").toString)))).modify(_.storage).setTo(base.storage.modify(_.waitMillis).setTo(StorageConfig.WaitMillis(30000))
     )
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
@@ -257,9 +270,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   /** #987: a name added by hand and a place of one's own, over REST and MCP (`zzn_*`). */
   test("names added by hand and hand-added places: REST and MCP agree"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
@@ -270,12 +283,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zzn_lake"),
-              com.histmersion.api.catalogue.Place.Label("Zzn Sea"),
+              Place.Id("zzn_lake"),
+              Place.Label("Zzn Sea"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Feature),
               Some(Place.Geometry("""{"type":"Point","coordinates":[140.5,-20.5]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzn Sea")))
+            List(Place.Name(Place.Name.Value("Zzn Sea")))
           )
         )
       )
@@ -347,9 +360,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("V080: a kind and period set by hand — REST and MCP agree, a re-seed keeps it, a reset restores the source's"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
@@ -362,12 +375,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zzo_regio"),
-              com.histmersion.api.catalogue.Place.Label("Zzo Regio XII"),
+              Place.Id("zzo_regio"),
+              Place.Label("Zzo Regio XII"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzo Regio XII")))
+            List(Place.Name(Place.Name.Value("Zzo Regio XII")))
           )
         )
       )
@@ -430,21 +443,21 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zzo_dup"),
-              com.histmersion.api.catalogue.Place.Label("Withdrawn: Zzo Regio XII"),
+              Place.Id("zzo_dup"),
+              Place.Label("Withdrawn: Zzo Regio XII"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Withdrawn: Zzo Regio XII")))
+            List(Place.Name(Place.Name.Value("Withdrawn: Zzo Regio XII")))
           ),
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id("zzo_road"),
-              com.histmersion.api.catalogue.Place.Label("Withdrawn: Untitled"),
+              Place.Id("zzo_road"),
+              Place.Label("Withdrawn: Untitled"),
               Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.7,-21.7]}"""))
             ),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Withdrawn: Untitled")))
+            List(Place.Name(Place.Name.Value("Withdrawn: Untitled")))
           )
         )
       )
@@ -496,9 +509,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#1064: /api/places/sources is routed before /api/places/{id}; load refuses an unknown source"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (ss, sb) = get(s"$url/api/places/sources")
       assertEquals(ss, 200, sb)

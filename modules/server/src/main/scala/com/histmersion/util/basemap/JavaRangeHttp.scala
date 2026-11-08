@@ -1,4 +1,5 @@
-package com.histmersion.util.basemap
+package com.histmersion
+package util.basemap
 
 import com.histmersion.util.storage.Reservation
 
@@ -7,6 +8,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.{Duration, Instant}
 import scala.util.Using
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The real client: java.net.http over `client` (the composition root's: HTTP/1.1, one stream per request — the
   * providers are CDNs — following redirects), as the product's `userAgent`, a slow-down answer asked again when
@@ -21,7 +24,7 @@ final class JavaRangeHttp(
     sleep: RetryWait.Ms => Unit = ms => Thread.sleep(ms.value)
 )(using clock: java.time.Clock) extends RangeHttp:
 
-  private def request(url: RangeHttp.Url, range: Option[(com.histmersion.ByteOffset, com.histmersion.ByteCount)]): HttpRequest =
+  private def request(url: RangeHttp.Url, range: Option[(ByteOffset, ByteCount)]): HttpRequest =
     val b = HttpRequest
       .newBuilder(URI.create(url.value))
       .GET()
@@ -58,7 +61,7 @@ final class JavaRangeHttp(
             case None => Right(resp)
     attempt(0)
 
-  private def meta[T](r: HttpResponse[T], total: com.histmersion.ByteCount): RemoteFile =
+  private def meta[T](r: HttpResponse[T], total: ByteCount): RemoteFile =
     RemoteFile(
       RemoteFile.Size(total.value),
       Option(r.headers.firstValue("ETag").orElse(null)).map(RemoteFile.Etag(_))
@@ -71,7 +74,7 @@ final class JavaRangeHttp(
     try ok(r)
     finally r.body.close()
 
-  private def ranged(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount) =
+  private def ranged(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount) =
     send(url, request(url, Some((offset, length)))).flatMap { r =>
       RangeHttp.check(
         url,
@@ -102,7 +105,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def bytes(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
+  def bytes(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val want = math.min(offset.value + length.value, total.value) - offset.value
@@ -112,7 +115,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def download(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount, to: Reservation): Either[RangeHttp.Problem, RemoteFile] =
+  def download(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount, to: Reservation): Either[RangeHttp.Problem, RemoteFile] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val got = Using.resource(to.output())(out => r.body.transferTo(out))
@@ -125,8 +128,8 @@ final class JavaRangeHttp(
 
 object JavaRangeHttp:
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type Retries = Retries.T
-  object Retries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Retries extends RefinedType[Int, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UserAgent extends RefinedType[String, Pure]

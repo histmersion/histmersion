@@ -1,4 +1,5 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.api.automation.{Activity, ListFilters}
 

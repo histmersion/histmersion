@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -15,6 +16,8 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.{Period, Place, Year}
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.util.storage.Blob
+import com.histmersion.util.ocr.Pixels
 
 /** The answers of every first-party media collection's provider, the settings that switch them all on at no pause, the
   * places and events a map holds for them, and what an import stored — the fixtures the media traffic and the media
@@ -66,7 +69,7 @@ object MediaWire:
       case "252448" => json(obj)
       case "248284" => json(obj.replace("\"isPublicDomain\": true", "\"isPublicDomain\": false"))
       case "252447" => json(obj.replace("\"excavation\": \"Mycenae\"", "\"excavation\": \"Argos\""))
-      case _        => Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+      case _        => Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
 
   /** Every provider's answers, by the URL's host and path; anything else is a picture (its bytes name its URL). */
   def route(url: String): Either[String, HttpAnswer] =
@@ -117,14 +120,14 @@ object MediaWire:
   /** Thumbnails made here: one per call, named after the file. */
   final class Thumbs extends ConverterClient:
     def convert(
-        file: com.histmersion.util.storage.Blob,
+        file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[ConverterClient.Problem, ConvertedDoc] =
       Left(ConverterClient.Problem("not used"))
     def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: com.histmersion.util.ocr.Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg(s"thumb:$filename:$maxPx")), com.histmersion.util.ocr.ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(maxPx.value), ConverterClient.Thumb.Height(maxPx.value * 3 / 4)))
+    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg(s"thumb:$filename:$maxPx")), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(maxPx.value), ConverterClient.Thumb.Height(maxPx.value * 3 / 4)))
 
   val env: Map[String, String] = Map("ZQMT_SI_KEY" -> "si-fixture-key", "ZQMT_EU_KEY" -> "eu-fixture-key")
 
@@ -149,7 +152,7 @@ object MediaWire:
   def load(more: String): Either[ConfigProblem, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
-  private def place(id: Place.Id, label: Place.Label, kind: Place.KindValue, lon: com.histmersion.Longitude, lat: com.histmersion.Latitude, period: Option[Period]) =
+  private def place(id: Place.Id, label: Place.Label, kind: Place.KindValue, lon: Longitude, lat: Latitude, period: Option[Period]) =
     Place.Input(
       Place(id, label, kind, Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}""")), period),
       List(Place.Name(Place.Name.Value(label.value)))
@@ -166,72 +169,72 @@ object MediaWire:
           Place.Id("pleiades_570491"),
           Place.Label("Mycenae"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
-          com.histmersion.Longitude(22.756),
-          com.histmersion.Latitude(37.73),
+          Longitude(22.756),
+          Latitude(37.73),
           span(-1600L, -1100L)
         ),
         place(
           Place.Id("geonames_390903"),
           Place.Label("Greece"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-          com.histmersion.Longitude(22.0),
-          com.histmersion.Latitude(39.0),
+          Longitude(22.0),
+          Latitude(39.0),
           span(-3000L, -100L)
         ),
         place(
           Place.Id("geonames_146669"),
           Place.Label("Cyprus"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-          com.histmersion.Longitude(33.0),
-          com.histmersion.Latitude(35.0),
+          Longitude(33.0),
+          Latitude(35.0),
           span(-1200L, -300L)
         ),
         place(
           Place.Id("pleiades_697725"),
           Place.Label("Petra"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
-          com.histmersion.Longitude(35.44),
-          com.histmersion.Latitude(30.33),
+          Longitude(35.44),
+          Latitude(30.33),
           span(-300L, 100L)
         ),
         place(
           Place.Id("geonames_248816"),
           Place.Label("Jordan"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-          com.histmersion.Longitude(36.0),
-          com.histmersion.Latitude(31.0),
+          Longitude(36.0),
+          Latitude(31.0),
           span(-3000L, 2000L)
         ),
         place(
           Place.Id("geonames_357994"),
           Place.Label("Egypt"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-          com.histmersion.Longitude(30.0),
-          com.histmersion.Latitude(26.0),
+          Longitude(30.0),
+          Latitude(26.0),
           span(-3100L, -30L)
         ),
         place(
           Place.Id("geonames_163843"),
           Place.Label("Syria"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-          com.histmersion.Longitude(38.0),
-          com.histmersion.Latitude(35.0),
+          Longitude(38.0),
+          Latitude(35.0),
           span(-3000L, 1500L)
         ),
         place(
           Place.Id("pleiades_757208100"),
           Place.Label("Zygouries"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
-          com.histmersion.Longitude(22.85),
-          com.histmersion.Latitude(37.8),
+          Longitude(22.85),
+          Latitude(37.8),
           span(-3000L, -1100L)
         ),
         place(
           Place.Id("x_site"),
           Place.Label("X"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
-          com.histmersion.Longitude(10.0),
-          com.histmersion.Latitude(10.0),
+          Longitude(10.0),
+          Latitude(10.0),
           None
         )
       )

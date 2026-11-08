@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.domain.automation.workflows.Pipelines
 
@@ -35,6 +36,13 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.ScheduleKind
+import com.histmersion.api.automation.AgentRole
+import com.histmersion.domain.automation.managers.ManagersControllers
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
@@ -43,7 +51,7 @@ import com.histmersion.api.automation.Goal
   */
 object AgentsTools:
   type RepairAcquire = RepairAcquire.T
-  object RepairAcquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RepairAcquire extends RefinedType[Boolean, Pure]
 
 
   import com.histmersion.util.mcp.ToolInputs.given
@@ -53,7 +61,7 @@ object AgentsTools:
     */
   def apply(
       a: AgentsControllers,
-      repairAcquire: com.histmersion.domain.automation.agents.AgentsTools.RepairAcquire => Either[Api.Error, String],
+      repairAcquire: RepairAcquire => Either[Api.Error, String],
       autopilotPage: Autopilot.EngineStatus => String
   ) =
     val start =
@@ -77,7 +85,7 @@ object AgentsTools:
                   None,
                   Option.when(in.fix)(RunRequest.Fix(true)),
                   in.rounds.map(RunRequest.Rounds(_)),
-                  in.acquireItem.map(com.histmersion.api.automation.Queue.QueueItem.Id(_)),
+                  in.acquireItem.map(Queue.QueueItem.Id(_)),
                   in.title.map(RunRequest.Title(_)),
                   in.kind.map(RunRequest.Kind(_)),
                   in.query.map(RunRequest.Query(_)),
@@ -160,7 +168,7 @@ object AgentsTools:
                     AgentsMarkdown.approvals(
                       as,
                       page,
-                      f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
+                      f.qualifier.map(q => Approval.State.Wire(q.value)),
                       Paging
                         .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")).map(t => Paging.Cursor(t.value))
                     )
@@ -261,18 +269,18 @@ object AgentsTools:
             case (Some(g), Some(k)) if in.remove =>
               AgentsControllers
                 .goalSlug(g)
-                .flatMap(s => a.removeSchedule(s, com.histmersion.api.automation.ScheduleKind.Wire(k)))
+                .flatMap(s => a.removeSchedule(s, ScheduleKind.Wire(k)))
                 .map(_ => AgentsMarkdown.schedules(a.schedules))
             case (Some(g), Some(k)) =>
               in.cron
-                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("give `cron` to set a schedule (or `remove: true`)")))
+                .toRight(Api.Error(Api.Error.Message("give `cron` to set a schedule (or `remove: true`)")))
                 .flatMap(c =>
                   AgentsControllers
                     .goalSlug(g)
                     .flatMap(slug =>
                       a.setSchedule(
                         slug,
-                        com.histmersion.api.automation.ScheduleKind.Wire(k),
+                        ScheduleKind.Wire(k),
                         Goal.Plans.ScheduleSet(
                           Goal.Plans.ScheduleSet.Cron(c),
                           Goal.Plans.ScheduleSet.Enabled(in.enabled),
@@ -283,7 +291,7 @@ object AgentsTools:
                     .map(s => AgentsMarkdown.scheduleLine(s))
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
-            case _            => Left(Api.Error(com.histmersion.api.Api.Error.Message("give both `goal` and `kind`, or neither to list the schedules")))
+            case _            => Left(Api.Error(Api.Error.Message("give both `goal` and `kind`, or neither to list the schedules")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -323,19 +331,19 @@ object AgentsTools:
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
             case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_)))).map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
-              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
+              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error(Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
               else a.setPool(
                 PlanQuota.PoolIdText(in.pool.get.trim),
                 PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
               ).map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(
-                com.histmersion.api.automation.AgentRole.Wire(r),
+                AgentRole.Wire(r),
                 PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(in.fallthrough.get))
               ).map(AgentsMarkdown.quota)
-            case (Some(r), None) if in.reset => a.resetChain(com.histmersion.api.automation.AgentRole.Wire(r)).map(AgentsMarkdown.roleChain)
+            case (Some(r), None) if in.reset => a.resetChain(AgentRole.Wire(r)).map(AgentsMarkdown.roleChain)
             case (Some(r), None) => a.setChain(
-                com.histmersion.api.automation.AgentRole.Wire(r),
+                AgentRole.Wire(r),
                 ModelChains.ChainSet(in.models.map(ModelChains.ChainSet.Models(_)))
               ).map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset =>
@@ -353,7 +361,7 @@ object AgentsTools:
                   )
                     .map(AgentsMarkdown.allowance)
                 case (errs, _) => Left(Api.Error(Api.Error.Message(errs.mkString("; "))))
-            case _ => Left(Api.Error(com.histmersion.api.Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
+            case _ => Left(Api.Error(Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -399,8 +407,8 @@ object AgentsTools:
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
-            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs))).map(ManagersMarkdown.line)
-            case "resume" => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
+            case "pause"  => m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs))).map(ManagersMarkdown.line)
+            case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
             case "create" =>
               m.create(
                 Managers.ManagerCreate(
@@ -446,7 +454,7 @@ object AgentsTools:
               in.text
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`hint` needs `text`")))
+                .toRight(Api.Error(Api.Error.Message("`hint` needs `text`")))
                 .flatMap(t =>
                   m.addHint(
                     id,
@@ -455,7 +463,7 @@ object AgentsTools:
                       in.item.map(Managers.HintAdd.Item(_)),
                       Some(Managers.HintAdd.Once(in.once)),
                       in.effect,
-                      Some(com.histmersion.api.automation.Managers.HintAdd.Author("mcp")),
+                      Some(Managers.HintAdd.Author("mcp")),
                       propose = Some(Managers.HintAdd.Propose(in.effect.isDefined)),
                       suggest = Some(Managers.HintAdd.Suggest(in.suggest))
                     )
@@ -465,23 +473,23 @@ object AgentsTools:
             case "autopilot" =>
               in.on match
                 case None    => Right(autopilotPage(m.autopilot))
-                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
+                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
             case "repair-acquire" =>
               repairAcquire(RepairAcquire(in.dryRun))
             case "drain" =>
-              m.drain(Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
+              m.drain(Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
-                .flatMap(md => m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(com.histmersion.api.automation.AgentMode.ModeSet.By("mcp")))))
+                .toRight(Api.Error(Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
+                .flatMap(md => m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp")))))
                 .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                 case None    => Right(AutopilotMarkdown.focus(m.focus))
                 case Some(v) =>
-                  m.setFocus(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), in.goal.map(Goal.Slug(_)), in.value.map(Autopilot.FocusSet.Value(_)), Some(com.histmersion.api.automation.Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
+                  m.setFocus(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), in.goal.map(Goal.Slug(_)), in.value.map(Autopilot.FocusSet.Value(_)), Some(Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
             case other =>
               Left(
                 Api.Error(
@@ -525,15 +533,15 @@ object AgentsTools:
               in.item
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`why` needs `item`")))
+                .toRight(Api.Error(Api.Error.Message("`why` needs `item`")))
                 .flatMap(i => m.schedulerWhy(Managers.ManagerItem.Ref(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`strategy` needs `strategy`")))
-                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(n), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("mcp")))))
+                .toRight(Api.Error(Api.Error.Message("`strategy` needs `strategy`")))
+                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(n), Some(AgentScheduler.SchedulerSet.By("mcp")))))
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(AgentAutopilotConfig.StallDays(_)))))
             case other    => Left(Api.Error(Api.Error.Message(s"unknown action '$other' (status, queue, why, strategy, stalls)")))

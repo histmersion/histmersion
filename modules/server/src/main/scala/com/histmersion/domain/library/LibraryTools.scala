@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
@@ -25,6 +26,14 @@ import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.{Citekey as ApiCitekey, Filter, PassagesMarkdown}
 import com.histmersion.api.library.Rename
+import com.histmersion.api.library.Facet
+import com.histmersion.api.library.Histogram
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.library.Sort
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -43,7 +52,7 @@ object LibraryTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   /** The `strict` flag of every Markdown-writing tool. */
-  val StrictDoc: com.histmersion.domain.library.LibraryTools.StrictDoc =
+  val StrictDoc: StrictDoc =
     "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, " +
       "a broken link). Default false: the write goes through and the problems are listed under 'Formatting'."
 
@@ -95,7 +104,7 @@ object LibraryTools:
               val depth = in.depth.orElse(Some(Api.AggregateQuery.Depth(1)))
               val samp = in.samples.orElse(Some(Api.AggregateQuery.TreeSamples(0)))
               search.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
-                case Right(t) => ToolResult.text(SearchMarkdown.tree(t, com.histmersion.api.library.SearchMarkdown.TreeUnit("sources")))
+                case Right(t) => ToolResult.text(SearchMarkdown.tree(t, SearchMarkdown.TreeUnit("sources")))
                 case Left(e)  => McpOut.error(e)
         }
 
@@ -110,7 +119,7 @@ object LibraryTools:
         )
         .input[FacetsInput]
         .handle { in =>
-          labels.facets(com.histmersion.api.library.Facet.Field.Wire(in.field.value), in.prefix.map(p => FilterSql.FacetPrefix(p.value)), in.toFilter) match
+          labels.facets(Facet.Field.Wire(in.field.value), in.prefix.map(p => FilterSql.FacetPrefix(p.value)), in.toFilter) match
             case Right(fs) => ToolResult.text(SearchMarkdown.facets(in.field, fs.toVector))
             case Left(e)   => McpOut.error(e)
         }
@@ -173,7 +182,7 @@ object LibraryTools:
         .handle { in =>
           val unit = in.unit.getOrElse(Api.AggregateQuery.Unit("sources"))
           search.aggregate(Api.AggregateQuery.time(in.toFilter, Some(unit))) match
-            case Right(hist) => ToolResult.text(SearchMarkdown.histogram(hist, com.histmersion.api.library.Histogram.Unit(unit.value)))
+            case Right(hist) => ToolResult.text(SearchMarkdown.histogram(hist, Histogram.Unit(unit.value)))
             case Left(e)     => McpOut.error(e)
         }
 
@@ -350,15 +359,15 @@ object LibraryTools:
       places: List[Filter.Places] = Nil,
       topics: List[Filter.Topics] = Nil,
       status: List[Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
-      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
-      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      sort: Option[com.histmersion.api.library.Sort.Wire] = None,
+      yearFrom: Option[Year] = None,
+      yearTo: Option[Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      minLon: Option[Longitude] = None,
+      minLat: Option[Latitude] = None,
+      maxLon: Option[Longitude] = None,
+      maxLat: Option[Latitude] = None,
+      sort: Option[Sort.Wire] = None,
       limit: Option[Filter.Limit] = None,
       offset: Option[Filter.Offset] = None,
       title: Option[Filter.Title] = None,
@@ -367,7 +376,7 @@ object LibraryTools:
       depth: Option[Api.AggregateQuery.Depth] = None,
       asOf: Option[Api.AggregateQuery.TreeAsOf] = None,
       samples: Option[Api.AggregateQuery.TreeSamples] = None,
-      verbose: SearchInput.Verbose = com.histmersion.domain.library.LibraryTools.SearchInput.Verbose(true)
+      verbose: SearchInput.Verbose = SearchInput.Verbose(true)
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(
       query,
@@ -392,7 +401,7 @@ object LibraryTools:
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
     type Verbose = Verbose.T
-    object Verbose extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verbose extends RefinedType[Boolean, Pure]
 
     given Schema[SearchInput] = Filter.Docs
       .describe(KindlingsSchema.derived[SearchInput].schema)
@@ -407,7 +416,7 @@ object LibraryTools:
       )
 
   final case class FacetsInput(
-      field: com.histmersion.api.library.Facet.FieldText,
+      field: Facet.FieldText,
       prefix: Option[Api.Facets.Prefix] = None,
       query: Option[Filter.Q] = None,
       tags: List[Filter.Tags] = Nil,
@@ -415,14 +424,14 @@ object LibraryTools:
       places: List[Filter.Places] = Nil,
       topics: List[Filter.Topics] = Nil,
       status: List[Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
-      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
-      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      yearFrom: Option[Year] = None,
+      yearTo: Option[Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      minLon: Option[Longitude] = None,
+      minLat: Option[Latitude] = None,
+      maxLon: Option[Longitude] = None,
+      maxLat: Option[Latitude] = None,
       limit: Option[Filter.Limit] = None
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(
@@ -453,8 +462,8 @@ object LibraryTools:
       .modify(_.limit)(_.description("At most this many values"))
 
   final case class GetSourceInput(
-      citekey: com.histmersion.domain.library.Citekey,
-      fullText: GetSourceInput.FullText = com.histmersion.domain.library.LibraryTools.GetSourceInput.FullText(false),
+      citekey: Citekey,
+      fullText: GetSourceInput.FullText = GetSourceInput.FullText(false),
       section: Option[com.histmersion.api.library.Source.Section.Wire] = None,
       heading: Option[SourceService.Heading] = None,
       offset: Option[GetSourceInput.Offset] = None,
@@ -462,9 +471,9 @@ object LibraryTools:
   ) derives KindlingsCodecAsObject
   object GetSourceInput:
     type FullText = FullText.T
-    object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FullText extends RefinedType[Boolean, Pure]
     type Offset = com.histmersion.Offset
-    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+    val Offset: com.histmersion.Offset.type = com.histmersion.Offset
 
     given Schema[GetSourceInput] = KindlingsSchema
       .derived[GetSourceInput]
@@ -483,7 +492,7 @@ object LibraryTools:
       .modify(_.chars)(_.description("Body slice length in characters (default: configured full-text-chars limit)"))
 
   /** What `passages` does — shared by the MCP tool and the agents' toolbox. */
-  val PassagesDoc: com.histmersion.domain.library.LibraryTools.PassagesDoc =
+  val PassagesDoc: PassagesDoc =
     "Find a word, phrase or quotation inside ONE source's full text — `grep` over its body. Returns the " +
       "passages around each match (the match in **bold**), each with its `offset` into the body (pass it " +
       "to `get_source` as `offset` to read on) and the heading it sits under, then how many more there " +
@@ -502,7 +511,7 @@ object LibraryTools:
       case Left(e) => McpOut.refusal(e)
 
   final case class PassagesInput(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       query: Api.PassagesQuery.Q,
       regex: Api.PassagesQuery.Regex = Api.PassagesQuery.Regex(false),
       limit: Option[Api.PassagesQuery.Limit] = None,
@@ -532,19 +541,19 @@ object LibraryTools:
       places: List[Filter.Places] = Nil,
       topics: List[Filter.Topics] = Nil,
       status: List[Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
-      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
-      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      yearFrom: Option[Year] = None,
+      yearTo: Option[Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      minLon: Option[Longitude] = None,
+      minLat: Option[Latitude] = None,
+      maxLon: Option[Longitude] = None,
+      maxLat: Option[Latitude] = None,
       limit: Option[Filter.Limit] = None,
       /** @deprecated use `from` */
-      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
+      periodStart: Option[Year] = None,
       /** @deprecated use `to` */
-      periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
+      periodEnd: Option[Year] = None,
       /** @deprecated use `places` */
       region: Option[Filter.Places] = None,
       offset: Option[Filter.Offset] = None
@@ -583,10 +592,10 @@ object LibraryTools:
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
-  final case class NeighborsInput(citekey: com.histmersion.domain.library.Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives KindlingsCodecAsObject
+  final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
-    type Kinds = com.histmersion.domain.library.Edge.Kind.Wire
-    val Kinds: _root_.com.histmersion.domain.library.Edge.Kind.Wire.type = _root_.com.histmersion.domain.library.Edge.Kind.Wire
+    type Kinds = Edge.Kind.Wire
+    val Kinds: Edge.Kind.Wire.type = Edge.Kind.Wire
 
     given Schema[NeighborsInput] = KindlingsSchema
       .derived[NeighborsInput]
@@ -597,7 +606,7 @@ object LibraryTools:
       )
 
   final case class GraphInput(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       depth: Option[CitationService.Depth] = None
   ) derives KindlingsCodecAsObject
   object GraphInput:
@@ -609,7 +618,7 @@ object LibraryTools:
       .modify(_.depth)(_.description("BFS depth 0–4 (default 2)"))
 
   final case class ContradictionsInput(
-      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       since: Option[CitationService.Since] = None
   ) derives KindlingsCodecAsObject
   object ContradictionsInput:
@@ -623,13 +632,13 @@ object LibraryTools:
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
   final case class PutSourceInput(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       source: com.histmersion.api.library.Source.Put,
-      strict: PutSourceInput.Strict = com.histmersion.domain.library.LibraryTools.PutSourceInput.Strict(false)
+      strict: PutSourceInput.Strict = PutSourceInput.Strict(false)
   )
   object PutSourceInput:
     type Strict = Strict.T
-    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strict extends RefinedType[Boolean, Pure]
 
     given Schema[PutSourceInput] = KindlingsSchema
       .derived[PutSourceInput]
@@ -638,13 +647,13 @@ object LibraryTools:
     given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
   final case class PatchSourceInput(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       patch: com.histmersion.api.library.Source.Patch,
-      strict: PatchSourceInput.Strict = com.histmersion.domain.library.LibraryTools.PatchSourceInput.Strict(false)
+      strict: PatchSourceInput.Strict = PatchSourceInput.Strict(false)
   )
   object PatchSourceInput:
     type Strict = Strict.T
-    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strict extends RefinedType[Boolean, Pure]
 
     given Schema[PatchSourceInput] = KindlingsSchema
       .derived[PatchSourceInput]
@@ -652,7 +661,7 @@ object LibraryTools:
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
-  final case class RenameSourceInput(citekey: com.histmersion.domain.library.Citekey, newCitekey: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject
+  final case class RenameSourceInput(citekey: Citekey, newCitekey: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject
   object RenameSourceInput:
 
     given Schema[RenameSourceInput] = KindlingsSchema
@@ -661,7 +670,7 @@ object LibraryTools:
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
-  final case class ExportSourceInput(citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ExportSourceInput(citekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
   /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `histogram` — now the FULL filter shape (A2).
@@ -674,21 +683,21 @@ object LibraryTools:
       places: List[Filter.Places] = Nil,
       topics: List[Filter.Topics] = Nil,
       status: List[Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
-      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
-      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      sort: Option[com.histmersion.api.library.Sort.Wire] = None,
+      yearFrom: Option[Year] = None,
+      yearTo: Option[Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      minLon: Option[Longitude] = None,
+      minLat: Option[Latitude] = None,
+      maxLon: Option[Longitude] = None,
+      maxLat: Option[Latitude] = None,
+      sort: Option[Sort.Wire] = None,
       limit: Option[Filter.Limit] = None,
       unit: Option[Api.AggregateQuery.Unit] = None,
       /** @deprecated use `from` */
-      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
+      periodStart: Option[Year] = None,
       /** @deprecated use `to` */
-      periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
+      periodEnd: Option[Year] = None,
       /** @deprecated use `places` */
       region: Option[Filter.Places] = None
   ) derives KindlingsCodecAsObject:

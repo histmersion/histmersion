@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.approvals.{ApprovalEffects, SubjectEffect}

@@ -1,6 +1,9 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one tool call of an agent step may return (`agents.tools`). Every later turn of a step re-sends every earlier
   * result, so a step that reads ten records pays for them on each of its turns: a Codex review step averaged ~8 turns
@@ -10,18 +13,18 @@ import com.histmersion.server.agents.Codex
   */
 object ToolResultCap:
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
   /** A chip link of the web UI (`[pie religion](/#topic=pie_religion)`): an agent reads the label and never follows the
     * link, so the target is dropped. Article links (`/article/<slug>`) stay.
     */
-  type CompactSourceMd = _root_.com.histmersion.domain.automation.agents.ToolResultCap.Markdown
-  val CompactSourceMd: _root_.com.histmersion.domain.automation.agents.ToolResultCap.Markdown.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.Markdown
+  type CompactSourceMd = Markdown
+  val CompactSourceMd: Markdown.type = Markdown
   type CapMax = CapMax.T
-  object CapMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CapMax extends RefinedType[Int, Pure]
   type CapHint = String
-  type SourceMax = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
-  val SourceMax: _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
+  type SourceMax = CapMax
+  val SourceMax: CapMax.type = CapMax
   type NotesExcerptHint = String
 
   private val ChipLink = """\[([^\]\n]*)\]\(/#[^)\s]*\)""".r
@@ -29,11 +32,11 @@ object ToolResultCap:
   /** Header lines of a source an agent does not act on (the bundle identity, how the file came). */
   private val IdentityLine = """(?m)^\*\*(?:Uid|Provenance):\*\* [^\n]*\n?""".r
 
-  def plainLinks(md: com.histmersion.domain.automation.agents.ToolResultCap.Markdown): String =
+  def plainLinks(md: Markdown): String =
     ChipLink.replaceAllIn(md.value, m => java.util.regex.Matcher.quoteReplacement(m.group(1)))
 
   /** A source record as an agent reads it: chip labels without their links, no identity lines. */
-  def compactSource(md: com.histmersion.domain.automation.agents.ToolResultCap.CompactSourceMd): String =
+  def compactSource(md: CompactSourceMd): String =
     IdentityLine.replaceAllIn(plainLinks(md), "").replace("  \n\n", "\n\n")
 
   /** The trailer of a cut result. */
@@ -43,7 +46,7 @@ object ToolResultCap:
   /** `text` within `max` characters: cut at the last line break that keeps at least half of what fits (else mid-line),
     * and closed with a [[trailer]] carrying `hint`. Shorter text is returned as is.
     */
-  def cap(text: String, max: com.histmersion.domain.automation.agents.ToolResultCap.CapMax, hint: com.histmersion.domain.automation.agents.ToolResultCap.CapHint): String =
+  def cap(text: String, max: CapMax, hint: CapHint): String =
     if max.value <= 0 || text.length <= max.value then text
     else
       val room = math.max(1, max.value - 160 - hint.length)
@@ -59,7 +62,7 @@ object ToolResultCap:
     * header, the summary and the findings — what a reviewer checks a sentence against — arrive whole; then the list of
     * articles mentioning it; anything still over is cut like any result.
     */
-  def source(md: com.histmersion.domain.automation.agents.ToolResultCap.Markdown, max: com.histmersion.domain.automation.agents.ToolResultCap.SourceMax): String =
+  def source(md: Markdown, max: SourceMax): String =
     val text = md.value
     val limit = max.value
     if limit <= 0 || text.length <= limit then text
@@ -85,7 +88,7 @@ object ToolResultCap:
         else shrunk.substring(0, m) + "\n\n_(the list of articles mentioning this source is left out)_"
       cap(lean, max, "the findings alone: get_source section=\"findings\"; a word in the source: passages")
 
-  private def notesExcerpt(notes: String, room: Int, hint: com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptHint): String =
+  private def notesExcerpt(notes: String, room: Int, hint: NotesExcerptHint): String =
     if room < 200 then s"_(${notes.length} characters of notes left out — $hint)_"
     else
       val nl = notes.lastIndexOf('\n', room)

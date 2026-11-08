@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -29,6 +30,19 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.api.library.Filter
+import com.histmersion.domain.automation.agents.RunCtx
+import com.histmersion.domain.library.Edge
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.automation.managers.ManagerContext
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -98,9 +112,9 @@ final class CompileArticlePipeline(
             decided <- ctx.approval(
               StepRecord.Name("approve"),
               ApprovalKind.ArticlePublish,
-              com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(snap.slug.value),
+              ApprovalQuery.Subject(snap.slug.value),
               io.scalaland.chimney.Transformer
-                .derive[com.histmersion.domain.automation.Approval.Mode, com.histmersion.api.automation.Approval.Mode]
+                .derive[Approval.Mode, com.histmersion.api.automation.Approval.Mode]
                 .transform(cfg.approvals.publishMode)
             )(
               Right(draft.asJson.noSpaces)
@@ -164,18 +178,18 @@ final class CompileArticlePipeline(
         case Left(e) => Left(e.message.value)
     }
 
-  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
-    val f = af.toFilter.copy(limit = com.histmersion.api.library.Filter.Limit(research.compile.maxSources.value))
+    val f = af.toFilter.copy(limit = Filter.Limit(research.compile.maxSources.value))
     val res = site.search.sources(f)
     val line = af.line
     val facts = res.hits.map(x =>
       SourceFact(
-        com.histmersion.domain.library.Citekey.assume(x.source.citekey.value),
+        Citekey.assume(x.source.citekey.value),
         Title(x.source.title.value),
-        x.source.year.map(y => com.histmersion.Year(y.value.toInt)),
+        x.source.year.map(y => Year(y.value.toInt)),
         x.source.status
       )
     )
@@ -183,13 +197,13 @@ final class CompileArticlePipeline(
     val already: Set[String] = AgentVerify.wikilinks(AgentVerify.Text(s.body.value)).map(w => w.value: String).toSet ++ s.reasons.map(r => r.citekey.value: String)
     if res.total.value > facts.size then
       ctx.warn(s"filter: $line → ${res.total.value}; only the first ${facts.size} are read (agents.compile.max-sources)")
-    Right(Found(ArticleDraft.Filter(line), com.histmersion.RowCount(res.total.value), facts, facts.map(_.citekey).filterNot(ck => already(ck.value))))
+    Right(Found(ArticleDraft.Filter(line), RowCount(res.total.value), facts, facts.map(_.citekey).filterNot(ck => already(ck.value))))
 
   /** A source's record, as an extraction reads it: summary, findings, notes, then the body, cut at
     * `agents.compile.record-chars`.
     */
-  private def record(ck: com.histmersion.domain.library.Citekey): Option[String] =
-    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).toOption.map { s =>
+  private def record(ck: Citekey): Option[String] =
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
@@ -225,7 +239,7 @@ final class CompileArticlePipeline(
                   CompileArticle.Last(last.value)
                 )
                 .left
-                .map(_.map(p => com.histmersion.domain.automation.agents.RunCtx.Problem(p.value)))
+                .map(_.map(p => RunCtx.Problem(p.value)))
                 .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
             }
             .map(sofar :+ _)
@@ -239,9 +253,9 @@ final class CompileArticlePipeline(
   private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
     val edges = found.sources.flatMap { s =>
       site.citations
-        .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => com.histmersion.domain.library.Edge.Kind.Wire(k.value)))
+        .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => Edge.Kind.Wire(k.value)))
         .filter(n => n.direction.value == "out" && n.target == NeighborTarget.Source)
-        .map(n => EdgeFact(s.citekey, Article.Coverage.DisagreementKind(com.histmersion.api.library.Edge.Kind.wireOf(n.kind).value), com.histmersion.domain.library.Citekey.assume(n.citekey.value)))
+        .map(n => EdgeFact(s.citekey, Article.Coverage.DisagreementKind(com.histmersion.api.library.Edge.Kind.wireOf(n.kind).value), Citekey.assume(n.citekey.value)))
     }
     CompileArticle.evidence(found.filter, found.total, found.sources, extracted, edges)
 
@@ -279,13 +293,13 @@ final class CompileArticlePipeline(
         val corpus = Corpus(
           isCitekey,
           t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined,
-          ck => site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.map(_.source.status)
+          ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)
         )
         val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
         CompileArticle
           .checkDraft(a, s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, CompileArticle.Last(last.value))
           .left
-          .map(_.map(p => com.histmersion.domain.automation.agents.RunCtx.Problem(p.value)))
+          .map(_.map(p => RunCtx.Problem(p.value)))
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
       }
     }
@@ -299,9 +313,9 @@ final class CompileArticlePipeline(
       val item = Pipelines.entry(
         ctx,
         Pipelines.EntryText(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
-        Some(com.histmersion.domain.automation.workflows.Pipelines.EntryTopic("agent compile"))
+        Some(Pipelines.EntryTopic("agent compile"))
       )
-      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), item).map(_ => ()))(Right(()))
+      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ()))(Right(()))
     if !decided.approved.value then Right(Written(written = Written.Value(false), Written.Why("the draft was rejected"), None))
     else
       d.mode match
@@ -316,7 +330,7 @@ final class CompileArticlePipeline(
             )(Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
-          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(com.histmersion.api.research.Coverage.Entry.Reason("")))
+          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Coverage.Entry.Reason("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),
@@ -357,7 +371,7 @@ final class CompileArticlePipeline(
           RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
           RunRequest.Target(s.slug.value),
           model = ctx.run.model.map(m => RunRequest.Model(m.value)),
-          fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)),
+          fix = Some(RunRequest.Fix(true)),
           goal = ctx.run.goal,
           modelFor = overrides
         ),
@@ -376,10 +390,10 @@ final class CompileArticlePipeline(
           goals.link(
             g,
             io.scalaland.chimney.Transformer
-              .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .derive[Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
               .transform(LinkKind.Article),
-            com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(d.slug.value),
-            Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("compiled by an agent run"))
+            Goal.Plans.GoalLink.Ref(d.slug.value),
+            Some(Goal.Plans.GoalLink.Note("compiled by an agent run"))
           )
         )
     log(
@@ -389,7 +403,7 @@ final class CompileArticlePipeline(
           d,
           CompileArticle.Written(w.written.value),
           CompileArticle.Reason(w.why.value),
-          review.map(com.histmersion.domain.automation.Run.Id.assume(_)),
+          review.map(Run.Id.assume(_)),
           ctx.runId
         )
         .value
@@ -400,7 +414,7 @@ final class CompileArticlePipeline(
 
 object CompileArticlePipeline:
 
-  def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[Written] =
+  def written(c: ManagerContext, run: Run.Id): Option[Written] =
     c.stepOutput(run, StepRecord.Name("write")).flatMap(o => io.circe.parser.decode[Written](o.value).toOption)
 
   /** The kind of a new article when the run names none. */
@@ -424,7 +438,7 @@ object CompileArticlePipeline:
   ) derives KindlingsCodecAsObject
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
-  final case class Found(filter: ArticleDraft.Filter, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[com.histmersion.domain.library.Citekey])
+  final case class Found(filter: ArticleDraft.Filter, total: RowCount, sources: List[SourceFact], toExtract: List[Citekey])
       derives KindlingsCodecAsObject
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
@@ -432,8 +446,8 @@ object CompileArticlePipeline:
 
   object Written:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Boolean, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type PreviousVersion = PreviousVersion.T
-    object PreviousVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PreviousVersion extends RefinedType[Long, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,34 +19,45 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.library.Ingest
+import com.histmersion.db.DbSuite
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.util.storage.Blob
+import com.histmersion.domain.media.assets.AssetService
+import com.histmersion.util.jobs.JobListing
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.library.ingest.Upload
+import com.histmersion.util.storage.HandedFile
+import com.histmersion.util.jobs.Job
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
   * acquisition bookkeeping failed. Uses only the disposable *_test database.
   */
-class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
+class IngestQueueFailureSuite extends DbSuite:
   override def munitIgnore: Boolean = TestDb.url.isEmpty
 
   test("a queue-write failure leaves the stored OCR job done, with a bookkeeping warning"):
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(TestDb.url.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("ingest-queue-spool").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(TestDb.url.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("ingest-queue-spool").toString))
     )
     val ds = testPool(cfg.db)
     Migrate.run(ds)
     val converter = new ConverterClient:
-      def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-      def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
-        Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Fixture\n\nOCR succeeded."), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil))
+      def health = Right(ConverterClient.HealthSummary("ok"))
+      def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+        Right(ConvertedDoc(markdown = ConvertedDoc.Markdown("# Fixture\n\nOCR succeeded."), pages = ConvertedDoc.Pages(1), images = Nil))
     val deps = Deps(cfg, ds)
     val handler = IngestWiring(
       deps,
       converter,
       AcquisitionTesting.sources(deps),
-      com.histmersion.domain.media.assets.AssetService(deps.transactor),
+      AssetService(deps.transactor),
       _ => None
     )
-    val jobs = com.histmersion.util.jobs.JobListing(ds, () => cfg)
-    val key = com.histmersion.domain.library.Citekey("zz_ingest_queue_failure")
+    val jobs = JobListing(ds, () => cfg)
+    val key = Citekey("zz_ingest_queue_failure")
     val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = Queue.QueueItem.Text("zz_ingest_queue_failure")))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")
     Files.writeString(pdf, "%PDF-1.4 queue failure fixture")
@@ -65,16 +77,16 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.queue.start()
       val accepted = handler.controllers
         .ingest(
-          Ingest.Params(com.histmersion.api.library.Citekey("zz_ingest_queue_failure"), Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = com.histmersion.api.library.Ingest.Params.Force(true), acquireItem = Some(Ingest.Params.AcquireItem(item.id.value))),
-          com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile))
+          Ingest.Params(com.histmersion.api.library.Citekey("zz_ingest_queue_failure"), Some(Bundle.Asset.FileName("fixture.pdf")), force = Ingest.Params.Force(true), acquireItem = Some(Ingest.Params.AcquireItem(item.id.value))),
+          Upload.handed(HandedFile.snapshot(pdf.toFile))
         )
         .toOption
         .get
-      var job = jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
+      var job = jobs.job(Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
       var attempts = 0
       while !job.isTerminal && attempts < 500 do
         Thread.sleep(10)
-        job = jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
+        job = jobs.job(Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
         attempts += 1
       assert(SourceFixtures.load(ds, key).isDefined, "source must have been stored")
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))

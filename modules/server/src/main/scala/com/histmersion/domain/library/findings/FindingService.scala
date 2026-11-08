@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
@@ -10,7 +11,7 @@ import com.histmersion.api.library.{Filter, GeoHit}
   */
 trait FindingService:
   def feed(filter: Filter, scope: PlaceScope): List[GeoHit]
-  def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
+  def count(filter: Filter, scope: PlaceScope): RowCount
 
 object FindingService:
 
@@ -18,5 +19,5 @@ object FindingService:
 
   final private class Implementation(db: Transactor) extends FindingService:
     def feed(filter: Filter, scope: PlaceScope): List[GeoHit] = db.read(FindingRepo.findingsFor(filter, scope)).toList
-    def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(FindingRepo.findingsCount(filter, scope))
+    def count(filter: Filter, scope: PlaceScope): RowCount = db.read(FindingRepo.findingsCount(filter, scope))
 

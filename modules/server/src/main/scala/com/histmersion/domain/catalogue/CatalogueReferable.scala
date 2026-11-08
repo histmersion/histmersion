@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.domain.ItemKind
 import com.histmersion.util.database.Transactor
@@ -17,12 +18,12 @@ object CatalogueReferable:
   val Events: RecordTable =
     RecordTable(
       EventKind,
-      com.histmersion.util.identity.RecordTable.Table("events"),
-      com.histmersion.util.identity.RecordTable.Key("t.id"),
-      com.histmersion.util.identity.RecordTable.Title("t.label"),
-      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
-      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("event_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("event_id")))
+      RecordTable.Table("events"),
+      RecordTable.Key("t.id"),
+      RecordTable.Title("t.label"),
+      Some(RecordTable.Uid("t.uid")),
+      Some(AliasColumns(AliasColumns.Table("event_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("event_id")))
     )
 
   val Places: RecordTable =
-    RecordTable(PlaceKind, com.histmersion.util.identity.RecordTable.Table("places"), com.histmersion.util.identity.RecordTable.Key("t.id"), com.histmersion.util.identity.RecordTable.Title("t.label"), None, Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("place_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("place_id"))))
+    RecordTable(PlaceKind, RecordTable.Table("places"), RecordTable.Key("t.id"), RecordTable.Title("t.label"), None, Some(AliasColumns(AliasColumns.Table("place_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("place_id"))))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.domain.library.acquisition.wire
 
@@ -8,6 +9,7 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{FollowupRow, WorkRef}
+import com.histmersion.upstreams.Offset
 
 final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsClient:
 
@@ -22,7 +24,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
     * `isInfluential` flag, which is what makes a follow-up worth reading. When it is down or rate limited we fall back
     * to OpenAlex's plain citation list — fewer signals, but never nothing.
     */
-  def citing(work: WorkRef, since: Option[com.histmersion.Year], limit: CitationsClient.CitingLimit): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] =
+  def citing(work: WorkRef, since: Option[Year], limit: CitationsClient.CitingLimit): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] =
     val semantic = CitationsClient.CitingResultPart2Part1("semantic-scholar")
     val openalex = CitationsClient.CitingResultPart2Part1("openalex")
     val found: Either[String, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] = work.doi match
@@ -36,15 +38,15 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
       case None => openalexCiting(work, since, limit.value).map((openalex, _))
     found.left.map(CitationsClient.Problem(_))
 
-  private def s2(doi: String, since: Option[com.histmersion.Year], limit: Int): Either[String, List[FollowupRow]] =
-    def page(offset: com.histmersion.upstreams.Offset, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =
+  private def s2(doi: String, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
+    def page(offset: Offset, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =
       if acc.size >= limit then Right(acc)
       else
         http
           .json(
             Url(
               Http.Url(cfg.semanticScholar.url.value),
-              com.histmersion.upstreams.http.Url.UrlPath(s"/paper/DOI:$doi/citations"),
+              Url.UrlPath(s"/paper/DOI:$doi/citations"),
               "fields" -> Fields,
               "limit" -> math.min(100, limit - acc.size).toString,
               "offset" -> offset.value.toString
@@ -60,9 +62,9 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
               case Some(next) if rows.nonEmpty && next.value > offset.value => page(next, kept)
               case _                                                        => Right(kept)
           }
-    page(com.histmersion.upstreams.Offset(0), Nil)
+    page(Offset(0), Nil)
 
-  private def openalexCiting(work: WorkRef, since: Option[com.histmersion.Year], limit: Int): Either[String, List[FollowupRow]] =
+  private def openalexCiting(work: WorkRef, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
     work.openalexId match
       case None     => Right(Nil)
       case Some(id) =>
@@ -71,7 +73,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
           .json(
             Url(
               Http.Url(cfg.openalex.url.value),
-              com.histmersion.upstreams.http.Url.UrlPath("/works"),
+              Url.UrlPath("/works"),
               "filter" -> filter,
               "per-page" -> math.max(1, math.min(limit, 50)).toString,
               "sort" -> "cited_by_count:desc",

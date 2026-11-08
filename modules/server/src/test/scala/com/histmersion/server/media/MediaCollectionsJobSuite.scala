@@ -1,4 +1,5 @@
-package com.histmersion.server.media
+package com.histmersion
+package server.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -28,6 +29,12 @@ import com.histmersion.db.*
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{AssetKind, MediaImportReport, MediaItem, MediaProvider}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.server.ServerPlugins
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.config.ServerConfig
+import com.histmersion.api.media.ImportJobKinds
 
 /** A collection import (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * places on the map and their name keys and periods as the match reads them (V094), a dry run's matches with their
@@ -35,8 +42,8 @@ import com.histmersion.api.media.{AssetKind, MediaImportReport, MediaItem, Media
   * Institute of Chicago is a stand-in server on this machine (the config's API and IIIF URLs point at it) — no request
   * leaves it. Fixtures: ids `zqmc_*`, names `Zqmc…`.
   */
-class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class MediaCollectionsJobSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -99,7 +106,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
     )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
-  private lazy val plugins = com.histmersion.server.ServerPlugins.offlineWith(
+  private lazy val plugins = ServerPlugins.offlineWith(
     Nil,
     org.ekrich.config.ConfigFactory.parseString(
       s"""histmersion.media {
@@ -123,7 +130,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqmc%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmc%'".update.run()
 
-  private def pt(lon: com.histmersion.Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-41]}"""))
+  private def pt(lon: Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-41]}"""))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -132,16 +139,16 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), com.histmersion.api.catalogue.Place.Label("Zqmcenae"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(140.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenae")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenai")))
+            Place(Place.Id("zqmc_site"), Place.Label("Zqmcenae"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(140.0))),
+            List(Place.Name(Place.Name.Value("Zqmcenae")), Place.Name(Place.Name.Value("Zqmcenai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(141.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
+            Place(Place.Id("zqmc_thebai_a"), Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(141.0))),
+            List(Place.Name(Place.Name.Value("Zqmc Thebai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(150.0))),
-            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
+            Place(Place.Id("zqmc_thebai_b"), Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(150.0))),
+            List(Place.Name(Place.Name.Value("Zqmc Thebai")))
           )
         )
       )
@@ -175,13 +182,13 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
       .fold(p => fail(p.value), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id.value).toSet), ts.toString)
     assert(
-      ImportFixtures.collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, Some(com.histmersion.domain.catalogue.Event.Id("e")), ImportFixtures.Limit(1), ImportFixtures.Refresh(false)).isLeft,
+      ImportFixtures.collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, Some(Event.Id("e")), ImportFixtures.Limit(1), ImportFixtures.Refresh(false)).isLeft,
       "a collection is about places"
     )
 
   test("dry run, a job, the link's reason and the check — through the server"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (us, ub) = post(s"$url/api/media/import", """{"provider":"rijks","dryRun":true}""")
@@ -205,7 +212,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         val job = decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity)
         assert(
           job.detail
-            .flatMap(com.histmersion.api.media.ImportJobKinds.Media.of)
+            .flatMap(ImportJobKinds.Media.of)
             .exists(_.value.contains("Art Institute of Chicago objects of zqmc_site")),
           job.toString
         )

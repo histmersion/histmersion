@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.api.Write
 import com.histmersion.config.{MediaConfig, MediaPluginCollectionsConfig}
@@ -17,6 +18,10 @@ import com.histmersion.api.jobs.{JobInfo, JobKinds}
 import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
 import com.histmersion.api.Api
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.media.MediaItem
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.media.ImportJobKinds
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -40,7 +45,7 @@ final class ImportsControllers(
   /** The importer an import request names, or why it cannot run (unknown, its plugin switched off, or its own
     * `media.<provider>.enabled` off).
     */
-  private def providerOf(p: com.histmersion.api.media.MediaItem.Provider): Either[Api.Error, MediaImporter] =
+  private def providerOf(p: MediaItem.Provider): Either[Api.Error, MediaImporter] =
     MediaImporters
       .resolve(MediaImporters.ImporterKey(p.value), collections()._1, imports, store, cfg, http, converter)
       .left
@@ -159,7 +164,7 @@ final class ImportsControllers(
       event: Option[Event.Id],
       refresh: ImportService.Refresh,
       single: Boolean,
-      limit: Option[com.histmersion.domain.media.imports.ImportsControllers.ImportLimit],
+      limit: Option[ImportsControllers.ImportLimit],
       since: Option[ImportService.Since],
       progress: JobInfo.Progress => Unit
   ): MediaImportReport =
@@ -169,7 +174,7 @@ final class ImportsControllers(
     progress(JobInfo.Progress(s"counting the ${imp.over} not asked yet"))
     val total = ImportsControllers.TotalCount(if single then 1 else imp.pending(since).value.min(cap))
     @annotation.tailrec
-    def loop(acc: MediaImportReport, seen: Set[com.histmersion.domain.media.imports.ImportsControllers.SeenKey]): MediaImportReport =
+    def loop(acc: MediaImportReport, seen: Set[ImportsControllers.SeenKey]): MediaImportReport =
       val left = cap - acc.targets.value
       if left <= 0 || jobs.held then acc
       else
@@ -205,7 +210,7 @@ final class ImportsControllers(
                 if single || (r.items.value == 0 && r.failed.nonEmpty) then next
                 else loop(next, seen ++ targets.map(ImportsControllers.seenKey))
     val out = loop(
-      MediaImportReport(com.histmersion.api.media.MediaItem.Provider(imp.check.value), dryRun = MediaImportRequest.DryRun(false)),
+      MediaImportReport(MediaItem.Provider(imp.check.value), dryRun = MediaImportRequest.DryRun(false)),
       Set.empty
     )
     scribe.info(
@@ -217,13 +222,13 @@ final class ImportsControllers(
 
 object ImportsControllers:
   type ImportLimit = ImportLimit.T
-  object ImportLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportLimit extends RefinedType[Int, Pure]
   type SeenKey = SeenKey.T
-  object SeenKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeenKey extends RefinedType[String, Pure]
   type TotalCount = TotalCount.T
-  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TotalCount extends RefinedType[Int, Pure]
 
-  val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value)
+  val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value)
 
   private[imports] def error(message: String, code: String): Api.Error =
     Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
@@ -237,7 +242,7 @@ object ImportsControllers:
   /** Pure: a running import job's progress line — `n/total` asked (a total of 0 or less is unknown, and a total passed
     * by the asked count is the asked count: places cited meanwhile join in).
     */
-  def progressLine(r: MediaImportReport, total: com.histmersion.domain.media.imports.ImportsControllers.TotalCount, requests: Polite.RequestCount): JobInfo.Progress =
+  def progressLine(r: MediaImportReport, total: TotalCount, requests: Polite.RequestCount): JobInfo.Progress =
     val of = if total.value > 0 then s"/${total.value.max(r.targets.value)}" else ""
     JobInfo.Progress(
       List(

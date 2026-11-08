@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.server.ServerPlugins
 
@@ -10,6 +11,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.instance.Version
 import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
+import com.histmersion.config.AppConfig
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every
@@ -35,7 +37,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
 
   private val Transport = Set("host", "connection", "accept", "content-length", "upgrade", "http2-settings")
 
-  private lazy val cfg = com.histmersion.config.AppConfig.load()
+  private lazy val cfg = AppConfig.load()
 
   /** The stock generation's gazetteer sources (the first-party plugins, found on the class path as the server finds
     * them).
@@ -63,7 +65,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     ImportRunner.places(sources(name), http).map(_._1)
 
   private def dryRun(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
-    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(true), GeocodeSettings.ToleranceKm(0.0))
+    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = GazetteerControllers.DryRun(true), GeocodeSettings.ToleranceKm(0.0))
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 

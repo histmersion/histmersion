@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,6 +12,8 @@ import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.time.Duration
+import com.histmersion.config.ConverterConfig
+import com.histmersion.util.jobs.Job
 
 /** A whole book legitimately converts for far longer than an article: the client asks the sidecar for the page count
   * and allows `pages × seconds-per-page` when that beats the configured timeout.
@@ -23,33 +26,33 @@ class ConverterClientSuite extends munit.FunSuite:
     Some(ConverterClient.PageCount(pages, scanned))
 
   test("the timeout is the configured one, or pages × seconds-per-page when that is longer"):
-    val c = base.modify(_.timeoutSeconds).setTo(com.histmersion.config.ConverterConfig.TimeoutSeconds(600)).modify(_.secondsPerPage).setTo(com.histmersion.config.ConverterConfig.SecondsPerPage(2)).modify(_.secondsPerPageQuality).setTo(com.histmersion.config.ConverterConfig.SecondsPerPageQuality(8)).modify(_.secondsPerScannedPage).setTo(com.histmersion.config.ConverterConfig.SecondsPerScannedPage(15))
+    val c = base.modify(_.timeoutSeconds).setTo(ConverterConfig.TimeoutSeconds(600)).modify(_.secondsPerPage).setTo(ConverterConfig.SecondsPerPage(2)).modify(_.secondsPerPageQuality).setTo(ConverterConfig.SecondsPerPageQuality(8)).modify(_.secondsPerScannedPage).setTo(ConverterConfig.SecondsPerScannedPage(15))
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10)), quality = ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = ConverterClient.HighQuality(false)),
       Duration.ofSeconds(1200)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = ConverterClient.HighQuality(true)),
       Duration.ofSeconds(4800)
     )
-    assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)), Duration.ofSeconds(600))
+    assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = ConverterClient.HighQuality(true)), Duration.ofSeconds(600))
 
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
-    val c = base.modify(_.timeoutSeconds).setTo(com.histmersion.config.ConverterConfig.TimeoutSeconds(600)).modify(_.secondsPerPage).setTo(com.histmersion.config.ConverterConfig.SecondsPerPage(2)).modify(_.secondsPerPageQuality).setTo(com.histmersion.config.ConverterConfig.SecondsPerPageQuality(8)).modify(_.secondsPerScannedPage).setTo(com.histmersion.config.ConverterConfig.SecondsPerScannedPage(15))
+    val c = base.modify(_.timeoutSeconds).setTo(ConverterConfig.TimeoutSeconds(600)).modify(_.secondsPerPage).setTo(ConverterConfig.SecondsPerPage(2)).modify(_.secondsPerPageQuality).setTo(ConverterConfig.SecondsPerPageQuality(8)).modify(_.secondsPerScannedPage).setTo(ConverterConfig.SecondsPerScannedPage(15))
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(155), scanned = ConverterClient.PageCount.Scanned(155)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(155), scanned = ConverterClient.PageCount.Scanned(155)), quality = ConverterClient.HighQuality(false)),
       Duration.ofSeconds(2325)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(400), scanned = ConverterClient.PageCount.Scanned(100)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(400), scanned = ConverterClient.PageCount.Scanned(100)), quality = ConverterClient.HighQuality(false)),
       Duration.ofSeconds(300 * 2 + 100 * 15)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10), scanned = ConverterClient.PageCount.Scanned(99)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10), scanned = ConverterClient.PageCount.Scanned(99)), quality = ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600),
       "scanned is capped at pages"
     )
@@ -78,10 +81,10 @@ class ConverterClientSuite extends munit.FunSuite:
     val file = Files.createTempFile("book", ".pdf")
     try
       HttpConverterClient(
-        ConverterWiring.settings(base.modify(_.url).setTo(com.histmersion.config.ConverterConfig.Url(url)).modify(_.timeoutSeconds).setTo(com.histmersion.config.ConverterConfig.TimeoutSeconds(1)).modify(_.secondsPerPage).setTo(com.histmersion.config.ConverterConfig.SecondsPerPage(3))),
+        ConverterWiring.settings(base.modify(_.url).setTo(ConverterConfig.Url(url)).modify(_.timeoutSeconds).setTo(ConverterConfig.TimeoutSeconds(1)).modify(_.secondsPerPage).setTo(ConverterConfig.SecondsPerPage(3))),
         ConverterWiring.http()
       )
-        .convert(OfflineConverter.blob(file), com.histmersion.util.ocr.ConverterClient.Filename("book.pdf"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false))
+        .convert(OfflineConverter.blob(file), ConverterClient.Filename("book.pdf"), quality = ConverterClient.HighQuality(false))
     finally Files.deleteIfExists(file)
 
   test("a long document gets the scaled time: a 2 s conversion of 1 page at 3 s/page succeeds past a 1 s timeout"):
@@ -98,12 +101,12 @@ class ConverterClientSuite extends munit.FunSuite:
 /** #692: what `/api/health` says about the sidecar, from the probe and the job it is converting. */
 class ConverterStateSuite extends munit.FunSuite:
   test("a failed probe during a conversion is busy (healthy); without one it is down"):
-    assertEquals(ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("ok"), None), ConverterState.Ok)
-    assertEquals(ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("ok"), Some(com.histmersion.util.jobs.Job.Id.assume("j1"))), ConverterState.Ok)
-    val busy = ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("degraded: no answer from the converter within 5000 ms"), Some(com.histmersion.util.jobs.Job.Id.assume("j1")))
-    assertEquals(busy, ConverterState.Busy(com.histmersion.util.ocr.ConverterState.Busy.JobId.assume("j1")))
+    assertEquals(ConverterState.of(ConverterState.Probe("ok"), None), ConverterState.Ok)
+    assertEquals(ConverterState.of(ConverterState.Probe("ok"), Some(Job.Id.assume("j1"))), ConverterState.Ok)
+    val busy = ConverterState.of(ConverterState.Probe("degraded: no answer from the converter within 5000 ms"), Some(Job.Id.assume("j1")))
+    assertEquals(busy, ConverterState.Busy(ConverterState.Busy.JobId.assume("j1")))
     assert(busy.healthy)
     assertEquals(busy.render, "converter busy: job j1")
-    val down = ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("converter at http://x is unreachable"), None)
+    val down = ConverterState.of(ConverterState.Probe("converter at http://x is unreachable"), None)
     assert(!down.healthy)
     assertEquals(down.render, "converter at http://x is unreachable")

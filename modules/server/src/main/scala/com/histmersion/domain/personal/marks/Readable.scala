@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.marks
+package com.histmersion
+package domain.personal.marks
 
 import hearth.kindlings.optics.syntax.*
 

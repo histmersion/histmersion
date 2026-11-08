@@ -1,8 +1,11 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 
 import com.histmersion.domain.automation.ScheduleKind
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A goal schedule not moved into its watcher yet, as [[GoalService.InMemory]] holds it. */
 final case class GoalScheduleRecord(
@@ -16,8 +19,8 @@ final case class GoalScheduleRecord(
 
 object GoalScheduleRecord:
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
   type Cron = Cron.T
-  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cron extends RefinedType[String, Pure]
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]

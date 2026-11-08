@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -30,6 +31,42 @@ import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.media.{MediaCoversRequest, MediaImportReport, MediaImportRequest}
 import com.histmersion.api.Api
+import com.histmersion.config.DbConfig
+import com.histmersion.plugin.LicenceReader
+import com.histmersion.plugin.MediaRights
+import com.histmersion.domain.AuthorName
+import com.histmersion.config.BackupsConfig
+import com.histmersion.config.BundlesConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.config.AcquireConfig
+import com.histmersion.config.InitConfig
+import com.histmersion.config.RuntimeConfig
+import com.histmersion.config.BasemapConfig
+import com.histmersion.config.MediaConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.plugin.Plugin
+import com.histmersion.plugin.Spi
+import com.histmersion.plugin.Registry
+import com.histmersion.plugin.MediaCollection
+import com.histmersion.plugin.MediaMatchRule
+import com.histmersion.plugin.MediaTarget
+import com.histmersion.plugin.MediaPlace
+import com.histmersion.plugin.MediaItem
+import com.histmersion.plugin.MediaEvent
+import com.histmersion.plugin.MediaFound
+import com.histmersion.plugin.MediaUse
+import com.histmersion.plugin.Period
+import com.histmersion.plugin.Year
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.library.RepairAcquire
+import com.histmersion.api.library.Citekey
+import com.histmersion.plugins.calibre.CalibreFixture
+import com.histmersion.cli.Calibre
+import com.histmersion.config.CalibreCliConfig
+import com.histmersion.cli.Client
+import com.histmersion.cli.MediaCovers
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *
@@ -58,7 +95,7 @@ class MediaOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-media-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -146,18 +183,18 @@ class MediaOracleSuite extends DbSuite:
 
   private def licences: String =
     val out = StringBuilder()
-    val default = Licence.allowList(com.histmersion.domain.Licence.AllowList("cc0,public-domain,cc-by,cc-by-sa"))
+    val default = Licence.allowList(Licence.AllowList("cc0,public-domain,cc-by,cc-by-sa"))
     out ++= "# classify: statement → id|family · needs attribution · public domain · allowed by default · host's read\n"
     Statements.foreach { s =>
       val l = Licence.classify(Licence.Id(s.value))
-      val r = HostLicences.readName(com.histmersion.plugin.LicenceReader.ReadNameName(s.value))
+      val r = HostLicences.readName(LicenceReader.ReadNameName(s.value))
       out ++= s"${(s.value: String).asJson.noSpaces} → ${lic(l)} · ${l.family.needsAttribution} · " +
         s"${l.family.isPublicDomain} · ${Licence.allowed(l, default)} · " +
         s"${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# ofUrl: url → id|family · host's read\n"
     Urls.foreach { u =>
-      val r = HostLicences.readUrl(com.histmersion.plugin.LicenceReader.ReadUrlUrl(u.value))
+      val r = HostLicences.readUrl(LicenceReader.ReadUrlUrl(u.value))
       out ++= s"${(u.value: String).asJson.noSpaces} → ${lic(Licence.ofUrl(u))} · ${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# parse(machine, short) and firstKnown\n"
@@ -173,7 +210,7 @@ class MediaOracleSuite extends DbSuite:
       out ++= s"${m.map(x => (x.value: String)).asJson.noSpaces}, ${s.map(x => (x.value: String)).asJson.noSpaces} → ${lic(Licence.parse(m, s))}\n"
     )
     List(List("x", "cc0"), List("", " ", "y"), Nil, List("CC BY-NC 4.0", "cc-by-4.0")).map(_.map(Licence.Statement(_))).foreach { ss =>
-      val r = HostLicences.readFirst(ss.map(x => com.histmersion.plugin.LicenceReader.ReadFirstStatements(x.value)))
+      val r = HostLicences.readFirst(ss.map(x => LicenceReader.ReadFirstStatements(x.value)))
       out ++= s"${ss.map(x => (x.value: String)).asJson.noSpaces} → ${lic(Licence.firstKnown(ss))} · ${r.id}|${r.family}\n"
     }
     out ++= "# allowList: csv → the families · each family allowed\n"
@@ -209,17 +246,17 @@ class MediaOracleSuite extends DbSuite:
     }
     out ++= "# a stated attribution as the host takes it\n"
     val stated = List(
-      spi.MediaRights(spi.Licence("CC BY-SA 4.0"), author = Some(com.histmersion.plugin.MediaRights.Author(" Zq Photographer ")), credit = com.histmersion.plugin.MediaRights.Credit(" Zq, CC BY-SA ")),
-      spi.MediaRights(spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"), credit = com.histmersion.plugin.MediaRights.Credit("Zq Museum")),
-      spi.MediaRights(
+      MediaRights(spi.Licence("CC BY-SA 4.0"), author = Some(MediaRights.Author(" Zq Photographer ")), credit = MediaRights.Credit(" Zq, CC BY-SA ")),
+      MediaRights(spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"), credit = MediaRights.Credit("Zq Museum")),
+      MediaRights(
         spi.Licence("see the licence"),
-        licenceUrl = Some(com.histmersion.plugin.MediaRights.LicenceUrl("https://creativecommons.org/licenses/by/3.0/")),
-        credit = com.histmersion.plugin.MediaRights.Credit("Zq")
+        licenceUrl = Some(MediaRights.LicenceUrl("https://creativecommons.org/licenses/by/3.0/")),
+        credit = MediaRights.Credit("Zq")
       ),
-      spi.MediaRights(spi.Licence("see the licence"), licenceUrl = Some(com.histmersion.plugin.MediaRights.LicenceUrl("https://zq.example/terms")), credit = com.histmersion.plugin.MediaRights.Credit("Zq")),
-      spi.MediaRights(spi.Licence("cc0"), licenceUrl = Some(com.histmersion.plugin.MediaRights.LicenceUrl(" ")), author = Some(com.histmersion.plugin.MediaRights.Author("")), credit = com.histmersion.plugin.MediaRights.Credit("Zq")),
-      spi.MediaRights(spi.Licence("cc-by-4.0"), credit = com.histmersion.plugin.MediaRights.Credit("  ")),
-      spi.MediaRights(spi.Licence("All rights reserved"), credit = com.histmersion.plugin.MediaRights.Credit("Zq Museum"))
+      MediaRights(spi.Licence("see the licence"), licenceUrl = Some(MediaRights.LicenceUrl("https://zq.example/terms")), credit = MediaRights.Credit("Zq")),
+      MediaRights(spi.Licence("cc0"), licenceUrl = Some(MediaRights.LicenceUrl(" ")), author = Some(MediaRights.Author("")), credit = MediaRights.Credit("Zq")),
+      MediaRights(spi.Licence("cc-by-4.0"), credit = MediaRights.Credit("  ")),
+      MediaRights(spi.Licence("All rights reserved"), credit = MediaRights.Credit("Zq Museum"))
     )
     stated.foreach { r =>
       out ++= s"${(r.licence.value: String).asJson.noSpaces} ${r.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} → " +
@@ -234,9 +271,9 @@ class MediaOracleSuite extends DbSuite:
     }
     out ++= "# the host's own statements\n"
     List(
-      Attribution.cc0(Some(com.histmersion.domain.AuthorName("Zq")), com.histmersion.domain.Attribution.Cc0Credit("Zq, CC0")),
-      Attribution.publicDomain(None, com.histmersion.domain.Attribution.PublicDomainCredit("Zq Museum")),
-      Attribution.publicDomain(Some(com.histmersion.domain.AuthorName("Zq")), com.histmersion.domain.Attribution.PublicDomainCredit("Zq"), None)
+      Attribution.cc0(Some(AuthorName("Zq")), Attribution.Cc0Credit("Zq, CC0")),
+      Attribution.publicDomain(None, Attribution.PublicDomainCredit("Zq Museum")),
+      Attribution.publicDomain(Some(AuthorName("Zq")), Attribution.PublicDomainCredit("Zq"), None)
     ).foreach(a =>
       out ++= s"${lic(a.licence)} url=${a.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} author=${a.author.map(x => (x.value: String)).asJson.noSpaces} " +
         s"credit=${(a.credit.value: String).asJson.noSpaces}\n"
@@ -250,12 +287,12 @@ class MediaOracleSuite extends DbSuite:
 
   private def cfgFor(name: String): AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s9o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(com.histmersion.config.MediaConfig.RequestIntervalMs(0))
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s9o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0))
     )
 
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWire.Thumbs()).start()
+      val b = Composition.server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWire.Thumbs()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -304,7 +341,7 @@ class MediaOracleSuite extends DbSuite:
     val r = raw(HttpRequest.newBuilder(URI.create(url)))
     val kind = r.headers().firstValue("content-type").orElse("-")
     if r.statusCode == 200 then
-      s"${r.statusCode} $kind ${r.body.length} ${com.histmersion.util.data.exchange.BundleFormat.sha256Hex(r.body)}"
+      s"${r.statusCode} $kind ${r.body.length} ${BundleFormat.sha256Hex(r.body)}"
     else s"${r.statusCode} $kind ${String(r.body, UTF_8)}"
 
   private def bytes(url: String): Array[Byte] =
@@ -601,7 +638,7 @@ class MediaOracleSuite extends DbSuite:
       String(r.body, java.nio.charset.StandardCharsets.ISO_8859_1),
       m => scala.util.matching.Regex.quoteReplacement(names.getOrElse(m.matched, "UUID"))
     )
-    val sha = com.histmersion.util.data.exchange.BundleFormat
+    val sha = BundleFormat
       .sha256Hex(named.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1))
     val etag = r.headers().firstValue("etag").orElse("-")
     s"$path ${r.statusCode} ${r.body.length} $sha $etag"
@@ -842,100 +879,100 @@ class MediaOracleSuite extends DbSuite:
   // ── imports ────────────────────────────────────────────────────────────────────────────────
 
   /** A plugin's collection of its targets' own pictures: it is asked about the whole batch and states each licence. */
-  final private class OwnPlugin extends spi.Plugin:
+  final private class OwnPlugin extends Plugin:
     type Config = ZqOracleConfig
-    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-own"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Plugin.Info.SpiVersion(spi.Spi.Version))
-    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
-    def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
+    val info = Plugin.Info(Plugin.Info.Id("zq-own"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
+    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    def register(c: ZqOracleConfig, ctx: Plugin.Context) =
       ctx.mediaCollections
-        .add(com.histmersion.plugin.Registry.AddId("zq-own"), OwnCollection)
-        .flatMap(_ => ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("zq-search"), Searched))
+        .add(Registry.AddId("zq-own"), OwnCollection)
+        .flatMap(_ => ctx.mediaCollections.add(Registry.AddId("zq-search"), Searched))
         .left
-        .map(why => spi.Plugin.RegisterResultPart1(why.value))
+        .map(why => Plugin.RegisterResultPart1(why.value))
 
-  private object OwnCollection extends spi.MediaCollection:
-    val title = com.histmersion.plugin.MediaCollection.TitleResult("Zq own pictures")
-    override val description = spi.MediaCollection.DescriptionResult("A fixture's collection of its targets' own pictures")
-    val role = spi.MediaCollection.RoleResult(spi.MediaCollection.Image)
-    override val requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(0)
-    override val matchRule = spi.MediaMatchRule.Own
-    override val asks = Set(spi.MediaTarget.Places, spi.MediaTarget.Events)
-    def search(place: spi.MediaPlace, http: spi.Plugin.Http) = Right(Nil)
-    private def item(key: spi.MediaItem.Key, licence: spi.Licence, author: Option[spi.MediaRights.Author], role: Option[spi.MediaItem.Role]) =
-      spi.MediaItem(
+  private object OwnCollection extends MediaCollection:
+    val title = MediaCollection.TitleResult("Zq own pictures")
+    override val description = MediaCollection.DescriptionResult("A fixture's collection of its targets' own pictures")
+    val role = MediaCollection.RoleResult(MediaCollection.Image)
+    override val requestIntervalMs = MediaCollection.RequestIntervalMsResult(0)
+    override val matchRule = MediaMatchRule.Own
+    override val asks = Set(MediaTarget.Places, MediaTarget.Events)
+    def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
+    private def item(key: MediaItem.Key, licence: spi.Licence, author: Option[MediaRights.Author], role: Option[MediaItem.Role]) =
+      MediaItem(
         key,
-        spi.MediaItem.Title(s"Zq picture $key"),
-        spi.MediaItem.PageUrl(s"https://zq-own.example/page/$key"),
-        Some(spi.MediaItem.ImageUrl(s"https://zq-own.example/img/$key.jpg")),
-        Right(spi.MediaRights(licence, author = author, credit = spi.MediaRights.Credit(s"Zq picture $key, $licence"))),
+        MediaItem.Title(s"Zq picture $key"),
+        MediaItem.PageUrl(s"https://zq-own.example/page/$key"),
+        Some(MediaItem.ImageUrl(s"https://zq-own.example/img/$key.jpg")),
+        Right(MediaRights(licence, author = author, credit = MediaRights.Credit(s"Zq picture $key, $licence"))),
         role = role
       )
     override def searchTargets(
-        places: List[spi.MediaPlace],
-        events: List[spi.MediaEvent],
-        http: spi.Plugin.Http
-    ): spi.MediaFound =
-      val _ = http.get(com.histmersion.plugin.Plugin.Http.GetUrl("https://zq-own.example/batch"), Map.empty)
+        places: List[MediaPlace],
+        events: List[MediaEvent],
+        http: Plugin.Http
+    ): MediaFound =
+      val _ = http.get(Plugin.Http.GetUrl("https://zq-own.example/batch"), Map.empty)
       val placeUses = places.flatMap { p =>
         List(
-          spi.MediaUse(
-            spi.MediaTarget.Id(spi.MediaTarget.Places, spi.MediaTarget.Id.Value(p.id.value)),
-            item(spi.MediaItem.Key(s"${p.id}-by"), spi.Licence("CC BY 4.0"), Some(spi.MediaRights.Author("Zq")), None),
-            statement = Some(com.histmersion.plugin.MediaUse.Statement("P18")),
-            rank = com.histmersion.plugin.MediaUse.Rank(0),
-            note = Some(spi.MediaUse.Note("its own picture"))
+          MediaUse(
+            MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value)),
+            item(MediaItem.Key(s"${p.id}-by"), spi.Licence("CC BY 4.0"), Some(MediaRights.Author("Zq")), None),
+            statement = Some(MediaUse.Statement("P18")),
+            rank = MediaUse.Rank(0),
+            note = Some(MediaUse.Note("its own picture"))
           ),
-          spi.MediaUse(
-            spi.MediaTarget.Id(spi.MediaTarget.Places, spi.MediaTarget.Id.Value(p.id.value)),
-            item(spi.MediaItem.Key(s"${p.id}-nc"), spi.Licence("CC BY-NC 4.0"), Some(spi.MediaRights.Author("Zq")), Some(spi.MediaItem.Role("plan"))),
-            rank = com.histmersion.plugin.MediaUse.Rank(1)
+          MediaUse(
+            MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value)),
+            item(MediaItem.Key(s"${p.id}-nc"), spi.Licence("CC BY-NC 4.0"), Some(MediaRights.Author("Zq")), Some(MediaItem.Role("plan"))),
+            rank = MediaUse.Rank(1)
           ),
-          spi.MediaUse(
-            spi.MediaTarget.Id(spi.MediaTarget.Places, spi.MediaTarget.Id.Value(p.id.value)),
-            item(spi.MediaItem.Key(s"${p.id}-anon"), spi.Licence("cc-by-sa-4.0"), None, Some(spi.MediaItem.Role("locator-map"))),
-            rank = com.histmersion.plugin.MediaUse.Rank(2)
+          MediaUse(
+            MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value)),
+            item(MediaItem.Key(s"${p.id}-anon"), spi.Licence("cc-by-sa-4.0"), None, Some(MediaItem.Role("locator-map"))),
+            rank = MediaUse.Rank(2)
           )
         )
       }
       val eventUses = events.map(e =>
-        spi.MediaUse(
-          spi.MediaTarget.Id(spi.MediaTarget.Events, spi.MediaTarget.Id.Value(e.id.value)),
-          item(spi.MediaItem.Key(s"${e.id}-pd"), spi.Licence("https://creativecommons.org/publicdomain/mark/1.0/"), None, None),
-          rank = com.histmersion.plugin.MediaUse.Rank(0),
-          basis = Some(spi.MediaUse.Basis("the event's own item"))
+        MediaUse(
+          MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value(e.id.value)),
+          item(MediaItem.Key(s"${e.id}-pd"), spi.Licence("https://creativecommons.org/publicdomain/mark/1.0/"), None, None),
+          rank = MediaUse.Rank(0),
+          basis = Some(MediaUse.Basis("the event's own item"))
         )
       )
-      spi.MediaFound(
+      MediaFound(
         uses = placeUses ++ eventUses,
-        asked = places.map(p => spi.MediaTarget.Id(spi.MediaTarget.Places, spi.MediaTarget.Id.Value(p.id.value))) ++
-          events.map(e => spi.MediaTarget.Id(spi.MediaTarget.Events, spi.MediaTarget.Id.Value(e.id.value))),
-        read = spi.MediaFound.Read(placeUses.size + eventUses.size),
-        notTaken = List(spi.MediaFound.NotTaken("a statement the plugin did not take"))
+        asked = places.map(p => MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value))) ++
+          events.map(e => MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value(e.id.value))),
+        read = MediaFound.Read(placeUses.size + eventUses.size),
+        notTaken = List(MediaFound.NotTaken("a statement the plugin did not take"))
       )
 
-  private object Searched extends spi.MediaCollection:
-    val title = com.histmersion.plugin.MediaCollection.TitleResult("Zq searched objects")
-    val role = spi.MediaCollection.RoleResult(spi.MediaCollection.Object)
-    override val requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(0)
-    def search(place: spi.MediaPlace, http: spi.Plugin.Http) =
-      http.get(spi.Plugin.Http.GetUrl(s"https://zq-search.example/q?label=${place.label}"), Map.empty).left.map(e => spi.MediaCollection.SearchResultPart1(e.value)).map { _ =>
-        def it(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.GeographyPart2) =
+  private object Searched extends MediaCollection:
+    val title = MediaCollection.TitleResult("Zq searched objects")
+    val role = MediaCollection.RoleResult(MediaCollection.Object)
+    override val requestIntervalMs = MediaCollection.RequestIntervalMsResult(0)
+    def search(place: MediaPlace, http: Plugin.Http) =
+      http.get(Plugin.Http.GetUrl(s"https://zq-search.example/q?label=${place.label}"), Map.empty).left.map(e => MediaCollection.SearchResultPart1(e.value)).map { _ =>
+        def it(key: MediaItem.Key, licence: spi.Licence, where: MediaItem.GeographyPart2) =
           Right(
-            spi.MediaItem(
+            MediaItem(
               key,
-              spi.MediaItem.Title(s"Zq object $key"),
-              spi.MediaItem.PageUrl(s"https://zq-search.example/objects/$key"),
-              Some(spi.MediaItem.ImageUrl(s"https://zq-search.example/img/$key.jpg")),
-              Right(spi.MediaRights(licence, author = Some(spi.MediaRights.Author("Zq Museum")), credit = spi.MediaRights.Credit(s"Zq object $key"))),
-              geography = List(spi.MediaItem.GeographyPart1("find_spot") -> where),
-              period = spi.Period.from(spi.Year(-1500), spi.Year(-1300)).toOption
+              MediaItem.Title(s"Zq object $key"),
+              MediaItem.PageUrl(s"https://zq-search.example/objects/$key"),
+              Some(MediaItem.ImageUrl(s"https://zq-search.example/img/$key.jpg")),
+              Right(MediaRights(licence, author = Some(MediaRights.Author("Zq Museum")), credit = MediaRights.Credit(s"Zq object $key"))),
+              geography = List(MediaItem.GeographyPart1("find_spot") -> where),
+              period = Period.from(Year(-1500), Year(-1300)).toOption
             )
           )
         List(
-          it(spi.MediaItem.Key("s1"), spi.Licence("CC0-1.0"), spi.MediaItem.GeographyPart2(place.label.value)),
-          it(spi.MediaItem.Key("s2"), spi.Licence("All rights reserved"), spi.MediaItem.GeographyPart2(place.label.value)),
-          it(spi.MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), spi.MediaItem.GeographyPart2("Nowhere at all")),
-          Left(spi.MediaCollection.SearchResultPart2Part1("an unreadable record"))
+          it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.GeographyPart2(place.label.value)),
+          it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.GeographyPart2(place.label.value)),
+          it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.GeographyPart2("Nowhere at all")),
+          Left(MediaCollection.SearchResultPart2Part1("an unreadable record"))
         )
       }
 
@@ -943,7 +980,7 @@ class MediaOracleSuite extends DbSuite:
     if url.startsWith("https://zq-own.example/batch") || url.startsWith("https://zq-search.example/q") then
       FakeMediaHttp.json("""{"ok":true}""")
     else if url.contains("covers.openlibrary.org") then
-      if url.contains("9780000000009") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, com.histmersion.pluginhost.HttpAnswer.Body(Array.emptyByteArray)))
+      if url.contains("9780000000009") then Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
       else FakeMediaHttp.bytes(MediaWire.jpeg(s"cover $url"), "image/jpeg")
     else MediaWire.route(url)
 
@@ -982,30 +1019,30 @@ class MediaOracleSuite extends DbSuite:
     ).map((p, place, event) =>
       (
         com.histmersion.api.media.MediaItem.Provider(p),
-        place.map(com.histmersion.api.catalogue.Place.Id(_)),
-        event.map(com.histmersion.api.catalogue.Event.Id(_))
+        place.map(Place.Id(_)),
+        event.map(Event.Id(_))
       )
     )
     builtins.foreach((p, place, event) =>
-      run(s"$p dry run", MediaImportRequest(p, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), place = place, event = event))
+      run(s"$p dry run", MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(true), place = place, event = event))
     )
     builtins.foreach((p, place, event) =>
       run(
         s"$p ${place.map(_.value).orElse(event.map(_.value)).getOrElse("")}",
-        MediaImportRequest(p, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = place, event = event)
+        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(false), place = place, event = event)
       )
     )
-    run("zq-own dry run", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(20))))
-    run("zq-own a place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_697725"))))
-    run("zq-own an event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), event = Some(com.histmersion.api.catalogue.Event.Id("fall_of_x"))))
+    run("zq-own dry run", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(20))))
+    run("zq-own a place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_697725"))))
+    run("zq-own an event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = MediaImportRequest.DryRun(false), event = Some(Event.Id("fall_of_x"))))
     run(
       "zq-own again, refresh",
-      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_697725")), refresh = com.histmersion.api.media.MediaImportRequest.Refresh(true))
+      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_697725")), refresh = MediaImportRequest.Refresh(true))
     )
-    run("zq-search dry run", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(3))))
-    run("zq-search a place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
+    run("zq-search dry run", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(3))))
+    run("zq-search a place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491"))))
     run("an unknown collection", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-nothing")))
-    run("many, not as a job", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false)))
+    run("many, not as a job", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = MediaImportRequest.DryRun(false)))
     exec(ds, "INSERT INTO sources (citekey, title) VALUES ('zqol2000_a', 'A'), ('zqol2000_b', 'B')")
     exec(
       ds,
@@ -1017,16 +1054,16 @@ class MediaOracleSuite extends DbSuite:
       val r = handlers.covers.covers(req)
       sb ++= s"## covers: $name\n" + wire.take() +
         r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
-    covers("dry run", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
-    covers("one with a cover", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_a")), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
-    covers("one without", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_b")), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
+    covers("dry run", MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(true), illustrations = MediaCoversRequest.Illustrations(false)))
+    covers("one with a cover", MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(Citekey("zqol2000_a")), illustrations = MediaCoversRequest.Illustrations(false)))
+    covers("one without", MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(Citekey("zqol2000_b")), illustrations = MediaCoversRequest.Illustrations(false)))
     covers(
       "an ISBN the request names",
       MediaCoversRequest(
-        dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
-        citekey = Some(com.histmersion.api.library.Citekey("zqmt2020_x")),
-        illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false),
-        isbn = Some(com.histmersion.api.media.MediaCoversRequest.Isbn("9780000000003"))
+        dryRun = RepairAcquire.RepairRequest.DryRun(false),
+        citekey = Some(Citekey("zqmt2020_x")),
+        illustrations = MediaCoversRequest.Illustrations(false),
+        isbn = Some(MediaCoversRequest.Isbn("9780000000003"))
       )
     )
     sb ++= "## stored\n" + MediaWire.stored(ds)
@@ -1034,27 +1071,27 @@ class MediaOracleSuite extends DbSuite:
 
   /** The Calibre covers as `media covers` reads them on the host, from a fixture library, through a server. */
   private def calibreCovers(url: String, ds: DataSource): String =
-    val lib = com.histmersion.plugins.calibre.CalibreFixture.create(tmp.resolve("calibre-library"))
+    val lib = CalibreFixture.create(tmp.resolve("calibre-library"))
     exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal1998_hittite', 'Hittite Myths', '5')")
     exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal1956_linear', 'Linear B', '2')")
     exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal2019_tin', 'Tin', '1')")
     exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal0000_gone', 'Gone', '99')")
-    val cal = com.histmersion.cli.Calibre(
+    val cal = Calibre(
       CalibreCliConfig(
         CalibreCliConfig.LibraryDir(lib.dir.toString),
         CalibreCliConfig.Calibredb(lib.calibredb.toString),
         CalibreCliConfig.Sqlite(lib.sqlite3.toString),
-        com.histmersion.config.CalibreCliConfig.OriginalsDir("")
+        CalibreCliConfig.OriginalsDir("")
       )
     )
-    val client = com.histmersion.cli.Client(com.histmersion.cli.Client.ServerUrl(url))
+    val client = Client(Client.ServerUrl(url))
     def step(
         name: String,
-        only: Option[com.histmersion.api.library.Citekey],
+        only: Option[Citekey],
         refresh: MediaImportRequest.Refresh,
         dry: MediaImportRequest.DryRun
     ): String =
-      com.histmersion.cli.MediaCovers
+      MediaCovers
         .calibreStep(client, cal, only, refresh, dry, None)
         .fold(
           e => s"## $name\nrefused: ${e.message}\n",
@@ -1065,7 +1102,7 @@ class MediaOracleSuite extends DbSuite:
       step("again: nothing left", None, refresh = MediaImportRequest.Refresh(false), dry = MediaImportRequest.DryRun(false)) +
       step(
         "one, refreshed",
-        Some(com.histmersion.api.library.Citekey("zqcal2019_tin")),
+        Some(Citekey("zqcal2019_tin")),
         refresh = MediaImportRequest.Refresh(true),
         dry = MediaImportRequest.DryRun(false)
       ) +
@@ -1104,7 +1141,7 @@ class MediaOracleSuite extends DbSuite:
           out ++= s"== $path (${lines.size} lines)\n"
           lines.foreach(l => out ++= json(l, names).linesIterator.map(_.trim).mkString(" ") + "\n")
         else if path.contains("/blobs/") || path.startsWith("blobs/") then
-          out ++= s"== $path $size ${com.histmersion.util.data.exchange.BundleFormat.sha256Hex(data)}\n"
+          out ++= s"== $path $size ${BundleFormat.sha256Hex(data)}\n"
         else out ++= s"== $path\n"
         loop()
     loop()

@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a period search asks for: a label substring (any case, `%` and `_` literal), an exact region (any case), and an
   * overlap with `from..to`, either bound alone a span too.
@@ -12,10 +16,10 @@ final case class PeriodSearch(
 
 object PeriodSearch:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Region = Region.T
-  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Region extends RefinedType[String, Pure]
   type From = From.T
-  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object From extends RefinedType[Long, Pure]
   type To = To.T
-  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object To extends RefinedType[Long, Pure]

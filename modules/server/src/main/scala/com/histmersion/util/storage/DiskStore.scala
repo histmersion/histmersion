@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import com.histmersion.{ByteCount, ByteOffset, Sha256}
 
@@ -24,6 +25,7 @@ import java.time.Instant
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
+import com.histmersion.util.basemap.PmTiles
 
 /** A store over a directory on disk: a key is a path below `root`. */
 final private[storage] class DiskStore(val location: Location, root: Path) extends Store:
@@ -47,7 +49,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       case e: NoSuchFileException => Left(Store.Error.NotFound(Blob.Location(e.getMessage)))
       case e: IOException         => Left(Store.Error.Failed(Store.Error.Reason(e.getMessage)))
 
-  def where(key: Store.Key): com.histmersion.util.storage.Blob.Location = Blob.Location(path(key).toString)
+  def where(key: Store.Key): Blob.Location = Blob.Location(path(key).toString)
 
   def sub(prefix: Store.Key): Store = DiskStore(location, path(prefix))
 
@@ -79,7 +81,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .map(stored)
         .sortBy(_.key.value)
 
-  def put(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] =
+  def put(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] =
     reserve(key).flatMap { r =>
       try
         Using.resource(r.output())(_.write(bytes.value))
@@ -87,14 +89,14 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       finally r.close()
     }
 
-  def write(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] = io {
+  def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = io {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
     Files.write(p, bytes.value, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
     stored(p)
   }
 
-  def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.Store.ThroughLink): Either[Store.Error, Reservation] = io {
+  def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] = io {
     val asked = path(key)
     val target = if throughLink.value && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
     val dir = target.toAbsolutePath.getParent
@@ -113,7 +115,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     Files.move(path(from), t, StandardCopyOption.REPLACE_EXISTING): Unit
   }
 
-  def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Unit] = io {
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] = io {
     val options =
       if keepAttributes.value then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
       else List(StandardCopyOption.REPLACE_EXISTING)
@@ -208,7 +210,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       }.toOption
     }
 
-  def names(prefix: Store.Key): List[com.histmersion.util.storage.Store.EntryName] =
+  def names(prefix: Store.Key): List[Store.EntryName] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else
@@ -238,12 +240,12 @@ private[storage] object DiskStore:
         loop(oldest, files.iterator.map(_.size.value).sum, Nil)
 
   final class FileBlob(val key: Store.Key, file: Path) extends Blob:
-    def where: com.histmersion.util.storage.Blob.Location = Blob.Location(file.toString)
+    def where: Blob.Location = Blob.Location(file.toString)
     def size: ByteCount = ByteCount.applyUnsafe(Files.size(file))
     def modified: Instant = Files.getLastModifiedTime(file).toInstant
     def open(): InputStream = Files.newInputStream(file)
-    def bytes(): com.histmersion.util.storage.ByteSource.Content = ByteSource.Content(Files.readAllBytes(file))
-    def text(): com.histmersion.util.storage.Blob.Text = Blob.Text(Files.readString(file, UTF_8))
+    def bytes(): ByteSource.Content = ByteSource.Content(Files.readAllBytes(file))
+    def text(): Blob.Text = Blob.Text(Files.readString(file, UTF_8))
 
     def sha256(): Sha256 =
       val md = MessageDigest.getInstance("SHA-256")
@@ -256,7 +258,7 @@ private[storage] object DiskStore:
       }
       Sha256.applyUnsafe(md.digest().map(b => f"${b & 0xff}%02x").mkString)
 
-    def readAt(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = Using.resource(reader())(_.read(offset, length))
+    def readAt(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = Using.resource(reader())(_.read(offset, length))
 
     def reader(): RandomReader = ChannelReader(file)
 
@@ -286,11 +288,11 @@ private[storage] object DiskStore:
             if retry && !Thread.currentThread().isInterrupted then attempt(retry = false) else throw e
       attempt(retry = true)
 
-    def where: com.histmersion.util.storage.Blob.Location = Blob.Location(file.toString)
+    def where: Blob.Location = Blob.Location(file.toString)
 
     def size: ByteCount = ByteCount.applyUnsafe(withChannel(_.size()))
 
-    def read(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = withChannel { c =>
+    def read(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = withChannel { c =>
       val len = length.value
       val buf = ByteBuffer.allocate(len)
       @tailrec def loop(at: Long): Unit =
@@ -302,7 +304,7 @@ private[storage] object DiskStore:
       ByteSource.Content(buf.array())
     }
 
-    def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = withChannel { c =>
+    def readUpTo(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = withChannel { c =>
       val buf = ByteBuffer.allocate(length.value)
       @tailrec def loop(at: Long): Unit =
         if buf.hasRemaining then
@@ -325,11 +327,11 @@ private[storage] object DiskStore:
   ) extends Reservation:
     @volatile private var committed = false
 
-    def where: com.histmersion.util.storage.Blob.Location = Blob.Location(file.toString)
+    def where: Blob.Location = Blob.Location(file.toString)
 
     def output(): OutputStream = Files.newOutputStream(file)
 
-    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.ByteSource.Content): Unit =
+    def writeAt(offset: ByteOffset, bytes: ByteSource.Content): Unit =
       Using.resource(FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) { ch =>
         val buf = ByteBuffer.wrap(bytes.value)
         @tailrec def loop(at: Long): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
@@ -338,7 +340,7 @@ private[storage] object DiskStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(if Files.exists(file) then Files.size(file) else 0L)
 
-    def commit(keepPermissions: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Stored] =
+    def commit(keepPermissions: Store.KeepPermissions): Either[Store.Error, Stored] =
       try
         if keepPermissions.value && Files.exists(asked) then
           Option(Files.getFileAttributeView(asked, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS))

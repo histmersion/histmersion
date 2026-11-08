@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
@@ -15,6 +16,8 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.pluginhost.Registries
 import com.histmersion.server.HttpDownload
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -111,10 +114,10 @@ final class GazetteerImports(
     BuiltinGazetteers.resolve(name, registered(), unknown)
 
   /** The names the sources are known by, a plugin's among them. */
-  def available: List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] = BuiltinGazetteers.available(registered())
+  def available: List[BuiltinGazetteers.Entry.Name] = BuiltinGazetteers.available(registered())
 
   /** The third-party sources the plugins register. */
-  def thirdParty: List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] = BuiltinGazetteers.thirdParty(registered())
+  def thirdParty: List[BuiltinGazetteers.Entry.Name] = BuiltinGazetteers.thirdParty(registered())
 
   /** A plugin's source read and its places upserted in batches (a dry run counts them), then the findings matched. */
   def fetch(
@@ -125,6 +128,6 @@ final class GazetteerImports(
 
 object GazetteerImports:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]

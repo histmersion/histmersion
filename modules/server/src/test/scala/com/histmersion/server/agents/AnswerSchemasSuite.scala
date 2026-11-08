@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,8 @@ import sttp.ai.core.agent.*
 import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.domain.ReviewArticle
+import com.histmersion.domain.automation.agents.LlmCall
 
 /** Every step's answer schema as Codex is sent it — OpenAI's strict structured-output form, which the Responses API
   * demands with `strict: true` and answers anything else with a 400 before the model runs — and every answer Codex
@@ -201,7 +204,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
       val items = p.downField("items").success.orElse(p.downField("anyOf").downN(0).downField("items").success)
       assertEquals(
         items.flatMap(_.downField("enum").as[List[String]].toOption),
-        Some(com.histmersion.domain.ReviewArticle.ExplainSlots),
+        Some(ReviewArticle.ExplainSlots),
         js.noSpaces
       )
 
@@ -277,7 +280,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
     CliOutcomes
-      .result(CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText(answer.noSpaces)), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)), com.histmersion.domain.automation.agents.LlmCall.User("u"), s, None)
+      .result(CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText(answer.noSpaces)), TokenUsage.Zero, None, CliOutcome.Turns(1)), LlmCall.User("u"), s, None)
       .finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):

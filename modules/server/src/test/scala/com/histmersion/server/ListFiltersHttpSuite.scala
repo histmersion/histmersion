@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,18 +14,23 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.automation.{Agents, ListFilters}
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.api.automation.Activity
 
 /** The list filters over real HTTP and MCP (core `ListFilters`): `/api/agents/approvals`, `/api/agents/runs` and
   * `/api/jobs` filter on the server, the body stays the plain array, the facet counts come back in their header, a bad
   * value is a 400 naming the allowed words, and the MCP list tools take the same filters and print the counts. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class ListFiltersHttpSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
-  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))) }
+  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))) }
   private lazy val ds = testPool(cfg.db)
   private val tag = s"zzlh${System.nanoTime().toHexString.takeRight(8)}"
 
@@ -64,7 +70,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
 
   private def withServer(body: String => Unit): Unit =
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -106,7 +112,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(h1(Paging.TotalHeader.toLowerCase), "2")
       // the kind counts are taken under the state (open) but not the kind filter
       assertEquals(facets(h1)(ListFilters.FacetName("kind")), Map("goal-plan" -> 2, "article-publish" -> 1))
-      assertEquals(Paging.decodeCounts(com.histmersion.api.automation.Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap, Map("open" -> 2))
+      assertEquals(Paging.decodeCounts(Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap, Map("open" -> 2))
       val (_, ball, hall) = get(s"$url/api/agents/approvals?subject=$tag&state=all&kind=goal-plan,edge")
       assertEquals(hall(Paging.TotalHeader.toLowerCase), "3", ball.take(300))
       assertEquals(facets(hall)(ListFilters.FacetName("decidedBy")), Map("person" -> 1))

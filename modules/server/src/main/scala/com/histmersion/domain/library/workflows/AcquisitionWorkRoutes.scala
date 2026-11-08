@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.api.library.AcquisitionWorkApi
 import sttp.shared.Identity

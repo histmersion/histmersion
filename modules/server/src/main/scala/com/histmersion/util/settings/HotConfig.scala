@@ -1,4 +1,5 @@
-package com.histmersion.util.settings
+package com.histmersion
+package util.settings
 
 import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import ox.{forkDiscard, useInScope}

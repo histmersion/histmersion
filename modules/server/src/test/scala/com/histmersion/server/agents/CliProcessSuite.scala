@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -71,7 +72,7 @@ class CliProcessSuite extends munit.FunSuite:
   test("a missing executable still fails at start"):
     val dir = Files.createTempDirectory("hm-cliproc-")
     val e =
-      intercept[java.io.IOException](CliProcess.run(List(com.histmersion.server.agents.ClaudeCode.Argument("hm-no-such-cli-xyz")), dir, _ => (), com.histmersion.server.agents.CliProcess.RunStdin(""), com.histmersion.server.agents.CliProcess.RunTimeoutSeconds(5), com.histmersion.server.agents.CliProcess.RunHint("install it")))
+      intercept[java.io.IOException](CliProcess.run(List(ClaudeCode.Argument("hm-no-such-cli-xyz")), dir, _ => (), CliProcess.RunStdin(""), CliProcess.RunTimeoutSeconds(5), CliProcess.RunHint("install it")))
     assert(e.getMessage.contains("cannot run 'hm-no-such-cli-xyz'"), e.getMessage)
 
   test("#1650: a CLI that never reads stdin, given a 200 KB prompt, is killed at the timeout"):

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.data.maintenance.WriteGate
 
@@ -10,6 +11,49 @@ import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.database.Transactor
 import java.time.Clock
 import javax.sql.DataSource
+import com.histmersion.util.jobs.JobStops
+import com.histmersion.util.time.Timer
+import com.histmersion.util.time.SystemTimer
+import com.histmersion.util.time.Pause
+import com.histmersion.util.time.ThreadPause
+import com.histmersion.util.storage.TextFiles
+import com.histmersion.util.storage.DiskTextFiles
+import com.histmersion.util.storage.Stores
+import com.histmersion.util.storage.Resources
+import com.histmersion.util.system.JvmHome
+import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.catalogue.evidence.passages.Passage
+import com.histmersion.domain.library.sources.SourcePassages
+import com.histmersion.domain.catalogue.events.EventSourceFilter
+import com.histmersion.domain.library.search.FilterEventSources
+import com.histmersion.util.storage.Storage
+import com.histmersion.util.data.DataContributions
+import com.histmersion.domain.automation.AutomationData
+import com.histmersion.domain.catalogue.CatalogueData
+import com.histmersion.domain.media.MediaData
+import com.histmersion.domain.library.LibraryData
+import com.histmersion.domain.research.ResearchData
+import com.histmersion.domain.personal.PersonalData
+import com.histmersion.util.data.DataManagementData
+import com.histmersion.util.jobs.JobsData
+import com.histmersion.util.identity.IdentityData
+import com.histmersion.util.database.DatabaseData
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer
+import com.histmersion.domain.media.links.AssetLinkSourceReferrer
+import com.histmersion.domain.research.articles.ArticleSourceReferrer
+import com.histmersion.domain.catalogue.events.EventSourceReferrer
+import com.histmersion.util.jobs.JobSourceReferrer
+import com.histmersion.domain.catalogue.places.PlaceSourceReferrer
+import com.histmersion.domain.automation.goals.GoalSourceReferrer
+import com.histmersion.domain.automation.worklists.WorkListSourceReferrer
+import com.histmersion.util.identity.AliasTables
+import com.histmersion.domain.library.sources.SourceAliasTable
+import com.histmersion.domain.research.articles.ArticleAliasTable
+import com.histmersion.domain.catalogue.events.EventAliasTable
+import com.histmersion.domain.automation.goals.GoalAliasTable
+import com.histmersion.domain.catalogue.places.PlaceAliasTable
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no object-initialisation
   * side effects anywhere below this.
@@ -37,7 +81,7 @@ final class Deps(
     /** `histmersion config reload`: read the config file again and switch to it. */
     val reloader: () => ReloadReport = Deps.NoReload,
     /** A person's pause and cancel of the long background jobs this server runs. */
-    val jobStops: com.histmersion.util.jobs.JobStops = com.histmersion.util.jobs.JobStops(),
+    val jobStops: JobStops = JobStops(),
     /** The load `cfg` came from: the settings file and the environment it was read with (Settings writes that file).
       */
     loadedNow: Option[() => LoadedConfig] = None,
@@ -46,34 +90,34 @@ final class Deps(
     /** The time, the environment and the per-user paths: read once by the entry point, never globally. */
     val clock: Clock = Clock.systemUTC(),
     val environment: Environment = Environment.empty,
-    val userPaths: UserPaths = UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("")), val timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, val pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
+    val userPaths: UserPaths = UserPaths(Environment.empty, UserPaths.OsName("")), val timer: Timer = new SystemTimer, val pause: Pause = new ThreadPause
 ):
 
   /** Transactions on the application role ([[ds]]). */
-  val textFiles: com.histmersion.util.storage.TextFiles = new com.histmersion.util.storage.DiskTextFiles
-  val stores: com.histmersion.util.storage.Stores = com.histmersion.util.storage.Stores.disk
-  val resources: com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
-  val jvmHome: com.histmersion.util.system.JvmHome = SystemContext.jvmHome()
+  val textFiles: TextFiles = new DiskTextFiles
+  val stores: Stores = Stores.disk
+  val resources: Resources = Resources.classpath(getClass.getClassLoader)
+  val jvmHome: JvmHome = SystemContext.jvmHome()
   val transactor: Transactor = Transactor(ds)
 
   /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */
-  val queues: com.histmersion.domain.automation.worklists.QueueService =
-    com.histmersion.domain.automation.worklists.QueueService(transactor)
+  val queues: QueueService =
+    QueueService(transactor)
 
   /** The work lists' operations as REST, MCP and the CLI reach them. */
-  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers =
-    com.histmersion.domain.automation.worklists.WorkListControllers(queues, maintenance, clock)
+  val workLists: WorkListControllers =
+    WorkListControllers(queues, maintenance, clock)
 
   /** The sources' texts as the catalogue's evidence searches them (the library's). */
-  lazy val passages: com.histmersion.domain.catalogue.evidence.passages.Passage.Source =
-    com.histmersion.domain.library.sources.SourcePassages(transactor)(using timer)
+  lazy val passages: Passage.Source =
+    SourcePassages(transactor)(using timer)
 
   /** The events related to what a filter selects, as the library reads the filter's sources. */
-  lazy val eventSources: com.histmersion.domain.catalogue.events.EventSourceFilter =
-    com.histmersion.domain.library.search.FilterEventSources()
+  lazy val eventSources: EventSourceFilter =
+    FilterEventSources()
 
   /** The server's files, each named place where today's settings put it. */
-  lazy val storage: com.histmersion.util.storage.Storage =
+  lazy val storage: Storage =
     StorageLocations.storage(() => cfg, () => loaded, environment, userPaths)
 
   /** Connections of the read-only role ([[queryDs]]), for the `query` escape hatch alone. */
@@ -112,7 +156,7 @@ object Deps:
       maintenance: WriteGate = WriteGate(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
-      clock: Clock = Clock.systemUTC(), timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
+      clock: Clock = Clock.systemUTC(), timer: Timer = new SystemTimer, pause: Pause = new ThreadPause
   ): Deps =
     new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins, clock = clock, timer = timer, pause = pause)
 
@@ -124,20 +168,20 @@ object Deps:
   /** Every owner's data contribution, in the order every operation runs the owners in: the domains bottom up, personal,
     * then the supporting areas.
     */
-  lazy val data: com.histmersion.util.data.DataContributions =
-    com.histmersion.util.data.DataContributions
+  lazy val data: DataContributions =
+    DataContributions
       .of(
         List(
-          com.histmersion.domain.automation.AutomationData,
-          com.histmersion.domain.catalogue.CatalogueData,
-          com.histmersion.domain.media.MediaData,
-          com.histmersion.domain.library.LibraryData(sourceReferrers),
-          com.histmersion.domain.research.ResearchData,
-          com.histmersion.domain.personal.PersonalData,
-          com.histmersion.util.data.DataManagementData,
-          com.histmersion.util.jobs.JobsData,
-          com.histmersion.util.identity.IdentityData,
-          com.histmersion.util.database.DatabaseData
+          AutomationData,
+          CatalogueData,
+          MediaData,
+          LibraryData(sourceReferrers),
+          ResearchData,
+          PersonalData,
+          DataManagementData,
+          JobsData,
+          IdentityData,
+          DatabaseData
         )
       )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)
@@ -145,38 +189,38 @@ object Deps:
   /** Every domain that names sources, in the order a rename reports their columns: what each keeps right when the
     * library renames or deletes a source.
     */
-  val sourceReferrers: com.histmersion.domain.library.sources.referrers.SourceReferrers =
-    com.histmersion.domain.library.sources.referrers.SourceReferrers(
+  val sourceReferrers: SourceReferrers =
+    SourceReferrers(
       List(
-        com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer(),
-        com.histmersion.domain.media.links.AssetLinkSourceReferrer(),
-        com.histmersion.domain.research.articles.ArticleSourceReferrer(),
-        com.histmersion.domain.catalogue.events.EventSourceReferrer(),
-        com.histmersion.util.jobs.JobSourceReferrer(),
-        com.histmersion.domain.catalogue.places.PlaceSourceReferrer(),
-        com.histmersion.domain.automation.goals.GoalSourceReferrer(),
-        com.histmersion.domain.automation.worklists.WorkListSourceReferrer()
+        AttestationSourceReferrer(),
+        AssetLinkSourceReferrer(),
+        ArticleSourceReferrer(),
+        EventSourceReferrer(),
+        JobSourceReferrer(),
+        PlaceSourceReferrer(),
+        GoalSourceReferrer(),
+        WorkListSourceReferrer()
       )
     )
 
   /** Every alias table, each registered by the kind's owner in the order of the kinds: how an old identifier of each
     * renamed kind is followed.
     */
-  val aliasTables: com.histmersion.util.identity.AliasTables =
-    com.histmersion.util.identity.AliasTables(
+  val aliasTables: AliasTables =
+    AliasTables(
       List(
-        com.histmersion.domain.library.sources.SourceAliasTable.table,
-        com.histmersion.domain.research.articles.ArticleAliasTable.table,
-        com.histmersion.domain.catalogue.events.EventAliasTable.table,
-        com.histmersion.domain.automation.goals.GoalAliasTable.table,
-        com.histmersion.domain.catalogue.places.PlaceAliasTable.table
+        SourceAliasTable.table,
+        ArticleAliasTable.table,
+        EventAliasTable.table,
+        GoalAliasTable.table,
+        PlaceAliasTable.table
       )
     )
 
   /** The reload of a server that was started without a config file to read again. */
   val NoReload: () => ReloadReport = () =>
     ReloadReport(
-      published = com.histmersion.api.settings.ReloadReport.Published(false),
-      generation = com.histmersion.api.settings.ReloadReport.Generation(0),
-      errors = List(com.histmersion.api.settings.ReloadReport.Errors("this server was started without a config file to reload"))
+      published = ReloadReport.Published(false),
+      generation = ReloadReport.Generation(0),
+      errors = List(ReloadReport.Errors("this server was started without a config file to reload"))
     )

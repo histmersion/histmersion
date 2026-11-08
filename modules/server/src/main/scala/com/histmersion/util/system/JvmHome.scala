@@ -1,10 +1,13 @@
-package com.histmersion.util.system
+package com.histmersion
+package util.system
 
 import java.nio.file.Path
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class JvmHome(path: Path):
-  def expand(value: com.histmersion.util.system.JvmHome.Path): com.histmersion.util.system.JvmHome.Path = com.histmersion.util.system.JvmHome.Path(value.value.replaceFirst("^~", java.util.regex.Matcher.quoteReplacement(path.toString)))
+  def expand(value: JvmHome.Path): JvmHome.Path = JvmHome.Path(value.value.replaceFirst("^~", java.util.regex.Matcher.quoteReplacement(path.toString)))
 
 object JvmHome:
   type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Path extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,8 +17,8 @@ import scala.collection.immutable.ListMap
 class BuiltinGazetteersSuite extends munit.FunSuite:
 
   private object Elsewhere extends GazetteerSource:
-    def title = com.histmersion.plugin.GazetteerSource.TitleResult("Elsewhere atlas")
-    def rights = GazetteerRights(Licence("CC0-1.0"), com.histmersion.plugin.GazetteerRights.Credit("Elsewhere atlas"))
+    def title = GazetteerSource.TitleResult("Elsewhere atlas")
+    def rights = GazetteerRights(Licence("CC0-1.0"), GazetteerRights.Credit("Elsewhere atlas"))
     def fetch(http: Plugin.Http) = Right(Nil)
 
   test("the stock generation registers the three first-party sources, listed in today's order"):
@@ -26,7 +27,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.thirdParty(registered), Nil)
     assertEquals(
-      BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("awmc"), registered, com.histmersion.domain.catalogue.places.GazetteerImports.Problem("unknown")).map(_.title),
+      BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("awmc"), registered, GazetteerImports.Problem("unknown")).map(_.title),
       Right(
         "AWMC classical-world regional names and features"
       )
@@ -39,16 +40,16 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
       .gazetteerSources
     assertEquals(off.keys.toSet, Set("cliopatria", "chronontology"))
     assertEquals(
-      BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("awmc"), off, com.histmersion.domain.catalogue.places.GazetteerImports.Problem("unknown")),
+      BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("awmc"), off, GazetteerImports.Problem("unknown")),
       Left(
         "AWMC classical-world regional names and features (awmc) is switched off " +
           "(histmersion.plugins.gazetteer-awmc.enabled = false)"
       )
     )
-    assertEquals(BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")), Left("unknown 'nowhere'"))
+    assertEquals(BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")), Left("unknown 'nowhere'"))
     assertEquals(BuiltinGazetteers.available(off), List("cliopatria", "awmc", "chronontology"))
 
   test("a plugin's source is listed after the first-party ones and found by its name"):
     val registered = ListMap[Registries.GazetteerSourcesKey, GazetteerSource](Registries.GazetteerSourcesKey("elsewhere") -> Elsewhere, Registries.GazetteerSourcesKey("cliopatria") -> Elsewhere)
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology", "elsewhere"))
-    assertEquals(BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("elsewhere"), registered, com.histmersion.domain.catalogue.places.GazetteerImports.Problem("unknown")), Right(Elsewhere))
+    assertEquals(BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("elsewhere"), registered, GazetteerImports.Problem("unknown")), Right(Elsewhere))

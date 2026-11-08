@@ -1,4 +1,5 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 /** What makes a cache stale. */
 enum CacheEvent:

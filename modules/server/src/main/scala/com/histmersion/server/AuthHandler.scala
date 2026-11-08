@@ -1,10 +1,16 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.*
 import io.netty.buffer.Unpooled
 import io.netty.util.ReferenceCountUtil
 import java.nio.charset.StandardCharsets
+import com.histmersion.config.AuthConfig
+import com.histmersion.domain.automation.agents.RunTokens
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.instance.UiApi
 
 /** Netty pipeline handler that gates write methods (POST/PUT/PATCH/DELETE) behind a Bearer token. GET/HEAD/OPTIONS pass
   * through unconditionally so the web UI and all read APIs remain open.
@@ -19,8 +25,8 @@ import java.nio.charset.StandardCharsets
   * shared.
   */
 final class AuthHandler(
-    apiKey: () => com.histmersion.config.AuthConfig.ApiKey,
-    tokens: com.histmersion.domain.automation.agents.RunTokens
+    apiKey: () => AuthConfig.ApiKey,
+    tokens: RunTokens
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
   private def expected: Option[String] = Option(apiKey().value).filter(_.nonEmpty).map(k => s"Bearer $k")
@@ -63,7 +69,7 @@ final class AuthHandler(
 
 object AuthHandler:
   type RequestPath = RequestPath.T
-  object RequestPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestPath extends RefinedType[String, Pure]
 
 
   def isWrite(m: HttpMethod): Boolean =
@@ -78,8 +84,8 @@ object AuthHandler:
 
   /** Pure: is this path one the gate lets by without a key? Exactly one segment after the prefix. */
   def isOpenPath(path: RequestPath): Boolean =
-    path.value.startsWith(com.histmersion.api.instance.UiApi.SeenPathPrefix) &&
+    path.value.startsWith(UiApi.SeenPathPrefix) &&
       {
-        val rest = path.value.drop(com.histmersion.api.instance.UiApi.SeenPathPrefix.length);
+        val rest = path.value.drop(UiApi.SeenPathPrefix.length);
         rest.nonEmpty && !rest.contains('/')
       }

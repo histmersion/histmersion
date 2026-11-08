@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.server.agents.{Codex, Opencode}
 
@@ -13,7 +14,7 @@ import scala.jdk.CollectionConverters.*
 enum ToolStyle:
   case Claude, Opencode, Bare
 
-  def tool(name: com.histmersion.domain.automation.agents.ToolUse.Tool): String = this match
+  def tool(name: ToolUse.Tool): String = this match
     case Claude   => s"mcp__${AgentDefinitions.McpServer}__$name"
     case Opencode => s"${AgentDefinitions.McpServer}_$name"
     case Bare     => name.value

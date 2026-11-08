@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,10 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
+import com.histmersion.db.TestDb
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** `POST /api/maintenance/vacuum` and the MCP `vacuum` tool (#1445) over real HTTP: the request answers at once with a
   * `vacuum` job, the job runs VACUUM (ANALYZE) outside any transaction (inside one, Postgres refuses it: "VACUUM cannot
@@ -16,7 +21,7 @@ import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
   * other server suites. Vacuums only small tables, so it is quick and leaves the other suites' fixtures alone.
   */
 class VacuumHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val client = java.net.http.HttpClient.newHttpClient()
@@ -40,7 +45,7 @@ class VacuumHttpSuite extends munit.FunSuite:
     io.circe.parser.decode[JobInfo](body).fold(e => fail(s"not a job: $body ($e)"), identity)
 
   /** Poll the job until it ends (a vacuum of two tiny tables takes well under a second). */
-  private def await(url: String, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
+  private def await(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$id")
     assertEquals(s, 200, b)
     val j = job(b)
@@ -51,9 +56,9 @@ class VacuumHttpSuite extends munit.FunSuite:
 
   test("a vacuum is a job: VACUUM (ANALYZE) outside a transaction, a line per table; bad tables are refused"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       val (s, body) =
@@ -63,7 +68,7 @@ class VacuumHttpSuite extends munit.FunSuite:
       assertEquals(started.kind, Vacuum.JobKind)
       assertEquals(
         started.detail.flatMap(VacuumPlan.Detail.of),
-        Some(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("place_overrides"), com.histmersion.api.maintenance.Vacuum.Request.Tables("place_removals"))))
+        Some(VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("place_overrides"), Vacuum.Request.Tables("place_removals"))))
       )
       val done = await(url, started.id)
       assertEquals((done.status, done.error), ("done", None), done.toString)
@@ -98,7 +103,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         else r
       val mb = mcp()
       assert(mb.contains(" · vacuum") && mb.contains("VACUUM of place_removals"), mb)
-      val id = com.histmersion.api.SpatialHierarchyResult.Job.Id("[0-9a-f-]{36}".r.findFirstIn(mb).getOrElse(fail(mb)))
+      val id = SpatialHierarchyResult.Job.Id("[0-9a-f-]{36}".r.findFirstIn(mb).getOrElse(fail(mb)))
       assertEquals(await(url, id).status, "done")
 
       b.stop()

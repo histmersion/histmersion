@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{Goal as ApiGoal, Managers, Queue}
@@ -16,77 +17,84 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.managers.ManagerLight
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.managers.SweepAcquireItem
+import com.histmersion.domain.automation.goals.FocusRepo
+import com.histmersion.domain.CodexRetention
 
 /** The agent runs as the engine's features read them — each run's row with its steps' usage summed — and the steps
   * themselves: the checkpoints a resume replays, the attempts, the trace, the spend.
   */
 trait RunService:
-  def get(id: com.histmersion.domain.automation.Run.Id): Option[RunInfo]
+  def get(id: Run.Id): Option[RunInfo]
 
   /** Newest first: of one state and one goal, when given. */
-  def list(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status], limit: com.histmersion.domain.automation.agents.RunQuery.Limit, goal: Option[com.histmersion.domain.automation.Goal.Slug] = None): Vector[RunInfo]
+  def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug] = None): Vector[RunInfo]
 
   /** One newest-first page of a state and a goal; `before`/`upTo` are run ids (Left: one that names no job). */
   def page(
-      status: Option[com.histmersion.domain.automation.agents.RunQuery.Status],
-      limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo] = None
-  ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
+      status: Option[RunQuery.Status],
+      limit: RunQuery.Limit,
+      goal: Option[Goal.Slug] = None,
+      before: Option[AgentRepo.PageCursor] = None,
+      upTo: Option[RunQuery.UpTo] = None
+  ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
 
   /** One newest-first page of the runs `q` matches. */
   def page(
       q: RunQuery,
-      limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
-  ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
+      limit: RunQuery.Limit,
+      before: Option[AgentRepo.PageCursor],
+      upTo: Option[RunQuery.UpTo]
+  ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
 
   /** Per state, and the pipeline, origin, manager, model and provider facets, each without its own filter. */
-  def runFacets(q: RunQuery): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)], List[(String, List[(String, com.histmersion.domain.automation.agents.RunService.Count)])])
+  def runFacets(q: RunQuery): (List[(Run.State.Wire, RunService.Count)], List[(String, List[(String, RunService.Count)])])
 
   /** Runs per state (of one goal). */
-  def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None): List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)]
+  def stateCounts(goal: Option[Goal.Slug] = None): List[(Run.State.Wire, RunService.Count)]
 
   /** Every run of `p` on `target`, newest first. */
-  def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo]
+  def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo]
 
   /** The runs a manager dispatched, newest first (`active`: those not settled yet). */
-  def forManager(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, active: com.histmersion.domain.automation.agents.RunService.Active = com.histmersion.domain.automation.agents.RunService.Active(false), limit: com.histmersion.domain.automation.agents.RunQuery.Limit = com.histmersion.domain.automation.agents.RunQuery.Limit(200)): Vector[RunInfo]
+  def forManager(managerId: ManagerLight.Id, active: RunService.Active = RunService.Active(false), limit: RunQuery.Limit = RunQuery.Limit(200)): Vector[RunInfo]
 
   /** Every run on `target` that has not settled. */
-  def unsettledOn(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo]
+  def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo]
 
   /** Step `seq`'s checkpoint: its name and output, when an attempt finished. */
-  def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): Option[(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output)]
+  def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)]
 
   /** How many attempts step `seq` has. */
-  def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): com.histmersion.domain.automation.agents.RunService.Count
+  def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): RunService.Count
 
   /** One attempt and its trace, together. */
-  def record(jobId: com.histmersion.util.jobs.Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit
-  def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars): List[StepInfo]
-  def messages(jobId: com.histmersion.util.jobs.Job.Id): List[MessageInfo]
+  def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit
+  def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo]
+  def messages(jobId: Job.Id): List[MessageInfo]
 
   /** What one run has spent, every attempt counted. */
-  def runSpend(jobId: com.histmersion.util.jobs.Job.Id): (Usage, BigDecimal)
+  def runSpend(jobId: Job.Id): (Usage, BigDecimal)
 
   /** What every run spent since the start of the UTC day and month. */
   def spendDayMonth(): (BigDecimal, BigDecimal)
 
   /** Traced messages older than `days` deleted (none for 0 or less); how many. */
-  def pruneMessages(days: com.histmersion.domain.automation.agents.RunService.RetentionDays): com.histmersion.domain.automation.agents.RunService.Count
+  def pruneMessages(days: RunService.RetentionDays): RunService.Count
 
 object RunService:
   type Active = Active.T
-  object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Active extends RefinedType[Boolean, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type RetentionDays = RetentionDays.T
-  object RetentionDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetentionDays extends RefinedType[Int, Pure]
 
   def apply(db: Transactor): RunService = Implementation(db)
 
@@ -96,18 +104,18 @@ object RunService:
     */
   def row(
       p: Pipeline,
-      target: com.histmersion.domain.automation.agents.AgentsControllers.Target,
-      model: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName],
+      target: AgentsControllers.Target,
+      model: Option[AgentsControllers.ModelName],
       budgetUsd: BigDecimal,
-      budgetTokens: com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens,
+      budgetTokens: AgentsControllers.BudgetTokens,
       params: RunParams,
-      acquireItem: Option[com.histmersion.domain.automation.managers.SweepAcquireItem.Item],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
-      parent: Option[com.histmersion.domain.automation.Run.Id],
+      acquireItem: Option[SweepAcquireItem.Item],
+      goal: Option[Goal.Slug],
+      parent: Option[Run.Id],
       origin: Origin,
-      dryRun: com.histmersion.domain.automation.agents.RunService.DryRun,
-      managerId: Option[com.histmersion.domain.automation.managers.ManagerLight.Id] = None,
-      managerItem: Option[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id] = None
+      dryRun: DryRun,
+      managerId: Option[ManagerLight.Id] = None,
+      managerItem: Option[FocusRepo.WorkRow.Id] = None
   ): RunRow =
     RunRow(
       RunRow.Kind(JobKind),
@@ -120,7 +128,7 @@ object RunService:
       model.map(m => RunRow.Model(m.value)),
       budgetUsd,
       RunRow.BudgetTokens(budgetTokens.value),
-      RunRow.Params(Jsonb.write(params, dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true)).value),
+      RunRow.Params(Jsonb.write(params, dropNulls = Jsonb.DropNulls(true)).value),
       acquireItem.map(i => RunRow.AcquireItem(i.value)),
       goal.map(g => RunRow.Goal(g.value)),
       parent.map(r => RunRow.Parent(r.value)),
@@ -131,52 +139,52 @@ object RunService:
     )
 
   final private class Implementation(db: Transactor) extends RunService:
-    private def stateOf(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status]): Option[com.histmersion.domain.automation.Run.State.Wire] =
-      status.map(s => com.histmersion.domain.automation.Run.State.Wire(s.value))
-    private def size(limit: com.histmersion.domain.automation.agents.RunQuery.Limit): PageSize = PageSize.assume(math.max(1, limit.value))
-    private def count(n: RowCount): com.histmersion.domain.automation.agents.RunService.Count =
-      com.histmersion.domain.automation.agents.RunService.Count(n.value)
+    private def stateOf(status: Option[RunQuery.Status]): Option[Run.State.Wire] =
+      status.map(s => Run.State.Wire(s.value))
+    private def size(limit: RunQuery.Limit): PageSize = PageSize.assume(math.max(1, limit.value))
+    private def count(n: RowCount): Count =
+      Count(n.value)
 
-    def get(id: com.histmersion.domain.automation.Run.Id): Option[RunInfo] = db.read(AgentRepo.get(RunInfo.Id(id.value)))
-    def list(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status], limit: com.histmersion.domain.automation.agents.RunQuery.Limit, goal: Option[com.histmersion.domain.automation.Goal.Slug]): Vector[RunInfo] =
+    def get(id: Run.Id): Option[RunInfo] = db.read(AgentRepo.get(RunInfo.Id(id.value)))
+    def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug]): Vector[RunInfo] =
       db.read(AgentRepo.list(stateOf(status), size(limit), goal))
     def page(
-        status: Option[com.histmersion.domain.automation.agents.RunQuery.Status],
-        limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-        goal: Option[com.histmersion.domain.automation.Goal.Slug],
-        before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-        upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+        status: Option[RunQuery.Status],
+        limit: RunQuery.Limit,
+        goal: Option[Goal.Slug],
+        before: Option[AgentRepo.PageCursor],
+        upTo: Option[RunQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
       db.read(AgentRepo.page(stateOf(status), size(limit), goal, before, upTo.map(u => AgentRepo.PageCursor(u.value))))
     def page(
         q: RunQuery,
-        limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-        before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-        upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+        limit: RunQuery.Limit,
+        before: Option[AgentRepo.PageCursor],
+        upTo: Option[RunQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
       db.read(AgentRepo.page(q, size(limit), before, upTo.map(u => AgentRepo.PageCursor(u.value))))
-    def runFacets(q: RunQuery): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)], List[(String, List[(String, com.histmersion.domain.automation.agents.RunService.Count)])]) =
+    def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       val (states, facets) = db.read(AgentRepo.runFacets(q))
       (states.map((s, n) => (s, count(n))), facets.map((name, vs) => (name, vs.map((v, n) => (v, count(n))))))
-    def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)] =
+    def stateCounts(goal: Option[Goal.Slug]): List[(Run.State.Wire, Count)] =
       db.read(AgentRepo.stateCounts(goal)).map((s, n) => (s, count(n)))
-    def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.forTarget(p, RunInfo.Target(target.value)))
-    def forManager(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, active: com.histmersion.domain.automation.agents.RunService.Active, limit: com.histmersion.domain.automation.agents.RunQuery.Limit): Vector[RunInfo] =
+    def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.forTarget(p, RunInfo.Target(target.value)))
+    def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       db.read(AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit)))
-    def unsettledOn(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.unsettledOn(RunInfo.Target(target.value)))
-    def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): Option[(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output)] =
+    def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.unsettledOn(RunInfo.Target(target.value)))
+    def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
       db.read(AgentRepo.checkpoint(jobId, StepInfo.Seq(seq.value)))
         .map((name, output) => (AgentRepo.StepRecord.Name(name.value), AgentRepo.StepRecord.Output(output.value)))
-    def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): com.histmersion.domain.automation.agents.RunService.Count =
-      com.histmersion.domain.automation.agents.RunService.Count(db.read(AgentRepo.attempts(jobId, StepInfo.Seq(seq.value))).value)
-    def record(jobId: com.histmersion.util.jobs.Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
+    def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
+      Count(db.read(AgentRepo.attempts(jobId, StepInfo.Seq(seq.value))).value)
+    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
       db.transact(AgentRepo.record(jobId, step, messages))
-    def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars): List[StepInfo] = db.read(AgentRepo.steps(jobId, outputChars))
-    def messages(jobId: com.histmersion.util.jobs.Job.Id): List[MessageInfo] = db.read(AgentRepo.messages(jobId))
-    def runSpend(jobId: com.histmersion.util.jobs.Job.Id): (Usage, BigDecimal) = db.read(AgentRepo.runSpend(jobId))
+    def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] = db.read(AgentRepo.steps(jobId, outputChars))
+    def messages(jobId: Job.Id): List[MessageInfo] = db.read(AgentRepo.messages(jobId))
+    def runSpend(jobId: Job.Id): (Usage, BigDecimal) = db.read(AgentRepo.runSpend(jobId))
     def spendDayMonth(): (BigDecimal, BigDecimal) = db.read(AgentRepo.spendDayMonth())
-    def pruneMessages(days: com.histmersion.domain.automation.agents.RunService.RetentionDays): com.histmersion.domain.automation.agents.RunService.Count =
-      count(db.transact(AgentRepo.pruneMessages(com.histmersion.domain.CodexRetention.KeepDays(days.value))))
+    def pruneMessages(days: RetentionDays): Count =
+      count(db.transact(AgentRepo.pruneMessages(CodexRetention.KeepDays(days.value))))
 
   /** The runs in memory: their rows are the jobs area's in-memory runs, their steps and traces the shared state;
     * `clock` stands in for the database's `now()`.
@@ -186,11 +194,11 @@ object RunService:
     private def now: Instant = Instant.now(clock)
     private val Unsettled = Set("queued", "running", "paused", "waiting")
     private def runs: List[JobRunState] = jobs.all.filter(_.row.kind.value == JobKind)
-    private def stepsOf(jobId: com.histmersion.util.jobs.Job.Id): Vector[StepRecordState] = state.get.steps.filter(_.jobId == jobId)
+    private def stepsOf(jobId: Job.Id): Vector[StepRecordState] = state.get.steps.filter(_.jobId == jobId)
     private def jobOf(r: JobRunState): Job.Id = Job.Id.assume(r.id.value)
     private def text(at: Instant): String = AutomationState.text(at).value
-    private def count(n: Int): com.histmersion.domain.automation.agents.RunService.Count =
-      com.histmersion.domain.automation.agents.RunService.Count(n)
+    private def count(n: Int): Count =
+      Count(n)
     private def info(r: JobRunState): RunInfo =
       val ss = stepsOf(jobOf(r)).map(_.step)
       RunInfo(
@@ -227,11 +235,11 @@ object RunService:
       )
     private def key(r: JobRunState): (Instant, Long) = (r.createdAt, r.created.value)
     private def newest(rs: List[JobRunState]): List[JobRunState] = rs.sortBy(key).reverse
-    private def runOf(cursor: com.histmersion.domain.automation.agents.AgentRepo.PageCursor): Option[JobRunState] =
+    private def runOf(cursor: AgentRepo.PageCursor): Option[JobRunState] =
       Run.Id.option(cursor.value).flatMap(jobs.get)
 
-    def get(id: com.histmersion.domain.automation.Run.Id): Option[RunInfo] = jobs.get(id).filter(_.row.kind.value == JobKind).map(info)
-    def list(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status], limit: com.histmersion.domain.automation.agents.RunQuery.Limit, goal: Option[com.histmersion.domain.automation.Goal.Slug]): Vector[RunInfo] =
+    def get(id: Run.Id): Option[RunInfo] = jobs.get(id).filter(_.row.kind.value == JobKind).map(info)
+    def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug]): Vector[RunInfo] =
       val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
       val g = goal.map(_.value.trim).filter(_.nonEmpty)
       newest(runs.filter(r => st.forall(_ == r.row.status.value) && g.forall(x => r.row.goal.exists(_.value == x))))
@@ -239,12 +247,12 @@ object RunService:
         .toVector
         .map(info)
     def page(
-        status: Option[com.histmersion.domain.automation.agents.RunQuery.Status],
-        limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-        goal: Option[com.histmersion.domain.automation.Goal.Slug],
-        before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-        upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+        status: Option[RunQuery.Status],
+        limit: RunQuery.Limit,
+        goal: Option[Goal.Slug],
+        before: Option[AgentRepo.PageCursor],
+        upTo: Option[RunQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
       page(
         RunQuery(
           status = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(s => RunQuery.Status(s)).toList,
@@ -278,10 +286,10 @@ object RunService:
 
     def page(
         q: RunQuery,
-        limit: com.histmersion.domain.automation.agents.RunQuery.Limit,
-        before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-        upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
-    ): Either[com.histmersion.domain.automation.agents.AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
+        limit: RunQuery.Limit,
+        before: Option[AgentRepo.PageCursor],
+        upTo: Option[RunQuery.UpTo]
+    ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)] =
       val cursors = before.toList ++ upTo.toList.map(u => AgentRepo.PageCursor(u.value))
       cursors.find(c => runOf(c).isEmpty) match
         case Some(c) => Left(AgentRepo.CursorProblem(s"No agent run '${c.value}' to page from"))
@@ -299,12 +307,12 @@ object RunService:
             else shown.lastOption.exists(last => all.exists(r => ordering.lt(key(r), key(last))))
           Right((shown.map(info), older))
 
-    private def facet(values: List[String]): List[(String, com.histmersion.domain.automation.agents.RunService.Count)] =
+    private def facet(values: List[String]): List[(String, Count)] =
       values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax).map((v, n) => (v, count(n)))
-    def runFacets(q: RunQuery): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)], List[(String, List[(String, com.histmersion.domain.automation.agents.RunService.Count)])]) =
+    def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       def of(except: String) = runs.filter(matches(q, except))
       (
-        facet(of("status").map(_.row.status.value)).map((v, n) => (com.histmersion.domain.automation.Run.State.Wire(v), n)),
+        facet(of("status").map(_.row.status.value)).map((v, n) => (Run.State.Wire(v), n)),
         List(
           "pipeline" -> facet(of("pipeline").map(_.row.pipeline.value)),
           "origin" -> facet(of("origin").map(_.row.origin.value)),
@@ -313,33 +321,33 @@ object RunService:
           "provider" -> facet(of("provider").flatMap(r => models(r).map(provider)))
         )
       )
-    def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.domain.automation.agents.RunService.Count)] =
+    def stateCounts(goal: Option[Goal.Slug]): List[(Run.State.Wire, Count)] =
       val g = goal.map(_.value.trim).filter(_.nonEmpty)
       facet(runs.filter(r => g.forall(x => r.row.goal.exists(_.value == x))).map(_.row.status.value))
-        .map((v, n) => (com.histmersion.domain.automation.Run.State.Wire(v), n))
-    def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo] =
+        .map((v, n) => (Run.State.Wire(v), n))
+    def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] =
       runs
         .filter(r => r.row.pipeline.value == p.wire.value && r.row.target.value == target.value)
         .sortBy(r => (r.createdAt, -r.created.value))
         .reverse
         .toVector
         .map(info)
-    def forManager(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, active: com.histmersion.domain.automation.agents.RunService.Active, limit: com.histmersion.domain.automation.agents.RunQuery.Limit): Vector[RunInfo] =
+    def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       newest(runs.filter(r => r.row.managerId.exists(_.value == managerId.value) && (!active.value || Unsettled(r.row.status.value))))
         .take(math.max(1, limit.value))
         .toVector
         .map(info)
-    def unsettledOn(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo] =
+    def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
       runs.filter(r => r.row.target.value == target.value && Unsettled(r.row.status.value)).toVector.map(info)
-    def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): Option[(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output)] =
+    def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
       stepsOf(jobId)
         .filter(s => s.step.seq == seq && s.step.status == StepStatus.Done)
         .sortBy[Int](_.step.attempt.value)
         .lastOption
         .map(s => (s.step.name, s.step.output.getOrElse(AgentRepo.StepRecord.Output("null"))))
-    def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): com.histmersion.domain.automation.agents.RunService.Count =
+    def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       count(stepsOf(jobId).filter(_.step.seq == seq).map(_.step.attempt.value).maxOption.getOrElse(0))
-    def record(jobId: com.histmersion.util.jobs.Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
+    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
       val at = now
       val _ = state.updateAndGet(
         _.modify(_.steps)
@@ -358,7 +366,7 @@ object RunService:
           )
       )
       jobs.stamped(Run.Id.assume(jobId.value))
-    def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars): List[StepInfo] =
+    def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] =
       stepsOf(jobId).sortBy[(Int, Int)](s => (s.step.seq.value, s.step.attempt.value)).toList.map { s =>
         val r = s.step
         StepInfo(
@@ -381,7 +389,7 @@ object RunService:
           r.turns.map(t => StepInfo.Turns(t.value))
         )
       }
-    def messages(jobId: com.histmersion.util.jobs.Job.Id): List[MessageInfo] =
+    def messages(jobId: Job.Id): List[MessageInfo] =
       state.get.messages
         .filter(_.jobId == jobId)
         .sortBy[(Int, Int, Int)](m => (m.seq.value, m.attempt.value, m.message.n.value))
@@ -398,7 +406,7 @@ object RunService:
             m.message.latencyMs.map(l => MessageInfo.LatencyMs(l.value))
           )
         )
-    def runSpend(jobId: com.histmersion.util.jobs.Job.Id): (Usage, BigDecimal) =
+    def runSpend(jobId: Job.Id): (Usage, BigDecimal) =
       val ss = stepsOf(jobId).map(_.step)
       (
         Usage(
@@ -418,8 +426,8 @@ object RunService:
         ss.filter(s => !s.finishedAt.isBefore(day)).map(_.step.costUsd).sum,
         ss.filter(s => !s.finishedAt.isBefore(month)).map(_.step.costUsd).sum
       )
-    def pruneMessages(days: com.histmersion.domain.automation.agents.RunService.RetentionDays): com.histmersion.domain.automation.agents.RunService.Count =
-      if days.value <= 0 then com.histmersion.domain.automation.agents.RunService.Count(0)
+    def pruneMessages(days: RetentionDays): Count =
+      if days.value <= 0 then Count(0)
       else
         val cut = now.minusSeconds(days.value.toLong * 86400L)
         count(

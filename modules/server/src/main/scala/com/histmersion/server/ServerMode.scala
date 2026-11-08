@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 /** The server binary's command line. It takes almost nothing — every setting is config — but what it does not know is
   * an ERROR that ends the process before anything is opened: once, `--help` started a real server against the live

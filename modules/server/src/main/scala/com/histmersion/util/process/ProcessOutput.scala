@@ -1,4 +1,5 @@
-package com.histmersion.util.process
+package com.histmersion
+package util.process
 
 import com.histmersion.util.storage.Store
 

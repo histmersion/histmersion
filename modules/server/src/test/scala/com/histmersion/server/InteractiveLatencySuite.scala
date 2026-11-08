@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,6 +7,9 @@ import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.{Lpf, Place}
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a hover, a keystroke
   * and a filter change fire, against a server on the test database, each repeated so the statement is prepared
@@ -14,7 +18,7 @@ import com.histmersion.api.catalogue.{Lpf, Place}
   * measures the real thing against a live-sized copy. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
   */
 class InteractiveLatencySuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
@@ -57,29 +61,29 @@ class InteractiveLatencySuite extends munit.FunSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzl_world"), com.histmersion.api.catalogue.Place.Label("Zzl World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzl World")))
+        Place(Place.Id("zzl_world"), Place.Label("Zzl World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        List(Place.Name(Place.Name.Value("Zzl World")))
       ),
       Place.Input(
         Place(
-          com.histmersion.api.catalogue.Place.Id("zzl_land"),
-          com.histmersion.api.catalogue.Place.Label("Zzl Land"),
+          Place.Id("zzl_land"),
+          Place.Label("Zzl Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry("""{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}""")
           )
         ),
-        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzl Land")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzlandia"), com.histmersion.api.catalogue.Place.Name.Lang("xx"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzl_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzl_world")))
+        List(Place.Name(Place.Name.Value("Zzl Land")), Place.Name(Place.Name.Value("Zzlandia"), Place.Name.Lang("xx"))),
+        List(Place.Relation(Place.Relation.ChildId("zzl_land"), Place.Relation.ParentId("zzl_world")))
       )
     )
   )
 
   test("hover cards, suggestions and a filter change stay within their budgets (loosely)"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       try
         assertEquals(post(s"$url/places/import", doc.value)._1, 200)

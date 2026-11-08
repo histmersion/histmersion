@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,6 +18,14 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
+import com.histmersion.db.TestDb
+import com.histmersion.util.storage.Blob
+import com.histmersion.api.media.ImageSize
+import com.histmersion.config.DbConfig
+import com.histmersion.config.ServerConfig
+import com.histmersion.config.ConverterConfig
+import com.histmersion.api.automation.Activity
+import com.histmersion.config.Limits
 
 /** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets → the bytes served with
   * the right headers → the figure rendered as a lazy `<img>` → the absolute URLs MCP hands out. Skipped without
@@ -26,7 +35,7 @@ import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
   * container, and the real sidecar is verified end to end separately.
   */
 class IngestHttpSuite extends munit.FunSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
@@ -98,17 +107,17 @@ class IngestHttpSuite extends munit.FunSuite:
   final private class FakeConverter(fail: Option[ConverterClient.Problem] = None, beforeConvert: () => Unit = () => ())
       extends ConverterClient:
     @volatile var calls: List[(ConverterClient.Filename, ConverterClient.HighQuality)] = Nil
-    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+    def health = Right(ConverterClient.HealthSummary("ok"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       beforeConvert()
       calls = calls :+ (filename, quality)
       fail.toLeft(
         ConvertedDoc(
-          markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n"),
-          pages = com.histmersion.api.ocr.ConvertedDoc.Pages(3),
+          markdown = ConvertedDoc.Markdown("# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n"),
+          pages = ConvertedDoc.Pages(3),
           images = List(
-            ConvertedImage(com.histmersion.api.ocr.ConvertedImage.Name("fig-1.png"), com.histmersion.api.ocr.ConvertedImage.Mime("image/png"), figureB64, Some(com.histmersion.api.media.ImageSize.Width(120)), Some(com.histmersion.api.media.ImageSize.Height(80))),
-            ConvertedImage(com.histmersion.api.ocr.ConvertedImage.Name("fig-1-copy.png"), com.histmersion.api.ocr.ConvertedImage.Mime("image/png"), figureB64, Some(com.histmersion.api.media.ImageSize.Width(120)), Some(com.histmersion.api.media.ImageSize.Height(80)))
+            ConvertedImage(ConvertedImage.Name("fig-1.png"), ConvertedImage.Mime("image/png"), figureB64, Some(ImageSize.Width(120)), Some(ImageSize.Height(80))),
+            ConvertedImage(ConvertedImage.Name("fig-1-copy.png"), ConvertedImage.Mime("image/png"), figureB64, Some(ImageSize.Width(120)), Some(ImageSize.Height(80)))
           ),
           filename = Some(ConvertedDoc.Filename(filename.value))
         )
@@ -122,7 +131,7 @@ class IngestHttpSuite extends munit.FunSuite:
   private def cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(com.histmersion.config.ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool").toString))
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool").toString))
     )
 
   /** Poll until the job leaves queued/running. */
@@ -142,7 +151,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("ingest → job → body + assets → served bytes → lazy <img> → absolute MCP URLs"):
     val conv = FakeConverter()
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("one")
 
@@ -199,7 +208,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a duplicate upload is refused with the citekey that already holds it, unless forced"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("dupe")
 
@@ -222,7 +231,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("re-OCR replaces body and figures but preserves enrichment"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("reocr")
 
@@ -251,7 +260,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("a converter failure fails the job with the reason, and lists under status=failed"):
     supervised {
       val b =
-        Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter at http://x is unreachable")))).start()
+        Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter at http://x is unreachable")))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("boom")
 
@@ -271,7 +280,7 @@ class IngestHttpSuite extends munit.FunSuite:
       assert(new String(pb, "UTF-8").startsWith("["), new String(pb, "UTF-8").take(200))
       val failed = ph(Paging.TotalHeader.toLowerCase).toInt
       assert(failed >= 1, ph.toString)
-      val counts = Paging.decodeCounts(com.histmersion.api.automation.Activity.Counts.Wire(ph(Paging.CountsHeader.toLowerCase)))
+      val counts = Paging.decodeCounts(Activity.Counts.Wire(ph(Paging.CountsHeader.toLowerCase)))
       assertEquals(counts.find(_._1.value == "failed").map(_._2), Some(failed), ph.toString)
       assertEquals(ph.contains(Paging.NextHeader.toLowerCase), failed > 1, ph.toString)
       // the id is a cursor: down to it (upTo) holds it; older than it (before) does not
@@ -309,7 +318,7 @@ class IngestHttpSuite extends munit.FunSuite:
         converting.countDown()
         if !release.await(30, TimeUnit.SECONDS) then throw IllegalStateException("test converter was not released")
       })
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil")
       val id = addItem(url, "zzfulfil Killen, The New Documents")
@@ -354,7 +363,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a failed OCR leaves the acquisition item open"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter exploded")))).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter exploded")))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-fail")
       val id = addItem(url, "zzfulfil a book whose scan fails")
@@ -374,7 +383,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("an upload naming an item it cannot fulfil is refused before a job is created"):
     supervised {
       val conv = FakeConverter()
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-refused")
       val done = addItem(url, "zzfulfil already got")
@@ -400,7 +409,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("empty and oversized uploads are refused before a job is created"):
     supervised {
       val b =
-        Composition.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = com.histmersion.config.Limits.UploadBytes(4))), com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter()).start()
+        Composition.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = Limits.UploadBytes(4))), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val empty = Files.createTempFile("histmersion-empty-", ".pdf")
       val big = tempPdf("far too long for a four byte limit")
@@ -422,14 +431,14 @@ class IngestHttpSuite extends munit.FunSuite:
     val entered = CountDownLatch(1)
     val release = CountDownLatch(1)
     val conv = new ConverterClient:
-      def health = Left(com.histmersion.util.ocr.ConverterClient.Problem("converter at http://sidecar did not finish within 5 s"))
-      def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+      def health = Left(ConverterClient.Problem("converter at http://sidecar did not finish within 5 s"))
+      def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)
-        Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Busy\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
-    val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = com.histmersion.config.ConverterConfig.HealthCacheMs(0)))
+        Right(ConvertedDoc(markdown = ConvertedDoc.Markdown("# Busy\n"), pages = ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
+    val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = ConverterConfig.HealthCacheMs(0)))
     supervised {
-      val b = Composition.server(c, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv).start()
+      val b = Composition.server(c, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (_, idle) = get(s"$url/api/health")
@@ -457,7 +466,7 @@ class IngestHttpSuite extends munit.FunSuite:
   // #652: `calibre push --replace` takes the file the server stored at ingest
   test("GET /api/sources/{ck}/original serves the stored original, named <citekey>.<ext>"):
     supervised {
-      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FakeConverter()).start()
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val pdf = tempPdf("original")

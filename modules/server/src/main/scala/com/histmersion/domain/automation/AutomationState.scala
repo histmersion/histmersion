@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation
+package com.histmersion
+package domain.automation
 
 import com.histmersion.domain.automation.agents.{ApprovalRecord, MessageRecordState, StepRecordState}
 import com.histmersion.domain.automation.autopilot.AutopilotRowState
@@ -7,6 +8,9 @@ import com.histmersion.domain.automation.managers.{ManagerEventRecord, ManagerIt
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.histmersion.domain.automation.agents.AgentStateRecord
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The engine's rows held in memory, one record the `InMemory` services of its features share (each reads and changes
   * its own part, through lenses): the autopilot's row; the goals, their links, the schedules not moved yet and what the
@@ -28,37 +32,37 @@ final case class AutomationState(
     events: Vector[ManagerEventRecord],
     lastEventId: AutomationState.LastEventId,
     goalAliases: Map[AutomationState.GoalAliasesKey, AutomationState.GoalAliasesValue] = Map.empty,
-    agentState: Map[com.histmersion.domain.automation.agents.AgentStateRecord.Key, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
+    agentState: Map[AgentStateRecord.Key, AgentStateRecord] = Map.empty
 )
 
 object AutomationState:
   type Timestamp = Timestamp.T
-  object Timestamp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Timestamp extends RefinedType[String, Pure]
 
 
   type GoalsKey = GoalsKey.T
-  object GoalsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalsKey extends RefinedType[String, Pure]
   type FocusKey = FocusKey.T
-  object FocusKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FocusKey extends RefinedType[String, Pure]
   type LastApprovalId = LastApprovalId.T
-  object LastApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastApprovalId extends RefinedType[Long, Pure]
   type LastItemId = LastItemId.T
-  object LastItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastItemId extends RefinedType[Long, Pure]
   type LastEventId = LastEventId.T
-  object LastEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastEventId extends RefinedType[Long, Pure]
   type GoalAliasesKey = GoalAliasesKey.T
-  object GoalAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalAliasesKey extends RefinedType[String, Pure]
   type GoalAliasesValue = GoalAliasesValue.T
-  object GoalAliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalAliasesValue extends RefinedType[String, Pure]
 
   import hearth.kindlings.optics.syntax.*
 
-  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: com.histmersion.domain.automation.Approval.Id => ApprovalRecord): Option[com.histmersion.domain.automation.Approval.Id] =
-    var made: Option[com.histmersion.domain.automation.Approval.Id] = None
+  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: Approval.Id => ApprovalRecord): Option[Approval.Id] =
+    var made: Option[Approval.Id] = None
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }
       else
-        val id = com.histmersion.domain.automation.Approval.Id(s.lastApprovalId.value + 1)
+        val id = Approval.Id(s.lastApprovalId.value + 1)
         made = Some(id)
         s.modify(_.approvals).using(_ :+ make(id)).modify(_.lastApprovalId).setTo(LastApprovalId(id.value))
     }
@@ -72,15 +76,15 @@ object AutomationState:
       Vector.empty,
       Map.empty,
       Vector.empty,
-      com.histmersion.domain.automation.AutomationState.LastApprovalId(0L),
+      LastApprovalId(0L),
       Vector.empty,
       Vector.empty,
       Vector.empty,
       Vector.empty,
-      com.histmersion.domain.automation.AutomationState.LastItemId(0L),
+      LastItemId(0L),
       Vector.empty,
-      com.histmersion.domain.automation.AutomationState.LastEventId(0L)
+      LastEventId(0L)
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
-  def text(at: Instant): com.histmersion.domain.automation.AutomationState.Timestamp = Timestamp(at.truncatedTo(ChronoUnit.SECONDS).toString)
+  def text(at: Instant): Timestamp = Timestamp(at.truncatedTo(ChronoUnit.SECONDS).toString)

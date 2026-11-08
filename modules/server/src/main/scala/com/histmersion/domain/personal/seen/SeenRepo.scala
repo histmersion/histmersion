@@ -1,4 +1,5 @@
-package com.histmersion.domain.personal.seen
+package com.histmersion
+package domain.personal.seen
 
 import com.histmersion.domain.personal.MarkTime
 import com.histmersion.util.database.NewtypeColumns.given

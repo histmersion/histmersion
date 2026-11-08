@@ -1,4 +1,5 @@
-package com.histmersion.server.agents
+package com.histmersion
+package server.agents
 
 import com.histmersion.domain.library.workflows.AcquisitionWork
 import com.histmersion.domain.library.workflows.EnrichManagerKind
@@ -17,6 +18,7 @@ import com.histmersion.api.automation.Agents.Pipeline
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, ServerWiring}
+import com.histmersion.server.views.AutopilotView
 
 /** What the domains register into the engine, in the order the engine has always listed them: the library's
   * contribution ([[LibraryWorkflows]]: its three workflows, the enrich and watch kinds, its tools), research's
@@ -52,7 +54,7 @@ object EngineContributions:
     * registered pipelines with the engine's own probe.
     */
   val roster: AgentRoster =
-    AgentRoster(ToolboxOrder.names, io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[com.histmersion.domain.automation.AgentRole]].transform((Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct))
+    AgentRoster(ToolboxOrder.names, io.scalaland.chimney.Transformer.derive[List[AgentRole], List[com.histmersion.domain.automation.AgentRole]].transform((Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct))
 
   /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
   def enrich(a: AgentsControllers): EnrichManagerKind =
@@ -70,5 +72,5 @@ object EngineContributions:
       .getOrElse(throw IllegalStateException("no watch manager kind is registered"))
 
   /** The autopilot's page over `a`: its status with the watch kind's upstreams and acquisition list's re-check. */
-  def autopilot(a: AgentsControllers): com.histmersion.server.views.AutopilotView =
-    com.histmersion.server.views.AutopilotView(a.managing, watch(a).upstreams, work(a).acquireRecheck.status, a.clock)
+  def autopilot(a: AgentsControllers): AutopilotView =
+    AutopilotView(a.managing, watch(a).upstreams, work(a).acquireRecheck.status, a.clock)

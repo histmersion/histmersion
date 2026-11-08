@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.util.database.Transactor
 
@@ -10,6 +11,10 @@ import java.time.Clock
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.automation.Queue
 
 /** The rows of the jobs that run as one piece (an OCR, a re-OCR): created `queued`, moved from state to state by
   * compare-and-set, annotated with their progress. The jobs area owns the `jobs` table; a domain that runs such jobs
@@ -17,7 +22,7 @@ import javax.sql.DataSource
   */
 trait JobRecords:
   /** A new `queued` job; `acquireItem` is the acquisition item it ticks off when it succeeds. */
-  def create(kind: Job.Kind, citekey: Option[com.histmersion.domain.library.Citekey], sha256: Option[com.histmersion.Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo
+  def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo
 
   def get(id: Job.Id): Option[JobInfo]
 
@@ -39,7 +44,7 @@ object JobRecords:
   def apply(ds: () => DataSource): JobRecords = Implementation(ds)
 
   final private class Implementation(ds: () => DataSource) extends JobRecords:
-    def create(kind: Job.Kind, citekey: Option[com.histmersion.domain.library.Citekey], sha256: Option[com.histmersion.Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
+    def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
       Transactor(ds()).transact(JobRepo.create(kind, citekey, sha256, acquireItem))
     def get(id: Job.Id): Option[JobInfo] = Transactor(ds()).read(JobRepo.get(id))
     def transition(
@@ -54,11 +59,11 @@ object JobRecords:
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[JobInfo.Id, JobInfo]], clock: Clock) extends JobRecords:
-    def create(kind: Job.Kind, citekey: Option[com.histmersion.domain.library.Citekey], sha256: Option[com.histmersion.Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
+    def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
-        com.histmersion.api.SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),
-        com.histmersion.api.jobs.JobKinds.Wire(kind.value),
+        SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),
+        JobKinds.Wire(kind.value),
         JobState.Queued.wire,
         citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
         None,
@@ -66,7 +71,7 @@ object JobRecords:
         sha256.map(h => com.histmersion.api.Sha256(h.value)),
         JobInfo.CreatedAt(now),
         JobInfo.UpdatedAt(now),
-        acquireItem.map(a => com.histmersion.api.automation.Queue.QueueItem.Id(a.value))
+        acquireItem.map(a => Queue.QueueItem.Id(a.value))
       )
       val _ = state.updateAndGet(_.updated(job.id, job))
       job

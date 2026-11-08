@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.AttestationsMarkdown
@@ -12,6 +13,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.api.library.Citekey
 
 /** The attestations for agents: list or show, create, delete. */
 object AttestationsTools:
@@ -19,11 +21,11 @@ object AttestationsTools:
 
   final case class AttestationsInput(
       id: Option[Attestation.Id] = None,
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       targetType: Option[Attestation.TargetType] = None,
       targetId: Option[Attestation.TargetId] = None,
-      limit: Option[com.histmersion.PageSize] = None,
-      offset: Option[com.histmersion.Offset] = None
+      limit: Option[PageSize] = None,
+      offset: Option[Offset] = None
   ) derives KindlingsCodecAsObject
   object AttestationsInput:
     given Schema[AttestationsInput] = KindlingsSchema
@@ -35,7 +37,7 @@ object AttestationsTools:
       .modify(_.targetId)(_.description("Filter by target entity id"))
 
   final case class AttestationPutInput(
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       targetType: Attestation.TargetType,
       targetId: Attestation.TargetId,
       quote: Option[Attestation.Quote] = None,

@@ -1,27 +1,30 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One LLM step's prompt. `system` is the step's prompt FILE(S) (bundled as resources, so one copy per prompt and its
   * hash recorded on every attempt); `user` carries the data.
   */
 final case class Prompt(system: Prompt.System, user: Prompt.User):
   /** sha256 of the system prompt — which prompt version produced a checkpoint. */
-  def hash: com.histmersion.Sha256 = Prompt.sha256(system.value)
+  def hash: Sha256 = Prompt.sha256(system.value)
 
 object Prompt:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type UserText = UserText.T
-  object UserText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UserText extends RefinedType[String, Pure]
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
     * copy of the closing tag inside it defused so the text cannot end its own fence.
     */
 
   type System = System.T
-  object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object System extends RefinedType[String, Pure]
   type User = User.T
-  object User extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object User extends RefinedType[String, Pure]
 
   def data(tag: String, text: String): String =
     val safe = text.replace(s"</$tag>", s"</ $tag>")
@@ -44,7 +47,7 @@ object Prompt:
     * was well-formed and only failed a check), the model amends it instead of redoing every lookup — a fixer that
     * started over ran out of turns on its third attempt.
     */
-  def retry(problems: List[com.histmersion.domain.automation.agents.Prompt.Problem], previous: Option[String] = None): String =
+  def retry(problems: List[Problem], previous: Option[String] = None): String =
     val points = problems.take(20).map(p => s"- $p").mkString("\n")
     previous.filter(_.length <= MaxPreviousAnswer) match
       case None =>
@@ -54,8 +57,8 @@ object Prompt:
           "\nEverything else in it stands. Do not repeat your lookups: return the same answer with exactly " +
           "these points fixed.\n\n" + data("previous-answer", prev)
 
-  def sha256(s: String): com.histmersion.Sha256 =
-    com.histmersion.Sha256.assume(
+  def sha256(s: String): Sha256 =
+    Sha256.assume(
       java.security.MessageDigest
         .getInstance("SHA-256")
         .digest(s.getBytes(UTF_8))

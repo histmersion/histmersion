@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.autopilot
+package com.histmersion
+package domain.automation.autopilot
 
 import hearth.kindlings.optics.syntax.*
 
@@ -27,6 +28,10 @@ import javax.sql.DataSource
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.backup.Backup
+import com.histmersion.api.automation.Managers
+import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.automation.Approval
+import com.histmersion.api.automation.Autopilot
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -103,7 +108,7 @@ final class AutopilotService(
     val row = agents.autopilotRow.row()
     val changes =
       if in.on.value then
-        val turned = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), changedBy, row.paused)
+        val turned = agents.autopilotRow.set(enabled = AutopilotRepo.Row.Enabled(true), changedBy, row.paused)
         // turning it on lifts a drain: the person wants it running
         val undrained = Option.when(agents.autopilotRow.setDrain(on = false, changedBy))(s"drain lifted by $by")
         (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(
@@ -118,11 +123,11 @@ final class AutopilotService(
           event(managerId, s"paused: the autopilot was turned off by $by (its runs in flight go on)")
         }
         val _ = agents.autopilotRow.set(
-          enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(false),
+          enabled = AutopilotRepo.Row.Enabled(false),
           changedBy,
           ids.map(id => AutopilotRepo.Row.Paused(id.value))
         )
-        List(s"turned off by $by", s"paused ${Plural.count(Plural.CountN(ids.size.toLong), com.histmersion.api.Plural.CountSingular("manager"))} it ran (turning it on resumes them)")
+        List(s"turned off by $by", s"paused ${Plural.count(Plural.CountN(ids.size.toLong), Plural.CountSingular("manager"))} it ran (turning it on resumes them)")
     log(s"autopilot ${if in.on.value then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
     status(now).modify(_.changes).setTo(changes.map(c => EngineStatus.Changes(c)))
@@ -226,7 +231,7 @@ final class AutopilotService(
         }
       case Step.CreateWatch(goal, cron, perDay) =>
         val id = watchId(Goal.Ref(goal.value))
-        val c = ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value)))
+        val c = ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value)))
         Option.when(
           agents.managerStore.create(id, Kind.Watch, Some(goal), State.Active, c, Some(ManagerInfo.Cron(cron.value)), next(cron, now))
         ) {
@@ -466,7 +471,7 @@ final class AutopilotService(
     log(line)
 
   private def log(line: String): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.take(1000))))
+    val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.take(1000))))
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────
@@ -515,8 +520,8 @@ final class AutopilotService(
     def rule(k: Agents.ApprovalKind, cap: String) =
       ApprovalRule(
         k.wire,
-        if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("checked")
-        else com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("person"),
+        if cfg.approvals.checked(k.transformInto[Approval.Kind]) then Autopilot.ApprovalRule.Mode("checked")
+        else Autopilot.ApprovalRule.Mode("person"),
         ApprovalRule.Cap(cap)
       ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == DomainApproval.Mode.Auto =>

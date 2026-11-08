@@ -1,8 +1,10 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}
+import com.histmersion.domain.library.Citekey
 
 /** `Spool.write` writes `<citekey>/paper.<ext>` in the acquisition spool. Defence in depth: the citekey must parse, AND
   * the store's key must stay inside it — a path-traversal guard should not rest on one regex being read correctly. Pure
@@ -27,7 +29,7 @@ class SpoolSuite extends munit.FunSuite:
   /** The spool over `d`: the file each write names. */
   private def write(d: Path, citekey: String, ext: Spool.Extension): Either[String, Path] =
     val spool = Spool(Storage.at(Location.Spool, d))
-    com.histmersion.domain.library.Citekey
+    Citekey
       .parse(citekey)
       .left
       .map(_.value)

@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,19 +20,25 @@ import com.histmersion.db.*
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PeriodO, PresetRegion, SkippedPeriod}
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobState
+import com.histmersion.db.DbSuite
+import com.histmersion.db.TestDb
+import com.histmersion.config.DbConfig
+import com.histmersion.config.InitConfig
+import com.histmersion.api.catalogue.Year
+import com.histmersion.util.jobs.Job
 
 /** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
   * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed
   * period seed — never the 16 000-place gazetteer, whose import re-materialises `finding_places` for the whole test
   * database other suites assert on.
   */
-class BootstrapSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class BootstrapSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val repoRoot = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
@@ -48,7 +55,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     d
 
   private def bootstrap(dir: Path, net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))) =
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(dir.toString)))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(InitConfig.DataDir(dir.toString)))
     Bootstrap(Deps(cfg, ds), net)
 
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */
@@ -74,23 +81,23 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     // #771: the seed's two EAMENA Palaeolithic periods start in 14,000,000 BC — reported, not stored
     assertEquals(r.skipped.map(_.id), List("p0m64tdgpvd", "p0m64tdp282"))
     assertEquals(r.skippedCount, 2)
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0m64tdp282")), None)
+    assertEquals(periods.get(HistoricalPeriod.Id("p0m64tdp282")), None)
     val b = bootstrap(dataDir())
     val lm = b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.value), identity) // Late Minoan (BSA)
-    assertEquals(lm.period.period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050)))
+    assertEquals(lm.period.period, Period(Year(-1700), Year(-1050)))
     assertEquals(lm.parent.map(_.label), Some("Bronze Age Minoan"))
     assert(lm.children.map(_.label).contains("Late Minoan I"), lm.children.toString)
     assert(lm.period.authority.exists(_.value.startsWith("PeriodO p0ds9qjh4dh · The British School at Athens")))
     // the web timeline's presets are the seed's, each under its region heading
     val seed = PeriodO.parse(seedText).toOption.get
     assertEquals(r.presets, seed.presets.size)
-    val aegean = periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).fold(fail("no Bronze Age (Greece)"))(identity)
+    val aegean = periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).fold(fail("no Bronze Age (Greece)"))(identity)
     assertEquals(
       (aegean.label, aegean.region, aegean.preset),
       ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean))
     )
     // ROAD's Eurasia-wide Bronze Age is still a period, but not a preset
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0s2rwkwbsz")).map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
+    assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
 
   test("a second seed is idempotent"):
     val before = periods.count()
@@ -103,23 +110,23 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     b.seedPeriods().fold(e => fail(e.message.value), identity)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false) // current: nothing to do
     // an older install: version 1, the BSA's Bronze Age under ROAD's, a preset the seed does not name
-    periods.setSeedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed), com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion(1))
+    periods.setSeedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed), PeriodService.SeedVersion(1))
     transact(ds):
       val _ = sql"UPDATE periods SET parent_id = 'p0s2rwkwbsz', preset = NULL WHERE id = 'p0ds9qjq7b2'".update.run()
       val _ = sql"UPDATE periods SET preset = 'broad' WHERE id = 'p0s2rwkwbsz'".update.run()
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, true)
     b.seedPeriods().fold(e => fail(e.message.value), identity)
-    val bsa = periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).get
+    val bsa = periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
+    assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
     assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)), PeriodO.parse(seedText).toOption.get.version)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
 
   test("a period fetch never takes a seed preset off the menu"):
     val b = bootstrap(dataDir())
     b.seedPeriods().fold(e => fail(e.message.value), identity)
-    periods.write(List(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).get.copy(preset = None)), Dataset.Seed)
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).flatMap(_.preset), Some(PresetRegion.Aegean))
+    periods.write(List(periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get.copy(preset = None)), Dataset.Seed)
+    assertEquals(periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).flatMap(_.preset), Some(PresetRegion.Aegean))
 
   test("a missing seed is an error naming where it looked"):
     val r = bootstrap(Files.createTempDirectory("histmersion-empty")).seedPeriods()
@@ -132,16 +139,16 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     assertEquals(asked, List(base.periods.periodoUrl))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqother01")), None)
+    assertEquals(periods.get(HistoricalPeriod.Id("zzqother01")), None)
     val node = b.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.value), identity)
     assertEquals(node.period.label, "Zzq test chronology")
-    assertEquals(node.period.period, Period(com.histmersion.api.catalogue.Year(-3000), com.histmersion.api.catalogue.Year(-500)))
+    assertEquals(node.period.period, Period(Year(-3000), Year(-500)))
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauthlba")).flatMap(_.parentId), Some("zzqauthbronze"))
+    assertEquals(periods.get(HistoricalPeriod.Id("zzqauthlba")).flatMap(_.parentId), Some("zzqauthbronze"))
     // somebody moves a period; a re-fetch leaves it where it is
     transact(ds)(sql"UPDATE periods SET parent_id = NULL WHERE id = 'zzqauthiron'".update.run())
     b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
-    assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauthiron")).flatMap(_.parentId), None)
+    assertEquals(periods.get(HistoricalPeriod.Id("zzqauthiron")).flatMap(_.parentId), None)
 
   test("periods fetch: an unknown source, a missing collection and a dead network are errors"):
     val b = bootstrap(dataDir())
@@ -155,16 +162,16 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     val job = b.init(fetch = false).fold(e => fail(e.message.value), identity)
     assertEquals(job.kind, Bootstrap.JobKind)
     val end = Iterator
-      .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(job.id.value))).get }
+      .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(Job.Id.applyUnsafe(job.id.value))).get }
       .take(300)
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
     assert(end.error.exists(_.value.contains("gazetteer: no gazetteer seed at")), end.toString)
     assert(end.progress.exists(_.value.contains("period presets:")), end.toString) // the periods still went in
-    assert(Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
+    assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
-    assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), periodPresets = com.histmersion.api.exchange.InitPlan.PeriodPresets(true))))
+    assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), periodPresets = InitPlan.PeriodPresets(true))))
     assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))
     assertEquals(end.detail.map(SkippedPeriod.SkippedCount.of), Some(2))
     assertEquals(end.detail.toList.flatMap(SkippedPeriod.Skipped.of(_).map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,12 +16,16 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import scala.collection.concurrent.TrieMap
+import com.histmersion.db.DbSuite
+import com.histmersion.domain.Title
+import com.histmersion.api.catalogue.EventSourceRef
+import com.histmersion.db.TestDb
 
 /** A contract of the catalogue's services, run once on the in-memory stores and once on the database (a scratch
   * database per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with
   * no such store.
   */
-abstract class CatalogueStoreSuite extends com.histmersion.db.DbSuite:
+abstract class CatalogueStoreSuite extends DbSuite:
   protected def fresh(test: String): Option[CatalogueStores]
 
   protected def stest(title: String)(body: CatalogueStores => Unit): Unit =
@@ -41,8 +46,8 @@ object CatalogueStoreSuite:
         val events = evs
         val corrections = CorrectionService.InMemory(state)
         val eventImports = EventImportService.InMemory(state)
-        val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck.value).map(_ => Some(com.histmersion.domain.Title(ck.value))))
-        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck.value).map(_ => (Some(com.histmersion.api.catalogue.EventSourceRef.Title(ck.value)), None)))
+        val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck.value).map(_ => Some(Title(ck.value))))
+        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck.value).map(_ => (Some(EventSourceRef.Title(ck.value)), None)))
         val siteTypes = SiteTypeService.InMemory(state, () => HeldSite.CheckedAt(clock.incrementAndGet()))
         val places =
           PlaceService.InMemory(state, java.time.Clock.fixed(java.time.Instant.EPOCH, java.time.ZoneOffset.UTC))
@@ -54,7 +59,7 @@ object CatalogueStoreSuite:
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends CatalogueStoreSuite:
-    private val testDb = com.histmersion.db.TestDb.url
+    private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
     private lazy val scratch =
       ScratchDatabases(

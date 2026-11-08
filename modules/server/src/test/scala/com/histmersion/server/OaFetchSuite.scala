@@ -1,4 +1,5 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,8 @@ import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
+import com.histmersion.config.LoadedConfig
+import com.histmersion.domain.library.Doi
 
 /** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean "anonymous" — no
   * `(mailto:)` stub in the User-Agent, and no Unpaywall call, which Unpaywall would refuse without an e-mail — while a
@@ -25,14 +28,14 @@ class OaFetchSuite extends munit.FunSuite:
 
   private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 
-  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+  private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
   private def asked(email: AcquireConfig.ContactEmail): List[Http.Url] =
     val cfg = acquire(email)
     val http = RecordingHttp()
     val _ =
-      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(com.histmersion.domain.library.Doi("10.1038/nature14317")), None)
+      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(Doi("10.1038/nature14317")), None)
     http.urls
 
   test("the repository default has no contact e-mail"):

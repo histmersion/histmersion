@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 /** Every domain's [[Referable]], by the kinds each owns: what a domain that points at records of any kind is given. */
 final class Referables(all: List[Referable]):

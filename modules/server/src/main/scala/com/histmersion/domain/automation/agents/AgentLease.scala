@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 
 import com.augustnagro.magnum.{connect, transact}
 
@@ -97,20 +98,20 @@ final class AgentLease(ds: DataSource, ttlSeconds: AgentLease.TtlSeconds, val ow
       held = false
 
   /** For About and the doctor: (holder, until, expired, held by this server). */
-  def status: Option[(com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner, com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry, Boolean, Boolean)] =
+  def status: Option[(LeaseRepo.LeaseOwner, LeaseRepo.LeaseExpiry, Boolean, Boolean)] =
     try connect(ds)(LeaseRepo.holder(AgentLease.Name)).map((o, u, expired) => (o, u, expired, o == owner))
     catch case _: Exception => None
 
 object AgentLease:
-  type TtlSeconds = com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds
-  val TtlSeconds: _root_.com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds.type = _root_.com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds
-  type Owner = com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner
-  val Owner: _root_.com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner.type = _root_.com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner
+  type TtlSeconds = LeaseRepo.TtlSeconds
+  val TtlSeconds: LeaseRepo.TtlSeconds.type = LeaseRepo.TtlSeconds
+  type Owner = LeaseRepo.LeaseOwner
+  val Owner: LeaseRepo.LeaseOwner.type = LeaseRepo.LeaseOwner
 
 
   val Name: LeaseRepo.LeaseName = LeaseRepo.LeaseName("agents")
 
-  def ownerId(): com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner =
+  def ownerId(): LeaseRepo.LeaseOwner =
     val host = try java.net.InetAddress.getLocalHost.getHostName
     catch case _: Exception => "localhost"
     Owner(s"$host:${ProcessHandle.current().pid()}")

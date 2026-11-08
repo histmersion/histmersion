@@ -1,10 +1,15 @@
-package com.histmersion.server
+package com.histmersion
+package server
 
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.api.ocr.ConvertedDoc
 
 import java.nio.file.Path
+import com.histmersion.util.storage.Blob
+import com.histmersion.util.storage.Storage
+import com.histmersion.util.storage.Location
+import com.histmersion.util.storage.Store
 
 /** A converter for HTTP tests that never leaves the process. `Composition.server(cfg, host, port)` builds the REAL
   * client from `converter.url` — `http://localhost:8100`, the live sidecar on this machine — so a test that accepted an
@@ -22,7 +27,7 @@ final class OfflineConverter extends ConverterClient:
 
   def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
   def convert(
-      file: com.histmersion.util.storage.Blob,
+      file: Blob,
       filename: ConverterClient.Filename,
       quality: ConverterClient.HighQuality
   ): Either[ConverterClient.Problem, ConvertedDoc] =
@@ -31,8 +36,8 @@ final class OfflineConverter extends ConverterClient:
 
 object OfflineConverter:
   /** The file `p` as a converter is handed it. */
-  def blob(p: Path): com.histmersion.util.storage.Blob =
-    com.histmersion.util.storage.Storage
-      .at(com.histmersion.util.storage.Location.Scratch, p.toAbsolutePath.getParent)
-      .get(com.histmersion.util.storage.Store.Key.applyUnsafe(p.getFileName.toString))
+  def blob(p: Path): Blob =
+    Storage
+      .at(Location.Scratch, p.toAbsolutePath.getParent)
+      .get(Store.Key.applyUnsafe(p.getFileName.toString))
       .getOrElse(throw AssertionError(s"$p is not a file"))
