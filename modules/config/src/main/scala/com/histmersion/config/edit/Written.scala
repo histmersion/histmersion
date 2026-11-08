@@ -17,5 +17,4 @@ enum Written:
 
 object Written:
   object Elsewhere:
-    type File = com.histmersion.config.edit.SettingsFile.Path
-    val File: _root_.com.histmersion.config.edit.SettingsFile.Path.type = _root_.com.histmersion.config.edit.SettingsFile.Path
+    export com.histmersion.config.edit.SettingsFile.{Path as File}
