@@ -70,7 +70,7 @@ class MediaCmdSuite extends munit.FunSuite:
   private def run(url: Client.ServerUrl, args: String*): (Either[Cli.Error, Unit], String, String) =
     val f = cmd.parse(args.toList, Map.empty).fold(h => fail(h.toString), identity)
     val (out, err) = (ByteArrayOutputStream(), ByteArrayOutputStream())
-    val r = Console.withOut(out)(Console.withErr(err)(f(Client(url))))
+    val r = Console.withOut(out)(Console.withErr(err)(f(new Client(url))))
     (r, out.toString(UTF_8), err.toString(UTF_8))
 
   test("the import starts a job and follows its n/total progress to the summary"):

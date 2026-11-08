@@ -108,7 +108,7 @@ class PreviewSuite extends munit.FunSuite:
       place = gn.place.modify(
         _.importSource).setTo(None).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Stated).modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Region)).modify(_.periodStart).setTo(Some(Year(-1650L))).modify(_.periodEnd).setTo(Some(Year(-1180L))).modify(_.source).setTo(Some(Place.Summary.Source("Pleiades (pleiades.stoa.org), CC-BY"))
       ),
-      hasBoundary = true,
+      hasBoundary = Place.Entry.HasBoundary(true),
       links = Nil
     )
     val s = Preview.card(seed)

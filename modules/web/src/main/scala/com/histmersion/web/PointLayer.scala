@@ -56,7 +56,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       next.foreach { (k, a) =>
         live.get(k) match
           case None =>
-            val d = Dot(Dot.Key(k.value), this, a, dotSpan(span), kind.member(a))
+            val d = new Dot(Dot.Key(k.value), this, a, dotSpan(span), kind.member(a))
             live(k) = d
             fresh += d
           case Some(d) =>
@@ -91,7 +91,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
     if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value)
-    val m = DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
+    val m = new DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
     val z = kind.zIndex(a)
     if z.value != 0 then m.setZ(DomMarker.ZIndex(z.value))
     def current: A = d.item.asInstanceOf[A]

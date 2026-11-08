@@ -35,7 +35,7 @@ class PointKindsSuite extends munit.FunSuite:
     Some(com.histmersion.api.catalogue.Year(-1300L)),
     Some(com.histmersion.api.catalogue.Year(-1250L)),
     Some(Confidence.High),
-    sourceKind = Some(Source.Kinds.Paper)
+    sourceKind = Some(GeoHit.SourceKind(Source.Kinds.Paper))
   )
   private val site = SitePoint(
     Some(com.histmersion.web.SitePoint.Id("zz_fort")),

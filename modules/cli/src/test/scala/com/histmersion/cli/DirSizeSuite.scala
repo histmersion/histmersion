@@ -67,7 +67,7 @@ class DirSizeSuite extends munit.FunSuite:
 
   tmp.test("the entry cap stops the walk: partial, with a lower bound"): d =>
     (1 to 50).foreach(i => file(d.resolve(f"f$i%02d.bin"), 10))
-    val b = DirSize.Budget(DirSize.Budget.MaxEntries(10), DirSize.Budget.DeadlineNanos(Long.MaxValue))
+    val b = new DirSize.Budget(DirSize.Budget.MaxEntries(10), DirSize.Budget.DeadlineNanos(Long.MaxValue))
     val r = DirSize.measure(d, b)
     assert(r.partial.value, r)
     assert(r.bytes.value < 500L && r.files.value < 50L, r)
@@ -80,7 +80,7 @@ class DirSizeSuite extends munit.FunSuite:
     (1 to 20).foreach(i => file(d.resolve(s"f$i.bin"), 10))
     // a clock that passes the deadline after five reads
     var t = 0L
-    val b = DirSize.Budget(DirSize.Budget.MaxEntries(Long.MaxValue), DirSize.Budget.DeadlineNanos(5L), () => { t += 1; t })
+    val b = new DirSize.Budget(DirSize.Budget.MaxEntries(Long.MaxValue), DirSize.Budget.DeadlineNanos(5L), () => { t += 1; t })
     val r = DirSize.measure(d, b)
     assert(r.partial.value, r)
     assert(r.files.value < 20L, r)

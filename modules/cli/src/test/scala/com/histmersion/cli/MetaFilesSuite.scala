@@ -41,7 +41,7 @@ class MetaFilesSuite extends munit.FunSuite:
   test("writeMeta writes GOALS.md beside ACQUIRE.md, TASKS.md and LOG.md"):
     withServer { (url, _) =>
       val dir = tempDir().resolve("meta") // not there yet: created on the way
-      val got = Ops.writeMeta(Client(url), dir)
+      val got = Ops.writeMeta(new Client(url), dir)
       assertEquals(got, Right(List("ACQUIRE.md", "TASKS.md", "LOG.md", "GOALS.md")))
       assertEquals(Files.readString(dir.resolve("GOALS.md")), s"${GoalsExport.Header}\n\ngoals body\n")
       assertEquals(Files.readString(dir.resolve("TASKS.md")), "# tasks\n")
@@ -60,14 +60,14 @@ class MetaFilesSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try assert(Ops.writeMeta(Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft)
+    try assert(Ops.writeMeta(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft)
     finally srv.stop(0)
 
   test("readMeta imports the three queue files and never sends GOALS.md"):
     withServer { (url, seen) =>
       val dir = tempDir()
       List("ACQUIRE.md", "TASKS.md", "LOG.md", "GOALS.md").foreach(f => Files.writeString(dir.resolve(f), "- [ ] x\n"))
-      val got = Ops.readMeta(Client(url), dir, replace = com.histmersion.api.Api.Overwrite(true))
+      val got = Ops.readMeta(new Client(url), dir, replace = com.histmersion.api.Api.Overwrite(true))
       assert(got.isRight, got.toString)
       assertEquals(
         seen(),

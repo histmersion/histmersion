@@ -11,7 +11,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private def job(status: JobInfo.Status, error: Option[String] = None) =
+  private def job(status: JobInfo.Status, error: Option[JobInfo.Error] = None) =
     JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), kind = com.histmersion.api.jobs.JobKinds.Wire("ingest"), status = status, error = error)
 
   /** A fake server answering `answers` in order (the last one repeats). */
@@ -32,7 +32,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("a job that fails exits 2 with its error"):
     val r = JobFollow.job(
-      _ => Right(job(JobInfo.Status("failed"), Some("pdf is encrypted"))),
+      _ => Right(job(JobInfo.Status("failed"), Some(JobInfo.Error("pdf is encrypted")))),
       com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
       sleep = _ => (),
       progress = quiet,

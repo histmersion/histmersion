@@ -83,7 +83,7 @@ class ManagersViewSuite extends munit.FunSuite:
     val c = ManagerConfig(
       maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(3)),
       includeTags = Some(List(com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags("a"), com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags("b"))),
-      models = Some(List(com.histmersion.api.automation.Agents.ModelOverride("fixer", "claude-code:opus")))
+      models = Some(List(com.histmersion.api.automation.Agents.ModelOverride(com.histmersion.api.automation.AgentRole.Wire("fixer"), com.histmersion.api.automation.Agents.ModelOverride.Model("claude-code:opus"))))
     )
     assertEquals(ManagersView.config(ManagersView.fields(c)), Right(c))
     assertEquals(ManagersView.config(Map.empty), Right(ManagerConfig()))
@@ -335,4 +335,4 @@ class DrainLineSuite extends munit.FunSuite:
       ManagersView.drainLine(DrainInfo(com.histmersion.api.automation.Autopilot.DrainInfo.Since("2026-10-24T10:00:00Z"), com.histmersion.api.automation.Autopilot.DrainInfo.By("cli"), inFlight = com.histmersion.api.automation.Autopilot.DrainInfo.InFlight(2))),
       "Finishing current work, then pausing (since 2026-10-24T10:00:00Z, by cli): nothing new starts; 2 runs in flight still finishing"
     )
-    assert(ManagersView.drainLine(DrainInfo(com.histmersion.api.automation.Autopilot.DrainInfo.Since("t"), drained = com.histmersion.api.automation.Autopilot.DrainInfo.Drained(true), drainedAt = Some(com.histmersion.api.automation.Autopilot.DrainInfo.DrainedAt("t2")))).startsWith("Paused since t2"))
+    assert(ManagersView.drainLine(DrainInfo(com.histmersion.api.automation.Autopilot.DrainInfo.Since("t"), drained = com.histmersion.api.automation.Autopilot.DrainInfo.Drained(true), drainedAt = Some(com.histmersion.api.automation.Autopilot.DrainInfo.DrainedAt("t2")))).value.startsWith("Paused since t2"))

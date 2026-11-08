@@ -6,6 +6,7 @@ import com.histmersion.api.research.CritiqueReason
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.testsupport.ComparedByValue.given
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.

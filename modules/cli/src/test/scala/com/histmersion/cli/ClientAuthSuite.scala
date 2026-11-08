@@ -41,7 +41,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = Client(url, Some(key)).downloadBackup(com.histmersion.api.backup.Backup.Name("histmersion-20260101T000000Z.dump"), dest)
+        val got = new Client(url, Some(key)).downloadBackup(com.histmersion.api.backup.Backup.Name("histmersion-20260101T000000Z.dump"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "DUMP")
       finally dest.delete()
@@ -51,7 +51,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-original", ".bin").toFile
       try
-        val got = Client(url, Some(key)).original(com.histmersion.api.library.Citekey("zz_ck"), dest)
+        val got = new Client(url, Some(key)).original(com.histmersion.api.library.Citekey("zz_ck"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "%PDF")
       finally dest.delete()
@@ -61,7 +61,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = Client(url).downloadBackup(com.histmersion.api.backup.Backup.Name("x.dump"), dest)
+        val got = new Client(url).downloadBackup(com.histmersion.api.backup.Backup.Name("x.dump"), dest)
         assert(got.left.exists(_.message.value.contains("API key")), got.toString)
       finally dest.delete()
     }

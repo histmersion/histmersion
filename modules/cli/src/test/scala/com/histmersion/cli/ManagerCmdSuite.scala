@@ -72,7 +72,7 @@ class ManagerCmdSuite extends munit.FunSuite:
     assert(cmd.parse(List("autopilot"), Map.empty).isRight)
     val extra = cmd.parse(List("autopilot", "on", "x"), Map.empty).fold(h => fail(h.toString), identity)
     assert(
-      extra(Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.exitCode == ExitCode.Usage),
+      extra(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.exitCode == ExitCode.Usage),
       "on takes no further argument"
     )
 
@@ -107,7 +107,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       val f =
         cmd.parse(List("autopilot", "repair-acquire", "--dry-run"), Map.empty).fold(h => fail(h.toString), identity)
       val out = ByteArrayOutputStream()
-      val r = Console.withOut(out)(f(Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
+      val r = Console.withOut(out)(f(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
       assertEquals(r, Right(()))
       assert(
         seen.peek().startsWith("POST /api/agents/autopilot/repair-acquire") && seen.peek().contains("\"dryRun\":true"),
@@ -116,5 +116,5 @@ class ManagerCmdSuite extends munit.FunSuite:
       val text = out.toString(UTF_8)
       assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
       val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
-      assert(bad(Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire")))
+      assert(bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire")))
     finally srv.stop(0)

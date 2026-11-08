@@ -62,7 +62,7 @@ object NoteMarkers:
     val words = s"Your note: ${PersonalMarkdown.excerpt(n.text, com.histmersion.api.checks.FormatIssue.Excerpt.Length(80))}"
     el.setAttribute("aria-label", s"$words — show it")
     el.setAttribute("title", words)
-    val m = DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((com.histmersion.web.map.DomMarker.BoxSize(26), com.histmersion.web.map.DomMarker.BoxSize(26))))
+    val m = new DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((com.histmersion.web.map.DomMarker.BoxSize(26), com.histmersion.web.map.DomMarker.BoxSize(26))))
     m.handlers = new MarkerHandlers:
       override def click(e: dom.MouseEvent): Unit = { e.stopPropagation(); show(n) }
       override def key(e: dom.KeyboardEvent): Unit =

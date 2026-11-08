@@ -303,7 +303,7 @@ object MapLabels:
 
   private def areaMarker(s: LabelPlacement.Shape, label: com.histmersion.web.MapLabels.Label, wrapClass: com.histmersion.web.MapLabels.WrapClass): DomMarker =
     // hidden until the first pass has sized and placed it; it then fades and grows in
-    DomMarker(
+    new DomMarker(
       s.lat,
       s.lon,
       DomMarker.element(wrapClass.value, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>""")

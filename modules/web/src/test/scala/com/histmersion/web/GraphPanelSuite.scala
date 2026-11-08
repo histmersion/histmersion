@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.{GraphLink, GraphNode}
@@ -16,7 +17,7 @@ class GraphPanelSuite extends munit.FunSuite:
       GraphNode(com.histmersion.api.library.Citekey("b2021_y"), Some(com.histmersion.api.library.Title("B")), Some(com.histmersion.api.catalogue.Year(2021)), Some(Source.Status.Contested), com.histmersion.api.library.GraphNode.Depth(1)),
       GraphNode(com.histmersion.api.library.Citekey("c2019_z"), Some(com.histmersion.api.library.Title("C")), None, None, com.histmersion.api.library.GraphNode.Depth(1))
     ),
-    List(GraphLink(com.histmersion.api.library.Citekey("a2020_x"), com.histmersion.api.library.Citekey("b2021_y"), com.histmersion.api.library.Edge.Kind("references")), GraphLink(com.histmersion.api.library.Citekey("c2019_z"), com.histmersion.api.library.Citekey("a2020_x"), com.histmersion.api.library.Edge.Kind("superseded_by")))
+    List(GraphLink(com.histmersion.api.library.Citekey("a2020_x"), com.histmersion.api.library.Citekey("b2021_y"), Edge.Kind.References), GraphLink(com.histmersion.api.library.Citekey("c2019_z"), com.histmersion.api.library.Citekey("a2020_x"), Edge.Kind.SupersededBy))
   )
 
   test("every link between the graph's nodes is drawn, as index pairs") {

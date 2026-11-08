@@ -38,7 +38,7 @@ class ModelsViewSuite extends munit.FunSuite:
     assertEquals(ModelsView.entryState(ChainEntry(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:a"), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false))), "is-paused")
     assertEquals(ModelsView.entryState(ChainEntry(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:a"), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(false), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false))), "is-unready")
     assertEquals(
-      ModelsView.limitsText(AllowanceStatus(com.histmersion.api.automation.ModelChains.AllowanceStatus.Target("local:a"), com.histmersion.api.automation.ModelChains.AllowanceStatus.Source("saved"), com.histmersion.api.automation.ModelChains.AllowanceStatus.ReservePct(0), List(l, l.modify(_.limit).setTo("5 usd/1d")), usable = com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true))),
+      ModelsView.limitsText(AllowanceStatus(com.histmersion.api.automation.ModelChains.AllowanceStatus.Target("local:a"), com.histmersion.api.automation.ModelChains.AllowanceStatus.Source("saved"), com.histmersion.api.automation.ModelChains.AllowanceStatus.ReservePct(0), List(l, l.modify(_.limit).setTo(com.histmersion.api.automation.ModelChains.LimitStatus.Limit("5 usd/1d"))), usable = com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true))),
       "1k tokens/1h, 5 usd/1d"
     )
 
