@@ -70,30 +70,23 @@ object SettingError:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object CredentialInFile:
-    type EnvVar = com.histmersion.config.edit.SettingField.EnvVar
-    val EnvVar: _root_.com.histmersion.config.edit.SettingField.EnvVar.type = _root_.com.histmersion.config.edit.SettingField.EnvVar
+    export com.histmersion.config.edit.SettingField.EnvVar
 
   object NotAReference:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
+    export com.histmersion.config.edit.SettingError.{Problem as Why}
 
   object FromInclude:
-    type File = com.histmersion.config.edit.SettingsFile.Path
-    val File: _root_.com.histmersion.config.edit.SettingsFile.Path.type = _root_.com.histmersion.config.edit.SettingsFile.Path
+    export com.histmersion.config.edit.SettingsFile.{Path as File}
 
   object Unreadable:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
+    export com.histmersion.config.edit.SettingError.{Problem as Why}
 
   object Invalid:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
+    export com.histmersion.config.edit.SettingError.{Problem as Why}
 
   object NoFile:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
+    export com.histmersion.config.edit.SettingError.{Problem as Why}
 
   object Io:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
+    export com.histmersion.config.edit.SettingError.{Problem as Why}
 
