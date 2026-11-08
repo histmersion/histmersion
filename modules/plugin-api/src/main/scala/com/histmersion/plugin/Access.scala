@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 /** On what terms a fetcher obtains its copy. The host decides from this alone whether it may run. */
 enum Access:

@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A search of a [[SourceCollection]].
   *
@@ -12,6 +16,6 @@ final case class CollectionQuery(text: Option[CollectionQuery.Text], limit: Opti
 
 object CollectionQuery:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]

@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One linked item that disagrees with the host's record, judged against the record it matches best (an item shared by
   * a chapter and its volume is fine when it matches either).
@@ -27,6 +31,6 @@ final case class CollectionFinding(
 
 object CollectionFinding:
   type Keys = Keys.T
-  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Keys extends RefinedType[String, Pure]
   type Fixable = Fixable.T
-  object Fixable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fixable extends RefinedType[Boolean, Pure]

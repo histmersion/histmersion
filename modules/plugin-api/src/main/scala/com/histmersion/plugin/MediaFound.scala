@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a collection with its own targets' pictures ([[MediaMatchRule.Own]]) found for a batch of targets.
   *
@@ -22,7 +26,7 @@ final case class MediaFound(
     uses: List[MediaUse],
     asked: List[MediaTarget.Id],
     unanswered: Set[MediaTarget.Id] = Set.empty,
-    read: MediaFound.Read = _root_.com.histmersion.plugin.MediaFound.Read(0),
+    read: MediaFound.Read = MediaFound.Read(0),
     failed: List[MediaFound.Failed] = Nil,
     notTaken: List[MediaFound.NotTaken] = Nil,
     categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)] = Nil
@@ -30,12 +34,12 @@ final case class MediaFound(
 
 object MediaFound:
   type Read = Read.T
-  object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Read extends RefinedType[Int, Pure]
   type Failed = Failed.T
-  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Failed extends RefinedType[String, Pure]
   type NotTaken = NotTaken.T
-  object NotTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotTaken extends RefinedType[String, Pure]
   type CategoriesPart1 = CategoriesPart1.T
-  object CategoriesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CategoriesPart1 extends RefinedType[String, Pure]
   type CategoriesPart2 = CategoriesPart2.T
-  object CategoriesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CategoriesPart2 extends RefinedType[String, Pure]

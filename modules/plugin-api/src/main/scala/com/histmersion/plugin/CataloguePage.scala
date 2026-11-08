@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one part of an import answered: its records, and the part to read after it when the catalogue pages its answers
   * (`next`), which the host reads in turn.
@@ -7,4 +11,4 @@ final case class CataloguePage(events: List[CatalogueEvent], next: Option[Catalo
 
 object CataloguePage:
   type Next = Next.T
-  object Next extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Next extends RefinedType[String, Pure]

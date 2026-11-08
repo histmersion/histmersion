@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure

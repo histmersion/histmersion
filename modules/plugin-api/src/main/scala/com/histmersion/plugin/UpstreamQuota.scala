@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A metered upstream's budget, kept by the host for the whole server — across plugin generations, config reloads and
   * restarts — and shared with the host's own calls to the same upstream. A plugin asks [[Plugin.Context.quota]] for it
@@ -21,31 +25,31 @@ trait UpstreamQuota:
     * when the budget paces calls. `Left` says why the call is not made now — the upstream asked to wait, the day's
     * budget is spent, the slot is too far — and nothing is counted then.
     */
-  def take(purpose: com.histmersion.plugin.UpstreamQuota.TakePurpose): Either[com.histmersion.plugin.UpstreamQuota.TakeResultPart1, Unit]
+  def take(purpose: UpstreamQuota.TakePurpose): Either[UpstreamQuota.TakeResultPart1, Unit]
 
   /** What the upstream answered the call taken last: its status and headers (names in lower case). */
-  def observe(status: com.histmersion.plugin.UpstreamQuota.ObserveStatus, headers: Map[com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart1, com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart2]): Unit
+  def observe(status: UpstreamQuota.ObserveStatus, headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]): Unit
 
   /** The time the upstream asked not to be called before, as the budget keeps it (ISO-8601, `2026-10-26T18:52:11Z`),
     * once an answer asked to wait; `None` while it may be called.
     */
-  def waitingUntil: Option[com.histmersion.plugin.UpstreamQuota.WaitingUntilResult] = None
+  def waitingUntil: Option[UpstreamQuota.WaitingUntilResult] = None
 
 object UpstreamQuota:
   /** No limit: every call may go, nothing is kept. What a host without a budget for the upstream lends. */
   type TakeResultPart1 = TakeResultPart1.T
-  object TakeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TakeResultPart1 extends RefinedType[String, Pure]
   type TakePurpose = TakePurpose.T
-  object TakePurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveStatus = _root_.com.histmersion.plugin.Plugin.HttpResponse.Status
-  val ObserveStatus: _root_.com.histmersion.plugin.Plugin.HttpResponse.Status.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.Status
-  type ObserveHeadersPart1 = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey
-  val ObserveHeadersPart1: _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey
-  type ObserveHeadersPart2 = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
-  val ObserveHeadersPart2: _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
+  object TakePurpose extends RefinedType[String, Pure]
+  type ObserveStatus = Plugin.HttpResponse.Status
+  val ObserveStatus: Plugin.HttpResponse.Status.type = Plugin.HttpResponse.Status
+  type ObserveHeadersPart1 = Plugin.HttpResponse.HeadersKey
+  val ObserveHeadersPart1: Plugin.HttpResponse.HeadersKey.type = Plugin.HttpResponse.HeadersKey
+  type ObserveHeadersPart2 = Plugin.HttpResponse.HeadersValue
+  val ObserveHeadersPart2: Plugin.HttpResponse.HeadersValue.type = Plugin.HttpResponse.HeadersValue
   type WaitingUntilResult = WaitingUntilResult.T
-  object WaitingUntilResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WaitingUntilResult extends RefinedType[String, Pure]
 
   val Unlimited: UpstreamQuota = new UpstreamQuota:
-    def take(purpose: com.histmersion.plugin.UpstreamQuota.TakePurpose): Either[com.histmersion.plugin.UpstreamQuota.TakeResultPart1, Unit] = Right(())
-    def observe(status: com.histmersion.plugin.UpstreamQuota.ObserveStatus, headers: Map[com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart1, com.histmersion.plugin.UpstreamQuota.ObserveHeadersPart2]): Unit = ()
+    def take(purpose: TakePurpose): Either[TakeResultPart1, Unit] = Right(())
+    def observe(status: ObserveStatus, headers: Map[ObserveHeadersPart1, ObserveHeadersPart2]): Unit = ()

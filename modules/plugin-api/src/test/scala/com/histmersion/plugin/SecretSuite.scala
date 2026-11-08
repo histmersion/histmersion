@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
@@ -9,56 +10,56 @@ final case class WithSecrets(token: Secret, password: Option[Secret], retries: I
 
 final class ExamplePlugin extends Plugin:
   type Config = WithSecrets
-  val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("example"), _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
+  val info = Plugin.Info(Plugin.Info.Id("example"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
   def register(config: WithSecrets, ctx: Plugin.Context) = Right(())
 
 class SecretSuite extends munit.FunSuite:
 
   test("the three reference forms parse"):
-    assertEquals(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("value:hunter2")), Right(Secret.Ref.Value(_root_.com.histmersion.plugin.Secret.Ref.Value.Literal("hunter2"))))
-    assertEquals(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:PORTAL_TOKEN")), Right(Secret.Ref.Env(_root_.com.histmersion.plugin.Secret.Ref.Env.Name("PORTAL_TOKEN"))))
+    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("value:hunter2")), Right(Secret.Ref.Value(Secret.Ref.Value.Literal("hunter2"))))
+    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")), Right(Secret.Ref.Env(Secret.Ref.Env.Name("PORTAL_TOKEN"))))
     assertEquals(
-      Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText(" keepassxc:Histmersion/Portal#password ")),
-      Right(Secret.Ref.Vault(_root_.com.histmersion.plugin.Secret.Ref.Vault.Value("keepassxc"), _root_.com.histmersion.plugin.Secret.Ref.Vault.Ref("Histmersion/Portal#password")))
+      Secret.Ref.parse(Secret.Ref.ParseText(" keepassxc:Histmersion/Portal#password ")),
+      Right(Secret.Ref.Vault(Secret.Ref.Vault.Value("keepassxc"), Secret.Ref.Vault.Ref("Histmersion/Portal#password")))
     )
     assertEquals(
-      Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("1password:op://Private/Portal/password")),
-      Right(Secret.Ref.Vault(_root_.com.histmersion.plugin.Secret.Ref.Vault.Value("1password"), _root_.com.histmersion.plugin.Secret.Ref.Vault.Ref("op://Private/Portal/password")))
+      Secret.Ref.parse(Secret.Ref.ParseText("1password:op://Private/Portal/password")),
+      Right(Secret.Ref.Vault(Secret.Ref.Vault.Value("1password"), Secret.Ref.Vault.Ref("op://Private/Portal/password")))
     )
     // a literal keeps its colons and its spaces inside
-    assertEquals(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("value:a:b c")), Right(Secret.Ref.Value(_root_.com.histmersion.plugin.Secret.Ref.Value.Literal("a:b c"))))
+    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("value:a:b c")), Right(Secret.Ref.Value(Secret.Ref.Value.Literal("a:b c"))))
 
   test("a bare value, an empty part or a bad name is refused, and the error never echoes a value"):
-    val bare = Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("hunter2"))
+    val bare = Secret.Ref.parse(Secret.Ref.ParseText("hunter2"))
     assert(bare.left.exists((_).value.contains("not a bare value")), bare)
     assert(!bare.left.exists((_).value.contains("hunter2")))
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("value:")).isLeft)
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:")).isLeft)
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:NOT-A-NAME")).isLeft)
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("keepassxc:")).isLeft)
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("Vault:x")).left.exists((_).value.contains("not a vault name")))
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText(":x")).isLeft)
-    assert(Secret.Ref.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText(null)).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("value:")).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("env:")).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("env:NOT-A-NAME")).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("keepassxc:")).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("Vault:x")).left.exists((_).value.contains("not a vault name")))
+    assert(Secret.Ref.parse(Secret.Ref.ParseText(":x")).isLeft)
+    assert(Secret.Ref.parse(Secret.Ref.ParseText(null)).isLeft)
 
   test("toString shows the reference, never a literal value"):
-    assertEquals(Secret.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:PORTAL_TOKEN")).map(_.toString), Right("Secret(env:PORTAL_TOKEN)"))
-    assertEquals(Secret.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("bitwarden:abc#password")).map(_.toString), Right("Secret(bitwarden:abc#password)"))
-    val literal = Secret.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("value:hunter2")).toOption.get
+    assertEquals(Secret.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")).map(_.toString), Right("Secret(env:PORTAL_TOKEN)"))
+    assertEquals(Secret.parse(Secret.Ref.ParseText("bitwarden:abc#password")).map(_.toString), Right("Secret(bitwarden:abc#password)"))
+    val literal = Secret.parse(Secret.Ref.ParseText("value:hunter2")).toOption.get
     assertEquals(literal.toString, "Secret(value:***)")
     assert(!s"$literal ${Some(literal)} ${List(literal)}".contains("hunter2"))
-    assertEquals(Secret.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:A")), Secret.parse(_root_.com.histmersion.plugin.Secret.Ref.ParseText("env:A")))
+    assertEquals(Secret.parse(Secret.Ref.ParseText("env:A")), Secret.parse(Secret.Ref.ParseText("env:A")))
 
   test("the reader parses references inside a derived config; numbers and booleans may be strings"):
     val c =
       ConfigFactory.parseString("token = \"env:PORTAL_TOKEN\"\npassword = null\nretries = \"3\"\nverbose = \"true\"")
     assertEquals(
       ConfigReader[WithSecrets].from(c.root),
-      Right(WithSecrets(Secret(Secret.Ref.Env(_root_.com.histmersion.plugin.Secret.Ref.Env.Name("PORTAL_TOKEN"))), None, 3, true))
+      Right(WithSecrets(Secret(Secret.Ref.Env(Secret.Ref.Env.Name("PORTAL_TOKEN"))), None, 3, true))
     )
     val withPw = c.withValue("password", org.ekrich.config.ConfigValueFactory.fromAnyRef("keepassxc:a#b"))
     assertEquals(
       ConfigReader[WithSecrets].from(withPw.root).map(_.password),
-      Right(Some(Secret(Secret.Ref.Vault(_root_.com.histmersion.plugin.Secret.Ref.Vault.Value("keepassxc"), _root_.com.histmersion.plugin.Secret.Ref.Vault.Ref("a#b")))))
+      Right(Some(Secret(Secret.Ref.Vault(Secret.Ref.Vault.Value("keepassxc"), Secret.Ref.Vault.Ref("a#b")))))
     )
 
   test("a bare string where a secret belongs is a decoding error that does not repeat the value"):

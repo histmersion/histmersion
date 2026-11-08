@@ -1,6 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The values the SPI exchanges about works, places, events and pictures, each a type that says what it means. They are
   * Iron newtypes: opaque, so at run time a `Year` is an `Int` and a `Doi` a `String`.
@@ -17,20 +19,20 @@ import io.github.iltotore.iron.*
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
 final case class Period private (start: Year, end: Year):
-  def isPoint: com.histmersion.plugin.Period.IsPointResult = _root_.com.histmersion.plugin.Period.IsPointResult(start.value == end.value)
+  def isPoint: Period.IsPointResult = Period.IsPointResult(start.value == end.value)
 
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
   type IsPointResult = IsPointResult.T
-  object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsPointResult extends RefinedType[Boolean, Pure]
   type FromResultPart1 = FromResultPart1.T
-  object FromResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FromResultPart1 extends RefinedType[String, Pure]
 
-  def from(start: Year, end: Year): Either[com.histmersion.plugin.Period.FromResultPart1, Period] =
+  def from(start: Year, end: Year): Either[FromResultPart1, Period] =
     Either.cond(
       start.value <= end.value,
       new Period(start, end),
-      _root_.com.histmersion.plugin.Period.FromResultPart1(s"the period ends (${end.value}) before it starts (${start.value})")
+      FromResultPart1(s"the period ends (${end.value}) before it starts (${start.value})")
     )
 
   /** The period of one year. */

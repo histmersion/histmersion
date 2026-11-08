@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place on the map the host asks a collection about.
   *
@@ -35,27 +39,27 @@ final case class MediaPlace(
       lat: Option[Latitude],
       lon: Option[Longitude],
       period: Option[Period]
-  ) = this(_root_.com.histmersion.plugin.MediaPlace.Id(id), _root_.com.histmersion.plugin.MediaPlace.Label(label), wikidata, lat, lon, period, Nil)
+  ) = this(MediaPlace.Id(id), MediaPlace.Label(label), wikidata, lat, lon, period, Nil)
 
 object MediaPlace:
   /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
-  type ApplyId = _root_.com.histmersion.plugin.MediaPlace.Id
-  val ApplyId: _root_.com.histmersion.plugin.MediaPlace.Id.type = _root_.com.histmersion.plugin.MediaPlace.Id
-  type ApplyLabel = _root_.com.histmersion.plugin.MediaPlace.Label
-  val ApplyLabel: _root_.com.histmersion.plugin.MediaPlace.Label.type = _root_.com.histmersion.plugin.MediaPlace.Label
+  type ApplyId = Id
+  val ApplyId: Id.type = Id
+  type ApplyLabel = Label
+  val ApplyLabel: Label.type = Label
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdsPart1 extends RefinedType[String, Pure]
   type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdsPart2 extends RefinedType[String, Pure]
 
   def apply(
-      id: com.histmersion.plugin.MediaPlace.ApplyId,
-      label: com.histmersion.plugin.MediaPlace.ApplyLabel,
+      id: ApplyId,
+      label: ApplyLabel,
       wikidata: Option[WikidataId],
       lat: Option[Latitude],
       lon: Option[Longitude],

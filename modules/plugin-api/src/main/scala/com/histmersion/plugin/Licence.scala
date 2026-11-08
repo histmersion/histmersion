@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -23,18 +24,18 @@ object Licence extends RefinedType[String, Pure]:
     * @param needsAttribution
     *   whether the licence requires the author to be named (every CC BY variant and the GFDL)
     */
-  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = _root_.com.histmersion.plugin.Licence.Read.NeedsAttribution(false))
+  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = Read.NeedsAttribution(false))
 
   object Read:
     type UnknownStatement = UnknownStatement.T
-    object UnknownStatement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UnknownStatement extends RefinedType[String, Pure]
 
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Family = Family.T
-    object Family extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Family extends RefinedType[String, Pure]
     type NeedsAttribution = NeedsAttribution.T
-    object NeedsAttribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NeedsAttribution extends RefinedType[Boolean, Pure]
 
     val Cc0 = "cc0"
     val PublicDomain = "public-domain"
@@ -42,4 +43,4 @@ object Licence extends RefinedType[String, Pure]:
     val Unknown = "unknown"
 
     /** A statement nothing reads. */
-    def unknown(statement: com.histmersion.plugin.Licence.Read.UnknownStatement): Read = Read(_root_.com.histmersion.plugin.Licence.Read.Id((statement).value), _root_.com.histmersion.plugin.Licence.Read.Family(Unknown))
+    def unknown(statement: UnknownStatement): Read = Read(Id((statement).value), Family(Unknown))

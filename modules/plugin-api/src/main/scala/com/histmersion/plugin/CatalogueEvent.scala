@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One event as a catalogue describes it. Its dating is a four-point span (years, inclusive): the start lies in
   * `[notBefore, beginBy]`, the end in `[endFrom, notAfter]`; an uncertainty widens the outer bounds and never invents a
@@ -49,7 +53,7 @@ final case class CatalogueEvent(
     endFrom: Option[Year] = None,
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
-    historicity: CatalogueEvent.Historicity = _root_.com.histmersion.plugin.CatalogueEvent.Historicity("attested"),
+    historicity: CatalogueEvent.Historicity = CatalogueEvent.Historicity("attested"),
     vei: Option[CatalogueEvent.Vei] = None,
     magnitude: Option[CatalogueEvent.Magnitude] = None,
     deaths: Option[CatalogueEvent.Deaths] = None,
@@ -65,30 +69,30 @@ final case class CatalogueEvent(
 
 object CatalogueEvent:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Historicity extends RefinedType[String, Pure]
   type Vei = Vei.T
-  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Vei extends RefinedType[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Magnitude extends RefinedType[Double, Pure]
   type Deaths = Deaths.T
-  object Deaths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Deaths extends RefinedType[Long, Pure]
   type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Names extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Group = Group.T
-  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Group extends RefinedType[String, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlusMinus extends RefinedType[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatingMethod extends RefinedType[String, Pure]
   type Raw = Raw.T
-  object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Raw extends RefinedType[String, Pure]

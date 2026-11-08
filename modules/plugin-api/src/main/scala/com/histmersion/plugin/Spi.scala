@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import scala.compiletime.deferred
 

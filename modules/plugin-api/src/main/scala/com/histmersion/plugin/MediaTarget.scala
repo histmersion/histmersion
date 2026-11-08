@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a collection asks about ([[MediaCollection.asks]]): the places on the map, the events with a Wikidata item, or
   * both.
@@ -13,4 +17,4 @@ object MediaTarget:
 
   object Id:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]

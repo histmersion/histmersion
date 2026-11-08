@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 /** Source fetching, the first extension point that moves part of the app into plugins. A plugin adds one or more
   * [[SourceFetcher]]s to [[Plugin.Context.sourceFetchers]]; the host runs them as ONE chain, in the configured order,

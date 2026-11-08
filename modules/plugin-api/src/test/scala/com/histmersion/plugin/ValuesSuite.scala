@@ -1,4 +1,5 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 /** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value read from a
   * provider; and the SPI generation compiled into the plugin.
@@ -13,7 +14,7 @@ class ValuesSuite extends munit.FunSuite:
     val p = Period.from(Year(-1700), Year(-1600)).toOption.get
     assertEquals(({ val refactorTuple = (p.start.value, p.end.value, p.isPoint); (refactorTuple._1, refactorTuple._2, (refactorTuple._3).value) }: (Int, Int, Boolean)), (-1700, -1600, false))
     assert((Period.point(Year(-1600)).isPoint).value)
-    assertEquals(((Period.from(Year(-1600), Year(-1700))).left.map(refactorError => (refactorError).value): Either[String, com.histmersion.plugin.Period]), Left("the period ends (-1700) before it starts (-1600)"))
+    assertEquals(((Period.from(Year(-1600), Year(-1700))).left.map(refactorError => (refactorError).value): Either[String, Period]), Left("the period ends (-1700) before it starts (-1600)"))
 
   test("coordinates are on the globe"):
     assertEquals((Latitude(36.4).value, Longitude(-25.4).value), (36.4, -25.4))

@@ -1,20 +1,23 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigFactory, ConfigValueFactory}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object PluginConfigSuite:
   final case class Settings(title: Settings.Title, retries: Settings.Retries, enabled: Settings.Enabled, weight: Settings.Weight, aliases: List[Settings.Title], delay: Option[Settings.Retries]) derives ConfigReader
   object Settings:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Retries = Retries.T
-    object Retries extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retries extends RefinedType[Int, Pure]
     type Enabled = Enabled.T
-    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Enabled extends RefinedType[Boolean, Pure]
     type Weight = Weight.T
-    object Weight extends _root_.io.github.iltotore.iron.RefinedType[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Weight extends RefinedType[Double, Pure]
 
 class PluginConfigSuite extends munit.FunSuite:
   import PluginConfigSuite.Settings

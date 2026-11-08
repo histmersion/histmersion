@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Gazetteer sources, a part of the app that plugins extend: a dataset of historical places — polity outlines, a
   * classical atlas's regions, named periods — that `histmersion places fetch <id>` (and `init.fetch-sources`) imports
@@ -15,10 +19,10 @@ package com.histmersion.plugin
   */
 trait GazetteerSource:
   /** What to call it: "Seshat Cliopatria polity polygons". */
-  def title: com.histmersion.plugin.GazetteerSource.TitleResult
+  def title: GazetteerSource.TitleResult
 
   /** One sentence: what it brings and on what terms. */
-  def description: com.histmersion.plugin.GazetteerSource.DescriptionResult = _root_.com.histmersion.plugin.GazetteerSource.DescriptionResult("")
+  def description: GazetteerSource.DescriptionResult = GazetteerSource.DescriptionResult("")
 
   /** The dataset's licence and credit, as its provider states them. The credit is the provenance line stored with each
     * place that does not state its own ([[GazetteerPlace.source]]).
@@ -29,12 +33,12 @@ trait GazetteerSource:
     * relation finds it). `http` is the host's client for gazetteer downloads (its User-Agent and timeouts); a dataset
     * is one large download, so [[Plugin.Http.fetch]] (one request, the answer's status as it came) suits it best.
     */
-  def fetch(http: Plugin.Http): Either[com.histmersion.plugin.GazetteerSource.FetchResultPart1, List[GazetteerPlace]]
+  def fetch(http: Plugin.Http): Either[GazetteerSource.FetchResultPart1, List[GazetteerPlace]]
 
 object GazetteerSource:
   type TitleResult = TitleResult.T
-  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleResult extends RefinedType[String, Pure]
   type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DescriptionResult extends RefinedType[String, Pure]
   type FetchResultPart1 = FetchResultPart1.T
-  object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FetchResultPart1 extends RefinedType[String, Pure]

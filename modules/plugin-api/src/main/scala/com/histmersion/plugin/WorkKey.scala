@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Every identifier the caller has for one work. A fetcher reads the ones it understands and answers [[Fetch.Miss]]
   * when none fits.
@@ -37,25 +41,25 @@ final case class WorkKey(
     format: Option[WorkKey.Format] = None
 ):
   /** No identifier at all (title, authors, year and format alone identify nothing to fetch). */
-  def isEmpty: com.histmersion.plugin.WorkKey.IsEmptyResult = _root_.com.histmersion.plugin.WorkKey.IsEmptyResult(List(doi, arxiv, pmid, pmcid, archive, isbn).forall(_.isEmpty))
+  def isEmpty: WorkKey.IsEmptyResult = WorkKey.IsEmptyResult(List(doi, arxiv, pmid, pmcid, archive, isbn).forall(_.isEmpty))
 
 object WorkKey:
   type IsEmptyResult = IsEmptyResult.T
-  object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsEmptyResult extends RefinedType[Boolean, Pure]
 
   type Arxiv = Arxiv.T
-  object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Arxiv extends RefinedType[String, Pure]
   type Pmid = Pmid.T
-  object Pmid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pmid extends RefinedType[String, Pure]
   type Pmcid = Pmcid.T
-  object Pmcid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pmcid extends RefinedType[String, Pure]
   type Archive = Archive.T
-  object Archive extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Archive extends RefinedType[String, Pure]
   type Isbn = Isbn.T
-  object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Isbn extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Authors extends RefinedType[String, Pure]
   type Format = Format.T
-  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Format extends RefinedType[String, Pure]
