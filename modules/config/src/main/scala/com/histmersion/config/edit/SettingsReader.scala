@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import com.histmersion.config.ConfigLayers
 import org.ekrich.config.{Config, ConfigObject, ConfigUtil}
@@ -62,7 +63,7 @@ object SettingsReader:
       .flatMap(ws => SettingKey.either(ws.mkString(".")).toOption)
       .distinct
 
-  private def leaves(o: ConfigObject, prefix: List[com.histmersion.config.edit.SettingKey.Segment]): List[List[com.histmersion.config.edit.SettingKey.Segment]] =
+  private def leaves(o: ConfigObject, prefix: List[SettingKey.Segment]): List[List[SettingKey.Segment]] =
     Try(o.keySet.asScala.toList.sorted).getOrElse(Nil).flatMap { k =>
       Option(o.get(k)) match
         case Some(child: ConfigObject) => leaves(child, prefix :+ SettingKey.Segment(k))

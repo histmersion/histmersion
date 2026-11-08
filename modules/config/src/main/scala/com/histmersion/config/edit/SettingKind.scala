@@ -1,6 +1,9 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.{ConfigValue, ConfigValueType}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
 enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe):
@@ -17,9 +20,9 @@ enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe)
 
 object SettingKind:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   type Describe = Describe.T
-  object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Describe extends RefinedType[String, Pure]
 
 
   def of(v: ConfigValue): SettingKind = v.valueType match
@@ -30,4 +33,4 @@ object SettingKind:
     case ConfigValueType.OBJECT  => Block
     case _                       => Any
 
-  def parse(s: com.histmersion.config.edit.SettingKind.Wire): Option[SettingKind] = values.find(_.wire.value == s.value.trim.toLowerCase)
+  def parse(s: Wire): Option[SettingKind] = values.find(_.wire.value == s.value.trim.toLowerCase)

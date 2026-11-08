@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import scala.annotation.tailrec
 import org.ekrich.config.{
@@ -20,6 +21,8 @@ import hearth.kindlings.sconfigderivation.ConfigDecodingError
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with the precedence
   * ENVIRONMENT > USER FILE > reference.conf.
@@ -72,9 +75,9 @@ private[config] object ConfigLayers:
 
   object Keys:
     type Settings = Settings.T
-    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Settings extends RefinedType[String, Pure]
     type Unknown = Unknown.T
-    object Unknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unknown extends RefinedType[String, Pure]
 
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's environment), not a fixed
     * set of settings: any key under one is known, and its value — any string, or null — is left to the reader.
@@ -93,12 +96,12 @@ private[config] object ConfigLayers:
   private def inOpenBlock(keys: List[SettingKey.Segment]): Boolean =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
-  def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
+  def check(user: Config, known: Config): Either[Problem, Keys] =
     @tailrec def loop(
         rest: List[(List[SettingKey.Segment], Boolean)],
-        settings: List[com.histmersion.config.ConfigLayers.Keys.Settings],
-        unknown: List[com.histmersion.config.ConfigLayers.Keys.Unknown]
-    ): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
+        settings: List[Keys.Settings],
+        unknown: List[Keys.Unknown]
+    ): Either[Problem, Keys] =
       rest match
         case Nil                                    => Right(Keys(settings, unknown))
         case (keys, _) :: tail if inOpenBlock(keys) => loop(tail, settings, unknown)
@@ -116,7 +119,7 @@ private[config] object ConfigLayers:
     * accept it (that is how env values arrive). Finer mismatches (a fraction for a whole number) are left to the
     * readers.
     */
-  def typeCheck(settings: List[com.histmersion.config.ConfigLayers.Keys.Settings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Unit] =
+  def typeCheck(settings: List[Keys.Settings], merged: Config, known: Config): Either[Problem, Unit] =
     settings.iterator
       .flatMap(path =>
         (Try(known.getValue(path.value)).toOption, Try(merged.getValue(path.value)).toOption) match
@@ -126,7 +129,7 @@ private[config] object ConfigLayers:
       .nextOption()
       .toLeft(())
 
-  private def mismatch(path: Keys.Settings, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.Problem] =
+  private def mismatch(path: Keys.Settings, k: ConfigValue, v: ConfigValue): Option[Problem] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
     def shown = v.render(ConfigRenderOptions.concise)
@@ -140,7 +143,7 @@ private[config] object ConfigLayers:
     Option.unless(ok)(Problem(s"'$path' must be $want, not $shown"))
 
   /** `file` as HOCON; `None` when there is no such file. */
-  def parse(file: Path): Either[com.histmersion.config.ConfigLayers.Problem, Option[Config]] =
+  def parse(file: Path): Either[Problem, Option[Config]] =
     if !Files.exists(file) then Right(None)
     else if !Files.isRegularFile(file) then Left(Problem(s"$file is not a file"))
     else
@@ -154,7 +157,7 @@ private[config] object ConfigLayers:
     )
 
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
-  def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.Problem =
+  def describe(err: ConfigDecodingError): Problem =
     err match
       case ConfigDecodingError.Multiple(errs) => Problem(errs.toList.map(describe).mkString("; "))
       case e                                  =>

@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =
   * `<data dir>/agents`) when the server starts if `generate`; `claudeMod` puts the quota-guard mod in the headless
@@ -12,10 +15,10 @@ final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: Age
 
 object AgentRuntimesConfig:
   type Dir = Dir.T
-  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dir extends RefinedType[String, Pure]
   type Generate = Generate.T
-  object Generate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Generate extends RefinedType[Boolean, Pure]
   type ClaudeMod = ClaudeMod.T
-  object ClaudeMod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClaudeMod extends RefinedType[Boolean, Pure]
   type InteractiveMod = InteractiveMod.T
-  object InteractiveMod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InteractiveMod extends RefinedType[Boolean, Pure]

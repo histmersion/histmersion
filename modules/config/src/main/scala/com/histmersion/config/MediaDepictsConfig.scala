@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Pictures that depict an event (`media.depicts`): Commons files whose structured data says `P180 depicts` the event's
   * item, and the images of the works its item lists as `P1299 depicted by`.
@@ -11,10 +14,10 @@ final case class MediaDepictsConfig(perEvent: MediaDepictsConfig.PerEvent, searc
 
 object MediaDepictsConfig:
   type PerEvent = PerEvent.T
-  object PerEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerEvent extends RefinedType[Int, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchLimit extends RefinedType[Int, Pure]
   type DepictedBy = DepictedBy.T
-  object DepictedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DepictedBy extends RefinedType[Boolean, Pure]
   type Licences = Licences.T
-  object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licences extends RefinedType[String, Pure]

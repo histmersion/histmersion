@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsLinksConfig(
     km: EventsLinksConfig.Km,
@@ -18,22 +21,22 @@ final case class EventsLinksConfig(
 
 object EventsLinksConfig:
   type Km = Km.T
-  object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Km extends RefinedType[Double, Pure]
   type Years = Years.T
-  object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Years extends RefinedType[Long, Pure]
   type NameWeight = NameWeight.T
-  object NameWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NameWeight extends RefinedType[Double, Pure]
   type FindingWeight = FindingWeight.T
-  object FindingWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingWeight extends RefinedType[Double, Pure]
   type MinScore = MinScore.T
-  object MinScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinScore extends RefinedType[Double, Pure]
   type MinNameChars = MinNameChars.T
-  object MinNameChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinNameChars extends RefinedType[Int, Pure]
   type MaxCandidates = MaxCandidates.T
-  object MaxCandidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxCandidates extends RefinedType[Int, Pure]
   type SourcesPerName = SourcesPerName.T
-  object SourcesPerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesPerName extends RefinedType[Int, Pure]
   type NearFindings = NearFindings.T
-  object NearFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NearFindings extends RefinedType[Int, Pure]
   type Batch = Batch.T
-  object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Batch extends RefinedType[Int, Pure]

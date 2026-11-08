@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by heading where the
   * source has a table of contents); the classify step sees the first `headChars`. `upstream` = check the record against
@@ -18,10 +21,10 @@ final case class AgentEnrichConfig(
 
 object AgentEnrichConfig:
   type WindowChars = WindowChars.T
-  object WindowChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WindowChars extends RefinedType[Int, Pure]
   type MaxWindows = MaxWindows.T
-  object MaxWindows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxWindows extends RefinedType[Int, Pure]
   type HeadChars = HeadChars.T
-  object HeadChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeadChars extends RefinedType[Int, Pure]
   type Upstream = Upstream.T
-  object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Upstream extends RefinedType[Boolean, Pure]

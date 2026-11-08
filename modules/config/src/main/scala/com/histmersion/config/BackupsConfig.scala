@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries are looked up on
   * PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are installed off PATH (homebrew's libpq
@@ -13,12 +16,12 @@ final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.P
 
 object BackupsConfig:
   type Dir = Dir.T
-  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dir extends RefinedType[String, Pure]
   type PgBinDir = PgBinDir.T
-  object PgBinDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PgBinDir extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type RequestWaitSeconds = RequestWaitSeconds.T
-  object RequestWaitSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestWaitSeconds extends RefinedType[Int, Pure]
   type Keep = Keep.T
-  object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Keep extends RefinedType[Int, Pure]

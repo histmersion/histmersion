@@ -1,6 +1,9 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.Config
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a write did to the config file.
   *
@@ -36,9 +39,9 @@ object WriteOutcome:
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
   type Backup = Backup.T
-  object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Backup extends RefinedType[String, Pure]
   type Created = Created.T
-  object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Created extends RefinedType[Boolean, Pure]
 
   def of(
       file: SettingsFile.Shown,
@@ -46,9 +49,9 @@ object WriteOutcome:
       env: Config,
       version: FileVersion,
       edited: EditedText,
-      backup: Option[WriteOutcome.Backup],
+      backup: Option[Backup],
       notes: List[SettingPolicy.Note],
-      created: WriteOutcome.Created = WriteOutcome.Created(false)
+      created: Created = Created(false)
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)
     val shadowed = fields.flatMap(f =>

@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsLeadsConfig(
     km: EventsLeadsConfig.Km,
@@ -14,14 +17,14 @@ final case class EventsLeadsConfig(
 
 object EventsLeadsConfig:
   type Km = Km.T
-  object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Km extends RefinedType[Double, Pure]
   type Years = Years.T
-  object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Years extends RefinedType[Long, Pure]
   type ArticleKm = ArticleKm.T
-  object ArticleKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticleKm extends RefinedType[Double, Pure]
   type LargeVei = LargeVei.T
-  object LargeVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LargeVei extends RefinedType[Int, Pure]
   type LargeMagnitude = LargeMagnitude.T
-  object LargeMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LargeMagnitude extends RefinedType[Double, Pure]
   type ArticleLimit = ArticleLimit.T
-  object ArticleLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticleLimit extends RefinedType[Int, Pure]

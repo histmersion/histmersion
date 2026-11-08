@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and every manager's
   * cron fires from the managers' tick (docs/research-process-managers.md, "As built (phase 3)"); the scheduler thread
@@ -48,41 +51,41 @@ object AgentSchedulerConfig:
     * plans and sweeps next, extensions, filters and currency checks last — never 0.
     */
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T
-  object MinIntervalMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinIntervalMinutes extends RefinedType[Int, Pure]
   type CurrencySources = CurrencySources.T
-  object CurrencySources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CurrencySources extends RefinedType[Int, Pure]
   type FollowupsPerSource = FollowupsPerSource.T
-  object FollowupsPerSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FollowupsPerSource extends RefinedType[Int, Pure]
   type DiscoverPerQuery = DiscoverPerQuery.T
-  object DiscoverPerQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DiscoverPerQuery extends RefinedType[Int, Pure]
   type SweepCandidates = SweepCandidates.T
-  object SweepCandidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SweepCandidates extends RefinedType[Int, Pure]
   type Strategy = Strategy.T
-  object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Strategy extends RefinedType[String, Pure]
   type AgingHours = AgingHours.T
-  object AgingHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AgingHours extends RefinedType[Int, Pure]
   type MaxWaitHours = MaxWaitHours.T
-  object MaxWaitHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxWaitHours extends RefinedType[Int, Pure]
   type MinShare = MinShare.T
-  object MinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinShare extends RefinedType[Double, Pure]
   type TypeWeights = TypeWeights.T
-  object TypeWeights extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TypeWeights extends RefinedType[String, Pure]
   type TypePriorities = TypePriorities.T
-  object TypePriorities extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TypePriorities extends RefinedType[String, Pure]
   type PoolOvercommit = PoolOvercommit.T
-  object PoolOvercommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolOvercommit extends RefinedType[Int, Pure]
   type GatheringSlots = GatheringSlots.T
-  object GatheringSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GatheringSlots extends RefinedType[Int, Pure]
   type ShareWindow = ShareWindow.T
-  object ShareWindow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShareWindow extends RefinedType[Int, Pure]
   type SeedGoalsPerTick = SeedGoalsPerTick.T
-  object SeedGoalsPerTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedGoalsPerTick extends RefinedType[Int, Pure]
   type SeedEveryHours = SeedEveryHours.T
-  object SeedEveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedEveryHours extends RefinedType[Int, Pure]
   type SeedIngestPerGoal = SeedIngestPerGoal.T
-  object SeedIngestPerGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedIngestPerGoal extends RefinedType[Int, Pure]
 
   val DefaultWeights: TypeWeights = TypeWeights("review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1")
 

@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Memory settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its next start;
   * nothing is written to its `postgresql.conf`). Each is a Postgres size (`"2GB"`, `"512MB"`), `"auto"` (sized from the
@@ -13,8 +16,8 @@ final case class PgTuning(sharedBuffers: PgTuning.SharedBuffers, effectiveCacheS
 
 object PgTuning:
   type SharedBuffers = SharedBuffers.T
-  object SharedBuffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SharedBuffers extends RefinedType[String, Pure]
   type EffectiveCacheSize = EffectiveCacheSize.T
-  object EffectiveCacheSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EffectiveCacheSize extends RefinedType[String, Pure]
   type WorkMem = WorkMem.T
-  object WorkMem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WorkMem extends RefinedType[String, Pure]

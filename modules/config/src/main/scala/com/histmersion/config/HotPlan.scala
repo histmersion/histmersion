@@ -1,4 +1,8 @@
-package com.histmersion.config
+package com.histmersion
+package config
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
   * them (every node that depends on one, transitively), and in which order. The server's `hot.HotGraph` builds and
@@ -6,12 +10,12 @@ package com.histmersion.config
   */
 object HotPlan:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).
     */
-  def keyMatches(changed: com.histmersion.config.ConfigReload.ChangedKey, key: com.histmersion.config.ConfigReload.Key): Boolean =
+  def keyMatches(changed: ConfigReload.ChangedKey, key: ConfigReload.Key): Boolean =
     changed.value == key.value || changed.value.startsWith(key.value + ".") || key.value.startsWith(changed.value + ".")
 
   private def depNames(n: HotNode): List[HotNode.Name] = n.deps.map(d => HotNode.Name(d.value))
@@ -21,7 +25,7 @@ object HotPlan:
   /** The nodes in an order where every node comes after the nodes it depends on (declaration order among independent
     * ones). Refused: a name used twice, a dependency on no node, a cycle (named).
     */
-  def order(nodes: List[HotNode]): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
+  def order(nodes: List[HotNode]): Either[Problem, List[HotNode.Name]] =
     val names = nodes.map(_.name)
     val dup = names.diff(names.distinct).distinct
     val known = names.toSet
@@ -32,7 +36,7 @@ object HotPlan:
       val byName = nodes.map(n => n.name -> n).toMap
       // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
       @annotation.tailrec
-      def go(left: List[HotNode], done: Vector[com.histmersion.config.HotNode.Name]): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
+      def go(left: List[HotNode], done: Vector[HotNode.Name]): Either[Problem, List[HotNode.Name]] =
         if left.isEmpty then Right(done.toList)
         else
           val doneSet = done.toSet
@@ -42,10 +46,10 @@ object HotPlan:
       go(nodes, Vector.empty)
 
   /** One cycle among `left` (every node of which waits on another of them), as a closed path. */
-  private def cycle(left: List[HotNode], byName: Map[com.histmersion.config.HotNode.Name, HotNode]): List[com.histmersion.config.HotNode.Name] =
+  private def cycle(left: List[HotNode], byName: Map[HotNode.Name, HotNode]): List[HotNode.Name] =
     val waiting = left.map(_.name).toSet
     @annotation.tailrec
-    def walk(at: com.histmersion.config.HotNode.Name, path: Vector[com.histmersion.config.HotNode.Name]): List[com.histmersion.config.HotNode.Name] =
+    def walk(at: HotNode.Name, path: Vector[HotNode.Name]): List[HotNode.Name] =
       val i = path.indexOf(at)
       if i >= 0 then (path.drop(i) :+ at).toList
       else
@@ -55,13 +59,13 @@ object HotPlan:
     walk(left.head.name, Vector.empty)
 
   /** The nodes a set of changed keys concerns directly. */
-  def touched(nodes: List[HotNode], changed: Iterable[com.histmersion.config.ConfigReload.ChangedKey]): Set[com.histmersion.config.HotNode.Name] =
+  def touched(nodes: List[HotNode], changed: Iterable[ConfigReload.ChangedKey]): Set[HotNode.Name] =
     nodes.filter(n => keyNames(n).exists(k => changed.exists(c => keyMatches(c, k)))).map(_.name).toSet
 
   /** `roots` and every node that depends on one of them, transitively. */
-  def dependents(nodes: List[HotNode], roots: Set[com.histmersion.config.HotNode.Name]): Set[com.histmersion.config.HotNode.Name] =
+  def dependents(nodes: List[HotNode], roots: Set[HotNode.Name]): Set[HotNode.Name] =
     @annotation.tailrec
-    def grow(acc: Set[com.histmersion.config.HotNode.Name]): Set[com.histmersion.config.HotNode.Name] =
+    def grow(acc: Set[HotNode.Name]): Set[HotNode.Name] =
       val more = nodes.filter(n => !acc(n.name) && depNames(n).exists(acc)).map(_.name)
       if more.isEmpty then acc else grow(acc ++ more)
     grow(roots)
@@ -71,9 +75,9 @@ object HotPlan:
     */
   def plan(
       nodes: List[HotNode],
-      changed: Iterable[com.histmersion.config.ConfigReload.ChangedKey],
-      forced: Set[com.histmersion.config.HotNode.Name] = Set.empty
-  ): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
+      changed: Iterable[ConfigReload.ChangedKey],
+      forced: Set[HotNode.Name] = Set.empty
+  ): Either[Problem, List[HotNode.Name]] =
     order(nodes).map { ordered =>
       val rebuild = dependents(nodes, touched(nodes, changed) ++ forced.intersect(nodes.map(_.name).toSet))
       ordered.filter(rebuild)

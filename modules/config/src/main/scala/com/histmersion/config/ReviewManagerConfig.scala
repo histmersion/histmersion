@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a converged article is
   * selected again (lowest priority) after this many days, or when its filter gained sources (0 = never); looked for at
@@ -27,28 +30,28 @@ final case class ReviewManagerConfig(
 
 object ReviewManagerConfig:
   type MaxRuns = MaxRuns.T
-  object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRuns extends RefinedType[Int, Pure]
   type Rounds = Rounds.T
-  object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Rounds extends RefinedType[Int, Pure]
   type MaxRunsPerArticle = MaxRunsPerArticle.T
-  object MaxRunsPerArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRunsPerArticle extends RefinedType[Int, Pure]
   type NoProgressRuns = NoProgressRuns.T
-  object NoProgressRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoProgressRuns extends RefinedType[Int, Pure]
   type ReopenLimit = ReopenLimit.T
-  object ReopenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReopenLimit extends RefinedType[Int, Pure]
   type CooldownMinutes = CooldownMinutes.T
-  object CooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CooldownMinutes extends RefinedType[Int, Pure]
   type LowWater = LowWater.T
-  object LowWater extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LowWater extends RefinedType[Int, Pure]
   type RefillBatch = RefillBatch.T
-  object RefillBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefillBatch extends RefinedType[Int, Pure]
   type StaleAfterDays = StaleAfterDays.T
-  object StaleAfterDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StaleAfterDays extends RefinedType[Int, Pure]
   type InferFilter = InferFilter.T
-  object InferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InferFilter extends RefinedType[Boolean, Pure]
   type StaleScanMinutes = StaleScanMinutes.T
-  object StaleScanMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StaleScanMinutes extends RefinedType[Int, Pure]
   type ExtendMinNew = ExtendMinNew.T
-  object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtendMinNew extends RefinedType[Int, Pure]
   type ExtendCooldownDays = ExtendCooldownDays.T
-  object ExtendCooldownDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtendCooldownDays extends RefinedType[Int, Pure]

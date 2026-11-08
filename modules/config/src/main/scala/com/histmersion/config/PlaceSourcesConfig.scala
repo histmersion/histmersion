@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the LPF drop folder are
   * (empty = under the data directory, [[UserPaths.dataDir]]), the manifest that pins the extracts (relative to
@@ -23,30 +26,30 @@ final case class PlaceSourcesConfig(
     pointAreaFixSeconds: PlaceSourcesConfig.PointAreaFixSeconds
 ) derives ConfigReader:
   /** `point-area-kinds` as a set ([[Gazetteer.dropsPointArea]]); empty keeps every record. */
-  def pointAreaKindSet: Set[com.histmersion.config.PlaceSourcesConfig.PointAreaKind] =
+  def pointAreaKindSet: Set[PlaceSourcesConfig.PointAreaKind] =
     Option(pointAreaKinds.value).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(k => PlaceSourcesConfig.PointAreaKind(k.toLowerCase(java.util.Locale.ROOT))).toSet
 
 object PlaceSourcesConfig:
   type PointAreaKind = PointAreaKind.T
-  object PointAreaKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointAreaKind extends RefinedType[String, Pure]
 
   type Dir = Dir.T
-  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dir extends RefinedType[String, Pure]
   type LpfDir = LpfDir.T
-  object LpfDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LpfDir extends RefinedType[String, Pure]
   type Manifest = Manifest.T
-  object Manifest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Manifest extends RefinedType[String, Pure]
   type Batch = Batch.T
-  object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Batch extends RefinedType[Int, Pure]
   type MaxLpfMb = MaxLpfMb.T
-  object MaxLpfMb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxLpfMb extends RefinedType[Int, Pure]
   type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
-  object DownloadTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DownloadTimeoutSeconds extends RefinedType[Int, Pure]
   type OpenStartWindowYears = OpenStartWindowYears.T
-  object OpenStartWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenStartWindowYears extends RefinedType[Int, Pure]
   type PointAreaKinds = PointAreaKinds.T
-  object PointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointAreaKinds extends RefinedType[String, Pure]
   type PointAreaFixBatch = PointAreaFixBatch.T
-  object PointAreaFixBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointAreaFixBatch extends RefinedType[Int, Pure]
   type PointAreaFixSeconds = PointAreaFixSeconds.T
-  object PointAreaFixSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointAreaFixSeconds extends RefinedType[Int, Pure]

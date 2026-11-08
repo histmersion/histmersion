@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Limits(
     /** HARD cap on any caller-supplied `limit`, everywhere. */
@@ -25,40 +28,40 @@ final case class Limits(
     passages: PassageLimits
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
-  def snippetWords: com.histmersion.config.Limits.SnippetWords = Limits.SnippetWords(math.max(1, snippetChars.value / 6))
+  def snippetWords: Limits.SnippetWords = Limits.SnippetWords(math.max(1, snippetChars.value / 6))
 
   /** Clamp a caller's `limit` into `[1, maxPage]`; `<= 0` means "the caller gave none" and yields `dflt` (itself
     * capped). ONE definition, so no surface can forget the cap.
     */
-  def page(limit: Option[com.histmersion.PageSize], dflt: com.histmersion.PageSize): com.histmersion.PageSize =
+  def page(limit: Option[PageSize], dflt: PageSize): PageSize =
     val cap = math.max(1, maxPage.value)
-    com.histmersion.PageSize.applyUnsafe(
+    PageSize.applyUnsafe(
       limit.map(_.value).filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt.value).min(cap))
     )
 
 object Limits:
   type SnippetWords = SnippetWords.T
-  object SnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SnippetWords extends RefinedType[Int, Pure]
 
   type MaxPage = MaxPage.T
-  object MaxPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxPage extends RefinedType[Int, Pure]
   type Search = Search.T
-  object Search extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Search extends RefinedType[Int, Pure]
   type Findings = Findings.T
-  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Findings extends RefinedType[Int, Pure]
   type SnippetChars = SnippetChars.T
-  object SnippetChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SnippetChars extends RefinedType[Int, Pure]
   type ChunkChars = ChunkChars.T
-  object ChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChunkChars extends RefinedType[Int, Pure]
   type ReindexChars = ReindexChars.T
-  object ReindexChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReindexChars extends RefinedType[Long, Pure]
   type UploadBytes = UploadBytes.T
-  object UploadBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UploadBytes extends RefinedType[Long, Pure]
   type InlineBytes = InlineBytes.T
-  object InlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InlineBytes extends RefinedType[Long, Pure]
   type AssetBytes = AssetBytes.T
-  object AssetBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AssetBytes extends RefinedType[Long, Pure]
   type FullTextChars = FullTextChars.T
-  object FullTextChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FullTextChars extends RefinedType[Int, Pure]
   type CoverageSources = CoverageSources.T
-  object CoverageSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CoverageSources extends RefinedType[Int, Pure]

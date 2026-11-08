@@ -1,6 +1,9 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import scala.annotation.tailrec
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What reference.conf says about a setting, read from its text: the comment lines just above the key, the comment at
   * the end of its line and of its environment line (`key = ${?VAR}` right under it), and the comment lines under those
@@ -19,7 +22,7 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
       clean(leading(i, indent) ++ trailing)
 
   /** The environment variable the key `leaf` at `line` names on the lines right under it. */
-  def envVar(line: Int, leaf: String): Option[com.histmersion.config.edit.SettingField.EnvVar] =
+  def envVar(line: Int, leaf: String): Option[SettingField.EnvVar] =
     envLines(line - 1, leaf).flatMap(j => EnvLine.findFirstMatchIn(content(lines(j).value)).map(m => SettingField.EnvVar(m.group(2)))).headOption
 
   /** The `leaf = ${?VAR}` lines directly under line `i`. */
@@ -51,12 +54,12 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
 
 object ReferenceDocs:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Line extends RefinedType[String, Pure]
 
-  def apply(text: com.histmersion.config.edit.ReferenceDocs.Text): ReferenceDocs = new ReferenceDocs(text.value.split("\n", -1).toIndexedSeq.map(Line(_)))
+  def apply(text: Text): ReferenceDocs = new ReferenceDocs(text.value.split("\n", -1).toIndexedSeq.map(Line(_)))
 
   /** A comment-only line indented this much past its key's column continues the comment above it. */
   private val ContinuationIndent = 8

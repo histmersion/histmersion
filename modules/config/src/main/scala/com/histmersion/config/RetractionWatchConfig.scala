@@ -1,11 +1,14 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Retraction Watch: the CSV Crossref publishes, mirrored into the `retraction_watch` table. */
 final case class RetractionWatchConfig(csvUrl: RetractionWatchConfig.CsvUrl) derives ConfigReader
 
 object RetractionWatchConfig:
   type CsvUrl = CsvUrl.T
-  object CsvUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CsvUrl extends RefinedType[String, Pure]

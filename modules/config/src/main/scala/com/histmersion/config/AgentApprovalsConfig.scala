@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a run may change without a person: `manual` (the default) records an approval and waits, `auto` applies at
   * once. `statusChange` covers every status an agent proposes beyond filling `unassessed` with
@@ -20,10 +23,10 @@ final case class AgentApprovalsConfig(
 
 object AgentApprovalsConfig:
   type Gate = Gate.T
-  object Gate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Gate extends RefinedType[String, Pure]
   /** `auto` or `checked`, in any case. */
 
 
-  def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.Gate): Boolean =
+  def isChecked(raw: Gate): Boolean =
     val v = Option(raw).map(_.value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
     v == "auto" || v == "checked"

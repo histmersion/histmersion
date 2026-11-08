@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step, how many it reads
   * per work, and the host and platform lists that decide what is a repository (each comma-separated; a host matches
@@ -25,11 +28,11 @@ final case class LandingConfig(
       */
     browserDownloadHosts: CommaList = CommaList("")
 ) derives ConfigReader:
-  def refusingHosts: List[com.histmersion.config.LandingConfig.RefusingHost] = browserDownloadHosts.entries.map(e => LandingConfig.RefusingHost(e.value))
+  def refusingHosts: List[LandingConfig.RefusingHost] = browserDownloadHosts.entries.map(e => LandingConfig.RefusingHost(e.value))
 
 object LandingConfig:
   type RefusingHost = RefusingHost.T
-  object RefusingHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusingHost extends RefinedType[String, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]

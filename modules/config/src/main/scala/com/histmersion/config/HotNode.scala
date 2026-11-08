@@ -1,4 +1,8 @@
-package com.histmersion.config
+package com.histmersion
+package config
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One node of the hot component graph (docs/research-plugins.md §3.6): its name, the nodes its value is built from,
   * and the config keys it is built from — each a HOCON path prefix (`histmersion.db` covers `histmersion.db.url` and
@@ -8,8 +12,8 @@ final case class HotNode(name: HotNode.Name, deps: List[HotNode.Deps], keys: Lis
 
 object HotNode:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Deps = Deps.T
-  object Deps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Deps extends RefinedType[String, Pure]
   type Keys = Keys.T
-  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Keys extends RefinedType[String, Pure]

@@ -1,4 +1,8 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
   * is the answer.
@@ -36,7 +40,7 @@ enum SettingError:
   case NoFile(why: SettingError.NoFile.Why)
   case Io(why: SettingError.Io.Why)
 
-  def message: com.histmersion.config.edit.SettingError.Problem = SettingError.Problem(text)
+  def message: SettingError.Problem = SettingError.Problem(text)
 
   private def text: String = this match
     case BadKey(why)            => why.value
@@ -68,25 +72,25 @@ enum SettingError:
 
 object SettingError:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   object CredentialInFile:
-    export com.histmersion.config.edit.SettingField.EnvVar
+    export SettingField.EnvVar
 
   object NotAReference:
-    export com.histmersion.config.edit.SettingError.{Problem as Why}
+    export SettingError.{Problem as Why}
 
   object FromInclude:
-    export com.histmersion.config.edit.SettingsFile.{Path as File}
+    export SettingsFile.{Path as File}
 
   object Unreadable:
-    export com.histmersion.config.edit.SettingError.{Problem as Why}
+    export SettingError.{Problem as Why}
 
   object Invalid:
-    export com.histmersion.config.edit.SettingError.{Problem as Why}
+    export SettingError.{Problem as Why}
 
   object NoFile:
-    export com.histmersion.config.edit.SettingError.{Problem as Why}
+    export SettingError.{Problem as Why}
 
   object Io:
-    export com.histmersion.config.edit.SettingError.{Problem as Why}
+    export SettingError.{Problem as Why}
 

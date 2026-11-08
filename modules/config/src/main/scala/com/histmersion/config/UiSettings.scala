@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of this block:
   * whether writes need a key, whether agents run, the plugins and the base map's language.
@@ -33,36 +36,36 @@ final case class UiSettings(
 
 object UiSettings:
   type Tiles = Tiles.T
-  object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tiles extends RefinedType[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TilesMaxZoom extends RefinedType[Int, Pure]
   type MarkerRadius = MarkerRadius.T
-  object MarkerRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkerRadius extends RefinedType[Int, Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
-  object ViewportDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ViewportDebounceMs extends RefinedType[Int, Pure]
   type PageSize = com.histmersion.PageSize
-  val PageSize: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+  val PageSize: com.histmersion.PageSize.type = com.histmersion.PageSize
   type FacetSuggestions = FacetSuggestions.T
-  object FacetSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FacetSuggestions extends RefinedType[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeDepth extends RefinedType[Int, Pure]
   type TreeSamples = TreeSamples.T
-  object TreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeSamples extends RefinedType[Int, Pure]
   type MaxBuckets = MaxBuckets.T
-  object MaxBuckets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxBuckets extends RefinedType[Int, Pure]
   type NarrowMaxWidthPx = NarrowMaxWidthPx.T
-  object NarrowMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NarrowMaxWidthPx extends RefinedType[Int, Pure]
   type NarrowMaxHeightPx = NarrowMaxHeightPx.T
-  object NarrowMaxHeightPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NarrowMaxHeightPx extends RefinedType[Int, Pure]
   type TabletMaxWidthPx = TabletMaxWidthPx.T
-  object TabletMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TabletMaxWidthPx extends RefinedType[Int, Pure]
   type CountersPollSeconds = CountersPollSeconds.T
-  object CountersPollSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CountersPollSeconds extends RefinedType[Int, Pure]
   type JobPollMs = JobPollMs.T
-  object JobPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobPollMs extends RefinedType[Int, Pure]
   type TilesTone = TilesTone.T
-  object TilesTone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TilesTone extends RefinedType[String, Pure]
   type DocsUrl = DocsUrl.T
-  object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DocsUrl extends RefinedType[String, Pure]
   type BaseMapSource = BaseMapSource.T
-  object BaseMapSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BaseMapSource extends RefinedType[String, Pure]

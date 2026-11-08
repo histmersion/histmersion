@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest provider timeout plus 5
   * minutes ([[stallMinutesFor]]).
@@ -13,7 +16,7 @@ final case class AgentWatchdogConfig(
     heartbeatSeconds: AgentWatchdogConfig.HeartbeatSeconds,
     interruptedResumeMinutes: AgentWatchdogConfig.InterruptedResumeMinutes
 ) derives ConfigReader:
-  def stallMinutesFor(p: AgentProvidersConfig): com.histmersion.config.AgentWatchdogConfig.StallMinutes =
+  def stallMinutesFor(p: AgentProvidersConfig): AgentWatchdogConfig.StallMinutes =
     if stallMinutes.value > 0 then stallMinutes
     else
       val longest = List(
@@ -29,12 +32,12 @@ final case class AgentWatchdogConfig(
 object AgentWatchdogConfig:
 
   type StallMinutes = StallMinutes.T
-  object StallMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StallMinutes extends RefinedType[Int, Pure]
   type ResumeMinutes = ResumeMinutes.T
-  object ResumeMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResumeMinutes extends RefinedType[Int, Pure]
   type MaxStalls = MaxStalls.T
-  object MaxStalls extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxStalls extends RefinedType[Int, Pure]
   type HeartbeatSeconds = HeartbeatSeconds.T
-  object HeartbeatSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeartbeatSeconds extends RefinedType[Int, Pure]
   type InterruptedResumeMinutes = InterruptedResumeMinutes.T
-  object InterruptedResumeMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InterruptedResumeMinutes extends RefinedType[Int, Pure]

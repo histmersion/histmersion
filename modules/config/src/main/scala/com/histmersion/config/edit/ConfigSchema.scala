@@ -1,10 +1,12 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import com.histmersion.config.{ConfigLayers, ConfigReload}
 import org.ekrich.config.{Config, ConfigFactory, ConfigObject, ConfigResolveOptions, ConfigValue}
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import com.histmersion.config.HotPlan
 
 /** Every setting of the config file, from reference.conf: its kind, default, documentation, environment variable,
   * whether it waits for a restart and whether it is a credential — what Settings' "Advanced" form is generated from and
@@ -42,7 +44,7 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       .map(_._1)
 
   /** The top-level blocks, in reference.conf's order, with the settings in each. */
-  def sections: List[(com.histmersion.config.edit.SettingField.Section, List[SettingField])] =
+  def sections: List[(SettingField.Section, List[SettingField])] =
     val order = fields.map(_.section).distinct
     order.map(s => s -> fields.filter(_.section == s))
 
@@ -50,14 +52,14 @@ object ConfigSchema:
   /** The schema of the reference.conf on the class path. */
   lazy val reference: ConfigSchema = of(referenceText)
 
-  def referenceText: com.histmersion.config.edit.ReferenceDocs.Text =
+  def referenceText: ReferenceDocs.Text =
     val is = Option(getClass.getClassLoader.getResourceAsStream("reference.conf"))
       .getOrElse(throw IllegalStateException("reference.conf is missing from the class path"))
     try ReferenceDocs.Text(String(is.readAllBytes, java.nio.charset.StandardCharsets.UTF_8))
     finally is.close()
 
   /** The schema of a reference.conf's text. */
-  def of(text: com.histmersion.config.edit.ReferenceDocs.Text): ConfigSchema =
+  def of(text: ReferenceDocs.Text): ConfigSchema =
     val raw = ConfigFactory.parseString(text.value)
     val resolved = raw.resolve(ConfigResolveOptions.noSystem)
     val docs = ReferenceDocs(text)
@@ -87,7 +89,7 @@ object ConfigSchema:
     new ConfigSchema(fields, blocks)
 
   /** Every node of the tree in the file's order (`isBlock` for an object), the open blocks' contents left out. */
-  private def walk(o: ConfigObject, prefix: List[com.histmersion.config.edit.SettingKey.Segment]): List[(List[com.histmersion.config.edit.SettingKey.Segment], ConfigValue, Boolean)] =
+  private def walk(o: ConfigObject, prefix: List[SettingKey.Segment]): List[(List[SettingKey.Segment], ConfigValue, Boolean)] =
     o.keySet.asScala.toList.sortBy(k => o.get(k).origin.lineNumber).flatMap { k =>
       val p = prefix :+ SettingKey.Segment(k)
       o.get(k) match
@@ -98,7 +100,7 @@ object ConfigSchema:
         case v => List((p, v, false))
     }
 
-  private def openBlock(path: List[com.histmersion.config.edit.SettingKey.Segment]): Boolean = ConfigLayers.OpenBlocks.contains(path)
+  private def openBlock(path: List[SettingKey.Segment]): Boolean = ConfigLayers.OpenBlocks.contains(path)
 
   /** The kind of an open block's key: a plugin's `enabled` is true or false (the host's own key); any other takes any
     * single value.
@@ -111,9 +113,9 @@ object ConfigSchema:
     val p = key.segments
     ConfigLayers.OpenBlocks.exists(b => p.length > b.length && p.startsWith(b))
 
-  def restartOf(key: SettingKey): Option[com.histmersion.config.edit.SettingField.Restart] =
+  def restartOf(key: SettingKey): Option[SettingField.Restart] =
     ConfigReload.RestartOnly.collectFirst {
-      case (k, why) if com.histmersion.config.HotPlan.keyMatches(ConfigReload.ChangedKey(key.value), k) => SettingField.Restart(why.value)
+      case (k, why) if HotPlan.keyMatches(ConfigReload.ChangedKey(key.value), k) => SettingField.Restart(why.value)
     }
 
   /** Levenshtein distance, for "did you mean". */

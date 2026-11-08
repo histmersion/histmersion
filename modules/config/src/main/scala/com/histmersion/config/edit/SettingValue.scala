@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.{
   ConfigException,
@@ -11,6 +12,8 @@ import org.ekrich.config.{
 }
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One value to write into the config file. */
 enum SettingValue:
@@ -29,7 +32,7 @@ enum SettingValue:
     case Items(xs) => ConfigValueFactory.fromIterable(xs.map(_.toConfig.unwrapped).asJava)
 
   /** The text written into the file: JSON, which HOCON reads as it is. */
-  def hocon: com.histmersion.config.edit.SettingValue.Hocon = SettingValue.Hocon(toConfig.render(ConfigRenderOptions.concise))
+  def hocon: SettingValue.Hocon = SettingValue.Hocon(toConfig.render(ConfigRenderOptions.concise))
 
   def kind: SettingKind = this match
     case Text(_)   => SettingKind.Text
@@ -39,20 +42,20 @@ enum SettingValue:
 
 object SettingValue:
   type Hocon = Hocon.T
-  object Hocon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Hocon extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   object Text:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
 
   object Flag:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Boolean, Pure]
 
   type Typed = Typed.T
-  object Typed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Typed extends RefinedType[String, Pure]
 
   private val Truthy = Set("true", "yes", "on")
   private val Falsy = Set("false", "no", "off")
@@ -60,7 +63,7 @@ object SettingValue:
   /** What a person typed, read as a setting of `kind` — the CLI's argument, a field of the web form. Text is taken as
     * typed; a number, a flag and a list are read; `Any` (a plugin's own key) guesses the kind.
     */
-  def parse(raw: com.histmersion.config.edit.SettingValue.Typed, kind: SettingKind): Either[com.histmersion.config.edit.SettingValue.Problem, SettingValue] =
+  def parse(raw: Typed, kind: SettingKind): Either[Problem, SettingValue] =
     val t = Option(raw).map(_.value).getOrElse("")
     kind match
       case SettingKind.Text   => Right(Text(Text.Value(t)))
@@ -86,7 +89,7 @@ object SettingValue:
       case _              => None
 
   /** `[a, "b c", 3]` (HOCON's list), or words between commas. */
-  private def items(t: String): Either[com.histmersion.config.edit.SettingValue.Problem, SettingValue] =
+  private def items(t: String): Either[Problem, SettingValue] =
     val s = t.trim
     if s.isEmpty then Right(Items(Nil))
     else if s.startsWith("[") then

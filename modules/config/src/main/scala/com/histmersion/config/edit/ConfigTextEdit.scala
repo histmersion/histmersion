@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigOrigin}
 import org.ekrich.config.parser.ConfigDocumentFactory
@@ -16,7 +17,7 @@ object ConfigTextEdit:
 
 
   def apply(
-      text: com.histmersion.config.edit.ConfigFileState.Text,
+      text: ConfigFileState.Text,
       current: Config,
       here: ConfigOrigin => Boolean,
       edits: List[SettingEdit]
@@ -159,7 +160,7 @@ object ConfigTextEdit:
 
   /** Where the file (read with its includes, unresolved) writes `key`. */
   def written(current: Config, key: SettingKey, here: ConfigOrigin => Boolean): Written =
-    @tailrec def down(obj: ConfigObject, path: List[com.histmersion.config.edit.SettingKey.Segment], seen: List[String]): Written =
+    @tailrec def down(obj: ConfigObject, path: List[SettingKey.Segment], seen: List[String]): Written =
       path match
         case Nil          => Written.Nowhere
         case word :: rest =>
@@ -180,5 +181,5 @@ object ConfigTextEdit:
                   case other => if here(other.origin) then Written.Nowhere else Written.Elsewhere(fileOf(other.origin))
     down(current.root, key.segments, Nil)
 
-  private def fileOf(o: ConfigOrigin): com.histmersion.config.edit.SettingsFile.Path =
+  private def fileOf(o: ConfigOrigin): SettingsFile.Path =
     SettingsFile.Path(Option(o.filename).orElse(Option(o.url).map(_.toString)).getOrElse(o.description))

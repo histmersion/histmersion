@@ -1,10 +1,13 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import scala.annotation.tailrec
 import org.ekrich.config.Config
 
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and backups; the agent
   * trees) and the user config file. ONE resolver, so the server, the bundle supervisor, the agent trees and the CLI
@@ -13,25 +16,25 @@ import scala.jdk.CollectionConverters.*
 final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def isMac: Boolean = UserPaths.isMac(osName)
   def defaultDataDir: Option[Path] = UserPaths.defaultDataDir(environment.lookup, osName)
-  def dataDir(configured: com.histmersion.config.RuntimeConfig.DataDir): Option[Path] = UserPaths.dataDir(configured, environment.lookup, osName)
+  def dataDir(configured: RuntimeConfig.DataDir): Option[Path] = UserPaths.dataDir(configured, environment.lookup, osName)
   def cacheDir: Option[Path] = UserPaths.cacheDir(environment.lookup)
   def configFile: Option[Path] = UserPaths.configFile(environment.lookup)
 
 object UserPaths:
   type BasemapDir = BasemapDir.T
-  object BasemapDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BasemapDir extends RefinedType[String, Pure]
   type Lookup = Environment.VariablesKey => Option[Environment.VariablesValue]
   type HomeDir = HomeDir.T
-  object HomeDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HomeDir extends RefinedType[String, Pure]
 
   type OsName = OsName.T
-  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OsName extends RefinedType[String, Pure]
 
   val ConfigEnv: Environment.VariablesKey = Environment.VariablesKey("HISTMERSION_CONFIG")
 
   val ConfigFileName = "histmersion.conf"
 
-  def isMac(osName: com.histmersion.config.UserPaths.OsName): Boolean = osName.value.toLowerCase.contains("mac")
+  def isMac(osName: OsName): Boolean = osName.value.toLowerCase.contains("mac")
 
   private def home(env: Lookup): Option[HomeDir] =
     env(Environment.VariablesKey("HOME")).map(_.value.trim).filter(_.nonEmpty).map(HomeDir(_))
@@ -49,7 +52,7 @@ object UserPaths:
         .orElse(home(env).map(h => Path.of(h.value, ".local", "share", "histmersion")))
 
   /** `configured` (`runtime.data-dir`) when it is set, else [[defaultDataDir]]. */
-  def dataDir(configured: com.histmersion.config.RuntimeConfig.DataDir, env: Lookup, osName: OsName): Option[Path] =
+  def dataDir(configured: RuntimeConfig.DataDir, env: Lookup, osName: OsName): Option[Path] =
     Option(configured).map(_.value.trim).filter(_.nonEmpty).map(Path.of(_)).orElse(defaultDataDir(env, osName))
 
   /** The per-user CACHE directory: `$XDG_CACHE_HOME/histmersion`, default `~/.cache/histmersion` — on macOS too (the
@@ -69,7 +72,7 @@ object UserPaths:
     * directory), else `<cache dir>/basemap` ([[cacheDir]]), else `basemap` under `initDataDir` (`init.data-dir`) —
     * absolute and normalised.
     */
-  def basemapDir(configured: com.histmersion.config.UserPaths.BasemapDir, initDataDir: com.histmersion.config.RuntimeConfig.DataDir, env: Lookup): Path =
+  def basemapDir(configured: BasemapDir, initDataDir: RuntimeConfig.DataDir, env: Lookup): Path =
     Option(configured)
       .map(_.value.trim)
       .filter(_.nonEmpty)

@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the map opens (`ui.map-start`): `mode` "last" (where the browser left it; here the first time) or "place"
   * (always here).
@@ -11,12 +14,12 @@ final case class UiMapStartSettings(mode: UiMapStartSettings.Mode, lat: UiMapSta
 
 object UiMapStartSettings:
   type Mode = Mode.T
-  object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Lat = com.histmersion.Latitude
-  val Lat: _root_.com.histmersion.Latitude.type = _root_.com.histmersion.Latitude
-  type Lon = com.histmersion.Longitude
-  val Lon: _root_.com.histmersion.Longitude.type = _root_.com.histmersion.Longitude
+  object Mode extends RefinedType[String, Pure]
+  type Lat = Latitude
+  val Lat: Latitude.type = Latitude
+  type Lon = Longitude
+  val Lon: Longitude.type = Longitude
   type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Zoom extends RefinedType[Double, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 
@@ -6,5 +7,5 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class ServiceConfig(url: ServiceConfig.Url) derives ConfigReader
 
 object ServiceConfig:
-  type Url = com.histmersion.config.ServiceUrl
-  val Url: _root_.com.histmersion.config.ServiceUrl.type = _root_.com.histmersion.config.ServiceUrl
+  type Url = ServiceUrl
+  val Url: ServiceUrl.type = ServiceUrl

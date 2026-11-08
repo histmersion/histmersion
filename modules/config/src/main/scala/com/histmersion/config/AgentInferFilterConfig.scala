@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `infer-filter`: a proposed filter must return at least `minHits` and at most `maxHits` sources, and at least
   * `minCitedShare` (0..1) of the sources the article cites; `sample` sources it returns that the article does not cite
@@ -12,10 +15,10 @@ final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits,
 
 object AgentInferFilterConfig:
   type MinHits = MinHits.T
-  object MinHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinHits extends RefinedType[Int, Pure]
   type MaxHits = MaxHits.T
-  object MaxHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxHits extends RefinedType[Int, Pure]
   type MinCitedShare = MinCitedShare.T
-  object MinCitedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinCitedShare extends RefinedType[Double, Pure]
   type Sample = Sample.T
-  object Sample extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sample extends RefinedType[Int, Pure]
