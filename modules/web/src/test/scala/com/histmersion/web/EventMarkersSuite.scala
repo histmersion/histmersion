@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TimeSpan
@@ -245,7 +246,7 @@ class EventMarkersSuite extends munit.FunSuite:
 
   private val hekla = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("gvp_12724")).modify(_.label).setTo(EventGeo.Label("Eruption of Hekla")).modify(_.timeSpan).setTo(TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026)))).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Imprecise)).modify(_.dating).setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)"))
   )
-  private val approx = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("zz_a")).modify(_.precision).setTo(EventPrecision.Approximate)
+  private val approx = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("zz_a")).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Approximate))
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
     assert(!PointKinds.Events.keep(hekla))
@@ -271,7 +272,7 @@ class EventMarkersSuite extends munit.FunSuite:
         plusMinus = Some(com.histmersion.api.catalogue.EventSummary.PlusMinus(2500)),
         datingMethod = Some(com.histmersion.api.catalogue.EventSummary.DatingMethod("Tephrochronology"))
       ),
-      tier = EventTier.Catalogue,
+      tier = EventGeo.Tier(EventTier.Catalogue),
       corrections = List(
         Correction(
           Correction.Id(1),

@@ -21,7 +21,7 @@ class TimelineViewSuite extends munit.FunSuite:
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(14026L), 3392.0)
     val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
-      buckets <= TimelineView.MAX_BUCKETS,
+      buckets <= TimelineView.MAX_BUCKETS.value,
       s"$buckets buckets (size=$size) exceeds MAX_BUCKETS=${TimelineView.MAX_BUCKETS}"
     )
   }
@@ -30,7 +30,7 @@ class TimelineViewSuite extends munit.FunSuite:
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(14026L), 400.0)
     val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
-      buckets <= TimelineView.MAX_BUCKETS,
+      buckets <= TimelineView.MAX_BUCKETS.value,
       s"$buckets buckets (size=$size) exceeds MAX_BUCKETS=${TimelineView.MAX_BUCKETS}"
     )
   }
@@ -44,7 +44,7 @@ class TimelineViewSuite extends munit.FunSuite:
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(3000L), 800.0)
     assert(size.value >= 1L, "size must be positive")
     val buckets = Math.ceil(3000.0 / size.value).toLong
-    assert(buckets <= TimelineView.MAX_BUCKETS, s"$buckets buckets (size=$size) exceeds limit")
+    assert(buckets <= TimelineView.MAX_BUCKETS.value, s"$buckets buckets (size=$size) exceeds limit")
     assert(buckets >= 100, s"only $buckets buckets for 3000-year span on 800px is too coarse")
   }
 
@@ -63,7 +63,7 @@ class TimelineViewSuite extends munit.FunSuite:
       val size = TimelineView.bucketSizeFor(Years.Shift(span), px)
       val buckets = Math.ceil(span.toDouble / size.value).toLong
       assert(
-        buckets <= TimelineView.MAX_BUCKETS,
+        buckets <= TimelineView.MAX_BUCKETS.value,
         s"span=$span px=$px → size=$size → $buckets buckets (limit=${TimelineView.MAX_BUCKETS})"
       )
   }

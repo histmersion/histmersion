@@ -77,7 +77,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre.guard(com.histmersion.api.library.Title("Untitled"), List(AuthorName("Author"))).isLeft)
     assert(Calibre.guard(com.histmersion.api.library.Title("Title"), Nil).isLeft)
     assert(Calibre.guard(com.histmersion.api.library.Title("Title"), List(AuthorName("Unknown Author"))).isLeft)
-    val both = Calibre.guard(com.histmersion.api.library.Title("unknown"), List(AuthorName("  "))).left.map(_.value).getOrElse("")
+    val both = Calibre.guard(com.histmersion.api.library.Title("unknown"), List(AuthorName("  "))).left.map(_.value).left.getOrElse("")
     assert(both.contains("title") && both.contains("author"), both)
 
   test("blankness is case- and whitespace-insensitive"):

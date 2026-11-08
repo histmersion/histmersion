@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.{Goal, Managers}

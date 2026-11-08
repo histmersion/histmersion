@@ -31,7 +31,7 @@ class MapRegionsSuite extends munit.FunSuite:
     )
 
   test("the default configured region is the whole world, listed once"):
-    val cs = choices(status.modify(_.bbox).setTo("world"))
+    val cs = choices(status.modify(_.bbox).setTo(Basemap.Status.Bbox("world")))
     assertEquals(
       cs.map(c => (c.id, c.bbox)),
       List(("configured", Some("world")), ("argolid", Some("22.5,37.4,23.2,37.9")), (OwnBox, None))

@@ -98,7 +98,7 @@ class CalibrePushSuite extends munit.FunSuite:
   final private class Recording extends Shell:
     @volatile var commands: List[List[String]] = Nil // a test double: the simplest thing
     @volatile var added: List[(Path, String)] = Nil
-    def run(cmd: List[String]): Either[String, String] =
+    def run(cmd: List[String]): Either[Shell.Problem, String] =
       commands = commands :+ cmd
       if cmd.lift(1).contains("add") then
         val f = cmd
@@ -110,7 +110,7 @@ class CalibrePushSuite extends munit.FunSuite:
         added = added :+ (f -> Files.readString(f))
         Right("Added book ids: 4242\n")
       else Right("")
-    def isRunning(processMatch: String): Boolean = false
+    def isRunning(processMatch: Shell.ProcessMatch): Boolean = false
 
   private def calibre(shell: Shell) =
     Calibre(CalibreCliConfig(com.histmersion.config.CalibreCliConfig.LibraryDir("/nonexistent/library"), com.histmersion.config.CalibreCliConfig.Calibredb("calibredb"), com.histmersion.config.CalibreCliConfig.Sqlite("sqlite3"), com.histmersion.config.CalibreCliConfig.OriginalsDir("")), shell)
@@ -125,7 +125,7 @@ class CalibrePushSuite extends munit.FunSuite:
   test("no --file and no originals-dir: the server's stored original is downloaded, added, and removed"):
     withStub { s =>
       val shell = Recording()
-      val got = CalibreCmd.pushOne(Client(s.url), Citekey("zz_ck"), None, calibre(shell), originals = None)
+      val got = CalibreCmd.pushOne(new Client(s.url), Citekey("zz_ck"), None, calibre(shell), originals = None)
       assertEquals(got.map(_._1), Right(Calibre.Book.Id(4242)))
       val (file, content) = shell.added.head
       assertEquals(content, Pdf, "calibredb add got the server's bytes")
@@ -145,7 +145,7 @@ class CalibrePushSuite extends munit.FunSuite:
       Files.writeString(dir.resolve("zz_ck/paper.pdf"), "%PDF local")
       val shell = Recording()
       val got = CalibreCmd.pushOne(
-        Client(s.url),
+        new Client(s.url),
         Citekey("zz_ck"),
         None,
         calibre(shell),
@@ -161,7 +161,7 @@ class CalibrePushSuite extends munit.FunSuite:
       val f = Files.createTempFile("zz-given-", ".pdf"); Files.writeString(f, "%PDF given")
       val shell = Recording()
       assertEquals(
-        CalibreCmd.pushOne(Client(s.url), Citekey("zz_ck"), Some(f), calibre(shell), originals = None).map(_._1),
+        CalibreCmd.pushOne(new Client(s.url), Citekey("zz_ck"), Some(f), calibre(shell), originals = None).map(_._1),
         Right(Calibre.Book.Id(4242))
       )
       assertEquals(shell.added.map(_._2), List("%PDF given"))
@@ -171,7 +171,7 @@ class CalibrePushSuite extends munit.FunSuite:
   test("no stored original and none on this host: nothing is added, and the error says what to do"):
     withStub { s =>
       val shell = Recording()
-      val got = CalibreCmd.pushOne(Client(s.url), Citekey("zz_none"), None, calibre(shell), originals = None)
+      val got = CalibreCmd.pushOne(new Client(s.url), Citekey("zz_none"), None, calibre(shell), originals = None)
       val msg = got.left.map(_.message.value).swap.getOrElse(fail(s"pushed: $got"))
       assert(msg.contains("no original stored") && msg.contains("--file") && msg.contains("originals-dir"), msg)
       assertEquals(shell.commands, Nil, "calibredb never ran")
@@ -215,7 +215,7 @@ class CalibrePushSuite extends munit.FunSuite:
     )
     assert(!md.contains("zz_none1") && !md.contains("zz_none2"), md)
     assert(md.contains("2 records without a fetched file — not counted; see the acquire list"), md)
-    val onlyNone = Calibre.markdownGaps(es.filterNot(_.counted))
+    val onlyNone = Calibre.markdownGaps(es.filterNot(_.counted.value))
     assert(onlyNone.startsWith("_Every source with a fetched file is in Calibre._"), onlyNone)
     assertEquals(Calibre.markdownGaps(Nil), "_Every source with a fetched file is in Calibre._")
 
@@ -231,7 +231,7 @@ class CalibrePushSuite extends munit.FunSuite:
     withGaps(List(gap(Citekey("zz_stored"), Stored), gap(Citekey("zz_local"), NotStored), gap(Citekey("zz_none"), NotStored))) { s =>
       val (r, out) = captured(
         CalibreCmd.listGaps(
-          Client(s.url),
+          new Client(s.url),
           quiet = Cli.QuietOutput(true),
           None,
           json = Cli.JsonOutput(false),
@@ -254,11 +254,11 @@ class CalibrePushSuite extends munit.FunSuite:
       )
     ) { s =>
       assertEquals(
-        captured(CalibreCmd.listGaps(Client(s.url), quiet = Cli.QuietOutput(true), None, json = Cli.JsonOutput(false), None)),
+        captured(CalibreCmd.listGaps(new Client(s.url), quiet = Cli.QuietOutput(true), None, json = Cli.JsonOutput(false), None)),
         (Right(()), "")
       )
       val (full, report) =
-        captured(CalibreCmd.listGaps(Client(s.url), quiet = Cli.QuietOutput(false), None, json = Cli.JsonOutput(false), None))
+        captured(CalibreCmd.listGaps(new Client(s.url), quiet = Cli.QuietOutput(false), None, json = Cli.JsonOutput(false), None))
       assertEquals(full, Right(()))
       assert(
         report.contains("_Every source with a fetched file is in Calibre._") &&
@@ -270,7 +270,7 @@ class CalibrePushSuite extends munit.FunSuite:
   test("gaps --json keeps every row, with original and counted"):
     withGaps(List(gap(Citekey("zz_stored"), Stored), gap(Citekey("zz_none"), NotStored))) { s =>
       val (r, out) =
-        captured(CalibreCmd.listGaps(Client(s.url), quiet = Cli.QuietOutput(false), None, json = Cli.JsonOutput(true), None))
+        captured(CalibreCmd.listGaps(new Client(s.url), quiet = Cli.QuietOutput(false), None, json = Cli.JsonOutput(true), None))
       assertEquals(r, Right(()))
       val j = io.circe.parser.parse(out).fold(e => fail(e.toString), identity).hcursor
       assertEquals(j.get[Int]("count"), Right(1))
@@ -288,7 +288,7 @@ class CalibrePushSuite extends munit.FunSuite:
       val shell = Recording()
       val (r, out) =
         captured(
-          CalibreCmd.syncGaps(Client(s.url), apply = Api.Apply(true), None, json = Cli.JsonOutput(false), calibre(shell), None)
+          CalibreCmd.syncGaps(new Client(s.url), apply = Api.Apply(true), None, json = Cli.JsonOutput(false), calibre(shell), None)
         )
       assertEquals(r, Right(()))
       assertEquals(s.pushed.toArray.toList, List("zz_ck=4242"))
@@ -297,7 +297,7 @@ class CalibrePushSuite extends munit.FunSuite:
       assert(!out.contains("skipped"), out)
       val (dry, plan) =
         captured(
-          CalibreCmd.syncGaps(Client(s.url), apply = Api.Apply(false), None, json = Cli.JsonOutput(false), calibre(shell), None)
+          CalibreCmd.syncGaps(new Client(s.url), apply = Api.Apply(false), None, json = Cli.JsonOutput(false), calibre(shell), None)
         )
       assertEquals(dry, Right(()))
       assert(plan.contains("Dry run: 1 source(s) would be pushed · 1 record without a fetched file"), plan)

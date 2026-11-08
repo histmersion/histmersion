@@ -101,7 +101,7 @@ class MergeViewSuite extends munit.FunSuite:
     assert(!MergeView.applicable(p))
     assert(MergeView.applicable(plan(List(issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left")))))))
     assert(!MergeView.applicable(plan(Nil, changes = MergePlan.Changes(0))), "nothing to write is nothing to apply")
-    assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List("a blob is missing"))))
+    assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List(com.histmersion.api.exchange.MergePlan.Problems("a blob is missing")))))
 
   test("the filter matches the id, the kind, the title and the labels"):
     val is = List(issue(MergeIssue.Id("S-1")), issue(MergeIssue.Id("A-2"), kind = MergeIssue.Kind.ArticleDiverged))

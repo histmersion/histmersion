@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{HistoricalPeriod, Latitude, Longitude, Period, PresetMenu, PresetRegion, Year}
 

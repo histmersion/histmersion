@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Years
@@ -122,7 +123,7 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(CardIcons.siteMarker(None).value, CardIcons.Unknown)
 
   test("every card kind carries its icon"):
-    val s = src(doi = Some("10.1038/nature14317"))
+    val s = src(doi = Some(Doi("10.1038/nature14317")))
     assertEquals(Preview.card(s).icon.map(_.value), Some("file-text"))
     val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u"), MediaThumb.Role(MediaRole.Cover), com.histmersion.api.media.MediaThumb.Url("/m/u/thumb"), com.histmersion.api.media.MediaItem.Credit("c"))
     assertEquals(
@@ -247,7 +248,7 @@ class CardIconsSuite extends munit.FunSuite:
   test("a bubble's outline (#1647): square for events only, tabbed with events among others, round otherwise"):
     assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Event)))), BubbleForm.Events)
     assertEquals(
-      DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), finds(hit(1, 2))))),
+      DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), finds(hit(Year(1), Year(2)))))),
       BubbleForm.WithEvents
     )
     assertEquals(
@@ -255,7 +256,7 @@ class CardIconsSuite extends munit.FunSuite:
       BubbleForm.WithEvents
     )
     assertEquals(
-      DotCluster.form(DotCluster.Contents(List(finds(hit(1, 2), hit(3, 4)), dot(DotKind.Site)))),
+      DotCluster.form(DotCluster.Contents(List(finds(hit(Year(1), Year(2)), hit(Year(3), Year(4))), dot(DotKind.Site)))),
       BubbleForm.Round
     )
     assertEquals(DotCluster.form(DotCluster.Contents(Nil)), BubbleForm.Round)

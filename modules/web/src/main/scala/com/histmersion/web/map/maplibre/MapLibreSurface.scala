@@ -373,10 +373,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
 
 object MapLibreSurface:
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
-  private[maplibre] def eases(animated: Boolean): Boolean = animated && MotionPref.animate()
+  private[web] def eases(animated: Boolean): Boolean = animated && MotionPref.animate()
 
   /** `o` with the motion of a camera move: `animate`, and `essential` when it eases (see `setView`). */
-  private[maplibre] def motion(animated: Boolean, o: js.Dynamic): js.Object =
+  private[web] def motion(animated: Boolean, o: js.Dynamic): js.Object =
     val e = eases(animated)
     o.animate = e
     if e then o.essential = true

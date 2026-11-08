@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 

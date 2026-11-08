@@ -160,7 +160,7 @@ class PluginCmdSuite extends munit.FunSuite:
     )
 
   test("the plugin commands refuse a server on another machine"):
-    val r = PluginCmd.local(Client(Client.ServerUrl("https://histmersion.example.org")))
+    val r = PluginCmd.local(new Client(Client.ServerUrl("https://histmersion.example.org")))
     assert(r.left.exists(e => e.message.value.contains("THIS machine") && e.exitCode == ExitCode.Usage), r)
 
   // ── add ───────────────────────────────────────────────────────────────────────────────────────

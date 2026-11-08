@@ -79,7 +79,7 @@ object MapView:
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one bubble,
     * whatever it is. Regions never join.
     */
-  lazy val dots: PointSet[Dot] = PointSet[Dot](
+  lazy val dots: PointSet[Dot] = new PointSet[Dot](
     paneOf = d => TheMap.pane(d.layer.kind.pane),
     pane = () => TheMap.pane(MapStack.Pane.Markers),
     surface = () => TheMap.surface,
@@ -355,7 +355,7 @@ object MapView:
     )
     val lat = LatLon.Lat(ds.map(_.at.lat.value).sum / ds.size)
     val lon = LatLon.Lon(ds.map(_.at.lon.value).sum / ds.size)
-    val m = DomMarker(lat, lon, el, Some((DomMarker.BoxSize(d), DomMarker.BoxSize(d))))
+    val m = new DomMarker(lat, lon, el, Some((DomMarker.BoxSize(d), DomMarker.BoxSize(d))))
     m.handlers = new MarkerHandlers:
       override def click(e: dom.MouseEvent): Unit =
         e.stopPropagation()

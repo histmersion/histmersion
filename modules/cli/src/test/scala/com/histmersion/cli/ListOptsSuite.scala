@@ -126,10 +126,10 @@ class ListOptsSuite extends munit.FunSuite:
   test("the next-page line repeats every filter, a list option once per value"):
     val f = ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan,edge")), decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("person")))
     assertEquals(
-      PageCmd.next("agent approvals", f.options ++ List("limit" -> Some("20")), com.histmersion.api.Paging.Cursor("41")),
+      PageCmd.next("agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> Some("20")), com.histmersion.api.Paging.Cursor("41")),
       "histmersion agent approvals --kind goal-plan --kind edge --decided-by person --limit 20 --before 41"
     )
     assertEquals(
-      PageCmd.next("agent runs", RunFilter(manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:tin")), since = Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("7d"))).options, com.histmersion.api.Paging.Cursor("r9")),
+      PageCmd.next("agent runs", RunFilter(manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:tin")), since = Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("7d"))).options.map((k, v) => (k.value, v.map(_.value))), com.histmersion.api.Paging.Cursor("r9")),
       "histmersion agent runs --manager seed:tin --since 7d --before r9"
     )

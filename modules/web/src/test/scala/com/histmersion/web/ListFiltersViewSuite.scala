@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.{UiLabels, Wording}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters

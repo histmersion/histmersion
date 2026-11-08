@@ -67,7 +67,7 @@ object PlaceGlyph:
       wrapClass: String = "hd-area-point-wrap",
       hidden: LabelHidden = LabelHidden(false)
   ): DomMarker =
-    DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
+    new DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 
   /** Keep the map container's `map-far` class equal to [[far]] of its zoom (the stylesheet hides point-only region
     * labels under it).

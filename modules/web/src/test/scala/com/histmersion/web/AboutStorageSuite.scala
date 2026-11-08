@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{ServiceState, TableSize}
@@ -47,7 +48,7 @@ class AboutStorageSuite extends munit.FunSuite:
           (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(Storage.Entry.Volume(vol)),
-          shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
+          shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).map(h => Storage.Entry.Shrink(h.value))
         ),
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("plugins"), com.histmersion.api.maintenance.Storage.Entry.Label("plugins"), com.histmersion.api.maintenance.Storage.Entry.Group("install"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/plugins")), None, None, exists = com.histmersion.api.maintenance.Storage.Entry.Exists(false)),
         Storage.Entry(

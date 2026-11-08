@@ -89,7 +89,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(c.identifier, "hatti")
     // a disputed shape says so; no counts asked for, none shown; a site with no parents and no period
     val bare =
-      Preview.card(d.copy(place = named("troy", "Troy", "site"), parents = Nil, counts = None, contested = true))
+      Preview.card(d.copy(place = named("troy", "Troy", "site"), parents = Nil, counts = None, contested = Place.Entry.Contested(true)))
     assertEquals(bare.byline, "Site · contested extent")
     assertEquals(bare.where, "")
     assertEquals(bare.facts, Nil)
@@ -220,7 +220,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     val s = AboutView.sections(about.modify(_.plugins).setTo(report))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))
     val rows = s.find(_.title == "Plugins").get.rows
-    def row(id: String) = rows.find(_.label == Wording.plugin(id)).get
+    def row(id: String) = rows.find(_.label == Wording.plugin(Wording.PluginId(id))).get
     assertEquals((row("media-met").value, row("media-met").state), ("Registered", Some(ServiceState.Ok)))
     assertEquals(row("media-met").label, "Pictures: Met")
     assertEquals(row("media-met").detail, Some("media-met · v1.0.0 · media-collection:met"))
