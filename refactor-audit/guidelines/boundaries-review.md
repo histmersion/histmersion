@@ -64,4 +64,21 @@ Dropped with no I/O of their own (pure data or policy, so no G23): `Environment`
 
 ## G44 after the change
 
-G44_PLACEHOLDER
+Counted by the guideline inventory with this boundaries.tsv (260 files), in the run that set G57's ratchet baseline
+(`architecture/guidelines-ratchet.tsv`). That run also no longer counts a newtype built from a literal (decision
+2026-11-08), so the change has two causes:
+
+| | main | test |
+|---|---|---|
+| G44 before (113,396-finding inventory, 292 boundary files) | 30,837 | 40,924 |
+| of which built from a literal, no longer counted | 5,595 | 31,218 |
+| G44 now | 25,964 | 9,605 |
+| change | −4,873 | −31,319 |
+| G45boundary (inside a listed file) before → now | 8,470 → 5,629 | 0 → 0 |
+
+Without the literal rows, main G44 grows by 722 (25,242 → 25,964), while G45boundary falls by 2,841. That is
+consistent with the hand `.value` and constructions of the 32 files that left the list now counting as G44; the
+literal constructions inside those files are no longer counted at all. Test G44 is 101 below the old count minus
+its literal rows. Test code is not part of any boundary, so the difference comes from the tree itself. The newer run
+also counts the test changes of G57 step 4 (the narrowed `ComparedByValue`). This page does not split the 101
+further.

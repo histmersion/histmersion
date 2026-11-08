@@ -44,6 +44,10 @@ ThisBuild / scalacOptions ++= Seq(
   "-language:strictEquality"
 )
 
+// Every compile writes its SemanticDB (beside the classes, in `meta`/`test-meta`, never into a jar): the guideline
+// ratchet (GuidelineRatchetSuite, server tests) reads it, so the check needs no separate build.
+ThisBuild / semanticdbEnabled := true
+
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
 
 // ── sbt 2's disk cache: one per checkout, never the machine-wide one (docs/research-build-speed.md §2) ──
@@ -654,6 +658,15 @@ def buildMetaSource(base: File): String = {
      |""".stripMargin
 }
 
+/** Every module's sources and the files the source-reading suites compare them with (ContractsSuite, ArchitectureSuite,
+  * GuidelineRatchetSuite): a digest that keys the server's cached test result, so a change in any module runs those
+  * suites again rather than replaying a pass.
+  */
+val sourcesDigest = taskKey[String]("A digest of every module's sources and of the architecture and ratchet files")
+
+/** Every module compiled with its tests: the SemanticDB GuidelineRatchetSuite reads is that of the last compile. */
+val everyModuleCompiled = taskKey[Unit]("Compile every module of the build, main and test")
+
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults, console)
@@ -675,6 +688,28 @@ lazy val server = project
   .settings(commonDeps)
   // one suite at a time per group: a restore drops connections, and a booting server fails the running jobs
   .settings(dbTestGroups("server", groups = 5, heap = "2g"))
+  .settings(
+    everyModuleCompiled := Def.uncached {
+      val _ = (Test / compile).all(ScopeFilter(inAggregates(LocalRootProject), inConfigurations(Test))).value
+    },
+    sourcesDigest := Def.uncached {
+      val root = (ThisBuild / baseDirectory).value
+      val files = (root / "modules").allPaths
+        .filter(f => f.isFile && f.getName.endsWith(".scala") && !f.getPath.contains("/target/"))
+        .get() ++
+        (root / "architecture").allPaths.filter(_.isFile).get() ++
+        Seq(root / "tools/refactor/GuidelineInventory.scala", root / "tools/refactor/guideline-ratchet.conf")
+      val digest = java.security.MessageDigest.getInstance("SHA-256")
+      files.filter(_.isFile).sortBy(_.getPath).foreach { f =>
+        digest.update(f.getPath.getBytes("UTF-8"))
+        digest.update(IO.readBytes(f))
+      }
+      digest.digest.map(b => f"${b & 0xff}%02x").mkString
+    },
+    Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"sources=${sourcesDigest.value}".getBytes("UTF-8")),
+    // `test` and `testOnly` both find the suites first: no suite starts before every module is compiled
+    Test / definedTests := (Test / definedTests).dependsOn(everyModuleCompiled).value
+  )
   .enablePlugins(NativeImage)
   .settings(
     nativeImageName := "histmersion-server",
