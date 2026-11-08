@@ -56,26 +56,20 @@ object QueueView:
 
   object Seg:
     object Text:
-      type S = com.histmersion.api.UiLabels.Text
-      val S: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
+      export com.histmersion.api.UiLabels.{Text as S}
     object Bold:
-      type S = com.histmersion.api.UiLabels.Text
-      val S: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
+      export com.histmersion.api.UiLabels.{Text as S}
     object Italic:
-      type S = com.histmersion.api.UiLabels.Text
-      val S: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
+      export com.histmersion.api.UiLabels.{Text as S}
     object Doi:
-      type Value = com.histmersion.web.QueueItemRef.Ref.Doi
-      val Value: _root_.com.histmersion.web.QueueItemRef.Ref.Doi.type = _root_.com.histmersion.web.QueueItemRef.Ref.Doi
+      export com.histmersion.web.QueueItemRef.Ref.{Doi as Value}
     object Url:
-      type Value = com.histmersion.web.Preview.Item.Href
-      val Value: _root_.com.histmersion.web.Preview.Item.Href.type = _root_.com.histmersion.web.Preview.Item.Href
+      export com.histmersion.web.Preview.Item.{Href as Value}
     object Cite:
       type Citekey = com.histmersion.web.Preview.Target.Source.Citekey
       val Citekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
     object Ident:
-      type Id = com.histmersion.web.IdentLink.Id
-      val Id: _root_.com.histmersion.web.IdentLink.Id.type = _root_.com.histmersion.web.IdentLink.Id
+      export com.histmersion.web.IdentLink.Id
 
   /** What differs between the three windows; everything else is shared.
     *

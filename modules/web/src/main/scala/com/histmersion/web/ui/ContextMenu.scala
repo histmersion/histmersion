@@ -13,12 +13,7 @@ object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
 
-  type ShowTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  val ShowTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  type OnTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  type ButtonTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  val ButtonTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  export com.histmersion.web.ui.ContextMenu.Open.{Title as ShowTitle, Title as OnTitle, Title as ButtonTitle}
   type ButtonExtraCls = ButtonExtraCls.T
   object ButtonExtraCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
