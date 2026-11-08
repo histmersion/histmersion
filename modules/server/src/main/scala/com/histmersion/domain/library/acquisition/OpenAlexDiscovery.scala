@@ -12,7 +12,7 @@ import com.histmersion.domain.library.Doi
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */
 final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
-  private def problem(p: Problem) = Problem(p.value)
+  private def problem(p: plugin.Problem) = Problem(p.value)
 
   def search(
       query: Search.Query,

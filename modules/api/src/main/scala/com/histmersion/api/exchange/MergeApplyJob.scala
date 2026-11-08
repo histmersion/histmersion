@@ -27,15 +27,11 @@ final case class MergeApplyJob(
       com.histmersion.api.json.Schema
 object MergeApplyJob:
 
-  type InterruptedText = InterruptedTextValue
-  type InterruptedTextValue = Problem
-  val InterruptedTextValue: Problem.type = Problem
+  type InterruptedText = Problem
   export com.histmersion.api.exchange.Bundle.Name as OfBundle
   export MergePlan.PlanHash as OfPlanHash
   type OfElapsedMs = ElapsedMs
   val OfElapsedMs: ElapsedMs.type = ElapsedMs
-  type OfError = Problem
-  val OfError: Problem.type = Problem
 
   export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
   export com.histmersion.api.exchange.Bundle.Name as Bundle
@@ -58,7 +54,7 @@ object MergeApplyJob:
       bundle: MergeApplyJob.OfBundle,
       planHash: MergeApplyJob.OfPlanHash,
       elapsedMs: OfElapsedMs,
-      error: Option[OfError],
+      error: Option[Problem],
       result: Option[MergeApplyResult]
   ): MergeApplyJob =
     status match

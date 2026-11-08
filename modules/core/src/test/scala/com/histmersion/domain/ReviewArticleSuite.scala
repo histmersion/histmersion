@@ -620,7 +620,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          ReviewArticle.RejectionAnswer.Reason("the record says so"),
+          Problem("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -648,13 +648,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          ReviewArticle.RejectionAnswer.Reason("no"),
+          Problem("no"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("the ship sank in a storm off Lycia in 1320 BCE")
         ),
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("C1"),
-          ReviewArticle.RejectionAnswer.Reason("it is clear"),
+          Problem("it is clear"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("ten tons of copper")
         )
@@ -732,7 +732,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          ReviewArticle.RejectionAnswer.Reason("no"),
+          Problem("no"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("nothing like this is in it")
         )
@@ -1515,7 +1515,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          ReviewArticle.RejectionAnswer.Reason("the record says so"),
+          Problem("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -1523,7 +1523,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
       wontFix = List(
-        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.WontFixAnswer.Reason("wordy, but exact"))
+        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem("wordy, but exact"))
       )
     )
     assertEquals(
@@ -1534,9 +1534,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       .modify(_.wontFix)
       .setTo(
         List(
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), ReviewArticle.WontFixAnswer.Reason("no")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), ReviewArticle.WontFixAnswer.Reason("x")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.WontFixAnswer.Reason(" "))
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), Problem("no")),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), Problem("x")),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem(" "))
         )
       )
     val ps = fix(bad, last = LastRound(false)).left.toOption.get
@@ -1577,7 +1577,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          ReviewArticle.RejectionAnswer.Reason("the record says so"),
+          Problem("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -1599,7 +1599,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(
           WontFixAnswer(
             ReviewArticle.WontFixAnswer.Id("R8"),
-            ReviewArticle.WontFixAnswer.Reason("recording the filter is not an edit")
+            Problem("recording the filter is not an edit")
           )
         )
       )

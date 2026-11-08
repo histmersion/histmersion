@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
 import com.histmersion.domain.automation.agents.Halt
@@ -354,7 +354,7 @@ final class AcquisitionSweepPipeline(
         Failed(
           p.candidate.doi,
           Problem(why.value.take(500)),
-          IngestBacklog.isNoLegalCopy(Problem(why.value))
+          IngestBacklog.isNoLegalCopy(domain.Problem(why.value))
         )
       )
     )
@@ -373,7 +373,7 @@ final class AcquisitionSweepPipeline(
         c.authors,
         c.venue,
         List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-        Problem(p.why.value),
+        api.Problem(p.why.value),
         Some(Managers.OaWork.FoundBy(ctx.run.id.value))
       )
       ctx.write(

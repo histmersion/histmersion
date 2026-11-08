@@ -1117,7 +1117,7 @@ object Calibre:
         citekeys: List[UpdateRow.Citekeys],
         state: UpdateRow.State,
         changes: List[Change],
-        reason: Option[UpdateRow.Reason]
+        reason: Option[Problem]
     ) derives KindlingsCodecAsObject
     object UpdateRow:
       type CalibreId = Calibre.Book.Id
@@ -1126,8 +1126,6 @@ object Calibre:
       val Citekeys: CollectionUpdateRow.Citekeys.type = CollectionUpdateRow.Citekeys
       type State = CollectionUpdateRow.State
       val State: CollectionUpdateRow.State.type = CollectionUpdateRow.State
-      type Reason = Problem
-      val Reason: Problem.type = Problem
 
       def of(e: UpdateEntry): UpdateRow =
         val (state, changes) = e.outcome match
@@ -1147,7 +1145,7 @@ object Calibre:
           e.citekeys.map(k => Citekeys(k.value)),
           State(state),
           changes.map(ch => Change(Change.Field(ch.field.name.value), ch.from, ch.to)),
-          reason.map(r => Reason(r.value))
+          reason.map(r => Problem(r.value))
         )
       def of(r: CollectionUpdateRow): UpdateRow =
         UpdateRow(

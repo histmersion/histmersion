@@ -322,7 +322,7 @@ final class ManagerSupervisor(
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[ManagerContext.EvaluateStepError],
+      error: Option[Problem],
       now: Instant,
       out: Builder[TickLine, List[TickLine]],
       kind: ManagerKindDefinition
@@ -337,7 +337,7 @@ final class ManagerSupervisor(
       item.state,
       run,
       st.transformInto[com.histmersion.domain.automation.Run.State],
-      error,
+      error.map(domain.Problem.fromApi),
       kind.facts(this, item, run),
       now
     ) match
@@ -728,7 +728,7 @@ final class ManagerSupervisor(
         ManagerPolicy.PendingCount(pending),
         ManagerPolicy.DueCount(waits.size),
         ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value),
-        blocked.map(Problem(_))
+        blocked.map(domain.Problem(_))
       )
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
         case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.value.take(200)}"

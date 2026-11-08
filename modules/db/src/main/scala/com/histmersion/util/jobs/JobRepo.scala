@@ -391,7 +391,7 @@ object JobRepo:
           MergeApplyJob.OfBundle(bundle),
           MergeApplyJob.OfPlanHash(plan),
           MergeApplyJob.OfElapsedMs(math.max(0L, ms)),
-          error.map(MergeApplyJob.OfError(_)),
+          error.map(Problem(_)),
           result.flatMap(r => Jsonb.read[MergeApplyResult](Jsonb.JsonText(r)))
         )
       }

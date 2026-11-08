@@ -18,9 +18,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 enum Halt derives CanEqual:
   /** `resumeAt`: when the run may go on by itself (an allowance window freeing); None = a person resumes it. */
-  case Pause(reason: PauseReason, detail: Halt.Pause.Detail, resumeAt: Option[java.time.Instant] = None)
+  case Pause(reason: PauseReason, detail: Problem, resumeAt: Option[java.time.Instant] = None)
   case Cancel
-  case Fail(message: Halt.Fail.Message)
+  case Fail(message: Problem)
 
   /** The run waits for a person to decide approval `id` (a blocking step); it holds no worker, and goes back to the
     * queue when the approval is decided.
@@ -30,12 +30,6 @@ enum Halt derives CanEqual:
 object Halt:
   type WaitId = WaitId.T
   object WaitId extends Newtype[Long, Pure]
-  object Pause:
-    type Detail = Problem
-    val Detail: Problem.type = Problem
-  object Fail:
-    type Message = Problem
-    val Message: Problem.type = Problem
   object Wait:
     type Id = WaitId
     val Id: WaitId.type = WaitId

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.Problem
+import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -376,7 +376,7 @@ final class CompileArticlePipeline(
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale =
-            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Problem("")))
+            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(api.Problem("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),
@@ -449,7 +449,7 @@ final class CompileArticlePipeline(
         .logLine(
           d,
           CompileArticle.Written(w.written.value),
-          Problem(w.why.value),
+          domain.Problem(w.why.value),
           review.map(Run.Id.assume(_)),
           ctx.runId
         )

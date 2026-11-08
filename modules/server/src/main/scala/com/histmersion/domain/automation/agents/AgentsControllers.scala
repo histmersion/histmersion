@@ -1239,7 +1239,7 @@ final class AgentsControllers(
             go(
               attempt + 1,
               ask + Prompt.retry(
-                problems.map(Problem(_)),
+                problems.map(domain.Problem(_)),
                 answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)
               ),
               use,

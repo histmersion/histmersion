@@ -172,14 +172,12 @@ final class Engine(
         )
         c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
           Halt.Fail(
-            Halt.Fail
-              .Message(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
+            Problem(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
           )
         else
           Halt.Pause(
             PauseReason.Stalled,
-            Halt.Pause
-              .Detail(s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})"),
+            Problem(s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})"),
             Some(
               java.time.Instant
                 .ofEpochMilli(now.value)
@@ -400,11 +398,11 @@ final class Engine(
           val outcome: Either[Halt, String] =
             try
               pipe match
-                case None => Left(Halt.Fail(Halt.Fail.Message(s"no pipeline '${run.pipeline}' in this build")))
+                case None => Left(Halt.Fail(Problem(s"no pipeline '${run.pipeline}' in this build")))
                 case Some(_) if !sameVersion =>
                   Left(
                     Halt.Fail(
-                      Halt.Fail.Message("the pipeline's version changed since this run started; start a new run")
+                      Problem("the pipeline's version changed since this run started; start a new run")
                     )
                   )
                 case Some(p) =>
@@ -427,10 +425,10 @@ final class Engine(
                     .now(agents.clock)
                     .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
                 )
-                Left(Halt.Pause(PauseReason.Interrupted, Halt.Pause.Detail("interrupted"), at))
+                Left(Halt.Pause(PauseReason.Interrupted, Problem("interrupted"), at))
               case e: Exception =>
                 scribe.error(s"agent run $id failed unexpectedly: ${e.getMessage}", e)
-                Left(Halt.Fail(Halt.Fail.Message(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
+                Left(Halt.Fail(Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
             finally
               running.remove(id)
               Thread.interrupted()
@@ -510,13 +508,13 @@ final class Engine(
   private[histmersion] def checkControl(id: Run.Id): Either[Halt, Unit] =
     Option(running.get(id)) match
       case Some(c) if c.cancel => Left(Halt.Cancel)
-      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, Halt.Pause.Detail("paused on request")))
+      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, Problem("paused on request")))
       case _                   => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
   private[histmersion] def checkBudget(id: Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
-      case None    => Left(Halt.Fail(Halt.Fail.Message("the run disappeared")))
+      case None    => Left(Halt.Fail(Problem("the run disappeared")))
       case Some(r) =>
         val (day, month) = agents.runs.spendDayMonth()
         val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
@@ -524,7 +522,7 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(
+              Problem(
                 s"the run spent ${AgentsMarkdown.usd(r.costUsd.value)} of its ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
               )
             )
@@ -533,7 +531,7 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(
+              Problem(
                 s"the run used ${r.usage.budgeted(weight)} of its ${r.budgetTokens} budget tokens " +
                   s"(cache reads count ${cfg.budgets.cacheReadWeight}: agents.budgets.cache-read-weight)"
               )
@@ -543,14 +541,14 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(s"today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
+              Problem(s"today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
             )
           )
         else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(
+              Problem(
                 s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"
               )
             )

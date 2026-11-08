@@ -481,7 +481,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         List(
           RejectionAnswer(
             RejectionAnswer.Id("S1"),
-            RejectionAnswer.Reason(" "),
+            Problem(" "),
             RejectionAnswer.Citekey("a2019_tin"),
             RejectionAnswer.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
           )
@@ -509,7 +509,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   private var noCheckId: CheckAnswer.Id = scala.compiletime.uninitialized
   private var noCheckNote: CheckAnswer.Note = scala.compiletime.uninitialized
   private var noWontFixId: WontFixAnswer.Id = scala.compiletime.uninitialized
-  private var noWontFixReason: WontFixAnswer.Reason = scala.compiletime.uninitialized
+  private var noWontFixReason: Problem = scala.compiletime.uninitialized
   private var noWorkDoi: PlanGoal.WorkAnswer.Doi = scala.compiletime.uninitialized
 
   test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
@@ -640,17 +640,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         last = LastRound(false)
       ).left.toOption.get
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id(""), WontFixAnswer.Reason("wordy, but exact"))).contains(
+      problems(WontFixAnswer(WontFixAnswer.Id(""), Problem("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(noWontFixId, WontFixAnswer.Reason("wordy, but exact"))).contains(
+      problems(WontFixAnswer(noWontFixId, Problem("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id("R1"), WontFixAnswer.Reason(" ")))
+      problems(WontFixAnswer(WontFixAnswer.Id("R1"), Problem(" ")))
         .contains("won't fix R1: give the reason")
     )
     assert(problems(WontFixAnswer(WontFixAnswer.Id("R1"), noWontFixReason)).contains("won't fix R1: give the reason"))

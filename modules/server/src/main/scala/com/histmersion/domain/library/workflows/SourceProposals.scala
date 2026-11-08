@@ -139,13 +139,7 @@ object SourceProposals:
       type What = OutcomeWhat
       val What: OutcomeWhat.type = OutcomeWhat
 
-    object Skipped:
-      type Why = Problem
-      val Why: Problem.type = Problem
 
-    object Failed:
-      type Why = Problem
-      val Why: Problem.type = Problem
 
     object NotProposed:
       type What = OutcomeWhat

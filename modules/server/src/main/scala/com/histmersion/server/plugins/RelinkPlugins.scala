@@ -3,7 +3,7 @@ package server.plugins
 
 import com.histmersion.plugin.Header
 
-import com.histmersion.plugin.Problem
+import com.histmersion.api.Problem
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
@@ -205,7 +205,7 @@ object RelinkPlugins:
       PluginDescription.Id(""),
       PluginDescription.Version(""),
       PluginDescription.SpiVersion(0),
-      error = Some(Problem(error))
+      error = Some(api.Problem(error))
     )
 
   private def fromJar(c: Class[?], jar: Path): Boolean =
@@ -213,7 +213,7 @@ object RelinkPlugins:
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      Problem("no HTTP while a plugin is being described")
+      plugin.Problem("no HTTP while a plugin is being described")
     )
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its

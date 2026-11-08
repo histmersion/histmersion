@@ -16,13 +16,13 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Either[Problem, HttpAnswer.Body] =
-    policy.bytes(HttpTransport.Url(url.value), headers)
+    policy.bytes(HttpTransport.Url(url.value), headers).left.map(p => Problem(p.value))
 
   override def once(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Either[Problem, HttpAnswer] =
-    policy.once(HttpTransport.Url(url.value), headers)
+    policy.once(HttpTransport.Url(url.value), headers).left.map(p => Problem(p.value))
 
   def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))

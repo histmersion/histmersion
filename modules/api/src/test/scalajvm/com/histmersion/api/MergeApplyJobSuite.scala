@@ -24,7 +24,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
     MergeApplyResult.PlanHash("abc123")
   )
 
-  private def of(status: JobState, error: Option[MergeApplyJob.OfError] = None, r: Option[MergeApplyResult] = None) =
+  private def of(status: JobState, error: Option[Problem] = None, r: Option[MergeApplyResult] = None) =
     MergeApplyJob.of(
       SpatialHierarchyResult.Job.Id("j1"),
       status,
@@ -44,7 +44,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
     )
 
   test("a row a restart failed is interrupted, and says nothing was half applied"):
-    val j = of(JobState.Failed, error = Some(MergeApplyJob.OfError(JobState.Interrupted)))
+    val j = of(JobState.Failed, error = Some(Problem(JobState.Interrupted)))
     assertEquals(j.state, MergeJobState.Interrupted)
     assert(
       j.error.exists(e => e.value.contains("never half applied") && e.value.contains("merge list")),
@@ -54,11 +54,11 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   test("a crash is failed with its reason; done without a recorded report is failed, not done"):
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.OfError("merge apply crashed: boom"))).error,
+      of(JobState.Failed, error = Some(Problem("merge apply crashed: boom"))).error,
       Some("merge apply crashed: boom")
     )
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.OfError("merge apply crashed: boom"))).state,
+      of(JobState.Failed, error = Some(Problem("merge apply crashed: boom"))).state,
       MergeJobState.Failed
     )
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)

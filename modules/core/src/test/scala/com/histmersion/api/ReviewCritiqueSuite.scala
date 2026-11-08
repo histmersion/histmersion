@@ -592,17 +592,17 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           None,
-          ReviewArticle.SetAsideAnswer.Reason("Cited for the date only.")
+          Problem("Cited for the date only.")
         ),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S2"),
           Some(CritiqueRef.Wire("brown1999_rites>frazer1922_golden")),
-          ReviewArticle.SetAsideAnswer.Reason("Off the point.")
+          Problem("Off the point.")
         ),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id(""),
           Some(CritiqueRef.Wire("frazer1922_golden>brown1999_rites")),
-          ReviewArticle.SetAsideAnswer.Reason("No finding names it.")
+          Problem("No finding names it.")
         )
       ),
       byId,
@@ -637,20 +637,20 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     val (none, noPair, bad) = checkSetAside(
       List(
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("R1"), None, ReviewArticle.SetAsideAnswer.Reason("x")),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S2"), None, ReviewArticle.SetAsideAnswer.Reason("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("R1"), None, Problem("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S2"), None, Problem("x")),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           Some(CritiqueRef.Wire("zz2000_a>zz2001_b")),
-          ReviewArticle.SetAsideAnswer.Reason("x")
+          Problem("x")
         ),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S1"), None, ReviewArticle.SetAsideAnswer.Reason("")),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S9"), None, ReviewArticle.SetAsideAnswer.Reason("x")),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id(""), None, ReviewArticle.SetAsideAnswer.Reason("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S1"), None, Problem("")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S9"), None, Problem("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id(""), None, Problem("x")),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id(""),
           Some(CritiqueRef.Wire("zz2000_a>zz2001_b")),
-          ReviewArticle.SetAsideAnswer.Reason("x")
+          Problem("x")
         )
       ),
       byId,
@@ -688,7 +688,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           None,
-          ReviewArticle.SetAsideAnswer.Reason("Cited for the date only.")
+          Problem("Cited for the date only.")
         )
       )
     )
