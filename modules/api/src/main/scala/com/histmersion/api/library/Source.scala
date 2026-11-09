@@ -712,22 +712,28 @@ object Source:
               )
             )
 
-    def applyPatch(existing: Source, patch: Patch): Either[Problem, Source] =
+    /** A patch the server refuses as invalid: why, and the field of the source it is about when there is one. */
+    final case class Refusal(message: Problem, field: Option[Api.Error.Field] = None):
+      def error: Api.Error = field.fold(invalid(message))(f => invalid(message, f.code))
+
+    private def refused[A](r: Either[Problem, A]): Either[Refusal, A] = r.left.map(Refusal(_))
+
+    def applyPatch(existing: Source, patch: Patch): Either[Refusal, Source] =
       for
-        _ <- precondition(existing, patch)
-        period <- patch.period.fold[Either[Problem, Option[Period]]](Right(existing.period))(p =>
-          periodOf(Some(p.start), Some(p.end), "source")
+        _ <- refused(precondition(existing, patch))
+        period <- patch.period.fold[Either[Refusal, Option[Period]]](Right(existing.period))(p =>
+          periodOf(Some(p.start), Some(p.end), "source").left.map(Refusal(_, Some(Api.Error.Field.Period)))
         )
-        fs <- patch.findings.fold[Either[Problem, List[Finding]]](Right(existing.findings))(fp =>
-          applyFindings(existing.citekey, existing.findings, fp)
+        fs <- patch.findings.fold[Either[Refusal, List[Finding]]](Right(existing.findings))(fp =>
+          refused(applyFindings(existing.citekey, existing.findings, fp))
         )
         meta = patch.metadata.getOrElse(MetadataPatch())
-        _ <- metadataCheck(meta)
-        newEdges <- patch.edges.fold[Either[Problem, List[Edge]]](Right(existing.edges))(
-          applyEdges(existing.citekey, existing.edges, _)
+        _ <- refused(metadataCheck(meta))
+        newEdges <- patch.edges.fold[Either[Refusal, List[Edge]]](Right(existing.edges))(e =>
+          refused(applyEdges(existing.citekey, existing.edges, e))
         )
         newStatus = meta.status.getOrElse(existing.status)
-        _ <- supersededEdgeCheck(newStatus, newEdges)
+        _ <- supersededEdgeCheck(newStatus, newEdges).left.map(Refusal(_, Some(Api.Error.Field.Status)))
       yield
         def cleared(f: MetadataField) = meta.clear.contains(f)
         existing.copy(

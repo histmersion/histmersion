@@ -492,8 +492,8 @@ object SourceService:
                   existing,
                   Source.Write.srcAliased(patch, apiKey(requested), apiKey(citekey))
                 ) match
-                  case Left(msg) =>
-                    answer = Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+                  case Left(refusal) =>
+                    answer = Left(refusal.error)
                     st
                   case Right(updated) => { answer = Right(Source.UpdatedAt(token(at))); written(st, updated, at) }
       }
