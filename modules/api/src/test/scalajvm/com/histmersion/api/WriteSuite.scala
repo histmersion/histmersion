@@ -162,7 +162,7 @@ class WriteSuite extends munit.FunSuite:
       FindingsPatch(add = List(Finding.Input(Finding.Claim("x"), confidence = Some(Confidence.Wire("certain")))))
     val r = Source.Write.applyPatch(existing, Source.Patch(findings = Some(bad)))
     assert(
-      r.left.exists(m => m.value.contains("confidence 'certain'") && m.value.contains("high|medium|low|contested")),
+      r.left.exists(m => m.message.value.contains("confidence 'certain'") && m.message.value.contains("high|medium|low|contested")),
       r.toString
     )
     val ok = Source.Write.applyPatch(
@@ -204,7 +204,7 @@ class WriteSuite extends munit.FunSuite:
   test("findings: a half-specified period is rejected with a readable message"):
     val p = FindingsPatch(add = List(Finding.Input(Finding.Claim("bad"), periodStart = Some(Year(-1000)))))
     val e = Source.Write.applyPatch(existing, Source.Patch(findings = Some(p))).swap.toOption.get
-    assert(e.value.contains("period_start"), e)
+    assert(e.message.value.contains("period_start"), e)
 
   // ── metadata / scalars ───────────────────────────────────────────────────────────────────────
   test("metadata: present fields replace, absent fields are left alone"):
@@ -255,8 +255,8 @@ class WriteSuite extends munit.FunSuite:
     val json = """{"edges":{"add":[{"src":"kassian2024_rebuttal","dst":"haak2015_massive","kind":"refutes"}]}}"""
     val p = io.circe.parser.decode[Source.Patch](json).toOption.get
     val e = Source.Write.applyPatch(existing, p).swap.toOption.get
-    assert(e.value.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
-    assert(e.value.contains("patch 'kassian2024_rebuttal'"), e)
+    assert(e.message.value.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
+    assert(e.message.value.contains("patch 'kassian2024_rebuttal'"), e)
     val rm =
       EdgesPatch(remove = List(Edge.Input(Citekey("anthony2007_horse"), Edge.Kind.References, Some(Citekey("other")))))
     assert(Source.Write.applyEdges(Citekey(ck), existing.edges, rm).swap.toOption.get.value.contains("edges.remove"))
@@ -467,7 +467,7 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(metadata =
       Some(MetadataPatch(doi = (Some("10.1/x")).map(Doi.apply), clear = List(MetadataField.Doi)))
     )
-    assert(Source.Write.applyPatch(existing, p).swap.toOption.get.value.contains("both set and cleared"))
+    assert(Source.Write.applyPatch(existing, p).swap.toOption.get.message.value.contains("both set and cleared"))
 
   test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
     import io.circe.parser.decode
@@ -482,7 +482,7 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId("1806")))))
     assertEquals(Source.Write.applyPatch(existing, p).map(_.calibreId), Right(Some("1806")))
     val bad = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId("abc")))))
-    assert(Source.Write.applyPatch(existing, bad).swap.toOption.get.value.contains("not a Calibre id"))
+    assert(Source.Write.applyPatch(existing, bad).swap.toOption.get.message.value.contains("not a Calibre id"))
 
   // ── #813: an unknown or misplaced key is refused, naming the key and the expected shape ─────────
   test("strict: an unknown top-level key in a patch is refused, with the keys that are accepted"):

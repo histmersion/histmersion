@@ -63,6 +63,15 @@ object SourceEditor:
   enum Field derives CanEqual:
     case Title, Authors, Year, Venue, Doi, Status, Topics, Regions, Tags, Period, Summary, Form
 
+  object Field:
+    /** Which field a server refusal is about, from the field it names; a refusal about none of them is shown above the
+      * buttons.
+      */
+    def of(e: Api.Error): Field = e.field match
+      case Some(Api.Error.Field.Period) => Period
+      case Some(Api.Error.Field.Status) => Status
+      case None                               => Form
+
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   private def cannotClear(what: String) =
@@ -148,25 +157,6 @@ object SourceEditor:
       if patch == Source.Patch() then Right(None)
       else Right(Some(patch.modify(_.ifUpdatedAt).setTo(orig.updatedAt.map(u => Source.UpdatedAt(u.value)))))
 
-  /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
-    * message about none of them is shown above the buttons.
-    */
-  def fieldOf(message: String): Field =
-    val m = message.toLowerCase
-    List(
-      "period" -> Field.Period,
-      "status" -> Field.Status,
-      "title" -> Field.Title,
-      "doi" -> Field.Doi,
-      "venue" -> Field.Venue,
-      "author" -> Field.Authors,
-      "topic" -> Field.Topics,
-      "region" -> Field.Regions,
-      "tag" -> Field.Tags,
-      "summary" -> Field.Summary,
-      "year" -> Field.Year
-    ).collectFirst { case (k, f) if m.contains(k) => f }.getOrElse(Field.Form)
-
   val ConflictMessage =
     "Someone else changed this source after you opened it. The form now shows the current version — " +
       "make your change again and save."
@@ -215,7 +205,7 @@ object SourceEditor:
                       errors.set(List(Field.Form -> ConflictMessage))
                       load()
                     case f: ApiFailure if f.unauthorized => errors.set(List(Field.Form -> f.error.message.value))
-                    case f: ApiFailure => errors.set(List(fieldOf(f.error.message.value) -> f.error.message.value))
+                    case f: ApiFailure => errors.set(List(Field.of(f.error) -> f.error.message.value))
                     case e             => errors.set(List(Field.Form -> e.getMessage))
                   },
                   sw =>

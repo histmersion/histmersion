@@ -15,6 +15,8 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
+import com.histmersion.api.Api
+import com.histmersion.api.Problem
 import com.histmersion.api.library.Doi
 import com.histmersion.api.Years
 
@@ -143,10 +145,22 @@ class SourceEditorSuite extends munit.FunSuite:
   }
 
   test("a server refusal is shown next to the field its message names") {
+    def refusal(field: Option[Api.Error.Field], message: Problem) =
+      Source.Write.Refusal(message, field).error
     assertEquals(
-      SourceEditor.fieldOf("anthony2007_horse: period_start (-1200) must not be after period_end"),
+      Field.of(
+        refusal(
+          Some(Api.Error.Field.Period),
+          Problem("anthony2007_horse: period_start (-1200) must not be after period_end")
+        )
+      ),
       Field.Period
     )
-    assertEquals(SourceEditor.fieldOf("status=superseded requires a superseded_by edge"), Field.Status)
-    assertEquals(SourceEditor.fieldOf("something else went wrong"), Field.Form)
+    assertEquals(
+      Field.of(
+        refusal(Some(Api.Error.Field.Status), Problem("status=superseded requires a superseded_by edge"))
+      ),
+      Field.Status
+    )
+    assertEquals(Field.of(refusal(None, Problem("something else went wrong"))), Field.Form)
   }

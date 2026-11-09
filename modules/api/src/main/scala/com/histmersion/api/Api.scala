@@ -2709,12 +2709,20 @@ object Api:
     /** The code of a refused citekey. */
     val InvalidCitekey: Code = Code("invalid_citekey")
 
+    /** The field of a source a refused patch is about, as the code the refusal carries. */
+    enum Field(val code: Code) derives CanEqual:
+      case Period extends Field(Code("invalid_period"))
+      case Status extends Field(Code("invalid_status"))
+
     extension (e: Error)
       /** The server answered "not found" (an unknown citekey, id or slug). */
       def isNotFound: Boolean = e.code.contains(Code(Write.CodeNotFound))
 
       /** The server refused the citekey of the request. */
       def isInvalidCitekey: Boolean = e.code.contains(InvalidCitekey)
+
+      /** The field of the source the server refused a patch for, when the refusal names one. */
+      def field: Option[Field] = e.code.flatMap(c => Field.values.find(_.code == c))
 
     def hasCode(code: Code): PartialFunction[Any, Boolean] =
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)
