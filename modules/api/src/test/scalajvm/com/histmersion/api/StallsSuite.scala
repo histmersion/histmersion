@@ -57,7 +57,7 @@ class StallsSuite extends munit.FunSuite:
       code(
         base
           .modify(_.waits)
-          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("budget: today's agent spend reached …"), blocker = Stalls.Blocker.Budget)))
+          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why.Budget(SchedWait.Detail("today's agent spend reached …")))))
       ),
       Code.Budget
     )
@@ -66,28 +66,28 @@ class StallsSuite extends munit.FunSuite:
         base
           .modify(_.waits)
           .setTo(
-            List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("starved: reviewer chain below its plan floor"), blocker = Stalls.Blocker.Starved))
+            List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why.Starved(SchedWait.Detail("reviewer chain below its plan floor"))))
           )
       ),
       Code.Quota
     )
     assertEquals(
       code(
-        base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("pool"), SchedWait.Why("plan pool chatgpt-plan …"))))
+        base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("pool"), SchedWait.Why.Other(SchedWait.Detail("plan pool chatgpt-plan …")))))
       ),
       Code.Quota
     )
     val q = classify(
       base
         .modify(_.waits)
-        .setTo(List(SchedWait(SchedWait.Code("capacity"), SchedWait.Why("no place free"), SchedWait.Position(12))))
+        .setTo(List(SchedWait(SchedWait.Code("capacity"), SchedWait.Why.Other(SchedWait.Detail("no place free")), SchedWait.Position(12))))
     )
     assert(q._1 == Stall.Code(Code.Queue) && q._2.value.contains("#12") && q._3.value.contains("focus priority g"), q)
     assertEquals(
       code(
         base
           .modify(_.waits)
-          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("its goal's plan comes first"))))
+          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why.Other(SchedWait.Detail("its goal's plan comes first")))))
       ),
       Code.Blocked
     )

@@ -63,12 +63,9 @@ final class DrainService(
       .drain()
       .map((since, by, _) =>
         SchedulerPolicy.Block(
-          SchedulerPolicy.Block.Code("drain"),
-          SchedulerPolicy.Block.Why(
-            s"draining since ${since.value}${
-                if by.value.nonEmpty then s" (by ${by.value})" else ""
-              }: nothing new starts until it is lifted " +
-              "(histmersion agent autopilot undrain)"
+          SchedulerPolicy.Block.Why.Draining(
+            SchedulerPolicy.Block.Since(since.value),
+            Option.when(by.value.nonEmpty)(SchedulerPolicy.Block.By(by.value))
           )
         )
       )

@@ -57,7 +57,7 @@ object ManagersMarkdown:
     val runs = if (m.pauseRuns) == ManagerInfo.PauseRuns(true) then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if (m.backlog).value > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
-      m.statusNote.filter(_.value.nonEmpty).fold("")(n => s" · $n") +
+      m.statusNote.map(_.render).filter(_.nonEmpty).fold("")(n => s" · $n") +
       m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.value.take(120)}")
 
   def list(ms: List[ManagerInfo]): String =

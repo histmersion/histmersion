@@ -9,6 +9,7 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.ManagerPolicy.*
+import com.histmersion.api.automation.Manager as ApiManager
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
@@ -229,6 +230,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(notesFor(hs, ManagerPolicy.ItemId(7)).map(_.text), List("a", "b"))
 
   test("status line: paused, starved, at capacity, pending, idle"):
+    val chain = SchedulerPolicy.Block.Chain("skeptic chain below its plan floor")
     assertEquals(
       statusNote(
         Manager.State.Paused,
@@ -236,33 +238,31 @@ class ManagerPolicySuite extends munit.FunSuite:
         ManagerPolicy.Capacity(0),
         ManagerPolicy.PendingCount(3),
         ManagerPolicy.DueCount(3),
-        ManagerPolicy.InFlightCount(0),
-        None
-      ),
+        ManagerPolicy.InFlightCount(0)
+      ).render,
       "paused"
     )
     assertEquals(
       statusNote(
         Manager.State.Active,
-        Some(ManagerPolicy.StatusNote("skeptic chain below its plan floor")),
+        Some(SchedulerPolicy.Block.Why.Starved(chain)),
         ManagerPolicy.Capacity(0),
         ManagerPolicy.PendingCount(3),
         ManagerPolicy.DueCount(3),
-        ManagerPolicy.InFlightCount(0),
-        None
-      ),
+        ManagerPolicy.InFlightCount(0)
+      ).render,
       "starved: skeptic chain below its plan floor"
     )
-    assert(
+    assertEquals(
       statusNote(
         Manager.State.Active,
         None,
         ManagerPolicy.Capacity(0),
         ManagerPolicy.PendingCount(3),
         ManagerPolicy.DueCount(3),
-        ManagerPolicy.InFlightCount(2),
-        None
-      ).value.startsWith("at capacity")
+        ManagerPolicy.InFlightCount(2)
+      ).is,
+      ApiManager.Status.Kind.AtCapacity
     )
     assertEquals(
       statusNote(
@@ -271,23 +271,41 @@ class ManagerPolicySuite extends munit.FunSuite:
         ManagerPolicy.Capacity(0),
         ManagerPolicy.PendingCount(0),
         ManagerPolicy.DueCount(0),
-        ManagerPolicy.InFlightCount(0),
-        None
-      ),
+        ManagerPolicy.InFlightCount(0)
+      ).render,
       "idle"
     )
-    assertEquals(
-      statusNote(
-        Manager.State.Active,
-        None,
-        ManagerPolicy.Capacity(1),
-        ManagerPolicy.PendingCount(3),
-        ManagerPolicy.DueCount(0),
-        ManagerPolicy.InFlightCount(0),
-        Some(Problem("budget: x"))
-      ),
-      "budget: x"
+    val capped = dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2))
+    val budget = statusNote(
+      Manager.State.Active,
+      capped,
+      ManagerPolicy.Capacity(1),
+      ManagerPolicy.PendingCount(3),
+      ManagerPolicy.DueCount(0),
+      ManagerPolicy.InFlightCount(0)
     )
+    assertEquals(budget.is, ApiManager.Status.Kind.Budget)
+    assertEquals(Some(budget.render), capped.map(_.render))
+
+  test("a status line is read back as it was written"):
+    val lines = List(
+      "stopped",
+      "paused",
+      "paused (2 runs in flight)",
+      "idle",
+      "idle; the scheduler: capacity — no place free",
+      "at capacity (1 run in flight, 3 pending)",
+      "budget: its spend today (2.00 USD, metered calls only) reached its daily-usd (2.00); it starts again tomorrow (UTC)",
+      "starved: skeptic chain below its plan floor; frees ~09:00",
+      "focus: its goal waits for a slot — idle",
+      "3 pending, 1 run in flight",
+      "",
+      "anything else a person wrote"
+    )
+    lines.foreach(l => assertEquals(ApiManager.Status.parse(l).render, l))
+    assertEquals(ApiManager.Status.parse("idle").is, ApiManager.Status.Kind.Idle)
+    assertEquals(ApiManager.Status.parse("idle; the scheduler: x").is, ApiManager.Status.Kind.Other)
+    assertEquals(ApiManager.Status.parse("starved: x").is, ApiManager.Status.Kind.Starved)
 
   test("config: k=v pairs parse; a typo is an error; settings resolve over the defaults"):
     val c = ManagerConfig.parse(
@@ -570,7 +588,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(dailyBlock(None, BigDecimal(100)), None)
     assertEquals(dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal("1.99")), None)
     assert(
-      dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2)).exists(_.value.contains("metered calls only")),
+      dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2)).exists(_.render.contains("metered calls only")),
       dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2))
     )
     assertEquals(

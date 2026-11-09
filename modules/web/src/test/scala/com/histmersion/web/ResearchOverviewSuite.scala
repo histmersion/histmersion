@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -127,7 +128,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
       goal: Goal.Slug,
       done: Managers.ItemCounts.Done,
       pending: Managers.ItemCounts.Pending,
-      note: Option[Managers.ManagerInfo.StatusNote] = None
+      note: Option[Manager.Status] = None
   ) =
     Managers.ManagerInfo(
       id,
@@ -183,7 +184,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
               Goal.Slug("a"),
               ItemCounts.Done(0),
               ItemCounts.Pending(1),
-              Some(ManagerInfo.StatusNote("starved: no model"))
+              Some(Manager.Status.parse("starved: no model"))
             )
           )
         ),

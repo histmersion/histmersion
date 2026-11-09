@@ -13,6 +13,7 @@ import com.histmersion.api.automation.{AgentMode, Autopilot, ListFilters, Manage
 import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.histmersion.api.views.AutopilotStatus
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.AgentScheduler
@@ -70,8 +71,8 @@ object ResearchOverview:
         managers
           .filter(_.goal.contains(g.slug))
           .flatMap(_.statusNote)
-          .map(_.value)
-          .find(n => n.startsWith("starved") || n.startsWith("held") || n.startsWith("paused"))
+          .find(n => n.is == Manager.Status.Kind.Starved || n.is == Manager.Status.Kind.Paused)
+          .map(_.render)
       )
       .map(UiLabels.Text(_))
 

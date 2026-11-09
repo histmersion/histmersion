@@ -79,22 +79,44 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
-  /** What stands in the way of a blocked wait: a spend cap, plan pools below their floors, or anything else. */
-  enum Blocker derives CanEqual:
-    case Budget, Starved, Other
-
   final case class SchedWait(
       code: SchedWait.Code,
       why: SchedWait.Why,
-      position: SchedWait.Position = SchedWait.Position(0),
-      blocker: Blocker = Blocker.Other
+      position: SchedWait.Position = SchedWait.Position(0)
   )
 
   object SchedWait:
-    export Stall.{Code, Why}
-
+    export Stall.Code
     type Position = Position.T
     object Position extends Newtype[Int, Pure]
+    type Detail = Detail.T
+    object Detail extends Newtype[String, Pure]
+
+    /** What stands in the way of a wait: a spend cap, plan pools below their floors, or anything else. */
+    enum Why derives CanEqual:
+      case Budget(detail: Detail)
+      case Starved(detail: Detail)
+      case Other(detail: Detail)
+
+    object Why:
+      extension (w: Why)
+        /** The sentence as the stall report tells it. */
+        def render: Stall.Why = w match
+          case Budget(d)  => Stall.Why(s"budget: $d")
+          case Starved(d) => Stall.Why(s"starved: $d")
+          case Other(d)   => Stall.Why(s"$d")
+
+        def isBudget: Boolean = w match
+          case Budget(_) => true
+          case _         => false
+
+        def isStarved: Boolean = w match
+          case Starved(_) => true
+          case _          => false
+
+    extension (w: SchedWait)
+      def isBudget: Boolean = w.why.isBudget
+      def isStarved: Boolean = w.why.isStarved
 
   final case class Facts(
       slug: Facts.Slug,
@@ -145,7 +167,7 @@ object Stalls:
     type Running = Running.T
     object Running extends Newtype[Int, Pure]
 
-  def stalled(f: Facts, days: Stalls.ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
+  def stalled(f: Facts, days: ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 
   def classify(f: Facts): (Stall.Code, Stall.Why, Stall.Action) =
     val g = f.slug
@@ -183,21 +205,21 @@ object Stalls:
         Stall.Action(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == Stall.Code("blocked") && w.blocker == Blocker.Budget)
+      waitOf(w => w.code == Stall.Code("blocked") && w.isBudget)
         .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("budget"))))) match
         case Some(w) =>
           (
             Stall.Code(Code.Budget),
-            w.why,
+            w.why.render,
             Stall.Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == Stall.Code("blocked") && w.blocker == Blocker.Starved)
+          waitOf(w => w.code == Stall.Code("blocked") && w.isStarved)
             .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("pool"))))) match
             case Some(w) =>
               (
                 Stall.Code(Code.Quota),
-                w.why,
+                w.why.render,
                 Stall.Action(
                   "histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models"
                 )
@@ -207,7 +229,7 @@ object Stalls:
                 case Some(w) =>
                   (
                     Stall.Code(Code.Queue),
-                    Stall.Why(s"waits in the scheduler's queue (#${w.position}): ${w.why}"),
+                    Stall.Why(s"waits in the scheduler's queue (#${w.position}): ${w.why.render}"),
                     Stall.Action(
                       s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs"
                     )
@@ -217,7 +239,7 @@ object Stalls:
                     case Some(w) =>
                       (
                         Stall.Code(Code.Blocked),
-                        w.why,
+                        w.why.render,
                         Stall.Action(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
                     case None if (f.running).value > 0 =>
@@ -259,7 +281,7 @@ object Stalls:
                             Stall.Action(s"histmersion agent scheduler why <item>")
                           )
 
-  def report(facts: List[Facts], days: Stalls.ReportDays, at: Stalls.ReportAt): StallReport =
+  def report(facts: List[Facts], days: ReportDays, at: ReportAt): StallReport =
     val stalls = facts
       .filter(stalled(_, days))
       .map { f =>

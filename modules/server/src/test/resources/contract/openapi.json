@@ -16989,7 +16989,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Status1"
+                  "$ref" : "#/components/schemas/Status2"
                 }
               }
             }
@@ -27872,7 +27872,7 @@
             "$ref" : "#/components/schemas/ManagerConfig"
           },
           "statusNote" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Status1"
           },
           "cron" : {
             "type" : "string"
@@ -34227,6 +34227,22 @@
         }
       },
       "Status1" : {
+        "title" : "Status",
+        "type" : "object",
+        "required" : [
+          "kind",
+          "detail"
+        ],
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Status2" : {
         "title" : "Status",
         "type" : "object",
         "required" : [

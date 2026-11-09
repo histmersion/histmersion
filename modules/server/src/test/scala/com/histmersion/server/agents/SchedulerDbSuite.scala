@@ -390,7 +390,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     assert(
       connect(ds)(ManagerRepo.get(seedId(ref(g(2)))))
         .flatMap(_.statusNote)
-        .exists(_.value.contains("the scheduler: capacity")),
+        .exists(_.render.contains("the scheduler: capacity")),
       connect(ds)(ManagerRepo.get(seedId(ref(g(2))))).flatMap(_.statusNote)
     )
 

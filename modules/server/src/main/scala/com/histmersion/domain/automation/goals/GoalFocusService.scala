@@ -18,6 +18,7 @@ import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.GoalFocus.Facts
 import com.histmersion.domain.GoalFocus.Plan
 import com.histmersion.domain.GoalFocus.Work
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
 
@@ -83,10 +84,12 @@ final class GoalFocusService(
   @volatile private var queued: Set[Goal.Slug] = Set.empty
 
   /** The status line of a seeding manager or watcher whose goal waits for a focus slot (else `note`). */
-  def statusNote(goal: Option[Goal.Slug], note: ManagerInfo.StatusNote): ManagerInfo.StatusNote =
+  def statusNote(goal: Option[Goal.Slug], note: Manager.Status): Manager.Status =
     goal
       .filter(g => current.isDefined && queued(g))
-      .fold(note)(_ => ManagerInfo.StatusNote(s"focus: its goal waits for a slot — ${note.value}"))
+      .fold(note)(_ =>
+        Manager.Status(Manager.Status.Kind.Queued, s" its goal waits for a slot — ${note.render}")
+      )
 
   private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Ref(goal.value))
 

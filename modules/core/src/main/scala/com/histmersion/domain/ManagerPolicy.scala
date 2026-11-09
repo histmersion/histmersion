@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.api.Plural
-import com.histmersion.api.automation.ManagersMarkdown
+import com.histmersion.api.automation.Manager as ApiManager
 import com.histmersion.api.given
 
 import com.histmersion.api.automation.Managers.*
@@ -50,8 +50,6 @@ object ManagerPolicy:
   object Quota extends Newtype[Int, Pure]
   type Room = Room.T
   object Room extends Newtype[Int, Pure]
-  type StatusNote = StatusNote.T
-  object StatusNote extends Newtype[String, Pure]
   type StepLabel = StepLabel.T
   object StepLabel extends Newtype[String, Pure]
   type Tag = Tag.T
@@ -219,13 +217,15 @@ object ManagerPolicy:
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
-  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[Problem] =
+  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[SchedulerPolicy.Block.Why] =
     cap
       .filter(c => spentToday >= BigDecimal(c.value))
       .map(c =>
-        Problem(
-          s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
-            s"(${ManagersMarkdown.usd(c.value)}); it starts again tomorrow (UTC)"
+        SchedulerPolicy.Block.Why.Budget(
+          SchedulerPolicy.Block.SpendCap.Manager(
+            SchedulerPolicy.Block.Usd(spentToday),
+            SchedulerPolicy.Block.Usd(BigDecimal(c.value))
+          )
         )
       )
 
@@ -457,32 +457,35 @@ object ManagerPolicy:
       .toOption
       .orElse(scala.util.Try(java.time.LocalDate.parse(t).atStartOfDay(java.time.ZoneOffset.UTC).toInstant).toOption)
 
-  /** The status line a manager shows. */
+  /** The status line a manager shows; `held` is the spend cap or the starved plan pools that hold all its items. */
   def statusNote(
       state: Manager.State,
-      starved: Option[StatusNote],
+      held: Option[SchedulerPolicy.Block.Why],
       capacity: Capacity,
       pending: PendingCount,
       due: DueCount,
-      inFlight: InFlightCount,
-      budget: Option[Problem]
-  ): StatusNote =
-    if state == Manager.State.Stopped then StatusNote("stopped")
+      inFlight: InFlightCount
+  ): ApiManager.Status =
+    import ApiManager.Status
+    import Status.Kind
+    if state == Manager.State.Stopped then Status(Kind.Stopped)
     else if state == Manager.State.Paused then
-      StatusNote(
-        if inFlight.value > 0 then s"paused (${counted(inFlight.value, "run")} in flight)" else "paused"
-      )
+      Status(Kind.Paused, if inFlight.value > 0 then s" (${counted(inFlight.value, "run")} in flight)" else "")
     else
-      StatusNote(
-        budget.map(_.value).orElse(starved.map(s => s"starved: $s")).getOrElse {
-          if pending.value == 0 && inFlight.value == 0 then "idle"
+      held match
+        case Some(SchedulerPolicy.Block.Why.Budget(cap))    => Status(Kind.Budget, cap.render)
+        case Some(SchedulerPolicy.Block.Why.Starved(chain)) => Status(Kind.Starved, s"$chain")
+        case Some(other)                                    => Status.parse(other.render)
+        case None                                           =>
+          if pending.value == 0 && inFlight.value == 0 then Status(Kind.Idle)
           else if due.value > 0 && capacity.value == 0 then
-            s"at capacity (${counted(inFlight.value, "run")} in flight, $pending pending)"
+            Status(Kind.AtCapacity, s" (${counted(inFlight.value, "run")} in flight, $pending pending)")
           else if pending.value > 0 then
-            s"$pending pending" + (if inFlight.value > 0 then s", ${counted(inFlight.value, "run")} in flight" else "")
-          else s"${counted(inFlight.value, "run")} in flight"
-        }
-      )
+            Status(
+              Kind.Other,
+              s"$pending pending" + (if inFlight.value > 0 then s", ${counted(inFlight.value, "run")} in flight" else "")
+            )
+          else Status(Kind.Other, s"${counted(inFlight.value, "run")} in flight")
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 

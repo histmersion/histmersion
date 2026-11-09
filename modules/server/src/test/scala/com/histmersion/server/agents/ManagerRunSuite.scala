@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -492,7 +493,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       List("pending", "active", "pending")
     )
     assert(
-      connect(ds)(ManagerRepo.get(Review)).get.statusNote.exists(_.value.startsWith("at capacity")),
+      connect(ds)(ManagerRepo.get(Review)).get.statusNote.exists(_.is == Manager.Status.Kind.AtCapacity),
       connect(ds)(ManagerRepo.get(Review)).get.statusNote
     )
     assertEquals(a.engine.cancel(ApiIds.run(mine.id)).map(_.status), Right("cancelled"))
@@ -548,7 +549,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managers.tick(t0); a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_s1")).status, "pending")
     val m = connect(ds)(ManagerRepo.get(Review)).get
-    assert(m.statusNote.exists(_.value.startsWith("starved: skeptic")), m.statusNote)
+    assert(m.statusNote.exists(n => n.is == Manager.Status.Kind.Starved && n.render.startsWith("starved: skeptic")), m.statusNote)
     assertEquals(events.count(_.kind == StarvedKind), 1, "one event per change, not per tick")
     a.managing.update(ReviewLight, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     a.managers.tick(t0)
