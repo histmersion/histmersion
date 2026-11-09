@@ -33334,6 +33334,9 @@
           },
           "heartbeatAt" : {
             "type" : "string"
+          },
+          "pausedFor" : {
+            "type" : "string"
           }
         }
       },
