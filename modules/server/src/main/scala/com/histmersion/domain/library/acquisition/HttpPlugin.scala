@@ -6,6 +6,7 @@ import com.histmersion.plugin.Header
 import com.histmersion.plugin.Problem
 
 import com.histmersion.domain.CoreQuota
+import io.scalaland.chimney.dsl.*
 
 /** The host's [[Http]] as the plugin SPI's client: plugins get bytes, and parse what they asked for; a metered call is
   * sent [[Http.once]], answered with its status and headers.
@@ -18,7 +19,7 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
     http
       .bytes(Http.Url(url.value), sent(headers))
       .left
-      .map(e => Plugin.Http.Failure.Transport(Problem(e.value)))
+      .map(failure)
       .map(b => Plugin.HttpResponse.Body(b.value))
   override def fetch(
       url: Plugin.Http.Url,
@@ -27,7 +28,7 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
     http
       .once(Http.Url(url.value), sent(headers))
       .left
-      .map(e => Plugin.Http.Failure.Transport(Problem(e.value)))
+      .map(failure)
       .map(a =>
         Plugin.HttpResponse(
           Plugin.HttpResponse.Status(a.code.value),
@@ -35,3 +36,7 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
           Plugin.HttpResponse.Body(a.body.value)
         )
       )
+
+  private def failure(f: Http.Failure): Plugin.Http.Failure = f match
+    case Http.Failure.Status(code, why) => Plugin.Http.Failure.Status(code.status, why.transformInto[Problem])
+    case Http.Failure.Transport(why)    => Plugin.Http.Failure.Transport(why.transformInto[Problem])

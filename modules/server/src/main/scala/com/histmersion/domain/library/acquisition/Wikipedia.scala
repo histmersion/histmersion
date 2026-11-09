@@ -28,7 +28,7 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
             )
           )
           .left
-          .map(e => Problem(e.value))
+          .map(_.problem)
           .flatMap { j =>
             AcquireParse.wikiText(j).toRight(Problem(s"Wikipedia returned no wikitext for '$page'")).map {
               text =>

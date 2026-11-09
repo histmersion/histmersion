@@ -28,5 +28,5 @@ final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyInde
         )
       )
       .left
-      .map(p => Problem(p.value))
+      .map(_.problem)
       .map(Candidates.europepmcWorks)

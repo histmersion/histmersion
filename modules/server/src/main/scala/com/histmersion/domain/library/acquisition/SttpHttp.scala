@@ -6,6 +6,7 @@ import com.histmersion.domain.Problem
 import com.histmersion.config.AcquireConfig
 
 import com.histmersion.domain.{CoreQuota, HttpPolicy}
+import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, PolicyHttp, SttpTransport}
 import io.circe.Json
 
@@ -16,24 +17,33 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
   def bytes(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Problem, HttpAnswer.Body] =
-    policy.bytes(HttpTransport.Url(url.value), headers).left.map(_.problem.transformInto[Problem])
+  ): Either[Http.Failure, HttpAnswer.Body] =
+    policy.bytes(HttpTransport.Url(url.value), headers).left.map(failure)
 
   override def once(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Problem, HttpAnswer] =
-    policy.once(HttpTransport.Url(url.value), headers).left.map(_.problem.transformInto[Problem])
+  ): Either[Http.Failure, HttpAnswer] =
+    policy.once(HttpTransport.Url(url.value), headers).left.map(failure)
 
-  def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Http.Text] =
+  private def failure(f: Plugin.Http.Failure): Http.Failure = f match
+    case Plugin.Http.Failure.Status(code, why) =>
+      Http.Failure.Status(HttpAnswer.Code(code.value), why.transformInto[Problem])
+    case Plugin.Http.Failure.Transport(why) => Http.Failure.Transport(why.transformInto[Problem])
+
+  def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))
 
-  def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
+  def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
     text(url, headers).flatMap(s =>
-      io.circe.parser.parse(s.value).left.map(e => Problem(s"$url returned unparseable JSON: ${e.getMessage}"))
+      io.circe.parser
+        .parse(s.value)
+        .left
+        .map(e => Http.Failure.Transport(Problem(s"$url returned unparseable JSON: ${e.getMessage}")))
     )
 
 object SttpHttp:
+
   /** The client over java.net.http (sttp, the backend `cli/Client.scala` uses) with `cfg`'s User-Agent and timeout;
     * `tls` is the trust `acquire.tls` configured, `None` the JDK's roots.
     */
