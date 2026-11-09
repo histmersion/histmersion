@@ -453,3 +453,116 @@ Each step 2 to 6 is one slice, deployed alone, as with the step-3 refactor. Step
 | 10 | Generic `Entity.Kind/Key` and `Field` in the module, or move `Citekey`, `Slug`, `Year` below it? | Generic. Moving them drags `values` and Iron constraints into a "tiny" module. |
 | 11 | Wording of the logs: `group.case key=value` plus sentence? | Yes; the keys come from the case's own field names, so there is no second vocabulary. |
 | 12 | Who re-sorts the 52 `Unsorted` and the roughly 20% of mis-sorted sites? | The slice owner, as part of steps 2 to 6; the inventory counts only what remains. |
+
+## Sentences other text depends on
+
+Found in step 0 by matching every literal fragment of the 2,510 templates in `sites.tsv` (three or more words, 18 or more
+characters) against `plugin/`, `agents/`, `skills/`, `docs/` and `.claude/`, and by a search of the same places for wire
+codes, statuses, exit codes and quoted refusals. A slice that moves one of these sites keeps the sentence (or changes the
+text that quotes it in the same commit). `plugin/` holds only the generated copies of `agents/` and `skills/`.
+
+| sentence (as the text quotes it) | site today | quoted by | what reads it |
+|---|---|---|---|
+| `_No source '<key>'_` | `Write.notFound`, `LibraryTools.scala:156/526`, `EnrichManagerKind.scala:59` (`No source '{citekey}'`) | `skills/histmersion-query/SKILL.md:261` | an agent: "means it is not there". `NotFound.Entity`'s English sentence is `no <Type> '<key>'` (`no Citekey 'x'`), so the slice that moves these sites needs a noun per key type or keeps this sentence for the source's citekey |
+| `ifUpdatedAt` … returns **412** | `Source.scala:709`, `PersonalControllers.scala:175` (`'{ck}' has moved on: …`) | `skills/histmersion-compile/SKILL.md:85`, `skills/histmersion-ingest/SKILL.md:140`, `skills/ingest-paper/SKILL.md:86`, `docs/user-guide/reference/mcp-tools.md:44`, `rest-api.md:26/59/97` | agents and clients: the status, not the text. `Conflict.Stale` renders 412 |
+| `cannot reach Histmersion at … (is the server running?)` | `cli/Client.scala:137` | `docs/user-guide/reference/troubleshooting.md` | a person |
+| `not a directory on the server: {dir}` | `SeedControllers.scala:41` | `troubleshooting.md` | a person |
+| `… was built for plugin SPI …; this Histmersion speaks SPI …: rebuild it against SPI …`, `… it was built against …`, `… but this Histmersion ships …`, `build the plugin against …`, `could not be loaded` | `PluginHost.scala:124/164`, `PluginKit.scala:305/309`, `Conflict.scala:12` | `docs/user-guide/plugins/developing.md`, `troubleshooting.md`, `docs/research-module-layout.md` | a plugin author |
+| `{x} is not between -90 and 90` | `EventGeometry.scala:14`, `SpiValues.scala:100` | `docs/research-module-layout.md` | a person |
+| `'{old}' is an old citekey of '{new}'` | `SourceDeleteRepo.scala:85`, `SourceRepo.scala:492/508` | `docs/research-merge-import.md` | a person |
+| `… is below its floor: …` | `ModelPicker.scala:291` | `docs/research-agent-runtimes.md` | a person |
+| `… is not an open acquisition item` | `Queue.scala:192` | `docs/user-guide/reference/rest-api.md` | a client |
+| `… in the server's environment` | `ChatCompletionsProvider.scala:42` | `docs/user-guide/exploring/settings.md`, `docs/user-guide/how-to/ai-providers.md` | a person |
+| `unavailable: no login` | `PlanPools.scala:203` | `docs/research-plan-quotas.md` | a person |
+| `the listener is bound once …` | `ConfigReload.scala:34/35` | `docs/user-guide/reference/configuration.md` | a person |
+| `its filter returns …`, `sources the article cites …`, `the self-check left …` | `AutopilotPolicy.scala:172/178`, `FilterInference.scala:115` | `configuration.md`, `docs/research-process-managers.md` | a person |
+| `no MAJOR open after agent run`, `terms undefined (count only; the individual findings carry the severity …)` | `ReviewArticlePipeline.scala:1051`, `ReviewArticle.scala:1541` | `docs/research-review-convergence.md` | a person |
+| `not Open Access (isPublicDomain is false …)`, `on Flickr (its API needs a key …)`, `a Commons category, not a file`, `… differs from the search's …` | `MetCollection.scala:105`, `PleiadesLinks.scala:23/24`, `OpenContext.scala:262` | `docs/media-providers.md` | a person (these become `Plugin.Rejected` refusals) |
+| `… did not answer within …` | `Processes.scala:45` | `docs/research-interactive-performance.md` | a person |
+| `… is still in use after …` | `Hot.scala:325` | `docs/research-plugins.md` | a person |
+| `… handed over a record the host cannot read` | `PluginEvents.scala:228` | `docs/research-module-layout.md` | a person |
+| narration, leaving `Problem` (section 3): `waits for a person`, `same Wikidata item`, `its dates do not overlap the place's …`, `… names another place on the map`, `no dates on the record`, `one record has the wrong DOI` | `GoalFocus.scala:317`, `CatalogMerge.scala:138`, `MediaMatch.scala:109-184`, `SourcePlan.scala:198` | `docs/media-providers.md`, `docs/research-deterministic-merge.md`, `docs/research-merge-import.md`, approvals and process-manager docs | a person; the per-feature narration types keep the words |
+| exit codes: `exits 1 when there are any` (`calibre gaps --quiet`), `the CLI exits 2 when nothing was …` (config reload), `Server exits 3 at startup`, `a failed migration exits 3` | `CalibreCmd.scala`, `Cli.scala`, `Main` | `docs/user-guide/reference/cli.md:206`, `skills/sync-calibre/SKILL.md:15`, `configuration.md:73`, `troubleshooting.md:72`, `skills/histmersion-dev/SKILL.md:164` | the Calibre-gap hook and people. `ExitCode.of(problems, origin)` keeps 1/2/3 |
+| `N source(s) are not in Calibre yet (…)` | `CalibreCmd.scala:858/905` (a CLI line, not a failure) | the research workspace's `CLAUDE.md` and its Calibre-gap hook (outside this repository) | an agent acts on it at once. Not a `Problem`; listed so the CLI slice does not reword it |
+
+The wire codes (`not_found`, `precondition_failed`, `settings_changed`, `settings_unavailable`, `invalid_citekey`,
+`invalid_period`, `invalid_status`) are quoted nowhere outside the code: no skill, agent or doc branches on them.
+
+## Step 0 as built (2026-11-09)
+
+### What differs from the sections above
+
+- **Package and file names.** The module's package is `com.histmersion.util.problem` (a supporting area), because
+  `com.histmersion.Problem` is still the values module's String newtype; step 1 may move it to the root when that goes.
+  The renderers are not `ProblemText`/`ProblemHttp`/`ProblemStored`: the guideline inventory reads `Problem<X>` beside the
+  api's own `Problem` as an `<Entity><Property>` name (G9prefix), and `Http` beside `HttpMethod`. They are namespaces in
+  `api.problem`: `Text` (the sentence), `Answer` (the body record; its companion holds the status and the codecs),
+  `Column` (the frozen stored sentence and reader); `util.problem.ProblemLog` in the server; the exit code is
+  `cli.ExitCode.of(problems, origin)`. ArchitectureSuite places `api.problem` at `util.problem`.
+- **Groups are sealed traits, not enums.** An enum case may not name its companion's members unqualified, and the
+  qualified form is a G47self finding; so each group is `sealed trait Invalid extends Problem` with its cases and small
+  types in `object Invalid`. `Problem` extends `Product`: a case's name is its `productPrefix`, its fields' names its
+  `productElementNames`. `Problem.Group` has the eleven groups plus `Unclassified` and `Stored` (the JSON `group`).
+- **Decision 1 as built.** `Newtype` takes a `Newtype.Described[A, C]` given that a macro (`CompanionMacro`) writes where
+  the companion is defined: the enclosing object's full name and the constraint as the companion's own parent writes it
+  (the given sees `C` dealiased, `Pure` as `True`; the parent keeps `Pure`, `Match["…"]`, `Interval.Closed[-5000, 3000]`;
+  the project's aliases such as `CitekeyRule` are followed to Iron's type). The description is Iron's
+  `RuntimeConstraint.message` (`rtc.message`). `X.typeName`, `X.constraint`, `X.refused(raw)`, `X.checked(raw)` are on
+  every companion; `X.parse(raw): Either[Problems, X]` is a top-level extension in `com.histmersion` (the newtype module is
+  below `problem`), returning `Invalid.Malformed(typeName, constraint, raw, at)`. It works on the JVM and in Scala.js
+  (tested in `newtype`, `newtypeJS`, `problem`, `problemJS`).
+- **Cases changed from section 2.** `Entity.Kind`, `Entity.Key` and `Rule` are gone (decision 1): `NotFound.Entity`,
+  `Conflict.*` and `Invalid.*` name a `TypeName` and a `Raw`. Every `Invalid` case carries `at: Vector[Field]` (the path
+  `Problems.at` prepends). `Conflict.Referenced` names one referrer type and its count (several types are several
+  problems; a `NonEmptyVector` of a record cannot be derived by Kindlings without a hand-written element codec).
+  `Run.Paused` carries `until` instead of a free `detail`. `Refused.Disabled(feature, setting)` is in (decision 5). Nested
+  vocabularies are named to avoid `<Entity><Property>` names: `Io.Access`, `Io.Kind`, `Plugin.Retrieval`,
+  `Content.Flaw`, `Content.Requirement`. `Stored.Text` and `Legacy.Text` are the two text carriers.
+- **One suite per module, not one suite.** The status, sentence, stored sentence and JSON are checked in `api`
+  (`RenderSuite`, JVM and JS), the exit code in `cli` (`ExitOnProblemsSuite`), the log line in the server
+  (`ProblemLinesSuite`): no module sees all four renderers. Each is a table over `Problem.examples`, whose coverage of
+  every case is checked against the compiler's mirrors (`CasesSuite`).
+- **Codecs are summoned, not derived in a `derives` clause.** The groups live in a module without circe; `Answer` summons
+  `KindlingsCodecAsObject[<group>]` (the derivation's own given) for each group, with `withEnumAsStrings` so code words
+  are strings. The body record `Answer` and its `Entry` derive in their `derives` clauses.
+- **Status choices not in section 5.** `Refused.Disabled` 403, `Plugin.Vault` 500, `Plugin.Said` by its claim (503
+  unavailable or misconfigured, 422 rejected, 502 failed), `Unclassified` and `Stored.Unrecognised` 500. Several problems
+  answer with the first one's status. `Retry-After` comes from `Refused.Quota.until`.
+
+### Spike: compile time and link size (measured)
+
+Each figure is one run on the shared machine; compile times vary by about 5 s run to run. A full compile was forced with
+an otherwise inert option (`-Xmax-inlines:33`/`34`) so the disk cache could not answer.
+
+| what | before | after |
+|---|--:|--:|
+| `problem` (6 files), full compile, JVM / JS | — | 5 s / 3 s |
+| `api` full compile, JVM (499 → 502 files) | 82 s | 77 s |
+| `api` full compile, JS | 88 s | 93 s |
+| `api` incremental: the three renderer files with the 13 summoned group codecs, JVM | — | 15 s |
+| `web` `fastLinkJS` `main.js`, pristine `49bae9138` | 43,988,701 B | |
+| `web` `fastLinkJS`, with the type-name capture (every newtype companion holds its name and constraint name) | 43,988,701 B | 46,064,494 B (+2,075,793, +4.7 %) |
+| `web` `fastLinkJS`, api depending on `problem` with the renderers and codecs, web not using them | 46,064,494 B | 46,064,494 B (+0: the linker drops what the web does not reach) |
+| `web` `fastLinkJS`, a temporary `Main` reaching `Answer.decoded`, `Answer.answer`, `Column.read`, `Text.sentence` | 46,064,494 B | 49,506,117 B (+3,441,623, +7.5 %) |
+
+So the derived codecs cost nothing measurable in compile time, but about 3.4 MB of unoptimised JS once the web decodes
+problems (fullLinkJS will be smaller; not measured), and the type-name capture costs about 2 MB on its own, paid in
+step 0 already (the names of every reachable newtype's companion are strings in the bundle).
+
+### Open points for step 1
+
+1. **The type-name capture's JS size.** If 2 MB of fastopt matters for the web, `Described` could be summoned only where
+   `parse` is called (an `inline` member) instead of being a constructor argument of every companion; the api's own
+   newtypes are never parsed on the client.
+2. **`_No source '<key>'_`.** `NotFound.Entity`'s sentence is `no Citekey '<key>'`; a skill quotes the old one (section
+   "Sentences other text depends on"). Either a noun per key type in `Text`, or a sentence kept for the citekey.
+3. **Problem ids for `Internal`** (decision 3) are not in the case yet: the log renderer should mint the id and the
+   answer carry it; step 5 decides where the id lives (a field of `Internal.Unexpected`, or of the `Answer` entry).
+4. **The pre-existing ratchet drift**: `ValuesSuite` (8fc441bdb) raised `G49 plugin-api test` from 18 to 21 without
+   regenerating the ratchet, which then refused every rewrite; step 0 wrote 21 (and `silentPure plugin-api test` 1).
+5. **Checks still to add** from section 8: `External.*` `.value` outside `render` files (ContractsSuite `unwrap` reading
+   the `render` rows), `Stored.Unrecognised` constructed in main (today only `Column.read` and `Problem.examples` do),
+   and a `: NonEmptyVector[` pattern outside the module.
+6. **G60fromString's starting count** is 2,236 sites in main (740 in tests), counted as constructions of the five String
+   `Problem` newtypes and `Unclassified`; section 1's 2,510 also counts `Api.Error`/`Cli.Error` and enum-case sites, which
+   step 1 rewrites into those constructions.
