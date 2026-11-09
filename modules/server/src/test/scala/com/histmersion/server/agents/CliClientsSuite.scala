@@ -206,7 +206,7 @@ class CliClientsSuite extends munit.FunSuite:
     assertEquals(CliOutcomes.stripFence("```json\n{\"a\":1}\n```"), "{\"a\":1}")
     assertEquals(CliOutcomes.stripFence("{\"a\":1}"), "{\"a\":1}")
     assert(
-      CliOutcomes.isLimit(ClaudeCode.Limit.Message("You've hit your usage limit")) &&
-        !CliOutcomes.isLimit(ClaudeCode.Limit.Message("connection refused"))
+      CliOutcomes.isLimit(ClaudeCode.Limit.Sentence("You've hit your usage limit")) &&
+        !CliOutcomes.isLimit(ClaudeCode.Limit.Sentence("connection refused"))
     )
     assertEquals(PoolId.ChatgptPlan.wire, "chatgpt-plan")

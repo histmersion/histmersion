@@ -201,10 +201,10 @@ final class PlanPools(
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
     * codex on the ChatGPT plan) needs that runtime's login. Some(why) = unavailable.
     */
-  def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[PlanPools.Reason] =
+  def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(PlanPools.Reason(s"unavailable: no login — $why"))
+        case Login.Missing(why) => Some(Problem(s"unavailable: no login — $why"))
         case _                  => None
     }
 
@@ -279,7 +279,7 @@ final class PlanPools(
               takeAndLog(
                 p,
                 RefreshTrigger.Schedule,
-                PlanPools.Reason(RefreshTrigger.Schedule.wire.value),
+                Problem(RefreshTrigger.Schedule.wire.value),
                 PlanQuota.Now(at)
               )
             )
@@ -312,12 +312,12 @@ final class PlanPools(
         .left
         .map(e => Problem(e.value))
         .map(n =>
-          takeAndLog(p, trigger, PlanPools.Reason(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now)
+          takeAndLog(p, trigger, Problem(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now)
         )
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
-  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanPools.Reason, now: PlanQuota.Now): Refreshed =
+  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: Problem, now: PlanQuota.Now): Refreshed =
     val r = take(p, now)
     val line = s"plan refresh ${p.wire} ($why) ${r.text}"
     if r.ok.value then scribe.info(line) else scribe.warn(line)
@@ -481,8 +481,6 @@ final class PlanPools(
 object PlanPools:
   type Force = Force.T
   object Force extends Newtype[Boolean, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   type ScheduleText = ScheduleText.T
   object ScheduleText extends Newtype[String, Pure]
 

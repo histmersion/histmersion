@@ -100,7 +100,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
         }
         val o = out.get().getOrElse(throw IllegalStateException("codex: no outcome"))
         rt.pools.foreach(_.refresh(PlanQuotaRepo.EpochMillis(System.currentTimeMillis())))
-        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Message(e.value))) match
+        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.value))) match
           case Some(m) =>
             val until = rt.pools
               .flatMap(_.blocked(PlanQuota.PoolId.ChatgptPlan, Some(AgentsControllers.ModelName(model.model.value))))

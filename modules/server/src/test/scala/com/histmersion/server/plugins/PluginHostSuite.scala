@@ -145,7 +145,7 @@ class PluginHostSuite extends munit.FunSuite:
             Left(plugin.Problem("offline"))
         },
       ConfigFactory.empty,
-      (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m",
+      (id, warn, m) => lines += s"${if warn then "W" else "I"} $id: $m",
       files = new DiskLocalFiles,
       processes = new SystemProcesses
     )

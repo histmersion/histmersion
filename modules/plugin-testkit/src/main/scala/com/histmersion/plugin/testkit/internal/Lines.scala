@@ -12,14 +12,14 @@ final private[testkit] class Lines:
   private val buffer = List.newBuilder[LogLine]
   def all: List[LogLine] = synchronized(buffer.result())
   private def add(l: LogLine): Unit = synchronized(buffer += l)
-  val plugin: (HostServices.LogArg1, HostServices.LogArg2, HostServices.LogArg3) => Unit = (id, warn, message) =>
+  val plugin: (HostServices.PluginId, Boolean, HostServices.Line) => Unit = (id, warn, message) =>
     add(
       LogLine(
         LogLine.Source(if id.value.isEmpty then "plugins" else id.value),
-        warn.value,
-        LogLine.Message(message.value)
+        warn,
+        LogLine.Text(message.value)
       )
     )
   val host: HostLog = new HostLog:
-    def info(line: HostLog.Line) = add(LogLine(LogLine.Source("host"), false, LogLine.Message(line.value)))
-    def warn(line: HostLog.Line) = add(LogLine(LogLine.Source("host"), true, LogLine.Message(line.value)))
+    def info(line: HostLog.Line) = add(LogLine(LogLine.Source("host"), false, LogLine.Text(line.value)))
+    def warn(line: HostLog.Line) = add(LogLine(LogLine.Source("host"), true, LogLine.Text(line.value)))

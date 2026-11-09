@@ -206,8 +206,6 @@ object Store:
   type Key = Key.T
 
   object Key extends Newtype[String, StoreKeyRule]:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
     type Segment = Segment.T
     object Segment extends Newtype[String, Pure]
 
@@ -221,7 +219,7 @@ object Store:
       def isRoot: Boolean = key.value.isEmpty
 
       /** `key/child`; `child` may itself hold several segments. */
-      def /(child: String): Either[Key.Problem, Key] = of(key.value, child)
+      def /(child: String): Either[Problem, Key] = of(key.value, child)
 
       /** `key/child` for a child the caller built from checked parts. */
       def child(name: EntryName): Key = (key / name.value).fold(e => throw IllegalArgumentException(e.value), identity)

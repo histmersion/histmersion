@@ -6,8 +6,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 trait TextFiles:
   def exists(path: Path): Boolean
-  def read(path: Path): TextFiles.ReadResult
+  def read(path: Path): TextFiles.Text
 
 object TextFiles:
-  type ReadResult = ReadResult.T
-  object ReadResult extends Newtype[String, Pure]
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]

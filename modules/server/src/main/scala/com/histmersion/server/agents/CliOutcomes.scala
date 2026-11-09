@@ -79,7 +79,7 @@ object CliOutcomes:
     else t
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
-  def isLimit(message: ClaudeCode.Limit.Message): Boolean =
+  def isLimit(message: ClaudeCode.Limit.Sentence): Boolean =
     val low = message.value.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||
     low.contains("hit your limit") || low.contains("quota exceeded")

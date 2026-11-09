@@ -489,9 +489,9 @@ object PluginHost:
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
       def info(message: Plugin.Log.Line) =
-        services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(false), HostServices.LogArg3(message.value))
+        services.log(HostServices.PluginId(id.value), false, HostServices.Line(message.value))
       def warn(message: Plugin.Log.Line) =
-        services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(message.value))
+        services.log(HostServices.PluginId(id.value), true, HostServices.Line(message.value))
     def env(name: EnvVar.Name) =
       Option(services.env.root.get(name.value))
         .flatMap(v => Option(v.unwrapped))
@@ -501,7 +501,7 @@ object PluginHost:
         .map(e => plugin.Problem(e.value))
         .map(v => Secret.Resolved(v.value))
     def secretVaults = vaults
-    override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.QuotaArg1(upstream.value))
+    override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.Upstream(upstream.value))
     override def licences = HostLicences
     override def sourceFetchers = fetchers
     override def mediaCollections = media
@@ -645,7 +645,7 @@ object PluginHost:
       .map(id => Problem(s"$Root.$id configures no plugin in this binary — ignored"))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
     warnings.foreach(w =>
-      services.log(HostServices.LogArg1(""), HostServices.LogArg2(true), HostServices.LogArg3(w.value))
+      services.log(HostServices.PluginId(""), true, HostServices.Line(w.value))
     )
 
     val byId = accepted.map(p => p.info.id -> p).toMap
@@ -754,9 +754,9 @@ object PluginHost:
       .filter(hasState(_, PluginState.Failed))
       .foreach(s =>
         services.log(
-          HostServices.LogArg1(s.id.value),
-          HostServices.LogArg2(true),
-          HostServices.LogArg3(s.error.fold("failed")(_.value))
+          HostServices.PluginId(s.id.value),
+          true,
+          HostServices.Line(s.error.fold("failed")(_.value))
         )
       )
     val live = registered.collect { case (id, (st, regs)) if hasState(st, PluginState.Registered) => id -> regs }
@@ -803,7 +803,7 @@ object PluginHost:
         )
       )
     warns.foreach(w =>
-      services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(w.value))
+      services.log(HostServices.PluginId(id.value), true, HostServices.Line(w.value))
     )
     def fail(e: Problem) =
       (

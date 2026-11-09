@@ -42,7 +42,7 @@ object Trace:
           content.map(c => AgentRepo.MessageRecord.Content(c)),
           tool.map(t => AgentRepo.MessageRecord.ToolName(t)),
           input.map(i => AgentRepo.MessageRecord.ToolInput(i)),
-          result.map(r => AgentRepo.MessageRecord.ToolResult(r)),
+          result.map(r => AgentRepo.MessageRecord.ToolOutput(r)),
           ms
         )
       }
