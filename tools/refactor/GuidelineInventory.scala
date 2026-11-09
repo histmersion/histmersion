@@ -454,7 +454,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
 
     // ---- G5problem and G55positional ---------------------------------------------------------------------------
     val problemWord = "(Problem|Error|Reason|Refusal|Failure|Why|Message)$".r
-    val topLevelProblem = "^com/histmersion/(?:[a-z0-9]+/)*Problem\\.$".r
+    val topLevelProblem = "^com/histmersion/(?:[a-z0-9]+/)*(?:Problem\\$package\\.)?Problem\\.$".r
     val positionalName = "^.+(Result[0-9]*|Arg[0-9]+|Part[0-9]+)$".r
     doc.tree.traverse {
       case o: Defn.Object if isNewtypeObject(o.name.symbol) && !o.name.symbol.isLocal =>
