@@ -50,3 +50,17 @@ class NewtypeSuite extends munit.FunSuite:
   test("a base type with no ordering gives the newtype none"):
     assert(compileErrors("List(Wrapped(Opaque(1))).sorted").contains("No given instance of type Ordering"))
     assert(compileErrors("Wrapped(Opaque(1)) < Wrapped(Opaque(2))").nonEmpty)
+
+  test("a newtype knows its full name and its constraint, written down where its companion is defined"):
+    assertEquals(Count.typeName, Newtype.TypeName("com.histmersion.NewtypeSuite.Count"))
+    assertEquals(Key.typeName, Newtype.TypeName("com.histmersion.NewtypeSuite.Key"))
+    assertEquals(Count.constraint, Newtype.Constraint("Pure", "Always valid"))
+    assertEquals(Key.constraint, Newtype.Constraint("Not[Blank]", "!(Should only contain whitespaces)"))
+
+  test("checked gives the value, or the type, the constraint and the raw input"):
+    assertEquals(Key.checked("a"), Right(Key("a")))
+    assertEquals(
+      Key.checked(" "),
+      Left(Newtype.Refusal(Key.typeName, Newtype.Constraint("Not[Blank]", "!(Should only contain whitespaces)"), " "))
+    )
+    assertEquals(Key.refused(" ").raw, " ")
