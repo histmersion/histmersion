@@ -231,6 +231,7 @@ object ArchitectureSuite:
       "plugins" -> "util.plugins",
       "settings" -> "util.settings",
       "text" -> "util.text",
+      "problem" -> "util.problem",
       "instance" -> "server.instance",
       "views" -> "server.views"
     )

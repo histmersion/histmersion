@@ -4,8 +4,8 @@ package util.problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Text from outside Histmersion that a problem carries: an exception's message, a process's standard error, the start
-  * of an upstream's reply, a plugin's or a model's words. Each is captured once, where the exception, the process or the
-  * reply was met, cut to a bounded length; it is shown at an edge and never branched on.
+  * of an upstream's reply, a plugin's or a model's words. Each is captured once, where the exception, the process or
+  * the reply was met, cut to a bounded length; it is shown at an edge and never branched on.
   */
 object External:
 

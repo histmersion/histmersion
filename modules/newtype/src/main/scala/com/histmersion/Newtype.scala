@@ -2,6 +2,8 @@ package com.histmersion
 
 import io.github.iltotore.iron.RefinedType
 
+import Newtype.{Constraint, Described, Refusal, TypeName}
+
 /** The companion of every Histmersion newtype: an Iron [[io.github.iltotore.iron.RefinedType]] that also gives its type
   * the instances a value of a concept needs, once, so that no use site builds them by hand.
   *
@@ -32,7 +34,7 @@ import io.github.iltotore.iron.RefinedType
   * @tparam C
   *   the constraint its values satisfy
   */
-trait Newtype[A, C](using described: Newtype.Described[A, C]) extends RefinedType[A, C]:
+trait Newtype[A, C](using described: Described[A, C]) extends RefinedType[A, C]:
 
   /** Two values of this newtype can be compared with `==` and `!=`; a value of another type cannot (under strict
     * equality).
@@ -43,16 +45,16 @@ trait Newtype[A, C](using described: Newtype.Described[A, C]) extends RefinedTyp
   inline given (base: Ordering[A]) => Ordering[T] = assumeAll[Ordering](base)
 
   /** The full name of the newtype: the package and the enclosing objects of its companion, then its name. */
-  def typeName: Newtype.TypeName = described.typeName
+  def typeName: TypeName = described.typeName
 
   /** The constraint every value satisfies: Iron's type as written, and Iron's description of it. */
-  def constraint: Newtype.Constraint = Newtype.Constraint(described.constraintName, rtc.message)
+  def constraint: Constraint = Constraint(described.constraintName, rtc.message)
 
   /** Why `raw` is no value of this newtype: this type, its constraint and the input as given. */
-  def refused(raw: A): Newtype.Refusal = Newtype.Refusal(typeName, constraint, s"$raw")
+  def refused(raw: A): Refusal = Refusal(typeName, constraint, s"$raw")
 
   /** `raw` as a value of this newtype, or what it fails. */
-  def checked(raw: A): Either[Newtype.Refusal, T] = either(raw).left.map(_ => refused(raw))
+  def checked(raw: A): Either[Refusal, T] = either(raw).left.map(_ => refused(raw))
 
   extension (x: T)
     /** `x` comes before `y` in the newtype's ordering. */
@@ -87,4 +89,4 @@ object Newtype:
   /** The description of the newtype whose companion is being defined: the enclosing object's full name and the
     * constraint `C` as written.
     */
-  inline given described: [A, C] => Described[A, C] = ${ NewtypeMacros.described[A, C] }
+  inline given described: [A, C] => Described[A, C] = ${ CompanionMacro.described[A, C] }

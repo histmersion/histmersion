@@ -5,7 +5,7 @@ import scala.quoted.*
 /** The compile-time half of [[Newtype.described]]: it reads the companion being defined from the place the given is
   * summoned (the companion's own `extends Newtype[...]`), so the names are the compiler's, never a written string.
   */
-object NewtypeMacros:
+object CompanionMacro:
 
   /** Iron's packages, left out of a constraint's name: `Interval.Closed[0, 9]`, not its full path. */
   private val IronPackages = "\\bio\\.github\\.iltotore\\.iron\\.(?:constraint\\.\\w+\\.)?(?:\\w+\\$package\\.)?".r

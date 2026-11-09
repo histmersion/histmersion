@@ -17,7 +17,9 @@ object NonEmptyVector:
   def from[A](elements: Vector[A]): Option[NonEmptyVector[A]] = Option.when(elements.nonEmpty)(elements)
 
   /** One `A` or many, as `Left` or `Right`; `one` tells an `A` from a vector, which an `A` never is. */
-  def split[A <: Matchable](value: A | NonEmptyVector[A])(using one: TypeTest[Matchable, A]): Either[A, NonEmptyVector[A]] =
+  def split[A <: Matchable](value: A | NonEmptyVector[A])(using
+      one: TypeTest[Matchable, A]
+  ): Either[A, NonEmptyVector[A]] =
     value match
       case many: Vector[? <: Matchable] => Right(many.collect { case one(a) => a })
       case one(a)                       => Left(a)
