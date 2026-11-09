@@ -96,7 +96,6 @@ config:config/CodexConfig.scala	automation.agents
 config:config/CommaList.scala	values
 config:config/Config.scala	config
 config:config/ConfigLayers.scala	config
-config:config/ConfigProblem.scala	config
 config:config/ConfigReload.scala	util.settings
 config:config/ConverterConfig.scala	library.ingest
 config:config/CoreServiceConfig.scala	library.acquisition
@@ -326,3 +325,4 @@ server:server/hot/BuildCtx.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/Pin.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins
+api:api/Problem.scala	kernel

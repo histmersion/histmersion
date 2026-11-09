@@ -5,6 +5,7 @@ bucket	upstreams:upstreams/Offset.scala	package com.histmersion.upstreams	1
 bucket	upstreams:upstreams/PageSize.scala	package com.histmersion.upstreams	1
 concept	layer core	ArchiveId in upstreams:upstreams/ArchiveId.scala values:domain/library/ArchiveId.scala	2
 concept	layer core	ArxivId in upstreams:upstreams/ArxivId.scala values:domain/library/ArxivId.scala	2
+concept	layer core	Problem in core:domain/Problem.scala plugin-resolver:pluginresolver/Problem.scala values:Problem.scala	3
 concept	layer core	Offset in upstreams:upstreams/Offset.scala values:Offset.scala	2
 concept	layer core	PageSize in upstreams:upstreams/PageSize.scala values:PageSize.scala	2
 concept	layer core	Seconds in config:config/Seconds.scala server:util/ocr/Seconds.scala	2
@@ -1132,7 +1133,7 @@ unwrap	server:domain/automation/approvals/Approvals.scala	.value outside a bound
 unwrap	server:domain/automation/approvals/AutoApprovals.scala	.value outside a boundary	41
 unwrap	server:domain/automation/autopilot/AutopilotRowService.scala	.value outside a boundary	17
 unwrap	server:domain/automation/autopilot/AutopilotService.scala	.value outside a boundary	155
-unwrap	server:domain/automation/goals/FocusService.scala	.value outside a boundary	37
+unwrap	server:domain/automation/goals/FocusService.scala	.value outside a boundary	35
 unwrap	server:domain/automation/goals/GoalFocusService.scala	.value outside a boundary	122
 unwrap	server:domain/automation/goals/GoalService.scala	.value outside a boundary	90
 unwrap	server:domain/automation/goals/GoalsControllers.scala	.value outside a boundary	16
@@ -1253,7 +1254,7 @@ unwrap	server:domain/library/workflows/EnrichManagerKind.scala	.value outside a 
 unwrap	server:domain/library/workflows/EnrichSourcePipeline.scala	.value outside a boundary	74
 unwrap	server:domain/library/workflows/GoalSweep.scala	.value outside a boundary	14
 unwrap	server:domain/library/workflows/LibraryWorkflow.scala	.value outside a boundary	4
-unwrap	server:domain/library/workflows/LibraryWorkflows.scala	.value outside a boundary	3
+unwrap	server:domain/library/workflows/LibraryWorkflows.scala	.value outside a boundary	2
 unwrap	server:domain/library/workflows/OaBacklog.scala	.value outside a boundary	121
 unwrap	server:domain/library/workflows/SeedService.scala	.value outside a boundary	23
 unwrap	server:domain/library/workflows/SourceApprovalService.scala	.value outside a boundary	28
