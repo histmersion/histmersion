@@ -3,6 +3,8 @@ package util.problem
 
 import scala.reflect.TypeTest
 
+import hearth.typename.TypeName as Named
+
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why an operation did not succeed: one closed list of cases, in eleven groups, each case holding typed data and no
@@ -27,8 +29,8 @@ object Problem:
     /** The name the newtype module captured. */
     def of(name: Newtype.TypeName): TypeName = TypeName(s"${name.text}")
 
-    /** The name of a newtype: its companion's own. */
-    def of[A, C](newtype: Newtype[A, C]): TypeName = of(newtype.typeName)
+    /** The name of a newtype, as Hearth names its `T` where it is asked. */
+    def of[A, C](newtype: Newtype[A, C])(using Named[newtype.T]): TypeName = of(newtype.typeName)
 
   /** An Iron constraint a value failed: its type as written and Iron's description of it. */
   import Constraint.{Description, Name}

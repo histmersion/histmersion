@@ -87,37 +87,37 @@ com.histmersion.plugin.testkit.AiHttpRequest$ class
 com.histmersion.plugin.testkit.AiHttpRequest$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AiHttpRequest
 com.histmersion.plugin.testkit.AiHttpRequest$ unapply(com.histmersion.plugin.testkit.AiHttpRequest): com.histmersion.plugin.testkit.AiHttpRequest
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.AiHttpRequest$Body$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.AiHttpRequest$Body$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ class
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ new()
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.AiHttpRequest$Body$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.AiHttpRequest$Body$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.AiHttpRequest$Body$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.AiHttpRequest$Body$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.AiHttpRequest$Body$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.AiHttpRequest$Method$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.AiHttpRequest$Method$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ class
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ new()
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.AiHttpRequest$Method$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.AiHttpRequest$Method$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.AiHttpRequest$Method$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.AiHttpRequest$Method$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.AiHttpRequest$Method$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.AiHttpRequest$Url$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.AiHttpRequest$Url$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ class
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ new()
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.AiHttpRequest$Url$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.AiHttpRequest$Url$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.AiHttpRequest$Url$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.AiHttpRequest$Url$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.AiHttpRequest$Url$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.AiReport _1(): scala.util.Either
 com.histmersion.plugin.testkit.AiReport _2(): scala.Option
@@ -183,37 +183,37 @@ com.histmersion.plugin.testkit.CatalogueReport$ class
 com.histmersion.plugin.testkit.CatalogueReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport$ unapply(com.histmersion.plugin.testkit.CatalogueReport): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.CatalogueReport$Events$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.CatalogueReport$Events$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.CatalogueReport$Events$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$Events$ class
 com.histmersion.plugin.testkit.CatalogueReport$Events$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.CatalogueReport$Events$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$Events$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.CatalogueReport$Events$ new()
 com.histmersion.plugin.testkit.CatalogueReport$Events$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport$Events$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.CatalogueReport$Events$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.CatalogueReport$Events$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.CatalogueReport$Events$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.CatalogueReport$Events$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ class
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ new()
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.CatalogueReport$Refused$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.CatalogueReport$Refused$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ class
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ new()
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport$Refused$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.CatalogueReport$Refused$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.CatalogueReport$Refused$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.CatalogueReport$Refused$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.CatalogueReport$Refused$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.Contributions _1(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.Contributions _2(): scala.collection.immutable.List
@@ -419,15 +419,15 @@ com.histmersion.plugin.testkit.GazetteerReport$ class
 com.histmersion.plugin.testkit.GazetteerReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.GazetteerReport
 com.histmersion.plugin.testkit.GazetteerReport$ unapply(com.histmersion.plugin.testkit.GazetteerReport): com.histmersion.plugin.testkit.GazetteerReport
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.GazetteerReport$Refused$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.GazetteerReport$Refused$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ class
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ new()
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.GazetteerReport$Refused$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.GazetteerReport$Refused$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.GazetteerReport$Refused$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.GazetteerReport$Refused$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.HttpMode LiveVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode ModeVariable(): java.lang.String
@@ -546,26 +546,26 @@ com.histmersion.plugin.testkit.LogLine$ class
 com.histmersion.plugin.testkit.LogLine$ fromProduct(scala.Product): com.histmersion.plugin.testkit.LogLine
 com.histmersion.plugin.testkit.LogLine$ unapply(com.histmersion.plugin.testkit.LogLine): com.histmersion.plugin.testkit.LogLine
 com.histmersion.plugin.testkit.LogLine$Source$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.LogLine$Source$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.LogLine$Source$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.LogLine$Source$ class
 com.histmersion.plugin.testkit.LogLine$Source$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.LogLine$Source$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.LogLine$Source$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.LogLine$Source$ new()
 com.histmersion.plugin.testkit.LogLine$Source$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.LogLine$Source$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.LogLine$Source$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.LogLine$Source$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.LogLine$Source$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.LogLine$Source$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.LogLine$Text$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.LogLine$Text$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.LogLine$Text$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.LogLine$Text$ class
 com.histmersion.plugin.testkit.LogLine$Text$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.LogLine$Text$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.LogLine$Text$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.LogLine$Text$ new()
 com.histmersion.plugin.testkit.LogLine$Text$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.LogLine$Text$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.LogLine$Text$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.LogLine$Text$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.LogLine$Text$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.LogLine$Text$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.MediaReport _1(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.MediaReport _2(): scala.Option
@@ -651,15 +651,15 @@ com.histmersion.plugin.testkit.PluginHarness$ class
 com.histmersion.plugin.testkit.PluginHarness$ liveAiHttp(): com.histmersion.plugin.AiHttp
 com.histmersion.plugin.testkit.PluginHarness$ load(java.lang.String, java.lang.Comparable, com.histmersion.plugin.testkit.HttpMode, scala.collection.immutable.Map, scala.collection.immutable.Map, scala.Option): scala.util.Either
 com.histmersion.plugin.testkit.PluginHarness$Request$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.PluginHarness$Request$ checked(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.PluginHarness$Request$ checked(java.lang.Object, hearth.typename.TypeName): scala.util.Either
 com.histmersion.plugin.testkit.PluginHarness$Request$ class
 com.histmersion.plugin.testkit.PluginHarness$Request$ constraint(): com.histmersion.Newtype$Constraint
 com.histmersion.plugin.testkit.PluginHarness$Request$ either(java.lang.Object): scala.util.Either
 com.histmersion.plugin.testkit.PluginHarness$Request$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
 com.histmersion.plugin.testkit.PluginHarness$Request$ new()
 com.histmersion.plugin.testkit.PluginHarness$Request$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.PluginHarness$Request$ refused(java.lang.Object): com.histmersion.Newtype$Refusal
-com.histmersion.plugin.testkit.PluginHarness$Request$ typeName(): com.histmersion.Newtype$TypeName
+com.histmersion.plugin.testkit.PluginHarness$Request$ refused(java.lang.Object, hearth.typename.TypeName): com.histmersion.Newtype$Refusal
+com.histmersion.plugin.testkit.PluginHarness$Request$ typeName(hearth.typename.TypeName): com.histmersion.Newtype$TypeName
 com.histmersion.plugin.testkit.PluginHarness$Request$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.Recordings class
 com.histmersion.plugin.testkit.Recordings exist(java.nio.file.Path): boolean
