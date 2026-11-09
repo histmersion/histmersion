@@ -91,6 +91,8 @@ Refer to names as their scope allows: inside `JobType` write `JobType.Wire("goal
 
 Literal constructors (`Citekey("x")`, `PageSize(20)`) are allowed anywhere (user, 2026-11-08): Iron checks them at compile time.
 
+An unconstrained (`Pure`) newtype built from an interpolated string (`Problem(s"cannot open $path")`, `Problem(f"...")`) is a literal constructor too (orchestrator, 2026-11-09): there is no validation to bypass, so it is allowed anywhere. A `.value` inside the splices is still a finding on its own (render the spliced concept through its own operation), and a refined (constrained) newtype built from an interpolation is still a finding. `GuidelineInventory` reads the constraint from the newtype's declaration.
+
 ## No compatibility engineering (user, 2026-11-08; overrides anything above)
 
 Until the user says the code is published, the only constraint is that the data in the user's current database survives. API, MCP, CLI output, plugin SPI, wire formats, JSON types, schema names, migration history: change them freely and update every consumer in the repo (web, cli, plugins, tests) in the same change. Contract snapshots (openapi.json, mcp-tools.json, toolbox.json, plugin-testkit-api.txt, contracts.tsv) are regenerated, never defended; a recorded traffic fixture is updated to the new shape. Spend nothing on keeping an old shape.

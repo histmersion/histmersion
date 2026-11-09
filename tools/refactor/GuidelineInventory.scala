@@ -72,7 +72,7 @@ object GuidelineInventory {
     "G3misplaced" -> "HEURISTIC: a def in a standalone object (no class/trait/enum/type of that name beside it) whose first explicit parameter has a project type",
     "G9prefix" -> "type `<Entity><Property>` while a top-level (or same-owner) type `<Entity>` exists in the same module",
     "G9prefixRole" -> "as G9prefix, but the suffix is a role word (Suite, Repo, Service, Row, Markdown, ...)",
-    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files",
+    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"... $y ...\")` / `X(f\"...\")` (nothing to validate); a `.value` inside the splices is still a finding, and a refined newtype built from an interpolation is one",
     "G44conversion" -> "the same inside a *Controller(s)/*Routes file where the value feeds a domain newtype constructor/parse directly, or the construction itself",
     "G44plaindef" -> "a public def with a String/Int/Long/Double/Boolean parameter that some call site feeds with `.value` of a newtype (reported at the def)",
     "G45boundary" -> "hand `.value` or newtype construction inside a boundaries.tsv file (G45: lift type classes instead)",
@@ -309,6 +309,11 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case _ => false
     }
 
+    def isInterpolatedString(t: Term): Boolean = t match {
+      case i: Term.Interpolate => i.prefix.value == "s" || i.prefix.value == "f"
+      case _ => false
+    }
+
     // ---- G58raw: raw SQL text handed to an operator that bypasses the codecs --------------------------------------
     def isRawText(sym: Symbol): Boolean = !sym.isNone && (policy.rawSqlText.contains(sym.value) || (resultOf(sym) match {
       case Some(st: s.SingleType) => policy.rawSqlText.contains(st.symbol)
@@ -391,7 +396,9 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val args = a.argClause.values
         val bridged = args.exists { case s: Term.Select => isIronValue(s.name); case _ => false }
         // a newtype built from a literal is checked by Iron at compile time and allowed anywhere (decision 2026-11-08)
-        val literal = how == "apply" && args.nonEmpty && args.forall(isLiteral)
+        // an unconstrained (Pure) newtype built from an s"" or f"" string is a literal constructor too: there is no validation to bypass
+        val unconstrained = newtypeParents(obj).exists(_._3.value == pure)
+        val literal = how == "apply" && args.nonEmpty && args.forall(arg => isLiteral(arg) || (unconstrained && isInterpolatedString(arg)))
         if (!bridged && !literal && !allowedInCompanion(a, Some(obj))) {
           val detail = s"construct:${obj.displayName}.$how;expr"
           if (boundary) report("G45boundary", a, detail + ";" + boundaryKinds(path))
