@@ -59,17 +59,17 @@ final class SearchControllers(
       .parseBy(by)
       .toRight(
         error(
-          s"unsupported by='$by' — use " +
-            "time | region | time,region | region,time"
+          Problem(s"unsupported by='$by' — use " +
+            "time | region | time,region | region,time")
         )
       )
       .flatMap { axes =>
         if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
-          Left(error(s"unsupported unit='$unit' — use sources, findings or starts"))
+          Left(error(Problem(s"unsupported unit='$unit' — use sources, findings or starts")))
         else aggregateOn(axes, unit, q)
       }
 
-  private def error(message: String): Api.Error = Api.Error(Problem(message))
+  private def error(message: Problem): Api.Error = Api.Error(message)
 
   /** The aggregation itself, once `by`/`unit` have been validated.
     *
@@ -94,8 +94,8 @@ final class SearchControllers(
     if wanted > BigInt(math.max(1, ui.maxBuckets.value)) then
       Left(
         error(
-          s"that window needs $wanted buckets of ${size.value} year(s), over the " +
-            s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`"
+          Problem(s"that window needs $wanted buckets of ${size.value} year(s), over the " +
+            s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`")
         )
       )
     else Right(aggregateWindow(axes, unit, q, from, to, size))

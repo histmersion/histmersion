@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
@@ -36,7 +37,7 @@ final class AttestationsControllers(
     maintenance: WriteGate
 ):
 
-  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
   private def notFound(id: Attestation.Id) =
     Api.Error(Problem(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
@@ -71,7 +72,7 @@ final class AttestationsControllers(
     maintenance.guard(WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value
       for
-        wire <- AttestationTarget.check(AttestationTarget.Wire(in.targetType.value)).left.map(p => invalid(p.value))
+        wire <- AttestationTarget.check(AttestationTarget.Wire(in.targetType.value)).left.map(p => invalid(p.transformInto[Problem]))
         t = Attestation.TargetType(wire.value)
         _ <- Either.cond(
           Citekey.option(ck).flatMap(sources.canonical).isDefined,

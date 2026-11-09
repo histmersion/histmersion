@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
@@ -134,7 +135,7 @@ final class PlacesControllers(
       else
         for
           set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(Problem(e.value)))
+          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(e.transformInto[Problem]))
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */
@@ -187,7 +188,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/merge")):
       for
-        _ <- ApiPlace.Overrides.reason(in.reason.map(r => Problem(r.value)))
+        _ <- ApiPlace.Overrides.reason(in.reason.map(r => r.transformInto[Problem]))
         into <- Place.Id.either(in.into.value.trim).left.map(_ => notFound(in.into.value))
         gone <- places.merge(placeId(id), placeId(into), tolKm)
       yield gone
@@ -200,7 +201,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/remove")):
       ApiPlace.Overrides
-        .reason(in.reason.map(r => Problem(r.value)))
+        .reason(in.reason.map(r => r.transformInto[Problem]))
         .flatMap(r => places.remove(placeId(id), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */

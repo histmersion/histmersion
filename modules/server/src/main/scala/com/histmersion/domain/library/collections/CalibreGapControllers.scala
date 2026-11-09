@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.collections
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
@@ -51,7 +52,7 @@ final class CalibreGapControllers(
       Citekey
         .parse(req.citekey.value)
         .left
-        .map(p => Api.Error(Problem(p.value)))
+        .map(p => Api.Error(p.transformInto[Problem]))
         .flatMap(ck =>
           sources
             .setCalibreId(ck, FullSourceRow.CalibreId(req.calibreId.value), Caller.Local)

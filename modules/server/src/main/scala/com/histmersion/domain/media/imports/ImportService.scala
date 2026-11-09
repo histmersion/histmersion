@@ -6,6 +6,7 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*
+import io.scalaland.chimney.dsl.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -29,7 +30,7 @@ trait ImportService:
       limit: ImportService.TargetsLimit,
       refresh: ImportService.Refresh,
       since: Option[ImportService.Since]
-  ): Either[ImportService.TargetsText, List[Target]]
+  ): Either[Problem, List[Target]]
 
   def pending(provider: ImportService.Provider, since: Option[ImportService.Since]): ImportService.PendingCount
 
@@ -43,7 +44,7 @@ trait ImportService:
       refresh: ImportService.Refresh,
       since: Option[ImportService.Since],
       pleiadesOnly: ImportService.PleiadesOnly
-  ): Either[ImportService.TargetsText, List[Target]]
+  ): Either[Problem, List[Target]]
 
   def collectionPending(
       check: ImportService.CheckName,
@@ -99,8 +100,6 @@ object ImportService:
   object Refresh extends Newtype[Boolean, Pure]
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
-  type TargetsText = TargetsText.T
-  object TargetsText extends Newtype[String, Pure]
   type TargetsLimit = TargetsLimit.T
   object TargetsLimit extends Newtype[Int, Pure]
   type CollectionTargetsLimit = CollectionTargetsLimit.T
@@ -116,7 +115,7 @@ object ImportService:
         limit: TargetsLimit,
         refresh: Refresh,
         since: Option[Since]
-    ): Either[TargetsText, List[Target]] = db
+    ): Either[Problem, List[Target]] = db
       .read(
         ImportRepo.targets(
           provider,
@@ -128,7 +127,7 @@ object ImportService:
         )
       )
       .left
-      .map(p => TargetsText(p.value))
+      .map(_.transformInto[Problem])
     def pending(provider: Provider, since: Option[Since]): PendingCount =
       db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
     def collectionTargets(
@@ -140,7 +139,7 @@ object ImportService:
         refresh: Refresh,
         since: Option[Since],
         pleiadesOnly: PleiadesOnly
-    ): Either[TargetsText, List[Target]] =
+    ): Either[Problem, List[Target]] =
       db.read(
         ImportRepo.collectionTargets(
           MediaItemRow.Provider(check.value),
@@ -153,7 +152,7 @@ object ImportService:
           ImportRepo.PleiadesOnly(pleiadesOnly.value)
         )
       ).left
-        .map(p => TargetsText(p.value))
+        .map(_.transformInto[Problem])
     def collectionPending(
         check: CheckName,
         places: Places,
@@ -195,12 +194,12 @@ object ImportService:
     * place to be recorded on. `clock` stamps a check as the database's `clock_timestamp()` does.
     */
   final class InMemory(state: AtomicReference[MediaState], clock: Clock) extends ImportService:
-    private def one(place: Option[Place.Id], event: Option[Event.Id]): Option[TargetsText] =
+    private def one(place: Option[Place.Id], event: Option[Event.Id]): Option[Problem] =
       place
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .map(p => TargetsText(s"No place '$p'"))
-        .orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => TargetsText(s"No event '$e'")))
+        .map(p => Problem(s"No place '$p'"))
+        .orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => Problem(s"No event '$e'")))
 
     def targets(
         provider: Provider,
@@ -209,7 +208,7 @@ object ImportService:
         limit: TargetsLimit,
         refresh: Refresh,
         since: Option[Since]
-    ): Either[TargetsText, List[Target]] = one(place, event).toLeft(Nil)
+    ): Either[Problem, List[Target]] = one(place, event).toLeft(Nil)
     def pending(provider: Provider, since: Option[Since]): PendingCount = PendingCount(0)
     def collectionTargets(
         check: CheckName,
@@ -220,10 +219,10 @@ object ImportService:
         refresh: Refresh,
         since: Option[Since],
         pleiadesOnly: PleiadesOnly
-    ): Either[TargetsText, List[Target]] =
+    ): Either[Problem, List[Target]] =
       (place.map(_.value.trim).filter(_.nonEmpty), event.map(_.value.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places.value   => Left(TargetsText("this import is about events: name one with --event"))
-        case (None, Some(_)) if places.value => Left(TargetsText("this import is about places: name one with --place"))
+        case (Some(_), _) if !places.value   => Left(Problem("this import is about events: name one with --event"))
+        case (None, Some(_)) if places.value => Left(Problem("this import is about places: name one with --place"))
         case _                               => one(place, event).toLeft(Nil)
     def collectionPending(
         check: CheckName,

@@ -110,7 +110,7 @@ object SettingsStore:
             onClick --> (_ =>
               ApiClient
                 .restartServer()
-                .onComplete(r => restarting.set(Some(r.toEither.left.map(message).map(_.message.value))))
+                .onComplete(r => restarting.set(Some(r.toEither.left.map(message).map(_.notice.value))))
             )
           ),
           child.maybe <-- restarting.signal.map(_.map {

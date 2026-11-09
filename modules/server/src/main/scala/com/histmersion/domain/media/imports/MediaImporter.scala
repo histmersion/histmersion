@@ -36,7 +36,7 @@ trait MediaImporter:
       limit: ImportService.TargetsLimit,
       refresh: ImportService.Refresh,
       since: Option[ImportService.Since]
-  ): Either[ImportService.TargetsText, List[Target]]
+  ): Either[Problem, List[Target]]
   def pending(since: Option[ImportService.Since]): ImportService.PendingCount
 
   /** A run: one polite client for its whole length (the pace is per run). */
@@ -123,7 +123,7 @@ object MediaImporter:
       def start() =
         val media = cfg()
         // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)
-        val fetch = Polite(
+        val fetch = new Polite(
           http,
           media
             .modify(_.requestIntervalMs)

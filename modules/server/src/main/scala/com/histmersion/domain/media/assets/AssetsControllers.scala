@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
@@ -70,7 +71,7 @@ final class AssetsControllers(
       Citekey
         .parse(citekey.value)
         .left
-        .map(p => Write.invalid(Problem(p.value)))
+        .map(p => Write.invalid(p.transformInto[Problem]))
         .flatMap(storeFigures(_, citekey, in))
     )
 
@@ -89,7 +90,7 @@ final class AssetsControllers(
       .lookup(citekey)
       .left
       .map {
-        case MediaSources.Error.Invalid(message) => Write.invalid(Problem(message.value))
+        case MediaSources.Error.Invalid(message) => Write.invalid(message.transformInto[Problem])
         case MediaSources.Error.NotFound         => Write.notFound(asked)
       }
       .flatMap { _ =>
@@ -108,7 +109,7 @@ final class AssetsControllers(
         NewFigure
           .of(a, ByteCount.option(cfg().limits.assetBytes.value).getOrElse(ByteCount(0L)))
           .left
-          .map(p => Api.Error(Problem(p.value)))
+          .map(p => Api.Error(p.transformInto[Problem]))
           .map(xs :+ _)
       )
     }

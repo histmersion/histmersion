@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.{Paging, Write}
 import com.histmersion.api.automation.Activity
@@ -46,13 +47,13 @@ final class PersonalControllers(
     clock: Clock
 ):
 
-  private def bad(why: String): Api.Error = Api.Error(Problem(why))
+  private def bad(why: Problem): Api.Error = Api.Error(why)
   private def missing(what: String): Api.Error =
     Api.Error(Problem(s"No $what"), Some(Api.Error.Code(Write.CodeNotFound)))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
   private def person(caller: Caller): Either[Api.Error, UserId] =
-    caller.person.toRight(bad("bookmarks, notes and read marks are a person's own; an automated run has none"))
+    caller.person.toRight(bad(Problem("bookmarks, notes and read marks are a person's own; an automated run has none")))
 
   private def kindOf(raw: Option[MarkKind.Wire], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
@@ -62,7 +63,7 @@ final class PersonalControllers(
           .parse(MarkKind.Wire(k))
           .filter(allowed)
           .map(Some(_))
-          .toRight(bad(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire.value).mkString(", ")}"))
+          .toRight(bad(Problem(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire.value).mkString(", ")}")))
 
   private def size(raw: Option[Paging.Limit]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw).value)
 
@@ -76,9 +77,9 @@ final class PersonalControllers(
     Target
       .check(t, allowed, what)
       .left
-      .map(_.value)
-      .flatMap(MarkTarget.zoomChecked(_).left.map(_.value))
-      .flatMap(MarkTarget.fromWire(_).toRight(s"a $what on a ${t.kind.label.value.toLowerCase} names it"))
+      .map(_.transformInto[Problem])
+      .flatMap(MarkTarget.zoomChecked(_).left.map(_.transformInto[Problem]))
+      .flatMap(MarkTarget.fromWire(_).toRight(Problem(s"a $what on a ${t.kind.label.value.toLowerCase} names it")))
       .left
       .map(bad)
 
@@ -100,7 +101,7 @@ final class PersonalControllers(
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
-        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
+        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.transformInto[Problem]))
       yield bookmarks.add(user, t, label, this.label(in.title), now()).wire
 
   def editBookmark(
@@ -111,8 +112,8 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("edit_bookmark")):
       for
         user <- person(caller)
-        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.value))
-        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.value))
+        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.transformInto[Problem]))
+        label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p.transformInto[Problem]))
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
@@ -120,7 +121,7 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("remove_bookmark")):
       for
         user <- person(caller)
-        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.value))
+        bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p.transformInto[Problem]))
         b <- bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
@@ -143,7 +144,7 @@ final class PersonalControllers(
   def note(caller: Caller, id: WireNote.Id): Either[Api.Error, WireNote] =
     for
       user <- person(caller)
-      nid <- Note.idOf(id).left.map(p => bad(p.value))
+      nid <- Note.idOf(id).left.map(p => bad(p.transformInto[Problem]))
       n <- notes.get(user, nid).toRight(missing(s"note $id"))
     yield n.wire
 
@@ -152,7 +153,7 @@ final class PersonalControllers(
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Notable, "note")
-        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.value))
+        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.transformInto[Problem]))
       yield notes.add(user, t, text, label(in.title), now()).wire
 
   def editNote(
@@ -163,8 +164,8 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("edit_note")):
       for
         user <- person(caller)
-        nid <- Note.idOf(id).left.map(p => bad(p.value))
-        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.value))
+        nid <- Note.idOf(id).left.map(p => bad(p.transformInto[Problem]))
+        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.transformInto[Problem]))
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.value.trim).filter(_.nonEmpty).map(MarkTime.Iso(_))).left
           .map {
             case Note.EditRefused.Missing      => missing(s"note $id")
@@ -195,7 +196,7 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("remove_note")):
       for
         user <- person(caller)
-        nid <- Note.idOf(id).left.map(p => bad(p.value))
+        nid <- Note.idOf(id).left.map(p => bad(p.transformInto[Problem]))
         n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
       yield n.wire
 
@@ -210,13 +211,13 @@ final class PersonalControllers(
     for
       user <- person(caller)
       k <- kindOf(kind, MarkKind.Readable)
-      s <- ReadingShow.parse(show.map(w => ReadingShow.Wire(w.value))).left.map(p => bad(p.value))
+      s <- ReadingShow.parse(show.map(w => ReadingShow.Wire(w.value))).left.map(p => bad(p.transformInto[Problem]))
     yield reading.list(user, k.map(MarkTarget.itemKind), s, size(max)).map(_.wire)
 
   private def readable(kind: MarkKind, key: WireKey): Either[Api.Error, ItemKey] =
     if !MarkKind.Readable.contains(kind) then
-      Left(bad(s"only sources and articles are marked read, not a ${kind.label.value.toLowerCase}"))
-    else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad("which one? (its id)"))
+      Left(bad(Problem(s"only sources and articles are marked read, not a ${kind.label.value.toLowerCase}")))
+    else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad(Problem("which one? (its id)")))
 
   def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("set_read")):

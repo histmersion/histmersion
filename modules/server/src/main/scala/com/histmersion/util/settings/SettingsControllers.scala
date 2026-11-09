@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.Problem as ValuesProblem
 import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
@@ -27,7 +28,7 @@ final class SettingsControllers(
           SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
         )
         .left
-        .map(why => Api.Error(Problem(why.value)))
+        .map(why => Api.Error(why.transformInto[Problem]))
       snap <- settings
         .read(p, knownKeys().flatMap(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).toOption))
         .left
@@ -66,9 +67,9 @@ final class SettingsControllers(
     restarts
       .restart()
       .fold(
-        why => Left(Api.Error(Problem(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
+        why => Left(Api.Error(why.transformInto[Problem], Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
         msg =>
-          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), Problem(msg.value)))
+          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), msg))
       )
 
   def setupDue: Boolean = settings.setupDue

@@ -30,8 +30,6 @@ object Subprocess:
 
   type Value = Value.T
   object Value extends Newtype[String, Pure]
-  type ValueOut = ValueOut.T
-  object ValueOut extends Newtype[String, Pure]
 
   type Result = Processes.Result
   val Result = Processes.Result
@@ -97,7 +95,7 @@ object Subprocess:
   /** Pure: what a tool printed, without the one line break it ends with (`op read`, `bw get` and `keepassxc-cli show`
     * all end their value with one). Nothing else is trimmed: a value may begin or end with a space.
     */
-  def value(out: ValueOut): Value = Value((out).value.stripSuffix("\n").stripSuffix("\r"))
+  def value(out: Result.Out): Value = Value(out.value.stripSuffix("\n").stripSuffix("\r"))
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
   def plain(what: Vaults.Operation, s: Text): Either[Problem, Plain] =

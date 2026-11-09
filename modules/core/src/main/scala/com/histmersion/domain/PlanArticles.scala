@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import FailureTransformers.domainAsApi
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.library.Citekey
 
@@ -220,7 +221,7 @@ object PlanArticles:
                         c.title,
                         c.kind,
                         c.filter,
-                        FailureTransformers.toApi(c.why),
+                        c.why.domainAsApi,
                         n,
                         w.fold(ProposedArticle.Overlap(0.0))(_._2),
                         w.filter(_._2.value > 0).map(x => ProposedArticle.OverlapWith(x._1.value))

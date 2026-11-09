@@ -63,7 +63,7 @@ object Vaults:
   ): Either[Problem, Secret.Resolved] =
     r.left.map(e => Problem(e.toString)).flatMap { res =>
       if res.exit.value == 0 then
-        val v = Subprocess.value(Subprocess.ValueOut(res.out.value)).value
+        val v = Subprocess.value(res.out).value
         if v.isEmpty then Left(Problem(s"$vault: '$ref' has an empty value"))
         else Right(Secret.Resolved(v))
       else

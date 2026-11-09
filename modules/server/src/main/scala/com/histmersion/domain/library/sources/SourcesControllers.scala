@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.aliases.AliasKinds
 
@@ -51,7 +52,7 @@ final class SourcesControllers(
   /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one.
     */
   def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
-    Citekey.parse(ck.value).left.map(p => Write.invalid(Problem(p.value)))
+    Citekey.parse(ck.value).left.map(p => Write.invalid(p.transformInto[Problem]))
 
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(c.value)
 
@@ -115,7 +116,7 @@ final class SourcesControllers(
       Source.Write
         .applyPut(apiCk(ck), in, sources.aliasesOf(ck).map(apiCk))
         .left
-        .map(m => Write.invalid(Problem(m.value)))
+        .map(m => Write.invalid(m.transformInto[Problem]))
         .flatMap(s => strictGate(strict.value, issuesOf(s.summary, s.notes)).map(_ => s))
         .flatMap { s =>
           val _ = sources.put(s, Caller.Local); get(ck).map(withFormatting)
@@ -141,7 +142,7 @@ final class SourcesControllers(
       Citekeys
         .renameTo(from, Citekeys.RenameToNewRaw(req.newCitekey.value))
         .left
-        .map(m => Write.invalid(Problem(m.value)))
+        .map(m => Write.invalid(m.transformInto[Problem]))
         .flatMap { now =>
           sources.rename(from, now, Caller.Local).flatMap { counts =>
             get(now, body = SourcesControllers.GetBody(false)).map(sw =>
@@ -213,7 +214,7 @@ final class SourcesControllers(
           Left(Api.Error(Problem("note has no citekey (none in the frontmatter, none supplied)")))
         else
           Citekey.parse(raw.value) match
-            case Left(problem) => Left(Write.invalid(Problem(problem.value)))
+            case Left(problem) => Left(Write.invalid(problem.transformInto[Problem]))
             case Right(ck)     =>
               if sources.aliasOf(ck).isDefined then
                 notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
@@ -272,7 +273,7 @@ final class SourcesControllers(
     */
   private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
     if !strict then Right(())
-    else formatting.refusal(issues).fold(Right(()))(m => Left(Write.invalid(Problem(m.value))))
+    else formatting.refusal(issues).fold(Right(()))(m => Left(Write.invalid(m.transformInto[Problem])))
 
   /** `GET /api/sources/{citekey}/lint`. */
   def lint(citekey: Citekey): Either[Api.Error, FormatReport] =
@@ -415,7 +416,7 @@ final class SourcesControllers(
             PassageFinder.TimeoutMs(lim.regexTimeoutMs.value.toLong)
           )
           .left
-          .map(m => Write.invalid(Problem(m.value)))
+          .map(m => Write.invalid(m.transformInto[Problem]))
       }
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */

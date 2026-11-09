@@ -281,7 +281,7 @@ final class AgentsControllers(
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
         .left
-        .map(e => Api.Error(Problem(e.value)))
+        .map(e => Api.Error(e.transformInto[Problem]))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -335,7 +335,7 @@ final class AgentsControllers(
           PlanQuota.Floors
             .parse(PlanQuota.Floors.Wire(t))
             .left
-            .map(e => Api.Error(Problem(e.value)))
+            .map(e => Api.Error(e.transformInto[Problem]))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
@@ -439,8 +439,8 @@ final class AgentsControllers(
     */
   def resolve(m: ModelRef): Either[domain.Problem, (LlmClient, Billing)] =
     for
-      ps <- prices.left.map(p => domain.Problem(p.value))
-      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => domain.Problem(p.value))
+      ps <- prices.left.map(p => p.transformInto[domain.Problem])
+      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => p.transformInto[domain.Problem])
       c <- clientFor(cfg, m)
     yield (c, b)
 
@@ -548,7 +548,7 @@ final class AgentsControllers(
       ms <- ModelChains
         .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
         .left
-        .map(e => Api.Error(Problem(e.value)))
+        .map(e => Api.Error(e.transformInto[Problem]))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
@@ -574,11 +574,11 @@ final class AgentsControllers(
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
         .left
-        .map(e => Api.Error(Problem(e.value)))
+        .map(e => Api.Error(e.transformInto[Problem]))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
         case (errs, _) => Left(Api.Error(Problem(errs.mkString("; "))))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(Problem(e.value)))
+      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(e.transformInto[Problem]))
       _ = Transactor(ds).transact(
         ModelSettingsRepo.setAllowance(
           ModelSettingsRepo.Saved.Target(t.wire.value),
@@ -597,7 +597,7 @@ final class AgentsControllers(
     ModelChains.Target
       .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
       .left
-      .map(e => Api.Error(Problem(e.value)))
+      .map(e => Api.Error(e.transformInto[Problem]))
       .map(t =>
         Goal.Plans.Removed(
           Goal.Plans.Removed.Value(
@@ -612,7 +612,7 @@ final class AgentsControllers(
       AgentDoctor(
         site.config,
         picker,
-        resolve(_).left.map(p => Problem(p.value)),
+        resolve(_).left.map(p => p.transformInto[Problem]),
         registry = Some(site.aiProviders().map((k, v) => AgentDoctor.RegistryKey(k.value) -> v)),
         aiHttp = aiHttp,
         paths = site.userPaths
@@ -726,14 +726,14 @@ final class AgentsControllers(
       _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
         acc.flatMap(_ =>
           runnable(role, over.get(role).orElse(req.model.map(m => ModelName(m.value)))).left
-            .map(e => Api.Error(Problem(e.value)))
+            .map(e => Api.Error(e.transformInto[Problem]))
         )
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
       // review) is checked the same way
       _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[Api.Error, Unit]](Right(())) {
         case (acc, (role, ref)) =>
-          acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Problem(e.value))))
+          acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(e.transformInto[Problem])))
       }
       _ <- host.runOptions(
         p,
@@ -865,8 +865,8 @@ final class AgentsControllers(
     if v.value >= 0.000001 then Right(v)
     else Left(Api.Error(Problem(s"$what must be at least 0.000001")))
 
-  private def notFound(message: String): Api.Error =
-    Api.Error(Problem(message), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(message: Problem): Api.Error =
+    Api.Error(message, Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def searchPage: PageSize = PageSize.applyUnsafe(math.max(1, site.config.limits.search.value))
 
@@ -923,7 +923,7 @@ final class AgentsControllers(
           cursor(upTo).map(c => RunQuery.UpTo(c.value))
         )
         .left
-        .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
+        .map(p => Api.Error(p.transformInto[Problem], Some(Api.Error.Code(Write.CodeNotFound))))
     yield
       val (rows, more) = page
       val (counts, facets) = runs.runFacets(q)
@@ -948,7 +948,7 @@ final class AgentsControllers(
   def run(id: DomainRun.Id): Either[Api.Error, RunDetail] =
     runs
       .get(id)
-      .toRight(notFound(s"No agent run '$id'"))
+      .toRight(notFound(Problem(s"No agent run '$id'")))
       .map(r =>
         RunDetail(
           r,
@@ -968,7 +968,7 @@ final class AgentsControllers(
         acc.flatMap(rs =>
           runs
             .get(id)
-            .toRight(notFound(s"No agent run '$id'"))
+            .toRight(notFound(Problem(s"No agent run '$id'")))
             .map(r => rs :+ RunDetail(r, runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(Int.MaxValue)), Nil))
         )
       }
@@ -977,7 +977,7 @@ final class AgentsControllers(
       outputs = compared.headOption
         .flatMap(r => workflows.parse(r.run.pipeline.value))
         .fold(OutputComparison.none)(_.outputs)
-      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(Problem(p.value)))
+      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(p.transformInto[Problem]))
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
@@ -1097,7 +1097,7 @@ final class AgentsControllers(
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
             .map(i => GoalLink.Ref(i.id.toString))
-            .toRight(notFound(s"No queue item '$ref'"))
+            .toRight(notFound(Problem(s"No queue item '$ref'")))
         case LinkKind.Query =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars.value,
@@ -1180,11 +1180,11 @@ final class AgentsControllers(
       ck <- Citekey
         .either(req.citekey.value)
         .left
-        .map(_ => notFound(s"No source '${req.citekey}'"))
+        .map(_ => notFound(Problem(s"No source '${req.citekey}'")))
       src <- host.probeSubject(ck)
       picked <- picker.pick(Role.Probe, req.model.map(m => ModelName(m.value))).left.map {
-        case PickFailure.Unavailable(m)     => Api.Error(Problem(m.value))
-        case PickFailure.Exhausted(m, _, _) => Api.Error(Problem(m.value))
+        case PickFailure.Unavailable(m)     => Api.Error(m.transformInto[Problem])
+        case PickFailure.Exhausted(m, _, _) => Api.Error(m.transformInto[Problem])
       }
       result <- probeWith(picked.client, picked.billing, src)
     yield result

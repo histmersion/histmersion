@@ -115,7 +115,7 @@ final class AcquisitionControllers(
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
   private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
-  private def err(msg: String): Api.Error = Api.Error(Problem(msg))
+  private def err(msg: Problem): Api.Error = Api.Error(msg)
 
   private def step(name: String, ok: Boolean, detail: String): Ingest.Step =
     Ingest.Step(Ingest.Step.Value(name), Ingest.Step.Ok(ok), Ingest.Step.Detail(detail))
@@ -225,7 +225,7 @@ final class AcquisitionControllers(
       notInDb: Boolean
   ): Either[Api.Error, DiscoverResult] =
     val query = q.value.trim
-    if query.isEmpty then Left(err("give a search query"))
+    if query.isEmpty then Left(err(Problem("give a search query")))
     else
       discovery
         .search(
@@ -242,7 +242,7 @@ final class AcquisitionControllers(
           )
         )
         .left
-        .map(e => err(e.value))
+        .map(e => err(e.transformInto[Problem]))
         .map { works =>
           // ONE index for the whole page: `mark` used to read `lower(doi) -> citekey` for the entire
           // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.
@@ -253,10 +253,10 @@ final class AcquisitionControllers(
         }
 
   def meta(id: AcquireApi.Identifier): Either[Api.Error, WorkRef] =
-    Ident.parse(Ident.Written(id.value)).left.map(e => err(e.value)).flatMap {
-      case Ident.Doi(doi) => discovery.meta(doi).left.map(e => err(e.value)).map(mark(_, sources.doiIndex))
+    Ident.parse(Ident.Written(id.value)).left.map(e => err(e.transformInto[Problem])).flatMap {
+      case Ident.Doi(doi) => discovery.meta(doi).left.map(e => err(e.transformInto[Problem])).map(mark(_, sources.doiIndex))
       case Ident.Arxiv(a) =>
-        discovery.meta(arxivDoi(a)).left.map(e => err(e.value)).map(mark(_, sources.doiIndex))
+        discovery.meta(arxivDoi(a)).left.map(e => err(e.transformInto[Problem])).map(mark(_, sources.doiIndex))
       case Ident.Citekey(k) =>
         Citekey
           .option(k.value)
@@ -265,14 +265,14 @@ final class AcquisitionControllers(
           .flatMap { s =>
             s.doi
               .flatMap(d => Doi.option(d.value))
-              .toRight(err(s"'$k' has no DOI recorded — nothing to look up upstream"))
-              .flatMap(discovery.meta(_).left.map(e => err(e.value)))
+              .toRight(err(Problem(s"'$k' has no DOI recorded — nothing to look up upstream")))
+              .flatMap(discovery.meta(_).left.map(e => err(e.transformInto[Problem])))
               .map(mark(_, sources.doiIndex))
           }
     }
 
   def wikirefs(url: com.histmersion.api.library.Title): Either[Api.Error, WikirefsResult] =
-    wiki.refs(WikiClient.ArticleUrl(url.value)).left.map(e => err(e.value)).map { r =>
+    wiki.refs(WikiClient.ArticleUrl(url.value)).left.map(e => err(e.transformInto[Problem])).map { r =>
       val index = sources.doiIndex
       r.modify(_.known)
         .setTo(r.dois.filter(d => Doi.option(d.value).exists(index.contains)).map(d => WikirefsResult.Known(d.value)))
@@ -311,8 +311,8 @@ final class AcquisitionControllers(
     */
   def refs(req: RefsRequest): Either[Api.Error, RefsResult] =
     target(req.id.value).flatMap { t =>
-      t.doi.toRight(err(s"no DOI for '${req.id}' — a reference list needs one")).flatMap { doi =>
-        discovery.references(doi).left.map(e => err(e.value)).map { (backend, rows) =>
+      t.doi.toRight(err(Problem(s"no DOI for '${req.id}' — a reference list needs one"))).flatMap { doi =>
+        discovery.references(doi).left.map(e => err(e.transformInto[Problem])).map { (backend, rows) =>
           val resolved = resolveRefs(rows)
           val added: RowCount =
             if !req.apply.value then RowCount(0)
@@ -369,7 +369,7 @@ final class AcquisitionControllers(
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
   private def assessNow(req: AssessRequest, store: Boolean = true): Either[Api.Error, Assessment] =
     target(req.id.value).flatMap { t =>
-      t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
+      t.doi.toRight(err(Problem(s"no DOI for '${req.id}' — an assessment needs one"))).map { doi =>
         val rw = assessments.retractionsFor(doi)
         val updates = discovery.updates(doi).getOrElse(Nil)
         val work = discovery.meta(doi).toOption
@@ -487,7 +487,7 @@ final class AcquisitionControllers(
   private def followupsNow(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
-        .toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
+        .toRight(err(Problem(s"no DOI for '${req.id}' — the citation graph is keyed by DOI")))
         .flatMap { doi =>
           val work =
             discovery.meta(doi).getOrElse(WorkRef(doi = (Some(doi)).map(d => com.histmersion.api.library.Doi(d.value))))
@@ -502,7 +502,7 @@ final class AcquisitionControllers(
           citations
             .citing(work, req.since.map(y => com.histmersion.Year(y.value.toInt)), cap)
             .left
-            .map(e => err(e.value))
+            .map(e => err(e.transformInto[Problem]))
             .map { (backend, rows) =>
               val index = sources.doiIndex
               val enriched = Acquire.rankFollowups(rows).map { r =>
@@ -564,7 +564,7 @@ final class AcquisitionControllers(
     * answers with a manual drop-in.
     */
   private def ingestNow(req: Ingest.Request, path: IngestPath): Either[Api.Error, Ingest.Report] =
-    Ident.parse(Ident.Written(req.id.value)).left.map(e => err(e.value)).flatMap { ident =>
+    Ident.parse(Ident.Written(req.id.value)).left.map(e => err(e.transformInto[Problem])).flatMap { ident =>
       val steps = List.newBuilder[Ingest.Step]
 
       val (doi, arxiv) = ident match
@@ -601,8 +601,8 @@ final class AcquisitionControllers(
       if work.flatMap(_.title).isEmpty && citekey.isEmpty then
         Left(
           err(
-            s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
-              "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+            Problem(s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
+              "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand")
           )
         )
       else
@@ -611,7 +611,7 @@ final class AcquisitionControllers(
         Citekey
           .parse(citekey.get)
           .left
-          .map(p => Write.invalid(Problem(p.value)))
+          .map(p => Write.invalid(p.transformInto[Problem]))
           .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.value, path))
     }
 
@@ -719,7 +719,7 @@ final class AcquisitionControllers(
     if path.needsFile.value && fetched.isLeft then
       val answers =
         Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
-      Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers"))
+      Left(err(Problem(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers")))
     else
       val spooled: Option[FetchedCopy] = fetched.toOption.flatMap(f => spoolCopy(citekey, f, steps))
 
@@ -748,7 +748,7 @@ final class AcquisitionControllers(
         citedByCount = work.flatMap(_.citedByCount).map(c => IngestMeta.CitedByCount(c.value))
       )
 
-      jobs.enqueue(spooled, citekey, meta).left.map(e => err(e.value)).map { outcome =>
+      jobs.enqueue(spooled, citekey, meta).left.map(e => err(e.transformInto[Problem])).map { outcome =>
         steps += step("store", true, s"${outcome.detail}")
         // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
         fetched.toOption.flatMap(_.licence).map(_.value).foreach { l =>
@@ -875,7 +875,7 @@ final class AcquisitionControllers(
       .getOrElse(
         stored(Acquire.citekey(authors, item.year, title), authors, item.year, title).value
       )
-    Citekey.parse(rawCitekey).left.map(p => Write.invalid(Problem(p.value))).flatMap { citekey =>
+    Citekey.parse(rawCitekey).left.map(p => Write.invalid(p.transformInto[Problem])).flatMap { citekey =>
       steps += step(
         "metadata",
         true,
@@ -892,7 +892,7 @@ final class AcquisitionControllers(
         ),
         FetchChain.LegalOnly(true)
       ).left
-        .map(e => err(s"'${item.identifier}': $e"))
+        .map(e => err(Problem(s"'${item.identifier}': $e")))
         .flatMap { f =>
           steps += step("fetch", true, s"archive.org: ${f.bytes.value.length} bytes (${file.name})")
           val spooled = spoolCopy(citekey, f, steps)
@@ -910,7 +910,7 @@ final class AcquisitionControllers(
               )
             )
             .left
-            .map(e => err(e.value))
+            .map(e => err(e.transformInto[Problem]))
             .map { outcome =>
               steps += step("store", true, s"${outcome.detail}")
               steps ++= acquireSteps(
@@ -1013,7 +1013,7 @@ final class AcquisitionControllers(
     * whichever of the two the caller happened to give us.
     */
   private def target(id: String): Either[Api.Error, Target] =
-    Ident.parse(Ident.Written(id)).left.map(e => err(e.value)).map {
+    Ident.parse(Ident.Written(id)).left.map(e => err(e.transformInto[Problem])).map {
       case Ident.Doi(doi) =>
         Target(Some(doi), sources.doiIndex.get(doi))
       case Ident.Arxiv(a) =>

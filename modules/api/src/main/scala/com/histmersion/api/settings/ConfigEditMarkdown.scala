@@ -60,5 +60,5 @@ object ConfigEditMarkdown:
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): String =
-    if (r.accepted) == Restart.Accepted(true) then (s"# Restarting\n\n${r.message}")
-    else (s"# Not restarted\n\n${r.message}")
+    if (r.accepted) == Restart.Accepted(true) then (s"# Restarting\n\n${r.notice}")
+    else (s"# Not restarted\n\n${r.notice}")

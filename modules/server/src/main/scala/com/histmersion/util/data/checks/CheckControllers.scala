@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.checks
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
@@ -36,7 +37,7 @@ final class CheckControllers(
     checks
       .select(rules)
       .left
-      .map(m => Api.Error(Problem(m.value)))
+      .map(m => Api.Error(m.transformInto[Problem]))
       .map(rs => checks.report(rs, context, CheckRule.MaxItems(config().lint.maxItems.value)))
 
   /** `POST /api/lint/fix` — the repairs that are safe to make without a person, each owner's, in their ranks: the ones

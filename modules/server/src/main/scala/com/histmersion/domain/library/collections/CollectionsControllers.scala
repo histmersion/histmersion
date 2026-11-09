@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.collections
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.Write
 
@@ -37,7 +38,7 @@ import com.histmersion.api.Api
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
   private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
-    Citekey.parse(raw.value).left.map(p => Write.invalid(Problem(p.value)))
+    Citekey.parse(raw.value).left.map(p => Write.invalid(p.transformInto[Problem]))
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
   def collection(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo] =

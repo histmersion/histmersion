@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.library.Query.*
 import com.histmersion.config.AppConfig
@@ -21,7 +22,7 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
         QueryRepo.MaxCellChars(q.maxCellChars.value)
       )
       .left
-      .map(m => Api.Error(Problem(m.value)))
+      .map(m => Api.Error(m.transformInto[Problem]))
 
   def schemaTables: SchemaTables = SchemaTables(queries.tables)
 

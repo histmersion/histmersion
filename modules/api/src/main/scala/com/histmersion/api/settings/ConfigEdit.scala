@@ -192,7 +192,11 @@ object ConfigEdit:
     type Restartable = Restartable.T
     object Restartable extends Newtype[Boolean, Pure]
 
-  final case class Restart(accepted: Restart.Accepted, message: Problem)
+  /** What the server says once a restart is under way. */
+  type Notice = Notice.T
+  object Notice extends Newtype[String, Pure]
+
+  final case class Restart(accepted: Restart.Accepted, notice: Notice)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema

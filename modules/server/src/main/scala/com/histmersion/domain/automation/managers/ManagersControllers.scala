@@ -66,9 +66,9 @@ final class ManagersControllers(
       .toList
       .filter(r => st.forall(_ == r.status.value))
 
-  private def error(message: String): Api.Error = Api.Error(Problem(message))
-  private def notFound(what: String) = Api.Error(Problem(what), Some(Api.Error.Code(Write.CodeNotFound)))
-  private def conflict(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+  private def error(message: Problem): Api.Error = Api.Error(message)
+  private def notFound(what: Problem) = Api.Error(what, Some(Api.Error.Code(Write.CodeNotFound)))
+  private def conflict(m: Problem) = Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   /** A run id read back from the database. */
   private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
@@ -119,7 +119,7 @@ final class ManagersControllers(
     agents.managerStore
       .get(ManagerInfo.Id(id.value.trim))
       .map(m => withEffective(m, backlogs()))
-      .toRight(notFound(s"No manager '$id'"))
+      .toRight(notFound(Problem(s"No manager '$id'")))
 
   def list: List[ManagerInfo] =
     lazy val snap = backlogs()
@@ -168,7 +168,7 @@ final class ManagersControllers(
           agents.managerStore
             .create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
           (),
-          conflict(s"the manager '$id' exists already")
+          conflict(Problem(s"the manager '$id' exists already"))
         )
         _ = record(
           infoId,
@@ -186,9 +186,9 @@ final class ManagersControllers(
       yield m
     Kind.parse(in.kind) match
       case None =>
-        Left(error(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
+        Left(error(Problem(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})")))
       case Some(Kind.Review) if goal.isDefined =>
-        Left(error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
+        Left(error(Problem("the review manager is library-wide: give no goal (narrow it with config includeGoal)")))
       case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
       case Some(Kind.Enrich) if goal.isDefined =>
         Left(Api.Error(Problem("the enrich manager is library-wide: give no goal")))
@@ -196,7 +196,7 @@ final class ManagersControllers(
       case Some(Kind.Seed)   =>
         for
           g <- goal.toRight(Api.Error(Problem("a seeding manager is for one research area: give its goal")))
-          slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
+          slug <- DomainGoal.Slug.option(g).toRight(notFound(Problem(s"No goal '$g'")))
           gl <- host.goal(slug)
           m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
           _ <- addItem(
@@ -208,7 +208,7 @@ final class ManagersControllers(
       case Some(Kind.Watch) =>
         for
           g <- goal.toRight(Api.Error(Problem("a watcher is for one research area: give its goal")))
-          slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
+          slug <- DomainGoal.Slug.option(g).toRight(notFound(Problem(s"No goal '$g'")))
           gl <- host.goal(slug)
           m <- make(
             Kind.Watch,
@@ -281,7 +281,7 @@ final class ManagersControllers(
           cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes]
         )
         .left
-        .map(p => error(p.value))
+        .map(p => error(p.transformInto[Problem]))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
   private def validate(k: Kind, c: ManagerConfig): Either[Api.Error, Unit] =
@@ -292,7 +292,7 @@ final class ManagersControllers(
         Either.cond(
           c.rounds.forall(r => r.value >= 2 && r.value <= agents.roundsCap.value),
           (),
-          error(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
+          error(Problem(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)"))
         )
       ) { (acc, o) =>
         acc.flatMap(_ =>
@@ -301,7 +301,7 @@ final class ManagersControllers(
             .filter(roles.contains)
             .toRight(
               error(
-                s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"
+                Problem(s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})")
               )
             )
             .flatMap(_ =>
@@ -311,7 +311,7 @@ final class ManagersControllers(
                   agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value))
                 )
                 .left
-                .map(e => error(s"models ${o.role}: $e"))
+                .map(e => error(Problem(s"models ${o.role}: $e")))
                 .map(_ => ())
             )
         )
@@ -391,7 +391,7 @@ final class ManagersControllers(
             s"stopped by a person: ${Plural.count(Plural.CountN(cancelled.toLong), Plural.CountSingular("run"))} cancelled, ${Plural.count(Plural.CountN(items.value.toLong), Plural.CountSingular("item"))} cancelled"
           )
           manager(lightId(m))
-        case other => Left(error(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))
+        case other => Left(error(Problem(s"unknown action '$other' (one of: ${Actions.mkString(", ")})")))
     }
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
@@ -409,7 +409,7 @@ final class ManagersControllers(
           ItemStatus
             .parse(com.histmersion.api.automation.ItemStatus.Wire(s))
             .map(Some(_))
-            .toRight(error(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
+            .toRight(error(Problem(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})")))
         case None => Right(None)
     yield
       val (off, lim) = (offset.getOrElse(Offset(0)), limits.page(limit, PageSize(25)))
@@ -429,7 +429,7 @@ final class ManagersControllers(
             i
           }
       )
-      .toRight(notFound(s"No item '$ref' of manager ${m.id}"))
+      .toRight(notFound(Problem(s"No item '$ref' of manager ${m.id}")))
 
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
@@ -441,7 +441,7 @@ final class ManagersControllers(
   ): Either[Api.Error, ManagerContext.ItemTarget] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
-      case None    => Left(error(s"unknown item kind '$kind'"))
+      case None    => Left(error(Problem(s"unknown item kind '$kind'")))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`, `enrich`, `propose`, or
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
@@ -455,7 +455,7 @@ final class ManagersControllers(
     for
       m <- manager(id)
       kind <- itemKindOf(kindOf(m), com.histmersion.api.ItemKind.Word(in.kind.value)).toRight(
-        error(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
+        error(Problem(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'"))
       )
       itemKind = ManagerContext.ItemKind(kind.value)
       target <- targetOf(m, itemKind, ManagerItem.Target(in.target.value))
@@ -479,7 +479,7 @@ final class ManagersControllers(
       _ = kinds
         .find(_.items.contains(itemKind))
         .foreach(_.added(supervisor, m, itemKind, target, ManagerContext.Priority(prio)))
-      item <- agents.managerStore.item(itemId).toRight(notFound(s"item $itemId vanished"))
+      item <- agents.managerStore.item(itemId).toRight(notFound(Problem(s"item $itemId vanished")))
     yield
       supervisor.nudge()
       item
@@ -492,7 +492,7 @@ final class ManagersControllers(
     EnqueueKind.parse(in.kind) match
       case None =>
         Left(
-          error(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})")
+          error(Problem(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})"))
         )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
@@ -507,7 +507,7 @@ final class ManagersControllers(
       case Some(EnqueueKind.Seed) =>
         val text = in.target.value.trim
         for
-          slug <- DomainGoal.Slug.option(text).toRight(notFound(s"No goal '$text'"))
+          slug <- DomainGoal.Slug.option(text).toRight(notFound(Problem(s"No goal '$text'")))
           g <- host.goal(slug)
           id = seedId(Goal.Ref(g.slug.value))
           _ = supervisor.ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(slug))
@@ -552,12 +552,12 @@ final class ManagersControllers(
               ManagerPolicy
                 .parseInstant(ManagerPolicy.InstantText(u.value))
                 .map(_ => ())
-                .toRight(error(s"'$u' is not a date (2026-11-01) or an instant"))
+                .toRight(error(Problem(s"'$u' is not a date (2026-11-01) or an instant")))
             )
             _ <- Either.cond(
               transact(ds)(ManagerRepo.hold(i.id, h)),
               (),
-              conflict(s"item #${i.id} is ${i.status}; only a pending or held item can be held")
+              conflict(Problem(s"item #${i.id} is ${i.status}; only a pending or held item can be held"))
             )
           yield record(
             m.id,
@@ -571,13 +571,13 @@ final class ManagersControllers(
           val g = i.hold.flatMap(_.focus).fold("")(_.value)
           Left(
             conflict(
-              s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
-                s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)"
+              Problem(s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
+                s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)")
             )
           )
         case "release" =>
           Either
-            .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(s"item #${i.id} is ${i.status}, not held"))
+            .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(Problem(s"item #${i.id} is ${i.status}, not held")))
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
           in.priority.toRight(Api.Error(Problem("give `priority`"))).map { p =>
@@ -600,7 +600,7 @@ final class ManagersControllers(
                   )
               ),
               (),
-              conflict(s"item #${i.id} is ${i.status} already")
+              conflict(Problem(s"item #${i.id} is ${i.status} already"))
             )
             .map(_ => record(m.id, Some(i.id), i.runId.map(runIdOf), Feed.Stopped, s"${i.target}: $why"))
         case "reopen" =>
@@ -608,11 +608,11 @@ final class ManagersControllers(
             .cond(
               Transactor(ds).transact(ManagerRepo.reopen(i.id)),
               (),
-              conflict(s"item #${i.id} is ${i.status}; only a settled item can be re-opened")
+              conflict(Problem(s"item #${i.id} is ${i.status}; only a settled item can be re-opened"))
             )
             .map(_ => record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person"))
-        case other => Left(error(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
-      out <- agents.managerStore.item(i.id).toRight(notFound(s"item ${i.id} vanished"))
+        case other => Left(error(Problem(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})")))
+      out <- agents.managerStore.item(i.id).toRight(notFound(Problem(s"item ${i.id} vanished")))
     yield
       supervisor.nudge()
       withRuns(List(out)).head
@@ -634,7 +634,7 @@ final class ManagersControllers(
     val suggest = in.suggest.exists(_.value)
     for
       m <- manager(id)
-      text <- Option(in.text.value.trim).filter(_.nonEmpty).map(ManagerHint.Text(_)).toRight(error("a hint needs text"))
+      text <- Option(in.text.value.trim).filter(_.nonEmpty).map(ManagerHint.Text(_)).toRight(error(Problem("a hint needs text")))
       item <- in.item
         .map(_.value.trim)
         .filter(_.nonEmpty)
@@ -645,7 +645,7 @@ final class ManagersControllers(
       _ <- Either.cond(
         !(suggest && eff.isDefined),
         (),
-        error("`suggest` asks a model for the action: give no effect with it")
+        error(Problem("`suggest` asks a model for the action: give no effect with it"))
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
       _ <-
@@ -691,7 +691,7 @@ final class ManagersControllers(
         Feed.Hint,
         s"hint #${hint.id} (${if hint.standing.value then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.value.take(300)}$applied$asked"
       )
-      out <- Transactor(ds).read(ManagerRepo.hint(hint.id)).toRight(notFound(s"hint ${hint.id} vanished"))
+      out <- Transactor(ds).read(ManagerRepo.hint(hint.id)).toRight(notFound(Problem(s"hint ${hint.id} vanished")))
     yield
       supervisor.nudge()
       out
@@ -711,9 +711,11 @@ final class ManagersControllers(
     if !allowed.contains(a) then
       Left(
         error(
-          s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})" +
-            (if !proposal && a == HintEffect.Config then " — change the settings with the manager's config instead"
-             else "")
+          if !proposal && a == HintEffect.Config then
+            Problem(
+              s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")}) — change the settings with the manager's config instead"
+            )
+          else Problem(s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})")
         )
       )
     else if a == HintEffect.Config then
@@ -722,11 +724,11 @@ final class ManagersControllers(
         .toRight(Api.Error(Problem("a config action names the settings it changes")))
         .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Action(a))))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-      Left(error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
+      Left(error(Problem("a structured hint names its targets, a tag, a topic or a goal (or is about one item)")))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
       Left(Api.Error(Problem("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
     else if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) then
-      Left(error(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant"))
+      Left(error(Problem(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant")))
     else
       Right(
         e.modify(_.action)
@@ -909,7 +911,7 @@ final class ManagersControllers(
           cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes]
         )
         .left
-        .map(p => error(p.value))
+        .map(p => error(p.transformInto[Problem]))
       _ = agents.managerStore.get(id) match
         case None =>
           val c = ManagerConfig(sweeps = Some(if in.enabled.value then List(sw.wire) else Nil), budgetUsd = budget)
@@ -1058,7 +1060,7 @@ final class ManagersControllers(
   def setMode(in: AgentMode.ModeSet): Either[Api.Error, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
-      .toRight(error(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
+      .toRight(error(Problem(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}")))
       .map { to =>
         val now = agents.autopilot.status()
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))

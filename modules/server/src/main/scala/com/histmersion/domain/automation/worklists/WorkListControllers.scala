@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
@@ -22,12 +23,12 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
   def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Kind] =
     Kind
       .parse(Kind.Label(list.value))
-      .toRight(WorkListControllers.bad(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
+      .toRight(WorkListControllers.bad(Problem(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}")))
 
   def add(list: WorkListControllers.ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
     maintenance.guard(WriteGate.OperationName("queue/add")):
       kindOf(WorkListControllers.KindOfList(list.value)).flatMap { k =>
-        if in.text.value.trim.isEmpty then Left(WorkListControllers.bad("queue item text is empty"))
+        if in.text.value.trim.isEmpty then Left(WorkListControllers.bad(Problem("queue item text is empty")))
         else
           val topic = in.topic.map(_.value.trim).filter(_.nonEmpty).map(QueueItem.Topic(_)) match
             case some @ Some(_)        => some
@@ -36,8 +37,8 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           // both are 400s, not 500s: `created_at` reaches Postgres as `?::timestamptz` (a malformed
           // one used to surface as a driver error) and `status` was written unchecked.
           for
-            status <- Queue.statusOf(in.status).left.map(p => WorkListControllers.bad(p.value))
-            createdAt <- Queue.createdAtOf(in.createdAt).left.map(p => WorkListControllers.bad(p.value))
+            status <- Queue.statusOf(in.status).left.map(p => WorkListControllers.bad(p.transformInto[Problem]))
+            createdAt <- Queue.createdAtOf(in.createdAt).left.map(p => WorkListControllers.bad(p.transformInto[Problem]))
           yield queues.add(
             k,
             in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt)
@@ -52,7 +53,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           _ <- Queue.textOf(p.text)
         yield p.modify(_.status).setTo(status)
       checked.left
-        .map(p => WorkListControllers.bad(p.value))
+        .map(p => WorkListControllers.bad(p.transformInto[Problem]))
         .flatMap(c => queues.patch(id, c).left.map(WorkListControllers.error))
 
   def delete(id: QueueItemId): Either[Api.Error, QueueItem] =
@@ -86,7 +87,7 @@ object WorkListControllers:
   type KindOfList = KindOfList.T
   object KindOfList extends Newtype[String, Pure]
 
-  private def bad(message: String): Api.Error = Api.Error(Problem(message))
+  private def bad(message: Problem): Api.Error = Api.Error(message)
 
   def error(e: QueueError): Api.Error = e match
     case QueueError.NotFound(_) =>

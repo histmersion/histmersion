@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.Problem as ValuesProblem
 import com.histmersion.api.Problem
 import com.histmersion.api.Write
@@ -49,10 +50,10 @@ final class IngestControllers(
   def ingest(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(WriteGate.OperationName("ingest"))(ingestNow(p, upload))
 
-  private def error(message: String, code: Option[Api.Error.Code] = None): Api.Error =
-    Api.Error(Problem(message), code)
+  private def error(message: Problem, code: Option[Api.Error.Code] = None): Api.Error =
+    Api.Error(message, code)
 
-  private def invalid(p: ValuesProblem): Api.Error = Write.invalid(Problem(p.value))
+  private def invalid(p: ValuesProblem): Api.Error = Write.invalid(p.transformInto[Problem])
 
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
@@ -60,9 +61,9 @@ final class IngestControllers(
       val citekey: Citekey = validated
       val size = upload.size.value
       val limits = cfg().limits
-      if size <= 0 then Left(error("the upload is empty"))
+      if size <= 0 then Left(error(Problem("the upload is empty")))
       else if size > limits.uploadBytes.value then
-        Left(error(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)"))
+        Left(error(Problem(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)")))
       else
         for
           _ <- acquireItemOk(p.acquireItem)
@@ -111,12 +112,12 @@ final class IngestControllers(
       )
     (path.map(_.value.trim).filter(_.nonEmpty), base64.map(_.value.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
-        tools.file(ToolFiles.Path(p)).left.map(why => error(why.value)).flatMap {
+        tools.file(ToolFiles.Path(p)).left.map(why => error(why.transformInto[Problem])).flatMap {
           case None =>
             Left(
               error(
-                s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
-                  "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host"
+                Problem(s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
+                  "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host")
               )
             )
           case Some(f) => ingest(params(filename.getOrElse(Ingest.Params.Filename(f.name.value))), f)
@@ -126,14 +127,14 @@ final class IngestControllers(
           .Try(java.util.Base64.getDecoder.decode(b64))
           .toEither
           .left
-          .map(e => error(s"base64 payload is not decodable: ${e.getMessage}"))
+          .map(e => error(Problem(s"base64 payload is not decodable: ${e.getMessage}")))
           .flatMap { raw =>
             val limit = cfg().limits.inlineBytes.value
             if raw.length > limit then
               Left(
                 error(
-                  s"payload is ${raw.length} bytes, over the $limit-byte " +
-                    "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`"
+                  Problem(s"payload is ${raw.length} bytes, over the $limit-byte " +
+                    "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`")
                 )
               )
             else
@@ -144,7 +145,7 @@ final class IngestControllers(
               )
           }
       case (None, None) =>
-        Left(error("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
+        Left(error(Problem("give either `path` (a file the SERVER can see) or `base64` (the document itself)")))
 
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
@@ -162,8 +163,8 @@ final class IngestControllers(
           case None =>
             Left(
               error(
-                s"no original stored for '$citekey' — the server keeps uploads in " +
-                  s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`"
+                Problem(s"no original stored for '$citekey' — the server keeps uploads in " +
+                  s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`")
               )
             )
           case Some((sha, file)) =>
@@ -193,8 +194,8 @@ final class IngestControllers(
             case None =>
               Left(
                 error(
-                  s"no original stored for '${s.citekey}' — the server keeps uploads in " +
-                    s"${cfg().converter.spoolDir}; pass the file yourself (--file)",
+                  Problem(s"no original stored for '${s.citekey}' — the server keeps uploads in " +
+                    s"${cfg().converter.spoolDir}; pass the file yourself (--file)"),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
@@ -213,7 +214,7 @@ final class IngestControllers(
         .fulfillable(Queue.QueueItem.Id(id.value), queues.get(QueueItemId(id.value)))
         .map(_ => ())
         .left
-        .map(p => error(p.value))
+        .map(p => error(p.transformInto[Problem]))
     )
 
   // ── the originals' store ───────────────────────────────────────────────────────────────────
@@ -226,7 +227,7 @@ final class IngestControllers(
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
     val key = Store.Key.applyUnsafe(s"${sha.value}.$ext")
-    def failed(why: String) = error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
+    def failed(why: String) = error(Problem(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why"))
     val store = originals()
     if store.exists(key) then Right(key)
     else
@@ -268,7 +269,7 @@ final class IngestControllers(
       }
       .toEither
       .left
-      .map(e => error(s"cannot read the upload: ${e.getMessage}"))
+      .map(e => error(Problem(s"cannot read the upload: ${e.getMessage}")))
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
   private def duplicate(sha: Sha256, citekey: Citekey, force: Ingest.Params.Force): Either[Api.Error, Unit] =
@@ -276,8 +277,8 @@ final class IngestControllers(
       case Some(other) if other != citekey && !force.value =>
         Left(
           error(
-            s"this file is already stored as '$other' (sha256 ${sha.value.take(12)}…) — " +
-              "pass force to ingest it again under a different citekey",
+            Problem(s"this file is already stored as '$other' (sha256 ${sha.value.take(12)}…) — " +
+              "pass force to ingest it again under a different citekey"),
             Some(Api.Error.Code(Ingest.CodeConflict))
           )
         )
