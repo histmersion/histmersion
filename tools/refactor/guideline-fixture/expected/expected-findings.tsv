@@ -142,3 +142,13 @@ silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	
 silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	Citekey.option
 silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	22	Citekey.option
 silentPure	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	Citekey.option
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	11	contains:Text.sentence
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	12	startsWith:Text.sentence
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	13	==:Text.sentence
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	14	contains:Problem.legacyText
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	15	!=:Problem.legacyText
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	16	endsWith:Text.sentence
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	17	contains:Text.sentence
+G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	18	match:Text.sentence
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	14	legacyText
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	15	legacyText

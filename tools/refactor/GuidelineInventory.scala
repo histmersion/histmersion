@@ -97,6 +97,7 @@ object GuidelineInventory {
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
     "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one. Since G60 step 1 the closed `com.histmersion.util.problem.Problem` is the only one: any other top-level type, trait, class, enum or (non-newtype) object named `Problem` is a finding too",
+    "G5problemText" -> "main code only: G5textBranch's operations on the words of the closed Problem: its temporary `legacyText`, or what `api.problem.Text` renders (`sentence`, `sentences`). A caller that branches on a failure matches its case, never its sentence",
     "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==`, `!=`, a match on a literal or a regex, a Regex, or a reading apart (`takeWhile`, `split`, `stripPrefix`, `indexOf`…) of the text of a failure, a stored state or a message: the `.value` of a String newtype named for one (Problem, Error, Reason, Failure, Why, Message, Detail, Note, Outcome, Warning, State…), a Throwable's `getMessage`/`toString`, or a `message`/`error`/`detail`/`note`/`why`/`reason` field, outside the newtype's own companion and a boundary file. A caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
     "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
     "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Also every read of the temporary accessor `legacyText` (an unclassified problem's text where the api's renderer is out of reach; detail `legacyText`). Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
@@ -591,8 +592,26 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         case Term.Select(_, n) if policy.textBranchFields.contains(n.value) && stringish(termType(t)) => Some("field:" + n.value)
         case _ => None
       }
+      /** The words of the closed Problem: its temporary `legacyText`, or anything the api's `problem.Text` renders. */
+      def problemWords(n: Name): Option[String] = {
+        val sym = n.symbol.value
+        if (sym.startsWith("com/histmersion/util/problem/Problem.legacyText(")) Some("Problem.legacyText")
+        else if (sym.startsWith("com/histmersion/api/problem/Text.") && !sym.endsWith("Text.")) Some("Text." + n.value)
+        else None
+      }
       /** What a term is a text of, if it is the text of a failure, a stored state or a message. */
       def textSubject(t: Term): Option[String] = t match {
+        case Term.Select(_, n) if problemWords(n).nonEmpty => problemWords(n)
+        case a: Term.Apply if (a.fun match {
+              case Term.Select(_, n) => problemWords(n).nonEmpty
+              case n: Term.Name      => problemWords(n).nonEmpty
+              case _                 => false
+            }) =>
+          a.fun match {
+            case Term.Select(_, n) => problemWords(n)
+            case n: Term.Name      => problemWords(n)
+            case _                 => None
+          }
         case Term.Select(q, n) if isIronValue(n) =>
           termType(q).flatMap(newtypeOf).filter(nt => newtypeParents(nt).exists(p => isStringBase(p._2)) && textNamed(nt.displayName)).map(_.displayName)
             .orElse(fieldNamed(q))
@@ -627,7 +646,8 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val nt = (subject match { case Term.Select(q, n) if isIronValue(n) => termType(q).flatMap(newtypeOf); case _ => None })
         allowedInCompanion(t, nt) && nt.nonEmpty
       }
-      def flag(t: Tree, op: String, subject: String): Unit = report("G5textBranch", t, s"$op:$subject")
+      def flag(t: Tree, op: String, subject: String): Unit =
+        report(if (subject.startsWith("Text.") || subject == "Problem.legacyText") "G5problemText" else "G5textBranch", t, s"$op:$subject")
       val regexOps = Set("findFirstIn", "findFirstMatchIn", "findPrefixOf", "findPrefixMatchOf", "findAllIn", "findAllMatchIn", "unapplySeq", "matcher", "replaceAllIn", "replaceFirstIn")
       doc.tree.traverse {
         // subject.op(constant), or a constant list tested for the subject
