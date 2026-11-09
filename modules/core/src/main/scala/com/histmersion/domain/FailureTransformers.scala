@@ -8,7 +8,7 @@ import com.histmersion.api.Problem as ApiProblem
   * parse (values), a record of the wire contract (api). Core has no Chimney, and the layers' messages are different
   * types on purpose.
   */
-object ProblemTransformers:
+object FailureTransformers:
 
   /** A failure of the values layer as the domain's. */
   def ofValues(p: ValuesProblem): Problem = Problem(p.value)

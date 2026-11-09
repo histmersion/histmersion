@@ -220,7 +220,7 @@ object PlanArticles:
                         c.title,
                         c.kind,
                         c.filter,
-                        ProblemTransformers.toApi(c.why),
+                        FailureTransformers.toApi(c.why),
                         n,
                         w.fold(ProposedArticle.Overlap(0.0))(_._2),
                         w.filter(_._2.value > 0).map(x => ProposedArticle.OverlapWith(x._1.value))
