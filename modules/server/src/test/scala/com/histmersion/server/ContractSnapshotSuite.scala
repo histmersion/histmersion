@@ -73,6 +73,9 @@ class ContractSnapshotSuite extends munit.FunSuite:
     import sttp.apispec.openapi.circe.*
     val doc = sttp.tapir.docs.openapi.OpenAPIDocsInterpreter().toOpenAPI(Api.all, "Histmersion", "contract")
     check("openapi.json", doc.asJson.deepDropNullValues.spaces2)
+    // an enum without its WireEnum schema is derived from its case objects: anonymous `type`, `type1`, ... schemas
+    val anonymous = doc.components.toList.flatMap(_.schemas.keys).filter(_.matches("type[0-9]*")).sorted
+    assertEquals(anonymous, Nil, "a wire enum lacks `given Schema[E] = WireEnum.schema` (and its Encoder/Decoder)")
 
   test("mcp-tools.json: the MCP tools/list"):
     val deps = Deps(loaded.config, RefusingDataSource)

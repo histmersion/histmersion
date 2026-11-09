@@ -5,6 +5,7 @@ import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -203,6 +204,10 @@ object Agents:
       def all: Array[PauseReason] = values
       def wire(e: PauseReason): WireEnumValues.Wire = e.wire
       def fromWire(s: WireEnumValues.Wire): Option[PauseReason] = values.find(_.wire == s)
+    // without these, a record deriving its codec spells the enum as an object (ContractSnapshotSuite refuses that)
+    given Encoder[PauseReason] = WireEnum.encoder
+    given Decoder[PauseReason] = WireEnum.decoder
+    given Schema[PauseReason] = WireEnum.schema
 
   enum StepKind(val wire: StepKind.Wire) derives CanEqual:
     case Code extends StepKind(StepKind.Wire("code"))

@@ -90,7 +90,7 @@ derives	api:api/ItemKind.scala	codec given written by hand	3
 derives	api:api/ListPatch.scala	codec given written by hand	1
 derives	api:api/VocabularyCodecs.scala	codec given written by hand	48
 derives	api:api/automation/AgentStatePut.scala	codec given written by hand	1
-derives	api:api/automation/Agents.scala	codec given written by hand	3
+derives	api:api/automation/Agents.scala	codec given written by hand	6
 derives	api:api/automation/Goal.scala	codec given written by hand	4
 derives	api:api/automation/ModelChains.scala	codec given written by hand	1
 derives	api:api/automation/Queue.scala	codec given written by hand	2
