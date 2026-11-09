@@ -59,7 +59,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             headers
           )
           .left
-          .map(_.value)
+          .map(_.problem.value)
           .flatMap { j =>
             val rows = AcquireParse.s2Citations(j).map(_.wire)
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_.value >= y.value)))
@@ -87,5 +87,5 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             )
           )
           .left
-          .map(_.value)
+          .map(_.problem.value)
           .map(AcquireParse.openalexCitations(_).map(_.wire))

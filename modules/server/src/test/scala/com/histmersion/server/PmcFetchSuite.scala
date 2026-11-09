@@ -40,21 +40,21 @@ class PmcFetchSuite extends munit.FunSuite:
     private def answer(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, Array[Byte]] =
+    ): Either[Http.Failure, Array[Byte]] =
       asked = asked :+ (url -> headers)
-      routes.applyOrElse(url.value, (u: String) => Left(s"$u: offline")).left.map(Problem(_))
+      routes.applyOrElse(url.value, (u: String) => Left(s"$u: offline")).left.map(why => Http.Failure.Transport(Problem(why)))
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, HttpAnswer.Body] =
+    ): Either[Http.Failure, HttpAnswer.Body] =
       answer(url, headers).map(HttpAnswer.Body(_))
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, Http.Text] =
+    ): Either[Http.Failure, Http.Text] =
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
-      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Problem(e.getMessage)))
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
+      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage))))
 
   private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))
 

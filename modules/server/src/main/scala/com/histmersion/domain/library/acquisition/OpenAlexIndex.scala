@@ -35,7 +35,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(_.value)
+      .map(_.problem.value)
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
@@ -53,7 +53,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(_.value)
+      .map(_.problem.value)
 
   def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
     work(doi)

@@ -29,5 +29,5 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
         )
       )
       .left
-      .map(p => Problem(p.value))
+      .map(_.problem)
       .map(t => Candidates.arxivWorks(t.value).filter(_.year.forall(_.value >= since.getYear)))

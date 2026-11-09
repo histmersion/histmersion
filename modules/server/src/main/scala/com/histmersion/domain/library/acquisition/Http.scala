@@ -8,6 +8,7 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.upstreams.landing.RepositoryLanding
 import io.circe.Json
+import Http.Failure
 
 /** The ONE seam between the acquisition toolset and the network.
   *
@@ -15,22 +16,22 @@ import io.circe.Json
   * and never opens a socket. It is deliberately tiny — three verbs — because the interesting logic is in the pure
   * parsers, not here.
   *
-  * Failures are `Left(message)`, never exceptions: an unreachable API is an expected condition for a tool whose whole
+  * Failures are `Left(Failure)`, never exceptions: an unreachable API is an expected condition for a tool whose whole
   * job is talking to flaky third parties.
   */
 trait Http:
   def json(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Problem, Json]
+  ): Either[Failure, Json]
   def text(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Problem, Http.Text]
+  ): Either[Failure, Http.Text]
   def bytes(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Problem, HttpAnswer.Body]
+  ): Either[Failure, HttpAnswer.Body]
 
   /** One request, not retried, answered as it came — the status and headers too (CORE's budget reads them). A client
     * that only has bodies (a test's) answers 200 with no headers, or its `Left`.
@@ -38,10 +39,26 @@ trait Http:
   def once(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Problem, HttpAnswer] =
+  ): Either[Failure, HttpAnswer] =
     bytes(url, headers).map(HttpAnswer(HttpAnswer.Code(200), Map.empty, _))
 
 object Http:
+
+  /** Why a request gave no answer to use, whichever of the verbs it was: the plugin SPI's [[Plugin.Http.Failure]] in the
+    * server's own layer (the conversions are at the two seams, [[SttpHttp]] and [[HttpPlugin]]).
+    */
+  enum Failure derives CanEqual:
+    /** The upstream answered and the client gave up on the answer: a refusal (401, 403), a missing page (404), a
+      * slow-down it left alone, any other error status.
+      */
+    case Status(code: HttpAnswer.Code, problem: Problem)
+
+    /** No usable answer: the upstream could not be reached, or the answer was not what was asked for. */
+    case Transport(problem: Problem)
+
+    /** The sentence for a person. */
+    def problem: Problem
+
   type Url = RepositoryLanding.Candidate.Url
   val Url: RepositoryLanding.Candidate.Url.type = RepositoryLanding.Candidate.Url
   type Text = HttpAnswer.Text

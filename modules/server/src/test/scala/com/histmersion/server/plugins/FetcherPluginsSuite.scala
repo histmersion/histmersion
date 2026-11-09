@@ -32,16 +32,16 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   /** Never asked: registering opens nothing. */
   private object Offline extends Http:
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       fail(s"asked $url")
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, Http.Text] = fail(s"asked $url")
+    ): Either[Http.Failure, Http.Text] = fail(s"asked $url")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, HttpAnswer.Body] = fail(s"asked $url")
+    ): Either[Http.Failure, HttpAnswer.Body] = fail(s"asked $url")
 
   private def loaded(user: String, env: Map[String, String]): LoadedConfig =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e.value), identity)
@@ -125,16 +125,16 @@ class FetcherPluginsSuite extends munit.FunSuite:
     var asked: List[(String, Map[String, String])] = Nil // a test double's record of calls
     private def record(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Unit =
       asked = asked :+ (url.value -> headers.map((k, v) => k.value -> v.value))
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       record(url, headers); Right(Json.obj())
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, Http.Text] = Left(Problem("no"))
+    ): Either[Http.Failure, Http.Text] = Left(Http.Failure.Transport(Problem("no")))
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Problem, HttpAnswer.Body] =
+    ): Either[Http.Failure, HttpAnswer.Body] =
       record(url, headers); Right(HttpAnswer.Body("{}".getBytes("UTF-8")))
     // CORE is asked once, not retried, through its budget
     override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
@@ -326,7 +326,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     */
   final private class Indexes(c: AcquireConfig) extends Http:
     var asked: List[String] = Nil // a test double's record of calls
-    private def answer(request: Http.Url): Either[Problem, HttpAnswer.Body] =
+    private def answer(request: Http.Url): Either[Http.Failure, HttpAnswer.Body] =
       val url = request.value
       asked = asked :+ url
       val body =
@@ -340,12 +340,14 @@ class FetcherPluginsSuite extends munit.FunSuite:
           )
         else if url == s"${c.datacite.url}/dois/$LandingDoi" then Some(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
         else None
-      body.map(b => HttpAnswer.Body(b.getBytes("UTF-8"))).toRight(Problem(s"$url: HTTP 404"))
+      body.map(b => HttpAnswer.Body(b.getBytes("UTF-8"))).toRight(Http.Failure.Status(HttpAnswer.Code(404), Problem(s"$url: HTTP 404")))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url)
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
-      text(url, headers).flatMap(t => io.circe.parser.parse(t.value).left.map(e => Problem(e.getMessage)))
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
+      text(url, headers).flatMap(t =>
+        io.circe.parser.parse(t.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage)))
+      )
 
   /** The index steps and the landing step of a generation built over `http`, run in today's order with one memo for the
     * work, as an ingest runs them.

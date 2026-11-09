@@ -32,5 +32,5 @@ final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(p => Problem(p.value))
+      .map(_.problem)
       .map(AcquireParse.crossrefWorks(_).map(_.wire))

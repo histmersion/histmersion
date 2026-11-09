@@ -64,7 +64,7 @@ G44	plugins/gazetteers	main	23
 G44	plugins/gazetteers	test	68
 G44	plugins/media	main	103
 G44	plugins/media	test	97
-G44	server	main	10640
+G44	server	main	10635
 G44	server	test	4494
 G44	upstreams	main	142
 G44	upstreams	test	45
@@ -101,7 +101,7 @@ G45boundary	plugins/calibre	main	8
 G45boundary	plugins/events	main	165
 G45boundary	plugins/gazetteers	main	53
 G45boundary	plugins/media	main	374
-G45boundary	server	main	367
+G45boundary	server	main	366
 G45boundary	upstreams	main	166
 G45boundary	web	main	106
 G46	api	main	83

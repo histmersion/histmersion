@@ -10,5 +10,5 @@ final class RetractionWatch(cfg: AcquireConfig, http: Http) extends RetractionWa
     http
       .text(Http.Url(cfg.retractionWatch.csvUrl.value))
       .left
-      .map(e => Problem(e.value))
+      .map(_.problem)
       .map(t => RetractionWatchClient.Csv(t.value))
