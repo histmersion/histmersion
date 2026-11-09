@@ -200,7 +200,7 @@ object PluginTemplate:
       |
       |  test("the defaults decode with the plugin's own reader"):
       |    val plugin   = @Plugin@()
-      |    val defaults = ConfigFactory.parseString(resource(plugin.defaultsResource)).resolve().withoutPath("enabled")
+      |    val defaults = ConfigFactory.parseString(resource(plugin.defaultsResource.value)).resolve().withoutPath("enabled")
       |    assert(plugin.configReader.from(defaults.root).isRight, plugin.configReader.from(defaults.root).toString)
       |
       |  test("the native-image metadata registers every lazy val and the defaults file"):
@@ -208,7 +208,7 @@ object PluginTemplate:
       |    val listed = metadata.getConfigList("reflection").asScala.toList.flatMap(t =>
       |      t.getConfigList("fields").asScala.toList.map(f => s"${t.getString("type")}#${f.getString("name")}")).toSet
       |    assertEquals(lazyValFields.diff(listed), Set.empty[String])
-      |    assert(metadata.getConfigList("resources").asScala.exists(_.getString("glob") == @Plugin@().defaultsResource))
+      |    assert(metadata.getConfigList("resources").asScala.exists(_.getString("glob") == @Plugin@().defaultsResource.value))
       |
       |  private def lazyValFields: Set[String] =
       |    val location = Path.of(classOf[@Plugin@].getProtectionDomain.getCodeSource.getLocation.toURI)

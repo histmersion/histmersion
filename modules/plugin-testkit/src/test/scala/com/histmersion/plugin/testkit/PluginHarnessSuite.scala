@@ -214,7 +214,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       val env =
         Map("HISTMERSION_ACQUIRE_OPENALEX_URL" -> base, "HISTMERSION_ACQUIRE_CONTACT_EMAIL" -> "someone@example.org")
       val live = loaded(KitFetcher, s"base-url = \"$base\"", HttpMode.Record(dir), env = env)
-      val work = WorkKey.fromDoi(com.histmersion.domain.library.Doi.assume("https://doi.org/10.1/OK"), live)
+      val work = WorkKey.fromDoi(com.histmersion.plugin.Doi.assume("https://doi.org/10.1/OK"), live)
       assertEquals(
         work,
         Right(
@@ -228,7 +228,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       )
       assert(!live.requests.exists(_.value.contains("someone")), "no contact e-mail from a test")
       val replay = loaded(KitFetcher, s"base-url = \"$base\"", HttpMode.Replay(dir), env = env)
-      assertEquals(WorkKey.fromDoi(com.histmersion.domain.library.Doi("10.1/ok"), replay), work)
+      assertEquals(WorkKey.fromDoi(com.histmersion.plugin.Doi("10.1/ok"), replay), work)
     }
   }
 
