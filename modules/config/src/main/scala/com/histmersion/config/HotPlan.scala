@@ -12,8 +12,8 @@ object HotPlan:
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).
     */
-  def keyMatches(changed: ConfigReload.ChangedKey, key: ConfigReload.Key): Boolean =
-    changed.value == key.value || changed.value.startsWith(key.value + ".") || key.value.startsWith(changed.value + ".")
+  def keyMatches(changed: ConfigReload.Key, key: ConfigReload.Key): Boolean =
+    changed == key || changed.value.startsWith(key.value + ".") || key.value.startsWith(changed.value + ".")
 
   private def depNames(n: HotNode): List[HotNode.Name] = n.deps.map(d => HotNode.Name(d.value))
 
@@ -56,7 +56,7 @@ object HotPlan:
     walk(left.head.name, Vector.empty)
 
   /** The nodes a set of changed keys concerns directly. */
-  def touched(nodes: List[HotNode], changed: Iterable[ConfigReload.ChangedKey]): Set[HotNode.Name] =
+  def touched(nodes: List[HotNode], changed: Iterable[ConfigReload.Key]): Set[HotNode.Name] =
     nodes.filter(n => keyNames(n).exists(k => changed.exists(c => keyMatches(c, k)))).map(_.name).toSet
 
   /** `roots` and every node that depends on one of them, transitively. */
@@ -72,7 +72,7 @@ object HotPlan:
     */
   def plan(
       nodes: List[HotNode],
-      changed: Iterable[ConfigReload.ChangedKey],
+      changed: Iterable[ConfigReload.Key],
       forced: Set[HotNode.Name] = Set.empty
   ): Either[Problem, List[HotNode.Name]] =
     order(nodes).map { ordered =>

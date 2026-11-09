@@ -888,7 +888,7 @@ object ManagersView:
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
     SchedulerHead(
-      s"Scheduler: ${strategyLabel(AgentScheduler.StrategyLine.Name(s.strategy.value))}" + (if s.strategyFrom.value == "person"
+      s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
                                                                                             then " (set by a person)"
                                                                                             else "") +
         s" · ${s.occupied} of ${s.maxRuns} runs at once" +
@@ -943,7 +943,7 @@ object ManagersView:
                   cls := "btn btn--toggle btn--sm",
                   strategyLabel(x.name).value,
                   title := s"${x.describe} (${x.name})",
-                  aria.pressed := (x.name.value == s.strategy.value).toString,
+                  aria.pressed := (x.name == s.strategy).toString,
                   onClick --> (_ => switch(x.name))
                 )
               )

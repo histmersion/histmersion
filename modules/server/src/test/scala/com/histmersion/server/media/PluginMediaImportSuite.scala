@@ -39,6 +39,7 @@ import com.histmersion.api.media.MediaImportRequest
 import com.histmersion.api.media.MediaCount
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.plugins.PluginDescription
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
@@ -284,7 +285,7 @@ class PluginMediaImportSuite extends DbSuite:
         MediaProvider.Info.Title("Zq portal objects"),
         MediaProvider.Info.Over("places"),
         MediaProvider.Info.Description("A test fixture's collection"),
-        MediaProvider.Info.Plugin("zq-plugin"),
+        PluginDescription.Id("zq-plugin"),
         builtin = MediaProvider.Info.Builtin(false),
         MediaProvider.Info.Licences(base.media.collections.licences.value)
       )
@@ -333,7 +334,7 @@ class PluginMediaImportSuite extends DbSuite:
         assertEquals(ps.map(_.name).last, Collection)
         assert(
           ps.find(_.name == MediaItem.Provider("met"))
-            .exists(p => p.builtin.value && p.plugin == MediaProvider.Info.Plugin("media-met")),
+            .exists(p => p.builtin.value && p.plugin == PluginDescription.Id("media-met")),
           ps.toString
         )
         assert(

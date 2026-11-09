@@ -248,7 +248,7 @@ object ServerGraph:
           Right(ctx.previous match
             case None => plugins.getOrElse(ServerPlugins.load(ctx.config.loaded, core = core))
             case prev =>
-              ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.ChangedKey(n.value)), core))
+              ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.Key(n.value)), core))
         }
       yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())

@@ -124,7 +124,7 @@ object AgentScheduler:
     object Waiting extends Newtype[Int, Pure]
 
   final case class SchedulerStatus(
-      strategy: SchedulerStatus.Strategy,
+      strategy: StrategyLine.Name,
       strategyFrom: SchedulerStatus.StrategyFrom = SchedulerStatus.StrategyFrom("config"),
       strategies: List[StrategyLine] = Nil,
       at: Option[SchedulerStatus.At] = None,
@@ -145,8 +145,6 @@ object AgentScheduler:
         com.histmersion.api.json.Schema
 
   object SchedulerStatus:
-    type Strategy = Strategy.T
-    object Strategy extends Newtype[String, Pure]
     type StrategyFrom = StrategyFrom.T
     object StrategyFrom extends Newtype[String, Pure]
     type At = At.T

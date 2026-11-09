@@ -421,7 +421,7 @@ object MergePlanner:
   ): IssueText =
     val hunks = base match
       case Some(b) =>
-        Diff3.merge(Diff3.MergeBase(b.value), Diff3.MergeLeft(left.value), Diff3.MergeRight(right.value)).hunks.map {
+        Diff3.merge(Diff3.Text(b.value), Diff3.Text(left.value), Diff3.Text(right.value)).hunks.map {
           case Diff3.Hunk.Agreed(ls) =>
             IssueHunk(conflict = IssueHunk.Conflict(false), left = ls.toList.map(l => IssueHunk.Left(l.value)))
           case Diff3.Hunk.Conflict(o, a, c) =>
@@ -931,7 +931,7 @@ object MergePlanner:
     // an acquire/tasks item with the same text here is the same item
     val queueClaimed = scala.collection.mutable.Set.empty[UUID]
     localized.queue
-      .filter(q => writesInitially(q.uid) && q.list.value != Queue.Kind.Log.label.value)
+      .filter(q => writesInitially(q.uid) && q.list != Queue.Kind.Log.label)
       .sortBy(_.uid.toString)
       .foreach { q =>
         in.local.queue
@@ -1088,13 +1088,13 @@ object MergePlanner:
                   List(
                     IssueField(
                       IssueField.Field("plan"),
-                      l.plan.map(j => IssueField.Left(MergeIssue.Detail.planText(j))),
-                      r.plan.map(j => IssueField.Right(MergeIssue.Detail.planText(j)))
+                      l.plan.map(j => IssueField.Value(MergeIssue.Detail.planText(j))),
+                      r.plan.map(j => IssueField.Value(MergeIssue.Detail.planText(j)))
                     ),
                     IssueField(
                       IssueField.Field("approved"),
-                      l.planApprovedAt.map(t => IssueField.Left(t.value)),
-                      r.planApprovedAt.map(t => IssueField.Right(t.value))
+                      l.planApprovedAt.map(t => IssueField.Value(t.value)),
+                      r.planApprovedAt.map(t => IssueField.Value(t.value))
                     )
                   )
                 )

@@ -122,19 +122,17 @@ object Managers:
 
   def watchId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
-  enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind) derives CanEqual:
-    case Acquisition extends Sweep(Sweep.Wire("acquisition"), Sweep.ItemKind(AcquisitionSweep))
-    case Currency extends Sweep(Sweep.Wire("currency"), Sweep.ItemKind(CurrencyCheck))
+  enum Sweep(val wire: Sweep.Wire, val itemKind: ManagerItem.Kind) derives CanEqual:
+    case Acquisition extends Sweep(Sweep.Wire("acquisition"), ManagerItem.Kind(AcquisitionSweep))
+    case Currency extends Sweep(Sweep.Wire("currency"), ManagerItem.Kind(CurrencyCheck))
 
   object Sweep:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-    type ItemKind = ItemKind.T
-    object ItemKind extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[Sweep] =
-      values.find(x => x.wire == Wire((s).value.trim.toLowerCase) || x.itemKind == ItemKind((s).value.trim.toLowerCase))
-    def ofItem(kind: ItemKind): Option[Sweep] = values.find(_.itemKind == kind)
+      values.find(x => x.wire == Wire((s).value.trim.toLowerCase) || x.itemKind == ManagerItem.Kind((s).value.trim.toLowerCase))
+    def ofItem(kind: ManagerItem.Kind): Option[Sweep] = values.find(_.itemKind == kind)
 
     def of(c: ManagerConfig): List[Sweep] =
       c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))

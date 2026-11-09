@@ -155,7 +155,7 @@ class MergeViewSuite extends munit.FunSuite:
   ):
     val i = issue(MergeIssue.Id("S-1"))
     val f =
-      IssueField(IssueField.Field("status"), Some(IssueField.Left("current")), Some(IssueField.Right("contested")))
+      IssueField(IssueField.Field("status"), Some(IssueField.Value("current")), Some(IssueField.Value("contested")))
     assertEquals(MergeView.resultOf(i, f, None), Some(Left("to decide")))
     assertEquals(
       MergeView.resultOf(i, f, Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
@@ -165,7 +165,7 @@ class MergeViewSuite extends munit.FunSuite:
       MergeView
         .resultOf(
           i,
-          IssueField(IssueField.Field("title"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+          IssueField(IssueField.Field("title"), Some(IssueField.Value("a")), Some(IssueField.Value("b"))),
           Some(MergeDecision.of(MergeDecision.Kind.KeepRight))
         ),
       None
@@ -175,7 +175,7 @@ class MergeViewSuite extends munit.FunSuite:
       MergeView
         .resultOf(
           notes,
-          IssueField(IssueField.Field("notes"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+          IssueField(IssueField.Field("notes"), Some(IssueField.Value("a")), Some(IssueField.Value("b"))),
           Some(MergeDecision.of(MergeDecision.Kind.Concat))
         ),
       Some(Right("a\n\nb"))
@@ -184,7 +184,7 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(
       MergeView.resultOf(
         gate,
-        IssueField(IssueField.Field("citekey"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+        IssueField(IssueField.Field("citekey"), Some(IssueField.Value("a")), Some(IssueField.Value("b"))),
         Some(MergeDecision.withArg(MergeDecision.Kind.Map, MergeDecision.Argument("b")))
       ),
       Some(Right("b"))
@@ -192,7 +192,7 @@ class MergeViewSuite extends munit.FunSuite:
     // the rows that differ come first; empty rows go
     val rows = MergeView.rows(
       List(
-        IssueField(IssueField.Field("year"), Some(IssueField.Left("1")), Some(IssueField.Right("1"))),
+        IssueField(IssueField.Field("year"), Some(IssueField.Value("1")), Some(IssueField.Value("1"))),
         f,
         IssueField(IssueField.Field("doi"), None, None)
       )

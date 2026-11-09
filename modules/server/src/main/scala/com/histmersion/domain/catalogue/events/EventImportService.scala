@@ -79,7 +79,7 @@ object EventImportService:
             pt.map(_._1),
             pt.map(_._2),
             e.wikidata.map(w => EventEntry.Wikidata(w.value)),
-            s.catalogueRecords.filter(_._1.value == e.id.value).map(_._2.key).toSet,
+            s.catalogueRecords.filter(_._1 == e.id).map(_._2.key).toSet,
             StoredEvent.Catalogue(e.catalogue.isDefined),
             StoredEvent.Label(e.label.value)
           )
@@ -230,7 +230,7 @@ object EventImportService:
       val wd = recs.flatMap(_.wikidata).headOption.flatMap(w => HeldEvent.Wikidata.option(w.value))
       val catalogue = s.events.find(_.id == eventId).map(_.catalogue)
       def ownerIn(p: HeldEvent.Catalogue): Option[CatalogRecord] =
-        val storedKeys = s.catalogueRecords.filter(_._1.value == eventId.value).map(_._2.key).toList
+        val storedKeys = s.catalogueRecords.filter(_._1 == eventId).map(_._2.key).toList
         CatalogRecord
           .owner(CatalogRecord.EventId(eventId.value), CatalogRecord.Provider(p.value), storedKeys ++ recs.map(_.key))
           .flatMap(k => recs.find(_.key == k))
@@ -295,7 +295,7 @@ object EventImportService:
         .toList
         .flatMap((id, r) =>
           s.events
-            .find(_.id.value == id.value)
+            .find(_.id == id)
             .map(e => (e.id, EventSummary.Kind(e.kind.value), r))
         )
       (rows, RowCount(0))

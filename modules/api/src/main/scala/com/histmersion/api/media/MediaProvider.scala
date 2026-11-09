@@ -3,6 +3,7 @@ package api.media
 
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
+import com.histmersion.api.plugins.PluginDescription
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -74,7 +75,7 @@ object MediaProvider:
       title: Info.Title,
       over: Info.Over,
       description: Info.Description,
-      plugin: Info.Plugin,
+      plugin: PluginDescription.Id,
       builtin: Info.Builtin,
       licences: Info.Licences
   ) derives KindlingsCodecAsObject,
@@ -88,8 +89,6 @@ object MediaProvider:
     object Over extends Newtype[String, Pure]
     type Description = Description.T
     object Description extends Newtype[String, Pure]
-    type Plugin = Plugin.T
-    object Plugin extends Newtype[String, Pure]
     type Builtin = Builtin.T
     object Builtin extends Newtype[Boolean, Pure]
     type Licences = Licences.T

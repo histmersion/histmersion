@@ -225,20 +225,20 @@ class AiProvidersSuite extends munit.FunSuite:
     assert(
       BuiltinAi.pluginIds
         .map(i => Plugin.Info.Id(i.value))
-        .subsetOf(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))).keySet)
+        .subsetOf(Plugins.carried(g1, List(ConfigReload.Key("histmersion.acquire.chain"))).keySet)
     )
     assert(
-      !Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))).contains(Plugin.Info.Id("zq-ai"))
+      !Plugins.carried(g1, List(ConfigReload.Key("histmersion.acquire.chain"))).contains(Plugin.Info.Id("zq-ai"))
     )
-    val own = Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.ai-codex.enabled"))).keySet
+    val own = Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins.ai-codex.enabled"))).keySet
     assert(!own(Plugin.Info.Id("ai-codex")) && own(Plugin.Info.Id("ai-local")) && own(Plugin.Info.Id("zq-ai")))
     // a command-line runtime's agents.* setting is no plugin key: nothing is rebuilt (its client reads it at each call)
     assertEquals(
-      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.agents.providers.codex.command"))).keySet,
+      Plugins.carried(g1, List(ConfigReload.Key("histmersion.agents.providers.codex.command"))).keySet,
       Plugins.carried(g1, Nil).keySet
     )
     // an HTTP provider's own agents.providers.<name> rebuilds its plugin alone
-    val keyed = Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.agents.providers.openai.api-key"))).keySet
+    val keyed = Plugins.carried(g1, List(ConfigReload.Key("histmersion.agents.providers.openai.api-key"))).keySet
     assert(
       !keyed(Plugin.Info.Id("ai-openai")) && keyed(Plugin.Info.Id("ai-anthropic")) && keyed(
         Plugin.Info.Id("ai-local")

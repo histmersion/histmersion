@@ -29,8 +29,7 @@ final class Downloads(http: Plugin.Http):
         None
 
 object Downloads:
-  type Md5 = Md5.T
-  object Md5 extends Newtype[String, Pure]
+  export com.histmersion.upstreams.identifiers.Md5
 
   /** A PDF that is really a PDF: the magic bytes within the first KiB and a plausible size (the host checks the same).
     */

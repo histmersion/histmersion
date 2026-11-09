@@ -25,8 +25,7 @@ object Queue:
   object InstantKey extends Newtype[Long, Pure]
   type Preamble = Preamble.T
   object Preamble extends Newtype[String, Pure]
-  type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  export Kind.Label as Wire
 
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]

@@ -161,7 +161,7 @@ object MergeFold:
     * differences are reported by the plan. Absent when empty.
     */
   def keepLocalSchedules(l: Bundle.Goal, r: Bundle.Goal): Bundle.Goal =
-    def key(k: Bundle.GoalLink) = (k.kind, k.refUid.fold(k.ref.value)(_.toString))
+    def key(k: Bundle.GoalLink) = (k.kind, k.target)
     val ls = l.links.getOrElse(Nil)
     val links = (ls ++ r.links.getOrElse(Nil).filterNot(x => ls.exists(y => key(y) == key(x))))
       .sortBy(k => (k.kind.value, k.ref.value, k.refUid.fold("")(_.toString)))
@@ -251,9 +251,9 @@ object MergeFold:
         case None              => ArticleOutcome.NoBase
         case Some((sha, base)) =>
           val m = Diff3.merge(
-            Diff3.MergeBase(base.value),
-            Diff3.MergeLeft(localBody.value),
-            Diff3.MergeRight(foreignBody.value)
+            Diff3.Text(base.value),
+            Diff3.Text(localBody.value),
+            Diff3.Text(foreignBody.value)
           )
           if m.clean then ArticleOutcome.Merged(ArticleBody(m.text.value), sha)
           else ArticleOutcome.Conflict(ConflictCount(m.conflicts.value), sha)

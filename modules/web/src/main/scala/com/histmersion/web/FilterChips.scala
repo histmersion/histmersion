@@ -34,13 +34,13 @@ object FilterChips:
 
   /** The label a chip's field reads as. */
   private def labelOf(c: UiState.ActiveChip): String = c.key match
-    case k if k.value == UiState.q.key.value => "Words"
+    case k if k == UiState.q.key => "Words"
     case _                                   => Wording.capitalize(c.label.value)
 
   /** One active filter's chip; a chosen place is named by its label, never by its id. */
   def chip(c: UiState.ActiveChip): HtmlElement =
     val remove = Some { () => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value); PlacesInput.sync() }
-    if c.key.value == UiState.placeIds.key.value then
+    if c.key == UiState.placeIds.key then
       span(
         child <-- PlacesInput
           .chipTextSignal(PlacesInput.ChipTextSignalId(c.value.value))
@@ -53,7 +53,7 @@ object FilterChips:
             )
           )
       )
-    else if c.key.value == UiState.status.key.value then
+    else if c.key == UiState.status.key then
       Chip(
         Chip.Text(Wording.statusOf(Api.GoalQuery.Status(c.value.value))),
         prefix = Some(Chip.Prefix(s"${labelOf(c)}: ")),

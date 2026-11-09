@@ -160,7 +160,7 @@ object LeadService:
 
     private def factsOf(s: CatalogueState, id: Event.Id): Option[LeadRow] =
       s.events.find(_.id == id).map { e =>
-        val recs = s.catalogueRecords.filter(_._1.value == id.value).map(_._2)
+        val recs = s.catalogueRecords.filter(_._1 == id).map(_._2)
         val tier =
           if e.citekey.isDefined || s.attestations
               .exists(a => a.targetType.value == "event" && a.targetId.value == id.value)

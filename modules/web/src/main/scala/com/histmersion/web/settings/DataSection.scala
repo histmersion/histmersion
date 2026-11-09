@@ -149,8 +149,8 @@ object DataSection:
           children <-- media.signal.map(ms =>
             ms.map { m =>
               val on = ui.plugins.plugins
-                .find(_.id.value == m.plugin.value)
-                .forall(_.state.value == PluginState.Registered.wire.value)
+                .find(_.id == m.plugin)
+                .forall(_.state == PluginState.Registered.wire)
               row(
                 m.title.value,
                 m.description.value,

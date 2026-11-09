@@ -75,7 +75,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
         t.roles.flatMap { (prop, r) =>
           WikidataStatement
             .best(
-              item.statements.filter(_.property.value == prop.value),
+              item.statements.filter(_.property == prop),
               WikidataStatement.BestPer(media.perProperty.value)
             )
             .zipWithIndex

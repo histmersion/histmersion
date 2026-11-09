@@ -32,7 +32,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(true),
-    PluginStatus.State(PluginState.Registered.wire.value),
+    PluginState.Wire(PluginState.Registered.wire.value),
     provides = List(PluginDescription.Provides("secret-vault:keepassxc")),
     settings = List(
       PluginSetting(PluginSetting.Key("database"), PluginSetting.Value("/v.kdbx")),
@@ -44,14 +44,14 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(false),
-    PluginStatus.State(PluginState.Disabled.wire.value)
+    PluginState.Wire(PluginState.Disabled.wire.value)
   )
   private val broken = PluginStatus(
     PluginStatus.Id("portal"),
     PluginStatus.Version("2.0.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(true),
-    PluginStatus.State(PluginState.Failed.wire.value),
+    PluginState.Wire(PluginState.Failed.wire.value),
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
     error =
@@ -62,7 +62,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Version("0.0.1"),
     PluginStatus.SpiVersion(0),
     enabled = PluginStatus.Enabled(false),
-    PluginStatus.State(PluginState.Refused.wire.value),
+    PluginState.Wire(PluginState.Refused.wire.value),
     error = Some(api.Problem("old: built for SPI 0, this host speaks 1"))
   )
 

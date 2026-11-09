@@ -428,7 +428,7 @@ object RunService:
         .toList
         .map(m =>
           MessageInfo(
-            MessageInfo.Seq(m.seq.value),
+            StepInfo.Seq(m.seq.value),
             MessageInfo.N(m.message.n.value),
             MessageInfo.Role(m.message.role.value),
             m.message.content.map(c => MessageInfo.Content(c.value)),

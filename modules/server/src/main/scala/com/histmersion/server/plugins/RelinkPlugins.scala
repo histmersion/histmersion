@@ -248,7 +248,7 @@ object RelinkPlugins:
       PluginDescription.SpiVersion(info.spiVersion.value),
       st.map(_.provides).getOrElse(Nil),
       access,
-      st.filter(s => s.state.value == PluginState.Failed.wire.value || s.state.value == PluginState.Refused.wire.value)
+      st.filter(s => s.state == PluginState.Failed.wire || s.state == PluginState.Refused.wire)
         .flatMap(_.error)
     )
 

@@ -11,6 +11,7 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.Offset
 import com.histmersion.api.Paging
@@ -686,7 +687,7 @@ class SchedulerPanelSuite extends munit.FunSuite:
   test("facets count the queue, the most first; the heading says the strategy and the room"):
     assertEquals(ManagersView.facet(ws, w => Facet.Value(w.jobType.value)), List("review" -> 2, "sweep" -> 1))
     val s = SchedulerStatus(
-      SchedulerStatus.Strategy("goal-first"),
+      AgentScheduler.StrategyLine.Name("goal-first"),
       SchedulerStatus.StrategyFrom("person"),
       maxRuns = SchedulerStatus.MaxRuns(4),
       occupied = SchedulerStatus.Occupied(3),

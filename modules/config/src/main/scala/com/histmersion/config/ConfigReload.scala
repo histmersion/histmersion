@@ -13,8 +13,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * server's `hot.HotGraph` rebuilds the components those settings feed ([[HotPlan]]).
   */
 object ConfigReload:
-  type ChangedKey = ChangedKey.T
-  object ChangedKey extends Newtype[String, Pure]
   type Key = Key.T
   object Key extends Newtype[String, Pure]
 
@@ -46,22 +44,22 @@ object ConfigReload:
     Key("histmersion.converter.parallelism") -> Problem("the size of the OCR worker pool, started once")
   )
 
-  def restartOnly(key: ChangedKey): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
+  def restartOnly(key: Key): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
 
   /** Every leaf setting (a value or a list; `null` leaves none) with its value rendered. */
-  def leaves(c: org.ekrich.config.Config): Map[ChangedKey, Rendered] =
+  def leaves(c: org.ekrich.config.Config): Map[Key, Rendered] =
     c.entrySet.asScala.iterator
-      .map(e => ChangedKey(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise)))
+      .map(e => Key(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise)))
       .toMap
 
   /** The settings that differ — set in one and not the other, or set to another value — sorted. */
-  def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[ChangedKey] =
+  def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[Key] =
     val a = leaves(settings(before))
     val b = leaves(settings(after))
     (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sorted
 
   /** `changed`, split into what a running server applies and what waits for a restart. */
-  def split(changed: List[ChangedKey]): (List[ChangedKey], List[ChangedKey]) = changed.partition(k => !restartOnly(k))
+  def split(changed: List[Key]): (List[Key], List[Key]) = changed.partition(k => !restartOnly(k))
 
   /** The settings the server switches to: `next`, with every restart-only setting that changed put back to its
     * `running` value — so the config the server reports is the one it runs.
@@ -69,7 +67,7 @@ object ConfigReload:
   def effective(
       running: org.ekrich.config.Config,
       next: org.ekrich.config.Config,
-      changed: List[ChangedKey]
+      changed: List[Key]
   ): org.ekrich.config.Config =
     changed.filter(restartOnly).foldLeft(settings(next)) { (c, k) =>
       if running.hasPath(k.value) then c.withValue(k.value, running.getValue(k.value)) else c.withoutPath(k.value)

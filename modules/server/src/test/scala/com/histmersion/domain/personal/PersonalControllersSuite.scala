@@ -105,7 +105,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     assertEquals(stale.left.map(_.code), Left(Some(Write.CodePrecondition)))
     assert(stale.left.exists(_.message.value.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
     assertEquals(
-      c.editNote(me, n.id, Note.Edit(Note.Text("four"), Some(Note.UpdatedAt("yesterday")))).left.map(_.code),
+      c.editNote(me, n.id, Note.Edit(Note.Text("four"), Some(Note.At("yesterday")))).left.map(_.code),
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(c.note(me, Note.Id("not-an-id")).left.map(_.code), Left(None))

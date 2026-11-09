@@ -805,7 +805,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(g1.rebuilt.toSet, Set("echo", "maker", "consumer"))
     assertEquals(makerUp.size, 1)
     // only echo's block changed: maker (a vault, unchanged) and consumer (disabled) are carried
-    val changed = List(ConfigReload.ChangedKey("histmersion.plugins.echo.greeting"))
+    val changed = List(ConfigReload.Key("histmersion.plugins.echo.greeting"))
     val carried = Plugins.carried(g1, changed)
     assertEquals(carried.keySet, Set("maker", "consumer"))
     val (l, s) = services()
@@ -827,13 +827,13 @@ class PluginHostSuite extends munit.FunSuite:
   test("reload: a vault plugin changed, `order` changed or a host key changed — every plugin is registered again"):
     val (g1, _) =
       build(List(EchoPlugin(), MakerPlugin()), "histmersion.plugins { echo.enabled = true, maker.enabled = true }")
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.maker.vault"))), Map.empty)
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.order"))), Map.empty)
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))), Map.empty)
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins.maker.vault"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins.order"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.acquire.chain"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins"))), Map.empty)
     // keys no plugin reads do not count
     assertEquals(
-      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.limits.search"))).keySet,
+      Plugins.carried(g1, List(ConfigReload.Key("histmersion.limits.search"))).keySet,
       Set("echo", "maker")
     )
 
@@ -846,14 +846,14 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(statusOf(g1, "consumer").state, "registered")
     assertEquals(statusOf(g1, "echo").state, "failed")
     assertEquals(g1.withSecrets, Set("consumer"))
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.other.x"))).keySet, Set("maker"))
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins.other.x"))).keySet, Set("maker"))
 
   test("pluginId: the plugin a key belongs to, quoted ids too; None for order and the block"):
-    assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.pmc.enabled")), Some("pmc"))
+    assertEquals(Plugins.pluginId(ConfigReload.Key("histmersion.plugins.pmc.enabled")), Some("pmc"))
     assertEquals(
-      Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.\"1password\".enabled")),
+      Plugins.pluginId(ConfigReload.Key("histmersion.plugins.\"1password\".enabled")),
       Some("1password")
     )
-    assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.order")), None)
-    assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins")), None)
-    assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.acquire.chain")), None)
+    assertEquals(Plugins.pluginId(ConfigReload.Key("histmersion.plugins.order")), None)
+    assertEquals(Plugins.pluginId(ConfigReload.Key("histmersion.plugins")), None)
+    assertEquals(Plugins.pluginId(ConfigReload.Key("histmersion.acquire.chain")), None)

@@ -13,29 +13,29 @@ import com.histmersion.config.given
 class Diff3Suite extends munit.FunSuite:
 
   private val baseText = "Intro.\n\nMiddle.\n\nEnd."
-  private val base = Diff3.MergeBase(baseText)
-  private val baseLeft = Diff3.MergeLeft(baseText)
-  private val baseRight = Diff3.MergeRight(baseText)
+  private val base = Diff3.Text(baseText)
+  private val baseLeft = Diff3.Text(baseText)
+  private val baseRight = Diff3.Text(baseText)
 
   test("changes in different places merge cleanly, both kept"):
     val r = Diff3.merge(
       base,
-      Diff3.MergeLeft("Intro (left).\n\nMiddle.\n\nEnd."),
-      Diff3.MergeRight("Intro.\n\nMiddle.\n\nEnd (right).")
+      Diff3.Text("Intro (left).\n\nMiddle.\n\nEnd."),
+      Diff3.Text("Intro.\n\nMiddle.\n\nEnd (right).")
     )
     assert(r.clean)
     assertEquals(r.text, "Intro (left).\n\nMiddle.\n\nEnd (right).")
 
   test("one side unchanged takes the other; the same change on both sides is taken once"):
-    assertEquals(Diff3.merge(base, baseLeft, Diff3.MergeRight("x")).text, "x")
-    assertEquals(Diff3.merge(base, Diff3.MergeLeft("y"), baseRight).text, "y")
+    assertEquals(Diff3.merge(base, baseLeft, Diff3.Text("x")).text, "x")
+    assertEquals(Diff3.merge(base, Diff3.Text("y"), baseRight).text, "y")
     val same = "Intro.\n\nMiddle, rewritten.\n\nEnd."
-    assertEquals(Diff3.merge(base, Diff3.MergeLeft(same), Diff3.MergeRight(same)).text, same)
+    assertEquals(Diff3.merge(base, Diff3.Text(same), Diff3.Text(same)).text, same)
     val both =
       Diff3.merge(
         base,
-        Diff3.MergeLeft("Intro.\n\nMiddle, rewritten.\n\nEnd (left)."),
-        Diff3.MergeRight("Intro (right).\n\nMiddle, rewritten.\n\nEnd.")
+        Diff3.Text("Intro.\n\nMiddle, rewritten.\n\nEnd (left)."),
+        Diff3.Text("Intro (right).\n\nMiddle, rewritten.\n\nEnd.")
       )
     assert(both.clean)
     assertEquals(both.text, "Intro (right).\n\nMiddle, rewritten.\n\nEnd (left).")
@@ -43,8 +43,8 @@ class Diff3Suite extends munit.FunSuite:
   test("one place changed differently on each side is a conflict, marked like git's"):
     val r = Diff3.merge(
       base,
-      Diff3.MergeLeft("Intro.\n\nMiddle (left).\n\nEnd."),
-      Diff3.MergeRight("Intro.\n\nMiddle (right).\n\nEnd.")
+      Diff3.Text("Intro.\n\nMiddle (left).\n\nEnd."),
+      Diff3.Text("Intro.\n\nMiddle (right).\n\nEnd.")
     )
     assert(!r.clean)
     assertEquals(r.conflicts, 1)
@@ -56,19 +56,19 @@ class Diff3Suite extends munit.FunSuite:
     assert(m.value.startsWith("Intro.\n"))
 
   test("inserted and deleted lines on either side merge; an insertion at one spot from both conflicts"):
-    val ins = Diff3.merge(Diff3.MergeBase("a\nb\nc"), Diff3.MergeLeft("a\nx\nb\nc"), Diff3.MergeRight("a\nb\nc\ny"))
+    val ins = Diff3.merge(Diff3.Text("a\nb\nc"), Diff3.Text("a\nx\nb\nc"), Diff3.Text("a\nb\nc\ny"))
     assertEquals(ins.text, "a\nx\nb\nc\ny")
-    val del = Diff3.merge(Diff3.MergeBase("a\nb\nc\nd"), Diff3.MergeLeft("a\nc\nd"), Diff3.MergeRight("a\nb\nc"))
+    val del = Diff3.merge(Diff3.Text("a\nb\nc\nd"), Diff3.Text("a\nc\nd"), Diff3.Text("a\nb\nc"))
     assertEquals(del.text, "a\nc")
-    assert(!Diff3.merge(Diff3.MergeBase("a\nb"), Diff3.MergeLeft("a\nx\nb"), Diff3.MergeRight("a\ny\nb")).clean)
+    assert(!Diff3.merge(Diff3.Text("a\nb"), Diff3.Text("a\nx\nb"), Diff3.Text("a\ny\nb")).clean)
 
   test("property: merging with an unchanged side is the other side, whatever the texts"):
     val rnd = scala.util.Random(3L)
     def text = (1 to rnd.nextInt(12)).map(_ => rnd.nextInt(5).toString).mkString("\n")
     (1 to 200).foreach { _ =>
       val (o, a) = (text, text)
-      val (ob, ol, or) = (Diff3.MergeBase(o), Diff3.MergeLeft(o), Diff3.MergeRight(o))
-      val (al, ar) = (Diff3.MergeLeft(a), Diff3.MergeRight(a))
+      val (ob, ol, or) = (Diff3.Text(o), Diff3.Text(o), Diff3.Text(o))
+      val (al, ar) = (Diff3.Text(a), Diff3.Text(a))
       assertEquals(Diff3.merge(ob, al, or).text, a)
       assertEquals(Diff3.merge(ob, ol, ar).text, a)
       assertEquals(Diff3.merge(ob, al, ar).text, a)

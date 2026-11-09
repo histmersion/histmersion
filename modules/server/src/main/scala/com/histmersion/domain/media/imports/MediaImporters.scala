@@ -11,6 +11,7 @@ import com.histmersion.util.ocr.ConverterClient
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.plugins.PluginDescription
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.config.MediaPluginCollectionsConfig
@@ -95,7 +96,7 @@ object MediaImporters:
         MediaProvider.Info.Title(safe(c.title).map(_.value).getOrElse(n.value)),
         MediaProvider.Info.Over(safe(MediaImporter.over(c.asks)).map(_.value).getOrElse("places")),
         MediaProvider.Info.Description(safe(c.description).map(_.value).getOrElse("")),
-        MediaProvider.Info.Plugin(own.fold(pluginOf(n).value)(_.plugin.value)),
+        PluginDescription.Id(own.fold(pluginOf(n).value)(_.plugin.value)),
         builtin = MediaProvider.Info.Builtin(firstParty),
         MediaProvider.Info.Licences(if firstParty then "" else allowFor(n).value)
       )

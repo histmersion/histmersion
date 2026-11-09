@@ -34,8 +34,8 @@ final case class Note(
     target.wire,
     text,
     com.histmersion.api.library.Title(title.value),
-    WireNote.CreatedAt(createdAt.iso.value),
-    WireNote.UpdatedAt(updatedAt.iso.value)
+    WireNote.At(createdAt.iso.value),
+    WireNote.At(updatedAt.iso.value)
   )
 
 object Note:

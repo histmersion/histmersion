@@ -71,36 +71,36 @@ class HotPlanSuite extends munit.FunSuite:
     )
 
   test("keyMatches: the key, a key under it, a block above it — not a sibling sharing a prefix"):
-    assert(HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion.db.url"), ConfigReload.Key("histmersion.db")))
-    assert(HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion.db"), ConfigReload.Key("histmersion.db")))
-    assert(HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion"), ConfigReload.Key("histmersion.db")))
-    assert(!HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion.dbx.url"), ConfigReload.Key("histmersion.db")))
-    assert(!HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion.query.user"), ConfigReload.Key("histmersion.db")))
+    assert(HotPlan.keyMatches(ConfigReload.Key("histmersion.db.url"), ConfigReload.Key("histmersion.db")))
+    assert(HotPlan.keyMatches(ConfigReload.Key("histmersion.db"), ConfigReload.Key("histmersion.db")))
+    assert(HotPlan.keyMatches(ConfigReload.Key("histmersion"), ConfigReload.Key("histmersion.db")))
+    assert(!HotPlan.keyMatches(ConfigReload.Key("histmersion.dbx.url"), ConfigReload.Key("histmersion.db")))
+    assert(!HotPlan.keyMatches(ConfigReload.Key("histmersion.query.user"), ConfigReload.Key("histmersion.db")))
 
   test("plan: the touched nodes and every dependent, in build order"):
     assertEquals(
-      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.db.url"))),
+      HotPlan.plan(nodes, List(ConfigReload.Key("histmersion.db.url"))),
       Right(List("pool", "migrations", "query-pool", "lease"))
     )
     assertEquals(
-      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.query.password"))),
+      HotPlan.plan(nodes, List(ConfigReload.Key("histmersion.query.password"))),
       Right(List("query-pool"))
     )
     assertEquals(
-      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.plugins.keepassxc.enabled"))),
+      HotPlan.plan(nodes, List(ConfigReload.Key("histmersion.plugins.keepassxc.enabled"))),
       Right(List("plugins", "acquisition"))
     )
     assertEquals(
-      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))),
+      HotPlan.plan(nodes, List(ConfigReload.Key("histmersion.acquire.chain"))),
       Right(List("plugins", "acquisition"))
     )
-    assertEquals(HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.limits.search"))), Right(Nil))
+    assertEquals(HotPlan.plan(nodes, List(ConfigReload.Key("histmersion.limits.search"))), Right(Nil))
     assertEquals(HotPlan.plan(nodes, Nil, forced = Set(HotNode.Name("lease"))), Right(List("lease")))
     assert(
       HotPlan
         .plan(
           List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), List(HotNode.Keys("k")))),
-          List(ConfigReload.ChangedKey("k"))
+          List(ConfigReload.Key("k"))
         )
         .isLeft
     )

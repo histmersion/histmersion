@@ -10,6 +10,7 @@ import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.instance.MapStartConfig
 import com.histmersion.api.plugins.PluginStatus
+import com.histmersion.api.plugins.PluginState
 import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.ByteCount
 import com.histmersion.api.instance.MapStartMode
@@ -144,7 +145,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
           enabled = PluginStatus.Enabled(true),
-          state = PluginStatus.State("registered")
+          state = PluginState.Wire("registered")
         )
       ),
       "Working"
@@ -156,7 +157,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
           enabled = PluginStatus.Enabled(false),
-          state = PluginStatus.State("disabled")
+          state = PluginState.Wire("disabled")
         )
       ),
       "Turned off"
@@ -169,7 +170,7 @@ class SettingsWebSuite extends munit.FunSuite:
             PluginStatus.Version("1"),
             PluginStatus.SpiVersion(2),
             enabled = PluginStatus.Enabled(true),
-            state = PluginStatus.State("failed"),
+            state = PluginState.Wire("failed"),
             error = Some(Problem("no key"))
           )
         )
@@ -185,7 +186,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
           enabled = PluginStatus.Enabled(true),
-          state = PluginStatus.State("registered"),
+          state = PluginState.Wire("registered"),
           provides = List(
             PluginDescription.Provides("source-fetcher:oa-core"),
             PluginDescription.Provides("source-fetcher:core-index")

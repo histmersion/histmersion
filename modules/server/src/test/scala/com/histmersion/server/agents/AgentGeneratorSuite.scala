@@ -35,7 +35,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
   private lazy val d = Generated.defs()
-  private def agent(s: StepAgent) = d.agents.find(_.name.value == s.wire.value).getOrElse(fail(s"no ${s.wire}"))
+  private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
   test("every pipeline step has a definition that parses, and every bundled file is in the index"):
     StepAgent.values.foreach(s => assert(defs.agent(s).isRight, s"${s.wire}: ${defs.agent(s)}"))

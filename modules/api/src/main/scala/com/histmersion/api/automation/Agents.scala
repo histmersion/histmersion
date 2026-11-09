@@ -448,7 +448,7 @@ object Agents:
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual:
-    def isWaiting: Boolean = (status.value == Run.State.WaitingApproval.wire.value)
+    def isWaiting: Boolean = (status == Run.State.WaitingApproval.wire)
 
     def modelFor(role: Role): Option[RunInfo.Model] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(o => RunInfo.Model(o.model.value)).orElse(model)
@@ -461,8 +461,7 @@ object Agents:
     object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Status = Status.T
-    object Status extends Newtype[String, Pure]
+    export Run.State.Wire as Status
     type Progress = Progress.T
     object Progress extends Newtype[String, Pure]
     type Model = Model.T
@@ -559,7 +558,7 @@ object Agents:
     object Turns extends Newtype[Int, Pure]
 
   final case class MessageInfo(
-      seq: MessageInfo.Seq,
+      seq: StepInfo.Seq,
       n: MessageInfo.N,
       role: MessageInfo.Role,
       content: Option[MessageInfo.Content] = None,
@@ -572,8 +571,6 @@ object Agents:
         com.histmersion.api.json.Schema
 
   object MessageInfo:
-    type Seq = Seq.T
-    object Seq extends Newtype[Int, Pure]
     type N = N.T
     object N extends Newtype[Int, Pure]
     type Role = Role.T

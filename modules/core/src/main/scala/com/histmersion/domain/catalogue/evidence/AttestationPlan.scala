@@ -241,7 +241,7 @@ object AttestationPlan:
     t.quote.exists(_.value.nonEmpty) || t.charStart.isDefined
 
   private def field(name: String, ours: Option[String], theirs: Option[String]): IssueField =
-    IssueField(IssueField.Field(name), ours.map(IssueField.Left(_)), theirs.map(IssueField.Right(_)))
+    IssueField(IssueField.Field(name), ours.map(IssueField.Value(_)), theirs.map(IssueField.Value(_)))
 
   /** An attestation of a pair tried against the body one alternative keeps. */
   final private case class AnchorTry(

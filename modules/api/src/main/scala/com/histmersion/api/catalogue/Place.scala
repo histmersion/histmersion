@@ -725,10 +725,10 @@ object Place:
       placeId: Id,
       label: OverrideChanged.Label,
       reset: OverrideChanged.Reset,
-      kindBefore: OverrideChanged.KindBefore,
-      kindAfter: OverrideChanged.KindAfter,
-      periodBefore: OverrideChanged.PeriodBefore,
-      periodAfter: OverrideChanged.PeriodAfter,
+      kindBefore: KindValue,
+      kindAfter: KindValue,
+      periodBefore: Dating.Description,
+      periodAfter: Dating.Description,
       findingsBefore: OverrideChanged.FindingsBefore,
       findingsAfter: OverrideChanged.FindingsAfter,
       unlocated: OverrideChanged.Unlocated,
@@ -744,14 +744,6 @@ object Place:
     export Place.Label
     type Reset = Reset.T
     object Reset extends Newtype[Boolean, Pure]
-    type KindBefore = KindBefore.T
-    object KindBefore extends Newtype[String, Pure]
-    type KindAfter = KindAfter.T
-    object KindAfter extends Newtype[String, Pure]
-    type PeriodBefore = PeriodBefore.T
-    object PeriodBefore extends Newtype[String, Pure]
-    type PeriodAfter = PeriodAfter.T
-    object PeriodAfter extends Newtype[String, Pure]
     type FindingsBefore = FindingsBefore.T
     object FindingsBefore extends Newtype[Int, Pure]
     type FindingsAfter = FindingsAfter.T

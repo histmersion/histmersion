@@ -2,6 +2,7 @@ package com.histmersion
 package domain.media.imports
 
 import com.histmersion.domain.Problem
+import com.histmersion.domain.media.assets.PictureTarget
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.Sql
@@ -33,8 +34,8 @@ private[imports] object ImportRepo:
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
 
-  val Place: Target.TargetType = Target.TargetType("place")
-  val Event: Target.TargetType = Target.TargetType("event")
+  val Place: Target.TargetType = PictureTarget.Place.wire
+  val Event: Target.TargetType = PictureTarget.Event.wire
 
   // ── which places and events to ask ───────────────────────────────────────────────────────────
 

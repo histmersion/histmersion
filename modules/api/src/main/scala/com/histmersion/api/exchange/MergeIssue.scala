@@ -205,7 +205,7 @@ object MergeIssue:
       s.map((_).trim).filter(_.nonEmpty).map(t => if t.length <= (n).value then (t) else (t.take((n).value - 1) + "…"))
 
     private def field(name: String, l: Option[String], r: Option[String]): IssueField =
-      IssueField(IssueField.Field(name), l.map(IssueField.Left(_)), r.map(IssueField.Right(_)))
+      IssueField(IssueField.Field(name), l.map(IssueField.Value(_)), r.map(IssueField.Value(_)))
 
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
       def range(p: Option[Bundle.Range]) = p.map(x => rangeText(Some(x)))

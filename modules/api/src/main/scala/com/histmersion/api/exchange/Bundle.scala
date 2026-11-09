@@ -268,10 +268,21 @@ object Bundle:
       notes: Option[AssetLink.Notes],
       updatedAt: AssetLink.UpdatedAt,
       rev: AssetLink.Rev = AssetLink.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject:
+
+    /** What the link points at: the target's uid when the link has one, else its id. */
+    def target: AssetLink.Target = AssetLink.Target.of(targetUid, targetId)
 
   object AssetLink:
     export com.histmersion.api.media.AssetRelation.Wire as Relation
+
+    enum Target derives CanEqual:
+      case ByUid(uid: UUID)
+      case ById(id: TargetId)
+
+    object Target:
+      def of(uid: Option[UUID], id: TargetId): Target = uid.fold[Target](ById(id))(ByUid(_))
+
     type TargetType = TargetType.T
     object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
@@ -765,10 +776,21 @@ object Bundle:
       note: Option[GoalLink.Note],
       createdAt: GoalLink.CreatedAt
   ) derives KindlingsCodecAsObject,
-        CanEqual
+        CanEqual:
+
+    /** What the link points at: the goal's or article's uid when the link has one, else its label. */
+    def target: GoalLink.Target = GoalLink.Target.of(refUid, ref)
 
   object GoalLink:
     export com.histmersion.api.automation.Goal.LinkKind.Wire as Kind
+
+    enum Target derives CanEqual:
+      case ByUid(uid: UUID)
+      case ByRef(ref: Ref)
+
+    object Target:
+      def of(uid: Option[UUID], ref: Ref): Target = uid.fold[Target](ByRef(ref))(ByUid(_))
+
     type Ref = Ref.T
     object Ref extends Newtype[String, Pure]
     type Note = Note.T

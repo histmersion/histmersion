@@ -18,7 +18,7 @@ object PluginsSection:
 
   /** What became of a plugin, in words. Pure. */
 
-  def state(p: PluginStatus): State = PluginState.parse(PluginState.Wire(p.state.value)) match
+  def state(p: PluginStatus): State = PluginState.parse(p.state) match
     case Some(PluginState.Registered) => State("Working")
     case Some(PluginState.Disabled)   => State("Turned off")
     case Some(PluginState.Failed)     => State(s"Not working: ${p.error.getOrElse("no reason given")}")

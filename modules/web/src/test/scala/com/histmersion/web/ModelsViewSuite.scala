@@ -87,7 +87,7 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelsView.limitsText(
         AllowanceStatus(
           ModelChains.AllowanceStatus.Target("local:a"),
-          ModelChains.AllowanceStatus.Source("saved"),
+          ModelChains.SettingSource.Wire("saved"),
           ModelChains.AllowanceStatus.ReservePct(0),
           List(l, l.modify(_.limit).setTo(ModelChains.LimitStatus.Limit("5 usd/1d"))),
           usable = ModelChains.AllowanceStatus.Usable(true)

@@ -37,12 +37,12 @@ class ExploreChromeSuite extends munit.FunSuite:
     assert(FilterChips.periodSet(Some(-1500), None, -3000, 2000))
     val chips = List(
       UiState.ActiveChip(
-        UiState.ActiveChip.Key("topics"),
+        Field.Key("topics"),
         UiState.ActiveChip.Label("topic"),
         UiState.ActiveChip.Value("bronze age")
       ),
       UiState.ActiveChip(
-        UiState.ActiveChip.Key("q"),
+        Field.Key("q"),
         UiState.ActiveChip.Label("search"),
         UiState.ActiveChip.Value("troy")
       )

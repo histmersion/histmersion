@@ -244,7 +244,7 @@ object Hot:
           val s = current.get()
           val specs = defs.get()
           HotPlan
-            .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.ChangedKey(n.value)), forced)
+            .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.Key(n.value)), forced)
             .left
             .map(p => Problem(p.value))
             .flatMap { plan =>

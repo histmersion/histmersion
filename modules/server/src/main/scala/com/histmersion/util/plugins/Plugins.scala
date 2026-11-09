@@ -49,7 +49,7 @@ object Plugins:
       http: () => Plugin.Http,
       quota: HostServices.Quotas,
       previous: Option[Generation] = None,
-      changed: List[ConfigReload.ChangedKey] = Nil
+      changed: List[ConfigReload.Key] = Nil
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     generation(loaded, found ++ provided, errors, http, quota, previous.fold(Map.empty)(carried(_, changed)))
@@ -138,7 +138,7 @@ object Plugins:
     */
   def carried(
       previous: Generation,
-      changed: List[ConfigReload.ChangedKey]
+      changed: List[ConfigReload.Key]
   ): Map[Plugin.Info.Id, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
     // a former plugin's key (oa-index) concerns its successors
@@ -163,8 +163,8 @@ object Plugins:
         .filter { (id, st) =>
           !touched(id) && !hostKeys.exists(FirstPartySettings.rebuilds(id, _)) &&
           !peerKeys.exists(k => FirstPartySettings.of(id).exists(_.readsHostKey(k))) &&
-          (st.state.value == PluginState.Disabled.wire.value ||
-            st.state.value == PluginState.Registered.wire.value && !previous.withSecrets(id))
+          (st.state == PluginState.Disabled.wire ||
+            st.state == PluginState.Registered.wire && !previous.withSecrets(id))
         }
         .flatMap((id, _) => previous.carry(id))
         .map(c => Plugin.Info.Id(c._1.id.value) -> c)
@@ -173,7 +173,7 @@ object Plugins:
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key — `order`, the whole
     * block, a host setting — which concerns every plugin.
     */
-  def pluginId(key: ConfigReload.ChangedKey): Option[com.histmersion.util.plugins.Plugin.Id] =
+  def pluginId(key: ConfigReload.Key): Option[com.histmersion.util.plugins.Plugin.Id] =
     scala.util.Try(ConfigUtil.splitPath(key.value).asScala.toList).toOption match
       case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey =>
         com.histmersion.util.plugins.Plugin.Id.option(id)

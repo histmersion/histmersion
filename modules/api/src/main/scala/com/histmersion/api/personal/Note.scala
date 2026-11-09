@@ -19,20 +19,19 @@ final case class Note(
     target: Target,
     text: Note.Text,
     title: Title,
-    createdAt: Note.CreatedAt = Note.CreatedAt(""),
-    updatedAt: Note.UpdatedAt = Note.UpdatedAt("")
+    createdAt: Note.At = Note.At(""),
+    updatedAt: Note.At = Note.At("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
 object Note:
 
-  type CreatedAt = CreatedAt.T
-  object CreatedAt extends Newtype[String, Pure]
-  type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends Newtype[String, Pure]
+  /** A moment of a note: when it was written, when it last changed. */
+  type At = At.T
+  object At extends Newtype[String, Pure]
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[UpdatedAt] = None)
+  final case class Edit(text: Text, ifUpdatedAt: Option[At] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema

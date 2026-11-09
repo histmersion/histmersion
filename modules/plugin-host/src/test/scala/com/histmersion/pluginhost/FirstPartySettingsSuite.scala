@@ -41,64 +41,64 @@ class FirstPartySettingsSuite extends munit.FunSuite:
 
   test("a changed host key rebuilds the plugins that read it; a third party's on the client's keys alone"):
     assert(
-      FirstPartySettings.rebuilds(Plugin.Info.Id("pmc"), ConfigReload.ChangedKey("histmersion.acquire.europepmc.url"))
+      FirstPartySettings.rebuilds(Plugin.Info.Id("pmc"), ConfigReload.Key("histmersion.acquire.europepmc.url"))
     )
     assert(
       FirstPartySettings.rebuilds(
         Plugin.Info.Id("pmc"),
-        ConfigReload.ChangedKey("histmersion.media.max-retry-after-seconds")
+        ConfigReload.Key("histmersion.media.max-retry-after-seconds")
       )
     )
-    assert(!FirstPartySettings.rebuilds(Plugin.Info.Id("pmc"), ConfigReload.ChangedKey("histmersion.events.gvp.url")))
+    assert(!FirstPartySettings.rebuilds(Plugin.Info.Id("pmc"), ConfigReload.Key("histmersion.events.gvp.url")))
     assert(
-      FirstPartySettings.rebuilds(Plugin.Info.Id("events-gvp"), ConfigReload.ChangedKey("histmersion.events.gvp.url"))
+      FirstPartySettings.rebuilds(Plugin.Info.Id("events-gvp"), ConfigReload.Key("histmersion.events.gvp.url"))
     )
-    assert(FirstPartySettings.rebuilds(Plugin.Info.Id("events-gvp"), ConfigReload.ChangedKey("histmersion.events")))
+    assert(FirstPartySettings.rebuilds(Plugin.Info.Id("events-gvp"), ConfigReload.Key("histmersion.events")))
     assert(
       !FirstPartySettings.rebuilds(
         Plugin.Info.Id("events-gvp"),
-        ConfigReload.ChangedKey("histmersion.acquire.user-agent")
+        ConfigReload.Key("histmersion.acquire.user-agent")
       )
     )
     assert(
       !FirstPartySettings.rebuilds(
         Plugin.Info.Id("media-met"),
-        ConfigReload.ChangedKey("histmersion.acquire.user-agent")
+        ConfigReload.Key("histmersion.acquire.user-agent")
       )
     )
     assert(
       FirstPartySettings.rebuilds(
         Plugin.Info.Id("media-met"),
-        ConfigReload.ChangedKey("histmersion.media.met.licences")
+        ConfigReload.Key("histmersion.media.met.licences")
       )
     )
     assert(
       FirstPartySettings.rebuilds(
         Plugin.Info.Id("media-wikidata"),
-        ConfigReload.ChangedKey("histmersion.media.commons.api-url")
+        ConfigReload.Key("histmersion.media.commons.api-url")
       )
     )
     assert(
-      !FirstPartySettings.rebuilds(Plugin.Info.Id("media-met"), ConfigReload.ChangedKey("histmersion.events.gvp.url"))
+      !FirstPartySettings.rebuilds(Plugin.Info.Id("media-met"), ConfigReload.Key("histmersion.events.gvp.url"))
     )
     assert(
       FirstPartySettings.rebuilds(
         Plugin.Info.Id("zq-portal"),
-        ConfigReload.ChangedKey("histmersion.acquire.user-agent")
+        ConfigReload.Key("histmersion.acquire.user-agent")
       )
     )
     assert(
-      !FirstPartySettings.rebuilds(Plugin.Info.Id("zq-portal"), ConfigReload.ChangedKey("histmersion.events.gvp.url"))
+      !FirstPartySettings.rebuilds(Plugin.Info.Id("zq-portal"), ConfigReload.Key("histmersion.events.gvp.url"))
     )
     assert(
       FirstPartySettings
         .of(Plugin.Info.Id("oa-landing"))
-        .exists(_.readsHostKey(ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email")))
+        .exists(_.readsHostKey(ConfigReload.Key("histmersion.plugins.oa-unpaywall.contact-email")))
     )
     assert(
       !FirstPartySettings
         .of(Plugin.Info.Id("oa-landing"))
-        .exists(_.readsHostKey(ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.enabled")))
+        .exists(_.readsHostKey(ConfigReload.Key("histmersion.plugins.oa-unpaywall.enabled")))
     )
 
   test("the host keys a generation is built from: the client's and every path the table names, no plugin block"):

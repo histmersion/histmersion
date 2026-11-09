@@ -196,9 +196,9 @@ object EventService:
     private def drawn(s: CatalogueState, e: HeldEvent): Option[EventGeo] =
       e.geometry.flatMap(HeldEvent.pointOf).map { (lat, lon) =>
         val sum = summaryOf(s, e)
-        val vei = s.catalogueRecords.filter(_._1.value == e.id.value).flatMap(_._2.vei.map(_.value)).maxOption
+        val vei = s.catalogueRecords.filter(_._1 == e.id).flatMap(_._2.vei.map(_.value)).maxOption
         val magnitude =
-          s.catalogueRecords.filter(_._1.value == e.id.value).flatMap(_._2.magnitude.map(_.value)).maxOption
+          s.catalogueRecords.filter(_._1 == e.id).flatMap(_._2.magnitude.map(_.value)).maxOption
         EventGeo(
           sum.id,
           EventGeo.Label(sum.label.value),
@@ -272,7 +272,7 @@ object EventService:
 
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] =
       state.get.catalogueRecords
-        .filter(_._1.value == id.value)
+        .filter(_._1 == id)
         .map(_._2)
         .sortBy(r => (r.provider.value, r.providerId.value))
         .toList

@@ -703,14 +703,10 @@ object PlaceService:
             apiId(id),
             before.place.label,
             Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
-            Place.OverrideChanged.KindBefore(before.place.kind.value),
-            Place.OverrideChanged.KindAfter(after.place.kind.value),
-            Place.OverrideChanged.PeriodBefore(
-              Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)).value
-            ),
-            Place.OverrideChanged.PeriodAfter(
-              Place.Overrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)).value
-            ),
+            Place.KindValue(before.place.kind.value),
+            Place.KindValue(after.place.kind.value),
+            Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),
+            Place.Overrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)),
             Place.OverrideChanged.FindingsBefore(0),
             Place.OverrideChanged.FindingsAfter(0),
             Place.OverrideChanged.Unlocated(0)

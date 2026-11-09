@@ -217,7 +217,7 @@ object AgentsTools:
                         ApprovalDigest.BulkDecide.Decision(in.decision),
                         in.kind.map(ApprovalDigest.BulkDecide.Kind(_)),
                         in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-                        in.ids.map(ApprovalDigest.BulkDecide.Ids(_)),
+                        in.ids.map(ApprovalDigest.Open.Id(_)),
                         in.note.map(ApprovalDigest.BulkDecide.Note(_)),
                         ApprovalDigest.BulkDecide.DryRun(in.dryRun),
                         in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),

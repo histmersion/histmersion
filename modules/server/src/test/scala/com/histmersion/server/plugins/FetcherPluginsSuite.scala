@@ -280,7 +280,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("reload: a change of an oa-index key rebuilds the four successors, and only them"):
     val g = generation()
-    val carried = Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.plugins.oa-index.enabled")))
+    val carried = Plugins.carried(g, List(ConfigReload.Key("histmersion.plugins.oa-index.enabled")))
     assertEquals(carried.keySet, Set("archive-org", "pmc", "arxiv"))
 
   test("the shipped default chain names exactly the built-in fetchers, in today's order"):
@@ -435,7 +435,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     val g = generation()
     // the landing step asks, fetch by fetch, which index plugins its generation registered
     List("oa-unpaywall", "oa-openalex", "oa-landing").foreach { id =>
-      val carried = Plugins.carried(g, List(ConfigReload.ChangedKey(s"histmersion.plugins.$id.enabled")))
+      val carried = Plugins.carried(g, List(ConfigReload.Key(s"histmersion.plugins.$id.enabled")))
       assertEquals(
         carried.keySet,
         Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv") - id,
@@ -444,11 +444,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
     }
     // … but it asks Unpaywall with oa-unpaywall's own contact, which it is supplied at registration
     assertEquals(
-      Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email"))).keySet,
+      Plugins.carried(g, List(ConfigReload.Key("histmersion.plugins.oa-unpaywall.contact-email"))).keySet,
       Set("archive-org", "oa-core", "oa-openalex", "pmc", "arxiv")
     )
     // a host key every fetcher reads rebuilds them all; one no fetcher reads, none
-    assertEquals(Plugins.carried(g, List(ConfigReload.ChangedKey("histmersion.acquire.landing.max-pages"))), Map.empty)
+    assertEquals(Plugins.carried(g, List(ConfigReload.Key("histmersion.acquire.landing.max-pages"))), Map.empty)
     assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
   private object Ctx extends Fetch.Context:

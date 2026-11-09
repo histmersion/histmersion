@@ -52,8 +52,7 @@ object AgentDef:
 
   /** `get_source` as `GetSource`. */
 
-  type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  export StepAgent.Wire as Name
   type Description = Description.T
   object Description extends Newtype[String, Pure]
   type Skills = Skills.T

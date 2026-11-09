@@ -94,23 +94,23 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
                   fields = List(
                     IssueField(
                       IssueField.Field("label"),
-                      Some(IssueField.Left(o.label.value)),
-                      Some(IssueField.Right(p.label.value))
+                      Some(IssueField.Value(o.label.value)),
+                      Some(IssueField.Value(p.label.value))
                     ),
                     IssueField(
                       IssueField.Field("span"),
-                      Some(IssueField.Left(MergeIssue.Detail.rangeText(o.period))),
-                      Some(IssueField.Right(MergeIssue.Detail.rangeText(p.period)))
+                      Some(IssueField.Value(MergeIssue.Detail.rangeText(o.period))),
+                      Some(IssueField.Value(MergeIssue.Detail.rangeText(p.period)))
                     ),
                     IssueField(
                       IssueField.Field("authority"),
-                      o.authority.map(a => IssueField.Left(a.value)),
-                      p.authority.map(a => IssueField.Right(a.value))
+                      o.authority.map(a => IssueField.Value(a.value)),
+                      p.authority.map(a => IssueField.Value(a.value))
                     ),
                     IssueField(
                       IssueField.Field("region"),
-                      o.region.map(a => IssueField.Left(a.value)),
-                      p.region.map(a => IssueField.Right(a.value))
+                      o.region.map(a => IssueField.Value(a.value)),
+                      p.region.map(a => IssueField.Value(a.value))
                     )
                   ),
                   place = Some(

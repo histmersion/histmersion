@@ -513,15 +513,13 @@ object UiState:
     bump()
 
   case class ActiveChip(
-      key: ActiveChip.Key,
+      key: Field.Key,
       label: ActiveChip.Label,
       value: ActiveChip.Value,
       shown: Option[ActiveChip.Shown] = None
   )
 
   object ActiveChip:
-    type Key = Key.T
-    object Key extends Newtype[String, Pure]
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type Value = FilterTerm
@@ -535,7 +533,7 @@ object UiState:
       .flatMap(f =>
         f.encoded.map(v =>
           ActiveChip(
-            ActiveChip.Key(f.key.value),
+            f.key,
             ActiveChip.Label(f.label.map(_.value).getOrElse(f.key.value)),
             ActiveChip.Value(v.value)
           )
