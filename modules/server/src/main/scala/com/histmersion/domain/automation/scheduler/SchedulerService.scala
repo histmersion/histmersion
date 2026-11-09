@@ -107,14 +107,16 @@ final class SchedulerService(
       Some(
         Block(
           Block.Code("budget"),
-          Block.Why(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
+          Block.Why(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"),
+          Blocker.Budget
         )
       )
     else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
       Some(
         Block(
           Block.Code("budget"),
-          Block.Why(s"budget: this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})")
+          Block.Why(s"budget: this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"),
+          Blocker.Budget
         )
       )
     else None
@@ -199,8 +201,8 @@ final class SchedulerService(
         val pools =
           if daily.isDefined then Right(Nil) else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline)))
         val block = daily
-          .map(d => Block(Block.Code("budget"), Block.Why(d.value)))
-          .orElse(pools.left.toOption.map(why => Block(QuotaBlock, Block.Why(s"starved: $why"))))
+          .map(d => Block(Block.Code("budget"), Block.Why(d.value), Blocker.Budget))
+          .orElse(pools.left.toOption.map(why => Block(QuotaBlock, Block.Why(s"starved: $why"), Blocker.Starved)))
           .orElse(
             Option.when(ManagerPolicy.waitsFor(itemKind, i.target.transformInto[ManagerPolicy.Candidate.Target], open))(
               Block(
@@ -576,7 +578,11 @@ final class SchedulerService(
       Stalls.SchedWait(
         Stalls.SchedWait.Code(x._2.code.value),
         Stalls.SchedWait.Why(x._2.why.value),
-        Stalls.SchedWait.Position(x._2.position.value)
+        Stalls.SchedWait.Position(x._2.position.value),
+        x._2.blocker match
+          case SchedulerPolicy.Blocker.Budget  => Stalls.Blocker.Budget
+          case SchedulerPolicy.Blocker.Starved => Stalls.Blocker.Starved
+          case SchedulerPolicy.Blocker.Other   => Stalls.Blocker.Other
       )
     )
     val stops = agents.focusStore.lastStops()

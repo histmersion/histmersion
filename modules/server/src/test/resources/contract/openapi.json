@@ -32635,13 +32635,13 @@
         "type" : "object",
         "required" : [
           "accepted",
-          "message"
+          "notice"
         ],
         "properties" : {
           "accepted" : {
             "type" : "boolean"
           },
-          "message" : {
+          "notice" : {
             "type" : "string"
           }
         }

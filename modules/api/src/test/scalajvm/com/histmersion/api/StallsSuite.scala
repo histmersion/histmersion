@@ -57,7 +57,7 @@ class StallsSuite extends munit.FunSuite:
       code(
         base
           .modify(_.waits)
-          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("budget: today's agent spend reached …"))))
+          .setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("budget: today's agent spend reached …"), blocker = Stalls.Blocker.Budget)))
       ),
       Code.Budget
     )
@@ -66,7 +66,7 @@ class StallsSuite extends munit.FunSuite:
         base
           .modify(_.waits)
           .setTo(
-            List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("starved: reviewer chain below its plan floor")))
+            List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("starved: reviewer chain below its plan floor"), blocker = Stalls.Blocker.Starved))
           )
       ),
       Code.Quota
