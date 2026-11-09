@@ -127,3 +127,13 @@ G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranche
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	35	match:field:message
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	38	match:field:note
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	contains-in:Detail
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	15	domain/Problem.apply;literal
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	16	domain/Problem.apply;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	17	domain/Problem.apply;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	domain/Problem.apply;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	domain/Problem.assume;expression
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	domain/Problem.applyUnsafe;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	12	Unclassified;literal
+G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	13	Unclassified;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	14	Unclassified;expression
+G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	17	Unclassified;expression

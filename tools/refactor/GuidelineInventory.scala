@@ -26,6 +26,9 @@ object GuidelineInventory {
     textBranchTypes: String = "(?i).*(problem|error|reason|refus|fail|why|because|message|detail|note|outcome|warning|stopped|state)(s|text)?",
     textBranchExceptions: String = "",
     textBranchFields: Set[String] = Set("message", "error", "detail", "note", "why", "reason"),
+    stringProblems: List[String] = List("com/histmersion/Problem.", "com/histmersion/api/Problem.", "com/histmersion/domain/Problem.",
+      "com/histmersion/plugin/Problem.", "com/histmersion/pluginresolver/Problem."),
+    unclassifiedProblem: String = "com/histmersion/util/problem/Problem.Unclassified.",
     controllerFile: String = ".*(Controller|Controllers|Routes)\\.scala",
     rawSqlOwners: List[String] = List("com/histmersion/util/database/Sql#", "com/histmersion/util/database/Sql."),
     rawSqlText: List[String] = List("com/histmersion/util/database/Sql.Text."),
@@ -92,6 +95,7 @@ object GuidelineInventory {
     "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one",
     "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==`, `!=`, a match on a literal or a regex, a Regex, or a reading apart (`takeWhile`, `split`, `stripPrefix`, `indexOf`…) of the text of a failure, a stored state or a message: the `.value` of a String newtype named for one (Problem, Error, Reason, Failure, Why, Message, Detail, Note, Outcome, Warning, State…), a Throwable's `getMessage`/`toString`, or a `message`/`error`/`detail`/`note`/`why`/`reason` field, outside the newtype's own companion and a boundary file. A caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
     "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
+    "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
     "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
@@ -124,7 +128,7 @@ object GuidelineInventory {
     else Files.readAllLines(Paths.get(path), UTF_8).asScala.toList.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#") && !l.startsWith("path\t")).map { l =>
       val cols = l.split("\t", -1)
       require(cols.length == 3 && cols(0).nonEmpty && cols(2).nonEmpty, "Malformed boundaries row: " + l)
-      require(Set("sql", "http", "json", "cli-args", "dom", "config", "process", "spi")(cols(1)), "Unknown boundary kind: " + l)
+      require(Set("sql", "http", "json", "cli-args", "dom", "config", "process", "spi", "render")(cols(1)), "Unknown boundary kind: " + l)
       require(Files.isRegularFile(Paths.get(cols(0))), "Boundary file does not exist: " + cols(0))
       cols(0) -> cols(1)
     }.toMap
@@ -436,6 +440,29 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           else report("G44", s, detail)
           if (Set("option", "either", "optionAll", "eitherAll")(n.value) && newtypeParents(obj).exists(_._3.value == pure)) report("silentPure", s, s"${obj.displayName}.${n.value}")
         }
+    }
+
+    // ---- G60fromString: a Problem built from text ---------------------------------------------------------------
+    def textShape(a: Term.Apply): String = a.argClause.values match {
+      case List(arg) if isLiteral(arg) => "literal"
+      case List(arg) if isInterpolatedString(arg) => "interpolation"
+      case _ => "expression"
+    }
+    // a top-level object of a file that also defines top-level types lives in the file's `<File>$package` object
+    val filePackage = "[A-Za-z0-9_]+\\$package\\.".r
+    def unclassified(fun: Term): Boolean = fun match {
+      case n: Term.Name => n.symbol.value.startsWith(policy.unclassifiedProblem)
+      case Term.Select(q, n) if n.value == "apply" => unclassified(q)
+      case Term.Select(_, n) => n.symbol.value.startsWith(policy.unclassifiedProblem)
+      case _ => false
+    }
+    doc.tree.traverse {
+      case a: Term.Apply if !inImport(a) =>
+        constructionOf(a.fun).map { case (obj, how) => (filePackage.replaceAllIn(obj.value, ""), how) }
+          .filter { case (obj, _) => policy.stringProblems.contains(obj) }.foreach { case (obj, how) =>
+            report("G60fromString", a, s"${obj.stripPrefix("com/histmersion/").stripSuffix(".")}.$how;${textShape(a)}")
+          }
+        if (unclassified(a.fun)) report("G60fromString", a, s"Unclassified;${textShape(a)}")
     }
 
     doc.tree.traverse {
