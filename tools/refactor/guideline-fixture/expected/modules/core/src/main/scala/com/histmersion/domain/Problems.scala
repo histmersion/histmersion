@@ -12,9 +12,9 @@ type Shelf = Shelf.T
 object Shelf extends RefinedType[String, Match["[a-z]+"]]
 
 object Failures:
-  def plain(name: String): Problem = Problem("cannot open") // no finding: a literal
-  def interpolated(name: String): Problem = Problem(s"cannot open $name") // no finding: Pure, interpolated
-  def formatted(n: Int): Problem = Problem(f"cannot open $n%03d") // no finding: Pure, interpolated
+  def plain(name: String): Problem = Problem("cannot open") // assert: GuidelineInventory.G60fromString (no G44: a literal)
+  def interpolated(name: String): Problem = Problem(s"cannot open $name") // assert: GuidelineInventory.G60fromString (no G44: Pure, interpolated)
+  def formatted(n: Int): Problem = Problem(f"cannot open $n%03d") // assert: GuidelineInventory.G60fromString (no G44: Pure, interpolated)
   def other(name: String): Note = Note(s"seen $name") // no finding: any Pure newtype
   def spliced(c: Citekey): Problem = Problem(s"no source ${c.value}") // assert: GuidelineInventory.G44
   def refined(name: String): Shelf = Shelf.assume(s"top-$name") // assert: GuidelineInventory.G44

@@ -36,7 +36,10 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     (`…Service`, `…Routes`, …, `Components`), a newtype's constraint `<Name>Rule` and the web page's own components
   *     are not properties;
   *   - `bucket` (rule 10): a type in a layer bucket (`com.histmersion.db`, `com.histmersion.files`,
-  *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package.
+  *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package;
+  *   - `problem-field` (rule 1, G60): a case of the closed `util.problem.Problem` (or a small type of its file) with a
+  *     `String`, `Int`, `Long`, `Double` or `Boolean` field — free text or an unnamed number where a newtype or an enum
+  *     says what it is; only the two cases that carry text no case wrote (`Unclassified`, `Stored.Unrecognised`) may.
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
@@ -114,6 +117,37 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(Rules.conceptOf("goalSlug", concepts), Some("GoalSlug"))
     assertEquals(Rules.conceptOf("limit", concepts), None)
 
+  test("a case of the closed Problem names its fields' types, and only the text cases hold text"):
+    val code =
+      """sealed trait Problem
+        |object Problem:
+        |  final case class Malformed(typeName: TypeName, raw: Raw, at: Vector[Field] = Vector.empty) extends Invalid
+        |  final case class Said(plugin: String, count: Int) extends Plugin
+        |  final case class Unclassified(text: String) extends Problem
+        |  enum Damage:
+        |    case Length(expected: Long, found: Count)
+        |  def within(p: Problem) = p match
+        |    case Invalid.Malformed(t, raw, at) => p
+        |""".stripMargin
+    assertEquals(
+      Rules.caseFields(code).map((c, f, t, _) => s"$c.$f: $t"),
+      List(
+        "Malformed.typeName: TypeName",
+        "Malformed.raw: Raw",
+        "Malformed.at: Vector[Field]",
+        "Said.plugin: String",
+        "Said.count: Int",
+        "Unclassified.text: String",
+        "Length.expected: Long",
+        "Length.found: Count"
+      )
+    )
+    val file = ArchitectureSuite.SourceFile(Rules.ProblemFile, "com.histmersion.util.problem", code, code)
+    assertEquals(
+      Rules.all(List(file)).filter(_.rule == "problem-field").map(_.detail),
+      List("Said.plugin: String", "Said.count: Int", "Length.expected: Long")
+    )
+
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
     assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
@@ -125,6 +159,7 @@ class ContractsSuite extends munit.FunSuite:
 object ContractsSuite:
 
   val Modules: List[String] = List(
+    "problem",
     "values",
     "api",
     "config",
@@ -168,7 +203,7 @@ object ContractsSuite:
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
           global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s)
-      ) ++ concept(sources) ++ helper(sources) ++ prefix(sources)
+      ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
     private def module(s: SourceFile): String = s.key.takeWhile(_ != ':')
     private def baseName(s: SourceFile): String = s.key.split('/').last.stripSuffix(".scala")
@@ -483,6 +518,40 @@ object ContractsSuite:
 
     private def bucket(s: SourceFile): List[Violation] =
       if Buckets(s.pkg) then counted("bucket", s, s"package ${s.pkg}", List(0)) else Nil
+
+    /** The file of the closed Problem, its cases and the small types they hold. */
+    val ProblemFile = "problem:util/problem/Problem.scala"
+
+    /** The cases that carry text no case wrote: the temporary one and the stored one. */
+    val TextCases: Set[String] = Set("Unclassified", "Unrecognised")
+
+    private val CaseWithFields = "\\bcase\\s+(?:class\\s+)?([A-Z]\\w*)\\s*\\(".r
+    private val PrimitiveField =
+      "^(?:(?:Option|List|Set|Seq|Vector|NonEmptyVector)\\[)?(?:String|Int|Long|Double|Boolean)\\]?$".r
+
+    /** The fields (name, type) of every case with fields in a text: `case class X(…)` and an enum's `case X(…)`. */
+    def caseFields(code: String): List[(String, String, String, Int)] =
+      CaseWithFields
+        .findAllMatchIn(code)
+        .toList
+        .flatMap { m =>
+          val close = code.indexOf(')', m.end)
+          val params = if close < 0 then "" else code.substring(m.end, close)
+          Param
+            .findAllMatchIn(params)
+            .map(p => (m.group(1), p.group(1), p.group(2).takeWhile(_ != '=').trim, m.start))
+            .toList
+        }
+
+    private def problemFields(sources: List[SourceFile]): List[Violation] =
+      sources
+        .filter(_.key == ProblemFile)
+        .flatMap(s =>
+          caseFields(s.code).collect {
+            case (name, field, tpe, at) if PrimitiveField.matches(tpe) && !TextCases(name) =>
+              Violation("problem-field", s.key, s"$name.$field: $tpe", 1, s"${s.key}:${s.lineOf(at)}")
+          }
+        )
 
     /** What works on an entity rather than describing it: `SourceService` is no property of `Source`. */
     val Components: List[String] = List(
