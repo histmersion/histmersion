@@ -70,7 +70,8 @@ object AppConfig:
     val reference = ConfigLayers.reference
     // sconfig's parse errors already start with the file (their origin): not twice
     def inFile(p: java.nio.file.Path)(msg: Problem) =
-      Problem(s"Histmersion config file $p: ${msg.stripPrefix(s"$p: ")}")
+      val text = s"$msg"
+      Problem(s"Histmersion config file $p: ${text.stripPrefix(s"$p: ")}")
     file match
       case None =>
         val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
