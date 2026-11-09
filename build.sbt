@@ -197,6 +197,20 @@ lazy val newtype = projectMatrix
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 
+// The one closed failure type of the application (Problem, Problems, the outside text it carries), on Iron alone: no
+// codec and no wording, which the edges that render it own
+lazy val problem = projectMatrix
+  .in(file("modules/problem"))
+  .dependsOn(newtype)
+  .settings(
+    name := "histmersion-problem",
+    description := "The closed Problem of the application, its accumulation (Problems) and the outside text it carries"
+  )
+  .settings(commonDeps)
+  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
+  .jvmPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(scalaVersions = Seq(scala3))
+
 lazy val values = projectMatrix
   .in(file("modules/values"))
   .dependsOn(newtype)
@@ -1077,7 +1091,7 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    (newtype.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
+    (newtype.projectRefs ++ problem.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
       pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
       pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs ++ pluginsCalibre.projectRefs)*
   )
