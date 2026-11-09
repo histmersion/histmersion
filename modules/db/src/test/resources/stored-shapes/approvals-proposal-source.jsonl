@@ -1,0 +1,12 @@
+{"kind":"edge","citekey":"hzf","status":"superseded","edgeKind":"superseded_by","target":"v-","evidence":"uj","quote":"de763673-721e-4651-a71b-782e9b2f1d79"}
+{"kind":"goal-plan","citekey":"sa4","status":"superseded","edgeKind":"superseded_by","target":"nh","evidence":"uiy","quote":"6189d2b12d9d765717428b335fa7c78c0f6467e4b3a5124abddc2994e6b63f25"}
+{"kind":"goal-plan","citekey":"d_","status":"superseded","edgeKind":"foundational_for","target":"yd_","evidence":"fde20e3fe72acc61a7b9292f41318a34c5e59f75730957b76094c0cb682a17c8","quote":"d_t9"}
+{"kind":"article-publish","citekey":"gx","status":"debunked","edgeKind":"cites","target":null,"evidence":"0c2ef413d024b2e535c5995ab9bedaef8ae2030ea5d087f11bf860b03cd5ff90","quote":"f05c1690-3f1a-41ea-b81a-4b2b534de4a8"}
+{"kind":"article-filter","citekey":"ea076bb8-3c85-4d84-9437-27c0871bec47","status":"contested","edgeKind":"verifies","target":null,"evidence":"f1af891d-852a-4b62-8112-93a343592cf8","quote":""}
+{"kind":"goal-plan","citekey":"k0p","status":"foundational","edgeKind":"superseded_by","target":"f6517fcbb1a9399b6a6c4dc26ee28e5bb3d5af206f3f2547b12fce36ebdd6dbc","evidence":"299c1ebf788b843b1f72d481115cb34493b82e9acd18149bfc670a4380fa8dfc","quote":"e2"}
+{"kind":"article-filter","citekey":"fe7f0e23-bc2f-41b9-a0ac-0c1f5758111b","status":"superseded","edgeKind":"challenges","target":"cm","evidence":"sab","quote":"ié"}
+{"kind":"status-change","citekey":"e19a956640dd4df292871c2e1085a2f9c8ba3a6a431dc6b9c4a001b4d726a1a3","status":"superseded","edgeKind":"compilation_of","target":null,"evidence":"z_","quote":"F"}
+{"kind":"article-publish","citekey":"jz-f","status":"unassessed","edgeKind":null,"target":"ce76ca6f-722b-4e4c-bb4a-56ee78242c82","evidence":"PSjK","quote":"2ce84da3-f762-432c-951f-1b7408419f91"}
+{"kind":"article-filter","citekey":"eb5a0cca-5a1d-4e55-8d27-f69a4ec9233f","status":"foundational","edgeKind":null,"target":"n1","evidence":"y","quote":"xd"}
+{"kind":"status-change","citekey":"s2p","status":"contested","edgeKind":"refutes","target":"fd74f07d9f5a2a37cfdc9d71a870a1e91df8a8863a8c107d53c10ef67ed85502","evidence":"5df7ad6b0078f730b8262cf53da0530f8eb64fd7840f3ba1561e5e9068297806","quote":"ex"}
+{"kind":"article-publish","citekey":"b3r-","status":"superseded","edgeKind":null,"target":"d5291ae6d0820dce7634797f7c2f83e6d67679951bf873456f2a463f4757ea5f","evidence":"8b108fa28ce6eb9087013497fbfb7946bdfaa19216e3c7de1488f1c7d4f18f7d","quote":"2a7c809b5e3d571a87eab84c9df6362277d866b96a3c37580e89b116ef976a18"}
