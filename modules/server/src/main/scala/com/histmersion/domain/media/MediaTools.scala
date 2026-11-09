@@ -79,8 +79,7 @@ object MediaTools:
   object AssetLinksInput:
     type Asset = Asset.T
     object Asset extends Newtype[String, Pure]
-    type TargetType = TargetType.T
-    object TargetType extends Newtype[String, Pure]
+    export com.histmersion.domain.media.assets.PictureTarget.Wire as TargetType
     type TargetId = TargetId.T
     object TargetId extends Newtype[String, Pure]
     type Relation = Relation.T

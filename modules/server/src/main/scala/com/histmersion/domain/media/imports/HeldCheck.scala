@@ -17,8 +17,7 @@ final case class HeldCheck(
 object HeldCheck:
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
-  type TargetType = TargetType.T
-  object TargetType extends Newtype[String, Pure]
+  export com.histmersion.domain.media.assets.PictureTarget.Wire as TargetType
   type TargetId = TargetId.T
   object TargetId extends Newtype[String, Pure]
   type Found = Found.T

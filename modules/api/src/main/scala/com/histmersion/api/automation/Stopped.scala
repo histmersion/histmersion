@@ -75,12 +75,12 @@ object Stopped extends Newtype[String, Pure]:
 
   /** The sentence a cause is stored as. */
   def of(c: Cause): Stopped = c match
-    case Cause.Paused(reason, detail) => Stopped(s"${prefix(reason)}$detail")
+    case Cause.Paused(reason, detail)              => Stopped(s"${prefix(reason)}$detail")
     case Cause.Exhausted(reason, lead, role, rest) =>
       Stopped(s"${prefix(reason)}$lead$AllModelsFor${role.wire}$Are$rest")
-    case Cause.Interrupted            => Stopped(s"${JobState.Interrupted}")
-    case Cause.Draining               => Stopped(s"$DrainingText")
-    case Cause.Failed(text)           => Stopped(s"$text")
+    case Cause.Interrupted  => Stopped(s"${JobState.Interrupted}")
+    case Cause.Draining     => Stopped(s"$DrainingText")
+    case Cause.Failed(text) => Stopped(s"$text")
 
   /** The stored sentence of a column read as a problem. */
   def from(stored: ApiProblem): Stopped = Stopped(s"$stored")
@@ -99,15 +99,17 @@ object Stopped extends Newtype[String, Pure]:
 
   private def exhausted(reason: PauseReason, sentence: String): Option[Cause] =
     val at = sentence.indexOf(AllModelsFor)
-    Option.when(at >= 0) {
-      val afterLead = sentence.drop(at + AllModelsFor.length)
-      val name = afterLead.takeWhile(_ != ' ')
-      val rest = afterLead.drop(name.length)
-      AgentRole
-        .parse(AgentRole.Wire.read(name))
-        .filter(_ => rest.startsWith(Are))
-        .map(role => Cause.Exhausted(reason, Lead.read(sentence.take(at)), role, Rest.read(rest.drop(Are.length))))
-    }.flatten
+    Option
+      .when(at >= 0) {
+        val afterLead = sentence.drop(at + AllModelsFor.length)
+        val name = afterLead.takeWhile(_ != ' ')
+        val rest = afterLead.drop(name.length)
+        AgentRole
+          .parse(AgentRole.Wire.read(name))
+          .filter(_ => rest.startsWith(Are))
+          .map(role => Cause.Exhausted(reason, Lead.read(sentence.take(at)), role, Rest.read(rest.drop(Are.length))))
+      }
+      .flatten
 
   extension (s: Stopped)
     def problem: ApiProblem = ApiProblem(s"$s")
