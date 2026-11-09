@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -62,9 +64,9 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(active(p), List("review", "compile", "ready"))
     assertEquals(p.active.map(_.stage), List(Stage.Reviewing, Stage.Compiling, Stage.Ready))
     assertEquals(p.queue.map(_.slug), List("gather"))
-    assert(p.active.head.why.value.startsWith("reviewing: 1 of 2 articles still to pass review"), p.active.head.why)
-    assert(p.active(1).why.value.contains("2 approved articles to compile"), p.active(1).why)
-    assert(p.active(2).why.value.contains("5 sources (at least 3), no article yet"), p.active(2).why)
+    assert(p.active.head.why.sentence.startsWith("reviewing: 1 of 2 articles still to pass review"), p.active.head.why)
+    assert(p.active(1).why.sentence.contains("2 approved articles to compile"), p.active(1).why)
+    assert(p.active(2).why.sentence.contains("5 sources (at least 3), no article yet"), p.active(2).why)
     assertEquals(p.joined, List("review", "compile", "ready"))
 
   test("depth-first: once a goal of a tree is chosen, its siblings come first, then its tree, then elsewhere"):
@@ -86,11 +88,11 @@ class GoalFocusSuite extends munit.FunSuite:
     // a1 has an unfinished sub-goal: it is not a candidate (its own articles wait); a1x is the oldest leaf
     val p = select(goals, s3)
     assertEquals(active(p), List("b1", "b2", "a1x"), p.active.map(_.why))
-    assert(p.active(1).why.value.contains("a sibling of b1 (active)"), p.active(1).why)
+    assert(p.active(1).why.sentence.contains("a sibling of b1 (active)"), p.active(1).why)
     assert(p.waiting.exists((s, c, _) => s == Goal.Slug("a1") && c == Code.Children), p.waiting)
     assert(p.waiting.exists((s, c, _) => s == Goal.Slug("root-a") && c == Code.Children), p.waiting)
     assertEquals(p.queue.map(_.slug), List("a2"))
-    assert(p.queue.head.why.value.contains("in the same tree as a1x"), p.queue.head.why)
+    assert(p.queue.head.why.sentence.contains("in the same tree as a1x"), p.queue.head.why)
 
   test("siblings of an active goal before an older goal of another tree"):
     val goals = List(
@@ -100,7 +102,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("x1", "x2"))
-    assert(p.active(1).why.value.contains("a sibling of x1 (active)"), p.active(1).why)
+    assert(p.active(1).why.sentence.contains("a sibling of x1 (active)"), p.active(1).why)
 
   test("a sub-goal of an active parent (planning) before a goal elsewhere"):
     val goals = List(
@@ -110,7 +112,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("p", "k"))
-    assert(p.active(1).why.value.contains("a sub-goal of p (active)"), p.active(1).why)
+    assert(p.active(1).why.sentence.contains("a sub-goal of p (active)"), p.active(1).why)
 
   test("a person's priority, then more sources, then the oldest, then the slug"):
     val goals = List(
@@ -122,7 +124,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(5)))
     assertEquals(active(p), List("prio", "more", "old", "a", "b"))
-    assert(p.active.head.why.value.contains("priority 5"), p.active.head.why)
+    assert(p.active.head.why.sentence.contains("priority 5"), p.active.head.why)
 
   test("deterministic: the same facts in another order give the same plan"):
     val goals =
@@ -143,7 +145,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("p1", "p2"))
-    assert(p.active.forall(_.pinned.value) && p.active.head.why.value.startsWith("pinned by a person"), p.active)
+    assert(p.active.forall(_.pinned.value) && p.active.head.why.sentence.startsWith("pinned by a person"), p.active)
     assertEquals(p.queue.map(_.slug), List("review"))
     assertEquals(active(select(goals, s3.modify(_.max).setTo(Settings.Max(1)))), List("p1", "p2"), "pins past the cap")
 
@@ -167,7 +169,7 @@ class GoalFocusSuite extends munit.FunSuite:
       )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("kept1", "kept2"))
-    assert(p.active.head.why.value.startsWith("active, kept until it is reviewed"), p.active.head.why)
+    assert(p.active.head.why.sentence.startsWith("active, kept until it is reviewed"), p.active.head.why)
     assertEquals(p.joined, Nil)
 
   test("a goal with articles to review or compile takes the slot of one still gathering (never a pinned one)"):
@@ -178,8 +180,11 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p).toSet, Set("pin", "toreview"))
-    assertEquals(p.left, List("gathering" -> "gave its slot to toreview, which has articles to review"))
-    assert(p.active.find(_.slug == Goal.Slug("toreview")).get.why.value.contains("took the slot of gathering"))
+    assertEquals(
+      p.left.map((a, p) => (a, p.sentence)),
+      List("gathering" -> "gave its slot to toreview, which has articles to review")
+    )
+    assert(p.active.find(_.slug == Goal.Slug("toreview")).get.why.sentence.contains("took the slot of gathering"))
     // a ready goal does not preempt
     assertEquals(
       active(
@@ -202,7 +207,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("a", "next"))
-    assertEquals(p.left, List("done" -> "it is reviewed"))
+    assertEquals(p.left.map((a, p) => (a, p.sentence)), List("done" -> "it is reviewed"))
     assertEquals(p.joined, List("next"))
 
   test("stuck (its last item stopped, nothing open) and idle free the slot; neither is a candidate"):
@@ -219,10 +224,10 @@ class GoalFocusSuite extends munit.FunSuite:
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(1)))
     assertEquals(active(p), List("next"))
     assertEquals(
-      p.left.toMap.get(Goal.Slug("stuck")),
+      p.left.toMap.get(Goal.Slug("stuck")).map(_.sentence),
       Some("stuck: its last item stopped — stopped: too many runs (task #12)")
     )
-    assert(p.left.toMap.apply(Goal.Slug("idle")).value.startsWith("idle"), p.left)
+    assert(p.left.toMap.apply(Goal.Slug("idle")).sentence.startsWith("idle"), p.left)
     assertEquals(p.waiting.map((s, c, _) => s -> c).toMap, Map("stuck" -> Code.Stuck, "idle" -> Code.Idle))
 
   test("waiting only for a person frees the slot; waiting for the autopilot's checks keeps it"):
@@ -249,7 +254,7 @@ class GoalFocusSuite extends munit.FunSuite:
       )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("byauto", "next"))
-    assertEquals(p.left, List("byperson" -> "waits for a person: approval #41"))
+    assertEquals(p.left.map((a, p) => (a, p.sentence)), List("byperson" -> "waits for a person: approval #41"))
     // a proposal behind a plan that waits for a person waits for that person too; behind a pending plan it is fine
     val behind = select(
       List(
@@ -261,7 +266,10 @@ class GoalFocusSuite extends munit.FunSuite:
       ),
       s3
     )
-    assertEquals(behind.waiting, List(("p", Code.Person, "waits for a person: approval #41")))
+    assertEquals(
+      behind.waiting.map((a, b, p) => (a, b, p.sentence)),
+      List(("p", Code.Person, "waits for a person: approval #41"))
+    )
     assertEquals(
       active(
         select(
@@ -305,7 +313,7 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(active(waiting), List("k1"))
     assert(
       waiting.waiting.exists((s, c, why) =>
-        s == Goal.Slug("p") && c == Code.Children && why.value.contains("1 unfinished sub-goal")
+        s == Goal.Slug("p") && c == Code.Children && why.sentence.contains("1 unfinished sub-goal")
       ),
       waiting.waiting
     )
@@ -354,14 +362,14 @@ class GoalFocusSuite extends munit.FunSuite:
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("r", "c"))
     assertEquals(p.left.map(_._1), List("x"))
-    assert(p.left.head._2.value.contains("cap of 2"), p.left)
+    assert(p.left.head._2.sentence.contains("cap of 2"), p.left)
     assertEquals(p.queue.map(_.slug), List("x"))
 
   // ── holds ──────────────────────────────────────────────────────────────────────────────────────
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
     val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
-    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, Problem(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, Problem.Unclassified(Legacy.Text("")))))
     val items = List(
       Item(
         GoalFocus.Work.ItemId(1),
@@ -414,7 +422,10 @@ class GoalFocusSuite extends munit.FunSuite:
     val hs = holds(items, plan, goals)
     assertEquals(hs.hold.map(_._1), List(1L))
     assertEquals(hs.hold.head._2, "off")
-    assert(hs.hold.head._3.value.startsWith(HoldPrefix) && hs.hold.head._3.value.contains("max-active-goals"), hs.hold)
+    assert(
+      hs.hold.head._3.sentence.startsWith(HoldPrefix) && hs.hold.head._3.sentence.contains("max-active-goals"),
+      hs.hold
+    )
     assertEquals(hs.release, List(3L), "the active goal's; a person's own hold (9) is not the focus's")
 
   test(
@@ -425,7 +436,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("p"), active = Facts.Active(true)),
       g(Goal.Slug("k"), Some(Goal.Slug("p")))
     )
-    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, Problem(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, Problem.Unclassified(Legacy.Text("")))))
     val items = List(
       Item(
         GoalFocus.Work.ItemId(1),
@@ -460,7 +471,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val hs = holds(items, plan, goals)
     assertEquals(hs.release.toSet, Set(1L, 2L, 5L))
     assertEquals(hs.hold.map(h => (h._1, h._2)), List((3L, "p")))
-    assert(hs.hold.head._3.value.contains("waits for its sub-goals"), hs.hold)
+    assert(hs.hold.head._3.sentence.contains("waits for its sub-goals"), hs.hold)
 
   // ── the library-wide managers ──────────────────────────────────────────────────────────────────
 
@@ -667,7 +678,7 @@ class GoalFocusSuite extends munit.FunSuite:
           FocusGoal.Slug("a"),
           status = FocusGoal.Status("seeding"),
           stage = FocusGoal.Stage("reviewing"),
-          why = api.Problem("reviewing: 1 of 2"),
+          why = Problem.Unclassified(Legacy.Text("reviewing: 1 of 2")),
           doing = Some(FocusGoal.Doing("running article-review x")),
           open = FocusGoal.Open(3),
           doneLast7 = FocusGoal.DoneLast7(7),
@@ -677,20 +688,25 @@ class GoalFocusSuite extends munit.FunSuite:
           FocusGoal.Slug("b"),
           status = FocusGoal.Status("seeding"),
           stage = FocusGoal.Stage("gathering"),
-          why = api.Problem("pinned by a person"),
+          why = Problem.Unclassified(Legacy.Text("pinned by a person")),
           pinned = FocusGoal.Pinned(true)
         )
       ),
-      queue =
-        List(FocusGoal(FocusGoal.Slug("c"), stage = FocusGoal.Stage("ready"), why = api.Problem("ready: 5 sources"))),
+      queue = List(
+        FocusGoal(
+          FocusGoal.Slug("c"),
+          stage = FocusGoal.Stage("ready"),
+          why = Problem.Unclassified(Legacy.Text("ready: 5 sources"))
+        )
+      ),
       queued = FocusInfo.Queued(4),
       waiting = List(
         FocusWaiting(
           FocusWaiting.Slug("d"),
           FocusWaiting.Code("person"),
-          api.Problem("waits for a person: approval #1")
+          Problem.Unclassified(Legacy.Text("waits for a person: approval #1"))
         ),
-        FocusWaiting(FocusWaiting.Slug("e"), FocusWaiting.Code("person"), api.Problem("x"))
+        FocusWaiting(FocusWaiting.Slug("e"), FocusWaiting.Code("person"), Problem.Unclassified(Legacy.Text("x")))
       ),
       held = FocusInfo.Held(12)
     )

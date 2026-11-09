@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -83,7 +84,10 @@ class CandidatesSuite extends munit.FunSuite:
       )
     )
     assertEquals(kept.head._2.authors, List(AuthorName("Ann")), "the first record, filled from the others")
-    assertEquals(skipped, Map("no DOI" -> 1, "retracted" -> 1, "in the corpus or queued" -> 1))
+    assertEquals(
+      skipped.map((k, v) => k.sentence -> v),
+      Map("no DOI" -> 1, "retracted" -> 1, "in the corpus or queued" -> 1)
+    )
 
   test("Europe PMC's answer: DOI, title, authors, year, journal, open access, abstract"):
     val j = parse(
@@ -196,7 +200,7 @@ class CandidatesSuite extends munit.FunSuite:
             CandidateWatch.Kind("query"),
             CandidateWatch.Subject("x"),
             CandidateWatch.Index("arxiv"),
-            lastError = Some(api.Problem("timeout"))
+            lastError = Some(Problem.Unclassified(Legacy.Text("timeout")))
           )
         ),
         CandidateSweep.Found(3),

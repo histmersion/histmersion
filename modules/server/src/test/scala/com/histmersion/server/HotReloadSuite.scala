@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.ocr.ConverterClient
@@ -96,9 +96,9 @@ class HotReloadSuite extends DbSuite:
          |""".stripMargin
     )
 
-  private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.value), identity)
+  private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.sentence), identity)
   private val source =
-    ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(p => Problem(p.value)))
+    ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))
 
   private val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
   private def send(req: HttpRequest): (Int, String) =

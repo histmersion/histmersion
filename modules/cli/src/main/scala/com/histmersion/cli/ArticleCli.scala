@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.Bundle
@@ -140,7 +141,7 @@ object ArticleCli:
                 failed ++ r.failed.map(_.value),
                 skipped ++ r.skipped.map(_.value)
               )
-            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message}", skipped)
+            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message.sentence}", skipped)
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
@@ -158,7 +159,7 @@ object ArticleCli:
               text.value
             )
             None
-          case Left(e) => Some(s"$slug: ${e.message}")
+          case Left(e) => Some(s"$slug: ${e.message.sentence}")
       }
       Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
@@ -166,7 +167,7 @@ object ArticleCli:
       else
         Left(
           Cli.Error(
-            Problem(s"${failed.size} of $total article(s) could not be exported"),
+            Problem.Unclassified(Legacy.Text(s"${failed.size} of $total article(s) could not be exported")),
             exitCode = ExitCode.Refused
           )
         )
@@ -249,7 +250,8 @@ object ArticleCli:
       )
         .mapN { (file, kind, strict) => (c: Client) =>
           val p = Path.of(file)
-          if !Files.isRegularFile(p) then Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+          if !Files.isRegularFile(p) then
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -313,7 +315,7 @@ object ArticleCli:
       def read(f: String) =
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Files.readString(p))
-        else Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
+        else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
       val req = (editsFile, bodyFile) match
         case (Some(e), None) =>
           read(e)
@@ -323,7 +325,7 @@ object ArticleCli:
                 .left
                 .map(err =>
                   Cli.Error(
-                    Problem(s"$e: not a JSON list of edits (${err.getMessage})"),
+                    Problem.Unclassified(Legacy.Text(s"$e: not a JSON list of edits (${err.getMessage})")),
                     exitCode = ExitCode.Usage
                   )
                 )
@@ -338,7 +340,10 @@ object ArticleCli:
           )
         case _ =>
           Left(
-            Cli.Error(Problem("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage)
+            Cli.Error(
+              Problem.Unclassified(Legacy.Text("give --edits-file or --body-file (one of them)")),
+              exitCode = ExitCode.Usage
+            )
           )
       req
         .flatMap(c.checkArticle(ReviewGoal.Slug(slug), _))
@@ -368,7 +373,8 @@ object ArticleCli:
       (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
         .mapN { (dir, force) => (c: Client) =>
           val p = Path.of(dir)
-          if !Files.isDirectory(p) then Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+          if !Files.isDirectory(p) then
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir")), exitCode = ExitCode.Usage))
           else Right(report(importAll(c, p, Api.Overwrite(force), Set(WikiLayout.SourcesDir))))
         }
     }
@@ -425,7 +431,7 @@ object ArticleCli:
           "(the critic first); <src>><dst>= removes it (repeatable)"
       )
       .orEmpty
-      .map(_.map(Problem(_)))
+      .map(_.map((text => Problem.Unclassified(Legacy.Text(text)))))
 
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
   private def coverage(using console: Console) = Opts.subcommand(

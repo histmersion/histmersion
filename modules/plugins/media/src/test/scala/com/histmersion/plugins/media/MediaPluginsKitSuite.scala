@@ -33,11 +33,11 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       config: String = "",
       env: Map[String, String] = Map.empty
   ) =
-    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = env).fold(e => fail(e.value), identity)
+    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = env).fold(e => fail(e.legacyText), identity)
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
-    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.value), identity)
+    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.legacyText), identity)
     val supplied = FirstPartySettings.fallback(Plugin.Info.Id("media-met"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
@@ -68,7 +68,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
   test("the keyless plugins are on by default, the two that need a key of the user's own off, with no key"):
     collections.foreach { (id, _) =>
       val h = load(Plugin.Info.Id(id))
-      val defaults = PluginHost.defaults(h.plugin).fold(e => fail(e.value), identity).resolve()
+      val defaults = PluginHost.defaults(h.plugin).fold(e => fail(e.legacyText), identity).resolve()
       assertEquals(defaults.getBoolean("enabled"), !keyed(id), id)
       if keyed(id) then assert(defaults.getIsNull("api-key"), s"$id ships no key")
     }
@@ -79,7 +79,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       "api-url = \"https://elsewhere.example\"",
       http = HttpMode.Offline
     )
-    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
 
   test("media-met: a search at the host's endpoint, each object read, judged as the server judges it"):
     val api = media.met.apiUrl
@@ -110,7 +110,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     )
     assertEquals(r.kept.map(v => (v.key, v.licence)), List(("252448", Some("CC0-1.0"))))
     assertEquals(
-      r.verdicts.find(_.key.value == "248284").flatMap(_.refused),
+      r.verdicts.find(_.key.value == "248284").flatMap(_.refused).map(_.legacyText),
       Some("not Open Access (isPublicDomain is false)")
     )
     assertEquals(
@@ -167,14 +167,14 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     assertEquals(on.contributions.mediaCollections, List("europeana"))
     val off =
       PluginHarness.load(Plugin.Info.Id("media-europeana"), "enabled = false", http = HttpMode.Offline, env = Map.empty)
-    assert(off.left.exists(_.value.contains("disabled")), off.toString)
+    assert(off.left.exists(_.legacyText.contains("disabled")), off.toString)
     val unset = PluginHarness.load(
       Plugin.Info.Id("media-europeana"),
       "api-key = \"env:ZQMT_NOT_SET\"",
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(unset.left.exists(_.value.contains("ZQMT_NOT_SET")), unset.toString)
+    assert(unset.left.exists(_.legacyText.contains("ZQMT_NOT_SET")), unset.toString)
 
   test("each collection's roles are ones the host stores"):
     val h = load(Plugin.Info.Id("media-wikidata"))

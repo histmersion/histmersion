@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -18,7 +19,8 @@ object CollectionsMarkdown:
     (s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
       s"- reachable: ${
-          if (c.reachable) == CollectionInfo.Reachable(true) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"
+          if (c.reachable) == CollectionInfo.Reachable(true) then "yes"
+          else s"no — ${c.problem.map(_.sentence).getOrElse("unknown")}"
         }")
 
   private def who(authors: List[AuthorName]): String =
@@ -99,7 +101,9 @@ object CollectionsMarkdown:
         (if ready.nonEmpty then " Re-run with --apply." else ""))
     else
       val lines = s.pushes.map(p =>
-        p.id.fold(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")(id => s"  + ${p.citekey} → Calibre id $id")
+        p.id.fold(s"  ! ${p.citekey}: ${p.error.map(_.sentence).getOrElse("")}")(id =>
+          s"  + ${p.citekey} → Calibre id $id"
+        )
       )
       val failed = s.pushes.count(_.id.isEmpty)
       (table + lines.map(_ + "\n").mkString + s"pushed ${s.pushes.size - failed} source(s), $failed failed$note")
@@ -110,7 +114,8 @@ object CollectionsMarkdown:
     val changing = rows.collect {
       case r if r.state == CollectionUpdateRow.State("would-change") => (r, "")
       case r if r.state == CollectionUpdateRow.State("updated")      => (r, "written")
-      case r if r.state == CollectionUpdateRow.State("failed")       => (r, s"FAILED: ${r.reason.getOrElse("")}")
+      case r if r.state == CollectionUpdateRow.State("failed")       =>
+        (r, s"FAILED: ${r.reason.map(_.sentence).getOrElse("")}")
     }
     val table = changing.flatMap { (r, note) =>
       r.changes.map(c =>
@@ -123,7 +128,7 @@ object CollectionsMarkdown:
       case r if r.state == CollectionUpdateRow.State("missing") =>
         s"- ${r.id}: no such Calibre entry (${r.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
       case r if r.state == CollectionUpdateRow.State("refused") =>
-        s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
+        s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.map(_.sentence).getOrElse("")}"
     }
     val upToDate = rows.count(_.state == CollectionUpdateRow.State("up-to-date"))
     val head =
@@ -168,7 +173,7 @@ object CollectionsMarkdown:
         if (c.warning) == CollectionCover.Warning(true) then s"warning: cover not stored — ${c.line}" else c.line
       ) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
-      i.jobError.map(e => s"not converted: $e")).mkString("\n"))
+      i.jobError.map(e => s"not converted: ${e.sentence}")).mkString("\n"))
 
   def linked(l: CollectionLinked): String = (s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}")
 

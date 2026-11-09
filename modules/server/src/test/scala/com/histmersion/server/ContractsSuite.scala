@@ -37,6 +37,8 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     are not properties;
   *   - `bucket` (rule 10): a type in a layer bucket (`com.histmersion.db`, `com.histmersion.files`,
   *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package;
+  *   - `nonempty-pattern` (G60): a type pattern `case …: NonEmptyVector[…] =>` outside the problem module — the union
+  *     `Problems` is folded (`fold`, `toVector`), never matched on;
   *   - `problem-field` (rule 1, G60): a case of the closed `util.problem.Problem` (or a small type of its file) with a
   *     `String`, `Int`, `Long`, `Double` or `Boolean` field — free text or an unnamed number where a newtype or an enum
   *     says what it is; only the two cases that carry text no case wrote (`Unclassified`, `Stored.Unrecognised`) may.
@@ -148,6 +150,21 @@ class ContractsSuite extends munit.FunSuite:
       List("Said.plugin: String", "Said.count: Int", "Length.expected: Long")
     )
 
+  test("a type pattern on the problems' NonEmptyVector is a violation outside the problem module"):
+    val code =
+      """object Answers:
+        |  def shown(e: Either[Problems, Int]) = e match
+        |    case Left(ps: NonEmptyVector[Problem]) => ps.toVector.size
+        |    case Left(p)                           => 1
+        |  val many: NonEmptyVector[Problem] = NonEmptyVector.of(a, b)
+        |""".stripMargin
+    def found(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", code, code)))
+        .filter(_.rule == "nonempty-pattern")
+    assertEquals(found("server:x/Answers.scala").map(v => (v.count, v.at)), List((1, "server:x/Answers.scala:3")))
+    assertEquals(found("problem:util/problem/Answers.scala"), Nil)
+
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
     assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
@@ -202,7 +219,13 @@ object ContractsSuite:
       val concepts = newtypes(sources)
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
-          global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s)
+          global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s) ++
+          counted(
+            "nonempty-pattern",
+            s,
+            "a type pattern on NonEmptyVector outside the problem module",
+            if module(s) == "problem" then Nil else NonEmptyPattern.findAllMatchIn(s.code).map(_.start).toList
+          )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
     private def module(s: SourceFile): String = s.key.takeWhile(_ != ':')
@@ -471,10 +494,20 @@ object ContractsSuite:
     private val Boundary = "(?:Routes|Endpoints|Endpoint|Tools|Transformers|Transformer|Controllers|Controller)$".r
     private val Named = "\\bcom\\.histmersion\\.(\\w+)".r
 
+    /** The closed Problem's module, below the api: the contract's one failure type, which the clients share. */
+    private val SharedProblem = "com.histmersion.util.problem."
+
+    /** The closed Problem's renderers (the sentence, the answer, the stored column): the problem module's edge, kept in
+      * the api only because every layer that renders sees it; a domain file may render a problem through them.
+      */
+    private val ProblemRenderers = "com.histmersion.api.problem."
+
     private def layer(s: SourceFile): List[Violation] =
       val m = module(s)
       if ClientModules(m) then
-        val outside = Named.findAllMatchIn(s.code).filterNot(n => n.group(1) == "api" || n.group(1) == "web")
+        val outside = Named
+          .findAllMatchIn(s.code)
+          .filterNot(n => n.group(1) == "api" || n.group(1) == "web" || s.code.startsWith(SharedProblem, n.start))
         val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil
         counted("layer", s, "the client names a package outside api", outside.map(_.start).toList.take(1)) ++
           counted("layer", s, "an api file outside com.histmersion.api", own)
@@ -485,9 +518,19 @@ object ContractsSuite:
           "layer",
           s,
           "a domain file names the api outside a boundary",
-          "\\bcom\\.histmersion\\.api\\b".r.findAllMatchIn(s.code).map(_.start).toList.take(1)
+          "\\bcom\\.histmersion\\.api\\b".r
+            .findAllMatchIn(s.code)
+            .map(_.start)
+            .filterNot(s.code.startsWith(ProblemRenderers, _))
+            .toList
+            .take(1)
         )
       else Nil
+
+    /** A type pattern on the problems' non-empty vector (`case Left(ps: NonEmptyVector[Problem])`): the union
+      * `Problems` is never matched on, erasure makes the test unchecked; `fold` and `toVector` tell one from many.
+      */
+    private val NonEmptyPattern = "\\bcase\\b[^\\n]*?:\\s*NonEmptyVector\\[[^\\n]*?=>".r
 
     private val RefinedModules = Set("api", "web", "cli", "plugin-api")
 

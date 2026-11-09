@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}

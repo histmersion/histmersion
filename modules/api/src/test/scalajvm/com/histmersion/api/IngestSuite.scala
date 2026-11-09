@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job state machine and the
@@ -299,7 +300,7 @@ class IngestSuite extends munit.FunSuite:
       JobInfo.Status("failed"),
       (Some("ck")).map(Citekey.apply),
       None,
-      Some(Problem("converter down")),
+      Some(Problem.Unclassified(Legacy.Text("converter down"))),
       (Some("0123456789abcdef")).map(Sha256.apply),
       JobInfo.CreatedAt("t0"),
       JobInfo.UpdatedAt("t1")

@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.config.{MediaConfig, MediaPluginCollectionsConfig}
 import com.histmersion.domain.catalogue.{Event, Place}
@@ -53,7 +54,7 @@ final class ImportsControllers(
     MediaImporters
       .resolve(MediaImporters.ImporterKey(p.value), collections()._1, imports, store, cfg, http, converter)
       .left
-      .map(why => ImportsControllers.error(why.transformInto[Problem], Write.CodeInvalid))
+      .map(why => ImportsControllers.error(why, Write.CodeInvalid))
 
   /** The place or event a request names, as the domain's ids: a blank one names none, a malformed one is no place or
     * event that exists. A place wins over an event.
@@ -65,7 +66,7 @@ final class ImportsControllers(
           Place.Id
             .either(p)
             .left
-            .map(_ => ImportsControllers.error(Problem(s"No place '$p'"), Write.CodeNotFound))
+            .map(_ => ImportsControllers.error(Problem.Unclassified(Legacy.Text(s"No place '$p'")), Write.CodeNotFound))
             .map(Some(_))
         case None => Right(None)
       event <- req.event.map(_.value.trim).filter(_.nonEmpty) match
@@ -73,7 +74,7 @@ final class ImportsControllers(
           Event.Id
             .either(e)
             .left
-            .map(_ => ImportsControllers.error(Problem(s"No event '$e'"), Write.CodeNotFound))
+            .map(_ => ImportsControllers.error(Problem.Unclassified(Legacy.Text(s"No event '$e'")), Write.CodeNotFound))
             .map(Some(_))
         case _ => Right(None)
     yield (place, event)
@@ -105,7 +106,7 @@ final class ImportsControllers(
                 None
               )
               .left
-              .map(why => ImportsControllers.error(why.transformInto[Problem], Write.CodeNotFound))
+              .map(why => ImportsControllers.error(why, Write.CodeNotFound))
               .map { targets =>
                 val run = imp.start()
                 val report =
@@ -123,9 +124,11 @@ final class ImportsControllers(
     else if !ImportsControllers.single(req) then
       Left(
         ImportsControllers.error(
-          Problem(
-            "an import over many places/events is a job: POST /api/media/import/job " +
-              "(`histmersion media import wikidata` starts and follows it)"
+          Problem.Unclassified(
+            Legacy.Text(
+              "an import over many places/events is a job: POST /api/media/import/job " +
+                "(`histmersion media import wikidata` starts and follows it)"
+            )
           ),
           Write.CodeInvalid
         )
@@ -139,7 +142,12 @@ final class ImportsControllers(
   def importJob(req: MediaImportRequest): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
       if req.dryRun.value then
-        Left(ImportsControllers.error(Problem("a dry run answers at once: POST /api/media/import"), Write.CodeInvalid))
+        Left(
+          ImportsControllers.error(
+            Problem.Unclassified(Legacy.Text("a dry run answers at once: POST /api/media/import")),
+            Write.CodeInvalid
+          )
+        )
       else
         val single = ImportsControllers.single(req)
         val refresh = ImportService.Refresh(req.refresh.value)
@@ -150,7 +158,7 @@ final class ImportsControllers(
               imp
                 .targets(place, event, ImportService.TargetsLimit(1), refresh, None)
                 .left
-                .map(why => ImportsControllers.error(why.transformInto[Problem], Write.CodeNotFound))
+                .map(why => ImportsControllers.error(why, Write.CodeNotFound))
                 .map(_ => ())
             else Right(())
           check.flatMap { _ =>
@@ -194,7 +202,7 @@ final class ImportsControllers(
       if left <= 0 || jobs.held then acc
       else
         imp.targets(place, event, ImportService.TargetsLimit(batch.min(left)), refresh, since) match
-          case Left(e)    => acc.modify(_.failed).using(_ :+ MediaImportReport.Failed(e.value))
+          case Left(e)    => acc.modify(_.failed).using(_ :+ MediaImportReport.Failed(e.sentence))
           case Right(Nil) => acc
           // none of the last batch's checks were recorded: asking again would spin on the same ones
           case Right(targets) if !single && targets.forall(t => seen(ImportsControllers.seenKey(t))) =>

@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import scala.annotation.tailrec
 
 import java.nio.file.Path
@@ -22,7 +23,7 @@ final case class UserConfigFile(
       val hint =
         if k.value == "histmersion" || k.value.startsWith("histmersion.") then ""
         else " (settings go under histmersion { … })"
-      Problem(s"$where: unknown setting '${k.value}' is ignored$hint")
+      Problem.Unclassified(Legacy.Text(s"$where: unknown setting '${k.value}' is ignored$hint"))
     }
 
 object UserConfigFile:

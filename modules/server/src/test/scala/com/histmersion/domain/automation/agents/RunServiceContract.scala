@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Agents.*
@@ -38,7 +39,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
       Some(model),
       Usage(Usage.Input(10L * attempt.value), Usage.Output(2), Usage.CacheRead(1), Usage.CacheWrite(0)),
       cost,
-      Option.when(status == StepStatus.Failed)(Problem("boom")),
+      Option.when(status == StepStatus.Failed)(Problem.Unclassified(Legacy.Text("boom"))),
       started,
       Some(AgentRepo.StepRecord.ActualModel(model.value)),
       List(WouldWrite(WouldWrite.What("w"), WouldWrite.Payload("p"))),
@@ -131,7 +132,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
     )
     val steps = r(s).steps(id, AgentRepo.OutputChars(3))
     assertEquals(
-      steps.map(x => (x.seq, x.attempt, x.status, x.output, x.error)),
+      steps.map(x => (x.seq, x.attempt, x.status, x.output, x.error.map(_.sentence))),
       List((1, 1, "failed", None, Some("boom")), (1, 2, "done", Some("\"ab"), None))
     )
     assertEquals(steps.head.wouldWrite, List(WouldWrite(WouldWrite.What("w"), WouldWrite.Payload("p"))))
@@ -232,7 +233,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
           before = Some(AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))
         )
         .left
-        .exists(_.value.contains("No agent run"))
+        .exists(_.sentence.contains("No agent run"))
     )
     def page(q: RunQuery) = r(s).page(q, RunQuery.Limit(10), None, None).map(_._1.map(_.id.value: String))
     assertEquals(page(RunQuery(status = List(RunQuery.Status("running")))), Right(Vector(c)))

@@ -1,9 +1,9 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
@@ -66,7 +66,7 @@ final class PolicyHttp(
     def attempt(n: HttpPolicy.Attempt): Either[Plugin.Http.Failure, HttpAnswer.Body] =
       transport.get(url, sent) match
         case Left(unreachable) =>
-          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.value)
+          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.sentence)
           else Left(unreachable)
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
@@ -74,7 +74,7 @@ final class PolicyHttp(
             Left(
               Plugin.Http.Failure.Status(
                 answer.code.status,
-                Problem(s"$url: HTTP $code bot-protection challenge — treated as no copy")
+                Problem.Unclassified(Legacy.Text(s"$url: HTTP $code bot-protection challenge — treated as no copy"))
               )
             )
           else
@@ -87,16 +87,19 @@ final class PolicyHttp(
               clock()
             ) match
               case HttpPolicy.Step.Accept                                    => Right(answer.body)
-              case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why.value)
+              case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why.sentence)
               case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) =>
                 Left(
-                  Plugin.Http.Failure.Status(answer.code.status, Problem(s"$url failed: $why"))
+                  Plugin.Http.Failure
+                    .Status(answer.code.status, Problem.Unclassified(Legacy.Text(s"$url failed: ${why.sentence}")))
                 )
               case HttpPolicy.Step.GiveUp(_) =>
                 Left(
                   Plugin.Http.Failure.Status(
                     answer.code.status,
-                    Problem(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}")
+                    Problem.Unclassified(
+                      Legacy.Text(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}")
+                    )
                   )
                 )
     attempt(HttpPolicy.Attempt(0))

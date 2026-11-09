@@ -1,7 +1,7 @@
 package com.histmersion
 package util.ocr
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 
@@ -35,7 +35,7 @@ trait ConverterClient:
       filename: ConverterClient.Filename,
       maxPx: Pixels
   ): Either[Problem, ConverterClient.Thumb] =
-    Left(Problem("this converter makes no thumbnails"))
+    Left(Problem.Unclassified(Legacy.Text("this converter makes no thumbnails")))
 
 object ConverterClient:
   type DocumentBytes = DocumentBytes.T

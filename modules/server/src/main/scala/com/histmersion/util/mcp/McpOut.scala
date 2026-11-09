@@ -1,6 +1,7 @@
 package com.histmersion
 package util.mcp
 
+import com.histmersion.api.problem.Text.sentence
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.Api
 
@@ -17,7 +18,7 @@ object McpOut:
   def refusal(message: String): Markdown = s"_${message}_"
 
   /** [[refusal]] of a handler's error. */
-  def refusal(e: Api.Error): Markdown = refusal(e.message.value)
+  def refusal(e: Api.Error): Markdown = refusal(e.message.sentence)
 
   /** A handler's answer: its Markdown, or the refusal. Pure. */
   def markdown[A](r: Either[Api.Error, A])(md: A => Markdown): Markdown = r.fold(e => refusal(e), md)

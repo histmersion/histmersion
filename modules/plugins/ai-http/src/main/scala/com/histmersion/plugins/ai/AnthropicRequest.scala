@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.AiMessage
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
@@ -92,7 +92,7 @@ object AnthropicRequest:
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
         parse((input).value).flatMap(_.as[Map[String, Json]]) match
-          case Left(e)  => Left(Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+          case Left(e)  => Left(Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
           case Right(m) =>
             val use = Json.obj(
               "id" -> Json.fromString((id).value),

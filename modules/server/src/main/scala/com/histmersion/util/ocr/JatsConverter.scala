@@ -1,7 +1,7 @@
 package com.histmersion
 package util.ocr
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.upstreams.jats.Jats
 
 import com.histmersion.api.ocr.ConvertedDoc
@@ -23,7 +23,7 @@ final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
     jats match
       case Some(xml) =>
         val md = Jats.toMarkdown(xml).value
-        if md.trim.isEmpty then Left(Problem(s"$filename is a JATS article with no text"))
+        if md.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$filename is a JATS article with no text")))
         else
           Right(
             ConvertedDoc(

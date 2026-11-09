@@ -1,6 +1,8 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.{Legacy, Problem}
+
 /** The SPI members added within SPI 2 for the first-party plugins — an answer's status and headers, an upstream's
   * budget, the peers of a fetch, a catalogue's re-reading and its changing parts, an AI provider's request options —
   * and their defaults, which keep a plugin or a host written before them compiling and linking.
@@ -13,11 +15,14 @@ class SpiAdditionsSuite extends munit.FunSuite:
         headers: Map[Header.Name, Header.Value]
     ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
       if (url).value.endsWith("/missing") then
-        Left(Plugin.Http.Failure.Status(Plugin.HttpResponse.Status.NotFound, Problem(s"$url: HTTP 404")))
+        Left(
+          Plugin.Http.Failure
+            .Status(Plugin.HttpResponse.Status.NotFound, Problem.Unclassified(Legacy.Text(s"$url: HTTP 404")))
+        )
       else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
-    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e.problem).value), identity)
+    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e.problem).legacyText), identity)
     assertEquals(
       ({
         val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8"));
@@ -36,7 +41,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
         .fetch(Plugin.Http.Url("https://x.example/missing"))
         .map(_.status))
         .left
-        .map(refactorError => (refactorError.problem).value))
+        .map(refactorError => (refactorError.problem).legacyText))
         .map(refactorValue => (refactorValue).value): Either[String, Int]),
       Left("https://x.example/missing: HTTP 404")
     )
@@ -79,9 +84,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     }
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
-      Problem("none")
+      Problem.Unclassified(Legacy.Text("none"))
     )
-    def secretVaults = Registry.refusing(Problem("no vaults"))
+    def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
 
   test("a context written before budgets existed lends the unlimited quota for any upstream"):
     assertEquals(EarlyContext.quota(Plugin.Context.QuotaUpstream("core")), UpstreamQuota.Unlimited)
@@ -136,7 +141,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     )
     val early = new AiProvider:
       def title = AiProvider.Title("Early")
-      def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(Problem("none")))
+      def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("none"))))
     assertEquals(
       early.capabilities,
       AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
@@ -209,7 +214,8 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val title = MediaCollection.Title("Portal objects")
     val role = MediaCollection.Object
     def search(place: MediaPlace, http: Plugin.Http) =
-      if place.label == MediaPlace.Label("Nowhere") then Left(Plugin.Http.Failure.Transport(Problem("offline")))
+      if place.label == MediaPlace.Label("Nowhere") then
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
       else
         Right(
           List(
@@ -219,10 +225,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
                 MediaItem.Title((place.label).value),
                 MediaItem.PageUrl("https://portal.example/1"),
                 None,
-                Left(Problem("closed"))
+                Left(Problem.Unclassified(Legacy.Text("closed")))
               )
             ),
-            Left(Plugin.Http.Failure.Transport(Problem("one record unreadable")))
+            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("one record unreadable"))))
           )
         )
 
@@ -232,7 +238,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
       MediaItem.Title("t"),
       MediaItem.PageUrl("https://p"),
       None,
-      Left(Problem("not open access"))
+      Left(Problem.Unclassified(Legacy.Text("not open access")))
     )
     assertEquals((item.role, item.rendition, item.withheld, item.ids), (None, None, None, Nil))
 
@@ -286,14 +292,14 @@ class SpiAdditionsSuite extends munit.FunSuite:
           MediaItem.Title("t"),
           MediaItem.PageUrl("https://p"),
           None,
-          Left(Problem("x"))
+          Left(Problem.Unclassified(Legacy.Text("x")))
         ),
         MediaItem(
           MediaItem.Key("k2"),
           MediaItem.Title("t"),
           MediaItem.PageUrl("https://p"),
           None,
-          Left(Problem("y"))
+          Left(Problem.Unclassified(Legacy.Text("y")))
         )
       )
     assertEquals(Portal.completeAll(items, Bodies), MediaCompleted(items.map(i => i.key -> i).toMap))
@@ -302,7 +308,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
       val role = MediaCollection.Map
       def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
       override def complete(item: MediaItem, http: Plugin.Http) =
-        if item.key == MediaItem.Key("k1") then Left(Problem("gone")) else Right(item)
+        if item.key == MediaItem.Key("k1") then Left(Problem.Unclassified(Legacy.Text("gone"))) else Right(item)
     assertEquals(
       failing.completeAll(items, Bodies),
       MediaCompleted(

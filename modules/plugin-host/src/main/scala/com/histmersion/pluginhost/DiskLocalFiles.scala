@@ -1,7 +1,6 @@
 package com.histmersion
 package pluginhost
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.LocalFiles
 import java.nio.file.{Files, Path}
@@ -24,15 +23,15 @@ final class DiskLocalFiles extends LocalFiles:
   ): Either[Problem, A] =
     val n = name.value
     if n.isEmpty || n == "." || n == ".." || n.contains('/') || n.contains('\\') || n.contains('\u0000') then
-      Left(Problem("cannot stage the file: expected a single filename"))
+      Left(Problem.Unclassified(Legacy.Text("cannot stage the file: expected a single filename")))
     else
       Try(Files.createTempDirectory("histmersion-original-")).toEither.left
-        .map(e => Problem(s"cannot stage the file: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"cannot stage the file: ${e.getMessage}")))
         .flatMap { dir =>
           try
             Try(Files.write(dir.resolve(n), bytes.value)).toEither.left
-              .map(e => Problem(s"cannot stage the file: ${e.getMessage}"))
-              .flatMap(p => use(p).left.map(e => Problem(e.value)))
+              .map(e => Problem.Unclassified(Legacy.Text(s"cannot stage the file: ${e.getMessage}")))
+              .flatMap(p => use(p))
           finally
             val entries = Files.list(dir)
             try

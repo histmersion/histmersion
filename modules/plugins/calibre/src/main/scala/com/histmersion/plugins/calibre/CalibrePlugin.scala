@@ -1,9 +1,8 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.EnvVar
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.LocalFiles
@@ -33,8 +32,6 @@ final class CalibrePlugin extends Plugin:
           Shell.system
         )
       )
-      .left
-      .map(e => Problem(e.value))
 
 object CalibrePlugin:
   val Version = "0.1.0"

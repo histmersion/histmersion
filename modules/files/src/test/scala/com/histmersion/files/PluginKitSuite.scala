@@ -1,7 +1,8 @@
 package com.histmersion
 package files
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -269,7 +270,7 @@ class PluginKitSuite extends munit.FunSuite:
     assertEquals(checkSigner(List(PluginDescription.Id("p")), PluginKit.Installed.Signer("AAAA"), signed), Right(()))
     assert(
       checkSigner(List(PluginDescription.Id("p")), PluginKit.Installed.Signer("BBBB"), signed).left
-        .exists(_.value.contains("signed by AAAA"))
+        .exists(_.sentence.contains("signed by AAAA"))
     )
     assertEquals(checkSigner(List(PluginDescription.Id("q")), PluginKit.Installed.Signer("BBBB"), signed), Right(()))
 
@@ -283,10 +284,12 @@ class PluginKitSuite extends munit.FunSuite:
     )
     assertEquals(refusals(ok, PluginSet.SpiVersion(1), Map.empty), Nil)
     assert(
-      refusals(PluginJar(PluginJar.File("e.jar"), Sha256("1")), PluginSet.SpiVersion(1), Map.empty).head.value
+      refusals(PluginJar(PluginJar.File("e.jar"), Sha256("1")), PluginSet.SpiVersion(1), Map.empty).head.sentence
         .contains("holds no plugin")
     )
-    assert(refusals(ok, PluginSet.SpiVersion(2), Map.empty).head.value.contains("SPI 1; this Histmersion speaks SPI 2"))
+    assert(
+      refusals(ok, PluginSet.SpiVersion(2), Map.empty).head.sentence.contains("SPI 1; this Histmersion speaks SPI 2")
+    )
     assert(
       refusals(
         PluginJar(
@@ -297,17 +300,17 @@ class PluginKitSuite extends munit.FunSuite:
               PluginDescription.Id(""),
               PluginDescription.Version(""),
               PluginDescription.SpiVersion(0),
-              error = Some(Problem("boom"))
+              error = Some(Problem.Unclassified(Legacy.Text("boom")))
             )
           )
         ),
         PluginSet.SpiVersion(0),
         Map.empty
       )
-        .exists(_.value.contains("could not be loaded: boom"))
+        .exists(_.sentence.contains("could not be loaded: boom"))
     )
     assert(
-      refusals(ok, PluginSet.SpiVersion(1), Map(PluginDescription.Id("p") -> "other.jar")).head.value
+      refusals(ok, PluginSet.SpiVersion(1), Map(PluginDescription.Id("p") -> "other.jar")).head.sentence
         .contains("already provided by other.jar")
     )
 
@@ -321,12 +324,12 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(Problem(foreign))
+          error = Some(Problem.Unclassified(Legacy.Text(foreign)))
         )
       )
     )
     assertEquals(
-      refusals(broken, PluginSet.SpiVersion(2), Map.empty),
+      refusals(broken, PluginSet.SpiVersion(2), Map.empty).map(_.sentence),
       List(s"a provider in b.jar could not be loaded: $foreign")
     )
     val missing = PluginJar(
@@ -337,12 +340,12 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(Problem("class x.Y is missing"))
+          error = Some(Problem.Unclassified(Legacy.Text("class x.Y is missing")))
         )
       )
     )
     assertEquals(
-      refusals(missing, PluginSet.SpiVersion(2), Map(PluginDescription.Id("") -> "other.jar")),
+      refusals(missing, PluginSet.SpiVersion(2), Map(PluginDescription.Id("") -> "other.jar")).map(_.sentence),
       List("a provider in m.jar could not be loaded: class x.Y is missing")
     )
 
@@ -372,7 +375,7 @@ class PluginKitSuite extends munit.FunSuite:
           KitFile.File("lib/b.jar") -> KitFile.Sha256.applyUnsafe("d" * 64),
           KitFile.File("lib/x.jar") -> KitFile.Sha256.applyUnsafe("e" * 64)
         )
-      ),
+      ).map(_.sentence),
       List("missing: classpath", "changed: lib/b.jar", "not in the manifest: lib/x.jar")
     )
     val k =

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.backup
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.RowCount
@@ -23,9 +24,9 @@ class BackupServiceSuite extends munit.FunSuite:
   test("dumps in one second get suffixes; the oldest beyond keep are pruned; the listing is newest first"):
     val (store, svc) = fixture(keep = BackupService.InMemory.Keep(2))
     val at = Instant.parse("2026-10-31T10:00:00Z")
-    val first = svc.create(at).fold(e => fail(e.message.value), identity)
-    val second = svc.create(at).fold(e => fail(e.message.value), identity)
-    val third = svc.create(at.plusSeconds(1)).fold(e => fail(e.message.value), identity)
+    val first = svc.create(at).fold(e => fail(e.message.sentence), identity)
+    val second = svc.create(at).fold(e => fail(e.message.sentence), identity)
+    val third = svc.create(at.plusSeconds(1)).fold(e => fail(e.message.sentence), identity)
     assertEquals(
       (first.file, second.file),
       ("histmersion-20261031T100000Z.dump", "histmersion-20261031T100000Z-2.dump")
@@ -38,7 +39,7 @@ class BackupServiceSuite extends munit.FunSuite:
 
   test("only a listed, syntactically safe name resolves; a restore of it changes nothing here"):
     val (_, svc) = fixture(keep = BackupService.InMemory.Keep(0))
-    val made = svc.create(Instant.parse("2026-10-31T10:00:00Z")).fold(e => fail(e.message.value), identity)
+    val made = svc.create(Instant.parse("2026-10-31T10:00:00Z")).fold(e => fail(e.message.sentence), identity)
     assertEquals(svc.resolve(PreparedBackup.File(made.file.value)).map(_.value: String), Right(made.file))
     assertEquals(
       svc.resolve(PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code),
@@ -52,7 +53,7 @@ class BackupServiceSuite extends munit.FunSuite:
     val (_, svc) = fixture(keep = BackupService.InMemory.Keep(0), rows = RowCount(3))
     assertEquals(svc.guardedRows, 3)
     assertEquals(
-      svc.refusal(RowCount(3)).message,
+      (svc.refusal(RowCount(3)).message).sentence,
       "the database still holds 3 source(s); restoring would drop them — re-run with force"
     )
     assertEquals(

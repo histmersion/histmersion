@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.{Write, YearFmt}
@@ -232,7 +232,7 @@ object GoalService:
       case com.histmersion.domain.automation.Goal.LinkKind.SearchQuery => 2
       case _                                                           => 3
     private def refused(message: String, code: String): Api.Error =
-      Api.Error(Problem(message), Some(Api.Error.Code(code)))
+      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(code)))
 
     def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = goals.get(key(slug)).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)

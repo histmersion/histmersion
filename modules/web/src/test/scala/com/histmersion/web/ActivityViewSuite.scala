@@ -1,7 +1,6 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Api.JobControl
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.Entry

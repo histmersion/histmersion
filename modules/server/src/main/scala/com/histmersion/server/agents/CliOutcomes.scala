@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.StrictJsonSchema
 
 import io.circe.{parser, Json}
@@ -28,7 +29,7 @@ object CliOutcomes:
   ): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.map(_.value).getOrElse("")
     val parsed = parser.parse(stripFence(raw))
-    val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.value.take(600)))
+    val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.sentence.take(600)))
     val answer: Either[AgentFailure, Out] = parsed match
       // a null decodes as an absent field: Codex's strict schema makes the model answer `null` for
       // every optional field it would have left out (StrictJsonSchema), and a field with a default

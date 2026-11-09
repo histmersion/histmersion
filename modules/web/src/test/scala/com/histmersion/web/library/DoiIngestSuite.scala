@@ -1,6 +1,7 @@
 package com.histmersion
 package web.library
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.library.Ingest
 class DoiIngestSuite extends munit.FunSuite:
 
@@ -41,5 +42,5 @@ class DoiIngestSuite extends munit.FunSuite:
 
   test("anything else is refused with what to type"):
     assert(DoiIngest.request("").isLeft)
-    assert(DoiIngest.request("The Horse, the Wheel and Language").left.exists(_.value.contains("neither a DOI")))
+    assert(DoiIngest.request("The Horse, the Wheel and Language").left.exists(_.sentence.contains("neither a DOI")))
     assert(DoiIngest.request("10.1017").isLeft)

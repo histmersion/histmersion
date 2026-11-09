@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.web.map.maplibre.MapLibreEngine
 
 /** The engine the app runs on: the one place outside the adapter that names it. */
@@ -19,10 +19,10 @@ object Engines:
   ): MapSurface =
     val caps = engine.probe()
     engine.unsupported(caps) match
-      case Some(why) => NoMapSurface(el, Problem(why.value), caps, maxZoom)
+      case Some(why) => NoMapSurface(el, why, caps, maxZoom)
       case None      =>
         try engine.create(el, MapEngine.MaxZoom(maxZoom.value), pixelRatio(caps))
         catch
           case e: Throwable =>
             val msg = Option(e.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(e.getClass.getSimpleName)
-            NoMapSurface(el, Problem(s"the map engine did not start ($msg)"), caps, maxZoom)
+            NoMapSurface(el, Problem.Unclassified(Legacy.Text(s"the map engine did not start ($msg)")), caps, maxZoom)

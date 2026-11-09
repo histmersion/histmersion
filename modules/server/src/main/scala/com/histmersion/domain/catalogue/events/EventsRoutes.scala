@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.Event
@@ -22,7 +22,10 @@ object EventsRoutes:
         Event.Id
           .option(id.value)
           .toRight(
-            Api.Error(Problem(s"No event '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+            Api.Error(
+              Problem.Unclassified(Legacy.Text(s"No event '${id.value}'")),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
           )
           .flatMap(events.delete(me, _))
       )

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -23,9 +24,9 @@ import com.histmersion.util.storage.Store
     io.circe.parser
       .parse(text)
       .left
-      .map(e => Problem(e.getMessage))
+      .map(e => Problem.Unclassified(Legacy.Text(e.getMessage)))
       .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
-      .fold(e => sys.error(e.value), identity)
+      .fold(e => sys.error(e.sentence), identity)
   }
   val kept = all.filter(BasemapLabels.within(_, b))
   val to = Path.of(out).toAbsolutePath

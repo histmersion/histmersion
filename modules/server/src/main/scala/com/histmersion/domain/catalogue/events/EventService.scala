@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.api.Write
@@ -89,7 +89,7 @@ object EventService:
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
   private def missing(id: Event.Id) =
-    Api.Error(Problem(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
     def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
@@ -110,7 +110,7 @@ object EventService:
         )
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
-      db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value))).map(p => Problem(p.value))
+      db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value)))
     def put(id: Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(BEventRow.Id(id.value), in))
     def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] =
       db.transact(EventRepo.patch(BEventRow.Id(id.value), p))
@@ -293,13 +293,13 @@ object EventService:
 
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       io.circe.parser.parse(geojson.value) match
-        case Left(e)  => Some(Problem(e.message))
+        case Left(e)  => Some(Problem.Unclassified(Legacy.Text(e.message)))
         case Right(j) =>
           val c = j.hcursor
           c.get[String]("type").toOption match
-            case None => Some(Problem("unknown GeoJSON type"))
+            case None => Some(Problem.Unclassified(Legacy.Text("unknown GeoJSON type")))
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
-            case Some(_) => Some(Problem("Unable to find 'coordinates' in GeoJSON string"))
+            case Some(_) => Some(Problem.Unclassified(Legacy.Text("Unable to find 'coordinates' in GeoJSON string")))
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
     private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, io.circe.Json]): CatalogueState =
@@ -453,14 +453,16 @@ object EventService:
       else if exists(newId) then
         Left(
           Api.Error(
-            Problem(s"'$newId' is already the id of another event"),
+            Problem.Unclassified(Legacy.Text(s"'$newId' is already the id of another event")),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
       else if aliasOf.exists(_.value != oldId.value) then
         Left(
           Api.Error(
-            Problem(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
+            Problem.Unclassified(
+              Legacy.Text(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another")
+            ),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )

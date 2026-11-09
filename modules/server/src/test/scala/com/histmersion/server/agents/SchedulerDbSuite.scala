@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -302,10 +303,10 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         ReviewLight,
         ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal(g(5).value)))))
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
 
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).getOrElse(fail(s"no $kind item for $target in $mid"))
@@ -328,10 +329,10 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     on(a)
     a.focus
       .set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(g(20))), by = Some(FocusSet.By("test"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.focus
       .set(FocusSet(FocusSet.Action("priority"), Some(apiSlug(g(15))), Some(FocusSet.Value(5))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     goals.foreach(s =>
       a.oaBacklog.add(watchId(ref(s)), s, OaWork(doi(s), com.histmersion.api.library.Title(s"Work of $s")))
     )
@@ -351,12 +352,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     assertEquals((st.strategy, st.strategyFrom, st.dry), ("goal-first", "config", false))
     assertEquals((st.maxRuns, st.started.size), (3, 3))
     assert(
-      st.started.head.why.value.contains("gathering share") || st.started.head.why.value.contains("goal-first"),
+      st.started.head.why.sentence.contains("gathering share") || st.started.head.why.sentence.contains("goal-first"),
       st.started.head.why
     )
     val first = st.waiting.head
     assertEquals((first.goal.map(_.value: String), first.position, first.code), (Some(g(15)), 1, "capacity"))
-    assert(first.why.value.contains("goal-first") && first.why.value.contains("no place free"), first.why)
+    assert(first.why.sentence.contains("goal-first") && first.why.sentence.contains("no place free"), first.why)
     assert(first.behind.nonEmpty, first)
     // then the oldest goals, by age and slug (they were made in the same second)
     assertEquals(
@@ -367,14 +368,14 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val w =
       a.scheduler
         .why(ManagerItem.Ref(item(seedId(ref(g(15))), ProposeKind, target(g(15))).id.toString))
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals((w.code, w.position), ("capacity", 1))
-    val running = a.scheduler.why(ManagerItem.Ref(g(20).value)).fold(e => fail(e.message.value), identity)
+    val running = a.scheduler.why(ManagerItem.Ref(g(20).value)).fold(e => fail(e.message.sentence), identity)
     note("why waiting", AgentSchedulerMarkdown.why(w))
     note("why running", AgentSchedulerMarkdown.why(running))
     note(
       "why unknown",
-      a.scheduler.why(Managers.ManagerItem.Ref("zzfocus-nope")).fold(_.message.value, AgentSchedulerMarkdown.why)
+      a.scheduler.why(Managers.ManagerItem.Ref("zzfocus-nope")).fold(_.message.sentence, AgentSchedulerMarkdown.why)
     )
     assertEquals(running.code, AgentScheduler.Code.Running)
     assert(a.scheduler.why(Managers.ManagerItem.Ref("zzfocus-nope")).isLeft)
@@ -403,7 +404,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
             Some(AgentScheduler.SchedulerSet.By("test"))
           )
         )
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals((sw.strategy, sw.strategyFrom), ("type-balanced", "person"))
     assert(QueueRepoLog.has(ds, "agent scheduler: strategy type-balanced"), "a worklog line")
     val (b, _, _) = handlers(
@@ -449,7 +450,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val planned = DomainGoal.Slug("zzfocus-plan")
     assert(h.goals.put(planned, Goal.Put(Goal.Title("Zz a goal with no plan"))).isRight)
     on(a)
-    a.focus.set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(planned)))).fold(e => fail(e.message.value), identity)
+    a.focus.set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(planned)))).fold(e => fail(e.message.sentence), identity)
     val clock = Clock()
     clock.tick(a)
     val planItem = item(seedId(ref(planned)), PlanGoalKind, target(planned))
@@ -465,8 +466,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val prop =
       a.scheduler
         .why(ManagerItem.Ref(item(seedId(ref(planned)), ProposeKind, target(planned)).id.toString))
-        .fold(e => fail(e.message.value), identity)
-    assert(prop.code.value == "blocked" && prop.why.value.contains("plan comes first"), prop)
+        .fold(e => fail(e.message.sentence), identity)
+    assert(prop.code.value == "blocked" && prop.why.sentence.contains("plan comes first"), prop)
     assert(a.scheduler.status().forPerson.value >= 1)
 
   test("gathering goals keep their place: a goal still gathering sources starts beside the pinned goal under review"):
@@ -474,14 +475,17 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(AgentsConfig.MaxConcurrentRuns(2)))
     val (a, h, up) = handlers(two); seed(a, h, up)
     on(a)
-    a.focus.set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(g(5))))).fold(e => fail(e.message.value), identity)
+    a.focus.set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(g(5))))).fold(e => fail(e.message.sentence), identity)
     Clock().tick(a)
     val started = runs().map(r => (r.pipeline, r.target)).toSet
     assert(started.contains((Agents.RunInfo.Pipeline("review-article"), ArtRunTarget)), started)
     assertEquals(started.size, 2)
     val other = (started - ((Agents.RunInfo.Pipeline("review-article"), ArtRunTarget))).head
     assert(other._2.value != g(5).value && other._2.value != g(10).value, s"a gathering goal's item, not $other")
-    assert(a.scheduler.status().started.exists(_.why.value.contains("gathering share")), a.scheduler.status().started)
+    assert(
+      a.scheduler.status().started.exists(_.why.sentence.contains("gathering share")),
+      a.scheduler.status().started
+    )
 
   test("goal plans are decided by code whatever the focus, within the open sub-goals"):
     val auto = cfg
@@ -503,7 +507,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     )
     assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
     judged(plan(g(1), 6)) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.value.contains("limit on open sub-goals"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.sentence.contains("limit on open sub-goals"), w)
       case v                                => fail(v.toString)
 
   test(
@@ -526,14 +530,16 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       connect(ds)(sql"UPDATE goals SET plan = '{}'::jsonb WHERE slug = $s".update.run())
     )
     on(a)
-    a.focus.set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(unplanned)))).fold(e => fail(e.message.value), identity)
+    a.focus
+      .set(FocusSet(FocusSet.Action("pin"), Some(apiSlug(unplanned))))
+      .fold(e => fail(e.message.sentence), identity)
     Clock().tick(a)
     val planItem = item(seedId(ref(unplanned)), PlanGoalKind, target(unplanned))
     assertEquals(planItem.status, "pending", "no plan-goal run starts")
     assert(!runs().exists(_.pipeline.value == Pipeline.PlanGoal.wire.value), runs())
-    val why = a.scheduler.why(ManagerItem.Ref(planItem.id.toString)).fold(e => fail(e.message.value), identity)
+    val why = a.scheduler.why(ManagerItem.Ref(planItem.id.toString)).fold(e => fail(e.message.sentence), identity)
     assert(
-      why.code.value == "blocked" && why.why.value.contains("drop to 2") && why.why.value
+      why.code.value == "blocked" && why.why.sentence.contains("drop to 2") && why.why.sentence
         .contains("3 goals with an approved plan"),
       why
     )
@@ -542,7 +548,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val _ = a.autoApprovals.sweep(Instant.now())
     assertEquals(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).map(_.state), Some("open"))
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, Instant.now()) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.value.contains("limit on unfinished goals"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.sentence.contains("limit on unfinished goals"), w)
       case v                                => fail(v.toString)
     val d = a.digest.digest()
     assert(d.goalPlansWait.exists(_.value.contains("drop to 2")), d)
@@ -604,7 +610,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
           dryRun = ApprovalDigest.BulkDecide.DryRun(true)
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((dry.matched, dry.decided.size, dry.dryRun), (3, 3, true))
     assert(
       ps.forall(p => TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).exists(_.state.value == "open")),
@@ -619,7 +625,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
           by = Some(ApprovalDigest.BulkDecide.By("test"))
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((done.matched, done.decided.map(_.value), done.failed), (1, List(ps(1).id.value), Nil))
     assertEquals(
       TestRuns
@@ -708,7 +714,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     // turning the autopilot on lifts it
     val st = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     note("on lifts the drain", a.autopilotPage(st))
     assert(st.changes.exists(_.value.contains("drain lifted")) && st.drain.isEmpty, st.changes)
 
@@ -794,9 +800,9 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     clock.tick(a)
     // g05's article has not passed review: its proposal is kept back
     val prop = item(seedId(ref(g(5))), ProposeKind, target(g(5)))
-    val why = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.value), identity)
+    val why = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.sentence), identity)
     assert(
-      why.code.value == "blocked" && why.why.value.contains("articles in progress come first (1 to pass review)"),
+      why.code.value == "blocked" && why.why.sentence.contains("articles in progress come first (1 to pass review)"),
       why
     )
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
@@ -847,8 +853,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       )
     )
     clock.tick(a)
-    val back = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.value), identity)
-    assert(back.code.value == "blocked" && back.why.value.contains("1 to compile"), back)
+    val back = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.sentence), identity)
+    assert(back.code.value == "blocked" && back.why.sentence.contains("1 to compile"), back)
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:

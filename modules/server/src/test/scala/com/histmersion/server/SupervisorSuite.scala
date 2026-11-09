@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -71,7 +72,7 @@ class SupervisorSuite extends munit.FunSuite:
       Supervisor
         .layout(rc(), Some(Path.of("/b/bin/x")), env(), UserPaths.OsName("Linux"))
         .left
-        .exists(_.value.contains("HISTMERSION_DATA_DIR"))
+        .exists(_.sentence.contains("HISTMERSION_DATA_DIR"))
     )
 
   test("postgres listens on loopback TCP only — no Unix socket (macOS caps its path at 103 bytes)"):

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.hot
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import ox.{releaseAfterScope, useInScope}
@@ -38,26 +39,26 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db"))) { ctx =>
         builds.incrementAndGet()
         ctx.config("db") match
-          case "broken" => Left(Problem("cannot connect"))
+          case "broken" => Left(Problem.Unclassified(Legacy.Text("cannot connect")))
           case db       => Right(useInScope(Res(s"pool-$db", log))(_.close()))
       }
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     val schema = graph
       .node[String](Hot.Graph.Def.Name("schema"), deps = List(pool)) { ctx =>
         Right(s"migrated ${ctx(pool).name}")
       }
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     val query = graph
       .node[Res](Hot.Graph.Def.Name("query"), deps = List(pool), keys = List(HotNode.Keys("query"))) { ctx =>
-        if ctx.config("query") == "bad" then Left(Problem("role cannot log in"))
+        if ctx.config("query") == "bad" then Left(Problem.Unclassified(Legacy.Text("role cannot log in")))
         else Right(useInScope(Res(s"query-${ctx.config("query")}-on-${ctx(pool).name}", log))(_.close()))
       }
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     val loose = graph
       .node[Res](Hot.Graph.Def.Name("loose"), keys = List(HotNode.Keys("other"))) { ctx =>
         Right(useInScope(Res(s"loose-${ctx.config("other")}", log))(_.close()))
       }
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     def opened: List[String] = log.asScala.toList.filter(_.startsWith("open"))
     def closed: List[String] = log.asScala.toList.filter(_.startsWith("close"))
 
@@ -80,7 +81,7 @@ class HotGraphSuite extends munit.FunSuite:
       val looseBefore = f.loose.peek
       val o = f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(HotNode.Name("db")), drain = 2.seconds)
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       assertEquals(o.generation, 1L)
       assertEquals(o.rebuilt, List("pool", "schema", "query"))
       assertEquals(o.draining, Nil)
@@ -97,7 +98,7 @@ class HotGraphSuite extends munit.FunSuite:
     withFixture { f =>
       val o = f.graph
         .reload(Map("db" -> "a", "query" -> "q1", "other" -> "x", "limit" -> "5"), List(HotNode.Name("limit")))
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       assertEquals(o.rebuilt, Nil)
       assertEquals(f.graph.config.get("limit"), Some("5"))
       assertEquals(f.builds.get, 1)
@@ -110,7 +111,7 @@ class HotGraphSuite extends munit.FunSuite:
         Map("db" -> "b", "query" -> "bad", "other" -> "x"),
         List(HotNode.Name("db"), HotNode.Name("query"))
       )
-      assert(e.swap.exists(m => m.value.contains("query") && m.value.contains("role cannot log in")), e.toString)
+      assert(e.swap.exists(m => m.sentence.contains("query") && m.sentence.contains("role cannot log in")), e.toString)
       assertEquals(f.graph.generation, 0L)
       assertEquals(f.graph.config("db"), "a")
       assertEquals(f.pool.use(_.name), "pool-a")
@@ -119,7 +120,7 @@ class HotGraphSuite extends munit.FunSuite:
       assert(!f.closed.exists(_.contains("pool-a")), f.closed.toString)
       // the first node failing: same
       val e2 = f.graph.reload(Map("db" -> "broken", "query" -> "q1", "other" -> "x"), List(HotNode.Name("db")))
-      assert(e2.swap.exists(_.value.contains("cannot connect")), e2.toString)
+      assert(e2.swap.exists(_.sentence.contains("cannot connect")), e2.toString)
       assertEquals(f.pool.use(_.name), "pool-a")
     }
 
@@ -129,15 +130,15 @@ class HotGraphSuite extends munit.FunSuite:
         .node[Int](Hot.Graph.Def.Name("throws"), keys = List(HotNode.Keys("t"))) { ctx =>
           if ctx.config.get("t").contains("boom") then throw IllegalStateException("boom") else Right(1)
         }
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       val e = f.graph.reload(Map("db" -> "a", "query" -> "q1", "other" -> "x", "t" -> "boom"), List(HotNode.Name("t")))
-      assert(e.swap.exists(_.value.contains("boom")), e.toString)
+      assert(e.swap.exists(_.sentence.contains("boom")), e.toString)
       assertEquals(h.use(identity), 1)
     }
 
   test("a node that would close a cycle, or names a node twice, is refused"):
     withFixture { f =>
-      assert(f.graph.node[Int](Hot.Graph.Def.Name("pool"))(_ => Right(1)).swap.exists(_.value.contains("twice")))
+      assert(f.graph.node[Int](Hot.Graph.Def.Name("pool"))(_ => Right(1)).swap.exists(_.sentence.contains("twice")))
     }
 
   test("a pinned user keeps its generation: the old value stays open until it lets go"):
@@ -159,7 +160,7 @@ class HotGraphSuite extends munit.FunSuite:
       assert(pinned.await(5, TimeUnit.SECONDS))
       val o = f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(HotNode.Name("db")), drain = 200.millis)
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       // the bound passed with the old generation still pinned: reported, not closed
       assertEquals(o.draining.size, 3, o.draining.toString)
       assert(o.draining.exists(_.value.startsWith("pool (generation 0")), o.draining.toString)
@@ -180,7 +181,7 @@ class HotGraphSuite extends munit.FunSuite:
       val work = f.graph.pinned(f.graph.carry(f.pool.use(_.name)))
       f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(HotNode.Name("db")), drain = 50.millis)
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       assert(!f.closed.exists(_.contains("pool-a")), "the carried work's generation stays open")
       val out = java.util.concurrent.CompletableFuture[String]()
       Thread.ofVirtual().start { () =>
@@ -194,7 +195,7 @@ class HotGraphSuite extends munit.FunSuite:
       val dropped = f.graph.carry(f.pool.use(_.name))
       f.graph
         .reload(Map("db" -> "c", "query" -> "q1", "other" -> "x"), List(HotNode.Name("db")), drain = 50.millis)
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       dropped.drop()
       val d2 = System.nanoTime() + 5.seconds.toNanos
       while !f.closed.contains("close pool-b") && System.nanoTime() < d2 do Thread.sleep(10)
@@ -210,9 +211,11 @@ class HotGraphSuite extends munit.FunSuite:
         .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db")), idle = _ => out.get == 0) { ctx =>
           Right(useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close()))
         }
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       val o =
-        graph.reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 100.millis).fold(p => fail(p.value), identity)
+        graph
+          .reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 100.millis)
+          .fold(p => fail(p.sentence), identity)
       assertEquals(o.draining.size, 1)
       assert(!log.contains("close pool-a"))
       out.set(0) // the last connection came back
@@ -228,7 +231,7 @@ class HotGraphSuite extends munit.FunSuite:
       val seen = ConcurrentLinkedQueue[String]()
       val pool = graph
         .node[String](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db")))(ctx => Right(ctx.config("db")))
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       val _ = graph
         .node[String](
           Hot.Graph.Def.Name("hook"),
@@ -237,9 +240,11 @@ class HotGraphSuite extends munit.FunSuite:
         ) { ctx =>
           Right(ctx(pool))
         }
-        .fold(p => fail(p.value), identity)
+        .fold(p => fail(p.sentence), identity)
       graph.pinned {
-        graph.reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 50.millis).fold(p => fail(p.value), identity)
+        graph
+          .reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 50.millis)
+          .fold(p => fail(p.sentence), identity)
         assertEquals(pool.use(identity), "a") // this thread's own pin
       }
       assertEquals(seen.asScala.toList, List("b"))
@@ -252,12 +257,13 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db"))) { ctx =>
         val r = useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close())
         releaseAfterScope(log.add(s"released ${r.name}"))
-        if ctx.config("db") == "half" then Left(Problem("the second half failed")) else Right(r)
+        if ctx.config("db") == "half" then Left(Problem.Unclassified(Legacy.Text("the second half failed")))
+        else Right(r)
       }
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     assert(graph.reload(Map("db" -> "half"), List(HotNode.Name("db"))).isLeft)
     assert(log.contains("close pool-half") && log.contains("released pool-half"), log.toString)
     graph.close(1.second)
     assert(log.contains("close pool-a"))
     assert(h.peek.closed)
-    assert(graph.reload(Map("db" -> "z"), List(HotNode.Name("db"))).swap.exists(_.value.contains("closed")))
+    assert(graph.reload(Map("db" -> "z"), List(HotNode.Name("db"))).swap.exists(_.sentence.contains("closed")))

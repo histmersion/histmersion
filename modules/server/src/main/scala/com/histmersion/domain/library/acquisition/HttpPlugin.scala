@@ -1,9 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.domain.CoreQuota
 import io.scalaland.chimney.dsl.*
@@ -38,5 +37,5 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
       )
 
   private def failure(f: Http.Failure): Plugin.Http.Failure = f match
-    case Http.Failure.Status(code, why) => Plugin.Http.Failure.Status(code.status, why.transformInto[Problem])
-    case Http.Failure.Transport(why)    => Plugin.Http.Failure.Transport(why.transformInto[Problem])
+    case Http.Failure.Status(code, why) => Plugin.Http.Failure.Status(code.status, why)
+    case Http.Failure.Transport(why)    => Plugin.Http.Failure.Transport(why)

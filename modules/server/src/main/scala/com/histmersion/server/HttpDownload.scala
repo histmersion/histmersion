@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.catalogue.places.GazetteerLoad
@@ -32,24 +32,24 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
     try
       val conn = open(url, 120000)
       val code = conn.getResponseCode
-      if code != 200 then Left(Problem(s"HTTP $code from $url"))
+      if code != 200 then Left(Problem.Unclassified(Legacy.Text(s"HTTP $code from $url")))
       else
         val bytes = HttpDownload.readAll(conn.getInputStream)
         conn.disconnect()
         if url.value.endsWith(".zip") then HttpDownload.unzip(bytes)
         else Right(HttpDownload.Text(new String(bytes, "UTF-8")))
-    catch case e: Exception => Left(Problem(s"download failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"download failed: ${e.getMessage}")))
 
   /** `url` into the file reserved for it. */
   val file: GazetteerLoad.Download = (url, into, timeoutSeconds) =>
     try
       val conn = open(url, timeoutSeconds.value * 1000)
       val code = conn.getResponseCode
-      if code != 200 then Left(domain.Problem(s"HTTP $code from $url"))
+      if code != 200 then Left(Problem.Unclassified(Legacy.Text(s"HTTP $code from $url")))
       else
         Using.resource(conn.getInputStream)(in => Using.resource(into.output())(out => in.transferTo(out)))
         Right(())
-    catch case e: Exception => Left(domain.Problem(s"download of $url failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"download of $url failed: ${e.getMessage}")))
 
 object HttpDownload:
   type Text = Text.T
@@ -80,6 +80,6 @@ object HttpDownload:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(Problem("zip contains no usable file"))
+        case None    => Left(Problem.Unclassified(Legacy.Text("zip contains no usable file")))
         case Some(_) => Right(Text(new String(readAll(zis), "UTF-8")))
-    catch case e: Exception => Left(Problem(s"unzip failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"unzip failed: ${e.getMessage}")))

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -61,7 +62,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-      Left(Plugin.Http.Failure.Transport(plugin.Problem("offline")))
+      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(
@@ -74,7 +75,7 @@ class AiProvidersSuite extends munit.FunSuite:
     */
   private def build(plugins: List[Plugin], user: String = "", env: String = ""): Generation =
     val (u, e) = (ConfigFactory.parseString(user), ConfigFactory.parseString(env))
-    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m.value), _.merged)
+    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m.sentence), _.merged)
     val host = FirstPartySettings.hostView(reference, u, e, plugins)
     PluginHost.build(
       plugins,
@@ -108,7 +109,9 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(plugin.Problem("script exhausted"))))(r)
+        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("script exhausted")))))(
+          r
+        )
 
   /** A third-party plugin registering `provider` under `name`. */
   final private class AiPlugin(name: Registry.AddId, provider: AiProvider, id: Plugin.Info.Id = Plugin.Info.Id("zq-ai"))
@@ -170,7 +173,7 @@ class AiProvidersSuite extends munit.FunSuite:
     assertEquals(byFile.report.plugins.find(_.id.value == "ai-codex").map(_.state), Some("disabled"))
     assert(!byFile.registries.aiProviders.contains(Registries.AiProvidersKey("codex")))
     assertEquals(
-      BuiltinAi.lookup(ProviderKind.Codex, providersOf(byFile.registries.aiProviders)),
+      BuiltinAi.lookup(ProviderKind.Codex, providersOf(byFile.registries.aiProviders)).left.map(_.sentence),
       Left("the codex provider is switched off (histmersion.plugins.ai-codex.enabled = false)")
     )
     val byEnv = build(builtins, env = "HISTMERSION_PLUGIN_AI_CLAUDE_CODE_ENABLED = false")
@@ -185,7 +188,7 @@ class AiProvidersSuite extends munit.FunSuite:
           providersOf(byEnv.registries.aiProviders)
         )
         .left
-        .exists(_.value.contains("no AI provider 'gemini'"))
+        .exists(_.sentence.contains("no AI provider 'gemini'"))
     )
 
   test("a third-party provider registers beside the built-ins; a host provider's name is refused"):
@@ -199,7 +202,7 @@ class AiProvidersSuite extends munit.FunSuite:
       taken.report.plugins
         .find(_.id.value == "zq-ai")
         .flatMap(_.error)
-        .exists(_.value.contains("'local' is already registered")),
+        .exists(_.sentence.contains("'local' is already registered")),
       taken.report.toString
     )
     assert(
@@ -213,12 +216,12 @@ class AiProvidersSuite extends munit.FunSuite:
       free.report.plugins
         .find(_.id.value == "zq-ai")
         .flatMap(_.error)
-        .exists(_.value.contains("one of Histmersion's own AI providers")),
+        .exists(_.sentence.contains("one of Histmersion's own AI providers")),
       free.report.toString
     )
     assert(!free.registries.aiProviders.contains(Registries.AiProvidersKey("local")))
     val bad = build(List(AiPlugin(Registry.AddId("Not_Kebab"), p)), on())
-    assert(bad.report.plugins.head.error.exists(_.value.contains("an AI provider name is")), bad.report.toString)
+    assert(bad.report.plugins.head.error.exists(_.sentence.contains("an AI provider name is")), bad.report.toString)
 
   test("reload: only an HTTP provider's own agents.providers.<name> rebuilds an AI built-in; so does its own block"):
     val g1 = build(builtins :+ AiPlugin(Registry.AddId("gemini"), Scripted(Nil)), on())
@@ -256,11 +259,11 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
     assertEquals(
-      f(app.agents, ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("m/x"))).left.toOption,
+      f(app.agents, ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
       Some("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
     )
     assertEquals(
-      f(app.agents, ModelRef(ProviderKind.OpenAI, Agents.ModelRef.Model("m/x"))).left.toOption,
+      f(app.agents, ModelRef(ProviderKind.OpenAI, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
       Some("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
     )
     // the command-line runtimes: exactly what the host's own factory says
@@ -270,7 +273,7 @@ class AiProvidersSuite extends munit.FunSuite:
     }
     val off = LlmClient.factory(rt(), () => reg - com.histmersion.util.plugins.Plugin.Id("local"), AiHttp.Offline)
     assertEquals(
-      off(app.agents, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen"))).left.toOption,
+      off(app.agents, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen"))).left.toOption.map(_.sentence),
       Some("local:qwen: the local provider is switched off (histmersion.plugins.ai-local.enabled = false)")
     )
 
@@ -290,12 +293,13 @@ class AiProvidersSuite extends munit.FunSuite:
       )
     assert(f(Scripted(Nil)).exists(_.isInstanceOf[PluginAiClient]))
     assertEquals(
-      f(Scripted(Nil, checked = Left(Problem("no GEMINI key")))).left.toOption,
+      f(Scripted(Nil, checked = Left(Problem.Unclassified(Legacy.Text("no GEMINI key"))))).left.toOption
+        .map(_.sentence),
       Some("gemini:pro: no GEMINI key")
     )
     assert(
       f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlan(true)), "0.0.0.0").left
-        .exists(_.value.contains("beyond loopback"))
+        .exists(_.sentence.contains("beyond loopback"))
     )
     assert(f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlan(true))).isRight)
     // not registered (its plugin switched off since): refused, naming it
@@ -303,7 +307,7 @@ class AiProvidersSuite extends munit.FunSuite:
       LlmClient
         .factory(rt(), () => providersOf(ServerPlugins.offline.registries.aiProviders), AiHttp.Offline)(app.agents, ref)
         .left
-        .exists(_.value.contains("no AI provider 'gemini' is registered"))
+        .exists(_.sentence.contains("no AI provider 'gemini' is registered"))
     )
 
   // ── the host's loop over a plugin's turns ──────────────────────────────────────────────────────
@@ -440,7 +444,7 @@ class AiProvidersSuite extends munit.FunSuite:
       List(_ =>
         Left(
           AiFailure.LimitReached(
-            plugin.Problem("usage limit reached"),
+            Problem.Unclassified(Legacy.Text("usage limit reached")),
             Some(AiFailure.LimitReached.UntilEpochMs(4102444800000L))
           )
         )
@@ -451,7 +455,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val err = intercept[java.io.IOException](
       PluginAiClient(
         ref,
-        Scripted(List(_ => Left(AiFailure.Error(plugin.Problem("HTTP 500"))))),
+        Scripted(List(_ => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("HTTP 500")))))),
         AiHttp.Offline
       ).run(call())
     )
@@ -515,7 +519,9 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(plugin.Problem("script exhausted"))))(r)
+        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("script exhausted")))))(
+          r
+        )
 
   test("the request options a provider asks for: the loop's notes, the rendered schema, reasoning, verbatim failures"):
     val p = Wired(
@@ -573,24 +579,36 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
     val failing = Wired(
-      List(_ => Left(AiFailure.Error(plugin.Problem("RuntimeException: Claude API error: Overloaded")))),
+      List(_ =>
+        Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("RuntimeException: Claude API error: Overloaded"))))
+      ),
       Right(())
     )
     assertEquals(
-      AgentsControllers.attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call())).left.map(_.message),
+      AgentsControllers
+        .attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call()))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("the call to gemini:pro failed: RuntimeException: Claude API error: Overloaded")
     )
     val refused = PluginAiClient.client(
       ref,
-      Wired(Nil, Left(Problem("no Gemini key — set GEMINI_KEY"))),
+      Wired(Nil, Left(Problem.Unclassified(Legacy.Text("no Gemini key — set GEMINI_KEY")))),
       AiHttp.Offline,
       PluginAiClient.Loopback(true)
     )
-    assertEquals(refused.left.toOption, Some("no Gemini key — set GEMINI_KEY"))
+    assertEquals(refused.left.toOption.map(_.sentence), Some("no Gemini key — set GEMINI_KEY"))
     // any other provider's error names the model and the exception, as before
-    val other = Scripted(List(_ => Left(AiFailure.Error(plugin.Problem("HTTP 500")))))
+    val other = Scripted(List(_ => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("HTTP 500"))))))
     assertEquals(
-      AgentsControllers.attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call())).left.map(_.message),
+      AgentsControllers
+        .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")
     )
 

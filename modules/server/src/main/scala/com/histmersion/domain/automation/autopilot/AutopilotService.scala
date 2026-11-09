@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.autopilot
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -429,12 +430,12 @@ final class AutopilotService(
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
         agents.host.patchGoal(slugOf(g), Goal.Patch(status = Some(Goal.StatusValue(to.value)))) match
           case Left(e) =>
-            scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.message}")
+            scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.message.sentence}")
             None
           case Right(_) =>
             val from = status(slug)
             status(slug) = Goal.StatusValue(to.value)
-            val line = s"goal $slug: $from → $to ($why)"
+            val line = s"goal $slug: $from → $to (${why.sentence})"
             mine
               .find(_.kind.value == Kind.Seed.wire.value)
               .orElse(mine.headOption)
@@ -531,7 +532,7 @@ final class AutopilotService(
 
   private def backup(): Unit =
     val line = agents.host.backup() match
-      case Left(e)    => s"autopilot: the scheduled backup failed: ${e.message}"
+      case Left(e)    => s"autopilot: the scheduled backup failed: ${e.message.sentence}"
       case Right(st0) =>
         // the request answers `running` after a while: follow the job to its end
         var st = st0 // the job's last status, polled until it settles
@@ -543,12 +544,13 @@ final class AutopilotService(
           case Some(r) =>
             s"autopilot: backup ${r.file} (${r.bytes} bytes)" +
               (if r.pruned.isEmpty then "" else s"; pruned ${r.pruned.mkString(", ")}")
-          case None => s"autopilot: the scheduled backup ${st.file} ended ${st.state}${st.error.fold("")(e => s": $e")}"
+          case None =>
+            s"autopilot: the scheduled backup ${st.file} ended ${st.state}${st.error.fold("")(e => s": ${e.sentence}")}"
     log(line)
 
   private def lint(): Unit =
     val line = agents.host.lintFix() match
-      case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.message}"
+      case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.message.sentence}"
       case Right(r) =>
         s"autopilot: lint --fix — ${r.edgesResolved} edge(s) resolved, ${r.sourcesReindexed} source(s) re-indexed" +
           (if r.remaining.value > 0 then s", ${r.remaining} left for the next run" else "")

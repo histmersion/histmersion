@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -26,7 +27,7 @@ class DataContributionsSuite extends DbSuite:
     val a = Fixed(DataOwner("a"), OwnedTable.all("t1", "t2"))
     val b = Fixed(DataOwner("b"), OwnedTable.all("t2"))
     assertEquals(
-      DataContributions.of(List(a, b, a)).left.toOption,
+      DataContributions.of(List(a, b, a)).left.toOption.map(_.map(_.sentence)),
       Some(List("owner a is registered twice", "table t1 is claimed by a, a", "table t2 is claimed by a, b, a"))
     )
     val ok =

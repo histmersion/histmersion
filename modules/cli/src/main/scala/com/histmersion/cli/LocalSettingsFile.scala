@@ -1,6 +1,8 @@
 package com.histmersion
 package cli
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.AppConfig
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import org.ekrich.config.{Config, ConfigFactory}
@@ -22,11 +24,12 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     try
       if !Files.exists(path) then
         Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, AppConfig.writtenIn(path)))
-      else if !Files.isRegularFile(path) then Left(SettingError.NoFile(Problem(s"$path is not a file")))
+      else if !Files.isRegularFile(path) then
+        Left(SettingError.NoFile(Problem.Unclassified(Legacy.Text(s"$path is not a file"))))
       else
         val text = ConfigFileState.Text(Files.readString(path, StandardCharsets.UTF_8))
         parse(path).map(c => ConfigFileState(Some(text), FileVersion.of(Some(text)), c, AppConfig.writtenIn(path)))
-    catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
+    catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
 
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
@@ -44,7 +47,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
             AppConfig
               .loadWithUserFile(env, Some(temp))
               .left
-              .map(m => Problem(m.value.replace(temp.toString, path.toString)))
+              .map(m => Problem.Unclassified(Legacy.Text(m.sentence.replace(temp.toString, path.toString))))
         )
         for
           _ <- check(staged)
@@ -53,7 +56,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         yield bak
       finally
         val _ = Files.deleteIfExists(temp)
-    catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
+    catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
 
   private def backup(existed: Boolean): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed then Right(None)
@@ -78,5 +81,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     AppConfig
       .parseUserFile(file)
       .left
-      .map(m => SettingError.Unreadable(Problem(m.value.replace(file.toString, path.toString))))
-      .flatMap(_.toRight(SettingError.Unreadable(Problem(s"$path: no such file"))))
+      .map(m =>
+        SettingError.Unreadable(Problem.Unclassified(Legacy.Text(m.sentence.replace(file.toString, path.toString))))
+      )
+      .flatMap(_.toRight(SettingError.Unreadable(Problem.Unclassified(Legacy.Text(s"$path: no such file")))))

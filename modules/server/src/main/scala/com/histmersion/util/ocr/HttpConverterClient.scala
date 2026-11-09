@@ -1,7 +1,7 @@
 package com.histmersion
 package util.ocr
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.storage.Blob
 
 import java.net.URI
@@ -24,7 +24,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
     send(
       HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build(),
       timeoutHint = None
-    ).map(_ => ConverterClient.HealthSummary("ok")).left.map(Problem(_))
+    ).map(_ => ConverterClient.HealthSummary("ok")).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it cannot tell (an
     * older sidecar, an unreadable file): the conversion then gets the plain timeout and reports the real error itself.
@@ -68,7 +68,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
         .decode[ConvertedDoc](text)
         .left
         .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
-    yield doc).left.map(Problem(_))
+    yield doc).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   override def thumbnail(
       bytes: ConverterClient.DocumentBytes,
@@ -104,7 +104,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       ConverterClient.Thumb.Mime(c.get[String]("mime").getOrElse("image/jpeg")),
       ConverterClient.Thumb.Width(c.get[Int]("width").getOrElse(0)),
       ConverterClient.Thumb.Height(c.get[Int]("height").getOrElse(0))
-    )).left.map(Problem(_))
+    )).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   /** `timeoutHint` is what to do about a timeout. Only a CONVERSION timing out is about the per-page budget; the health
     * probe timing out is not (#692), so it carries none.

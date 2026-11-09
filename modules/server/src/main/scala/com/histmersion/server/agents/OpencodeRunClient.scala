@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.OpencodeConfig
@@ -60,9 +61,13 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
           AgentResponse(o.finalText.fold("")(_.value), Nil, StopReason.EndTurn, Some(o.usage), Some(model.model.value))
         }
         val o = out.get().getOrElse(throw IllegalStateException("opencode: no outcome"))
-        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.value))) match
+        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.sentence))) match
           case Some(m) =>
-            throw new ModelLimitReached(model, None, domain.Problem(s"opencode run: $m".take(300)))
+            throw new ModelLimitReached(
+              model,
+              None,
+              Problem.Unclassified(Legacy.Text(s"opencode run: ${m.sentence}".take(300)))
+            )
           case None =>
             CliOutcomes.result(
               o,

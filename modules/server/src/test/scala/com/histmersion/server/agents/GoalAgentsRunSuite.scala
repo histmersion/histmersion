@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -73,9 +74,10 @@ final class StubUpstream extends AgentUpstream:
   @volatile var found: Map[String, List[WorkRef]] = Map.empty
   val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
   def meta(doi: Doi) = {
-    calls.add(s"meta $doi"); metas.get(doi.value).toRight(Problem(s"$doi: not found upstream"))
+    calls.add(s"meta $doi");
+    metas.get(doi.value).toRight(Problem.Unclassified(Legacy.Text(s"$doi: not found upstream")))
   }
-  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
+  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
   def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) =
     calls.add(s"assess $citekey")
     Right(
@@ -115,7 +117,7 @@ final class StubUpstream extends AgentUpstream:
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
   @volatile var onIngest: String => Either[String, Ingest.Report] = _ => Left("not stubbed")
   override def ingestLegal(doi: Doi) = {
-    calls.add(s"ingest $doi"); onIngest(doi.value).left.map(Problem(_))
+    calls.add(s"ingest $doi"); onIngest(doi.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))
   }
 
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
@@ -125,7 +127,7 @@ final class StubUpstream extends AgentUpstream:
     calls.add(s"sweep $goal")
     sweepFinds
       .get(goal.value)
-      .toRight(Problem("the candidate search is not connected"))
+      .toRight(Problem.Unclassified(Legacy.Text("the candidate search is not connected")))
       .map(cs =>
         CandidateSweep(
           CandidateSweep.Goal(goal.value),
@@ -309,7 +311,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.value), identity)
+    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -317,7 +319,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
-      .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
+      .map(s => s"${s.name}#${s.attempt}: ${s.error.get.sentence}"))
       .mkString("\n")
 
   private def runAgain(a: AgentsControllers, id: RunInfo.Id): RunInfo =
@@ -516,7 +518,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       )
     )
     assert(
-      steps.exists(s => s.name.value == "draft" && s.error.exists(_.value.contains("does not say it is contested"))),
+      steps.exists(s => s.name.value == "draft" && s.error.exists(_.sentence.contains("does not say it is contested"))),
       steps
     )
     // the extraction saw the record as data and was offered no tool; the writer only the dry run of its draft
@@ -554,7 +556,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
     )
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.sentence), identity)
     assertEquals(
       (cov.total, cov.cited.map(_.citekey.value: String).toSet, cov.notUsed, cov.drift),
       (2, Set(Ck, Ck2), Nil, Nil)
@@ -592,16 +594,16 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     val first = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
       .find(s => s.name.value == "draft" && s.status.value == "failed")
       .flatMap(_.error)
-      .map(_.value)
+      .map(_.sentence)
       .getOrElse("")
     assert(
       first.contains("a Not used section: code generates it") && first.contains("a _Method_ note: code generates it"),
       first
     )
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, onlyCk.trim)
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.sentence), identity)
     assertEquals(
-      cov.notUsed.map(e => (e.source.citekey.value: String, e.reason)),
+      cov.notUsed.map(e => (e.source.citekey.value: String, e.reason.map(_.sentence))),
       List((Ck2, Some("Its isotope study dates a later trade.")))
     )
     assertEquals(cov.drift, Nil)
@@ -739,12 +741,12 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(
       a.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x"))))
         .left
-        .exists(_.message.value.contains("filter"))
+        .exists(_.message.sentence.contains("filter"))
     )
     assert(
       a.startRun(RunRequest(CompileArticle, SlugTarget, topics = List(RunRequest.Topics("t"))))
         .left
-        .exists(_.message.value.contains("title"))
+        .exists(_.message.sentence.contains("title"))
     )
     assert(
       a.startRun(
@@ -770,7 +772,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(
       a.startRun(RunRequest(EnrichSource, CkTarget, query = Some(RunRequest.Query("q"))))
         .left
-        .exists(_.message.value.contains("compile-article"))
+        .exists(_.message.sentence.contains("compile-article"))
     )
     assert(a.startRun(RunRequest(PlanGoal, RunRequest.Target("zzagent-nope"))).isLeft)
     assert(
@@ -793,7 +795,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
           topics = List(RunRequest.Topics("t"))
         )
       ).left
-        .exists(_.message.value.contains("writer"))
+        .exists(_.message.sentence.contains("writer"))
     )
 
   // ── #992: dry runs ───────────────────────────────────────────────────────────────────────────────

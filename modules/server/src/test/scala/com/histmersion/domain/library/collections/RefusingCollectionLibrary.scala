@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{
   ArchiveFile,
@@ -20,7 +20,7 @@ import com.histmersion.domain.library.Citekey
 
 /** A library a suite's collections write through that refuses everything; a suite overrides what it uses. */
 open class RefusingCollectionLibrary extends CollectionLibrary:
-  private def no = Left(Api.Error(Problem("not used in this suite")))
+  private def no = Left(Api.Error(Problem.Unclassified(Legacy.Text("not used in this suite"))))
   def source(citekey: Citekey): Either[Api.Error, Source.WithFindings] = no
   def create(citekey: Citekey, put: Source.Put): Either[Api.Error, Source.WithFindings] = no
   def patch(citekey: Citekey, patch: Source.Patch): Either[Api.Error, Source.WithFindings] = no

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.upstreams.media.MediaText
 import io.circe.Json
 import com.histmersion.plugin.*
@@ -78,8 +78,10 @@ object Commons:
     c.downField("error").focus match
       case Some(err) =>
         Left(
-          Problem(
-            s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+            )
           )
         )
       case None =>
@@ -100,7 +102,7 @@ object Commons:
           val info = h.downField("imageinfo").downArray
           val entry: Either[Problem, File] =
             if h.downField("missing").focus.isDefined || h.downField("invalid").focus.isDefined || info.focus.isEmpty
-            then Left(Problem("missing on Commons"))
+            then Left(Problem.Unclassified(Legacy.Text("missing on Commons")))
             else
               val i = info
               val meta = i
@@ -137,7 +139,7 @@ object Commons:
                 i.get[Long]("size").toOption.map(File.Size(_)),
                 meta
               ))
-                .toRight(Problem("no file URL in the answer"))
+                .toRight(Problem.Unclassified(Legacy.Text("no file URL in the answer")))
           (title :: normalized.getOrElse(title, Nil)).map(_ -> entry)
         }
         Right(pages.map((t, e) => File.Title(t) -> e).toMap)
@@ -172,7 +174,7 @@ object Commons:
       )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(
-      Plugin.Http.Failure.Transport(plugin.Problem("the depictions are about events"))
+      Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("the depictions are about events")))
     )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
@@ -186,7 +188,10 @@ object Commons:
         else
           qids.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
             ids -> http.askJson(entitiesUrl(ids, wikidata)).left.map(_.problem).flatMap { j =>
-              j.hcursor.downField("error").focus.fold(Right(j))(_ => Left(plugin.Problem("Wikidata error")))
+              j.hcursor
+                .downField("error")
+                .focus
+                .fold(Right(j))(_ => Left(Problem.Unclassified(Legacy.Text("Wikidata error"))))
             }
           }
       val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
@@ -251,10 +256,12 @@ object Commons:
         asked = asked.map((e, _) => eventTarget(e)),
         unanswered = asked.filter((_, q) => unanswered(q)).map((e, _) => eventTarget(e)).toSet,
         read = MediaFound.Read(depictedBy.size + workImage.size),
-        failed = (byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head.value}…: $err" } ++
-          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head.value}…: $err" } ++
-          searches.collect { case (e, q, Left(err)) => s"Commons search for ${e.id.value} (${q.value}): $err" })
-          .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.value))
+        failed = (byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head.value}…: ${err.legacyText}" } ++
+          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head.value}…: ${err.legacyText}" } ++
+          searches.collect { case (e, q, Left(err)) =>
+            s"Commons search for ${e.id.value} (${q.value}): ${err.legacyText}"
+          })
+          .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.legacyText))
       )
 
     private def eventTarget(e: MediaEvent): MediaTarget.Id =
@@ -290,8 +297,10 @@ object Commons:
       c.downField("error").focus match
         case Some(err) =>
           Left(
-            Problem(
-              s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+              )
             )
           )
         case None =>
@@ -401,7 +410,7 @@ object Commons:
             .map(_.problem)
             .flatMap(Commons.imageInfo)
             .left
-            .map(e => Problem(s"Commons ${batch.head.value}…: $e"))
+            .map(e => Problem.Unclassified(Legacy.Text(s"Commons ${batch.head.value}…: ${e.legacyText}")))
         }
       (answers.flatMap(_.toOption).flatMap(_.toList).toMap, answers.flatMap(_.left.toOption))
 
@@ -420,11 +429,11 @@ object Commons:
         MediaItem.Title(title.value.stripPrefix("File:")),
         MediaItem.PageUrl(""),
         None,
-        Left(plugin.Problem("no answer from Commons"))
+        Left(Problem.Unclassified(Legacy.Text("no answer from Commons")))
       )
       answer match
         case None              => bare
-        case Some(Left(why))   => bare.copy(rights = Left(plugin.Problem(why.value)))
+        case Some(Left(why))   => bare.copy(rights = Left(why))
         case Some(Right(info)) =>
           def field(k: File.MetaKey): Option[String] =
             info.meta.get(k).map(v => MediaText.plain(MediaText.Html(v.value)).value).filter(_.nonEmpty)
@@ -495,7 +504,7 @@ object Commons:
             )
           }
         }.toMap,
-        failed.map(f => MediaCompleted.Failed(f.value))
+        failed.map(f => MediaCompleted.Failed(f.legacyText))
       )
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */

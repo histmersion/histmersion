@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.jobs.{JobInfo, JobState}
@@ -111,7 +111,7 @@ object JobRecords:
                   .modify(_.progress)
                   .setTo(progress.map(p => JobInfo.Progress(p.value)))
                   .modify(_.error)
-                  .setTo(error.map(e => Problem(e.value)))
+                  .setTo(error)
                   .modify(_.updatedAt)
                   .setTo(JobInfo.UpdatedAt(now))
               )

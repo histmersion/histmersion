@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.library.Tree
 
 import com.histmersion.api.Api
@@ -59,15 +59,17 @@ final class SearchControllers(
       .parseBy(by)
       .toRight(
         error(
-          Problem(
-            s"unsupported by='$by' — use " +
-              "time | region | time,region | region,time"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"unsupported by='$by' — use " +
+                "time | region | time,region | region,time"
+            )
           )
         )
       )
       .flatMap { axes =>
         if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
-          Left(error(Problem(s"unsupported unit='$unit' — use sources, findings or starts")))
+          Left(error(Problem.Unclassified(Legacy.Text(s"unsupported unit='$unit' — use sources, findings or starts"))))
         else aggregateOn(axes, unit, q)
       }
 
@@ -96,9 +98,11 @@ final class SearchControllers(
     if wanted > BigInt(math.max(1, ui.maxBuckets.value)) then
       Left(
         error(
-          Problem(
-            s"that window needs $wanted buckets of ${size.value} year(s), over the " +
-              s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"that window needs $wanted buckets of ${size.value} year(s), over the " +
+                s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`"
+            )
           )
         )
       )

@@ -1,8 +1,9 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Plugin
-import com.histmersion.plugin.Problem
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.MediaConfig
 
@@ -81,7 +82,7 @@ final class Polite(
         ) match
           case HttpPolicy.Step.Accept        => Right(a)
           case HttpPolicy.Step.Wait(ms, why) =>
-            log.info(HostLog.Line(s"media: ${why.value} from ${h.value} — waiting ${ms.value} ms"))
+            log.info(HostLog.Line(s"media: ${why.sentence} from ${h.value} — waiting ${ms.value} ms"))
             sleep(Polite.IntervalMs(ms.value))
             attempt(HttpPolicy.Attempt(n.value + 1), refusals)
           case HttpPolicy.Step.GiveUp(why) if a.code.value == 403 && refusals < refusalBackoffMs.size =>
@@ -89,7 +90,7 @@ final class Polite(
             slowdown(h) = (slowdown.getOrElse(h, 1) * 2).min(Polite.MaxSlowdown)
             log.warn(
               HostLog.Line(
-                s"media: ${why.value} from ${h.value} — taken as rate limiting: waiting ${ms.value} ms, then asking at " +
+                s"media: ${why.sentence} from ${h.value} — taken as rate limiting: waiting ${ms.value} ms, then asking at " +
                   s"${intervalMs(h).value} ms between requests"
               )
             )
@@ -102,7 +103,7 @@ final class Polite(
             Left(
               Plugin.Http.Failure.Status(
                 a.code.status,
-                Problem(s"${h.value}: ${why.value}$waited")
+                Problem.Unclassified(Legacy.Text(s"${h.value}: ${why.sentence}$waited"))
               )
             )
       }
@@ -119,7 +120,10 @@ final class Polite(
       io.circe.parser
         .parse(a.text.value)
         .left
-        .map(e => Plugin.Http.Failure.Transport(Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})")))
+        .map(e =>
+          Plugin.Http.Failure
+            .Transport(Problem.Unclassified(Legacy.Text(s"${host(url).value}: unparseable JSON (${e.getMessage})")))
+        )
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */

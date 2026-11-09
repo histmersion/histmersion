@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -112,12 +113,18 @@ object AcquireCmd:
       case Left(e)                      => Left(e)
       case Right(r) if !r.running.value =>
         r.error match
-          case Some(msg) => Left(Cli.Error(Problem(s"the refresh failed: $msg"), exitCode = ExitCode.Refused))
-          case None      => Right(r)
+          case Some(msg) =>
+            Left(
+              Cli.Error(
+                Problem.Unclassified(Legacy.Text(s"the refresh failed: ${msg.sentence}")),
+                exitCode = ExitCode.Refused
+              )
+            )
+          case None => Right(r)
       case Right(_) if waited > 600 =>
         Left(
           Cli.Error(
-            Problem("the refresh is still running after 10 minutes — check the server log"),
+            Problem.Unclassified(Legacy.Text("the refresh is still running after 10 minutes — check the server log")),
             exitCode = ExitCode.Refused
           )
         )
@@ -250,9 +257,11 @@ object AcquireCmd:
           else if item.isDefined then
             Left(
               Cli.Error(
-                Problem(
-                  "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
-                    "`histmersion queue done <id>` once the source is in"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
+                      "`histmersion queue done <id>` once the source is in"
+                  )
                 ),
                 exitCode = ExitCode.Usage
               )

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -70,7 +71,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     @volatile var fail = false
     def text(url: RangeHttp.Url) = local.text(url)
     def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) =
-      if fail then Left(Problem(s"${url.value} unreachable")) else local.bytes(url, o, l)
+      if fail then Left(Problem.Unclassified(Legacy.Text(s"${url.value} unreachable"))) else local.bytes(url, o, l)
     def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = local.download(url, o, l, to)
 
   private def setup(c: BasemapOnDemandConfig = cfg()) =
@@ -203,7 +204,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
       BasemapService
         .focusOf(Some(Basemap.Focus.Name("nowhere")), None, false, None, t)
         .left
-        .exists(_.value.contains("give its --bbox"))
+        .exists(_.sentence.contains("give its --bbox"))
     )
     assert(BasemapService.focusOf(Some(Basemap.Focus.Name("bad name!")), Some(box), false, None, t).isLeft)
     assertEquals(
@@ -232,9 +233,11 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("ondemand-get")
     val gets = AtomicInteger(0)
     val http = new RangeHttp:
-      def text(url: RangeHttp.Url) = Left(Problem("no"))
-      def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = Left(Problem("no range requests here"))
-      def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = Left(Problem("no"))
+      def text(url: RangeHttp.Url) = Left(Problem.Unclassified(Legacy.Text("no")))
+      def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) =
+        Left(Problem.Unclassified(Legacy.Text("no range requests here")))
+      def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) =
+        Left(Problem.Unclassified(Legacy.Text("no")))
       override def file(url: RangeHttp.Url) =
         gets.incrementAndGet()
         Right(Option.when(!url.value.endsWith("/0/0.png"))(RangeHttp.ResponseBytes(url.value.getBytes)))

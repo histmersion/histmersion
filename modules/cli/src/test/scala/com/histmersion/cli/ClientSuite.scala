@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
 /** What the CLI says when the server answers outside an endpoint's contract. */
 class ClientSuite extends munit.FunSuite:
@@ -10,7 +10,9 @@ class ClientSuite extends munit.FunSuite:
   test("a 401/403 names the missing API key and how to pass it, never 'cannot reach'"):
     for code <- List(401, 403) do
       val m =
-        Client.unexpected(Client.HttpStatus(code), Client.ServerUrl("http://h:8000"), write = Client.Write(true)).value
+        Client
+          .unexpected(Client.HttpStatus(code), Client.ServerUrl("http://h:8000"), write = Client.Write(true))
+          .sentence
       assert(m.contains("API key") && m.contains("--token") && m.contains("HISTMERSION_TOKEN"), m)
       assert(!m.contains("cannot reach"), m)
 
@@ -18,12 +20,12 @@ class ClientSuite extends munit.FunSuite:
     assert(
       Client
         .unexpected(Client.HttpStatus(404), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
-        .value
+        .sentence
         .contains("no such endpoint")
     )
     assertEquals(
       Client.unexpected(Client.HttpStatus(502), Client.ServerUrl("http://h:8000"), write = Client.Write(false)),
-      Problem("unexpected answer from http://h:8000: HTTP 502")
+      Problem.Unclassified(Legacy.Text("unexpected answer from http://h:8000: HTTP 502"))
     )
 
   // #819: a refused GET (a backup or original download) said "refused this write"
@@ -31,19 +33,19 @@ class ClientSuite extends munit.FunSuite:
     assert(
       Client
         .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
-        .value
+        .sentence
         .contains("refused this request")
     )
     assert(
       !Client
         .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
-        .value
+        .sentence
         .contains("write")
     )
     assert(
       Client
         .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(true))
-        .value
+        .sentence
         .contains("refused this write")
     )
 

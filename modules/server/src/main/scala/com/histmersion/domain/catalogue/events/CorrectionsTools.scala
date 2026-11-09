@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.catalogue.Corrections
@@ -62,7 +62,7 @@ object CorrectionsTools:
                 Event.Id
                   .either(i)
                   .left
-                  .map(e => Api.Error(Problem(e)))
+                  .map(e => Api.Error(Problem.Unclassified(Legacy.Text(e))))
                   .map(Some(_))
           ToolResult.text(
             event

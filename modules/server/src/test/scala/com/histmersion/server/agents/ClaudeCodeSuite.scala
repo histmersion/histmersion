@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -299,7 +300,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
-    assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.value.contains("beyond loopback")))
+    assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.sentence.contains("beyond loopback")))
     assert(
       ClaudeCode
         .client(Cfg.modify(_.allowNonLoopback).setTo(ClaudeCodeConfig.AllowNonLoopback(true)), lan, Sonnet)
@@ -586,7 +587,12 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit"):
     val fake = FakeCli("claude", List(Init, Turn1, RateLimit), sleepAfter = 60)
     val sink = FakeCli.Sink(block =
-      Some((Problem("five_hour: 8% left, floor 25%"), Some(PlanQuotaRepo.EpochMillis(1791236400000L))))
+      Some(
+        (
+          Problem.Unclassified(Legacy.Text("five_hour: 8% left, floor 25%")),
+          Some(PlanQuotaRepo.EpochMillis(1791236400000L))
+        )
+      )
     )
     val (rt, skeptic) = runtime(sink)
     val t0 = System.nanoTime()

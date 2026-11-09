@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -448,7 +448,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       ),
       Set(Citekey("knapp2016_tin")),
       List(Citekey("knapp2016_tin"), Citekey("other2020_x")),
-      Map(Citekey("egypt2001_old") -> Problem("About Egypt, not the Aegean")),
+      Map(Citekey("egypt2001_old") -> Problem.Unclassified(Legacy.Text("About Egypt, not the Aegean"))),
       List(Coverage.Edge(Citekey("crit2022_x"), Coverage.Edge.Kind("superseded_by"), Citekey("knapp2016_tin"))),
       List(CoverageSearch(CoverageSearch.Query("synoikism"), CoverageSearch.Total(3), Nil))
     )

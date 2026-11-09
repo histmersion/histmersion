@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -109,7 +110,7 @@ object ResultsList:
   def failed(msg: Problem): Unit =
     isError.set(true)
     isBusy.set(false)
-    countText.set(UiLabels.Text(if msg.value.nonEmpty then msg.value
+    countText.set(UiLabels.Text(if msg.sentence.nonEmpty then msg.sentence
     else "failed to load — retrying on the next change"))
 
   def renderSources(result: SearchResult, opts: SourceRenderOpts): Unit =
@@ -269,7 +270,10 @@ object ResultsList:
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
           moreLoading.set(false)
-          failed(Problem(s"Could not list more sources: ${Option(e.getMessage).getOrElse(e.toString)}"))
+          failed(
+            Problem
+              .Unclassified(Legacy.Text(s"Could not list more sources: ${Option(e.getMessage).getOrElse(e.toString)}"))
+          )
       }
     }
 
@@ -285,7 +289,7 @@ object ResultsList:
       Some(period.value).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
 
-    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.value).isDefined)
+    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.sentence).isDefined)
     val matched = h.matched
     val shownMatches = matched.take(2)
 
@@ -307,7 +311,7 @@ object ResultsList:
           div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value))))
         )
         .getOrElse(emptyNode),
-      if why.nonEmpty then ul(cls := "why", why.map(w => li(w.value)))
+      if why.nonEmpty then ul(cls := "why", why.map(w => li(w.sentence)))
       else emptyNode,
       if matched.nonEmpty then
         div(
@@ -315,7 +319,7 @@ object ResultsList:
           span(cls := "lbl", "matches:"),
           ul(
             shownMatches.map { m =>
-              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.value).isDefined)
+              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.sentence).isDefined)
               li(
                 span(cls := "claim", Fmt.clip(m.claim.value, Markdown.CharLimit(160))),
                 Fmt.periodStr(m.periodStart, m.periodEnd).value match
@@ -325,7 +329,7 @@ object ResultsList:
                   .filter(_.value.nonEmpty)
                   .map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}"))
                   .getOrElse(emptyNode),
-                if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
+                if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.map(_.sentence).mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
                     List(li(cls := "more-matches", s"+${matched.length - shownMatches.length} more"))

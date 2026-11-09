@@ -20,3 +20,17 @@ object Problem:
   def matched(p: Problem): Boolean = p match
     case Unclassified(_) => true // no finding: a pattern
     case _               => false
+
+  // G60fromString: reading an unclassified problem's text through the temporary accessor counts too
+  extension (p: Problem)
+    def legacyText: String = p match
+      case Unclassified(text) => text
+      case _                  => "?"
+
+  def shown(p: Problem): String = p.legacyText // assert: GuidelineInventory.G60fromString
+
+  // G60unrecognised: an old stored text, built in main code
+  object Stored:
+    final case class Unrecognised(text: String) extends Problem
+
+  def stored(text: String): Problem = Stored.Unrecognised(text) // assert: GuidelineInventory.G60unrecognised

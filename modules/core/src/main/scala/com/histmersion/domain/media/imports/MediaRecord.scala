@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.media.imports
 
-import com.histmersion.domain.{Attribution, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.domain.Attribution
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.places.ExternalIds
 import io.github.iltotore.iron.constraint.any.Pure

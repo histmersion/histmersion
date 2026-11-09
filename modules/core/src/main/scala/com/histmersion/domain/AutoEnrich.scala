@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.domain.automation.Run
@@ -58,16 +60,18 @@ object AutoEnrich:
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings.value > 0 then
       Some(
-        Problem(
-          s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"
+          )
         )
       )
-    else if notes.exists(_.value.trim.nonEmpty) then Some(Problem("it already has notes"))
-    else live.map(r => Problem(s"enrich-source run ${r.id} is ${r.state.wire}"))
+    else if notes.exists(_.value.trim.nonEmpty) then Some(Problem.Unclassified(Legacy.Text("it already has notes")))
+    else live.map(r => Problem.Unclassified(Legacy.Text(s"enrich-source run ${r.id} is ${r.state.wire}")))
 
   /** The job's progress note for what happened. */
   def queued(runId: Run.Id): Note = Note(s"enrichment queued: run $runId")
-  def notQueued(why: Problem): Note = Note(s"enrichment not queued: $why")
+  def notQueued(why: Problem): Note = Note(s"enrichment not queued: ${why.sentence}")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.

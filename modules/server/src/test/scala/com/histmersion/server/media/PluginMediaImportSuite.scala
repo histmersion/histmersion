@@ -1,9 +1,9 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -130,7 +130,9 @@ class PluginMediaImportSuite extends DbSuite:
               spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"),
               spi.MediaItem.Geography.Value("Zqpl Nowhere")
             ),
-            Left(Plugin.Http.Failure.Transport(Problem("a record the API could not describe")))
+            Left(
+              Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("a record the API could not describe")))
+            )
           )
         }
 
@@ -213,7 +215,7 @@ class PluginMediaImportSuite extends DbSuite:
     val http = fake
     val r = handlers(base, http)
       .importMedia(MediaImportRequest(Collection, place = Some(PlaceId)))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(r.provider, Collection)
     assertEquals(
       r.samples.map(s => (s.key, s.license, s.basis)),
@@ -243,7 +245,7 @@ class PluginMediaImportSuite extends DbSuite:
     val http = fake
     val r = handlers(cfg, http)
       .importMedia(MediaImportRequest(Collection, dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
     assert(
       r.rejected.exists(_.key.value == s"licence all-rights-reserved not allowed for $Collection"),
@@ -294,7 +296,7 @@ class PluginMediaImportSuite extends DbSuite:
       h.imports
         .importMedia(MediaImportRequest(MediaItem.Provider("rijks")))
         .left
-        .exists(_.message.value.contains(s"opencontext, $Collection;"))
+        .exists(_.message.sentence.contains(s"opencontext, $Collection;"))
     )
     assert(
       handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some(Event.Id("e1")))).isLeft,
@@ -308,7 +310,7 @@ class PluginMediaImportSuite extends DbSuite:
       h2.imports
         .importMedia(MediaImportRequest(Collection))
         .left
-        .exists(_.message.value.contains("unknown media provider 'zq-portal'"))
+        .exists(_.message.sentence.contains("unknown media provider 'zq-portal'"))
     )
 
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):

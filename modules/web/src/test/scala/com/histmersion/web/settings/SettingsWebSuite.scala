@@ -1,7 +1,7 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -171,7 +171,7 @@ class SettingsWebSuite extends munit.FunSuite:
             PluginStatus.SpiVersion(2),
             enabled = PluginStatus.Enabled(true),
             state = PluginState.Wire("failed"),
-            error = Some(Problem("no key"))
+            error = Some(Problem.Unclassified(Legacy.Text("no key")))
           )
         )
         .value

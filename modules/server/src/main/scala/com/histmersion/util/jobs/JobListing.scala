@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.{Paging, Write}
@@ -23,7 +23,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
   def job(id: Job.Id): Either[Api.Error, JobInfo] =
     Transactor(ds)
       .read(JobRepo.get(id))
-      .toRight(Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
 
   def jobs(status: Option[JobState.Wire], limit: Option[PageSize]): List[JobInfo] =
     val c = cfg()
@@ -43,7 +43,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
     Transactor(ds)
       .read(JobRepo.page(q, c.limits.page(limit, searchPage(c)), clean(before), clean(upTo)))
       .left
-      .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeNotFound))))
       .map { (rows, more) =>
         val (counts, facets) = Transactor(ds).read(JobRepo.facets(q, facetMax))
         (

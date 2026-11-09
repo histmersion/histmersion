@@ -1,5 +1,6 @@
 package com.histmersion
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.Year
 import io.github.iltotore.iron.constraint.any.Pure
 final case class Period private (start: Year, end: Year):
@@ -16,4 +17,5 @@ object Period:
     case EndsBeforeStart(start: Year, end: Year)
 
     def message: Problem = this match
-      case EndsBeforeStart(s, e) => Problem(s"the period ends (${e.value}) before it starts (${s.value})")
+      case EndsBeforeStart(s, e) =>
+        Problem.Unclassified(Legacy.Text(s"the period ends (${e.value}) before it starts (${s.value})"))

@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Plural
@@ -55,16 +56,16 @@ object DeleteCmd:
       byId: Calibre.Book.Id => Either[Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
-      case None                      => CalibreEntryCheck.Unchecked(api.Problem(s"'$calibreId' is not a Calibre id"))
+      case None => CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text(s"'$calibreId' is not a Calibre id")))
       case Some(_) if !libraryExists =>
-        CalibreEntryCheck.Unchecked(api.Problem(s"no Calibre library at $library"))
+        CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text(s"no Calibre library at $library")))
       case Some(id) =>
         byId(Calibre.Book.Id(id)) match
           case Right(Some(_)) => CalibreEntryCheck.Present
           case Right(None)    => CalibreEntryCheck.Missing
           case Left(e)        =>
             CalibreEntryCheck.Unchecked(
-              api.Problem(e.value.linesIterator.nextOption().getOrElse(e.value).take(200))
+              Problem.Unclassified(Legacy.Text(e.sentence.linesIterator.nextOption().getOrElse(e.sentence).take(200)))
             )
 
   def run(c: Client, a: Args)(using console: Console): Either[Cli.Error, Unit] =
@@ -78,13 +79,15 @@ object DeleteCmd:
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
       if d.refused then
         Left(
-          Cli.Error(Problem(Source.Delete.refusal(d.citekey, d.blockers).value), exitCode = ExitCode.Refused)
+          Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused)
         )
       else if d.filesFailed.nonEmpty then
         Left(
           Cli.Error(
-            Problem(
-              s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
+              )
             ),
             exitCode = ExitCode.Refused
           )

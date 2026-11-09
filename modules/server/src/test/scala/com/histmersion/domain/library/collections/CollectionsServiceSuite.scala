@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.*
@@ -39,7 +40,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     override def capabilities =
       if writes then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
       else Set(CollectionCapability.Read)
-    override def readOnlyReason = plugin.Problem("write-back is off")
+    override def readOnlyReason = Problem.Unclassified(Legacy.Text("write-back is off"))
     private val books = List(
       book(CollectionId("1"), CollectionItem.Title("One")),
       book(CollectionId("2"), CollectionItem.Title("Two")),
@@ -110,7 +111,8 @@ class CollectionsServiceSuite extends munit.FunSuite:
       pushedIds += req.citekey -> req.calibreId;
       Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
     override def original(citekey: com.histmersion.domain.library.Citekey) =
-      if citekey.value == "zz_none" then Left(Api.Error(Problem(s"no original stored for '$citekey'")))
+      if citekey.value == "zz_none" then
+        Left(Api.Error(Problem.Unclassified(Legacy.Text(s"no original stored for '$citekey'"))))
       else
         Right(
           StoredOriginal(
@@ -162,7 +164,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
         Some(CollectionsService.Limit(1)),
         unlinked = CollectionsService.SearchUnlinked(true)
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.entries.map(_.id), r.total), (List("3"), 2))
     assertEquals(
       service(Shelf(writes = true))
@@ -182,7 +184,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     val lib = Library()
     val p = service(shelf, lib)
       .push(Caller.Local, CollectionsService.CollectionName("calibre"), CollectionPushRequest(Citekey("zz_new")))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((p.id, p.title), ("9", "Title of zz_new"))
     assertEquals(shelf.written.toList, List("add zz_new Title of zz_new pdf 3"))
     assertEquals(lib.pushedIds.toList, List("zz_new" -> "9"))
@@ -191,7 +193,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
       CollectionsService.CollectionName("calibre"),
       CollectionPushRequest(Citekey("zz_none"))
     )
-    assert(none.left.exists(_.message.value.endsWith("to a directory holding <citekey>/paper.pdf")), none)
+    assert(none.left.exists(_.message.sentence.endsWith("to a directory holding <citekey>/paper.pdf")), none)
 
   test("update-all is given every linked source, in citekey order; the audit counts the linked entries"):
     val shelf = Shelf(writes = true)
@@ -201,17 +203,17 @@ class CollectionsServiceSuite extends munit.FunSuite:
         CollectionsService.CollectionName("calibre"),
         apply = CollectionsService.UpdateAllApply(false)
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(shelf.written.toList, List("updateAll 99:zz_lost,2:zz_two false"))
     assertEquals(u.rows.map(_.state).distinct, List("up-to-date"))
     val a =
-      service(shelf).audit(CollectionsService.CollectionName("calibre")).fold(e => fail(e.message.value), identity)
+      service(shelf).audit(CollectionsService.CollectionName("calibre")).fold(e => fail(e.message.sentence), identity)
     assertEquals((a.checked, a.findings.map(f => (f.id, f.codes, f.fix))), (2, List(("99", List("Missing"), None))))
 
   test("gaps count only a source with an original that is not in Calibre already"):
     val g = service(Shelf(writes = true))
       .gaps(CollectionsService.CollectionName("calibre"), None)
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(
       g.gaps.map(r => (r.citekey, r.original, r.counted)),
       List(("zz_a", "stored", true), ("zz_b", "none", false), ("zz_c", "unknown", true), ("zz_d", "stored", false))
@@ -238,11 +240,11 @@ class CollectionsServiceSuite extends munit.FunSuite:
       other
         .audit(CollectionsService.CollectionName("shelf"))
         .left
-        .exists(_.message.value.contains("links sources to Calibre only"))
+        .exists(_.message.sentence.contains("links sources to Calibre only"))
     )
     val ro = service(Shelf(writes = false))
       .push(Caller.Local, CollectionsService.CollectionName("calibre"), CollectionPushRequest(Citekey("zz_new")))
-    assertEquals(ro.left.map(_.message), Left("Calibre is read-only here: write-back is off"))
+    assertEquals(ro.left.map(_.message).left.map(_.sentence), Left("Calibre is read-only here: write-back is off"))
     assertEquals(
       service(Shelf(writes = false)).collection(CollectionsService.CollectionName("calibre")).map(_.capabilities),
       Right(List("read"))

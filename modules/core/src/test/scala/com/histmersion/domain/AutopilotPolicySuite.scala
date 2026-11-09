@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -48,7 +50,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
     articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6)) match
       case Verdict.Approve(r) =>
-        assert(r.value.contains("2 articles") && r.value.contains("a 9, b 5") && r.value.contains("2 of 6"), r)
+        assert(r.sentence.contains("2 articles") && r.sentence.contains("a 9, b 5") && r.sentence.contains("2 of 6"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(4), AutopilotPolicy.Cap(6))
@@ -57,7 +59,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(6)),
       Verdict.Leave(
-        Problem("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
+        Problem.Unclassified(
+          Legacy.Text("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
+        )
       )
     )
     assert(
@@ -85,7 +89,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       AutopilotPolicy.Cap(6)
     ) match
       case Verdict.Reject(r) =>
-        assert(r.value.contains("a: the slug is taken") && r.value.contains("b: its filter returns 2"), r)
+        assert(r.sentence.contains("a: the slug is taken") && r.sentence.contains("b: its filter returns 2"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(Nil, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6))
@@ -131,7 +135,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("article-publish: each failed check rejects with why"):
     def why(d: DraftFacts) =
       articlePublish(d, AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10)) match
-        case Verdict.Reject(r) => r.value
+        case Verdict.Reject(r) => r.sentence
         case v                 => fail(v.toString)
     assert(
       why(draft.modify(_.filterRecorded).setTo(AutopilotPolicy.DraftFacts.FilterRecorded(false)))
@@ -173,7 +177,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       AutopilotPolicy.Cap(5)
     ) match
       case Verdict.Reject(r) =>
-        assert(r.value.contains("3 sub-goals") && r.value.contains("2 level(s) below a root"), r)
+        assert(r.sentence.contains("3 sub-goals") && r.sentence.contains("2 level(s) below a root"), r)
       case v => fail(v.toString)
     assert(
       goalPlan(
@@ -206,9 +210,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
-    assertEquals(note(Verdict.Approve(Problem("r"))), Some("autopilot: approved — r"))
-    assertEquals(note(Verdict.Reject(Problem("r"))), Some("autopilot: rejected — r"))
-    assertEquals(note(Verdict.Leave(Problem("r"))), None)
+    assertEquals(note(Verdict.Approve(Problem.Unclassified(Legacy.Text("r")))), Some("autopilot: approved — r"))
+    assertEquals(note(Verdict.Reject(Problem.Unclassified(Legacy.Text("r")))), Some("autopilot: rejected — r"))
+    assertEquals(note(Verdict.Leave(Problem.Unclassified(Legacy.Text("r")))), None)
 
   test("depth: the parents above a goal; a cycle stops"):
     val parent = Map(Slug("c") -> Slug("b"), Slug("b") -> Slug("a"))
@@ -267,7 +271,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
           .setTo(AutopilotPolicy.GoalFacts.Articles(2))
           .modify(_.reviewed)
           .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
-      ),
+      ).map((a, p) => (a, p.sentence)),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 

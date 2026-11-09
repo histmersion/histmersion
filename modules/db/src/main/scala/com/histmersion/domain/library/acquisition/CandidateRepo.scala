@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
@@ -51,7 +51,7 @@ private[acquisition] object CandidateRepo:
           r.index,
           r.watermark,
           r.lastRun,
-          r.lastError.map(_.transformInto[api.Problem]),
+          r.lastError,
           r.lastFound
         )
       )

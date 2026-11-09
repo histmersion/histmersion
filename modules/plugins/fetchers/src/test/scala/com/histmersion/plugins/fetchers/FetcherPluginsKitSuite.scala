@@ -25,7 +25,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
   ) =
     PluginHarness
       .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
 
   private def json(s: HttpAnswer.Text) = StubAnswer.text(s, CoreQuota.HeaderValue("application/json"))
 
@@ -53,7 +53,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
 
   // ── archive-org ─────────────────────────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     )
     val r = h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqlent"))))
     r.outcome match
-      case FetchOutcome.Refused(why) => assert(why.value.contains("lending-only"), why)
+      case FetchOutcome.Refused(why) => assert(why.legacyText.contains("lending-only"), why)
       case other                     => fail(s"not refused: $other")
     assertEquals(r.requests, List("GET https://archive.org/metadata/zqlent"))
 
@@ -109,7 +109,9 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Map(metadata -> json(HttpAnswer.Text("""{"metadata":{},"files":[{"name":"zqbook.djvu"}]}""")))
     )
     assert(
-      h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")))).answers.exists(_.why.value.contains("no epub/pdf"))
+      h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook"))))
+        .answers
+        .exists(_.why.legacyText.contains("no epub/pdf"))
     )
 
   // ── the open-access indexes ─────────────────────────────────────────────────────────────────
@@ -152,7 +154,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
   test("oa-core with no key at all does not ask CORE, and says which settings would key it"):
     val r = load(Plugin.Info.Id("oa-core")).fetch(WorkKey(doi = Some(Doi.applyUnsafe("10.1/core"))))
     assertEquals(r.requests, Nil)
-    assert(r.answers.exists(_.why.value.contains("plugins.oa-core.api-key or acquire.core.api-key")), r.toString)
+    assert(r.answers.exists(_.why.legacyText.contains("plugins.oa-core.api-key or acquire.core.api-key")), r.toString)
 
   test("oa-landing alone (no index plugin registered): the DOI's DataCite page, no index asked"):
     val h = load(

@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import scala.concurrent.Future
@@ -130,7 +130,7 @@ object ApiClient:
           Future.failed(
             ApiFailure(
               ApiFailure.Status(code),
-              Api.Error(Problem(s"could not read the server's answer (HTTP $code): $other"))
+              Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer (HTTP $code): $other")))
             )
           )
     }
@@ -427,7 +427,7 @@ object ApiClient:
               result.failure(
                 ApiFailure(
                   ApiFailure.Status(xhr.status),
-                  Api.Error(Problem(s"could not read the server's answer: ${e.getMessage}"))
+                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: ${e.getMessage}")))
                 )
               ),
             ok => result.success(ok)
@@ -474,7 +474,7 @@ object ApiClient:
               result.failure(
                 ApiFailure(
                   ApiFailure.Status(xhr.status),
-                  Api.Error(Problem(s"could not read the server's answer: ${e.getMessage}"))
+                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: ${e.getMessage}")))
                 )
               ),
             ok => result.success(ok)

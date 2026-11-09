@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.library.RepairAcquire
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -140,6 +141,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
       val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
       assert(
-        bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire"))
+        bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left
+          .exists(_.message.sentence.contains("repair-acquire"))
       )
     finally srv.stop(0)

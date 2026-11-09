@@ -14,8 +14,8 @@ class SlugSuite extends munit.FunSuite:
 
   test("what is no slug says so, naming what was written"):
     val why = "use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
-    assertEquals(Slug.parse("Bad Slug"), Left(s"invalid slug 'Bad Slug' — $why"))
-    assertEquals(Slug.parse(""), Left(s"invalid slug '' — $why"))
-    assertEquals(Slug.parse("_lead"), Left(s"invalid slug '_lead' — $why"))
+    assertEquals(Slug.parse("Bad Slug").left.map(_.legacyText), Left(s"invalid slug 'Bad Slug' — $why"))
+    assertEquals(Slug.parse("").left.map(_.legacyText), Left(s"invalid slug '' — $why"))
+    assertEquals(Slug.parse("_lead").left.map(_.legacyText), Left(s"invalid slug '_lead' — $why"))
     assert(Slug.parse("a" * 121).isRight)
     assert(Slug.parse("a" * 122).isLeft)

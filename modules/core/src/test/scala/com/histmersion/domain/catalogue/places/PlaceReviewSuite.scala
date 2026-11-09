@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.*
@@ -81,7 +81,7 @@ class PlaceReviewSuite extends munit.FunSuite:
           Place.Kind.Wire(Place.Kind.Region),
           Place.Kind.Wire(Place.Kind.Polity),
           None,
-          Problem("an administrative unit (a polity)"),
+          Problem.Unclassified(Legacy.Text("an administrative unit (a polity)")),
           List(Proposal.EvidenceLine("Pleiades types: province"))
         )
       )

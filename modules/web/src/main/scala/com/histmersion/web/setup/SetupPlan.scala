@@ -1,7 +1,7 @@
 package com.histmersion
 package web.setup
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.settings.ConfigEdit
 import io.github.iltotore.iron.constraint.any.Pure
@@ -15,7 +15,7 @@ object SetupPlan:
   def email(s: SetupChoices.Email): Either[Problem, SetupChoices.Email] =
     val t = s.value.trim
     if t.isEmpty || t.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") then Right(SetupChoices.Email(t))
-    else Left(Problem(s"$t does not look like an e-mail address."))
+    else Left(Problem.Unclassified(Legacy.Text(s"$t does not look like an e-mail address.")))
 
   /** The settings to write: what differs from `before`, and the mark that the setup was done. A change the file already
     * holds is skipped by the server, so writing it again does no harm.

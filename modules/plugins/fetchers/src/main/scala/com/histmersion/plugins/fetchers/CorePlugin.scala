@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `oa-core`: CORE's download URLs for a DOI, with an API key, through the server's CORE budget. */
 import com.histmersion.plugin.Plugin
@@ -15,8 +14,6 @@ final class CorePlugin extends FetcherPlugin("oa-core"):
       )(s =>
         ctx
           .secret(s)
-          .left
-          .map(e => Problem(e.value))
           .map(v => Option(v).map(_.value.trim).filter(_.nonEmpty).map(OpenAccess.CoreKey(_)))
       )
       .flatMap(key =>
@@ -25,6 +22,4 @@ final class CorePlugin extends FetcherPlugin("oa-core"):
             Registry.AddId("core"),
             OpenAccess(c.acquire, () => ctx.http, ctx.log).core(key, ctx.quota(Plugin.Context.QuotaUpstream("core")))
           )
-          .left
-          .map(e => Problem(e.value))
       )

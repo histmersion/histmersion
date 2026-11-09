@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -51,7 +53,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
         allow,
         PluginMedia.Provider("mine")
       ),
-      Some(PluginMedia.Refusal.Withheld(Problem("human remains")))
+      Some(PluginMedia.Refusal.Withheld(Problem.Unclassified(Legacy.Text("human remains"))))
     )
     assertEquals(
       PluginMedia.refusal(
@@ -59,7 +61,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
         allow,
         PluginMedia.Provider("mine")
       ),
-      Some(PluginMedia.Refusal.Unreadable(Problem("no credit line")))
+      Some(PluginMedia.Refusal.Unreadable(Problem.Unclassified(Legacy.Text("no credit line"))))
     )
 
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
@@ -67,11 +69,11 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
     def parts(q: CatalogueQuery) = pages.keys.toList.map(EventCatalogue.ReadPart(_))
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
-      pages(part.value).left.map(Problem(_))
+      pages(part.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      Plugin.Http.Failure.Transport(Problem("offline"))
+      Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline")))
     )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
@@ -118,14 +120,17 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val nulls = new AiProvider:
       val title = AiProvider.Title("t")
       def turn(r: AiTurn.Request, http: AiHttp) = Right(null)
-    assertEquals(PluginAi.check(throwing, PluginAi.ModelName("m")), Left("its check threw IllegalStateException"))
+    assertEquals(
+      PluginAi.check(throwing, PluginAi.ModelName("m")).left.map(_.sentence),
+      Left("its check threw IllegalStateException")
+    )
     assertEquals(
       PluginAi.turn(throwing, request, AiHttp.Offline),
-      Left(AiFailure.Error(Problem("IllegalStateException: boom")))
+      Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("IllegalStateException: boom"))))
     )
     assertEquals(
       PluginAi.turn(nulls, request, AiHttp.Offline),
-      Left(AiFailure.Error(Problem("the provider answered null")))
+      Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("the provider answered null"))))
     )
 
   /** Answers in turn, recording each request's headers. */
@@ -177,19 +182,19 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assert(
       got.left.exists {
         case Plugin.Http.Failure.Status(code, why) =>
-          code == Plugin.HttpResponse.Status.Forbidden && why.value.contains("bot-protection challenge")
+          code == Plugin.HttpResponse.Status.Forbidden && why.sentence.contains("bot-protection challenge")
         case _ => false
       },
       got.toString
     )
     val down = Scripted(
-      Left(Plugin.Http.Failure.Transport(Problem("x unreachable"))),
-      Left(Plugin.Http.Failure.Transport(Problem("x unreachable")))
+      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable")))),
+      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable"))))
     )
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), down, tries = PolicyHttp.Tries(2), sleep = _ => (), log = quiet)
         .bytes(HttpTransport.Url("https://x.example/c")),
-      Left(Plugin.Http.Failure.Transport(Problem("x unreachable")))
+      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable"))))
     )
     val missing = Scripted(answer(HttpAnswer.Code(404), "no such work"))
     assertEquals(
@@ -197,7 +202,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
       Left(
         Plugin.Http.Failure.Status(
           Plugin.HttpResponse.Status.NotFound,
-          Problem("https://x.example/d: HTTP 404 no such work")
+          Problem.Unclassified(Legacy.Text("https://x.example/d: HTTP 404 no such work"))
         )
       )
     )
@@ -210,7 +215,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
   test("a plugin built against SPI 1 is recognised by the member it reads, and told to rebuild"):
     assertEquals(PluginHost.foreignSpi(spi1), Some(Some(1)))
     assertEquals(
-      PluginHost.failure(spi1),
+      (PluginHost.failure(spi1)).sentence,
       "it was built against plugin SPI 1; this Histmersion speaks SPI 2 — rebuild the plugin against SPI 2 " +
         "(`histmersion plugin repo` has its API)"
     )
@@ -227,12 +232,15 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assert(
       PluginHost
         .failure(other)
-        .value
+        .sentence
         .startsWith("it was built against another plugin SPI; this Histmersion speaks SPI 2")
     )
     assertEquals(PluginHost.foreignSpi(NoSuchMethodError("'void org.example.Lib.go()'")), None)
     assert(
-      PluginHost.failure(NoClassDefFoundError("org/example/Lib")).value.startsWith("class org.example.Lib is missing")
+      PluginHost
+        .failure(NoClassDefFoundError("org/example/Lib"))
+        .sentence
+        .startsWith("class org.example.Lib is missing")
     )
 
   test("a plugin whose info cannot be read is not loaded: the error, not an exception"):

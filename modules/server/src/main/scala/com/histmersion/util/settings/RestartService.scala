@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.settings.ConfigEdit
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.iltotore.iron.constraint.any.Pure
@@ -24,9 +24,11 @@ object RestartService:
     "The server is restarting. It is back in a few seconds; this page reconnects by itself."
   )
   val NotHere: Problem =
-    Problem(
-      "This server was not started by a service that starts it again, so it cannot restart itself. " +
-        "Stop it and start it again yourself."
+    Problem.Unclassified(
+      Legacy.Text(
+        "This server was not started by a service that starts it again, so it cannot restart itself. " +
+          "Stop it and start it again yourself."
+      )
     )
 
   /** `stop` ends the process (`None`: nothing runs this server again, so no restart is offered). */

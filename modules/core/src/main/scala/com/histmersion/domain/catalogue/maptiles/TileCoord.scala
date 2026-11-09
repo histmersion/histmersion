@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.maptiles
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One tile of the XYZ grid MapLibre asks for (Web Mercator; a tile's side is [[TileCoord.Extent]] units of the vector
@@ -56,9 +56,9 @@ object TileCoord:
 
   /** The tile `z`/`x`/`y`, when the grid has it and `z` is no deeper than `maxZoom`. */
   def of(z: Z, x: X, y: Y, maxZoom: Z): Either[Problem, TileCoord] =
-    if z.value < 0 || z > maxZoom then Left(Problem(s"zoom $z is outside 0..$maxZoom"))
+    if z.value < 0 || z > maxZoom then Left(Problem.Unclassified(Legacy.Text(s"zoom $z is outside 0..$maxZoom")))
     else if x.value < 0 || y.value < 0 || x.value >= (1L << z.value) || y.value >= (1L << z.value) then
-      Left(Problem(s"tile $x/$y is outside the grid of zoom $z"))
+      Left(Problem.Unclassified(Legacy.Text(s"tile $x/$y is outside the grid of zoom $z")))
     else Right(new TileCoord(z, x, y))
 
   /** Pure: a point's place on the unit square of Web Mercator (0..1 east and south), its latitude held inside

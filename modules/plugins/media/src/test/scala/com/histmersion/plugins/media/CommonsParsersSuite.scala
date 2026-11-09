@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -23,7 +23,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
-    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.value), identity)
+    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.legacyText), identity)
     val supplied = FirstPartySettings.fallback(Plugin.Info.Id("media-wikidata"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
@@ -69,7 +69,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
-    assertEquals(m(Commons.File.Title("File:Gone.jpg")), Left("missing on Commons"))
+    assertEquals(m(Commons.File.Title("File:Gone.jpg")).left.map(_.legacyText), Left("missing on Commons"))
     val a = m(Commons.File.Title("File:A.jpg")).toOption.get
     assertEquals(
       m(Commons.File.Title("File:a.jpg")),
@@ -84,7 +84,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: an API error is a Left for the whole answer"):
     val err = json("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
-    assertEquals(Commons.imageInfo(err).left.toOption.map(_.value.takeWhile(_ != ':')), Some("maxlag"))
+    assertEquals(Commons.imageInfo(err).left.toOption.map(_.legacyText.takeWhile(_ != ':')), Some("maxlag"))
 
   // ── rights ───────────────────────────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ class CommonsParsersSuite extends munit.FunSuite:
       "AttributionRequired" -> "true"
     )
     assertEquals(it.withheld, None)
-    val r = it.rights.fold(e => fail(e.value), identity)
+    val r = it.rights.fold(e => fail(e.legacyText), identity)
     assertEquals(r.licence, Licence("CC-BY-SA-3.0"))
     assertEquals(HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family, "cc-by-sa")
     assertEquals(r.credit, "David Monniaux, CC BY-SA 3.0, via Wikimedia Commons")
@@ -174,15 +174,18 @@ class CommonsParsersSuite extends munit.FunSuite:
       .Files(http, media, HostLicences)
       .items(List(Commons.File.Title("File:Gone.jpg"), Commons.File.Title("File:Other.jpg")))
     assertEquals(failed, Nil)
-    assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
-    assertEquals(items(Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
+    assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights.left.map(_.legacyText), Left("missing on Commons"))
+    assertEquals(
+      items(Commons.File.Title("File:Other.jpg")).rights.left.map(_.legacyText),
+      Left("no answer from Commons")
+    )
     val down = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Plugin.Http.Failure.Transport(Problem("HTTP 503")))
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("HTTP 503"))))
     }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
-    assertEquals(none(Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))
-    assertEquals(lines, List("Commons File:A.jpg…: HTTP 503"))
+    assertEquals(none(Commons.File.Title("File:A.jpg")).rights.left.map(_.legacyText), Left("no answer from Commons"))
+    assertEquals(lines.map(_.legacyText), List("Commons File:A.jpg…: HTTP 503"))
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 

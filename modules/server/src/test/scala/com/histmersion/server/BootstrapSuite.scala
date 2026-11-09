@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -84,7 +85,7 @@ class BootstrapSuite extends DbSuite:
   override def afterSuite(): Unit = if testDb.nonEmpty then clean()
 
   test("periods seed imports the bundled presets: the BSA's Bronze Age → Minoan → phases"):
-    val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.value), identity)
+    val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.sentence), identity)
     assertEquals(r.periods, seedIds.size)
     assertEquals(r.roots, 0)
     // #771: the seed's two EAMENA Palaeolithic periods start in 14,000,000 BC — reported, not stored
@@ -93,7 +94,7 @@ class BootstrapSuite extends DbSuite:
     assertEquals(periods.get(HistoricalPeriod.Id("p0m64tdp282")), None)
     val b = bootstrap(dataDir())
     val lm =
-      b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.value), identity) // Late Minoan (BSA)
+      b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.sentence), identity) // Late Minoan (BSA)
     assertEquals(lm.period.period, Period(Year(-1700), Year(-1050)))
     assertEquals(lm.parent.map(_.label), Some("Bronze Age Minoan"))
     assert(lm.children.map(_.label).contains("Late Minoan I"), lm.children.toString)
@@ -114,13 +115,13 @@ class BootstrapSuite extends DbSuite:
 
   test("a second seed is idempotent"):
     val before = periods.count()
-    bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.value), identity)
+    bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.sentence), identity)
     assertEquals(periods.count(), before)
 
   // the presets of an install seeded before V062 were the parentless rows, under ROAD's umbrella
   test("a newer bundled seed re-applies itself on start: old nesting undone, the presets become the seed's"):
     val b = bootstrap(dataDir())
-    b.seedPeriods().fold(e => fail(e.message.value), identity)
+    b.seedPeriods().fold(e => fail(e.message.sentence), identity)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false) // current: nothing to do
     // an older install: version 1, the BSA's Bronze Age under ROAD's, a preset the seed does not name
     periods.setSeedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed), PeriodService.SeedVersion(1))
@@ -128,7 +129,7 @@ class BootstrapSuite extends DbSuite:
       val _ = sql"UPDATE periods SET parent_id = 'p0s2rwkwbsz', preset = NULL WHERE id = 'p0ds9qjq7b2'".update.run()
       val _ = sql"UPDATE periods SET preset = 'broad' WHERE id = 'p0s2rwkwbsz'".update.run()
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, true)
-    b.seedPeriods().fold(e => fail(e.message.value), identity)
+    b.seedPeriods().fold(e => fail(e.message.sentence), identity)
     val bsa = periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
     assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
@@ -140,25 +141,25 @@ class BootstrapSuite extends DbSuite:
 
   test("a period fetch never takes a seed preset off the menu"):
     val b = bootstrap(dataDir())
-    b.seedPeriods().fold(e => fail(e.message.value), identity)
+    b.seedPeriods().fold(e => fail(e.message.sentence), identity)
     periods.write(List(periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get.copy(preset = None)), Dataset.Seed)
     assertEquals(periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).flatMap(_.preset), Some(PresetRegion.Aegean))
 
   test("a missing seed is an error naming where it looked"):
     val r = bootstrap(Files.createTempDirectory("histmersion-empty")).seedPeriods()
-    assert(r.left.exists(_.message.value.contains("no period seed at")), r.toString)
+    assert(r.left.exists(_.message.sentence.contains("no period seed at")), r.toString)
 
   test("periods fetch periodo: the named collection only, under one authority node; re-runnable"):
     var asked = List.empty[HttpDownload.Url] // a test double is the one place a var is the simplest thing
     val b = bootstrap(dataDir(), url => { asked = asked :+ url; Right(HttpDownload.Text(dump)) })
     val r = b
       .fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(asked.map(_.value: String), List(base.periods.periodoUrl.value: String))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
     assertEquals(periods.get(HistoricalPeriod.Id("zzqother01")), None)
-    val node = b.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.value), identity)
+    val node = b.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.sentence), identity)
     assertEquals(node.period.label, "Zzq test chronology")
     assertEquals(node.period.period, Period(Year(-3000), Year(-500)))
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
@@ -166,7 +167,7 @@ class BootstrapSuite extends DbSuite:
     // somebody moves a period; a re-fetch leaves it where it is
     transact(ds)(sql"UPDATE periods SET parent_id = NULL WHERE id = 'zzqauthiron'".update.run())
     b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(periods.get(HistoricalPeriod.Id("zzqauthiron")).flatMap(_.parentId), None)
 
   test("periods fetch: an unknown source, a missing collection and a dead network are errors"):
@@ -174,24 +175,24 @@ class BootstrapSuite extends DbSuite:
     assert(
       b.fetchPeriods(PeriodSources.PeriodoUrl("chronontology"), Nil)
         .left
-        .exists(_.message.value.contains("unknown period source"))
+        .exists(_.message.sentence.contains("unknown period source"))
     )
     assert(
       b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope")))
         .left
-        .exists(_.message.value.contains("zzqnope"))
+        .exists(_.message.sentence.contains("zzqnope"))
     )
-    val dead = bootstrap(dataDir(), _ => Left(Problem("HTTP 503")))
+    val dead = bootstrap(dataDir(), _ => Left(Problem.Unclassified(Legacy.Text("HTTP 503"))))
     assert(
       dead
         .fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
         .left
-        .exists(_.message.value.contains("503"))
+        .exists(_.message.sentence.contains("503"))
     )
 
   test("init runs as a job: every step is attempted, a missing gazetteer seed is reported"):
     val b = bootstrap(dataDir())
-    val job = b.init(fetch = false).fold(e => fail(e.message.value), identity)
+    val job = b.init(fetch = false).fold(e => fail(e.message.sentence), identity)
     assertEquals(job.kind.value: String, Bootstrap.JobKind.value: String)
     val end = Iterator
       .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(Job.Id.applyUnsafe(job.id.value))).get }
@@ -199,7 +200,7 @@ class BootstrapSuite extends DbSuite:
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
-    assert(end.error.exists(_.value.contains("gazetteer: no gazetteer seed at")), end.toString)
+    assert(end.error.exists(_.sentence.contains("gazetteer: no gazetteer seed at")), end.toString)
     assert(end.progress.exists(_.value.contains("period presets:")), end.toString) // the periods still went in
     assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out

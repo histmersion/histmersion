@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.AppConfig
@@ -92,4 +93,4 @@ class MigrateSquashSuite extends DbSuite with Bounded:
     val e = intercept[IllegalStateException](Migrate.run(ds))
     assert(e.getMessage.contains("schema 108"), e.getMessage)
     assertEquals(strings(ds, "SELECT count(*)::text FROM flyway_schema_history"), List("108"))
-    assert(Migrate.validate(ds).left.exists(_.value.contains("schema 108")), Migrate.validate(ds).toString)
+    assert(Migrate.validate(ds).left.exists(_.sentence.contains("schema 108")), Migrate.validate(ds).toString)

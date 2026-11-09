@@ -54,7 +54,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
         .items(err, Set(WikidataStatement.Property("P18")))
         .left
         .toOption
-        .map(_.value.takeWhile(_ != ':')),
+        .map(_.legacyText.takeWhile(_ != ':')),
       Some("maxlag")
     )
 

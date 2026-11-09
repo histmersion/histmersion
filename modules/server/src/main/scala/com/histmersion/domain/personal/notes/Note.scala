@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.notes
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
@@ -44,7 +44,11 @@ object Note:
 
   def idOf(raw: WireNote.Id): Either[Problem, WireNote.Id] =
     val id = Option(raw).fold("")(_.value.trim.toLowerCase)
-    Either.cond(PersonalUuid.matches(PersonalUuid.Text(id)), WireNote.Id(id), Problem(s"not a note id: '$raw'"))
+    Either.cond(
+      PersonalUuid.matches(PersonalUuid.Text(id)),
+      WireNote.Id(id),
+      Problem.Unclassified(Legacy.Text(s"not a note id: '$raw'"))
+    )
 
   def of(stored: StoredNote, described: Map[ItemRef, Described]): Note =
     val (target, title) = stored.target.shown(described, stored.targetLabel)

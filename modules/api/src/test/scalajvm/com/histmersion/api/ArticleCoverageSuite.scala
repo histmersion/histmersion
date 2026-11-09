@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Period
@@ -35,11 +37,13 @@ class ArticleCoverageSuite extends munit.FunSuite:
   private val cited =
     List(Citekey("walker1995_theseus"), Citekey("gantz1993_earlymyth"), Citekey("middleton2020_collapse"))
   private val reasons = Map(
-    Citekey("graves2017_greek") -> Problem("retells the myths with no dated finding on their origin"),
-    Citekey("bremmer2008_religion") -> Problem("a handbook; nothing on synoikism"),
-    Citekey("graf1993_mythology") -> Problem("a handbook; nothing on synoikism"),
-    Citekey("gantz1993_earlymyth") -> Problem("stale: it is cited now"),
-    Citekey("zz2000_gone") -> Problem("the filter no longer returns it")
+    Citekey("graves2017_greek") -> Problem.Unclassified(
+      Legacy.Text("retells the myths with no dated finding on their origin")
+    ),
+    Citekey("bremmer2008_religion") -> Problem.Unclassified(Legacy.Text("a handbook; nothing on synoikism")),
+    Citekey("graf1993_mythology") -> Problem.Unclassified(Legacy.Text("a handbook; nothing on synoikism")),
+    Citekey("gantz1993_earlymyth") -> Problem.Unclassified(Legacy.Text("stale: it is cited now")),
+    Citekey("zz2000_gone") -> Problem.Unclassified(Legacy.Text("the filter no longer returns it"))
   )
   private val edges = List(
     Coverage.Edge(Citekey("simpson1970_catalogue"), Coverage.Edge.Kind("challenges"), Citekey("gantz1993_earlymyth")),
@@ -137,7 +141,11 @@ class ArticleCoverageSuite extends munit.FunSuite:
     assertEquals(Article.Coverage.unplacedAfter(c, Set(Citekey("nilsson1927_minoan")), reasons), Nil)
     assertEquals(
       Article.Coverage
-        .unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Problem("superseded"))),
+        .unplacedAfter(
+          c,
+          Set.empty,
+          reasons + (Citekey("nilsson1927_minoan") -> Problem.Unclassified(Legacy.Text("superseded")))
+        ),
       Nil
     )
 
@@ -325,7 +333,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Article.Filter
         .normalise(Article.Filter(tags = List(Filter.Tags("x")), status = List(Filter.Status("famous"))))
         .left
-        .exists(_.value.contains("'famous'"))
+        .exists(_.sentence.contains("'famous'"))
     )
     assert(
       Article.Filter
@@ -347,22 +355,30 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("reasons: set, replaced, removed by an empty one, folded onto one line; a non-citekey or an essay refused"):
     val m = Coverage.Reason
       .merge(
-        Map(Citekey("a2019_tin") -> Problem("old")),
+        Map(Citekey("a2019_tin") -> Problem.Unclassified(Legacy.Text("old"))),
         List(
-          Coverage.Reason(Citekey("[[A2019_tin]]"), Problem("new\n  reason")),
-          Coverage.Reason(Citekey("b2020_iso"), Problem("about Egypt"))
+          Coverage.Reason(Citekey("[[A2019_tin]]"), Problem.Unclassified(Legacy.Text("new\n  reason"))),
+          Coverage.Reason(Citekey("b2020_iso"), Problem.Unclassified(Legacy.Text("about Egypt")))
         )
       )
       .toOption
       .get
-    assertEquals(m, Map("a2019_tin" -> "new reason", "b2020_iso" -> "about Egypt"))
+    assertEquals(m.view.mapValues(_.sentence).toMap, Map("a2019_tin" -> "new reason", "b2020_iso" -> "about Egypt"))
     assertEquals(
-      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("b2020_iso"), Problem(" ")))),
+      Coverage.Reason
+        .merge(m, List(Coverage.Reason(Citekey("b2020_iso"), Problem.Unclassified(Legacy.Text(" ")))))
+        .map(_.view.mapValues(_.sentence).toMap),
       Right(Map("a2019_tin" -> "new reason"))
     )
-    assert(Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("Not A Key"), Problem("x")))).isLeft)
     assert(
-      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Problem("x" * 501)))).isLeft
+      Coverage.Reason
+        .merge(m, List(Coverage.Reason(Citekey("Not A Key"), Problem.Unclassified(Legacy.Text("x")))))
+        .isLeft
+    )
+    assert(
+      Coverage.Reason
+        .merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Problem.Unclassified(Legacy.Text("x" * 501)))))
+        .isLeft
     )
     assertEquals(Coverage.Reason.list(m).map(_.citekey), List("a2019_tin", "b2020_iso"))
 
@@ -384,13 +400,13 @@ class ArticleCoverageSuite extends munit.FunSuite:
           Article.Kind.Wire("concept"),
           Article.Body("Body [[a2019_tin]]."),
           filter = Some(Article.Filter(tags = List(Filter.Tags("tin")))),
-          reasons = List(Coverage.Reason(Citekey("b2020_iso"), Problem("about Egypt")))
+          reasons = List(Coverage.Reason(Citekey("b2020_iso"), Problem.Unclassified(Legacy.Text("about Egypt"))))
         )
       )
       .toOption
       .get
     assertEquals(put.filter, Some(Article.Filter(tags = List(Filter.Tags("tin")))))
-    assertEquals(put.reasons, Map("b2020_iso" -> "about Egypt"))
+    assertEquals(put.reasons.view.mapValues(_.sentence).toMap, Map("b2020_iso" -> "about Egypt"))
     val kept = Articles
       .applyPatch(
         put,
@@ -406,14 +422,14 @@ class ArticleCoverageSuite extends munit.FunSuite:
         put,
         Article.Patch(reasons =
           List(
-            Coverage.Reason(Citekey("c2001_old"), Problem("older")),
-            Coverage.Reason(Citekey("b2020_iso"), Problem(""))
+            Coverage.Reason(Citekey("c2001_old"), Problem.Unclassified(Legacy.Text("older"))),
+            Coverage.Reason(Citekey("b2020_iso"), Problem.Unclassified(Legacy.Text("")))
           )
         )
       )
       .toOption
       .get
-    assertEquals(more.reasons, Map("c2001_old" -> "older"))
+    assertEquals(more.reasons.view.mapValues(_.sentence).toMap, Map("c2001_old" -> "older"))
     assertEquals(Articles.applyPatch(put, Article.Patch(filter = Some(Article.Filter()))).toOption.get.filter, None)
     assert(
       Articles
@@ -422,7 +438,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     assertEquals(
       Article.Put.of(more).reasons,
-      List(Coverage.Reason(Citekey("c2001_old"), Problem("older")))
+      List(Coverage.Reason(Citekey("c2001_old"), Problem.Unclassified(Legacy.Text("older"))))
     )
 
   test("an exported note sent back as a body: the generated block never enters the store"):

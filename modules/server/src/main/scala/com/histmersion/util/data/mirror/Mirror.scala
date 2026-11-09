@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.mirror
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 /** The Markdown mirror over the registered kinds: the note of one record of a registered kind, rendered by its owner.
   */
@@ -16,7 +15,7 @@ final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
     exports
       .find(_.records == records)
       .flatMap(_ => notes.find(_.records == records))
-      .toRight(Api.Error(Problem(s"no mirror notes of ${records.value} are registered")))
+      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"no mirror notes of ${records.value} are registered"))))
       .flatMap(_.note(id))
 
 object Mirror:

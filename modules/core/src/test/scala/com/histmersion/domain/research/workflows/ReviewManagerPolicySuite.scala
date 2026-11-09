@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -287,7 +288,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case other => fail(other.toString)
 
   test("failed runs back off exponentially; the max-failures-th stops the item with a task"):
-    eval(status = RunState.Failed, fs = None, error = Some(Problem("boom"))) match
+    eval(status = RunState.Failed, fs = None, error = Some(Problem.Unclassified(Legacy.Text("boom")))) match
       case Next.Retry(nb, n, note) =>
         assertEquals((nb, n), (now.plusSeconds(15 * 60), 1)); assert(note.value.contains("boom"))
       case other => fail(other.toString)
@@ -378,7 +379,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val picks = select(
       majors = List(Slug("a") -> ReviewFacts.OpenMajors(3), Slug("b") -> ReviewFacts.OpenMajors(1)),
       unreviewed = List(Slug("c"), Slug("a")),
-      stale = List(Slug("d") -> Problem("old")),
+      stale = List(Slug("d") -> Problem.Unclassified(Legacy.Text("old"))),
       batch = ReviewSettings.RefillBatch(10),
       inferFilter = ReviewSettings.InferFilter(true),
       hasFilter = Set(Slug("a"), Slug("d")),
@@ -394,7 +395,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         (ArticleReview, "d", StalePriority)
       )
     )
-    assert(picks.find(_.target == Slug("d")).get.why.value.startsWith("stale"))
+    assert(picks.find(_.target == Slug("d")).get.why.sentence.startsWith("stale"))
     // the batch counts reviews; inferFilter off adds none
     assertEquals(
       select(
@@ -412,7 +413,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
   test("staleWhy: older than N days, or its filter gained sources; 0 days = never"):
     val at = now.minus(java.time.Duration.ofDays(100))
     assertEquals(
-      staleWhy(at, now, ReviewSettings.StaleAfterDays(90), None, None),
+      staleWhy(at, now, ReviewSettings.StaleAfterDays(90), None, None).map(_.sentence),
       Some("last converged over 90 days ago")
     )
     assertEquals(
@@ -422,7 +423,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         ReviewSettings.StaleAfterDays(90),
         Some(ReviewManagerPolicy.FilterHits(4)),
         Some(ReviewManagerPolicy.FilterHits(6))
-      ),
+      ).map(_.sentence),
       Some("its filter gained 2 sources")
     )
     assertEquals(

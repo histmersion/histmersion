@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
@@ -22,7 +23,7 @@ object LibDirectory:
     if !Files.isRegularFile(f) then Right(Nil)
     else
       traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => Problem(s"$f: '$r': $e"))
+        RepositoryUrl.either(r).left.map(e => Problem.Unclassified(Legacy.Text(s"$f: '$r': $e")))
       )
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.

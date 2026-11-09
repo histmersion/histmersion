@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -115,8 +116,8 @@ class BackupSuite extends munit.FunSuite:
     assert(Backup.safeName(Backup.Name("a" * 200 + ".dump")).isLeft)
 
   test("safeName's message says what is wrong"):
-    assert(Backup.safeName(Backup.Name("../x.dump")).left.exists(_.value.contains("no directories")))
-    assert(Backup.safeName(Backup.Name("x.sql")).left.exists(_.value.contains(".dump")))
+    assert(Backup.safeName(Backup.Name("../x.dump")).left.exists(_.sentence.contains("no directories")))
+    assert(Backup.safeName(Backup.Name("x.sql")).left.exists(_.sentence.contains(".dump")))
 
   // ── JDBC URL → pg_dump arguments ─────────────────────────────────────────────────────────────
 
@@ -185,11 +186,11 @@ class BackupSuite extends munit.FunSuite:
       List(Backup.ToolOutput("pg_restore: error: could not open input file: No such file"))
     )
     assert(out.isLeft, out.toString)
-    assert(out.left.exists(_.value.contains("could not open input file")), out.toString)
-    assert(out.left.exists(_.value.contains("exit 1")), out.toString)
+    assert(out.left.exists(_.sentence.contains("could not open input file")), out.toString)
+    assert(out.left.exists(_.sentence.contains("exit 1")), out.toString)
 
   test("restoreOutcome: a failure with no output at all still says something"):
-    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists(_.value.contains("exit 2")))
+    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists(_.sentence.contains("exit 2")))
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
     val out = Backup.restoreOutcome(

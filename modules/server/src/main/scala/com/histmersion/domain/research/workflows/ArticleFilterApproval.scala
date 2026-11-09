@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.approvals.{ApprovalEffects, SubjectEffect}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
@@ -18,4 +18,4 @@ final class ArticleFilterApproval(articles: => ArticlesControllers, store: => Ar
       .toRight("the approval carries no readable filter")
       .flatMap(InferFilterPipeline.applyProposal(articles, store, _))
       .left
-      .map(Problem(_))
+      .map((text => Problem.Unclassified(Legacy.Text(text))))

@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.ocr.{ConverterClient, JatsConverter}
@@ -45,7 +46,7 @@ class PmcFetchSuite extends munit.FunSuite:
       routes
         .applyOrElse(url.value, (u: String) => Left(s"$u: offline"))
         .left
-        .map(why => Http.Failure.Transport(Problem(why)))
+        .map(why => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(why))))
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -58,7 +59,10 @@ class PmcFetchSuite extends munit.FunSuite:
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(s =>
-        io.circe.parser.parse(s.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage)))
+        io.circe.parser
+          .parse(s.value)
+          .left
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
       )
 
   private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))
@@ -94,7 +98,7 @@ class PmcFetchSuite extends munit.FunSuite:
     ).fetch(Some(doi), arxiv)
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
 
   test("Europe PMC's PDF link is a challenge page → the PMC dataset PDF, verified, provenance pmc"):
     val c = cfg
@@ -107,7 +111,7 @@ class PmcFetchSuite extends munit.FunSuite:
     )
     val got =
       fetch(c, http, Doi("10.1038/nature25778"))
-        .fold(e => fail(s"$e\n" + http.asked.map(_._1).mkString("\n")), identity)
+        .fold(e => fail(s"${e.sentence}\n" + http.asked.map(_._1).mkString("\n")), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "pdf")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6091220.1/PMC6091220.1.pdf"))
@@ -151,7 +155,10 @@ class PmcFetchSuite extends munit.FunSuite:
   test("a PDF whose MD5 does not match the record is not taken"):
     val c = cfg
     val http = FakeUpstream(c, routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf), xml = Left("gone")))
-    assertEquals(fetch(c, http, Doi("10.1038/nature25778")).map(_.source), Left("no legal open-access PDF found"))
+    assertEquals(
+      fetch(c, http, Doi("10.1038/nature25778")).map(_.source).left.map(_.sentence),
+      Left("no legal open-access PDF found")
+    )
 
   test("an author manuscript with no PDF: arXiv is tried first, then the JATS full text is the copy"):
     val c = cfg
@@ -163,7 +170,7 @@ class PmcFetchSuite extends munit.FunSuite:
       }.orElse(routes(c, "europepmc_free.json", "pmc_dataset_manuscript.json", Left("no pdf")))
     )
     val got = fetch(c, http, Doi("10.1126/science.aar7711"), arxiv = Some(ArxivId("1805.00001")))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "xml")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6748862.1/PMC6748862.1.xml"))
@@ -235,7 +242,7 @@ class PmcFetchSuite extends munit.FunSuite:
           ConverterClient.Filename("paper.xml"),
           quality = ConverterClient.HighQuality(false)
         )
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
       assert(doc.markdown.value.startsWith("# The first horse herders"), doc.markdown.value.take(200))
       assertEquals(doc.images, Nil)
       assertEquals(

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -173,13 +173,13 @@ object Europeana:
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
-        case "" => Problem("the search failed")
-        case e  => Problem(e))
+        case "" => Problem.Unclassified(Legacy.Text("the search failed"))
+        case e  => Problem.Unclassified(Legacy.Text(e)))
     else
       c.downField("items").focus.flatMap(_.asArray) match
         case Some(items)                              => Right(items.toList.map(record(_, api, licences, ex)))
         case None if c.long("totalResults").isDefined => Right(Nil)
-        case None                                     => Left(Problem("no items in the answer"))
+        case None => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
 
   /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld with that reason.
     */
@@ -190,7 +190,7 @@ object Europeana:
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.str("id").filter(_.startsWith("/")).toRight(Problem("no Europeana id")).map { id =>
+    c.str("id").filter(_.startsWith("/")).toRight(Problem.Unclassified(Legacy.Text("no Europeana id"))).map { id =>
       val title =
         values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
       val creator = values(c, Field("dcCreator")).filterNot(isUri).headOption
@@ -199,10 +199,11 @@ object Europeana:
       val media =
         values(c, Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
       val rights: Either[Problem, MediaRights] = values(c, Field("rights")).headOption match
-        case None    => Left(Problem("no rights statement on the record"))
+        case None    => Left(Problem.Unclassified(Legacy.Text("no rights statement on the record")))
         case Some(u) =>
           val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
-          if lic.family.value == Licence.Read.Unknown then Left(Problem(s"not an open licence ($u)"))
+          if lic.family.value == Licence.Read.Unknown then
+            Left(Problem.Unclassified(Legacy.Text(s"not an open licence ($u)")))
           else
             Right(
               MediaRights(
@@ -230,7 +231,7 @@ object Europeana:
         MediaItem.Title(title),
         MediaItem.PageUrl(s"https://www.europeana.eu/item$id"),
         media.map(m => MediaItem.ImageUrl(thumbnailUrl(api, Source(m), MediaRendition.Width(400)).value)),
-        rights.left.map(p => plugin.Problem(p.value)),
+        rights,
         thumbUrl = media.map(m => MediaItem.ThumbUrl(thumbnailUrl(api, Source(m), MediaRendition.Width(200)).value)),
         originalUrl = shownBy.map(MediaItem.OriginalUrl(_)),
         geography = geo,
@@ -256,7 +257,7 @@ object Europeana:
   ): Either[Problem, MediaItem] =
     val c = json.hcursor
     if c.bool("success").contains(false) then
-      Left(Problem(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ")))
+      Left(Problem.Unclassified(Legacy.Text(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": "))))
     else
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
@@ -271,8 +272,8 @@ object Europeana:
           .flatMap(values(_, Field("dcType")))
           .map(Exclusions.Types(_))
       val firstAggregation: Either[Problem, ACursor] = excludedType(types, ex) match
-        case Some(t) => Left(Problem(s"an excluded type (${t.value})"))
-        case None    => aggs.headOption.toRight(Problem("no aggregation on the record"))
+        case Some(t) => Left(Problem.Unclassified(Legacy.Text(s"an excluded type (${t.value})")))
+        case None    => aggs.headOption.toRight(Problem.Unclassified(Legacy.Text("no aggregation on the record")))
       firstAggregation.flatMap { agg =>
         val shownBy = agg.str("edmIsShownBy").orElse(values(agg, Field("edmIsShownBy")).headOption)
         val resource = agg
@@ -287,14 +288,14 @@ object Europeana:
           resource
             .flatMap(values(_, Field("webResourceEdmRights")).headOption)
             .orElse(values(agg, Field("edmRights")).headOption)
-        rec.rights.left.map(p => Problem(p.value)).flatMap { r =>
+        rec.rights.flatMap { r =>
           val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
           stated.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match
-            case None                           => Left(Problem("no licence on the full record"))
+            case None => Left(Problem.Unclassified(Legacy.Text("no licence on the full record")))
             case Some(l) if l.id != searched.id =>
-              Left(Problem(s"the full record's licence (${
+              Left(Problem.Unclassified(Legacy.Text(s"the full record's licence (${
                   if l.id.value.isEmpty then "unreadable" else l.id.value
-                }) differs from the search's (${searched.id.value})"))
+                }) differs from the search's (${searched.id.value})")))
             case Some(_) => Right(rec.copy(originalUrl = shownBy.map(MediaItem.OriginalUrl(_)).orElse(rec.originalUrl)))
         }
       }

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
 import hearth.kindlings.optics.syntax.*
@@ -100,8 +101,8 @@ private[search] object SearchRepo:
             byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
               val m = fr.toMatch
               val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-              if why.isEmpty then None else Some(m.modify(_.why).setTo(why.map(_.transformInto[api.Problem])))
+              if why.isEmpty then None else Some(m.modify(_.why).setTo(why))
             }
-        Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet).map(_.transformInto[api.Problem]))
+        Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
       }
       SearchResult.of(SearchResult.Total(total), hits.toList, UnreadPage.Offset(filter.offset.value.max(0)))

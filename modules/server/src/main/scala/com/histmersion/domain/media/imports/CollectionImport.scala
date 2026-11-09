@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite}
@@ -74,14 +75,14 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         case Some(f)            =>
           col.search(fetch, f) match
             case Left(e) =>
-              failed += s"$providerTitle search for ${t.id} (${t.label}): ${e.problem}"
+              failed += s"$providerTitle search for ${t.id} (${t.label}): ${e.problem.sentence}"
               if e.refused then
                 refused = true
                 failed += s"$providerTitle refused the request; the rest of this batch was not asked"
               None
             case Right(rs) =>
               val errors = rs.collect { case Left(e) => e }
-              errors.foreach(e => failed += s"${t.id}: ${e.problem}")
+              errors.foreach(e => failed += s"${t.id}: ${e.problem.sentence}")
               // a refusal of one of its records ends the batch too (#2561): the rest would be refused alike
               if errors.exists(_.refused) then
                 refused = true
@@ -121,7 +122,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       recs.distinctBy(_.key).map { rec =>
         val d = PluginMedia
           .refusal(rec, allow, PluginMedia.Provider(col.provider.value))
-          .map(r => Problem(r.problem.value))
+          .map(r => r.problem)
           .toLeft(())
           .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)
@@ -165,7 +166,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         )
         .sortBy(c => (-c.n.value, c.key.value)),
       byRole = MediaCount.of(kept.map(j => MediaCount.Key(roleOf(j.rec).value))),
-      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.value))),
+      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.sentence))),
       samples = samples.take(cfg.samples.value.max(0))
     )
 
@@ -191,7 +192,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       knownOf(rec).flatMap { k =>
         rec.rights match
           case _ if rec.withheld.isDefined => Some(s"${col.provider} ${rec.key} (media:${k.uid}): ${rec.withheld.get}")
-          case Left(why)                   => Some(s"${col.provider} ${rec.key} (media:${k.uid}): $why")
+          case Left(why)                   => Some(s"${col.provider} ${rec.key} (media:${k.uid}): ${why.sentence}")
           case Right(r) if !allow.allows(r.licence) =>
             Some(s"${col.provider} ${rec.key} (media:${k.uid}): licence ${r.licence.family.wire} not allowed")
           case _ => None
@@ -224,9 +225,9 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
             .complete(fetch, j.rec)
             .filterOrElse(
               _.rights.exists(r => allow.allows(r.licence)),
-              Problem("licence not allowed on the full record")
+              Problem.Unclassified(Legacy.Text("licence not allowed on the full record"))
             )
-          completed.left.map(_.value).flatMap(rec => download(rec).map(d => (rec, d))) match
+          completed.left.map(_.sentence).flatMap(rec => download(rec).map(d => (rec, d))) match
             case Left(why)                          => failed += s"${col.provider} ${j.rec.key}: $why"
             case Right((rec, (bytes, mime, thumb))) =>
               val rights = rightsOf(rec)
@@ -316,7 +317,9 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   ] =
     rec.imageUrl
       .toRight("no image")
-      .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(f => s"${f.problem}"))
+      .flatMap(u =>
+        fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(f => s"${f.problem.sentence}")
+      )
       .flatMap { (bytes, mime) =>
         if bytes.value.length.toLong > cfg.maxBytes.value then
           Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -336,7 +339,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
                 )
               case Right(_)  => None
               case Left(why) =>
-                scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem}"); None
+                scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem.sentence}");
+                None
           }
           val made = own.orElse(
             converter.thumbnail(
@@ -353,7 +357,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
                     Some(t.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_))
                   )
                 )
-              case Left(why) => scribe.info(s"media: no thumbnail for ${col.provider} ${rec.key} ($why)"); None
+              case Left(why) =>
+                scribe.info(s"media: no thumbnail for ${col.provider} ${rec.key} (${why.sentence})"); None
           )
           Right((ProviderAsset.Bytes(bytes.value), ProviderAsset.Mime(mime.value), made))
       }

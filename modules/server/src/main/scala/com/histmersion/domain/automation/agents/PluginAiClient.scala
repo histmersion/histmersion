@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.plugin.*
@@ -41,16 +42,21 @@ object PluginAiClient:
   def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Loopback): Either[Problem, LlmClient] =
     if provider.spendsPersonalPlan.value && !loopback.value then
       Left(
-        Problem(
-          s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
-            "and another client could spend it"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
+              "and another client could spend it"
+          )
         )
       )
     else
       PluginAi
         .check(provider, PluginAi.ModelName(ref.model.value))
         .left
-        .map(why => Problem(if verbatim(provider) then why.value else s"${ref.wire}: $why"))
+        .map(why =>
+          Problem.Unclassified(Legacy.Text(if verbatim(provider) then why.sentence
+          else s"${ref.wire}: ${why.sentence}"))
+        )
         .map(_ => PluginAiClient(ref, provider, http))
 
   /** Whether the provider's failures are whole descriptions ([[AiCapabilities.verbatimFailures]]); a provider whose
@@ -163,8 +169,8 @@ object PluginAiClient:
           throw new ModelLimitReached(
             model,
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
-            domain.Problem(s"${model.wire}: $m".take(300))
+            Problem.Unclassified(Legacy.Text(s"${model.wire}: ${m.sentence}".take(300)))
           )
         case Left(AiFailure.Error(m)) if caps.verbatimFailures.value =>
-          throw VerbatimFailure(domain.Problem(m.value))
-        case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))
+          throw VerbatimFailure(m)
+        case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: ${m.sentence}".take(600))

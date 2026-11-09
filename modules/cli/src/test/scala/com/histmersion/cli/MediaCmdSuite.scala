@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -116,10 +117,10 @@ class MediaCmdSuite extends munit.FunSuite:
           .modify(_.status)
           .setTo(JobInfo.Status("failed"))
           .modify(_.error)
-          .setTo(Some(Problem("interrupted")))
+          .setTo(Some(Problem.Unclassified(Legacy.Text("interrupted"))))
       )
     ) { (url, _) =>
       val (r, _, _) = run(url, "media", "import", "wikidata")
       assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-      assert(r.left.exists(_.message.value.contains("interrupted")), r.toString)
+      assert(r.left.exists(_.message.sentence.contains("interrupted")), r.toString)
     }

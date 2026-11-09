@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.OpenSide
 import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
 import com.histmersion.api.instance.Version
@@ -42,8 +44,8 @@ object PluginGazetteers:
     PolicyHttp(UserAgent, transport, log = log).plugin
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[?, A]): Either[Problem, A] =
-    PluginMedia.guard(a).left.map(e => Problem(e.value))
+  def guard[A](a: => Either[Problem, A]): Either[Problem, A] =
+    PluginMedia.guard(a)
 
   /** Every place `source` answers, each checked and converted, in its order, and the ones refused with the reason.
     * `Left` when the source answered no dataset at all (its download failed, its body was not one).
@@ -52,7 +54,7 @@ object PluginGazetteers:
     guard(source.fetch(http)).map { got =>
       val credit = guard(Right(source.rights)).toOption.flatMap(r => Option(r).flatMap(r => Option(r.credit)))
       val read = got.map(p => input(p, credit.map(c => Attribution.Credit(c.value)).getOrElse(Attribution.Credit(""))))
-      (read.collect { case Right(in) => in }, read.collect { case Left(why) => Warning(why.value) })
+      (read.collect { case Right(in) => in }, read.collect { case Left(why) => Warning(why.sentence) })
     }
 
   /** Pure: the host's place of a plugin's, or why it is refused — no id or kind, a shape or properties that are not
@@ -60,15 +62,16 @@ object PluginGazetteers:
     */
   def input(p: GazetteerPlace, credit: Attribution.Credit): Either[Problem, Place.Input] =
     try
-      if p == null then Left(Problem("a place that is null"))
+      if p == null then Left(Problem.Unclassified(Legacy.Text("a place that is null")))
       else
         val id = Option(p.id).map(_.value).getOrElse("")
-        def named(why: Problem): Problem = Problem(s"place '$id': ${why.value}")
-        if id.trim.isEmpty then Left(Problem("a place with no id"))
-        else if Option(p.kind).forall(_.value.trim.isEmpty) then Left(named(Problem("no kind")))
+        def named(why: Problem): Problem = Problem.Unclassified(Legacy.Text(s"place '$id': ${why.sentence}"))
+        if id.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text("a place with no id")))
+        else if Option(p.kind).forall(_.value.trim.isEmpty) then
+          Left(named(Problem.Unclassified(Legacy.Text("no kind"))))
         else
           for
-            label <- Option(p.label).toRight(named(Problem("no label")))
+            label <- Option(p.label).toRight(named(Problem.Unclassified(Legacy.Text("no label"))))
             geometry <- json(Option(p.geometry).flatten.map(_.value), FieldName("geometry")).left.map(named)
             properties <- json(Option(p.properties).flatten.map(_.value), FieldName("properties")).left.map(named)
             period <- span(Option(p.period).flatten, Option(p.open).flatten).left.map(named)
@@ -94,14 +97,16 @@ object PluginGazetteers:
     catch
       case NonFatal(e) =>
         Left(
-          Problem(
-            s"a place the host cannot read (${e.getClass.getSimpleName}) — is the plugin built against plugin SPI " +
-              s"${Spi.Version}?"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"a place the host cannot read (${e.getClass.getSimpleName}) — is the plugin built against plugin SPI " +
+                s"${Spi.Version}?"
+            )
           )
         )
 
   private def name(n: GazetteerName): Either[Problem, Place.Name] =
-    if n == null || Option(n.name).isEmpty then Left(Problem("a name that is null"))
+    if n == null || Option(n.name).isEmpty then Left(Problem.Unclassified(Legacy.Text("a name that is null")))
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
         Place.Name(
@@ -113,11 +118,11 @@ object PluginGazetteers:
       )
 
   private def relation(r: GazetteerRelation): Either[Problem, Place.Relation] =
-    if r == null then Left(Problem("a relation that is null"))
+    if r == null then Left(Problem.Unclassified(Legacy.Text("a relation that is null")))
     else if Option(r.childId).forall(_.value.trim.isEmpty) || Option(r.parentId).forall(_.value.trim.isEmpty) then
-      Left(Problem("a relation without both its places"))
+      Left(Problem.Unclassified(Legacy.Text("a relation without both its places")))
     else if Option(r.kind).forall(_.value.trim.isEmpty) then
-      Left(Problem(s"the relation to '${r.parentId.value}' has no kind"))
+      Left(Problem.Unclassified(Legacy.Text(s"the relation to '${r.parentId.value}' has no kind")))
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>
         Place.Relation(
@@ -137,9 +142,9 @@ object PluginGazetteers:
       open: Option[GazetteerOpenSide]
   ): Either[Problem, (Option[ApiPeriod], Option[OpenSide])] =
     for
-      p <- SpiValues.optional(period)(SpiValues.periodOf).left.map(e => Problem(e.value))
+      p <- SpiValues.optional(period)(SpiValues.periodOf)
       side <- (p, open) match
-        case (None, Some(_)) => Left(Problem("an open side without a period"))
+        case (None, Some(_)) => Left(Problem.Unclassified(Legacy.Text("an open side without a period")))
         case _               => Right(open.map(openSide))
     yield (
       p.map(v =>
@@ -162,7 +167,7 @@ object PluginGazetteers:
       case Some(t) =>
         io.circe.parser.parse(t) match
           case Right(j) if j.isObject => Right(Some(t))
-          case _                      => Left(Problem(s"its ${what.value} is not a JSON object"))
+          case _ => Left(Problem.Unclassified(Legacy.Text(s"its ${what.value} is not a JSON object")))
 
   /** Every element converted, or the first refusal. */
   private def all[A, B](as: List[A])(f: A => Either[Problem, B]): Either[Problem, List[B]] =

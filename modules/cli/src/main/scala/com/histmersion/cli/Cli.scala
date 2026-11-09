@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.library.Tree
 
 import com.histmersion.api.library.SearchMarkdown
@@ -168,7 +169,8 @@ object Cli:
                 else
                   Notes.figures(f, Citekey(ck), FigureBytes, FigureCount) match
                     case Nil => None
-                    case fs  => c.putAssets(Citekey(ck), fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
+                    case fs  =>
+                      c.putAssets(Citekey(ck), fs).left.toOption.map(e => s"$ck (figures): ${e.message.sentence}")
               loop(
                 tail,
                 number + 1,
@@ -176,7 +178,7 @@ object Cli:
                 failed ++ r.failed.map(_.value) ++ figureFailure,
                 skipped ++ r.skipped.map(_.value)
               )
-            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message}", skipped)
+            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message.sentence}", skipped)
     val acc = loop(files, 1, 0, Nil, Nil)
     val done =
       c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(SeedResult.EdgesResolved(e.resolved.value))))
@@ -194,7 +196,8 @@ object Cli:
     Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
       Opts.argument[String]("file.md").map { file => (c: Client) =>
         val p = Path.of(file)
-        if !Files.isRegularFile(p) then Left(Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(p) then
+          Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
         else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
       }
@@ -227,7 +230,7 @@ object Cli:
                 text.value
               )
               None
-            case Left(e) => Some(s"$ck: ${e.message}")
+            case Left(e) => Some(s"$ck: ${e.message.sentence}")
         }
         Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
         // a renamed source's note would otherwise linger under its OLD citekey — and a later
@@ -246,7 +249,7 @@ object Cli:
           if failed.nonEmpty then
             Left(
               Error(
-                Problem(s"${failed.size} of $total source(s) could not be exported"),
+                Problem.Unclassified(Legacy.Text(s"${failed.size} of $total source(s) could not be exported")),
                 exitCode = ExitCode.Refused
               )
             )
@@ -266,7 +269,7 @@ object Cli:
     */
   private def pruneRenamed(c: Client, sources: Path)(using console: Console): Unit =
     c.sourceAliases match
-      case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.message}")
+      case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.message.sentence}")
       case Right(as) =>
         val (failed, removed) = RenameCmd.pruneRenamed(sources, as).partitionMap(identity)
         failed.foreach(f => err.println(s"  ! $f"))
@@ -405,7 +408,10 @@ object Cli:
           Tree.parseBy(by) match
             case None =>
               Left(
-                Error(Problem(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
+                Error(
+                  Problem.Unclassified(Legacy.Text(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})")),
+                  exitCode = ExitCode.Usage
+                )
               )
             case Some(axes) =>
               c.aggregate(
@@ -490,7 +496,9 @@ object Cli:
           if json.value then
             Left(
               Error(
-                Problem("--json prints the whole record; drop --section/--heading/--offset/--chars"),
+                Problem.Unclassified(
+                  Legacy.Text("--json prints the whole record; drop --section/--heading/--offset/--chars")
+                ),
                 exitCode = ExitCode.Usage
               )
             )
@@ -602,7 +610,7 @@ object Cli:
                   .left
                   .map(m =>
                     Error(
-                      Problem(s"server returned an odd file name: $m"),
+                      Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}")),
                       exitCode = ExitCode.Refused
                     )
                   )
@@ -633,7 +641,7 @@ object Cli:
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
-      then Left(Error(Problem("aborted"), exitCode = ExitCode.Usage))
+      then Left(Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage))
       else
         c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
           .map(r => out.println(Markdown.restored(r)))
@@ -772,7 +780,7 @@ object Cli:
         run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
           case Right(())                     => ()
           case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
-          case Left(e)                       => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
+          case Left(e)                       => err.println(s"error: ${e.message.sentence}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(

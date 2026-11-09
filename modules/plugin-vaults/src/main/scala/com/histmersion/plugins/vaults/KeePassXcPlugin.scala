@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -20,7 +20,7 @@ final class KeePassXcPlugin extends Plugin:
   def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
-    def failed(why: String) = Problem(why)
+    def failed(why: String) = Problem.Unclassified(Legacy.Text(why))
     val home = ctx.env(EnvVar.Name("HOME"))
     for
       db <- Option(c.database.value)
@@ -36,13 +36,13 @@ final class KeePassXcPlugin extends Plugin:
       exe <- Subprocess
         .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
         .left
-        .map(e => failed(e.value))
+        .map(e => failed(e.legacyText))
       yks <- YubiKey
         .parseAll(c.yubikey.fold[List[YubiKey.Setting.Entries]](Nil)(_.entries))
         .left
-        .map(e => failed(e.value))
+        .map(e => failed(e.legacyText))
       det <- if yks.isEmpty then Right(None) else detector(c.ykman, ctx)
-      pw <- Vaults.optional(c.password, ctx).left.map(e => failed(e.value))
+      pw <- Vaults.optional(c.password, ctx).left.map(e => failed(e.legacyText))
       _ <- ctx.secretVaults
         .add(
           Registry.AddId(info.id.value),
@@ -61,7 +61,7 @@ final class KeePassXcPlugin extends Plugin:
           )
         )
         .left
-        .map(e => failed(e.value))
+        .map(e => failed(e.legacyText))
     yield ()
 
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
@@ -89,4 +89,4 @@ final class KeePassXcPlugin extends Plugin:
             )
           )
           Right(None)
-        case Left(e) => Left(Problem(s"ykman: ${e.value}"))
+        case Left(e) => Left(Problem.Unclassified(Legacy.Text(s"ykman: ${e.legacyText}")))

@@ -505,8 +505,17 @@ object Problem:
 
   object Internal:
 
-    /** `exception` was thrown at `where`; `reported` is its message. */
-    final case class Unexpected(where: Where, exception: ExceptionName, reported: External.Reported) extends Internal
+    /** `exception` was thrown at `where`; `reported` is its message. The exception is logged under `id`, which the
+      * answer names so the log line can be found.
+      */
+    final case class Unexpected(id: Id, where: Where, exception: ExceptionName, reported: External.Reported)
+        extends Internal
+
+    /** A problem's id: the key under which the log holds the exception, named in the answer. */
+    type Id = Id.T
+    object Id extends Newtype[String, Pure]:
+      /** A new id: the first eight hexadecimal digits of a random UUID, enough to find one line in a day's log. */
+      def mint(): Id = Id(s"${java.util.UUID.randomUUID()}".take(8))
 
     /** The class of an exception, by its full name. */
     type ExceptionName = ExceptionName.T
@@ -519,6 +528,12 @@ object Problem:
     * every construction site over writes it; each later change replaces some with their cases, until none is left.
     */
   final case class Unclassified(text: Legacy.Text) extends Problem
+
+  object Unclassified:
+    /** TEMPORARY (G60 step 1, counted by `G60fromString`): an exception's message as an unclassified problem, as the
+      * values module's String `Problem.of` read it; its slice turns the site into [[Problem.from]].
+      */
+    def of(thrown: Throwable): Unclassified = Unclassified(Legacy.Text.of(thrown))
 
   /** What a stored column held. */
   sealed trait Stored extends Problem
@@ -536,9 +551,9 @@ object Problem:
 
   // ---- the operations -----------------------------------------------------------------------------------------
 
-  /** An exception met at `where`, as a problem: its class and its message, captured once, here. */
-  def from(thrown: Throwable, where: Where): Problem =
-    Internal.Unexpected(where, Internal.ExceptionName.of(thrown), External.Reported.of(thrown))
+  /** An exception met at `where`, as a problem under the id `id`: its class and its message, captured once, here. */
+  def from(thrown: Throwable, where: Where, id: Internal.Id): Problem =
+    Internal.Unexpected(id, where, Internal.ExceptionName.of(thrown), External.Reported.of(thrown))
 
   extension (problem: Problem)
     /** The group the case belongs to. */
@@ -556,6 +571,16 @@ object Problem:
       case _: Internal     => Group.Internal
       case _: Unclassified => Group.Unclassified
       case _: Stored       => Group.Stored
+
+    /** TEMPORARY (G60 step 1, counted by `G60fromString`): the words of an [[Unclassified]] problem as its site wrote
+      * them, for the modules that cannot see the api's renderer `api.problem.Text` (plugin-api, upstreams, the plugins,
+      * plugin-vaults, plugin-resolver, values, config). Every problem those modules meet is unclassified until their
+      * slice moves them to cases and renders them at an edge; any other case shows as Scala prints it. Goes with
+      * `Unclassified`.
+      */
+    def legacyText: String = problem match
+      case Unclassified(text) => s"$text"
+      case other              => s"$other"
 
     /** Is it a missing entity? */
     def isNotFound: Boolean = problem match
@@ -663,6 +688,7 @@ object Problem:
       Content.Finding(Content.Flaw.UncitedParagraph),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
       Internal.Unexpected(
+        Internal.Id("3f2a9c1e"),
         Where("backup"),
         Internal.ExceptionName("java.lang.IllegalStateException"),
         External.Reported("java.lang.IllegalStateException: pg_dump vanished")

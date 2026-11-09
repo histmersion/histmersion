@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
 import com.histmersion.api.automation.Goal.Plans.*
@@ -132,9 +133,9 @@ object GoalsView:
     val t = title.value.trim
     val s = Option(slug.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)).getOrElse(slugify(Goal.Title(t)))
     val cap = perDay.value.trim
-    if t.isEmpty then Left(Problem("a research area needs a title"))
+    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text("a research area needs a title")))
     else if watch.value && autoIngest.value && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
-      Left(Problem("ingests a day: a whole number"))
+      Left(Problem.Unclassified(Legacy.Text("ingests a day: a whole number")))
     else
       val ok = s
       val w = Option.when(watch.value)(
@@ -270,7 +271,7 @@ object GoalsView:
         Managers.ManagerConfig.AutoIngest(ingest.now()),
         PerDay(perDay.now())
       ) match
-        case Left(m)  => msg.set(Some(Left(m.value)))
+        case Left(m)  => msg.set(Some(Left(m.sentence)))
         case Right(a) =>
           busy.set(true)
           val created =

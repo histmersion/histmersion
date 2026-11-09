@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -74,15 +76,15 @@ class CompareRunsSuite extends munit.FunSuite:
 
   test("refused: fewer than two runs, a run twice, two pipelines, two targets"):
     val a = run(RunHead.Id("a"), RunHead.Pipeline("enrich-source"), RunHead.Target("x2020"), Nil)
-    assert(compare(List(a)).left.exists(_.value.contains("at least two")))
-    assert(compare(List(a, a)).left.exists(_.value.contains("twice")))
+    assert(compare(List(a)).left.exists(_.sentence.contains("at least two")))
+    assert(compare(List(a, a)).left.exists(_.sentence.contains("twice")))
     assert(
       compare(List(a, run(RunHead.Id("b"), RunHead.Pipeline("review-article"), RunHead.Target("x2020"), Nil))).left
-        .exists(_.value.contains("one pipeline"))
+        .exists(_.sentence.contains("one pipeline"))
     )
     assert(
       compare(List(a, run(RunHead.Id("b"), RunHead.Pipeline("enrich-source"), RunHead.Target("y2021"), Nil))).left
-        .exists(_.value.contains("one target"))
+        .exists(_.sentence.contains("one target"))
     )
 
   test("the step union keeps each run's order; a run with more windows or rounds slots its extra steps in"):
@@ -118,7 +120,7 @@ class CompareRunsSuite extends munit.FunSuite:
           model = Some(Step.Model("claude-code:haiku")),
           actual = Some(Step.ActualModel("claude-haiku-5-5")),
           usage = Tokens(Tokens.Input(10), Tokens.Output(2)),
-          error = Some(Problem("bad"))
+          error = Some(Problem.Unclassified(Legacy.Text("bad")))
         ),
         step(
           3,
@@ -156,14 +158,14 @@ class CompareRunsSuite extends munit.FunSuite:
       Step.Name("classify"),
       Step.Status("failed"),
       model = Some(Step.Model("claude-code:haiku")),
-      error = Some(Problem("bad"))
+      error = Some(Problem.Unclassified(Legacy.Text("bad")))
     )
     val a1 = step(
       3,
       Step.Name("classify"),
       Step.Status("failed"),
       model = Some(Step.Model("claude-code:haiku")),
-      error = Some(Problem("bad")),
+      error = Some(Problem.Unclassified(Legacy.Text("bad"))),
       attempt = 2
     )
       .modify(_.firstCallTokens)
@@ -228,7 +230,11 @@ class CompareRunsSuite extends munit.FunSuite:
         Step.Status("failed"),
         output = Some(Step.Output(rejected)),
         model = Some(Step.Model("m")),
-        error = Some(Problem("finding 2 (b): the quote is not in the text (best match 0.40) — copy it exactly"))
+        error = Some(
+          Problem.Unclassified(
+            Legacy.Text("finding 2 (b): the quote is not in the text (best match 0.40) — copy it exactly")
+          )
+        )
       ),
       step(
         4,
@@ -279,7 +285,7 @@ class CompareRunsSuite extends munit.FunSuite:
         Step.Status("failed"),
         output = None,
         model = Some(Step.Model("m")),
-        error = Some(Problem("the answer is not the JSON"))
+        error = Some(Problem.Unclassified(Legacy.Text("the answer is not the JSON")))
       )
     )
     assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
@@ -371,7 +377,7 @@ class CompareRunsSuite extends munit.FunSuite:
       Nil,
       "N."
     )
-    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.sentence), identity)
     assertEquals(
       cmp.enrich,
       List(
@@ -422,7 +428,7 @@ class CompareRunsSuite extends munit.FunSuite:
       List(step(1, Step.Name("load"))),
       status = RunHead.Status("paused")
     )
-    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.sentence), identity)
     assertEquals(cmp.notes, List("run bbbbbbbb is paused, not done: its outputs are what it had so far"))
     assertEquals(
       cmp.steps,
@@ -599,7 +605,7 @@ class CompareRunsSuite extends munit.FunSuite:
       List(Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1b)))
     )
-    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.sentence), identity)
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("PASS"), 2), (Some("MAJOR"), 1)))
     assertEquals(
       cmp.review.head.reviewers.map(r => (r.reviewer, r.verdict, r.majors, r.minors)),

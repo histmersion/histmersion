@@ -26,7 +26,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
       stubs: Map[HttpTransport.Url, StubAnswer] = Map.empty,
       config: String = ""
   ) =
-    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.value), identity)
+    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.legacyText), identity)
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its catalogue"):
     List("events-gvp" -> "gvp", "events-noaa" -> "noaa", "events-wikidata" -> "wikidata").foreach { (id, catalogue) =>
@@ -44,7 +44,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
         http = HttpMode.Offline,
         env = Map.empty
       )
-    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
 
   test("events-gvp: a window of years at the host's endpoint, each record checked and dated as the server stores it"):
     val url = GvpCatalogue.url(
@@ -89,7 +89,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
         ),
         env = Map("HISTMERSION_EVENTS_GVP_URL" -> "https://gvp.example/ows")
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     val r = h.readCatalogue(Registries.EventCataloguesKey("gvp"), CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.requests, List(s"GET $url"))
     assertEquals(r.accepted.size, 3)
@@ -111,7 +111,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
         http = HttpMode.Offline,
         env = Map("HISTMERSION_EVENTS_WIKIDATA_CLASSES" -> "Q188055:siege")
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(
       wd.readCatalogue(Registries.EventCataloguesKey("wikidata"), CatalogueQuery(None, Year(-2000))).parts,
       List("class:Q188055")

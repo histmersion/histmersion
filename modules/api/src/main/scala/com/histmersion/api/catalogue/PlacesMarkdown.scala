@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.YearFmt
 
@@ -124,7 +125,7 @@ object PlacesMarkdown:
             yield s", point ${Place.Overrides.pointText(la, lo)}").getOrElse(", no point")
           val src = s"${r.sourceKind}, ${Place.Overrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt"
           s"- **${r.label}** `${r.placeId}`: ${set.mkString(", ")} _(the source says: $src)_" +
-            r.reason.fold("")(w => s" — $w")
+            r.reason.fold("")(w => s" — ${w.sentence}")
         }
         .mkString("\n")
 

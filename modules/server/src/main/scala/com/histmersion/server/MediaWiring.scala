@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.library.sources.{SourceMedia, SourceService}
 import com.histmersion.domain.media.{MediaJobs, MediaSources}
 import com.histmersion.domain.media.assets.{AssetsControllers, AssetService, IiifControllers, MediaMapLayer}
@@ -94,7 +94,7 @@ object MediaWiring:
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] =
-      Left(Problem("no converter"))
+      Left(Problem.Unclassified(Legacy.Text("no converter")))
     def health: Either[Problem, ConverterClient.HealthSummary] = Left(
-      Problem("no converter")
+      Problem.Unclassified(Legacy.Text("no converter"))
     )

@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import coursierapi.{Cache, Fetch, Logger, MavenRepository, Module, Repository, ResolutionParams, Version}
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -29,7 +30,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
       .withResolutionParams(params)
       .withCache(cache.foldLeft(Cache.create().withLogger(Logger.nop()))((c, dir) => c.withLocation(dir.toFile)))
     Try(fetch.fetchResult()).toEither.left
-      .map(e => Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+      .map(e => Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
       .flatMap { result =>
         val jars = result.getArtifacts.asScala.toList.map(e => e.getKey.getUrl -> e.getValue.toPath)
         traverse(result.getDependencies.asScala.toList) { d =>
@@ -67,11 +68,19 @@ object Coursier:
       plugins: List[PluginArtifact]
   ): Either[Problem, List[(PluginArtifact, ModuleCoordinates)]] =
     traverse(plugins.flatMap(p => p.pom.map(p -> _))) { (plugin, pom) =>
-      Pom.coordinates(pom).left.map(e => Problem(s"${plugin.fileName}: its POM: $e")).map { c =>
-        val jar = dir.resolve((jarPath(c)).value.drop(1))
-        Files.createDirectories(jar.getParent)
-        Files.copy(plugin.jar, jar, StandardCopyOption.REPLACE_EXISTING)
-        Files.writeString(jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom"), (pom).value, UTF_8)
-        plugin -> c
-      }
+      Pom
+        .coordinates(pom)
+        .left
+        .map(e => Problem.Unclassified(Legacy.Text(s"${plugin.fileName}: its POM: ${e.legacyText}")))
+        .map { c =>
+          val jar = dir.resolve((jarPath(c)).value.drop(1))
+          Files.createDirectories(jar.getParent)
+          Files.copy(plugin.jar, jar, StandardCopyOption.REPLACE_EXISTING)
+          Files.writeString(
+            jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom"),
+            (pom).value,
+            UTF_8
+          )
+          plugin -> c
+        }
     }

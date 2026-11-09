@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.Source
 import io.github.iltotore.iron.constraint.any.Pure

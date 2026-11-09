@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -84,15 +85,15 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val byRight = RegisteredPlanMatches.kind.all(p.sources).map(m => m.rightCitekey -> m).toMap
     assertEquals(byRight(Citekey("kuhrt1995_near")).method, MatchMethod.StrongKey)
     assert(
-      byRight(Citekey("kuhrt1995_near")).why.exists(_.value.contains("sha256")),
+      byRight(Citekey("kuhrt1995_near")).why.exists(_.sentence.contains("sha256")),
       byRight(Citekey("kuhrt1995_near")).why.toString
     )
     assertEquals(byRight(Citekey("bryce2005_kingdom")).leftCitekey, Some("bryce2005_kingdom_hittites"))
     assertEquals(byRight(Citekey("guterbock1997_perspectives")).outcome, MatchOutcome.AutoMerge)
     assertEquals(byRight(Citekey("guterbock1997_perspectives")).leftCitekey, Some("guterbock1997_hittite"))
-    assert(!byRight(Citekey("guterbock1997_perspectives")).why.exists(_.value.toLowerCase.contains("doi")))
+    assert(!byRight(Citekey("guterbock1997_perspectives")).why.exists(_.sentence.toLowerCase.contains("doi")))
     assertEquals(byRight(Citekey("latacz2023_troy")).leftCitekey, Some("latacz2004_troy"))
-    assert(byRight(Citekey("latacz2023_troy")).why.exists(_.value.contains("old citekey")))
+    assert(byRight(Citekey("latacz2023_troy")).why.exists(_.sentence.contains("old citekey")))
     assertEquals(byRight(Citekey("harrison1903_prolegomena")).leftCitekey, Some("harrison1903_prolegomena_greek"))
     assertEquals(byRight(Citekey("olsen2015_penelope")).outcome, MatchOutcome.AutoMerge)
     assertEquals(byRight(Citekey("page2024_history")).outcome, MatchOutcome.NeedsDecision)
@@ -377,10 +378,10 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       MergeResolutionsFile.Text("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n")
     )
     val es = bad.left.getOrElse(fail("parsed"))
-    assert(es.exists(_.value.contains("unknown key 'bundel'")), es.toString)
-    assert(es.exists(_.value.contains("'sometimes' is not merge or separate")))
-    assert(es.exists(_.value.contains("policy: unknown key 'colour'")))
-    assert(es.exists(_.value.contains("resolve: expected a map")))
+    assert(es.exists(_.sentence.contains("unknown key 'bundel'")), es.toString)
+    assert(es.exists(_.sentence.contains("'sometimes' is not merge or separate")))
+    assert(es.exists(_.sentence.contains("policy: unknown key 'colour'")))
+    assert(es.exists(_.sentence.contains("resolve: expected a map")))
     assertEquals(MergeResolutionsFile.parse(MergeResolutionsFile.Text("")), Right(MergeResolutions()))
     assertEquals(
       MergeResolutionsFile.flag(MergeResolutions.Text.Flag("S-12345678=keep-left")),

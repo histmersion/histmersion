@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -129,7 +130,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     @volatile var probeOut: List[String] = Nil
     @volatile var probeArgs: List[String] = Nil
     @volatile var auth: String = """{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}"""
-    @volatile var codex: Either[Problem, io.circe.Json] = Left(Problem("no app-server here"))
+    @volatile var codex: Either[Problem, io.circe.Json] = Left(Problem.Unclassified(Legacy.Text("no app-server here")))
     @volatile var hold: Option[(CountDownLatch, CountDownLatch)] = None
     def seams: PlanPools.Seams = PlanPools.Seams(
       (_, _, _) => { codexReads.incrementAndGet(); codex },
@@ -173,7 +174,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}")),
+        (_, ref) => clients.get(ref).toRight(Problem.Unclassified(Legacy.Text(s"no scripted client for ${ref.wire}"))),
         CliRuntime(cfg, EngineContributions.roster),
         reads.seams
       ),
@@ -232,7 +233,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), CkTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -288,7 +289,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val run = startAndRun(a)
-    assert(run.status.value == "paused" && run.error.exists(_.value.startsWith("plan-quota:")), run.error)
+    assert(run.status.value == "paused" && run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
     connect(ds)(sql"UPDATE plan_quota_readings SET observed_at = now() - interval '1 hour'".update.run())
     assert(a.picker.pick(Role.Extractor, None).isLeft)
@@ -301,7 +302,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     staleReading()
     val run = startAndRun(a)
     assertEquals(run.status, "paused", run.error)
-    assert(run.error.exists(e => e.value.startsWith("plan-quota:") && e.value.contains("stale")), run.error)
+    assert(run.error.exists(e => e.sentence.startsWith("plan-quota:") && e.sentence.contains("stale")), run.error)
     assert(
       run.resumeAt.exists(_.value > java.time.Instant.now().plusSeconds(3600).toString),
       s"it waits for the reset: ${run.resumeAt}"
@@ -387,8 +388,14 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         when: java.time.Instant = at
     ) =
       a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn, wanted, when)
-    assertEquals(onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)), Left("the autopilot is off"))
-    assertEquals(onSchedule(wanted = PlanReadSchedule.Wanted(false)), Left("no queued work wants the pool"))
+    assertEquals(
+      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)).left.map(_.sentence),
+      Left("the autopilot is off")
+    )
+    assertEquals(
+      onSchedule(wanted = PlanReadSchedule.Wanted(false)).left.map(_.sentence),
+      Left("no queued work wants the pool")
+    )
     assertEquals(reads.probes.get(), 0)
     assertEquals(onSchedule().map(_.ok), Right(true))
     assertEquals(reads.probes.get(), 1)
@@ -399,7 +406,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       pool.refresh.exists(_.value.contains("every 180 min while the autopilot has queued work for it")),
       pool.refresh
     )
-    assert(onSchedule(when = at.plusSeconds(179 * 60)).left.exists(_.value.startsWith("read 179 min ago")))
+    assert(onSchedule(when = at.plusSeconds(179 * 60)).left.exists(_.sentence.startsWith("read 179 min ago")))
     assertEquals(onSchedule(when = at.plusSeconds(181 * 60)).map(_.ok), Right(true))
     assertEquals(reads.probes.get(), 2)
     // a reading a run recorded since counts like the schedule's own
@@ -419,7 +426,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    assert(onSchedule(when = at.plusSeconds(330 * 60)).left.exists(_.value.startsWith("read 30 min ago")))
+    assert(onSchedule(when = at.plusSeconds(330 * 60)).left.exists(_.sentence.startsWith("read 30 min ago")))
     assertEquals(reads.probes.get(), 2)
 
   test(
@@ -437,7 +444,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           java.time.Instant.now()
         )
         .left
-        .exists(_.value.startsWith("no login"))
+        .exists(_.sentence.startsWith("no login"))
     )
     val off = baseCfg
       .modify(_.agents)
@@ -452,12 +459,15 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       )
     val (b, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), Reads(), off)
     assertEquals(
-      b.pools.refreshOnSchedule(
-        PoolId.ClaudePlan,
-        autopilotOn = PlanReadSchedule.AutopilotOn(true),
-        wanted = PlanReadSchedule.Wanted(true),
-        java.time.Instant.now()
-      ),
+      b.pools
+        .refreshOnSchedule(
+          PoolId.ClaudePlan,
+          autopilotOn = PlanReadSchedule.AutopilotOn(true),
+          wanted = PlanReadSchedule.Wanted(true),
+          java.time.Instant.now()
+        )
+        .left
+        .map(_.sentence),
       Left("the schedule is off")
     )
     val reads3 = Reads(); reads3.probeOut = List(event(20, 30), Result)
@@ -499,7 +509,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       a.picker.cool(Plan, Some(java.time.Instant.ofEpochMilli(since + 6 * 86400000L)), PlanQuotaRepo.EpochMillis(since))
     val head = a.models.chains.find(_.role.value == "extractor").get.models.head
     assert(
-      !head.usable.value && head.cooling.value && head.problem.exists(_.value.contains(ModelPicker.CoolingWhy)),
+      !head.usable.value && head.cooling.value && head.problem.exists(_.sentence.contains(ModelPicker.CoolingWhy)),
       head
     )
     val listed = AgentsMarkdown.roleChain(a.models.chains.find(_.role.value == "extractor").get)
@@ -531,7 +541,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     Thread.sleep(5)
     val refreshed = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(refreshed.lifted.map(_.value: String), List(Plan.wire.value: String))
     assert(AgentsMarkdown.refreshed(refreshed).contains("Back in use"), AgentsMarkdown.refreshed(refreshed))
     assertEquals(a.quota.cooldowns, Nil)
@@ -569,20 +579,20 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       )
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan)), reads, only)
     a.picker.pick(Role.Extractor, None) match
-      case Left(PickFailure.Unavailable(m)) => assert(m.value.contains("unavailable: no login"), m)
+      case Left(PickFailure.Unavailable(m)) => assert(m.sentence.contains("unavailable: no login"), m)
       case other                            => fail(s"not unavailable: $other")
     assertEquals(reads.probes.get(), 0)
     val pool = a.quota.plans.find(_.pool.value == "claude-plan").get
     assert(
-      !pool.available.value && !pool.usable.value && pool.reason.exists(_.value.startsWith("unavailable: no login")),
+      !pool.available.value && !pool.usable.value && pool.reason.exists(_.sentence.startsWith("unavailable: no login")),
       pool
     )
     assert(AgentsMarkdown.pool(pool).contains("**unavailable: no login"), AgentsMarkdown.pool(pool))
     val entry = a.models.chains.find(_.role.value == "extractor").get.models.head
-    assert(!entry.usable.value && entry.problem.exists(_.value.contains("no login")), entry)
+    assert(!entry.usable.value && entry.problem.exists(_.sentence.contains("no login")), entry)
     val forced = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assert(!forced.pools.head.refreshed.value && forced.pools.head.detail.value.contains("no login"), forced)
     assertEquals(reads.probes.get(), 0)
     // logged in with an API key where the plan is wanted is no plan login either
@@ -597,7 +607,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       |"resetsAt":${(now() + 3600000L) / 1000}},"secondary":{"usedPercent":10,"windowDurationMins":10080,"resetsAt":${(now() + 86400000L) / 1000}},
       |"planType":"plus","rateLimitReachedType":null}}""".stripMargin)
       .left
-      .map(e => Problem(e.getMessage))
+      .map(e => Problem.Unclassified(Legacy.Text(e.getMessage)))
     // the polling every poll-seconds never comes around in this test: only the refresh reads
     val cfg = baseCfg.agents
       .modify(_.quota)
@@ -629,7 +639,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assert(
       pools
         .unavailable(ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5")))
-        .exists(_.value.contains("codex login"))
+        .exists(_.sentence.contains("codex login"))
     )
     assertEquals(pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)._3, None)
     assertEquals(reads.codexReads.get(), 0)

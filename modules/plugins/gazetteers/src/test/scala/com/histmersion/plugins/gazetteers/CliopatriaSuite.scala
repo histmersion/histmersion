@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -126,7 +126,7 @@ class CliopatriaSuite extends munit.FunSuite:
   test("the gazetteer-cliopatria plugin registers the source cliopatria"):
     val h = PluginHarness
       .load(Plugin.Info.Id("gazetteer-cliopatria"), http = HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(h.gazetteerSources, List("cliopatria"))
 
   // the host's runner names no source: the parents come with the slices, first, as the runner stored them before
@@ -145,14 +145,14 @@ class CliopatriaSuite extends munit.FunSuite:
     val asked = scala.collection.mutable.ListBuffer.empty[Plugin.Http.Url]
     val http = new Plugin.Http:
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Plugin.Http.Failure.Transport(Problem("get is not used")))
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("get is not used"))))
       override def fetch(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]
       ) =
         asked += url
         Right(Plugin.HttpResponse(Plugin.HttpResponse.Status(200), Map.empty, Plugin.HttpResponse.Body(zip)))
-    val all = Cliopatria.fetch(http).fold(e => fail(e.value), identity)
+    val all = Cliopatria.fetch(http).fold(e => fail(e.legacyText), identity)
     assertEquals(asked.toList, List(Cliopatria.url))
     assertEquals(
       all.map(_.id),
@@ -167,14 +167,17 @@ class CliopatriaSuite extends munit.FunSuite:
   test("an error answer, a zip without a usable file: the download says which"):
     def answering(status: Plugin.HttpResponse.Status, body: Plugin.HttpResponse.Body) = new Plugin.Http:
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Plugin.Http.Failure.Transport(Problem("get is not used")))
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("get is not used"))))
       override def fetch(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]
       ) =
         Right(Plugin.HttpResponse(status, Map.empty, body))
     assertEquals(
-      Cliopatria.fetch(answering(Plugin.HttpResponse.Status(404), Plugin.HttpResponse.Body(Array.emptyByteArray))),
+      Cliopatria
+        .fetch(answering(Plugin.HttpResponse.Status(404), Plugin.HttpResponse.Body(Array.emptyByteArray)))
+        .left
+        .map(_.legacyText),
       Left(s"HTTP 404 from ${Cliopatria.url}")
     )
     val empty =
@@ -185,7 +188,10 @@ class CliopatriaSuite extends munit.FunSuite:
       z.close()
       out.toByteArray
     assertEquals(
-      Cliopatria.fetch(answering(Plugin.HttpResponse.Status(200), Plugin.HttpResponse.Body(empty))),
+      Cliopatria
+        .fetch(answering(Plugin.HttpResponse.Status(200), Plugin.HttpResponse.Body(empty)))
+        .left
+        .map(_.legacyText),
       Left("zip contains no usable file")
     )
 

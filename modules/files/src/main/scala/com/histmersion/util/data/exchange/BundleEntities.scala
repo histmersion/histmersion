@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.api.given
@@ -198,7 +199,7 @@ object BundleEntities:
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
         BundleFormat.decodeLine[A](l, stamped) match
           case Right(a) => Some(a)
-          case Left(e)  => problems += s"$path:${i + 1}: $e"; None
+          case Left(e)  => problems += s"$path:${i + 1}: ${e.sentence}"; None
       }
     val es = BundleEntities(
       sources = read[Bundle.Source](Bundle.Kind.Source.file, true),

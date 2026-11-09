@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.util.data.exchange.BundleImport
@@ -59,9 +60,9 @@ object CarriedKinds:
     Either.cond(
       problems.isEmpty,
       new CarriedKinds(kinds.sortBy(k => Bundle.Files.all.indexOf(k.entry.value))),
-      problems.map(Problem(_))
+      problems.map((text => Problem.Unclassified(Legacy.Text(text))))
     )
 
   /** The registry's kinds; an inconsistent registry is a programming error, found at start. */
   def apply(kinds: List[CarriedKind]): CarriedKinds =
-    of(kinds).fold(ps => throw IllegalStateException(ps.mkString("; ")), identity)
+    of(kinds).fold(ps => throw IllegalStateException(ps.map(_.sentence).mkString("; ")), identity)

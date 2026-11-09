@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit.kit
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
@@ -22,8 +23,6 @@ final class KitFetcherPlugin extends Plugin:
   def register(c: KitFetcherConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     c.token
       .fold[Either[Problem, Option[Secret.Resolved]]](Right(None))(t => ctx.secret(t).map(Some(_)))
-      .left
-      .map(e => Problem(e.value))
       .flatMap { key =>
         ctx.sourceFetchers
           .add(
@@ -32,7 +31,7 @@ final class KitFetcherPlugin extends Plugin:
               val access = Access.Open
               def fetch(work: WorkKey, fc: Fetch.Context): Fetch =
                 work.doi match
-                  case None      => Fetch.Miss(Problem("no DOI"))
+                  case None      => Fetch.Miss(Problem.Unclassified(Legacy.Text("no DOI")))
                   case Some(doi) =>
                     val url = s"${c.baseUrl.stripSuffix("/")}/$doi.pdf" + key.fold("")(k => s"?key=$k")
                     ctx.http.get(Plugin.Http.Url(url)) match
@@ -50,8 +49,6 @@ final class KitFetcherPlugin extends Plugin:
                           )
                         )
           )
-          .left
-          .map(e => Problem(e.value))
       }
 
 final case class KitBaseConfig(baseUrl: String) derives ConfigReader
@@ -84,12 +81,13 @@ final class KitMediaPlugin extends Plugin:
                           Right(MediaRights(Licence(licence), credit = MediaRights.Credit("A. Photographer")))
                         )
                       )
-                    case _ => Left(Plugin.Http.Failure.Transport(Problem(s"unreadable record '$line'")))
+                    case _ =>
+                      Left(
+                        Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"unreadable record '$line'")))
+                      )
                 }
               )
       )
-      .left
-      .map(e => Problem(e.value))
 
 /** An event catalogue: part `p1` at `<base-url>/p1` pages on to `p2`; each line `id|label|year`. */
 final class KitEventsPlugin extends Plugin:
@@ -126,8 +124,6 @@ final class KitEventsPlugin extends Plugin:
                 CataloguePage(events, Option.when(part.value == "p1")(CataloguePage.Next("p2")))
               }
       )
-      .left
-      .map(e => Problem(e.value))
 
 final case class KitAiConfig(baseUrl: String, apiKey: Option[Secret]) derives ConfigReader
 
@@ -138,8 +134,6 @@ final class KitAiPlugin extends Plugin:
   def register(c: KitAiConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     c.apiKey
       .fold[Either[Problem, Option[Secret.Resolved]]](Right(None))(k => ctx.secret(k).map(Some(_)))
-      .left
-      .map(e => Problem(e.value))
       .flatMap { key =>
         ctx.aiProviders
           .add(
@@ -147,7 +141,7 @@ final class KitAiPlugin extends Plugin:
             new AiProvider:
               val title = AiProvider.Title("Kit AI")
               override def check(model: AiProvider.CheckModel) =
-                key.map(_ => ()).toRight(Problem("no api-key configured"))
+                key.map(_ => ()).toRight(Problem.Unclassified(Legacy.Text("no api-key configured")))
               def turn(r: AiTurn.Request, http: AiHttp) =
                 http
                   .post(
@@ -160,8 +154,6 @@ final class KitAiPlugin extends Plugin:
                   .map(e => AiFailure.Error(e.reported))
                   .map(resp => AiTurn(AiTurn.Text(resp.body.value)))
           )
-          .left
-          .map(e => Problem(e.value))
       }
 
 /** @param entries `ref=value` each */
@@ -181,7 +173,7 @@ final class KitVaultPlugin extends Plugin:
             c.entries
               .map(_.split("=", 2))
               .collectFirst { case Array(r, v) if r == ref.value => Secret.Resolved(v) }
-              .toRight(Problem(s"no entry '$ref'"))
+              .toRight(Problem.Unclassified(Legacy.Text(s"no entry '$ref'")))
       )
 
 /** A plugin whose `register` refuses. */
@@ -190,7 +182,7 @@ final class KitBrokenPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("kit-broken"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
   def register(c: KitBaseConfigOrNothing, ctx: Plugin.Context): Either[Problem, Unit] = Left(
-    Problem("broken on purpose")
+    Problem.Unclassified(Legacy.Text("broken on purpose"))
   )
 
 final case class KitBaseConfigOrNothing() derives ConfigReader

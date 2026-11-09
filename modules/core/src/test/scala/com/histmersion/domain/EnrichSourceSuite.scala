@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -127,7 +128,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     )
     assert(
       checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).left
-        .exists(_.exists(_.value.contains("uncalibrated")))
+        .exists(_.exists(_.sentence.contains("uncalibrated")))
     )
     val (v, ws) = checkClassification(
       bp,
@@ -154,7 +155,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       open,
       last = EnrichSource.Last(false)
     )
-    assert(first.left.exists(ps => ps.size == 1 && ps.head.value.contains("quote is not in the text")), first)
+    assert(first.left.exists(ps => ps.size == 1 && ps.head.sentence.contains("quote is not in the text")), first)
     val (kept, warnings) = checkFindings(
       f,
       window,
@@ -191,7 +192,7 @@ class EnrichSourceSuite extends munit.FunSuite:
         open,
         last = EnrichSource.Last(false)
       ).left
-        .exists(_.exists(_.value.contains("confidence")))
+        .exists(_.exists(_.sentence.contains("confidence")))
     )
     val (kept, _) = checkFindings(
       f,

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `europeana`: Europeana's Search API (a user's personal key, sent as a header): one search by the place's name,

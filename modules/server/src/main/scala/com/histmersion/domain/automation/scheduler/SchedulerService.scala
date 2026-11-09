@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.scheduler
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.*
@@ -143,7 +144,7 @@ final class SchedulerService(
               at.fold("")(t => s"; frees ~$t")
           )
         )
-      case Some((r, PickFailure.Unavailable(msg))) => Left(Block.Chain(s"${r.wire}: ${msg.value.take(200)}"))
+      case Some((r, PickFailure.Unavailable(msg))) => Left(Block.Chain(s"${r.wire}: ${msg.sentence.take(200)}"))
       case _                                       =>
         val plans = picks.collect { case (_, Right(p)) => p.billing }
         val pools = plans.collect { case Billing.Plan(p) => p }.distinct
@@ -406,7 +407,7 @@ final class SchedulerService(
           Started.JobType(x.c.jobType.wire.value),
           Started.Target(x.c.target.value),
           x.c.goal.map(g => Goal.Slug(g.value)),
-          Problem(why.value)
+          Problem.Unclassified(Legacy.Text(why.value))
         )
       ),
       waits.take(shown).map(wire),
@@ -440,13 +441,13 @@ final class SchedulerService(
       Waiting.Priority(sc.effective.value),
       Waiting.WaitedMinutes(sc.waitedMinutes.value),
       Waiting.Code(w.code.value),
-      Problem(w.why.render),
+      Problem.Unclassified(Legacy.Text(w.why.render)),
       w.behind.map(b => Waiting.Behind(b.value)),
       Waiting.Position(w.position.value)
     )
 
   private def say(base: WhyInfo, code: String, why: String): WhyInfo =
-    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(Problem(why))
+    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(Problem.Unclassified(Legacy.Text(why)))
 
   /** Why one item (its id, or a target among the open items) is where it is. */
   def why(ref: ManagerItem.Ref, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
@@ -459,7 +460,7 @@ final class SchedulerService(
     item
       .toRight(
         Api.Error(
-          Problem(s"no manager item '$r' (an item id, or the target of an open item)"),
+          Problem.Unclassified(Legacy.Text(s"no manager item '$r' (an item id, or the target of an open item)")),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )
@@ -511,7 +512,9 @@ final class SchedulerService(
                                 s"its manager ${m.id} is ${m.state}: it starts nothing"
                               )
                             case None =>
-                              base.modify(_.why).setTo(Problem("not looked at yet: the next pass decides it"))
+                              base
+                                .modify(_.why)
+                                .setTo(Problem.Unclassified(Legacy.Text("not looked at yet: the next pass decides it")))
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>
@@ -524,7 +527,7 @@ final class SchedulerService(
                 say(
                   base,
                   AgentScheduler.Code.Held,
-                  s"held: ${hd.reason}" +
+                  s"held: ${hd.reason.sentence}" +
                     hd.until.fold("")(u => s" (until $u)") + hd.untilSource
                       .fold("")(u => s" (until $u is in the corpus)")
                 )
@@ -547,7 +550,7 @@ final class SchedulerService(
                 say(
                   base,
                   AgentScheduler.Code.Paused,
-                  s"its run is paused: ${run.flatMap(_.error).fold("")(_.value)}".trim
+                  s"its run is paused: ${run.flatMap(_.error).fold("")(_.sentence)}".trim
                 )
               case Some(st) => say(base, AgentScheduler.Code.Running, s"its run is ${st.wire}")
               case None     => say(base, AgentScheduler.Code.Running, "its run is being evaluated")
@@ -611,7 +614,7 @@ final class SchedulerService(
         paused.getOrElse(ManagerLight.Goal(g.slug.value), Nil).map(id => Stalls.Facts.Paused(id.value)),
         Stalls.Facts.Draining(draining),
         waits.getOrElse(Some(Candidate.Goal(g.slug.value)), Nil),
-        stops.get(slug).map(w => Stalls.Facts.LastStop(w.value)),
+        stops.get(slug).map(w => Stalls.Facts.LastStop(w.sentence)),
         Stalls.Facts.Sources(sources.get(slug).fold(0)(_.value)),
         Stalls.Facts.NoCandidates(sweeps.get(slug).exists(_.value.contains("no new candidates"))),
         Stalls.Facts.Open(
@@ -641,8 +644,10 @@ final class SchedulerService(
           case None =>
             Left(
               Api.Error(
-                Problem(
-                  s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"
+                  )
                 )
               )
             )

@@ -1,8 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.automation.Manager
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -110,11 +110,14 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagerItem.Kind(ProposeArticles),
       Managers.ManagerItem.Target("g"),
       Managers.ManagerItem.Status("held"),
-      hold = Some(Hold(reason = Problem("focus: waits"), focus = Some(Managers.Hold.Focus("g"))))
+      hold =
+        Some(Hold(reason = Problem.Unclassified(Legacy.Text("focus: waits")), focus = Some(Managers.Hold.Focus("g"))))
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(
-      ManagersView.itemActionsFor(focus.modify(_.hold).setTo(Some(Hold(reason = Problem("held by a person"))))),
+      ManagersView.itemActionsFor(
+        focus.modify(_.hold).setTo(Some(Hold(reason = Problem.Unclassified(Legacy.Text("held by a person")))))
+      ),
       List("release", "priority", "skip")
     )
 

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -22,7 +23,6 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.config.ClaudePlanConfig
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.config.CodexConfig
-import com.histmersion.api.Problem as ApiProblem
 
 /** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument vector and environment,
   * its output read into readings, the single-flight gate, the login checks — and the probe end to end against a FAKE
@@ -113,7 +113,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         PlanQuota.Now(5000L),
         ClaudeCodeConfig.LimitCooldownMinutes(60)
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(
       rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected)).toSet,
       Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false))
@@ -131,7 +131,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         PlanQuota.Now(5000L),
         ClaudeCodeConfig.LimitCooldownMinutes(60)
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(rs.map(r => (r.kind, r.rejected, r.resetsAt)), List(("usage_limit", true, Some(1791236400000L))))
     val rejected = Event.replace("\"status\":\"allowed\"", "\"status\":\"rejected\"")
     val rr = PlanPools
@@ -145,7 +145,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         PlanQuota.Now(5000L),
         ClaudeCodeConfig.LimitCooldownMinutes(60)
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(rr.filter(_.rejected.value).map(_.kind), List("five_hour"))
     // no reset in the message: the cool-down
     val noReset = limit.replace("|1791236400", "")
@@ -171,13 +171,13 @@ class PlanRefreshSuite extends munit.FunSuite:
       PlanQuota.Now(5000L),
       ClaudeCodeConfig.LimitCooldownMinutes(60)
     )
-    assert(r.left.exists(_.value.contains("no rate_limit_event")), r)
+    assert(r.left.exists(_.sentence.contains("no rate_limit_event")), r)
     val e = PlanPools.probeReadings(
       CliProcess.Run(Nil, CliProcess.Run.Exit(1), CliProcess.Run.Stderr("Not logged in"), None),
       PlanQuota.Now(5000L),
       ClaudeCodeConfig.LimitCooldownMinutes(60)
     )
-    assert(e.left.exists(_.value.contains("Not logged in")), e)
+    assert(e.left.exists(_.sentence.contains("Not logged in")), e)
 
   test("single flight: a second refresh of the same pool WAITS for the first and then takes none"):
     val gate = RefreshGate()
@@ -190,7 +190,7 @@ class PlanRefreshSuite extends munit.FunSuite:
           PlanQuota.Rules.MinGap(600000L),
           PlanQuota.Now(1000L)
         )
-      then Left(Problem("throttled"))
+      then Left(Problem.Unclassified(Legacy.Text("throttled")))
       else
         val n = calls.incrementAndGet()
         inside.countDown()
@@ -206,14 +206,17 @@ class PlanRefreshSuite extends munit.FunSuite:
     assertEquals(gate.exclusive(PoolId.ChatgptPlan, 1000L)(_ => Right(7)), Right(7))
     release.countDown()
     assertEquals(first.get(10, TimeUnit.SECONDS), Right(1))
-    assertEquals(second.get(10, TimeUnit.SECONDS), Left("throttled"))
+    assertEquals(second.get(10, TimeUnit.SECONDS).left.map(_.sentence), Left("throttled"))
     assertEquals(calls.get(), 1)
     assertEquals(gate.lastAttempt(PoolId.ClaudePlan), Some(1000L))
 
   test("the gate stamps an attempt only when one was made"):
     val gate = RefreshGate()
     assertEquals(
-      gate.exclusive(PoolId.ClaudePlan, 5L)(_ => Left[Problem, Int](Problem("not now"))),
+      gate
+        .exclusive(PoolId.ClaudePlan, 5L)(_ => Left[Problem, Int](Problem.Unclassified(Legacy.Text("not now"))))
+        .left
+        .map(_.sentence),
       Left("not now")
     )
     assertEquals(gate.lastAttempt(PoolId.ClaudePlan), None)
@@ -247,7 +250,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     val home = Files.createTempDirectory("hm-codex-home-")
     assert(PlanPools.codexLogin(Some(home), CodexConfig.Command("codex")) match
-      case Login.Missing(w) => w.value.contains("codex login") && w.value.contains(home.toString)
+      case Login.Missing(w) => w.sentence.contains("codex login") && w.sentence.contains(home.toString)
       case _                => false)
     assert(PlanPools.codexLogin(None, CodexConfig.Command("codex")).isInstanceOf[Login.Missing])
     Files.writeString(home.resolve("auth.json"), "") // an empty stand-in: only its presence is looked at
@@ -256,19 +259,21 @@ class PlanRefreshSuite extends munit.FunSuite:
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
     assertEquals(
       ModelPicker.pausedRole(
-        ApiProblem(
-          "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
+        Problem.Unclassified(
+          Legacy.Text("plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …")
         )
       ),
       Some(Role.Extractor)
     )
     assertEquals(
       ModelPicker.pausedRole(
-        ApiProblem("plan-quota: review: all models for role cold-reader are below their allowance")
+        Problem.Unclassified(
+          Legacy.Text("plan-quota: review: all models for role cold-reader are below their allowance")
+        )
       ),
       Some(Role.ColdReader)
     )
-    assertEquals(ModelPicker.pausedRole(ApiProblem("plan-quota: something else")), None)
+    assertEquals(ModelPicker.pausedRole(Problem.Unclassified(Legacy.Text("plan-quota: something else"))), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time
@@ -342,7 +347,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         CliProcess.RunStdin(ClaudeCode.ProbePrompt),
         CliProcess.RunTimeoutSeconds(30)
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(fake.stdin, "quota")
     assertEquals(fake.after("--max-turns"), "1")
     assertEquals(fake.after("--model"), "haiku")
@@ -362,4 +367,4 @@ class PlanRefreshSuite extends munit.FunSuite:
       CliProcess.RunStdin("quota"),
       CliProcess.RunTimeoutSeconds(5)
     )
-    assert(gone.left.exists(_.value.contains("cannot run")), gone)
+    assert(gone.left.exists(_.sentence.contains("cannot run")), gone)

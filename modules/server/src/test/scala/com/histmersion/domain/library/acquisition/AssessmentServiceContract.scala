@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.{Acquire, RetractionNotice}
@@ -25,9 +25,9 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.assessments.replaceRetractionWatch(
         List(
-          row(Doi("10.5555/zq.a"), Problem("first"), RetractionNotice.Date("1/2/2019 0:00")),
-          row(Doi("10.5555/zq.b"), Problem("other"), RetractionNotice.Date("2019-03-04")),
-          row(Doi("10.5555/zq.a"), Problem("again"), RetractionNotice.Date("12/15/2021 0:00"))
+          row(Doi("10.5555/zq.a"), Problem.Unclassified(Legacy.Text("first")), RetractionNotice.Date("1/2/2019 0:00")),
+          row(Doi("10.5555/zq.b"), Problem.Unclassified(Legacy.Text("other")), RetractionNotice.Date("2019-03-04")),
+          row(Doi("10.5555/zq.a"), Problem.Unclassified(Legacy.Text("again")), RetractionNotice.Date("12/15/2021 0:00"))
         )
       ),
       2
@@ -38,14 +38,14 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       List(
         RetractionNotice(
           Some(RetractionNotice.Nature("Retraction")),
-          Some(Problem("again")),
+          Some(Problem.Unclassified(Legacy.Text("again"))),
           Some(RetractionNotice.Date("2021-12-15"))
         )
       )
     )
     assertEquals(
       s.assessments.replaceRetractionWatch(
-        List(row(Doi("10.5555/zq.c"), Problem("c"), RetractionNotice.Date("1/1/2020 0:00")))
+        List(row(Doi("10.5555/zq.c"), Problem.Unclassified(Legacy.Text("c")), RetractionNotice.Date("1/1/2020 0:00")))
       ),
       1
     )

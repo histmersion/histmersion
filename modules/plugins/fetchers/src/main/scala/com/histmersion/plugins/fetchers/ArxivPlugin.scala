@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `arxiv`: an arXiv preprint's PDF, by its arXiv id. */
 import com.histmersion.plugin.Plugin

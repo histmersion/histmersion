@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.ocr.ConverterClient
@@ -140,5 +140,5 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
   private object NoConverter extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(
-      Problem("not used")
+      Problem.Unclassified(Legacy.Text("not used"))
     )

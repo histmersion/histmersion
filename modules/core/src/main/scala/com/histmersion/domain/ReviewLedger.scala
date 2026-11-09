@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import scala.annotation.tailrec
@@ -411,7 +413,7 @@ object ReviewLedger:
         .fold(led)(_ =>
           update(led, w.id)(e =>
             e.copy(
-              notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason}".take(300))),
+              notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason.sentence}".take(300))),
               notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1)
             )
           )
@@ -427,7 +429,7 @@ object ReviewLedger:
               status = Status.Rejected,
               claimed = Entry.Claimed(false),
               closed = Some(
-                Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.value), r.quote, Some(r.citekey))
+                Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.sentence), r.quote, Some(r.citekey))
               )
             )
           )
@@ -442,7 +444,7 @@ object ReviewLedger:
             _.copy(
               status = Status.WontFix,
               claimed = Entry.Claimed(false),
-              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.value)))
+              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.sentence)))
             )
           )
         )
@@ -463,7 +465,7 @@ object ReviewLedger:
                   Reviewer.Wire("fixer"),
                   round,
                   run,
-                  Closure.Note(a.reason.value),
+                  Closure.Note(a.reason.sentence),
                   Closure.Quote(a.pair.wire.value)
                 )
               )
@@ -473,7 +475,7 @@ object ReviewLedger:
     )
     learn(
       setAside,
-      f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason}")),
+      f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason.sentence}")),
       LessonSource.Rejection,
       run,
       round
@@ -695,7 +697,7 @@ object ReviewLedger:
 
   /** One closed finding a revision would reopen, and why. */
   final case class Regression(id: Regression.Id, why: Problem) derives KindlingsCodecAsObject:
-    def line: String = s"$id (closed): $why"
+    def line: String = s"$id (closed): ${why.sentence}"
 
   object Regression:
 
@@ -733,21 +735,28 @@ object ReviewLedger:
         .map(r =>
           Regression(
             e.id,
-            Problem(
-              s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
+              )
             )
           )
         )
       val q = Option(e.finding.quote.value).map(_.trim).getOrElse("")
       val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
-        Regression(e.id, Problem(s"the text it fixed is back: \"${q.take(100)}\""))
+        Regression(e.id, Problem.Unclassified(Legacy.Text(s"the text it fixed is back: \"${q.take(100)}\"")))
       )
       val lost = e.closed.toList
         .flatMap(c => AgentVerify.wikilinks(AgentVerify.Text(c.quote.value)))
         .distinct
         .flatMap(ck => Citekey.parse(ck.value).toOption)
         .filter(ck => cites(before, ck) && !cites(after, ck))
-        .map(ck => Regression(e.id, Problem(s"[[$ck]], which its fix cites, is cited nowhere any more")))
+        .map(ck =>
+          Regression(
+            e.id,
+            Problem.Unclassified(Legacy.Text(s"[[$ck]], which its fix cites, is cited nowhere any more"))
+          )
+        )
       (pair.toList ++ back.toList ++ lost).take(1)
     }
 

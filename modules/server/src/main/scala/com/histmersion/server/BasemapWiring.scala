@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
@@ -87,7 +88,7 @@ object BasemapWiring:
         HttpPolicy.MaxRetryAfterSeconds(maxRetryAfterSeconds.value),
         now
       ) match
-        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), Problem(why.value)))
+        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), why))
         case _                             => None
 
   /** The fetch as one of the server's background jobs: behind its write guard, pinned to the caller's generation, and
@@ -102,7 +103,7 @@ object BasemapWiring:
       deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
     def busy(what: BasemapJobs.Target, busyCode: Option[Problem]): Api.Error =
-      BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.value)))
+      BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.sentence)))
 
     def start(
         kind: Job.Kind,
@@ -118,13 +119,12 @@ object BasemapWiring:
         Some(JobDetail.Purpose(Some(JobKinds.Subject(about.value)))),
         slot,
         BackgroundJob.Work(what.value),
-        busyCode.map(c => Api.Error.Code(c.value)),
+        busyCode.map(c => Api.Error.Code(c.sentence)),
         deps.pins,
         Some(deps.jobStops)
       )((_, note) =>
         BackgroundJob.Outcome.of(
-          body(t => note(JobInfo.Progress(t.value))).left
-            .map(p => Problem(p.value))
+          body(t => note(JobInfo.Progress(t.value)))
             .map(d => BackgroundJob.Outcome.Summary(d.value))
         )
       )

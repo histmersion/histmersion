@@ -1,8 +1,8 @@
 package com.histmersion
 package server.instance
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.library.{SeedRequest, SeedResult}
 import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.util.storage.SafePath
@@ -26,7 +26,10 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
 
   def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard(WriteGate.OperationName("seed")):
     val asked = Option(req.dir).map(_.value.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir.value)
-    if asked.isEmpty then Left(Api.Error(Problem("no directory given and histmersion.corpus.dir is not configured")))
+    if asked.isEmpty then
+      Left(
+        Api.Error(Problem.Unclassified(Legacy.Text("no directory given and histmersion.corpus.dir is not configured")))
+      )
     else
       if !SafePath.configured(corpusRoot) then
         scribe.warn(
@@ -36,9 +39,10 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
       SafePath
         .confine(corpusRoot, SafePath.Candidate(asked))
         .left
-        .map(p => Api.Error(p.transformInto[Problem]))
+        .map(p => Api.Error(p))
         .flatMap { dir =>
-          if !Files.isDirectory(dir) then Left(Api.Error(Problem(s"not a directory on the server: $dir")))
+          if !Files.isDirectory(dir) then
+            Left(Api.Error(Problem.Unclassified(Legacy.Text(s"not a directory on the server: $dir"))))
           else
             Right(
               importer.run(

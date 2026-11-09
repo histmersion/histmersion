@@ -1,9 +1,9 @@
 package com.histmersion
 package server.plugins
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.api.Problem
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
@@ -100,7 +100,7 @@ object RelinkPlugins:
       case ("check", kit :: jars) =>
         val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
         lines.foreach(l => console.writeLine(l))
-        problems.foreach(p => console.writeLine(s"refused: $p"))
+        problems.foreach(p => console.writeLine(s"refused: ${p.sentence}"))
         if problems.isEmpty then ExitCode(0) else ExitCode(2)
       case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
         val described = jars.map(j => describe(Path.of(j), loader))
@@ -192,12 +192,12 @@ object RelinkPlugins:
             instance.flatMap(PluginHost.described) match
               case Right(p) => dryRun(p)
               case Left(e)  =>
-                unloadable(s"${prov.`type`().getName}: ${PluginHost.failure(e).value}")
+                unloadable(s"${prov.`type`().getName}: ${PluginHost.failure(e).sentence}")
           }
       catch
         case e: java.util.ServiceConfigurationError =>
-          List(unloadable(PluginHost.failure(e).value))
-        case e: LinkageError => List(unloadable(PluginHost.failure(e).value))
+          List(unloadable(PluginHost.failure(e).sentence))
+        case e: LinkageError => List(unloadable(PluginHost.failure(e).sentence))
     PluginJar(PluginJar.File(abs.getFileName.toString), sha256(abs), plugins)
 
   private def unloadable(error: String): PluginDescription =
@@ -205,7 +205,7 @@ object RelinkPlugins:
       PluginDescription.Id(""),
       PluginDescription.Version(""),
       PluginDescription.SpiVersion(0),
-      error = Some(api.Problem(error))
+      error = Some(Problem.Unclassified(Legacy.Text(error)))
     )
 
   private def fromJar(c: Class[?], jar: Path): Boolean =
@@ -213,7 +213,7 @@ object RelinkPlugins:
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      Plugin.Http.Failure.Transport(plugin.Problem("no HTTP while a plugin is being described"))
+      Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("no HTTP while a plugin is being described")))
     )
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its
@@ -287,9 +287,11 @@ object RelinkPlugins:
                 (if cs.size > 3 then ", …)" else ")")
             }
             List(
-              Problem(
-                s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
-                  "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
+                    "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar"
+                )
               )
             )
           loop(tail, seen ++ classes.map(_ -> name.value), acc ++ msg)
@@ -326,7 +328,7 @@ object RelinkPlugins:
               if p.access.isEmpty then "none declared" else p.access.mkString(", ")
             }" +
             (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}") +
-            p.error.fold("")(e => s" · with its defaults alone: $e")
+            p.error.fold("")(e => s" · with its defaults alone: ${e.sentence}")
         )
       )
     )

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -163,7 +164,7 @@ class CandidateSearchSuite extends DbSuite:
     val day = LocalDate.of(2026, 10, 24)
     val s = search(List(oa, cr), FakeAlerts(), day)
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
     // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it
@@ -191,7 +192,7 @@ class CandidateSearchSuite extends DbSuite:
     var crFails = false
     val cr = FakeIndex(
       ScholarlyIndex.Name("crossref"),
-      if crFails then Left(Problem("HTTP 503")) else Right(Nil)
+      if crFails then Left(Problem.Unclassified(Legacy.Text("HTTP 503"))) else Right(Nil)
     )
     val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1))
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
@@ -208,14 +209,14 @@ class CandidateSearchSuite extends DbSuite:
     val ws = store.watches(Goal).map(w => w.index -> (w.watermark, w.lastError)).toMap
     assertEquals(ws(Candidates.Index("openalex")), (Some("2026-10-24"), None))
     assertEquals(
-      ws(Candidates.Index("crossref")),
+      ws(Candidates.Index("crossref")) match { case (mark, error) => (mark, error.map(_.sentence)) },
       (Some("2026-10-01"), Some("HTTP 503")),
       "a failed read skips nothing next time"
     )
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
     assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(CandidateSweep.Unseen(0)))))
-    assert(!WatchManagerKind.nothingNew(Left(api.Problem("not connected"))))
+    assert(!WatchManagerKind.nothingNew(Left(Problem.Unclassified(Legacy.Text("not connected")))))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
     fresh()
@@ -339,9 +340,11 @@ class CandidateSearchSuite extends DbSuite:
       val name = ScholarlyIndex.Name("core")
       val asked = ConcurrentLinkedQueue[String]()
       override def unavailable =
-        Option.when(!asked.isEmpty)(domain.Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
+        Option.when(!asked.isEmpty)(
+          Problem.Unclassified(Legacy.Text("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
+        )
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = {
-        asked.add(query.value); Left(domain.Problem("CORE not asked: CORE answered HTTP 429"))
+        asked.add(query.value); Left(Problem.Unclassified(Legacy.Text("CORE not asked: CORE answered HTTP 429")))
       }
     val core = Throttled()
     val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24))
@@ -362,7 +365,7 @@ class CandidateSearchSuite extends DbSuite:
     // a budget spent before the sweep: CORE is not asked at all
     val spent = new ScholarlyIndex:
       val name = ScholarlyIndex.Name("core")
-      override def unavailable = Some(domain.Problem("CORE's daily budget for searches is spent"))
+      override def unavailable = Some(Problem.Unclassified(Legacy.Text("CORE's daily budget for searches is spent")))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24))
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(true))

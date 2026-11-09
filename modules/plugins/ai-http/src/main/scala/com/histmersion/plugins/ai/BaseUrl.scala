@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import sttp.model.Uri
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -27,4 +27,4 @@ object BaseUrl:
       .map(e => s"$setting: $e")
       .map(BaseUrl(_)))
       .left
-      .map(refactorError => Problem(refactorError))
+      .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))

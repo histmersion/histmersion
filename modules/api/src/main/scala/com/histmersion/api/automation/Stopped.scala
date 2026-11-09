@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem as ApiProblem
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.api.jobs.JobState
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,7 +19,7 @@ object Stopped extends Newtype[String, Pure]:
 
     /** A run that stopped for `reason` and waits for a person, an allowance or a clock: stored `<reason>: <detail>`.
       */
-    case Paused(reason: PauseReason, detail: ApiProblem)
+    case Paused(reason: PauseReason, detail: Problem)
 
     /** A pause for want of a model, stored `<reason>: <lead>all models for role <role> are <rest>`: the role is the one
       * to ask again before the pause's end. `lead` is what the pipeline's step put in front (`enrich: `, or nothing).
@@ -32,7 +33,7 @@ object Stopped extends Newtype[String, Pure]:
     case Draining
 
     /** Any other sentence, as written (a failure's message, `cancelled`). */
-    case Failed(text: ApiProblem)
+    case Failed(text: Problem)
 
     /** Is this a pause for `reason`? */
     def pausedOn(reason: PauseReason): Boolean = this match
@@ -75,15 +76,15 @@ object Stopped extends Newtype[String, Pure]:
 
   /** The sentence a cause is stored as. */
   def of(c: Cause): Stopped = c match
-    case Cause.Paused(reason, detail)              => Stopped(s"${prefix(reason)}$detail")
+    case Cause.Paused(reason, detail)              => Stopped(s"${prefix(reason)}${detail.sentence}")
     case Cause.Exhausted(reason, lead, role, rest) =>
       Stopped(s"${prefix(reason)}$lead$AllModelsFor${role.wire}$Are$rest")
     case Cause.Interrupted  => Stopped(s"${JobState.Interrupted}")
     case Cause.Draining     => Stopped(s"$DrainingText")
-    case Cause.Failed(text) => Stopped(s"$text")
+    case Cause.Failed(text) => Stopped(s"${text.sentence}")
 
   /** The stored sentence of a column read as a problem. */
-  def from(stored: ApiProblem): Stopped = Stopped(s"$stored")
+  def from(stored: Problem): Stopped = Stopped(s"${stored.sentence}")
 
   /** The SQL `LIKE` pattern of the stored sentences that read as a pause for `reason`: the prefix [[of]] writes, then
     * anything. A column filtered by it and a column read by [[cause]] agree on which rows are a pause for `reason`.
@@ -91,11 +92,11 @@ object Stopped extends Newtype[String, Pure]:
   def pausedPattern(reason: PauseReason): String = s"${prefix(reason)}%"
 
   /** Why a paused run waits, from the sentence its row keeps: a run paused with no sentence was paused by a person. */
-  def pausedFor(stored: Option[ApiProblem]): Option[PauseReason] =
+  def pausedFor(stored: Option[Problem]): Option[PauseReason] =
     stored.fold(Some(PauseReason.Requested))(from(_).cause.pauseReason)
 
   /** The sentence of a cause, to store or show. */
-  def write(c: Cause): ApiProblem = of(c).problem
+  def write(c: Cause): Problem = of(c).problem
 
   private def exhausted(reason: PauseReason, sentence: String): Option[Cause] =
     val at = sentence.indexOf(AllModelsFor)
@@ -112,7 +113,7 @@ object Stopped extends Newtype[String, Pure]:
       .flatten
 
   extension (s: Stopped)
-    def problem: ApiProblem = ApiProblem(s"$s")
+    def problem: Problem = Problem.Unclassified(Legacy.Text(s"$s"))
 
     /** What the sentence says. A sentence is only read as a pause, an interruption or a drain when writing that cause
       * gives the sentence back exactly, so [[of]] of [[cause]] is always the stored sentence.
@@ -125,8 +126,8 @@ object Stopped extends Newtype[String, Pure]:
         case _                    =>
           PauseReason.values
             .find(r => text.startsWith(prefix(r)))
-            .fold[Cause](Cause.Failed(ApiProblem(s"$s"))) { r =>
+            .fold[Cause](Cause.Failed(Problem.Unclassified(Legacy.Text(s"$s")))) { r =>
               val detail = text.drop(prefix(r).length)
-              exhausted(r, detail).getOrElse(Cause.Paused(r, ApiProblem(s"$detail")))
+              exhausted(r, detail).getOrElse(Cause.Paused(r, Problem.Unclassified(Legacy.Text(s"$detail"))))
             }
-      if of(read).value == text then read else Cause.Failed(ApiProblem(s"$s"))
+      if of(read).value == text then read else Cause.Failed(Problem.Unclassified(Legacy.Text(s"$s")))

@@ -1,4 +1,5 @@
 rule	module	path	line	detail
+G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	Failures.spliced(c: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	Sources.describe(s: Source)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	13	Sources.same(a: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	15	Sources.titled(t: Title)
@@ -8,8 +9,12 @@ G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.sca
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	25	Sources.loud(c: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	26	Sources.bound(c: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	27	Sources.same2(c: Citekey)
+G3misplaced	core	modules/core/src/main/scala/com/histmersion/util/problem/Edge.scala	6	Edge.shown(r: Reported)
+G3misplaced	core	modules/core/src/main/scala/com/histmersion/util/problem/External.scala	13	External.leaked(r: Reported)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	SourceRows.toParam(c: Citekey)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	11	SourceRows.q(st: Status)
+G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	8	Queries.appended(s: Sql)
+G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	9	Queries.wrapped(s: Sql)
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	6	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	7	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	8	value:Problem
@@ -17,9 +22,14 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	9	va
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	10	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	11	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	13	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	13	construct:Citekey.applyUnsafe;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	14	construct:Year.apply;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	value:Wire
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	value:Citekey
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Shelf.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Problem.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	construct:Problem.applyUnsafe;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	value:Citekey
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	construct:Citekey.option;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	21	construct:Slug.either;expr
@@ -27,21 +37,37 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	22	co
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	24	value:Slug;bridge->Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	25	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	26	value:Citekey
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	value:Citekey
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	24	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	25	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	27	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	45	value:Citekey2
+G44	core	modules/core/src/main/scala/com/histmersion/util/problem/External.scala	13	value:Reported
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	construct:Text.apply;expr
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	construct:Text.applyUnsafe;expr
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	17	value:Text
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	18	value:Text
 G44	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	8	value:Citekey
 G44conversion	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	value:ApiCitekey->Citekey.option
 G44conversion	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	9	construct:Slug.either;expr
 G44plaindef	core	modules/core/src/main/scala/com/histmersion/domain/Text.scala	5	shout(text:String<-Citekey);calls=1
+G45boundary	core	modules/core/src/main/scala/com/histmersion/util/problem/Edge.scala	6	value:Reported;render
 G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	value:Citekey;sql
 G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	9	construct:Citekey.assume;expr;sql
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	5	Citekey=com/histmersion/domain/Policy$package.Citekey
+G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	Key=com/histmersion/domain/Policy$package.Citekey;renamed
 G47fqn	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	27	same-package:com.histmersion.domain.Citekey
 G47fqn	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	other-package:com.histmersion.api.ApiCitekey
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	5	other-package:com.histmersion.domain.Citekey
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	6	other-package:com.histmersion.domain.Citekey
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	6	other-package:com.histmersion.domain.Citekey.type
+G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	other-package:com.histmersion.domain.Citekey
+G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey
+G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey.type
 G47package	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	1	com.histmersion.domain
 G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	6	_root_.com
-G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	6	_root_.com
+G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
 G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	20	name-qualified:Status.Wire
 G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	21	name-qualified:Status.Wire
 G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	22	name-qualified:Status.Wire
@@ -51,35 +77,12 @@ G48	api	modules/api/src/main/scala/com/histmersion/api/Wire.scala	15	modify(_.qu
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	compare:equalsIgnoreCase;Wire
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	compare:compare-==;Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	lambda:find;Citekey
-G9prefix	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	6	Source+Status;class;entity=com/histmersion/domain/Source#
-G9prefixRole	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	7	Source+Repo;class;entity=com/histmersion/domain/Source#
-silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	12	contains:Citekey~String
-silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	14	contains:Citekey~Slug
-silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	s:Status
-silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	16	s:Status
-silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	17	s:Status
-silentInterp	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	11	sql:Status
-silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	12	Citekey.option
-silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	Citekey.option
-silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	22	Citekey.option
-silentPure	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	Citekey.option
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	value:Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	lambda:map;Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	arg-of-contains;Detail
-G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	Key=com/histmersion/domain/Policy$package.Citekey;renamed
-G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	other-package:com.histmersion.domain.Citekey
-G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey
-G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey.type
-G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
-G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
-G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	8	Queries.appended(s: Sql)
-G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	9	Queries.wrapped(s: Sql)
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	13	construct:Citekey.applyUnsafe;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	14	construct:Year.apply;expr
-G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	construct:Text.apply;expr
-G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	construct:Text.applyUnsafe;expr
-G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	17	value:Text
-G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	18	value:Text
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	43	newtype:LookupResult
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	45	alias:Round1Result
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	46	alias:MergeArg2
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	47	alias:HeaderPart1
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	operator:raw
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	text:Text
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	7	operator:of
@@ -90,23 +93,10 @@ G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	10	text:Text
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	operator:raw
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	text:Text.applyUnsafe
-G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	Failures.spliced(c: Citekey)
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	value:Citekey
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Shelf.assume;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Problem.assume;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	construct:Problem.applyUnsafe;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	24	value:Detail
-G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	25	value:Detail
-G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	27	value:Problem
-G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	value:Detail
-G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	45	value:Citekey2
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	43	newtype:LookupResult
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	45	alias:Round1Result
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	46	alias:MergeArg2
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	47	alias:HeaderPart1
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problem.scala	8	a second top-level Problem: domain/Problem.
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	domain/Problems$package.ReviewProblem.
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	30	domain/Check.Why.
-G5problem	core	modules/core/src/main/scala/com/histmersion/domain/review/Problem.scala	9	second top-level Problem
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/review/Problem.scala	9	a second top-level Problem: domain/review/Problem.
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	6	contains:Problem
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	7	startsWith:Problem
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	8	endsWith:Problem
@@ -127,6 +117,7 @@ G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranche
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	35	match:field:message
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	38	match:field:note
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	contains-in:Detail
+G60external	core	modules/core/src/main/scala/com/histmersion/util/problem/External.scala	13	value:Reported
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	15	domain/Problem.apply;literal
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	16	domain/Problem.apply;interpolation
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	17	domain/Problem.apply;interpolation
@@ -137,3 +128,17 @@ G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Prob
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	13	Unclassified;interpolation
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	14	Unclassified;expression
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	17	Unclassified;expression
+G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	30	legacyText
+G60unrecognised	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	36	Stored.Unrecognised
+G9prefix	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	6	Source+Status;class;entity=com/histmersion/domain/Source#
+G9prefixRole	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	7	Source+Repo;class;entity=com/histmersion/domain/Source#
+silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	12	contains:Citekey~String
+silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	14	contains:Citekey~Slug
+silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	s:Status
+silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	16	s:Status
+silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	17	s:Status
+silentInterp	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	11	sql:Status
+silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	12	Citekey.option
+silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	Citekey.option
+silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	22	Citekey.option
+silentPure	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	Citekey.option

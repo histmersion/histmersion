@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.{AgentVerify, CompareRuns}
 import com.histmersion.domain.CompareRuns.{EnrichSide, Run, Step}
 import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, VerifiedFindings}
@@ -41,7 +42,7 @@ object EnrichComparison extends OutputComparison:
               val fails =
                 math.min(
                   n,
-                  s.error.fold(0)(e => e.value.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1)
+                  s.error.fold(0)(e => e.sentence.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1)
                 )
               loop(tail, checked + n, passed + n - fails)
             case None => loop(tail, checked, passed)

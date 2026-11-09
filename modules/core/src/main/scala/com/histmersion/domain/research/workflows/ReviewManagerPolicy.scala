@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Managers.*
@@ -210,7 +211,7 @@ object ReviewManagerPolicy:
         Next.Stop(ManagerPolicy.ItemOutcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
       case _ => // failed (or anything else terminal)
         val n = failures.value + 1
-        val why = error.map(_.value).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
+        val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
             ManagerPolicy.ItemOutcome(s"stopped: ${counted(n, "failed run")}$why"),
@@ -261,20 +262,40 @@ object ReviewManagerPolicy:
   ): List[Pick] =
     val reviews =
       (majors.map((slug, n) =>
-        Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Problem(counted(n.value, "open MAJOR").value))
+        Pick(
+          ManagerPolicy.ItemKind.ArticleReview,
+          slug,
+          MajorsPriority,
+          Problem.Unclassified(Legacy.Text(counted(n.value, "open MAJOR").value))
+        )
       ) ++
         unreviewed.map(slug =>
-          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, UnreviewedPriority, Problem("never reviewed"))
+          Pick(
+            ManagerPolicy.ItemKind.ArticleReview,
+            slug,
+            UnreviewedPriority,
+            Problem.Unclassified(Legacy.Text("never reviewed"))
+          )
         ) ++
         stale.map((slug, why) =>
-          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, StalePriority, Problem(s"stale: $why"))
+          Pick(
+            ManagerPolicy.ItemKind.ArticleReview,
+            slug,
+            StalePriority,
+            Problem.Unclassified(Legacy.Text(s"stale: ${why.sentence}"))
+          )
         ))
         .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
         .take(math.max(0, batch.value))
         .toList
     reviews.flatMap { p =>
       val infer = Option.when(inferFilter.value && !hasFilter(p.target) && !inferredBefore(p.target))(
-        Pick(ManagerPolicy.ItemKind.InferFilter, p.target, p.priority, Problem("it records no coverage filter"))
+        Pick(
+          ManagerPolicy.ItemKind.InferFilter,
+          p.target,
+          p.priority,
+          Problem.Unclassified(Legacy.Text("it records no coverage filter"))
+        )
       )
       infer.toList :+ p
     }
@@ -300,4 +321,4 @@ object ReviewManagerPolicy:
               s"last converged over $days days ago"
             )
         )
-        .map(Problem(_))
+        .map((text => Problem.Unclassified(Legacy.Text(text))))

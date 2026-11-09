@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -150,14 +151,14 @@ class MediaHttpSuite extends DbSuite:
     val fake = fakeProvider
     val h = MediaWiring(Deps(cfg, ds), fake)
     val dry =
-      h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.value), identity)
+      h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.sentence), identity)
     assert(dry.dryRun.value)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
     assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget), Nil)
     val done =
       h.imports
         .importMedia(MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
     assertEquals(
       AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget).map(_.license),
@@ -173,19 +174,19 @@ class MediaHttpSuite extends DbSuite:
       h.imports
         .importMedia(MediaImportRequest(provider = MediaItem.Provider("flickr")))
         .left
-        .exists(_.message.value.contains("unknown media provider"))
+        .exists(_.message.sentence.contains("unknown media provider"))
     )
     assert(
       h.imports
         .importMedia(MediaImportRequest(place = Some(Place.Id("zqmh_nolink"))))
         .left
-        .exists(_.message.value.contains("no Wikidata link"))
+        .exists(_.message.sentence.contains("no Wikidata link"))
     )
     assert(
       h.imports
         .importMedia(MediaImportRequest(event = Some(ApiEventId)))
         .left
-        .exists(_.message.value.contains("events patch"))
+        .exists(_.message.sentence.contains("events patch"))
     )
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):

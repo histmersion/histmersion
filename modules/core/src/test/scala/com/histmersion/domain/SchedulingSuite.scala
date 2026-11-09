@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -55,7 +56,7 @@ class SchedulingSuite extends munit.FunSuite:
 
   test("the daily and monthly caps are checked BEFORE a start (skip); a full pool defers"):
     decide(None, BigDecimal(10), zero, DailyBudget(10), MonthlyBudget(150), ActiveCount(0), MaxConcurrent(4)) match
-      case Decision.Skip(why) => assert(why.value.contains("daily-usd"), why)
+      case Decision.Skip(why) => assert(why.sentence.contains("daily-usd"), why)
       case other              => fail(s"expected a skip, got $other")
     decide(
       None,
@@ -66,7 +67,7 @@ class SchedulingSuite extends munit.FunSuite:
       ActiveCount(0),
       MaxConcurrent(4)
     ) match
-      case Decision.Skip(why) => assert(why.value.contains("monthly-usd"), why)
+      case Decision.Skip(why) => assert(why.sentence.contains("monthly-usd"), why)
       case other              => fail(s"expected a skip, got $other")
     assert(
       decide(

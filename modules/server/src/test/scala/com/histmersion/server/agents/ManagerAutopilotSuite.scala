@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -321,7 +322,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
-      .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
+      .map(s => s"${s.name}#${s.attempt}: ${s.error.get.sentence}"))
       .mkString("\n")
 
   private def exec(a: AgentsControllers, id: RunInfo.Id): RunInfo =
@@ -357,10 +358,10 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         ApiIds.manager(Review),
         ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal("zzagent-apgoal")))))
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val on = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assert(on.on.value)
     assert(
       on.changes.contains(s"${seedId(ref(Goal))} created") && on.changes.contains(s"${watchId(ref(Goal))} created") &&
@@ -497,7 +498,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c, manualCfg); seed(h)
     a.managers.ensureDefaults()
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     c.scripts += Seq(text(planJson))
     val clock = Clock()
     clock.tick(a)
@@ -512,8 +513,8 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     // keeps the proposal back (its plan comes first), and the waiting plan run holds no place
     val waits = item(seedId(ref(Goal)), ProposeKind, itemTarget(Goal))
     assertEquals((waits.status, waits.hold), ("pending", None), "the proposal waits for the plan")
-    val why = a.scheduler.why(ManagerItem.Ref(waits.id.toString)).fold(e => fail(e.message.value), identity)
-    assert(why.code.value == "blocked" && why.why.value.contains("plan comes first"), why)
+    val why = a.scheduler.why(ManagerItem.Ref(waits.id.toString)).fold(e => fail(e.message.sentence), identity)
+    assert(why.code.value == "blocked" && why.why.sentence.contains("plan comes first"), why)
     assertEquals(
       a.scheduler.why(ManagerItem.Ref(item(seedId(ref(Goal)), PlanGoalKind, itemTarget(Goal)).id.toString)).map(_.code),
       Right(AgentScheduler.Code.Person)
@@ -580,7 +581,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .isRight
     )
     a.managers.ensureDefaults()
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     List(Goal, ChildGoal, GrandGoal).foreach { g =>
       assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(g)))).map(_.state), Some("active"), g)
       assertEquals(connect(ds)(ManagerRepo.get(watchId(ref(g)))).map(_.state), Some("active"), g)
@@ -600,9 +601,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     // a person pauses one watcher; off pauses the others it runs, on resumes those only
     a.managing
       .action(ApiIds.manager(watchId(ref(ChildGoal))), ManagersControllers.Action("pause"), None)
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val off =
-      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(false))).fold(e => fail(e.message.value), identity)
+      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(false))).fold(e => fail(e.message.sentence), identity)
     assert(!off.on.value)
     assert(off.changes.exists(_.value.contains("paused 5 managers")), off.changes)
     assert(
@@ -612,7 +613,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("active"), "the library-wide ones stay")
     assertEquals(Clock().tick(a).filter(_.value.startsWith("goal")), Nil, "off: nothing ensured")
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(ChildGoal)))).map(_.state),
       Some("paused"),
@@ -687,7 +688,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         )
         .isRight
     )
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))), None)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron).map(_.value: String),
@@ -755,7 +756,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "2 of 2 articles approved today: the third waits"
     )
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, None, None, now) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.value.contains("daily cap"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.sentence.contains("daily cap"), w)
       case v                                => fail(v.toString)
     // a thin filter is rejected with why
     val p3 = TestRuns
@@ -848,7 +849,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
 
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     transact(ds)(
       ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_a]] ingested"))
     )
@@ -920,7 +921,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .patch(
           Slug("zzagent_x"),
           Article
-            .Patch(reasons = List(Coverage.Reason(ApiCk2, Problem("a later study, cited elsewhere"))))
+            .Patch(reasons =
+              List(Coverage.Reason(ApiCk2, Problem.Unclassified(Legacy.Text("a later study, cited elsewhere"))))
+            )
         )
         .isRight
     )
@@ -938,7 +941,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       )
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
-    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.sentence), identity)
     val out = a.autopilot.tick(t0)
     assert(out.contains("lint --fix started"), out)
     assert(transact(ds)(AutopilotRepo.get()).lastLintAt.isDefined)

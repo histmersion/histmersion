@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiHttp, Plugin}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -18,7 +18,9 @@ final case class SendFailure(failure: AiHttp.Failure):
       case AiHttp.Failure.TimedOut(_) => Some("TimeoutException")
       case AiHttp.Failure.Read(_)     => Some("ReadException")
       case AiHttp.Failure.Refused(_)  => None
-    kind.fold(failure.reported)(k => Problem(s"$k: Exception when sending request: $method $url"))
+    kind.fold(failure.reported)(k =>
+      Problem.Unclassified(Legacy.Text(s"$k: Exception when sending request: $method $url"))
+    )
 
 object SendFailure:
   type Method = Method.T

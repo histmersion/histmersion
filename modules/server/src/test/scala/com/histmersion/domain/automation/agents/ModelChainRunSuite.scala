@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -125,7 +126,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(Problem.Unclassified(Legacy.Text(s"no scripted client for ${ref.wire}")))
       ),
       h
     )
@@ -203,7 +204,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -250,7 +251,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "paused")
     assert(
       run.error
-        .map(_.value)
+        .map(_.sentence)
         .exists(e =>
           e.startsWith("allowance:") && e.contains("all models for role extractor are below their allowance")
             && e.contains("next reset at")
@@ -287,21 +288,28 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       classify.map(s => (s.attempt, s.status, s.model.map(_.value: String))),
       List((1, "failed", Some(A.wire)), (2, "done", Some(B.wire)))
     )
-    assert(classify.head.error.exists(_.value.contains("reached its allowance during the step")), classify.head.error)
+    assert(
+      classify.head.error.exists(_.sentence.contains("reached its allowance during the step")),
+      classify.head.error
+    )
 
   test("a plan's own usage limit (claude -p) skips the model until its reset; the chain's next takes the step"):
     val until = Instant.now().plusSeconds(3600)
     val limited = new LlmClient:
       val model = A
       def run[Out](call: LlmCall[Out]) =
-        throw ModelLimitReached(A, Some(until), domain.Problem("claude -p: Claude AI usage limit reached"))
+        throw ModelLimitReached(
+          A,
+          Some(until),
+          Problem.Unclassified(Legacy.Text("claude -p: Claude AI usage limit reached"))
+        )
     val cb = ScriptedClient(B); enrichScripts(cb)
     val (a, h) = handlers(Map(A -> limited, B -> cb)); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     val first =
       connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(_.kind.value == "llm").head
-    assert(first.error.map(_.value).exists(e => e.contains("usage limit") && e.contains("skipped until")), first)
+    assert(first.error.map(_.sentence).exists(e => e.contains("usage limit") && e.contains("skipped until")), first)
     assertEquals(llmModels(run.id).count(_._4.contains(A.wire)), 1, "zzA was tried once, then skipped")
     val ex = a.models.chains.find(_.role.value == "extractor").get
     assertEquals(ex.models.head.freesAt, Some(until.truncatedTo(java.time.temporal.ChronoUnit.MILLIS).toString))
@@ -313,7 +321,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> down, B -> ScriptedClient(B))); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "paused")
-    assert(run.error.exists(_.value.startsWith("provider:")), run.error)
+    assert(run.error.exists(_.sentence.startsWith("provider:")), run.error)
 
   test("chains and allowances saved over config survive a restart; reset goes back to config; bad input is refused"):
     val (a, _) = handlers(
@@ -322,7 +330,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     val saved = a
       .setChain(Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(
       (saved.source, saved.active.map(_.value: String), saved.models.map(_.model.value: String)),
       ("saved", Some(B.wire), List(B.wire, A.wire))
@@ -335,7 +343,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           ModelChains.AllowanceSet.ReservePct(20)
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((st.source, st.reservePct, st.limits.map(_.limit)), ("saved", 20, List("2M tokens/5h")))
     // a new process sees the same
     val (again, _) =
@@ -373,16 +381,19 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       again
         .setChain(Agents.Role.Wire("narrator"), ChainSet(List(chainModel(A))))
         .left
-        .exists(_.message.value.contains("unknown role"))
+        .exists(_.message.sentence.contains("unknown role"))
     )
     assert(
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("ollama:x"))))
         .left
-        .exists(_.message.value.contains("unknown provider"))
+        .exists(_.message.sentence.contains("unknown provider"))
     )
     assert(
-      again.setChain(Agents.Role.Wire("extractor"), ChainSet(Nil)).left.exists(_.message.value.contains("at least one"))
+      again
+        .setChain(Agents.Role.Wire("extractor"), ChainSet(Nil))
+        .left
+        .exists(_.message.sentence.contains("at least one"))
     )
     assert(
       again
@@ -393,19 +404,19 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           )
         )
         .left
-        .exists(_.message.value.contains("not a window"))
+        .exists(_.message.sentence.contains("not a window"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(allowanceTarget(A), Nil, ModelChains.AllowanceSet.ReservePct(120)))
         .left
-        .exists(_.message.value.contains("0 to 99"))
+        .exists(_.message.sentence.contains("0 to 99"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(ModelChains.AllowanceSet.Target("nobody:*"), Nil))
         .left
-        .exists(_.message.value.contains("unknown provider"))
+        .exists(_.message.sentence.contains("unknown provider"))
     )
 
   test("a saved chain decides which model a run uses; an unready chained model is shown, not refused"):
@@ -416,9 +427,9 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         Agents.Role.Wire("extractor"),
         ChainSet(List(ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(c.models.map(e => (e.model.value: String, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
-    assert(c.models.head.problem.exists(_.value.contains("has no price")), c)
+    assert(c.models.head.problem.exists(_.sentence.contains("has no price")), c)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals(llmModels(run.id).map(_._4.map(_.value: String)).distinct, List(Some(B.wire)))
@@ -426,7 +437,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.runnable(Role.Extractor, Some(AgentsControllers.ModelName("local:zzUnpriced")))
         .left
-        .exists(_.value.contains("has no price"))
+        .exists(_.sentence.contains("has no price"))
     )
 
   // ── agent doctor ───────────────────────────────────────────────────────────────────────────────

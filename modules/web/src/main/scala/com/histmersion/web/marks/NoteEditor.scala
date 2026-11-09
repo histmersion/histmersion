@@ -1,7 +1,7 @@
 package com.histmersion
 package web.marks
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.personal.{Note, Target}
 import com.histmersion.web.{Auth, ErrorLine, WindowKey, WindowManager}
 import com.raquo.laminar.api.L.*
@@ -146,7 +146,9 @@ object NoteEditor:
           "Markdown: **bold**, *italic*, `code`, - lists, > quotes, [a link](https://…), [[citekey]]. ",
           "Ctrl/⌘+Enter saves."
         ),
-        child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(s"Not saved: $m")))),
+        child.maybe <-- problem.signal.map(
+          _.map(m => ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Not saved: $m"))))
+        ),
         div(
           cls := "toolbar note-editor-actions",
           button(

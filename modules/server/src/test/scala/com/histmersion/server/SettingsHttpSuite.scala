@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.config.*
@@ -53,7 +53,7 @@ class SettingsHttpSuite extends DbSuite:
 
   private def withServer(text: String, env: org.ekrich.config.Config = env)(run: String => Unit): Unit =
     Files.writeString(file, text)
-    val l = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.value), identity)
+    val l = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.sentence), identity)
     supervised {
       val b = Composition
         .server(
@@ -64,7 +64,7 @@ class SettingsHttpSuite extends DbSuite:
           source = Some(
             (
               l,
-              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(e => Problem(e.value)))
+              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))
             )
           )
         )

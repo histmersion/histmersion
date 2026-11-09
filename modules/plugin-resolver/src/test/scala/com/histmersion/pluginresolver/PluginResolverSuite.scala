@@ -60,7 +60,7 @@ class PluginResolverSuite extends munit.FunSuite:
         Resolver.Argument(refactorValue)
       )
     ) match
-      case Left(e)  => fail((e).value)
+      case Left(e)  => fail((e).legacyText)
       case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)))(using consoleFor(out += _, err += _))
     ((rc).value, out.result(), err.result())
 
@@ -141,7 +141,7 @@ class PluginResolverSuite extends munit.FunSuite:
           Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)
         )
       )
-      .fold(e => fail((e).value), identity)
+      .fold(e => fail((e).legacyText), identity)
     assertEquals(
       ((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int),
       0
@@ -149,7 +149,7 @@ class PluginResolverSuite extends munit.FunSuite:
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
     val other = RepositoryUrl
       .fromArgument(Resolver.Argument(s.kit.resolve("other-repo").toString))
-      .fold(e => fail((e).value), identity)
+      .fold(e => fail((e).legacyText), identity)
     assertEquals(
       ((DependencyResolver
         .resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ())))
@@ -193,7 +193,7 @@ class PluginResolverSuite extends munit.FunSuite:
         )
         .left
         .toOption)
-        .map(refactorValue2 => (refactorValue2).value): Option[String]),
+        .map(refactorValue2 => (refactorValue2).legacyText): Option[String]),
       Some("unknown option --nope")
     )
     assertEquals(

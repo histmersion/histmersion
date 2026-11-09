@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.library.LibraryData
 import com.histmersion.api.Api
 import com.histmersion.util.data.mirror.Mirror
@@ -17,5 +16,5 @@ final class SourceMirrorNote(sources: SourcesControllers) extends Mirror.Note:
     Citekey
       .parse(id.value)
       .left
-      .map(p => Write.invalid(Problem(p.value)))
+      .map(p => Write.invalid(p))
       .flatMap(ck => sources.note(ck).map(t => Frontmatter.NoteBody(t.value)))

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.domain.library.Citekey
 
@@ -17,7 +16,7 @@ final class SourceMedia(sources: SourceService) extends MediaSources:
     Citekey
       .parse(citekey.value)
       .left
-      .map(p => MediaSources.Error.Invalid(Problem(p.value)))
+      .map(p => MediaSources.Error.Invalid(p))
       .flatMap { _ =>
         if sources.load(citekey).isDefined then Right(MediaSources.Key(citekey.value))
         else Left(MediaSources.Error.NotFound)

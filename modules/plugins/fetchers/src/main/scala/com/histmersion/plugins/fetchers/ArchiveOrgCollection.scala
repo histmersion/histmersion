@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.fetchers
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.archiveorg.{ArchiveFile, ArchiveItem, ArchiveOrg}
@@ -22,15 +22,11 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
         ArchiveOrg.SearchQuery(query.text.fold("")(_.value)),
         PageSize(query.limit.getOrElse(ArchiveOrgCollection.Rows).value)
       )
-      .left
-      .map(e => Problem(e.value))
       .map(_.map(ArchiveOrgCollection.item))
 
   def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
     client()
       .info(ArchiveId(id.value))
-      .left
-      .map(e => Problem(e.value))
       .map(i => Some(ArchiveOrgCollection.item(i)))
 
   def file(
@@ -43,18 +39,16 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
         format.map(f => AcquireParse.WantedFileKind(f.value))
       )
       .map(ArchiveOrgCollection.collectionFile)
-      .toRight(Problem(s"'${item.id.value}' has no epub/pdf file to download"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"'${item.id.value}' has no epub/pdf file to download")))
 
   def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
     if item.restricted.value then
       Left(
-        Problem(s"'${item.id.value}' is a lending-only item — borrow it on archive.org")
+        Problem.Unclassified(Legacy.Text(s"'${item.id.value}' is a lending-only item — borrow it on archive.org"))
       )
     else
       client()
         .download(ArchiveId(item.id.value), ArchiveOrg.DownloadFile(file.name.value))
-        .left
-        .map(e => Problem(e.value))
 
 object ArchiveOrgCollection:
   /** The hits a search answers when the host does not say. */

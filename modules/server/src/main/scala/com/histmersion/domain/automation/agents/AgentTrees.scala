@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.server.agents.ClaudeCode
 
 import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
@@ -66,13 +66,13 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
   def load(known: Set[ToolName]): Either[Problem, AgentGenerator.Defs] =
     for
-      as <- defs.agents.left.map(Problem(_))
-      fs <- defs.fragments.left.map(Problem(_))
-      ss <- defs.skills.left.map(Problem(_))
+      as <- defs.agents.left.map((text => Problem.Unclassified(Legacy.Text(text))))
+      fs <- defs.fragments.left.map((text => Problem.Unclassified(Legacy.Text(text))))
+      ss <- defs.skills.left.map((text => Problem.Unclassified(Legacy.Text(text))))
       d = AgentGenerator.Defs(as, fs, ss)
       _ <- AgentGenerator.check(d, known.map(t => t.value: String)) match
         case Nil  => Right(())
-        case errs => Left(Problem(errs.mkString("; ")))
+        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
@@ -84,7 +84,11 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     for
       dir <- out
         .orElse(root)
-        .toRight(Problem("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)"))
+        .toRight(
+          Problem.Unclassified(
+            Legacy.Text("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)")
+          )
+        )
       d <- load(known)
       sha = AgentTrees.sha(d)
       tree = AgentGenerator.tree(
@@ -165,4 +169,4 @@ object AgentTrees:
   def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
       java.time.Clock
   ): Either[Problem, GenerateResult] =
-    AgentTreeWriter.write(store, tree, runtimes, sha).left.map(Problem(_))
+    AgentTreeWriter.write(store, tree, runtimes, sha).left.map((text => Problem.Unclassified(Legacy.Text(text))))

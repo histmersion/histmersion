@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Registries}
 
 import com.histmersion.config.MediaConfig
@@ -35,15 +35,17 @@ object MediaImporters:
       .get(Registries.MediaCollectionsKey(name))
       .map(MediaImporter.ImporterName(name) -> _)
       .toRight(
-        Problem(
-          BuiltinMedia.entry(BuiltinMedia.EntryName(name)) match
-            case Some(e) if BuiltinMedia.keyed.contains(BuiltinMedia.EntryKey(name)) =>
-              s"${e.title} ($name) is switched off — it is off by default and needs ${BuiltinMedia.keyed(BuiltinMedia.EntryKey(name))}: set " +
-                s"histmersion.plugins.${e.plugin}.enabled = true and its api-key (a secret reference)"
-            case Some(e) => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
-            case None    =>
-              s"unknown media provider '${asked.value.trim}' (one of: " +
-                s"${ordered(collections.keys.toList).map(_.value).mkString(", ")}; `histmersion media providers` lists them)"
+        Problem.Unclassified(
+          Legacy.Text(
+            BuiltinMedia.entry(BuiltinMedia.EntryName(name)) match
+              case Some(e) if BuiltinMedia.keyed.contains(BuiltinMedia.EntryKey(name)) =>
+                s"${e.title} ($name) is switched off — it is off by default and needs ${BuiltinMedia.keyed(BuiltinMedia.EntryKey(name))}: set " +
+                  s"histmersion.plugins.${e.plugin}.enabled = true and its api-key (a secret reference)"
+              case Some(e) => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
+              case None    =>
+                s"unknown media provider '${asked.value.trim}' (one of: " +
+                  s"${ordered(collections.keys.toList).map(_.value).mkString(", ")}; `histmersion media providers` lists them)"
+          )
         )
       )
 
@@ -63,8 +65,6 @@ object MediaImporters:
     lookup(asked, collections).flatMap { (name, c) =>
       PluginMedia
         .guard(c.check)
-        .left
-        .map(why => Problem(why.value))
         .map(_ =>
           MediaImporter.of(
             name,

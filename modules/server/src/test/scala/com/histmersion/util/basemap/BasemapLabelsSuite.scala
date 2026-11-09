@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -234,7 +235,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
       )
       tiles
         .find(_._1 == id)
-        .map(t => PmTiles.gunzip(PmTiles.CompressedBytes(t._2.value)).fold(e => fail(e.value), identity))
+        .map(t => PmTiles.gunzip(PmTiles.CompressedBytes(t._2.value)).fold(e => fail(e.sentence), identity))
     assertEquals(
       at(PmTiles.Zoom(6), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("physical"))),
       Some(Right(List("peak")))

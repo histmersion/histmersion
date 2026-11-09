@@ -1,6 +1,8 @@
 package com.histmersion
 package upstreams.wikidata
-import com.histmersion.plugin.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import io.circe.Json
 
 import java.net.URLEncoder
@@ -38,7 +40,7 @@ object WikidataEntities:
     c.downField("error").focus match
       case Some(err) =>
         val code = err.hcursor.get[String]("code").getOrElse("error")
-        Left(Problem(s"$code: ${err.hcursor.get[String]("info").getOrElse("")}".trim))
+        Left(Problem.Unclassified(Legacy.Text(s"$code: ${err.hcursor.get[String]("info").getOrElse("")}".trim)))
       case None =>
         val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
         Right(ents.flatMap { (key, ent) =>

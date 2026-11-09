@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}
@@ -32,8 +33,10 @@ class SpoolSuite extends munit.FunSuite:
     Citekey
       .parse(citekey)
       .left
-      .map(_.value)
-      .flatMap(ck => spool.write(ck, ext, Spool.Bytes(bytes)).left.map(_.value).map(k => Path.of(spool.where(k).value)))
+      .map(_.sentence)
+      .flatMap(ck =>
+        spool.write(ck, ext, Spool.Bytes(bytes)).left.map(_.sentence).map(k => Path.of(spool.where(k).value))
+      )
 
   tmp.test("a valid citekey writes inside the spool") { d =>
     val p = write(d, "anthony2007_horse", Spool.Extension("pdf"))

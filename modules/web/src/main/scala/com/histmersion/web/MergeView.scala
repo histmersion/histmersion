@@ -1,5 +1,6 @@
 package com.histmersion
 package web
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeIssue
@@ -648,7 +649,7 @@ object MergeView:
         )
       ),
       div(cls := "merge-sides", side("here", i.left, i.entity), side("bundle", i.right, i.entity)),
-      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(w.value))))),
+      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(w.sentence))))),
       i.detail.toList.flatMap(d =>
         d.fields.headOption.map(_ => fieldTable(i, d.fields)).toList ++
           d.text.map(t => articleView(i, t, mine.flatMap(_.text))).toList ++
@@ -947,7 +948,7 @@ object MergeView:
             s"Applying plan ${j.planHash}: ${j.elapsedMs.value / 1000} s so far — the backup is taken first."
           )
         case Some(j) if j.state == MergeJobState.Failed || j.state == MergeJobState.Interrupted =>
-          p_(cls := "form-error", role := "alert", j.error.map(_.value).getOrElse("the merge failed"))
+          p_(cls := "form-error", role := "alert", j.error.map(_.sentence).getOrElse("the merge failed"))
         case Some(j) => j.result.fold(emptyNode)(appliedReport)
         case None    => emptyNode
       },

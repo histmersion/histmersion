@@ -1,6 +1,7 @@
 package com.histmersion
 package util.process
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.storage.{ByteSource, Location, Storage}
@@ -24,7 +25,7 @@ class ProcessesSuite extends munit.FunSuite:
           environment = Map(ProcessLaunch.EnvironmentKey("GREETING") -> ProcessLaunch.EnvironmentValue("hello"))
         )
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(r.exitCode, 3)
     assertEquals(r.lines.head, "hello")
     assertEquals(java.nio.file.Path.of(r.lines(1).value).toRealPath(), dir.toRealPath())
@@ -41,7 +42,7 @@ class ProcessesSuite extends munit.FunSuite:
           output = ProcessOutput.AppendTo(logs, Store.Key("child.log"))
         )
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(p.waitFor(), 0)
     assertEquals(logs.get(Store.Key("child.log")).map(_.text()), Some("before\nafter\n"))
 

@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.MediaCollection
 import com.histmersion.plugin.Plugin
@@ -30,8 +29,6 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       .fold[Either[Problem, Option[KeyedCollection.Key]]](Right(None))(s =>
         ctx
           .secret(s)
-          .left
-          .map(e => Problem(e.value))
           .map(v => Option(v).map(_.value.trim).filter(_.nonEmpty).map(KeyedCollection.Key(_)))
       )
       .flatMap(key =>

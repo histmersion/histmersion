@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -37,17 +38,17 @@ class AgentsSuite extends munit.FunSuite:
 
   test("ModelRef: unknown provider, no model, no colon are errors"):
     assert(
-      ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(_.value.contains("unknown provider 'ollama'"))
+      ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(_.sentence.contains("unknown provider 'ollama'"))
     )
-    assert(ModelRef.parse(Agents.ModelRef.Wire("local:")).left.exists(_.value.contains("names no model")))
-    assert(ModelRef.parse(Agents.ModelRef.Wire("qwen")).left.exists(_.value.contains("provider:model")))
+    assert(ModelRef.parse(Agents.ModelRef.Wire("local:")).left.exists(_.sentence.contains("names no model")))
+    assert(ModelRef.parse(Agents.ModelRef.Wire("qwen")).left.exists(_.sentence.contains("provider:model")))
 
   test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
     assert(
       ModelRef
         .parse(Agents.ModelRef.Wire("gemini:pro"))
         .left
-        .exists(e => e.value.contains("unknown provider 'gemini'") && !e.value.contains("gemini,"))
+        .exists(e => e.sentence.contains("unknown provider 'gemini'") && !e.sentence.contains("gemini,"))
     )
     assertEquals(
       ModelRef.parse(
@@ -80,7 +81,7 @@ class AgentsSuite extends munit.FunSuite:
       ModelRef
         .parse(Agents.ModelRef.Wire("ollama:x"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")))
         .left
-        .exists(_.value.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
+        .exists(_.sentence.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
     )
     assertEquals(
       ProviderKind.values.map(_.wire),
@@ -95,7 +96,7 @@ class AgentsSuite extends munit.FunSuite:
     )
     assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
     assert(PlanQuota.paid(m, PlanQuota.Logins()))
-    assert(Prices.billing(Map.empty, m, None).left.exists(_.value.contains("model 'pro' has no price")))
+    assert(Prices.billing(Map.empty, m, None).left.exists(_.sentence.contains("model 'pro' has no price")))
     assertEquals(
       Prices.billing(Map(Agents.ModelRef.Model("pro") -> Price(BigDecimal(1), BigDecimal(2))), m, None),
       Right(Billing.Metered(Price(BigDecimal(1), BigDecimal(2))))
@@ -112,7 +113,7 @@ class AgentsSuite extends munit.FunSuite:
 
   test("Prices: every malformed entry is reported, none silently skipped"):
     val e = Prices.parse(Agents.Prices.Wire("a=1; b=x/2; c=1/2/3; =1/1")).left.toOption.get
-    List("'a=1'", "'b=x/2'", "'c=1/2/3'", "'=1/1'").foreach(m => assert(e.value.contains(m), e))
+    List("'a=1'", "'b=x/2'", "'c=1/2/3'", "'=1/1'").foreach(m => assert(e.sentence.contains(m), e))
     assert(Prices.parse(Agents.Prices.Wire("a=-1/2")).isLeft)
 
   test("cost: per million tokens, cache reads and writes at their own rates"):
@@ -136,7 +137,7 @@ class AgentsSuite extends munit.FunSuite:
   test("cost: an UNPRICED model is refused, never free (the inverse of sttp-ai's PriceTable)"):
     val c =
       Prices.cost(Map.empty, Agents.Prices.CostModel("gpt-x"), Usage(Agents.Usage.Input(10), Agents.Usage.Output(10)))
-    assert(c.left.exists(_.value.contains("has no price")), c)
+    assert(c.left.exists(_.sentence.contains("has no price")), c)
 
   test("billing: a plan model needs no price and costs 0 USD; a metered one is priced"):
     val plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet"))
@@ -165,9 +166,9 @@ class AgentsSuite extends munit.FunSuite:
 
   test("billing: an unpriced METERED model is refused — claude-code on an API key included"):
     val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen")), None)
-    assert(local.left.exists(_.value.contains("has no price")), local)
+    assert(local.left.exists(_.sentence.contains("has no price")), local)
     val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet")), None)
-    assert(keyed.left.exists(e => e.value.contains("has no price") && e.value.contains("use an API key")), keyed)
+    assert(keyed.left.exists(e => e.sentence.contains("has no price") && e.sentence.contains("use an API key")), keyed)
 
   test("price text: two or four numbers, trailing zeros dropped"):
     assertEquals(Price(BigDecimal("3.00"), BigDecimal(15)).text, "3/15")
@@ -269,7 +270,7 @@ class AgentsSuite extends munit.FunSuite:
           Some(Year(2020)),
           citekey = Some(Citekey("x2020_y")),
           inCorpus = PlannedWork.InCorpus(true),
-          why = api.Problem("core")
+          why = Problem.Unclassified(Legacy.Text("core"))
         )
       ),
       List(Plan.Dropped("10.1000/z: not verified upstream"))
@@ -351,10 +352,15 @@ class AgentsSuite extends munit.FunSuite:
       Right(ModelOverride(Agents.ModelOverride.Role("fixer"), Agents.ModelOverride.Model("local:a > anthropic:b")))
     )
     assert(
-      ModelOverride.parse(Agents.ModelOverride.Wire("skeptic")).left.exists(_.value.contains("<role>=<provider:model>"))
+      ModelOverride
+        .parse(Agents.ModelOverride.Wire("skeptic"))
+        .left
+        .exists(_.sentence.contains("<role>=<provider:model>"))
     )
-    assert(ModelOverride.parse(Agents.ModelOverride.Wire("=local:x")).left.exists(_.value.contains("names no role")))
-    assert(ModelOverride.parse(Agents.ModelOverride.Wire("skeptic=")).left.exists(_.value.contains("names no model")))
+    assert(ModelOverride.parse(Agents.ModelOverride.Wire("=local:x")).left.exists(_.sentence.contains("names no role")))
+    assert(
+      ModelOverride.parse(Agents.ModelOverride.Wire("skeptic=")).left.exists(_.sentence.contains("names no model"))
+    )
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
     val r = RunInfo(

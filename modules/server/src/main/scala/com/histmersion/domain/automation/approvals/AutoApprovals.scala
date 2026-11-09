@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -125,7 +126,7 @@ final class AutoApprovals(
     AutopilotPolicy.note(verdict) match
       case None =>
         val why = verdict match
-          case Verdict.Leave(w) => w.value
+          case Verdict.Leave(w) => w.sentence
           case _                => ""
         mgr.foreach { m =>
           val text = s"approval #${a.id} (${a.kind}) left for a person: $why"
@@ -149,7 +150,7 @@ final class AutoApprovals(
           DecisionRequest(Some(DecisionRequest.Note(note.value)))
         ) match
           case Left(e) =>
-            scribe.info(s"autopilot: $what not decided: ${e.message}")
+            scribe.info(s"autopilot: $what not decided: ${e.message.sentence}")
             Nil
           case Right(d) =>
             val text =
@@ -213,9 +214,9 @@ final class AutoApprovals(
     a.approvalKind match
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
-          case (_, Some(wait)) => Verdict.Leave(domain.Problem(wait.value))
-          case (None, _)       => Verdict.Leave(domain.Problem("the approval carries no readable plan"))
-          case (Some(p), _)    =>
+          case (_, Some(wait)) => Verdict.Leave(Problem.Unclassified(Legacy.Text(wait.value)))
+          case (None, _)    => Verdict.Leave(Problem.Unclassified(Legacy.Text("the approval carries no readable plan")))
+          case (Some(p), _) =>
             val raw = a.subject.fold(p.goal.value)(_.value)
             (com.histmersion.domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
               case (Some(goal), Some(slug)) =>
@@ -246,10 +247,10 @@ final class AutoApprovals(
                   case v @ Verdict.Approve(_) =>
                     agents.focus
                       .goalPlanBlock(goal, AutopilotPolicy.Proposed(p.subGoals.size))
-                      .fold(v)(d => Verdict.Leave(domain.Problem(d.value)))
+                      .fold(v)(d => Verdict.Leave(Problem.Unclassified(Legacy.Text(d.value))))
                   case v => v
-              case _ => Verdict.Leave(domain.Problem("the approval names no valid goal"))
-      case _ => Verdict.Leave(domain.Problem("not a kind the autopilot decides"))
+              case _ => Verdict.Leave(Problem.Unclassified(Legacy.Text("the approval names no valid goal")))
+      case _ => Verdict.Leave(Problem.Unclassified(Legacy.Text("not a kind the autopilot decides")))
 
   def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =
     agents.runs

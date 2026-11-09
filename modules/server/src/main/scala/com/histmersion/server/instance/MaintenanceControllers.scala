@@ -1,7 +1,8 @@
 package com.histmersion
 package server.instance
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
@@ -55,7 +56,7 @@ final class MaintenanceControllers(
     maintenance.guard(WriteGate.OperationName("reindex")):
       Deps.data
         .task(MaintenanceTask.Name("reindex"))
-        .toRight(Api.Error(Problem("no reindex is registered")))
+        .toRight(Api.Error(Problem.Unclassified(Legacy.Text("no reindex is registered"))))
         .map(
           _.run(
             MaintenanceSlice(
@@ -71,15 +72,15 @@ final class MaintenanceControllers(
     * and agent runs going on beside it are fine.
     */
   def housekeepingBlock: Option[Problem] =
-    if maintenance.active then Some(Problem("a restore holds the maintenance lock"))
-    else if backupJobs.running then Some(Problem("a backup is still running"))
-    else if vacuumJobs.isRunning then Some(Problem("a vacuum is still running"))
+    if maintenance.active then Some(Problem.Unclassified(Legacy.Text("a restore holds the maintenance lock")))
+    else if backupJobs.running then Some(Problem.Unclassified(Legacy.Text("a backup is still running")))
+    else if vacuumJobs.isRunning then Some(Problem.Unclassified(Legacy.Text("a vacuum is still running")))
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
     backupJobs.status.toRight(
       Api.Error(
-        Problem("no backup has run since the server started"),
+        Problem.Unclassified(Legacy.Text("no backup has run since the server started")),
         Some(Api.Error.Code(Write.CodeNotFound))
       )
     )
@@ -98,14 +99,16 @@ final class MaintenanceControllers(
     if backupJobs.running then
       Left(
         Api.Error(
-          Problem("a backup is still running — wait for `histmersion backup` to finish"),
+          Problem.Unclassified(Legacy.Text("a backup is still running — wait for `histmersion backup` to finish")),
           Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
     else if vacuumJobs.isRunning then
       Left(
         Api.Error(
-          Problem("a vacuum is still running — wait for its job (`histmersion jobs`) to finish"),
+          Problem.Unclassified(
+            Legacy.Text("a vacuum is still running — wait for its job (`histmersion jobs`) to finish")
+          ),
           Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
@@ -133,13 +136,17 @@ final class MaintenanceControllers(
         .Try(Migrate.run(ds))
         .toEither
         .left
-        .map(e => Api.Error(Problem(s"restored ${req.file}, but migrating it failed: ${e.getMessage}")))
+        .map(e =>
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"restored ${req.file}, but migrating it failed: ${e.getMessage}"))
+          )
+        )
       _ = Db.ensureDatabaseSettings(ds)
       role = QueryAccess
         .provision(ds, cfg.query)
         .left
         .toOption
-        .map(m => s"the read-only role '${cfg.query.user}' was not re-provisioned: $m")
+        .map(m => s"the read-only role '${cfg.query.user}' was not re-provisioned: ${m.sentence}")
         .toList
       _ = { Db.evict(ds); Db.evict(deps.queryDs) }
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
@@ -147,7 +154,11 @@ final class MaintenanceControllers(
       v <- Migrate
         .validate(ds)
         .left
-        .map(m => Api.Error(Problem(s"restored ${req.file}, but the schema does not validate: $m")))
+        .map(m =>
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"restored ${req.file}, but the schema does not validate: ${m.sentence}"))
+          )
+        )
     yield RestoreResult(
       req.file,
       RestoreResult.SchemaVersion(v.value),

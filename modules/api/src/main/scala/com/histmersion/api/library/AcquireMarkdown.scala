@@ -1,6 +1,7 @@
 package com.histmersion
 package api.library
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AcquireMarkdown:
@@ -121,7 +122,7 @@ object AcquireMarkdown:
         "\n\n**Retraction Watch**\n" + a.retractionWatch
           .map { n =>
             s"- ${n.nature.getOrElse("notice")}${n.date.map(d => s" ($d)").getOrElse("")}" +
-              n.reason.map(r => s" — $r").getOrElse("")
+              n.reason.map(r => s" — ${r.sentence}").getOrElse("")
           }
           .mkString("\n")
 
@@ -149,7 +150,7 @@ object AcquireMarkdown:
 
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
-      case Some(e) => (s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
+      case Some(e) => (s"Retraction Watch refresh FAILED: ${e.sentence} (the mirror still holds ${r.rows} row(s)).")
       case None if ((r.running) == RetractionsUpdate.Running(true)) =>
         (s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")

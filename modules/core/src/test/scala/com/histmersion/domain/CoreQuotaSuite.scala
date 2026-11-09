@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -234,7 +235,7 @@ class CoreQuotaSuite extends munit.FunSuite:
       ("core", "2026-10-26", 1, 1, 10, 6, 3)
     )
     assertEquals(
-      (v.blockedUntil, v.blockedWhy, v.rateLimit, v.rateRemaining),
+      (v.blockedUntil, v.blockedWhy.map(_.sentence), v.rateLimit, v.rateRemaining),
       (Some("2026-10-26T18:52:11Z"), Some("HTTP 429"), Some(25), Some(0))
     )
     assertEquals(view(s, limits, Instant.parse("2026-10-26T19:00:00Z")).blockedUntil, None)

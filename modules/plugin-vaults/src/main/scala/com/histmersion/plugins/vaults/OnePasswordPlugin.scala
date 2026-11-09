@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -22,9 +22,7 @@ final class OnePasswordPlugin extends Plugin:
     for
       exe <- Subprocess
         .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
-        .left
-        .map(e => Problem(e.value))
-      token <- Vaults.optional(c.serviceAccountToken, ctx).left.map(e => Problem(e.value))
+      token <- Vaults.optional(c.serviceAccountToken, ctx)
       _ <- ctx.secretVaults
         .add(
           Registry.AddId(info.id.value),
@@ -36,6 +34,4 @@ final class OnePasswordPlugin extends Plugin:
             Vaults.timeout(c.timeoutSeconds.value)
           )
         )
-        .left
-        .map(e => Problem(e.value))
     yield ()

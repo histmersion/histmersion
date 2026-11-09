@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.LabelRename
@@ -38,7 +38,7 @@ final class PlacesControllers(
   private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
   private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
   private def page(raw: Int): PageSize = PageSize.applyUnsafe(math.max(1, raw))
-  private def notFound(id: String): Api.Error = Api.Error(Problem(s"No place '$id'"))
+  private def notFound(id: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$id'")))
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
     * resolves to the place it names, as an old citekey does.
@@ -63,7 +63,11 @@ final class PlacesControllers(
   def shapes(q: Api.PlacesGeoQuery): Either[Api.Error, Api.PlacesGeo.Json] =
     q.pick.map(p => GeoPick.Wire(p.value.trim)).filter(_.value.nonEmpty) match
       case Some(p) if GeoPick.parse(p).isEmpty =>
-        Left(Api.Error(Problem(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}")))
+        Left(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
+          )
+        )
       case p =>
         val time = GeoPick.resolve(
           q.asOf.map(y => Year(y.value)),
@@ -131,11 +135,13 @@ final class PlacesControllers(
     maintenance.guard(WriteGate.OperationName("places/import")):
       val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(Place.Kind.Wire(k)) then
-        Left(Api.Error(Problem(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
+        Left(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
+        )
       else
         for
           set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(e.transformInto[Problem]))
+          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(e))
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */
@@ -188,7 +194,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/merge")):
       for
-        _ <- ApiPlace.Overrides.reason(in.reason.map(r => r.transformInto[Problem]))
+        _ <- ApiPlace.Overrides.reason(in.reason)
         into <- Place.Id.either(in.into.value.trim).left.map(_ => notFound(in.into.value))
         gone <- places.merge(placeId(id), placeId(into), tolKm)
       yield gone
@@ -201,7 +207,7 @@ final class PlacesControllers(
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/remove")):
       ApiPlace.Overrides
-        .reason(in.reason.map(r => r.transformInto[Problem]))
+        .reason(in.reason)
         .flatMap(r => places.remove(placeId(id), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
@@ -248,7 +254,7 @@ final class PlacesControllers(
               .left
               .map(why =>
                 Api.Error(
-                  Problem(s"'${to.value}' is not a place id: $why"),
+                  Problem.Unclassified(Legacy.Text(s"'${to.value}' is not a place id: $why")),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

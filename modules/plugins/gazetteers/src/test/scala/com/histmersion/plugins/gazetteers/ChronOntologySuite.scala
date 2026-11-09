@@ -106,5 +106,5 @@ class ChronOntologySuite extends munit.FunSuite:
   test("the gazetteer-chronontology plugin registers the source chronontology"):
     val h = PluginHarness
       .load(Plugin.Info.Id("gazetteer-chronontology"), http = HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(h.gazetteerSources, List("chronontology"))

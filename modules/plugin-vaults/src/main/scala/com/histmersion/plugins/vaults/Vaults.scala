@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -64,14 +64,16 @@ object Vaults:
     r.left.map(_.problem).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(res.out).value
-        if v.isEmpty then Left(Problem(s"$vault: '$ref' has an empty value"))
+        if v.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$vault: '$ref' has an empty value")))
         else Right(Secret.Resolved(v))
       else
         val low = res.err.value.toLowerCase(java.util.Locale.ROOT)
         Left(
-          Problem(
-            classify(low).getOrElse(
-              s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Problem(res.err.value))})"
+          Problem.Unclassified(
+            Legacy.Text(
+              classify(low).getOrElse(
+                s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Problem.Unclassified(Legacy.Text(res.err.value))).legacyText})"
+              )
             )
           )
         )

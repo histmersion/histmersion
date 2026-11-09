@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}
 import com.histmersion.util.storage.Blob
@@ -23,12 +24,14 @@ final class Spool(store: Store):
     Store.Key
       .of(citekey.value, s"paper.${SafeName.of(extension.value)}")
       .left
-      .map(_ => Problem(s"could not spool the file: '$citekey' would escape the spool directory"))
+      .map(_ =>
+        Problem.Unclassified(Legacy.Text(s"could not spool the file: '$citekey' would escape the spool directory"))
+      )
       .flatMap(key =>
         store
           .write(key, ByteSource.Content(bytes.value))
           .left
-          .map(e => Problem(s"could not spool the file: ${e.message}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"could not spool the file: ${e.message.sentence}")))
           .map(_ => key)
       )
 

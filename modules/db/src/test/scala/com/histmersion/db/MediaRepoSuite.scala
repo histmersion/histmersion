@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -540,7 +541,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           refresh = ImportFixtures.Refresh(false)
         )
         .left
-        .exists(_.value.contains("no Wikidata link"))
+        .exists(_.sentence.contains("no Wikidata link"))
     )
     assert(
       ImportFixtures
@@ -553,7 +554,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           refresh = ImportFixtures.Refresh(false)
         )
         .left
-        .exists(_.value.contains("No place"))
+        .exists(_.sentence.contains("No place"))
     )
     assertEquals(
       ImportFixtures

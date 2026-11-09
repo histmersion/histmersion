@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -21,7 +22,7 @@ object BundleCmd:
   private def existing(file: String): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
-    else Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+    else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
   private[cli] def manifestOf(p: Path): Either[Problem, Bundle.Manifest] =
@@ -30,7 +31,7 @@ object BundleCmd:
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))
       r.next().flatMap {
         case Some(e) if e.name.value == Bundle.ManifestPath => BundleFormat.parseManifest(r.readAll())
-        case _ => Left(Problem(s"$p does not start with ${Bundle.ManifestPath}"))
+        case _ => Left(Problem.Unclassified(Legacy.Text(s"$p does not start with ${Bundle.ManifestPath}")))
       }
     finally in.close()
 
@@ -57,7 +58,7 @@ object BundleCmd:
             e =>
               Left(
                 Cli.Error(
-                  Problem(s"the server sent something that is not a bundle: $e"),
+                  Problem.Unclassified(Legacy.Text(s"the server sent something that is not a bundle: ${e.sentence}")),
                   exitCode = ExitCode.Refused
                 )
               ),
@@ -74,7 +75,8 @@ object BundleCmd:
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
         if r.ok.value then Right(())
-        else Left(Cli.Error(Problem("the bundle did not verify"), exitCode = ExitCode.Refused))
+        else
+          Left(Cli.Error(Problem.Unclassified(Legacy.Text("the bundle did not verify")), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -103,7 +105,7 @@ object BundleCmd:
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
         if r.problems.isEmpty then Right(())
-        else Left(Cli.Error(Problem("the import was refused"), exitCode = ExitCode.Refused))
+        else Left(Cli.Error(Problem.Unclassified(Legacy.Text("the import was refused")), exitCode = ExitCode.Refused))
       }
     }
   }

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -22,11 +23,11 @@ class AutoEnrichSuite extends munit.FunSuite:
   test("findings or notes mean enriched; an abstract-as-summary or tags do not count"):
     assert(
       decide(true, true, FindingCount(2), None, Nil).left
-        .exists(_ == Skip.Enriched(Problem("it already has 2 findings")))
+        .exists(_ == Skip.Enriched(Problem.Unclassified(Legacy.Text("it already has 2 findings"))))
     )
     assert(
       decide(true, true, FindingCount(0), Some(Notes("Tin by sea [[x]].")), Nil).left
-        .exists(_ == Skip.Enriched(Problem("it already has notes")))
+        .exists(_ == Skip.Enriched(Problem.Unclassified(Legacy.Text("it already has notes"))))
     )
     assertEquals(decide(true, true, FindingCount(0), Some(Notes("   ")), Nil), Right(()))
 
@@ -34,7 +35,7 @@ class AutoEnrichSuite extends munit.FunSuite:
     List(Run.State.Queued, Run.State.Running, Run.State.Paused, Run.State.WaitingApproval, Run.State.Done).foreach { st =>
       assertEquals(
         decide(true, true, FindingCount(0), None, List(PriorRun(PriorRun.Id("r1"), st))),
-        Left(Skip.Enriched(Problem(s"enrich-source run r1 is ${st.wire}")))
+        Left(Skip.Enriched(Problem.Unclassified(Legacy.Text(s"enrich-source run r1 is ${st.wire}"))))
       )
     }
     assertEquals(
@@ -54,6 +55,6 @@ class AutoEnrichSuite extends munit.FunSuite:
       "enrichment queued: run 90015098-3cd2-4fb0-d696-3f7d28e17f72"
     )
     assertEquals(
-      note(Skip.Enriched(Problem("it already has notes"))),
+      note(Skip.Enriched(Problem.Unclassified(Legacy.Text("it already has notes")))),
       Some("enrichment not queued: it already has notes")
     )

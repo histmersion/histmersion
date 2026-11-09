@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -55,7 +57,11 @@ class CompileArticleSuite extends munit.FunSuite:
       )
     val sent =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin trade"), List(good, made, conf)),
+        ExtractAnswer(
+          ExtractAnswer.Relevant(true),
+          Problem.Unclassified(Legacy.Text("tin trade")),
+          List(good, made, conf)
+        ),
         Citekey("ck"),
         record,
         minRatio,
@@ -64,12 +70,16 @@ class CompileArticleSuite extends munit.FunSuite:
       )
     assert(
       sent.left.exists(ps =>
-        ps.exists(_.value.contains("not in the record")) && ps.exists(_.value.contains("certain"))
+        ps.exists(_.sentence.contains("not in the record")) && ps.exists(_.sentence.contains("certain"))
       ),
       sent
     )
     val (kept, warns) = checkExtract(
-      ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin trade"), List(good, made, conf)),
+      ExtractAnswer(
+        ExtractAnswer.Relevant(true),
+        Problem.Unclassified(Legacy.Text("tin trade")),
+        List(good, made, conf)
+      ),
       Citekey("ck"),
       record,
       minRatio,
@@ -83,7 +93,7 @@ class CompileArticleSuite extends munit.FunSuite:
   test("extraction: an irrelevant source must say why, and lands in Not used"):
     assert(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Problem(" "), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Problem.Unclassified(Legacy.Text(" ")), Nil),
         Citekey("ck"),
         record,
         minRatio,
@@ -92,14 +102,18 @@ class CompileArticleSuite extends munit.FunSuite:
       ).isLeft
     )
     val (e, _) = checkExtract(
-      ExtractAnswer(ExtractAnswer.Relevant(false), Problem("about Egypt, not the Aegean"), Nil),
+      ExtractAnswer(
+        ExtractAnswer.Relevant(false),
+        Problem.Unclassified(Legacy.Text("about Egypt, not the Aegean")),
+        Nil
+      ),
       Citekey("ck"),
       record,
       minRatio,
       MaxClaims(10),
       last = Last(false)
     ).toOption.get
-    assertEquals(e.notUsed, Some("about Egypt, not the Aegean"))
+    assertEquals(e.notUsed.map(_.sentence), Some("about Egypt, not the Aegean"))
 
   private val facts = List(
     SourceFact(Citekey("a2019_tin"), Title("Tin"), Some(Year(2019)), Source.Status.Current),
@@ -118,7 +132,7 @@ class CompileArticleSuite extends munit.FunSuite:
   private val extracted = List(
     Extracted(Citekey("a2019_tin"), List(claim(Citekey("a2019_tin")), claim(Citekey("a2019_tin"))), None),
     Extracted(Citekey("b2024_iso"), List(claim(Citekey("b2024_iso"))), None),
-    Extracted(Citekey("c2001_old"), Nil, Some(Problem("about Egypt")))
+    Extracted(Citekey("c2001_old"), Nil, Some(Problem.Unclassified(Legacy.Text("about Egypt"))))
   )
   private val ev = evidence(
     Goal.Plans.ArticleDraft.Filter("search {topics:[tin]}"),
@@ -139,7 +153,7 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     assertEquals(ev.disputed, List("b2024_iso"))
     assertEquals(ev.claims, Map("a2019_tin" -> 2, "b2024_iso" -> 1, "c2001_old" -> 0))
-    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Problem("about Egypt"))))
+    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Problem.Unclassified(Legacy.Text("about Egypt")))))
     assertEquals(ev.used, List("a2019_tin", "b2024_iso"))
     val text = evidenceText(ev, extracted)
     assert(
@@ -179,7 +193,7 @@ class CompileArticleSuite extends munit.FunSuite:
         corpus,
         last = Last(false)
       )
-    val (d, warns) = checked.fold(ps => fail(ps.mkString("; ")), identity)
+    val (d, warns) = checked.fold(ps => fail(ps.map(_.sentence).mkString("; ")), identity)
     assertEquals(warns, Nil)
     assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
     assertEquals(d.problems, Nil)
@@ -187,7 +201,12 @@ class CompileArticleSuite extends munit.FunSuite:
     // the extraction's reason is what the article stores for the source it leaves out
     assertEquals(
       d.reasons,
-      List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), api.Problem("about Egypt")))
+      List(
+        Coverage.Reason(
+          com.histmersion.api.library.Citekey("c2001_old"),
+          Problem.Unclassified(Legacy.Text("about Egypt"))
+        )
+      )
     )
 
   test("self-check (#958): a hand-written Not used section or Method note is sent back"):
@@ -204,8 +223,8 @@ class CompileArticleSuite extends munit.FunSuite:
       corpus,
       last = Last(false)
     ).left.toOption.get
-    assert(ps.exists(_.value.startsWith("a Not used section: code generates it")), ps)
-    assert(ps.exists(_.value.startsWith("a _Method_ note: code generates it")), ps)
+    assert(ps.exists(_.sentence.startsWith("a Not used section: code generates it")), ps)
+    assert(ps.exists(_.sentence.startsWith("a _Method_ note: code generates it")), ps)
     // a source listed there is not cited
     val (d, _) =
       checkDraft(
@@ -239,10 +258,13 @@ class CompileArticleSuite extends munit.FunSuite:
       corpus,
       last = Last(false)
     ).left.toOption.get
-    assertEquals(ps, List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason"))
+    assertEquals(
+      ps.map(_.sentence),
+      List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason")
+    )
     val why = Coverage.Reason(
       com.histmersion.api.library.Citekey("b2024_iso"),
-      api.Problem("Its isotopes speak to a later period.")
+      Problem.Unclassified(Legacy.Text("Its isotopes speak to a later period."))
     )
     val (d, _) = checkDraft(
       draft(Article.Body(noIso), reasons = List(why)),
@@ -255,22 +277,30 @@ class CompileArticleSuite extends munit.FunSuite:
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
       last = Last(false)
-    ).fold(ps => fail(ps.mkString("; ")), identity)
+    ).fold(ps => fail(ps.map(_.sentence).mkString("; ")), identity)
     assertEquals(
       d.reasons,
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("b2024_iso"),
-          api.Problem("Its isotopes speak to a later period.")
+          Problem.Unclassified(Legacy.Text("Its isotopes speak to a later period."))
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), api.Problem("about Egypt"))
+        Coverage.Reason(
+          com.histmersion.api.library.Citekey("c2001_old"),
+          Problem.Unclassified(Legacy.Text("about Egypt"))
+        )
       ).sortBy(_.citekey.value)
     )
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
-      Coverage.Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), api.Problem("not needed")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_nope"), api.Problem("never read")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), api.Problem("covers Egypt only"))
+      Coverage
+        .Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Problem.Unclassified(Legacy.Text("not needed"))),
+      Coverage
+        .Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Problem.Unclassified(Legacy.Text("never read"))),
+      Coverage.Reason(
+        com.histmersion.api.library.Citekey("c2001_old"),
+        Problem.Unclassified(Legacy.Text("covers Egypt only"))
+      )
     )
     val ps2 = checkDraft(
       draft(Article.Body(goodBody), reasons = bad),
@@ -285,7 +315,7 @@ class CompileArticleSuite extends munit.FunSuite:
       last = Last(false)
     ).left.toOption.get
     assertEquals(
-      ps2,
+      ps2.map(_.sentence),
       List(
         "a reason for [[a2019_tin]], which the draft cites (a reason is only for a source it leaves out)",
         "a reason for [[zz1999_nope]], which is not a source of the claim table"
@@ -306,7 +336,10 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(
       d2.reasons,
       List(
-        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), api.Problem("covers Egypt only"))
+        Coverage.Reason(
+          com.histmersion.api.library.Citekey("c2001_old"),
+          Problem.Unclassified(Legacy.Text("covers Egypt only"))
+        )
       )
     )
 
@@ -340,7 +373,7 @@ class CompileArticleSuite extends munit.FunSuite:
         corpus,
         last = Last(true)
       ).left
-        .exists(_.exists(_.value.contains("Sources cited")))
+        .exists(_.exists(_.sentence.contains("Sources cited")))
     )
     assert(
       checkDraft(
@@ -374,9 +407,9 @@ class CompileArticleSuite extends munit.FunSuite:
       corpus,
       last = Last(false)
     ).left.toOption.get
-    assert(ps.exists(_.value.contains("does not say it is contested")), ps)
-    assert(ps.exists(_.value.contains("no [[citekey]]")), ps)
-    assert(ps.exists(_.value.contains("'unresolved' or 'open questions'")), ps)
+    assert(ps.exists(_.sentence.contains("does not say it is contested")), ps)
+    assert(ps.exists(_.sentence.contains("no [[citekey]]")), ps)
+    assert(ps.exists(_.sentence.contains("'unresolved' or 'open questions'")), ps)
     val (d, warns) =
       checkDraft(
         draft(Article.Body(silent)),
@@ -410,7 +443,7 @@ class CompileArticleSuite extends munit.FunSuite:
       corpus,
       last = Last(false)
     ).left.toOption.get
-    assert(ps.exists(_.value.contains("[[c2001_old]] is cited but no claim")), ps)
+    assert(ps.exists(_.sentence.contains("[[c2001_old]] is cited but no claim")), ps)
 
   test("extending: the text goes under an existing heading (or at the end); statuses are checked on the result"):
     val current = Article.Body(
@@ -445,7 +478,7 @@ class CompileArticleSuite extends munit.FunSuite:
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
         last = Last(true)
-      ).left.exists(_.exists(_.value.contains("no heading")))
+      ).left.exists(_.exists(_.sentence.contains("no heading")))
     )
     // the required sections are not demanded of an extension
     assert(
@@ -466,7 +499,7 @@ class CompileArticleSuite extends munit.FunSuite:
   test("the first citation of a non-current source must state its status"):
     val st = (ck: Citekey) => statuses.get(ck)
     assertEquals(
-      statusesSilent(Article.Body("[[b2024_iso]] says X.\n\n[[b2024_iso]] (contested) again."), st),
+      statusesSilent(Article.Body("[[b2024_iso]] says X.\n\n[[b2024_iso]] (contested) again."), st).map(_.sentence),
       List("the first citation of [[b2024_iso]] does not say it is contested")
     )
     assertEquals(statusesSilent(Article.Body("[[b2024_iso]], contested by others, says X."), st), Nil)
@@ -500,7 +533,7 @@ class CompileArticleSuite extends munit.FunSuite:
       logLine(
         d,
         written = Written(true),
-        Problem("created"),
+        Problem.Unclassified(Legacy.Text("created")),
         Some(Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")),
         Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")
       ).value.contains(
@@ -511,7 +544,7 @@ class CompileArticleSuite extends munit.FunSuite:
       logLine(
         d,
         written = Written(false),
-        Problem("the draft was rejected"),
+        Problem.Unclassified(Legacy.Text("the draft was rejected")),
         None,
         Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")
       ).value.contains(

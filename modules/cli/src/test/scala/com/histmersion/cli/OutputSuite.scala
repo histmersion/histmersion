@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.monovore.decline.Command
 import com.histmersion.config.*
 
@@ -62,14 +62,14 @@ class OutputSuite extends munit.FunSuite:
       UpdateEntry(
         UpdateEntry.CalibreId(3),
         List(UpdateEntry.Citekeys("ck")),
-        UpdateOutcome.Failed(List(ch), Problem("locked"))
+        UpdateOutcome.Failed(List(ch), Problem.Unclassified(Legacy.Text("locked")))
       )
     )
     assertEquals(
       (r.state, r.reason, r.changes.map(_.from)),
       (
         Calibre.Json.UpdateRow.State("failed"),
-        Some(Problem("locked")),
+        Some(Problem.Unclassified(Legacy.Text("locked"))),
         List(Calibre.Change.From("a"))
       )
     )

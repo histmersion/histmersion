@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -134,14 +135,20 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(4))), t).isRight)
     assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), None), t).isLeft)
     assertEquals(
-      EventProviders.keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t),
+      EventProviders
+        .keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t)
+        .left
+        .map(_.sentence),
       Left("no position")
     )
     assertEquals(
-      EventProviders.keep(
-        erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(5))),
-        t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))
-      ),
+      EventProviders
+        .keep(
+          erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(5))),
+          t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))
+        )
+        .left
+        .map(_.sentence),
       Left("outside --bbox")
     )
 

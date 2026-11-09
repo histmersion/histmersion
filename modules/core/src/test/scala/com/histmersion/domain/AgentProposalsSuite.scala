@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -73,7 +74,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Evidence("e"),
           ProposalAnswer.Quote("one ton of tin")
         )
-      ).left.exists(_.value.contains("edge kind"))
+      ).left.exists(_.sentence.contains("edge kind"))
     )
     assert(
       check(
@@ -86,7 +87,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Evidence("e"),
           ProposalAnswer.Quote("one ton of tin")
         )
-      ).left.exists(_.value.contains("itself"))
+      ).left.exists(_.sentence.contains("itself"))
     )
 
   test("refused: unknown citekey, no evidence, an invented quote, unassessed, an unknown kind"):
@@ -102,7 +103,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Quote("q")
         )
       ).left
-        .exists(_.value.contains("not a citekey"))
+        .exists(_.sentence.contains("not a citekey"))
     )
     assert(
       check(
@@ -116,7 +117,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Quote("one ton of tin")
         )
       ).left
-        .exists(_.value.contains("no evidence"))
+        .exists(_.sentence.contains("no evidence"))
     )
     assert(
       check(
@@ -129,7 +130,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Evidence("e"),
           ProposalAnswer.Quote("the ship was a Phoenician trader from Tyre")
         )
-      ).left.exists(_.value.contains("not in the record"))
+      ).left.exists(_.sentence.contains("not in the record"))
     )
     assert(
       check(
@@ -156,7 +157,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Quote("one ton of tin")
         )
       ).left
-        .exists(_.value.contains("neither"))
+        .exists(_.sentence.contains("neither"))
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):

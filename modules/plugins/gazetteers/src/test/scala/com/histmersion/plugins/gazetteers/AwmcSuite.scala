@@ -88,5 +88,5 @@ class AwmcSuite extends munit.FunSuite:
   test("the gazetteer-awmc plugin registers the source awmc"):
     val h = PluginHarness
       .load(Plugin.Info.Id("gazetteer-awmc"), http = HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(h.gazetteerSources, List("awmc"))

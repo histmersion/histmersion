@@ -1,7 +1,7 @@
 package com.histmersion
 package server
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -352,7 +352,7 @@ class AcquisitionOracleSuite extends DbSuite:
             val access = Access.Unauthorised
             def fetch(w: WorkKey, c: Fetch.Context) =
               unauthorisedAsked.incrementAndGet()
-              Fetch.Miss(plugin.Problem("the zq fixture has no copy"))
+              Fetch.Miss(Problem.Unclassified(Legacy.Text("the zq fixture has no copy")))
         )
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
@@ -378,10 +378,8 @@ class AcquisitionOracleSuite extends DbSuite:
                     Some(Licence("CC BY 4.0"))
                   )
                 )
-              else Fetch.Miss(plugin.Problem("the zq shelf has only one work"))
+              else Fetch.Miss(Problem.Unclassified(Legacy.Text("the zq shelf has only one work")))
         )
-        .left
-        .map(e => plugin.Problem(e.value))
 
   // ── the converter: every document converts, deterministically ──────────────────────────────
 
@@ -454,7 +452,7 @@ class AcquisitionOracleSuite extends DbSuite:
     CalibreFixture.refuseRealLibrary(lib.dir)
     val loaded = AppConfig
       .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), userText(up, lib, allowUnauthorised))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     val c = loaded.config
     val cfg = c
       .modify(_.db)

@@ -1,6 +1,9 @@
 package com.histmersion
 package util.plugins
-import com.histmersion.api.Problem
+
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
@@ -62,12 +65,15 @@ object PluginKit:
     )
 
   def parseSet(text: String): Either[Problem, PluginSet] =
-    parser.decode[PluginSet](text).left.map(e => Problem(s"plugin-set.json: ${e.getMessage}"))
+    parser.decode[PluginSet](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugin-set.json: ${e.getMessage}")))
 
   def renderSet(s: PluginSet): String = s.asJson.printWith(printer)
 
   def parseJars(text: String): Either[Problem, List[PluginJar]] =
-    parser.decode[List[PluginJar]](text).left.map(e => Problem(s"plugin description: ${e.getMessage}"))
+    parser
+      .decode[List[PluginJar]](text)
+      .left
+      .map(e => Problem.Unclassified(Legacy.Text(s"plugin description: ${e.getMessage}")))
 
   def renderJars(js: List[PluginJar]): String = js.asJson.printWith(printer)
 
@@ -183,7 +189,11 @@ object PluginKit:
         Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(s"${a}_3"), Coordinates.Version(v)))
       case plain(g, a, v) => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
       case other          =>
-        Left(Problem(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)"))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)")
+          )
+        )
 
   enum Origin derives CanEqual:
     case File(path: Origin.File.Path)
@@ -263,7 +273,7 @@ object PluginKit:
       jars.find(j => j.plugins.exists(_.id == id) && j.signer.nonEmpty).flatMap(_.signer)
 
   def parseIndex(text: String): Either[Problem, Index] =
-    parser.decode[Index](text).left.map(e => Problem(s"plugins index: ${e.getMessage}"))
+    parser.decode[Index](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugins index: ${e.getMessage}")))
 
   def renderIndex(i: Index): String = i.asJson.printWith(printer)
 
@@ -283,9 +293,11 @@ object PluginKit:
       case Nil               => Right(())
       case (id, pinned) :: _ =>
         Left(
-          Problem(
-            s"plugin '$id' was installed signed by $pinned, this jar is signed by $seen — refused " +
-              s"(remove the plugin first with `histmersion plugin rm $id` to trust the new key)"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"plugin '$id' was installed signed by $pinned, this jar is signed by $seen — refused " +
+                s"(remove the plugin first with `histmersion plugin rm $id` to trust the new key)"
+            )
           )
         )
 
@@ -298,21 +310,35 @@ object PluginKit:
       taken: Map[PluginDescription.Id, String]
   ): List[Problem] =
     val none = if jar.plugins.isEmpty then
-      List(Problem(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)"))
+      List(
+        Problem.Unclassified(
+          Legacy.Text(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)")
+        )
+      )
     else Nil
     none ++ jar.plugins.flatMap { p =>
       // a provider that could not be loaded has no id, version or SPI to compare: its error is the reason
-      if p.id.isEmpty then List(Problem(s"a provider in ${jar.file} could not be loaded: ${p.error.getOrElse("?")}"))
+      if p.id.isEmpty then
+        List(
+          Problem.Unclassified(
+            Legacy.Text(s"a provider in ${jar.file} could not be loaded: ${p.error.map(_.sentence).getOrElse("?")}")
+          )
+        )
       else
         val spi = if p.spiVersion != spiVersion then
           List(
-            Problem(
-              s"${p.id} ${p.version} was built for plugin SPI ${p.spiVersion}; this Histmersion speaks SPI $spiVersion — " +
-                s"rebuild it against SPI $spiVersion"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${p.id} ${p.version} was built for plugin SPI ${p.spiVersion}; this Histmersion speaks SPI $spiVersion — " +
+                  s"rebuild it against SPI $spiVersion"
+              )
             )
           )
         else Nil
-        val clash = taken.get(p.id).map(o => Problem(s"plugin id '${p.id}' is already provided by $o")).toList
+        val clash = taken
+          .get(p.id)
+          .map(o => Problem.Unclassified(Legacy.Text(s"plugin id '${p.id}' is already provided by $o")))
+          .toList
         spi ++ clash
     }
 
@@ -358,10 +384,10 @@ object PluginKit:
     parser
       .decode[KitManifest](text)
       .left
-      .map(e => Problem(s"kit.json: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"kit.json: ${e.getMessage}")))
       .filterOrElse(
         _.format <= KitFormat,
-        Problem(s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)")
+        Problem.Unclassified(Legacy.Text(s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)"))
       )
 
   def renderKit(k: KitManifest): String = k.asJson.printWith(printer)
@@ -374,7 +400,7 @@ object PluginKit:
     val line = "([0-9a-f]{64}) [ *](.+)".r
     text.linesIterator.filter(_.trim.nonEmpty).toList.foldLeft[Either[Problem, List[KitFile]]](Right(Nil)) {
       case (Right(acc), line(h, f)) => Right(acc :+ KitFile(KitFile.File(f), KitFile.Sha256.applyUnsafe(h)))
-      case (Right(_), bad)          => Left(Problem(s"SHA256SUMS: not a checksum line: $bad"))
+      case (Right(_), bad)          => Left(Problem.Unclassified(Legacy.Text(s"SHA256SUMS: not a checksum line: $bad")))
       case (left, _)                => left
     }
 
@@ -383,8 +409,17 @@ object PluginKit:
     */
   def verifyKit(expected: List[KitFile], actual: Map[KitFile.File, KitFile.Sha256]): List[Problem] =
     val want = expected.map(f => f.file -> f.sha256).toMap
-    val missing = want.keys.filterNot(actual.contains).toList.sorted.map(f => Problem(s"missing: $f"))
+    val missing =
+      want.keys.filterNot(actual.contains).toList.sorted.map(f => Problem.Unclassified(Legacy.Text(s"missing: $f")))
     val changed =
-      want.collect { case (f, h) if actual.get(f).exists(_ != h) => f }.toList.sorted.map(f => Problem(s"changed: $f"))
-    val extra = actual.keys.filterNot(want.contains).toList.sorted.map(f => Problem(s"not in the manifest: $f"))
+      want
+        .collect { case (f, h) if actual.get(f).exists(_ != h) => f }
+        .toList
+        .sorted
+        .map(f => Problem.Unclassified(Legacy.Text(s"changed: $f")))
+    val extra = actual.keys
+      .filterNot(want.contains)
+      .toList
+      .sorted
+      .map(f => Problem.Unclassified(Legacy.Text(s"not in the manifest: $f")))
     missing ++ changed ++ extra

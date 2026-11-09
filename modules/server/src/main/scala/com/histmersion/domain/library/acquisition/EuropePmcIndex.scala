@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.Problem
 import com.histmersion.upstreams.http.Url
 
 import com.histmersion.config.*

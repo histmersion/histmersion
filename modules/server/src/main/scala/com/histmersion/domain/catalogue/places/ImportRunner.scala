@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Dataset
@@ -23,7 +23,7 @@ object ImportRunner:
       source: GazetteerSource,
       http: Plugin.Http
   ): Either[Problem, (List[Place.Input], List[Place.ImportResult.Failed])] =
-    PluginGazetteers.places(source, http).left.map(p => Problem(p.value)).map { (items, refused) =>
+    PluginGazetteers.places(source, http).map { (items, refused) =>
       refused.foreach(why => scribe.warn(s"[import] refused $why"))
       (items, refused.map(why => Place.ImportResult.Failed(why.value)))
     }
@@ -77,4 +77,4 @@ object ImportRunner:
       scribe.info(s"[import] rebuilding finding_places…")
       val _ = geometry.rebuildFindingPlaces(toleranceKm)
       Right(total)
-    catch case e: Exception => Left(Problem(s"upsert failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"upsert failed: ${e.getMessage}")))

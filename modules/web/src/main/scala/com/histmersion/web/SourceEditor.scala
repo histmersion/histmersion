@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Api, ListPatch, Wording, YearFmt, Years}
@@ -116,8 +117,8 @@ object SourceEditor:
     val summary = text(d.summary, orig.summary.map(_.value), Field.Summary, "the summary")
 
     val period = (year(Years.Text(d.periodStart)), year(Years.Text(d.periodEnd))) match
-      case (Left(e), _)               => errs += Field.Period -> e.value; None
-      case (_, Left(e))               => errs += Field.Period -> e.value; None
+      case (Left(e), _)               => errs += Field.Period -> e.sentence; None
+      case (_, Left(e))               => errs += Field.Period -> e.sentence; None
       case (Right(None), Right(None)) =>
         if orig.periodStart.isDefined then errs += Field.Period -> cannotClear("the period")
         None
@@ -204,9 +205,9 @@ object SourceEditor:
                     case f: ApiFailure if f.conflict =>
                       errors.set(List(Field.Form -> ConflictMessage))
                       load()
-                    case f: ApiFailure if f.unauthorized => errors.set(List(Field.Form -> f.error.message.value))
-                    case f: ApiFailure                   => errors.set(List(Field.of(f.error) -> f.error.message.value))
-                    case e                               => errors.set(List(Field.Form -> e.getMessage))
+                    case f: ApiFailure if f.unauthorized => errors.set(List(Field.Form -> f.error.message.sentence))
+                    case f: ApiFailure => errors.set(List(Field.of(f.error) -> f.error.message.sentence))
+                    case e             => errors.set(List(Field.Form -> e.getMessage))
                   },
                   sw =>
                     orig.set(Some(sw.source))

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
@@ -44,5 +44,5 @@ object CandidateDedupe:
     }
     (
       kept.toList.map { case (k, (w, bys)) => (k, w, bys) },
-      skipped.toMap.map((reason, n) => Problem(reason) -> SkipCount(n))
+      skipped.toMap.map((reason, n) => Problem.Unclassified(Legacy.Text(reason)) -> SkipCount(n))
     )

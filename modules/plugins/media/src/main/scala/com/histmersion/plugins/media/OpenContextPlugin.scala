@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `media-opencontext`: `histmersion media import opencontext` — Open Context's excavation media. */
 import com.histmersion.plugin.Plugin

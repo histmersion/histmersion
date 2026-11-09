@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
@@ -67,7 +68,11 @@ final class ProposeArticlesPipeline(
   import ProposeArticlesPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Goal.Slug.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem(m))).flatMap(runFor(ctx, _))
+    Goal.Slug
+      .either(ctx.run.target.value)
+      .left
+      .map(m => Halt.Fail(Problem.Unclassified(Legacy.Text(m))))
+      .flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
@@ -86,7 +91,7 @@ final class ProposeArticlesPipeline(
     yield PipelineDef.Summary(closed)
 
   private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.value).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentence).map(_.value)
 
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
@@ -121,7 +126,7 @@ final class ProposeArticlesPipeline(
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
   private def load(slug: Goal.Slug): Either[String, Loaded] =
-    site.goal(slug).left.map(_.message.value).map { g =>
+    site.goal(slug).left.map(_.message.sentence).map { g =>
       val goal = Goal.Slug.assume(g.slug.value)
       val links = goals.links(goal)
       val area = goal :: family(goal)
@@ -208,8 +213,6 @@ final class ProposeArticlesPipeline(
     val lim = limits(ctx)
     PlanArticles
       .check(a, lim.maxArticles, PlanArticles.LastRound(last))
-      .left
-      .map(_.map(p => Problem(p.value)))
       .flatMap { (cs, dropped) =>
         val taken = l.articles.map(_.slug).toSet
         val existing = l.articles.map(e => (Article.Slug(e.slug.value), sourcesOf(e)))
@@ -234,8 +237,10 @@ final class ProposeArticlesPipeline(
         )
         if plan.isEmpty && !last then
           Left(
-            plan.dropped.take(12).map(d => Problem(d.value)) :+
-              Problem("no proposed article passed the checks: fix the ones above or propose others")
+            plan.dropped.take(12).map(d => Problem.Unclassified(Legacy.Text(d.value))) :+
+              Problem.Unclassified(
+                Legacy.Text("no proposed article passed the checks: fix the ones above or propose others")
+              )
           )
         else Right(plan)
       }

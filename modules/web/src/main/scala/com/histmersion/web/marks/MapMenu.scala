@@ -1,6 +1,7 @@
 package com.histmersion
 package web.marks
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.settings.ConfigEdit
@@ -104,7 +105,7 @@ object MapMenu:
       .onComplete(r =>
         Flash.say(
           r.fold(
-            e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e)}"),
+            e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e).sentence}"),
             _ => Flash.Text("The map opens here from now on.")
           )
         )

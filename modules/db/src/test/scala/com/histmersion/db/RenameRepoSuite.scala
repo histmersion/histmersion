@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -224,7 +225,7 @@ class RenameRepoSuite extends DbSuite:
       sql"""INSERT INTO place_footprints (place_id, role, geom, citekey)
             VALUES ($Place, 'core', ST_GeomFromText('POINT(32 39)', 4326), $Old)""".update.run()
 
-    val counts = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.value), identity)
+    val counts = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.sentence), identity)
 
     // the source and everything with a foreign key
     assert(SourceFixtures.get(ds, Old).isEmpty)
@@ -355,7 +356,7 @@ class RenameRepoSuite extends DbSuite:
 
   test("after a rename the old citekey keeps working as a link target, an edge target and a patch target"):
     put(source(Old)); put(source(Other))
-    val _ = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.value), identity)
+    val _ = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.sentence), identity)
     // an article written LATER with the old key links the source, recorded under the new key
     val _ = ArticleFixtures.put(
       ds,
@@ -439,7 +440,7 @@ class RenameRepoSuite extends DbSuite:
         case Right(_) => fail(s"$from → $to should be refused")
         case Left(e)  =>
           assertEquals(e.code, code, e.message)
-          assert(e.message.value.contains(says), e.message)
+          assert(e.message.sentence.contains(says), e.message)
     refused(Old, RenameToNewRaw(Old.value), Some(Write.CodeInvalid), "already the citekey")
     refused(Old, RenameToNewRaw("Not A Key"), Some(Write.CodeInvalid), "invalid citekey")
     refused(Old, RenameToNewRaw("zzrn-2011"), Some(Write.CodeInvalid), "LINK-shaped")

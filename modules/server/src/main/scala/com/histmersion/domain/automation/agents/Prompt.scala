@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -47,7 +48,7 @@ object Prompt:
     * started over ran out of turns on its third attempt.
     */
   def retry(problems: List[Problem], previous: Option[String] = None): String =
-    val points = problems.take(20).map(p => s"- $p").mkString("\n")
+    val points = problems.take(20).map(p => s"- ${p.sentence}").mkString("\n")
     previous.filter(_.length <= MaxPreviousAnswer) match
       case None =>
         "\n\nYour previous answer was rejected by validation:\n" + points + "\nAnswer again, fixing every point."

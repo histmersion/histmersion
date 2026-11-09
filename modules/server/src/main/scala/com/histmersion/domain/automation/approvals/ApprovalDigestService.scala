@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -80,11 +81,15 @@ final class ApprovalDigestService(
     for
       d <- Decision
         .parse(Decision.Wire(b.decision.value))
-        .toRight(Api.Error(Problem(s"unknown decision '${b.decision}' (approve or reject)")))
+        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown decision '${b.decision}' (approve or reject)"))))
       _ <- Either.cond(
         b.kind.exists(_.value.trim.nonEmpty) || b.subject.exists(_.value.trim.nonEmpty) || b.ids.nonEmpty,
         (),
-        Api.Error(Problem("give a kind, a subject or ids: a bulk decision never takes every open approval"))
+        Api.Error(
+          Problem.Unclassified(
+            Legacy.Text("give a kind, a subject or ids: a bulk decision never takes every open approval")
+          )
+        )
       )
       _ <- b.kind
         .map(_.value.trim)
@@ -94,7 +99,9 @@ final class ApprovalDigestService(
             .parse(ApprovalKind.Wire(k))
             .toRight(
               Api.Error(
-                Problem(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
+                Problem.Unclassified(
+                  Legacy.Text(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
+                )
               )
             )
             .map(_ => ())
@@ -127,7 +134,7 @@ final class ApprovalDigestService(
         )
         val ok = done.collect { case (id, Right(_)) => id }
         val bad = done.collect { case (id, Left(e)) =>
-          BulkFailed(BulkFailed.Id(id.value), Problem(e.message.value.take(300)))
+          BulkFailed(BulkFailed.Id(id.value), Problem.Unclassified(Legacy.Text(e.message.sentence.take(300))))
         }
         val left = agents.approvalStore.openLight().size
         if ok.nonEmpty then

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.checks
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.checks.Lint
@@ -92,7 +93,7 @@ class CheckRunnerSuite extends munit.FunSuite:
       Right(List("c", "a"))
     )
     assertEquals(
-      runner.select(List(CheckRule.Name("a"), CheckRule.Name("nope"))).map(_.map(_.rule.name)),
+      runner.select(List(CheckRule.Name("a"), CheckRule.Name("nope"))).map(_.map(_.rule.name)).left.map(_.sentence),
       Left("unknown lint rule(s): nope — known rules: a, b, c, z")
     )
 

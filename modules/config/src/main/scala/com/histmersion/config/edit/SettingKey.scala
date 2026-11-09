@@ -1,6 +1,7 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import org.ekrich.config.ConfigUtil
@@ -34,8 +35,10 @@ object SettingKey extends Newtype[String, SettingKeyRule]:
     val t = Option(raw).map(_.value).getOrElse("").trim
     val full = if t == Root || t.startsWith(s"$Root.") then t else s"$Root.$t"
     either(full).left.map(_ =>
-      Problem(
-        s"'$t' is not a setting's name: dot-separated words of letters, digits, '_' and '-', such as backups.keep"
+      Problem.Unclassified(
+        Legacy.Text(
+          s"'$t' is not a setting's name: dot-separated words of letters, digits, '_' and '-', such as backups.keep"
+        )
       )
     )
 

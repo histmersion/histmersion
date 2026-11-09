@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -143,21 +144,28 @@ object Codex:
             .as[String]
             .toOption
             .orElse(Some("turn failed"))
-            .map(Problem(_))
-        case "error" => error = error.orElse(c.downField("message").as[String].toOption.map(Problem(_)))
-        case _       => ()
+            .map((text => Problem.Unclassified(Legacy.Text(text))))
+        case "error" =>
+          error = error.orElse(
+            c.downField("message").as[String].toOption.map((text => Problem.Unclassified(Legacy.Text(text))))
+          )
+        case _ => ()
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
   def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
-    if ref.provider != ProviderKind.Codex then Left(Problem(s"${ref.wire} is not a codex model"))
+    if ref.provider != ProviderKind.Codex then
+      Left(Problem.Unclassified(Legacy.Text(s"${ref.wire} is not a codex model")))
     else if !rt.loopback then
       Left(
-        Problem(
-          "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"
+        Problem.Unclassified(
+          Legacy.Text(
+            "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"
+          )
         )
       )
-    else if cfg.command.value.trim.isEmpty then Left(Problem("agents.providers.codex.command is empty"))
+    else if cfg.command.value.trim.isEmpty then
+      Left(Problem.Unclassified(Legacy.Text("agents.providers.codex.command is empty")))
     else Right(CodexExecClient(ref, cfg, rt))
 
   /** Who uses the runs' Codex home, and its retention (#2582, [[CodexRetention]]).
@@ -201,8 +209,8 @@ object Codex:
         (List(
           s"${Plural.count(Plural.Count(deleted.value.toLong), Plural.Noun.Singular("transcript"))} deleted (${Backup.humanBytes(freedBytes)})"
         ) ++
-          Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems.map(_.value)).mkString("; ")
-      }(_.value))
+          Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems.map(_.sentence)).mkString("; ")
+      }(_.sentence))
 
     object Report:
       type Summary = Summary.T
@@ -242,8 +250,10 @@ object Codex:
         run: List[Argument] => Either[Problem, ExitCode] = runCommand
     ): Report =
       val w = lock(home).writeLock()
-      if !Files.isDirectory(home) then Report(skipped = Some(Problem(s"no Codex home at $home")))
-      else if !w.tryLock() then Report(skipped = Some(Problem("a Codex run is using the home — not now")))
+      if !Files.isDirectory(home) then
+        Report(skipped = Some(Problem.Unclassified(Legacy.Text(s"no Codex home at $home"))))
+      else if !w.tryLock() then
+        Report(skipped = Some(Problem.Unclassified(Legacy.Text("a Codex run is using the home — not now"))))
       else
         try
           val problems = List.newBuilder[Problem]
@@ -252,7 +262,10 @@ object Codex:
             CodexRetention.stale(files, nowMs, CodexRetention.KeepDays(cfg.keepSessionsDays.value)).filter { f =>
               scala.util
                 .Try(Files.deleteIfExists(home.resolve(f.rel.value)))
-                .fold(e => { problems += Problem(s"${f.rel}: ${e.getMessage}"); false }, identity)
+                .fold(
+                  e => { problems += Problem.Unclassified(Legacy.Text(s"${f.rel}: ${e.getMessage}")); false },
+                  identity
+                )
             }
           CodexRetention.SessionDirs.foreach(d => pruneEmpty(home.resolve(d.value)))
           val vacuumed =
@@ -265,8 +278,8 @@ object Codex:
                 run(List(Argument(cfg.sqlite.value), Argument(f.toString), Argument("VACUUM;"))) match
                   case Right(c) if c.value == 0 =>
                     Some((Report.VacuumedFile(n.value), ByteCount(before), ByteCount(Files.size(f))))
-                  case Right(c) => problems += Problem(s"$n: ${cfg.sqlite} exit $c"); None
-                  case Left(e)  => problems += Problem(s"$n: $e"); None
+                  case Right(c) => problems += Problem.Unclassified(Legacy.Text(s"$n: ${cfg.sqlite} exit $c")); None
+                  case Left(e)  => problems += Problem.Unclassified(Legacy.Text(s"$n: ${e.sentence}")); None
               }
           Report(
             None,
@@ -300,11 +313,13 @@ object Codex:
               .redirectOutput(ProcessBuilder.Redirect.DISCARD)
               .start()
           if p.waitFor(10, TimeUnit.MINUTES) then Right(ExitCode(p.exitValue()))
-          else { p.destroyForcibly(); Left(Problem(s"${argv.head} did not finish in 10 minutes")) }
+          else {
+            p.destroyForcibly(); Left(Problem.Unclassified(Legacy.Text(s"${argv.head} did not finish in 10 minutes")))
+          }
         }
         .toEither
         .left
-        .map(e => Problem(s"${argv.headOption.fold("")(_.value)}: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"${argv.headOption.fold("")(_.value)}: ${e.getMessage}")))
         .flatten
 
     /** After a step: a pass on a virtual thread when one is due ([[CodexRetention.due]]). */

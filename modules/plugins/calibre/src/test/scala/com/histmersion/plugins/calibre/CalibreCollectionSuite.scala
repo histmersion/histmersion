@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.calibre
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -51,9 +51,9 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val c = collection(master)
     val found = c
       .search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20))))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(found.map(_.id.value), List("1", "6"))
-    val one = c.item(CollectionId("5")).fold(e => fail(e.value), identity).getOrElse(fail("no book 5"))
+    val one = c.item(CollectionId("5")).fold(e => fail(e.legacyText), identity).getOrElse(fail("no book 5"))
     assertEquals(
       (one.title, one.authors, one.year.map(y => y.value: Int), one.publisher, one.identifiers),
       (
@@ -66,14 +66,14 @@ class CalibreCollectionSuite extends munit.FunSuite:
     )
     assertEquals(c.item(CollectionId("99")), Right(None))
     assertEquals(c.item(CollectionId("not-a-number")), Right(None))
-    val file = c.file(one, Some(SourceCollection.FileFormat("epub"))).fold(e => fail(e.value), identity)
+    val file = c.file(one, Some(SourceCollection.FileFormat("epub"))).fold(e => fail(e.legacyText), identity)
     assert(file.name.value.endsWith("Book 5.epub"), file)
     assert(c.original(one, file).exists(f => f.extension.value == "epub" && f.bytes.value.nonEmpty))
     assert(c.cover(one).exists(_.exists(_.extension.value == "jpg")))
     val mobi = c.item(CollectionId("7")).toOption.flatten.getOrElse(fail("no book 7"))
-    assert(c.file(mobi, None).left.exists(_.value.contains("has no pdf/epub")), c.file(mobi, None))
+    assert(c.file(mobi, None).left.exists(_.legacyText.contains("has no pdf/epub")), c.file(mobi, None))
     val junk = c.item(CollectionId("4")).toOption.flatten.getOrElse(fail("no book 4"))
-    assert(c.admits(junk).left.exists(_.value.startsWith("Calibre id 4 has empty or Unknown title and author")))
+    assert(c.admits(junk).left.exists(_.legacyText.startsWith("Calibre id 4 has empty or Unknown title and author")))
     assertEquals(c.reach, Right(()))
     assertEquals(master.takeLog().count(_.startsWith("calibredb \"list\"")), 5)
 
@@ -82,7 +82,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     f.lock(true)
     val found = collection(f)
       .search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20))))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assertEquals(found.map(_.id.value).sorted, List("1", "6"))
     val calls = f.takeLog()
     assertEquals(calls.map(_.takeWhile(_ != ' ')), List("calibredb", "sqlite3"))
@@ -105,7 +105,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
         doi = Some(CollectionMetadata.Doi("10.1/new")),
         year = Some(Year(2001))
       )
-    val id = c.add(meta, pdf).fold(e => fail(e.value), identity)
+    val id = c.add(meta, pdf).fold(e => fail(e.legacyText), identity)
     assertEquals(id.value, "9")
     assertEquals(c.replace(CollectionId("1"), SourceCollection.ReplaceKey("zz_linked"), pdf), Right("pdf"))
     assertEquals(
@@ -122,7 +122,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     assert(
       c.set(CollectionId("1"), List(SourceCollection.FieldName("bogus") -> SourceCollection.FieldValue("x")))
         .left
-        .exists(_.value.startsWith("cannot set bogus"))
+        .exists(_.legacyText.startsWith("cannot set bogus"))
     )
     val calls = f.takeLog().map(_.split(' ').take(2).mkString(" "))
     assertEquals(
@@ -173,7 +173,9 @@ class CalibreCollectionSuite extends munit.FunSuite:
         List(SourceCollection.FieldName("languages") -> SourceCollection.FieldValue("eng"))
       )
     )
-    refusals.foreach(r => assert(r.left.exists(_.value.contains("histmersion.plugins.calibre.write-back = true")), r))
+    refusals.foreach(r =>
+      assert(r.left.exists(_.legacyText.contains("histmersion.plugins.calibre.write-back = true")), r)
+    )
     assertEquals(f.takeLog(), Nil, "nothing ran")
     assert(c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(false)).isRight, "a dry run reads only")
 
@@ -195,7 +197,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
         None
       )
     )
-    val found = c.audit(recs).fold(e => fail(e.value), identity)
+    val found = c.audit(recs).fold(e => fail(e.legacyText), identity)
     assertEquals(found.map(f => f.id.value -> f.issues.map(_.code)), List("99" -> List("Missing")))
     master.takeLog(): Unit
     val links = List(
@@ -208,21 +210,22 @@ class CalibreCollectionSuite extends munit.FunSuite:
         )
       )
     )
-    val plan = c.updateAll(links, apply = SourceCollection.UpdateAllApply(false)).fold(e => fail(e.value), identity)
+    val plan =
+      c.updateAll(links, apply = SourceCollection.UpdateAllApply(false)).fold(e => fail(e.legacyText), identity)
     assert(plan.head.outcome.isInstanceOf[CollectionUpdateOutcome.Change], plan)
     assertEquals(master.takeLog().size, 1)
 
   test("the doctor check: a missing library, and one the server may not read"):
     val none = scratch().resolve("absent")
-    assert(CalibreCollection.reach(none).left.exists(_.value.contains("there is no Calibre library at")))
+    assert(CalibreCollection.reach(none).left.exists(_.legacyText.contains("there is no Calibre library at")))
     val empty = Files.createDirectories(scratch().resolve("empty"))
-    assert(CalibreCollection.reach(empty).left.exists(_.value.contains("there is no metadata.db")))
+    assert(CalibreCollection.reach(empty).left.exists(_.legacyText.contains("there is no metadata.db")))
     val locked = Files.createDirectories(scratch().resolve("unreadable"))
     val db = Files.writeString(locked.resolve("metadata.db"), "SQLite format 3")
     Files.setPosixFilePermissions(db, java.nio.file.attribute.PosixFilePermissions.fromString("-w-------"))
     try
       assert(
-        CalibreCollection.reach(locked).left.exists(_.value.contains("Full Disk Access")),
+        CalibreCollection.reach(locked).left.exists(_.legacyText.contains("Full Disk Access")),
         CalibreCollection.reach(locked)
       )
     finally
@@ -236,7 +239,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
         http = HttpMode.Stub(Map.empty),
         env = Map.empty
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.legacyText), identity)
     assert(h.log.forall(!_.toString.contains("unknown")), h.log)
     val added = List.newBuilder[(String, SourceCollection)]
     val ctx = new Plugin.Context:
@@ -244,13 +247,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
       override def processes: Processes = summon[Processes]
       def http = new Plugin.Http {
         def get(u: Plugin.Http.Url, hs: Map[Header.Name, Header.Value]) =
-          Left(Plugin.Http.Failure.Transport(Problem("offline")))
+          Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
       }
       def log = new Plugin.Log { def info(m: Plugin.Log.Line) = (); def warn(m: Plugin.Log.Line) = () }
       def env(name: EnvVar.Name) =
         Option.when(name.value == "HOME")(EnvVar.Value("/home/someone"))
-      def secret(s: Secret) = Left(Problem("none"))
-      def secretVaults = Registry.refusing(Problem("no vaults"))
+      def secret(s: Secret) = Left(Problem.Unclassified(Legacy.Text("none")))
+      def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)
     val settings = Calibre.Settings(

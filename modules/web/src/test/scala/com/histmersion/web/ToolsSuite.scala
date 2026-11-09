@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -114,10 +115,10 @@ class ToolsSuite extends munit.FunSuite:
   test("a failed response is classified by its status, with the server's message when there is one") {
     assert(ApiFailure.of(ApiFailure.Status(401), None).unauthorized)
     assert(ApiFailure.of(ApiFailure.Status(403), None).unauthorized)
-    assert(ApiFailure(ApiFailure.Status(412), Api.Error(Problem("moved on"))).conflict)
-    assert(ApiFailure(ApiFailure.Status(409), Api.Error(Problem("dup"))).duplicate)
+    assert(ApiFailure(ApiFailure.Status(412), Api.Error(Problem.Unclassified(Legacy.Text("moved on")))).conflict)
+    assert(ApiFailure(ApiFailure.Status(409), Api.Error(Problem.Unclassified(Legacy.Text("dup")))).duplicate)
     assertEquals(
-      ApiFailure.of(ApiFailure.Status(400), Some(Api.Error(Problem("bad year")))).getMessage,
+      ApiFailure.of(ApiFailure.Status(400), Some(Api.Error(Problem.Unclassified(Legacy.Text("bad year"))))).getMessage,
       "bad year"
     )
     assert(ApiFailure.of(ApiFailure.Status(0), None).getMessage.contains("could not be reached"))
@@ -378,7 +379,7 @@ class ToolsSuite extends munit.FunSuite:
       UploadView.fieldOf(
         ApiFailure(
           ApiFailure.Status(409),
-          Api.Error(Problem("already stored as x"), Some(Api.Error.Code(Ingest.CodeConflict)))
+          Api.Error(Problem.Unclassified(Legacy.Text("already stored as x")), Some(Api.Error.Code(Ingest.CodeConflict)))
         )
       ),
       UploadView.Field.File
@@ -387,13 +388,15 @@ class ToolsSuite extends munit.FunSuite:
       UploadView.fieldOf(
         ApiFailure(
           ApiFailure.Status(400),
-          Api.Error(Problem("invalid citekey 'X'"), Some(Api.Error.InvalidCitekey))
+          Api.Error(Problem.Unclassified(Legacy.Text("invalid citekey 'X'")), Some(Api.Error.InvalidCitekey))
         )
       ),
       UploadView.Field.Citekey
     )
     assertEquals(
-      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Problem("upload too large")))),
+      UploadView.fieldOf(
+        ApiFailure(ApiFailure.Status(400), Api.Error(Problem.Unclassified(Legacy.Text("upload too large"))))
+      ),
       UploadView.Field.Form
     )
   }
@@ -658,7 +661,7 @@ class ToolsSuite extends munit.FunSuite:
   test("an added item needs text; a blank topic or reason is left out; the worklog takes no reason") {
     val tasks = QueueView.spec(Queue.Kind.Tasks); val log = QueueView.spec(Queue.Kind.Log)
     assertEquals(
-      QueueView.validateAdd(tasks, QueueView.AddDraft(text = QueueView.AddDraft.Text("  \n "))),
+      QueueView.validateAdd(tasks, QueueView.AddDraft(text = QueueView.AddDraft.Text("  \n "))).left.map(_.sentence),
       Left("Write the item's text first.")
     )
     assertEquals(
@@ -667,7 +670,7 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text(" re-run the lint \n"),
           QueueView.AddDraft.Topic("  "),
-          Problem(" ")
+          Problem.Unclassified(Legacy.Text(" "))
         )
       ),
       Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None))
@@ -678,14 +681,14 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text("x"),
           QueueView.AddDraft.Topic(" Corpus hygiene "),
-          Problem(" because ")
+          Problem.Unclassified(Legacy.Text(" because "))
         )
       ),
       Right(
         Queue.QueueAdd(
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
-          reason = Some(Problem("because"))
+          reason = Some(Problem.Unclassified(Legacy.Text("because")))
         )
       )
     )
@@ -695,7 +698,7 @@ class ToolsSuite extends munit.FunSuite:
         QueueView.AddDraft(
           QueueView.AddDraft.Text("ran the lint"),
           QueueView.AddDraft.Topic("2026-09-27"),
-          Problem("ignored")
+          Problem.Unclassified(Legacy.Text("ignored"))
         )
       ),
       Right(Queue.QueueAdd(QueueItem.Text("ran the lint"), Some(QueueItem.Topic("2026-09-27")), reason = None))
@@ -764,13 +767,13 @@ class ToolsSuite extends munit.FunSuite:
       QueueView.fulfil(item, Preview.Target.Source.Citekey("lambert2013_babylonian")),
       QueueItem.Id(567) -> Queue.QueuePatch(
         status = Some(QueueItem.Status(Queue.Done)),
-        reason = Some(Problem("ingested as [[lambert2013_babylonian]]"))
+        reason = Some(Problem.Unclassified(Legacy.Text("ingested as [[lambert2013_babylonian]]")))
       )
     )
     // the reason renders the citekey as a source link
     assert(
       QueueView
-        .segments(UiLabels.Text(Queue.fulfilledReason(None, Citekey("a2020_b")).value))
+        .segments(UiLabels.Text(Queue.fulfilledReason(None, Citekey("a2020_b")).sentence))
         .contains(QueueView.Seg.Cite(QueueView.Seg.Cite.Citekey("a2020_b")))
     )
   }

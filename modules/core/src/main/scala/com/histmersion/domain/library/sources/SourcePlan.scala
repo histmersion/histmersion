@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.domain.FailureTransformers.domainAsApi
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -131,8 +133,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           title,
           Some(MergeIssue.Detail.side(p.left.source)),
           Some(MergeIssue.Detail.side(p.right.source)),
-          (ev.why.map(_.value) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
-            .map(api.Problem(_)),
+          (ev.why
+            .map(_.sentence) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
+            .map((text => Problem.Unclassified(Legacy.Text(text)))),
           List(km.Map, km.Both),
           Option.when(ev.score.value >= cfg.autoMerge.value)(
             MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))
@@ -180,7 +183,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(l)),
         Some(MergeIssue.Detail.side(r)),
-        why.map(_.domainAsApi),
+        why,
         opts,
         suggested,
         cond,
@@ -195,7 +198,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Kind.DoiDiffers,
           MergeIssue.Title(s"DOI differs: ${l.doi.get} here, ${r.doi.get} in the bundle"),
           lr,
-          why = p.evidence.strong.map(k => Problem(s"matched by $k: one record has the wrong DOI"))
+          why = p.evidence.strong.map(k =>
+            Problem.Unclassified(Legacy.Text(s"matched by $k: one record has the wrong DOI"))
+          )
         )
       ),
       r.year.zip(l.year).filter((a, b) => a != b && !(math.abs(a.value - b.value) == 1 && sameDoi)).map { (a, b) =>
@@ -205,7 +210,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Title(s"year differs: $b here, $a in the bundle"),
           lr,
           Some(MergeDecision.of(earliest)),
-          why = List(Problem("the suggestion keeps the earliest year (the first edition)"))
+          why = List(Problem.Unclassified(Legacy.Text("the suggestion keeps the earliest year (the first edition)")))
         )
       },
       Option.when(r.status != l.status && r.status != Source.Status.Unassessed && l.status != Source.Status.Unassessed)(
@@ -220,7 +225,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Kind.TitleDiffers,
           MergeIssue.Title("title differs"),
           lr,
-          why = List(Problem(s"here: ${l.title}"), Problem(s"bundle: ${r.title}"))
+          why = List(
+            Problem.Unclassified(Legacy.Text(s"here: ${l.title}")),
+            Problem.Unclassified(Legacy.Text(s"bundle: ${r.title}"))
+          )
         )
       ),
       Option.when(p.evidence.authors == MergeText.AuthorAgreement.Disjoint)(
@@ -229,8 +237,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Title("no author in common"),
           lr,
           why = List(
-            Problem(s"here: ${l.authors.mkString("; ")}"),
-            Problem(s"bundle: ${r.authors.mkString("; ")}")
+            Problem.Unclassified(Legacy.Text(s"here: ${l.authors.mkString("; ")}")),
+            Problem.Unclassified(Legacy.Text(s"bundle: ${r.authors.mkString("; ")}"))
           )
         )
       ),
@@ -272,7 +280,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           Some(MergeDecision.of(km.KeepLeft)),
           MergeIssue.Severity.Default,
           List(
-            Problem("by default this collection's body stays; keep-right takes the bundle's (and its figures)")
+            Problem.Unclassified(
+              Legacy.Text("by default this collection's body stays; keep-right takes the bundle's (and its figures)")
+            )
           )
         )
       }
@@ -316,7 +326,11 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(o)),
         Some(MergeIssue.Detail.side(s)),
-        if asAlias then List(api.Problem("rename-left cannot free an old citekey: the bundle's source takes a new one"))
+        if asAlias then
+          List(
+            Problem
+              .Unclassified(Legacy.Text("rename-left cannot free an old citekey: the bundle's source takes a new one"))
+          )
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
         Some(MergeDecision.withArg(km.RenameRight, MergeDecision.Argument(suggestion.value))),
@@ -441,7 +455,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             if ev.strongKey then MatchMethod.StrongKey else MatchMethod.Score,
             MatchOutcome.AutoMerge,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why.map(w => api.Problem(w.value))
+            ev.why
           )
         )
       case SourceFate.Gate(p, g) =>
@@ -455,7 +469,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             MatchMethod.Score,
             MatchOutcome.NeedsDecision,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why.map(w => api.Problem(w.value)),
+            ev.why,
             Some(Source.Match.Issue(g.value))
           )
         )

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.*
 
 import com.histmersion.api.YearFmt
@@ -150,11 +151,11 @@ object PlaceReview:
         case Reclassify(_, label, from, to, period, reason, evidence) =>
           val per =
             period.fold("")(p => s", period ${periodText(p)}")
-          Proposal.Line(s"$label: $from → $to$per — $reason${ev(evidence)}")
+          Proposal.Line(s"$label: $from → $to$per — ${reason.sentence}${ev(evidence)}")
         case Merge(_, label, into, intoLabel, reason, evidence) =>
-          Proposal.Line(s"$label: merge into $into $intoLabel — $reason${ev(evidence)}")
+          Proposal.Line(s"$label: merge into $into $intoLabel — ${reason.sentence}${ev(evidence)}")
         case Review(_, label, reason, evidence) =>
-          Proposal.Line(s"$label: review — $reason${ev(evidence)}")
+          Proposal.Line(s"$label: review — ${reason.sentence}${ev(evidence)}")
 
     /** Does `--fix` act on it? */
     def fixable: Boolean = this match
@@ -217,7 +218,7 @@ object PlaceReview:
                 e.label,
                 c.id,
                 c.label,
-                Problem(s"withdrawn by Pleiades as a duplicate of '$x'"),
+                Problem.Unclassified(Legacy.Text(s"withdrawn by Pleiades as a duplicate of '$x'")),
                 ev
               )
             )
@@ -226,7 +227,9 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Problem(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name"),
+                Problem.Unclassified(
+                  Legacy.Text(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name")
+                ),
                 ev
               )
             )
@@ -235,14 +238,23 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Problem(
-                  s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
+                  )
                 ),
                 ev
               )
             )
       case None if Withdrawn.matches(e.label.value.trim) =>
-        Some(Proposal.Review(e.id, e.label, Problem("withdrawn by Pleiades, with no replacement named"), ev))
+        Some(
+          Proposal.Review(
+            e.id,
+            e.label,
+            Problem.Unclassified(Legacy.Text("withdrawn by Pleiades, with no replacement named")),
+            ev
+          )
+        )
       case None if e.kind.value == Place.Kind.Feature => None
       case None                                       =>
         val settled = types.intersect(SiteTypes)
@@ -264,17 +276,25 @@ object PlaceReview:
           else
             Some(
               Proposal
-                .Reclassify(e.id, e.label, e.kind, Place.Kind.Wire(Place.Kind.Polity), write, Problem(note), ev)
+                .Reclassify(
+                  e.id,
+                  e.label,
+                  e.kind,
+                  Place.Kind.Wire(Place.Kind.Polity),
+                  write,
+                  Problem.Unclassified(Legacy.Text(note)),
+                  ev
+                )
             )
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
           to(
             Place.Kind.Wire(Place.Kind.People),
-            Problem("a people or civic tribe — a group of persons, not a territory")
+            Problem.Unclassified(Legacy.Text("a people or civic tribe — a group of persons, not a territory"))
           )
         else if settled.nonEmpty && !RegionAside.matches(e.label.value) then
           to(
             Place.Kind.Wire(Place.Kind.Site),
-            Problem(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
+            Problem.Unclassified(Legacy.Text(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region"))
           )
         else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
           // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
@@ -282,8 +302,8 @@ object PlaceReview:
             Proposal.Review(
               e.id,
               e.label,
-              Problem(
-                "the linked Wikidata item is a historical country — a polity, or a region named after one"
+              Problem.Unclassified(
+                Legacy.Text("the linked Wikidata item is a historical country — a polity, or a region named after one")
               ),
               ev
             )

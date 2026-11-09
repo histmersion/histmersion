@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `pmc`: Europe PMC / PMC Article Datasets — the PDF (`pmc`), else the JATS full text (`pmc-text`), by DOI. Two
   * fetchers, because their steps are not adjacent in the chain (the PMC PDF comes before arXiv, its JATS text after the
@@ -16,5 +15,3 @@ final class PmcPlugin extends FetcherPlugin("pmc"):
     ctx.sourceFetchers
       .add(Registry.AddId("pmc"), pmc.pdfStep)
       .flatMap(_ => ctx.sourceFetchers.add(Registry.AddId("pmc-text"), pmc.textStep))
-      .left
-      .map(e => Problem(e.value))

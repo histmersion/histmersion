@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
@@ -36,7 +37,7 @@ object JobFollow:
 
   private def failed(what: String, why: Option[String]): Cli.Error =
     Cli.Error(
-      Problem(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"),
+      Problem.Unclassified(Legacy.Text(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}")),
       ExitCode.Refused
     )
 
@@ -55,14 +56,14 @@ object JobFollow:
     fetch(id) match
       case Left(e)  => clear(); Left(e)
       case Right(j) =>
-        val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
+        val detail = j.progress.map(p => s"$p").orElse(j.error.map(_.sentence)).map(t => s" — $t").getOrElse("")
         progress(s"job $id: ${j.status}$detail (${waited / 1000}s)")
         if !j.isTerminal then
           sleep(Poll.value)
           job(fetch, id, waited + Poll.value, sleep, progress, clear)
         else
           clear()
-          if j.succeeded then Right(j) else Left(failed(s"job $id", j.error.map(_.value)))
+          if j.succeeded then Right(j) else Left(failed(s"job $id", j.error.map(_.sentence)))
 
   /** Poll a backup the server answered `running` until its archive is written; a failure, or a "done" without a
     * checksum, is `ExitCode.Refused`.
@@ -86,6 +87,9 @@ object JobFollow:
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
         s.result.toRight(
-          Cli.Error(Problem(s"backup ${s.file} finished without a checksum"), ExitCode.Refused)
+          Cli.Error(
+            Problem.Unclassified(Legacy.Text(s"backup ${s.file} finished without a checksum")),
+            ExitCode.Refused
+          )
         )
-      case _ => Left(failed(s"backup ${s.file}", s.error.map(_.value)))
+      case _ => Left(failed(s"backup ${s.file}", s.error.map(_.sentence)))

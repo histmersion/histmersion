@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.data.maintenance.WriteGate
@@ -140,7 +141,9 @@ object Composition:
   )(using Ox): NettySyncServer =
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
     val sg =
-      ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(s"$e"), identity)
+      ServerGraph
+        .start(hc, source, Some(plugins), selectedCore)
+        .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
@@ -171,8 +174,8 @@ object Composition:
     releaseAfterScope { h.agents.stop(); h.ingest.queue.stop() }
     // a swapped database: the agent lease re-acquired on it (and given up on the old one when that
     // generation closes), its interrupted jobs and runs reconciled as at a start
-    leases(sg, h).left.foreach(e => throw IllegalStateException(s"$e"))
-    sg.addWatch().left.foreach(e => throw IllegalStateException(s"$e"))
+    leases(sg, h).left.foreach(e => throw IllegalStateException(s"${e.sentence}"))
+    sg.addWatch().left.foreach(e => throw IllegalStateException(s"${e.sentence}"))
     // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
     // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
     // a test server must never seed its database behind the test's back
@@ -266,7 +269,7 @@ object Composition:
       ) { ctx =>
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
-      .fold(e => throw IllegalStateException(s"$e"), identity)
+      .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
     AcquisitionWiring(deps, h.library.sourceStore, h.ingest, clients)
 
   /** The library's source collections (the Calibre library, archive.org): the service over the plugin generation's
@@ -294,7 +297,9 @@ object Composition:
             .Try(file.bytes())
             .toEither
             .left
-            .map(e => Api.Error(Problem(s"cannot read the original of '$citekey': ${e.getMessage}")))
+            .map(e =>
+              Api.Error(Problem.Unclassified(Legacy.Text(s"cannot read the original of '$citekey': ${e.getMessage}")))
+            )
             .map(b => StoredOriginal(StoredOriginal.Bytes(b.value), StoredOriginal.Disposition(disposition.value)))
         }
       def queueItem(id: CollectionLibrary.QueueItemId) =
@@ -357,7 +362,7 @@ object Composition:
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = plugins.registered.flatMap(i => Plugin.Id.option(i.value))
     )
-    notes.foreach(n => scribe.info(n.value))
+    notes.foreach(n => scribe.info(n.sentence))
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")

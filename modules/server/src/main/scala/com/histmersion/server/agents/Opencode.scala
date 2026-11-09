@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -88,18 +88,29 @@ object Opencode:
             .orElse(err.downField("message").as[String].toOption)
             .orElse(err.focus.map(_.noSpaces))
             .orElse(Some("error"))
-            .map(Problem(_))
+            .map((text => Problem.Unclassified(Legacy.Text(text))))
         case _ => ()
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
   def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
-    if ref.provider != ProviderKind.Opencode then Left(Problem(s"${ref.wire} is not an opencode model"))
+    if ref.provider != ProviderKind.Opencode then
+      Left(Problem.Unclassified(Legacy.Text(s"${ref.wire} is not an opencode model")))
     else if !ref.model.value.contains('/') then
-      Left(Problem(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")
+        )
+      )
     else if PlanQuota
         .poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value)))
         .isDefined && !rt.loopback
-    then Left(Problem("opencode on a ChatGPT login is refused while the server listens beyond loopback"))
-    else if cfg.command.value.trim.isEmpty then Left(Problem("agents.providers.opencode.command is empty"))
+    then
+      Left(
+        Problem.Unclassified(
+          Legacy.Text("opencode on a ChatGPT login is refused while the server listens beyond loopback")
+        )
+      )
+    else if cfg.command.value.trim.isEmpty then
+      Left(Problem.Unclassified(Legacy.Text("agents.providers.opencode.command is empty")))
     else Right(OpencodeRunClient(ref, cfg, rt))

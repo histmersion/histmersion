@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -24,7 +26,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       topics: List[ArticleAnswer.Topics],
       title: ArticleAnswer.Title = ArticleAnswer.Title("T")
   ) =
-    ArticleAnswer(slug, title, None, None, topics, Nil, Problem("why"))
+    ArticleAnswer(slug, title, None, None, topics, Nil, Problem.Unclassified(Legacy.Text("why")))
 
   private def slug(s: String) = ArticleAnswer.Slug(s)
   private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))
@@ -46,8 +48,8 @@ class PlanArticlesSuite extends munit.FunSuite:
     val back = check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(false))
     assert(
       back.left.exists(ps =>
-        ps.exists(_.value.contains("Bad Slug")) && ps.exists(_.value.contains("no filter")) &&
-          ps.exists(_.value.contains("no title"))
+        ps.exists(_.sentence.contains("Bad Slug")) && ps.exists(_.sentence.contains("no filter")) &&
+          ps.exists(_.sentence.contains("no title"))
       ),
       back.toString
     )
@@ -65,7 +67,7 @@ class PlanArticlesSuite extends munit.FunSuite:
         Limits.MaxArticles(1),
         last = LastRound(false)
       ).left
-        .exists(_.exists(_.value.contains("at most 1")))
+        .exists(_.exists(_.sentence.contains("at most 1")))
     )
 
   test("verify: slug taken, too few sources, too much overlap with an area article or an earlier proposal are dropped"):
@@ -86,7 +88,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       Article.Title(slug.value),
       Article.Kind.Wire("concept"),
       Article.Filter(topics = List(topic)),
-      Problem("w")
+      Problem.Unclassified(Legacy.Text("w"))
     )
     val plan = verify(
       Goal.Slug("goal"),

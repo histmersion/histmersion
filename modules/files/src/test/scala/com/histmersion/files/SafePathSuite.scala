@@ -1,6 +1,7 @@
 package com.histmersion
 package files
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.given
 
 import java.nio.file.Paths
@@ -28,7 +29,7 @@ class SafePathSuite extends munit.FunSuite:
 
   test("the refusal names the configured directory, so it is actionable"):
     val e = SafePath.confine(base, SafePath.Candidate("/etc/passwd")).swap.toOption.get
-    assert(e.value.contains("/srv/corpus"), e)
+    assert(e.sentence.contains("/srv/corpus"), e)
 
   test("no corpus configured = the old behaviour, unchanged"):
     assert(SafePath.confine(None, SafePath.Candidate("/etc/passwd")).isRight)

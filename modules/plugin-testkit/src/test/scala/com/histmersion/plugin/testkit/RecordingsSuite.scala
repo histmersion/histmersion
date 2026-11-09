@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.plugin.testkit.internal.{ProjectPaths, RecordedExchange, Scrubber}
@@ -58,7 +59,7 @@ class RecordingsSuite extends munit.FunSuite:
       assertEquals(HttpMode.fromEnv(dir, Map("HISTMERSION_PLUGIN_HTTP" -> "record")), Right(HttpMode.Record(dir)))
       assertEquals(HttpMode.fromEnv(dir, Map("HISTMERSION_PLUGIN_HTTP" -> "LIVE")), Right(HttpMode.Live))
       assert(HttpMode.fromEnv(dir, Map("HISTMERSION_PLUGIN_HTTP" -> "maybe")).isLeft)
-      assert(HttpMode.fromEnv(dir, Map.empty).left.exists(_.value.contains("HISTMERSION_PLUGIN_LIVE=1")))
+      assert(HttpMode.fromEnv(dir, Map.empty).left.exists(_.sentence.contains("HISTMERSION_PLUGIN_LIVE=1")))
       assertEquals(HttpMode.fromEnv(dir, Map("HISTMERSION_PLUGIN_LIVE" -> "1")), Right(HttpMode.Live))
       Files.writeString(dir.resolve("001-x.example.http"), "GET https://x.example/\nstatus: 200\n")
       assertEquals(HttpMode.fromEnv(dir, Map("HISTMERSION_PLUGIN_LIVE" -> "1")), Right(HttpMode.Replay(dir)))
@@ -87,4 +88,4 @@ class RecordingsSuite extends munit.FunSuite:
 
   test("the reason to skip names the directory it looked in, resolved"):
     val why = HttpMode.fromEnv(Path.of("recordings", "never-recorded"), Map.empty)
-    assert(why.left.exists(_.value.contains(Path.of("recordings", "never-recorded").toAbsolutePath.toString)), why)
+    assert(why.left.exists(_.sentence.contains(Path.of("recordings", "never-recorded").toAbsolutePath.toString)), why)

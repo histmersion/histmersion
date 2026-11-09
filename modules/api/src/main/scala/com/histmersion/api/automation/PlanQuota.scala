@@ -1,6 +1,9 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -149,7 +152,7 @@ object PlanQuota:
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(Floors(parsed.collect { case Right((k, v)) => ByKindKey(k) -> Floor(v) }.toMap))
-        case errs => Left(Problem(errs.mkString("; ")))
+        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
 
   final case class Rules(
       floors: Floors,
@@ -229,7 +232,7 @@ object PlanQuota:
       WindowStatus.LeftPct(left),
       WindowState.Stale(stale),
       WindowState.Usable(why.isEmpty),
-      (why).map(refactorValue4 => Problem(refactorValue4))
+      (why).map(refactorValue4 => Problem.Unclassified(Legacy.Text(refactorValue4)))
     )
 
   def verdict(
@@ -244,12 +247,16 @@ object PlanQuota:
     val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if (held).value then Verdict.Blocked(Problem("held: a person paused all agent use of this plan"), None)
+      if (held).value then
+        Verdict.Blocked(Problem.Unclassified(Legacy.Text("held: a person paused all agent use of this plan")), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))        => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty =>
-            Verdict.Blocked(Problem(blocking.flatMap(_.why).mkString("; ")), earliest)
+            Verdict.Blocked(
+              Problem.Unclassified(Legacy.Text(blocking.flatMap(_.why).map(_.sentence).mkString("; "))),
+              earliest
+            )
           case None if states.isEmpty =>
             Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
           case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) =>
@@ -338,12 +345,12 @@ object PlanQuota:
       force: Boolean = (false)
   ): Either[Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)                                          => Left(Problem("refresh is off for this pool"))
-      case Login.Missing(why)                                       => Left(Problem(s"no login: $why"))
-      case _ if (force)                                             => Right(need)
-      case _ if need.isEmpty                                        => Left(Problem("the reading decides by itself"))
+      case _ if !(enabled)    => Left(Problem.Unclassified(Legacy.Text("refresh is off for this pool")))
+      case Login.Missing(why) => Left(Problem.Unclassified(Legacy.Text(s"no login: ${why.sentence}")))
+      case _ if (force)       => Right(need)
+      case _ if need.isEmpty  => Left(Problem.Unclassified(Legacy.Text("the reading decides by itself")))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
-        Left(Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
+        Left(Problem.Unclassified(Legacy.Text("a fresh reading was taken (or tried) less than stale-minutes ago")))
       case _ => Right(need)
 
   final case class WindowStatus(

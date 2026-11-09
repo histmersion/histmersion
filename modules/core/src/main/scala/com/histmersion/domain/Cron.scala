@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import io.github.iltotore.iron.constraint.any.Pure
@@ -140,15 +141,17 @@ object Cron:
     val parts = expr.split("\\s+").toList.filter(_.nonEmpty)
     if parts.size != 5 then
       Left(
-        Problem(
-          s"'$t' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
-            s"or one of ${Shortcuts.keys.toList.sorted.mkString(", ")}"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"'$t' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
+              s"or one of ${Shortcuts.keys.toList.sorted.mkString(", ")}"
+          )
         )
       )
     else
       val parsed = parts.zip(Fields).map((p, f) => field(p, f))
       parsed.collectFirst { case Left(m) => m } match
-        case Some(m) => Left(Problem(s"'$t': $m"))
+        case Some(m) => Left(Problem.Unclassified(Legacy.Text(s"'$t': $m")))
         case None    =>
           val v = parsed.collect { case Right(s) => s }
           val c = Cron(
@@ -161,5 +164,6 @@ object Cron:
             anyDay = AnyDay(parts(2) == "*"),
             anyWeekday = AnyWeekday(parts(4) == "*")
           )
-          if c.next(Instant.parse("2000-01-01T00:00:00Z")).isEmpty then Left(Problem(s"'$t' never fires"))
+          if c.next(Instant.parse("2000-01-01T00:00:00Z")).isEmpty then
+            Left(Problem.Unclassified(Legacy.Text(s"'$t' never fires")))
           else Right(c)

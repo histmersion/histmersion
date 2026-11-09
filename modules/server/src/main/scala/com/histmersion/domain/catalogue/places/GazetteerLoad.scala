@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -76,20 +77,18 @@ object GazetteerLoad:
 
   def manifest(p: Stores): Either[Problem, Gazetteer.Manifest] =
     p.manifestText()
-      .left
-      .map(e => Problem(e.value))
       .flatMap(text =>
         io.circe.parser
           .decode[Gazetteer.Manifest](text.value)
           .left
-          .map(e => Problem(s"${p.manifestAt}: ${e.getMessage}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"${p.manifestAt}: ${e.getMessage}")))
       )
 
   private def pin(p: Stores, kind: Gazetteer.Kind): Either[Problem, Gazetteer.Extract] =
     manifest(p).flatMap(
       _.extracts
         .find(_.name.value == kind.wire.value)
-        .toRight(Problem(s"${p.manifestAt} pins no '${kind.wire}' extract"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"${p.manifestAt} pins no '${kind.wire}' extract")))
     )
 
   // ── checksums and downloads ────────────────────────────────────────────────────────────────────
@@ -99,15 +98,17 @@ object GazetteerLoad:
     */
   def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[Problem, Blob] =
     store.get(key) match
-      case None    => Left(Problem(s"${store.where(key)} is missing"))
+      case None    => Left(Problem.Unclassified(Legacy.Text(s"${store.where(key)} is missing")))
       case Some(f) =>
         val got = f.sha256().value
         if got.equalsIgnoreCase(x.sha256.value) then Right(f)
         else
           Left(
-            Problem(
-              s"${store.where(key)} has sha256 $got, but ${x.name} ${x.version} is pinned at ${x.sha256} — refused " +
-                "(rebuild it with db/gazetteer/build.py and re-pin, or fetch the pinned file)"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${store.where(key)} has sha256 $got, but ${x.name} ${x.version} is pinned at ${x.sha256} — refused " +
+                  "(rebuild it with db/gazetteer/build.py and re-pin, or fetch the pinned file)"
+              )
             )
           )
 
@@ -122,18 +123,22 @@ object GazetteerLoad:
     */
   def missing(p: Stores, x: Gazetteer.Extract): Problem =
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then
-      Problem(
-        s"${x.name} is not pinned yet (${p.manifestAt} names no built file or sha256 for it) — build it with " +
-          s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
+      Problem.Unclassified(
+        Legacy.Text(
+          s"${x.name} is not pinned yet (${p.manifestAt} names no built file or sha256 for it) — build it with " +
+            s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
+        )
       )
     else
       val f = Store.Key.of(x.file.value).toOption.fold(p.extracts.where())(p.extracts.where(_))
-      Problem(
-        s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
-          s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(ByteCount(x.bytes.value))} — copied from " +
-          s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
-          s"places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, " +
-          s"$$XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
+      Problem.Unclassified(
+        Legacy.Text(
+          s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
+            s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(ByteCount(x.bytes.value))} — copied from " +
+            s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
+            s"places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, " +
+            s"$$XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
+        )
       )
 
   /** A pinned extract at the legacy place (not in `extracts`), VERIFIED, moved over once and logged — so an install
@@ -177,7 +182,7 @@ object GazetteerLoad:
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then Left(missing(p, x))
     else
       Store.Key.of(x.file.value) match
-        case Left(e)                              => Left(Problem(s"${x.file}: $e"))
+        case Left(e) => Left(Problem.Unclassified(Legacy.Text(s"${x.file}: ${e.sentence}")))
         case Right(key) if p.extracts.isFile(key) => verify(p.extracts, key, x)
         case Right(key)                           =>
           p.legacy.filter(_.isFile(key)) match
@@ -187,12 +192,12 @@ object GazetteerLoad:
                 case None      => Left(missing(p, x))
                 case Some(url) =>
                   for
-                    _ <- p.extracts.makeDirectory().left.map(e => Problem(e.toString))
-                    r <- p.extracts.reserve(key).left.map(e => Problem(e.toString))
+                    _ <- p.extracts.makeDirectory().left.map(e => Problem.Unclassified(Legacy.Text(e.toString)))
+                    r <- p.extracts.reserve(key).left.map(e => Problem.Unclassified(Legacy.Text(e.toString)))
                     _ <- download(HttpDownload.Url(url), r, timeoutSeconds).left.map { e =>
-                      r.discard(); Problem(e.value)
+                      r.discard(); e
                     }
-                    _ <- r.commit().left.map(e => Problem(e.toString))
+                    _ <- r.commit().left.map(e => Problem.Unclassified(Legacy.Text(e.toString)))
                     f <- verify(p.extracts, key, x).left.map { e =>
                       val _ = p.extracts.delete(key)
                       e
@@ -225,7 +230,7 @@ object GazetteerLoad:
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[Problem, GazRecord]): Unit = r match
-      case Left(e)    => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.value)).take(20))
+      case Left(e) => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.sentence)).take(20))
       case Right(rec) =>
         span = Span(
           (span.from ++ rec.span.from).minByOption(_.value: Long),
@@ -338,8 +343,13 @@ object GazetteerLoad:
     io.circe.parser
       .parse(line)
       .left
-      .map(e => Problem(s"line $n: ${e.getMessage}"))
-      .flatMap(Gazetteer.fromFeature(_, dataset, n, source).left.map(e => Problem(s"line $n: $e")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"line $n: ${e.getMessage}")))
+      .flatMap(
+        Gazetteer
+          .fromFeature(_, dataset, n, source)
+          .left
+          .map(e => Problem.Unclassified(Legacy.Text(s"line $n: ${e.sentence}")))
+      )
 
   /** One source through one session: batches, then (when every line was read) the sweep. */
   private def run(
@@ -405,7 +415,11 @@ object GazetteerLoad:
   ): Either[Problem, List[Gazetteer.LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
-      Left(Problem(s"no LPF files in ${s.stores.lpf.where()} (put World Historical Gazetteer downloads there)"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"no LPF files in ${s.stores.lpf.where()} (put World Historical Gazetteer downloads there)")
+        )
+      )
     else
       files.foldLeft[Either[Problem, List[Gazetteer.LoadCounts]]](Right(Nil)) { (acc, f) =>
         acc.flatMap(done => loadLpfFile(db, s, f, apply, note).map(done :+ _))
@@ -444,8 +458,6 @@ object GazetteerLoad:
                     n,
                     meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
                   )
-                  .left
-                  .map(_.transformInto[Problem])
                   .map(Gazetteer.inDataset(_, meta))
               )
           }
@@ -464,27 +476,27 @@ object GazetteerLoad:
         )
       else if f.size.value > s.maxLpfBytes.value then
         Left(
-          Problem(
-            s"$name is ${f.size.value / (1024 * 1024)} MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"$name is ${f.size.value / (1024 * 1024)} MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)"
+            )
           )
         )
       else
         io.circe.parser
           .parse(Using.resource(open(f))(in => new String(in.readAllBytes(), StandardCharsets.UTF_8)))
           .left
-          .map(e => Problem(s"$name: invalid JSON: ${e.getMessage}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"$name: invalid JSON: ${e.getMessage}")))
           .flatMap { doc =>
             val top = doc.asObject.getOrElse(JsonObject.empty)
             val feats = doc.asArray.map(_.toList).orElse(top("features").flatMap(_.asArray).map(_.toList))
-            feats.toRight(Problem(s"$name: not a FeatureCollection")).map { fs =>
+            feats.toRight(Problem.Unclassified(Legacy.Text(s"$name: not a FeatureCollection"))).map { fs =>
               val meta = Gazetteer.dataset(top, side)
               meta -> ((b: Batcher) =>
                 fs.zipWithIndex.foreach((j, i) =>
                   b.add(
                     Gazetteer
                       .fromFeature(j, slug, i, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
-                      .left
-                      .map(_.transformInto[Problem])
                       .map(Gazetteer.inDataset(_, meta))
                   )
                 )

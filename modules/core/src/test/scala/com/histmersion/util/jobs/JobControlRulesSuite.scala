@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.jobs.JobInfo
@@ -39,7 +40,7 @@ class JobControlRulesSuite extends munit.FunSuite:
           resumable = false
         )
         .left
-        .exists(_.value.contains("one piece"))
+        .exists(_.sentence.contains("one piece"))
     )
     assert(
       JobControlRules
@@ -84,7 +85,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     val paused = job(ImportJobKinds.MediaImport.kind, JobInfo.Status("paused"))
     assertEquals(JobControlRules.decide(paused, JobAction.Resume, resumable = true), Right(JobControlStep.Resume))
     assert(
-      JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.value.contains("restarted"))
+      JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.sentence.contains("restarted"))
     )
     assert(
       JobControlRules
@@ -94,7 +95,7 @@ class JobControlRulesSuite extends munit.FunSuite:
           resumable = true
         )
         .left
-        .exists(_.value.contains("not paused"))
+        .exists(_.sentence.contains("not paused"))
     )
 
   test("an ended job is left as it ended; a paused one is not paused twice; a queued one is cancelled, not paused"):
@@ -106,7 +107,7 @@ class JobControlRulesSuite extends munit.FunSuite:
             JobControlRules
               .decide(job(ImportJobKinds.MediaImport.kind, s), a, resumable = true)
               .left
-              .exists(_.value.contains("ended")),
+              .exists(_.sentence.contains("ended")),
             s"$s $a"
           )
         )
@@ -119,7 +120,7 @@ class JobControlRulesSuite extends munit.FunSuite:
           resumable = true
         )
         .left
-        .exists(_.value.contains("already"))
+        .exists(_.sentence.contains("already"))
     )
     assert(
       JobControlRules
@@ -129,7 +130,7 @@ class JobControlRulesSuite extends munit.FunSuite:
           resumable = true
         )
         .left
-        .exists(_.value.contains("cancel it"))
+        .exists(_.sentence.contains("cancel it"))
     )
 
   test("a stopped job keeps what it had done in its progress line"):

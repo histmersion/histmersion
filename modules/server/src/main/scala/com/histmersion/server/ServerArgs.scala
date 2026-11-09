@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ServerArgs:
@@ -26,7 +26,7 @@ object ServerArgs:
       case Nil                   => Right(ServerMode.Serve)
       case List("--self-check")  => Right(ServerMode.SelfCheck)
       case List("--help" | "-h") => Right(ServerMode.Help)
-      case a :: _ if !Known(a)   => Left(Problem(s"unknown argument '$a'"))
-      case _                     => Left(Problem(s"one argument at most: ${args.mkString(" ")}"))
+      case a :: _ if !Known(a)   => Left(Problem.Unclassified(Legacy.Text(s"unknown argument '$a'")))
+      case _ => Left(Problem.Unclassified(Legacy.Text(s"one argument at most: ${args.mkString(" ")}")))
 
   private val Known = Set("--self-check", "--help", "-h")

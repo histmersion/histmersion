@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.LatinFold
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
@@ -197,7 +199,7 @@ object AcquireMatch:
     val key = doi.flatMap(d => doiKeyOf(d.value))
     val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.QueueItem.Status(Queue.Open))
     val (closes, rest) =
-      open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(_.value).getOrElse("")).contains))
+      open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(_.sentence).getOrElse("")).contains))
     val proposals = rest
       .flatMap { i =>
         val s = scoreOf(i.text.value, title.value, authors)
@@ -215,7 +217,7 @@ object AcquireMatch:
   def describe(d: Decision, closed: Queue.QueueItem.Id => Either[Problem, Unit] = _ => Right(())): Description = d match
     case Decision.Close(i) =>
       closed(i.id).fold(
-        e => Description(s"acquisition item #${i.id} matches by DOI but was NOT ticked off: $e"),
+        e => Description(s"acquisition item #${i.id} matches by DOI but was NOT ticked off: ${e.sentence}"),
         _ => Description(s"ticked off acquisition item #${i.id} (same DOI)")
       )
     case Decision.Propose(i, s, other) =>

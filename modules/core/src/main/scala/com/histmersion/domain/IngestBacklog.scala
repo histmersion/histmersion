@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -39,7 +41,7 @@ object IngestBacklog:
   val NoLegalCopy = "no legal open-access copy of"
 
   def isNoLegalCopy(message: Problem): Boolean =
-    Option(message).exists(m => startsWithNoLegalCopy(m.value))
+    Option(message).exists(m => startsWithNoLegalCopy(m.sentence))
 
   private def startsWithNoLegalCopy(text: String): Boolean = text.trim.startsWith(NoLegalCopy)
 
@@ -151,21 +153,23 @@ object IngestBacklog:
       maxBackoffMinutes: ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
       now: Instant
   ): Failure =
-    val why = Option(message).map(_.value.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
-    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Problem(why))
+    val why = Option(message).map(_.sentence.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
+    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Problem.Unclassified(Legacy.Text(why)))
     else
       val n = math.max(0, failures.value) + 1
       if n >= math.max(1, maxFailures.value) then
         Failure.ToAcquire(
-          Problem(
-            s"$why (${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"$why (${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
+            )
           )
         )
       else
         Failure.Retry(
           now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, ManagerPolicy.Next.Retry.Failures(n))),
           Failure.Retry.Failures(n),
-          Problem(why)
+          Problem.Unclassified(Legacy.Text(why))
         )
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
@@ -253,12 +257,14 @@ object IngestBacklog:
 
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa.value then
-      RepairAction.Keep(Problem("no legal open-access copy known: it stays on the acquisition list"))
+      RepairAction.Keep(
+        Problem.Unclassified(Legacy.Text("no legal open-access copy known: it stays on the acquisition list"))
+      )
     else
       f.inCorpus match
         case Some(ck)                       => RepairAction.Remove(ck)
         case None if !f.watcherExists.value =>
-          RepairAction.Keep(Problem(s"its watcher ${f.watcher} no longer exists"))
+          RepairAction.Keep(Problem.Unclassified(Legacy.Text(s"its watcher ${f.watcher} no longer exists")))
         case None if !f.watcherAutoIngest.value =>
-          RepairAction.Keep(Problem(s"its watcher ${f.watcher} does not auto-ingest"))
+          RepairAction.Keep(Problem.Unclassified(Legacy.Text(s"its watcher ${f.watcher} does not auto-ingest")))
         case None => RepairAction.Move

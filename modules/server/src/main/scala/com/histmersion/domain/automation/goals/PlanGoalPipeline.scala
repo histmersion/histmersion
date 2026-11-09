@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
@@ -71,7 +72,7 @@ final class PlanGoalPipeline(
     DomainGoal.Slug
       .either(ctx.run.target.value)
       .left
-      .map(_ => Halt.Fail(Problem(s"invalid goal slug '${ctx.run.target.value}'")))
+      .map(_ => Halt.Fail(Problem.Unclassified(Legacy.Text(s"invalid goal slug '${ctx.run.target.value}'"))))
       .flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: DomainGoal.Slug): Either[Halt, PipelineDef.Summary] =
@@ -85,9 +86,7 @@ final class PlanGoalPipeline(
       )((a, last) =>
         PlanGoal
           .check(a, slug, taken, loaded.queries.toSet, caps(ctx), PlanGoal.LastRound(last.value))
-          .left
-          .map(_.map(p => Problem(p.value)))
-          .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.value))))
+          .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.sentence))))
       )
       plan <- ctx.code[Plan](AgentRepo.StepRecord.Name("verify"))(Right(verify(ctx, proposed, slug)))
       line <-
@@ -123,7 +122,7 @@ final class PlanGoalPipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: DomainGoal.Slug): Either[String, Loaded] =
-    host.goal(slug).left.map(_.message.value).map { g =>
+    host.goal(slug).left.map(_.message.sentence).map { g =>
       val links = goals.links(slug)
       val vocab = (field: String) => host.vocabulary(AutomationHost.VocabularyField(field)).take(VocabularySize)
       Loaded(
@@ -170,7 +169,7 @@ final class PlanGoalPipeline(
     plan
 
   private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
+    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
 
   private def runId(ctx: RunCtx): Run.Id =
     Run.Id.assume(ctx.run.id.value)
@@ -239,7 +238,7 @@ final class PlanGoalPipeline(
               )
             ) match
               case Right(_) => true
-              case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.message.value}"); false
+              case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.message.sentence}"); false
     }
     plan.queries.foreach(q =>
       goals.link(
@@ -262,7 +261,7 @@ final class PlanGoalPipeline(
         slug,
         DomainGoal.LinkKind.Source,
         GoalLink.Ref(w.citekey.get.value),
-        Option(w.why).filter(_.value.nonEmpty).map(y => GoalLink.Note(y.value))
+        Option(w.why).filter(_.sentence.nonEmpty).map(y => GoalLink.Note(y.sentence))
       )
     )
     val items = outside.flatMap { w =>
@@ -290,7 +289,7 @@ final class PlanGoalPipeline(
             Some(GoalLink.Note(w.doi.value))
           );
           Some(id)
-        case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.message.value}"); None
+        case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.message.sentence}"); None
     }
     goals.setPlan(slug, BGoalRow.Plan(plan.asJson.noSpaces))
     log(

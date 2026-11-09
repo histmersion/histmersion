@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
 
@@ -22,28 +22,28 @@ object ChronOntology extends DownloadedGazetteer:
   val rights: GazetteerRights =
     GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 
-  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+  def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     io.circe.parser
       .parse(text.value)
       .left
-      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
       .flatMap { doc =>
         val results = doc.asObject
           .flatMap(_("results"))
           .flatMap(_.asArray)
           .map(_.toList)
-          .toRight(DownloadedGazetteer.Problem("expected {results: [...]}"))
+          .toRight(Problem.Unclassified(Legacy.Text("expected {results: [...]}")))
         results.map(_.flatMap(r => readResult(r).toOption))
       }
 
-  def readResult(j: Json): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
-    j.asObject.toRight(DownloadedGazetteer.Problem("result is not a JSON object")).flatMap { wrapper =>
+  def readResult(j: Json): Either[Problem, GazetteerPlace] =
+    j.asObject.toRight(Problem.Unclassified(Legacy.Text("result is not a JSON object"))).flatMap { wrapper =>
       val res = wrapper("resource").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val id = strField(res, "id").getOrElse("")
-      if id.isEmpty then Left(DownloadedGazetteer.Problem("result has no id"))
+      if id.isEmpty then Left(Problem.Unclassified(Legacy.Text("result has no id")))
       else
         val label = bestName(res)
-        if label.value.isEmpty then Left(DownloadedGazetteer.Problem(s"period $id has no name"))
+        if label.value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"period $id has no name")))
         else
           val regions = extractRegions(wrapper)
           val props = JsonObject.fromIterable(

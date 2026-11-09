@@ -1,7 +1,6 @@
 package com.histmersion
 package api.personal
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -57,8 +56,9 @@ object Bookmark:
     /** A name as given, tidied (spaces collapsed): none when empty, refused when too long. */
     def tidy(raw: Option[Label]): Either[Problem, Option[Label]] =
       raw.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty) match
-        case Some(l) if l.length > MaxChars => Left(Problem(s"a bookmark's name is at most $MaxChars characters"))
-        case other                          => Right(other.map(Label(_)))
+        case Some(l) if l.length > MaxChars =>
+          Left(Problem.Unclassified(Legacy.Text(s"a bookmark's name is at most $MaxChars characters")))
+        case other => Right(other.map(Label(_)))
     given Encoder[Label] = Encoder.encodeString.contramap(_.value)
     given Decoder[Label] = Decoder.decodeString.map(Label(_))
     given Schema[Label] = Schema.string[Label]

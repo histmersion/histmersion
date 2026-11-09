@@ -1,6 +1,6 @@
 package com.histmersion.fixtures.helloai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -16,7 +16,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     Either.cond(
       model.value != "broken",
       (),
-      Problem("the model 'broken' cannot be built (a test of the check)")
+      Problem.Unclassified(Legacy.Text("the model 'broken' cannot be built (a test of the check)"))
     )
 
   override def models(http: AiHttp): Either[Problem, List[AiProvider.ModelName]] =
@@ -48,7 +48,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then
       Left(
         AiFailure.LimitReached(
-          Problem("hello-ai: usage limit reached")
+          Problem.Unclassified(Legacy.Text("hello-ai: usage limit reached"))
         )
       )
     else
@@ -57,7 +57,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
         case None =>
           Left(
             AiFailure.Error(
-              Problem(s"no scripted reply for this step (${replies.size} repl(ies))")
+              Problem.Unclassified(Legacy.Text(s"no scripted reply for this step (${replies.size} repl(ies))"))
             )
           )
         case Some(r) =>

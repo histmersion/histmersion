@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.assets
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.media.imports.{MediaMatch, Target}
@@ -62,7 +62,10 @@ object AssetFixtures:
     transact(ds)(AssetRepo.patch(citekey, name, p))
       .flatMap(_ =>
         detail(ds, citekey, name).toRight(
-          Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
         )
       )
 

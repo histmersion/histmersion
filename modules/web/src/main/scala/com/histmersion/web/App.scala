@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -289,6 +289,8 @@ object App:
             )
             statusVar.set("")
           },
-          m => { statusVar.set(""); ResultsList.failed(Problem(s"Could not list sources: $m")) }
+          m => {
+            statusVar.set(""); ResultsList.failed(Problem.Unclassified(Legacy.Text(s"Could not list sources: $m")))
+          }
         )
     }

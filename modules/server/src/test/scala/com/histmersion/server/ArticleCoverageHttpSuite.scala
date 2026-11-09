@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -135,7 +136,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assertEquals((c.total, c.checked), (5, 5))
         assertEquals(c.cited.map(_.citekey), List(Cited1, Cited2).sortBy[String](_.value))
         assertEquals(
-          c.notUsed.map(e => e.source.citekey -> e.reason),
+          c.notUsed.map(e => e.source.citekey -> e.reason.map(_.sentence)),
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy[String](_._1.value)
         )
         assertEquals(c.citedOutside, List(Outside))
@@ -232,7 +233,9 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assertEquals(rs, 200, rb)
         val reasoned = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(
-          reasoned.coverage.toList.flatMap(_.critiques).map(p => (p.ref.wire, p.state, p.reason, p.reasonBy)),
+          reasoned.coverage.toList
+            .flatMap(_.critiques)
+            .map(p => (p.ref.wire, p.state, p.reason.map(_.sentence), p.reasonBy)),
           List(
             (
               s"$Critic>$Cited2",

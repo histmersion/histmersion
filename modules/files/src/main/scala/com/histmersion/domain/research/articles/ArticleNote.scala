@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.research.articles
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.given
 
 import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
@@ -30,7 +33,7 @@ object ArticleNote:
   def render(a: Article, generated: Option[String] = None): String =
     val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
-      a.reasons.toList.sortBy(_._1.value).foreach((k, v) => r.put(k.value, v.value))
+      a.reasons.toList.sortBy(_._1.value).foreach((k, v) => r.put(k.value, v.sentence))
       "reasons" -> r
     }
     val fields = List(
@@ -121,7 +124,7 @@ object ArticleNote:
             r.asScala.toList
               .flatMap((k, v) => Option(v).map(x => k.toString.trim.toLowerCase -> x.toString.trim))
               .filter((k, v) => k.nonEmpty && v.nonEmpty)
-              .map((k, v) => Citekey(k) -> Problem(v))
+              .map((k, v) => Citekey(k) -> Problem.Unclassified(Legacy.Text(v)))
               .toMap
           }
           .getOrElse(Map.empty)

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.workflows.*
@@ -70,9 +71,9 @@ class StepFailureSuite extends munit.FunSuite:
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
-    assert(p.value.startsWith("the answer does not match the schema at .notes: "), p)
-    assert(p.value.contains("expecting string"), p)
-    assert(p.value.endsWith(s"the answer began: $raw"), p)
+    assert(p.sentence.startsWith("the answer does not match the schema at .notes: "), p)
+    assert(p.sentence.contains("expecting string"), p)
+    assert(p.sentence.endsWith(s"the answer began: $raw"), p)
     assertEquals(Engine.undecoded(f), Some(raw))
 
   test("#941 a missing field deep in a list is located by index"):
@@ -83,19 +84,19 @@ class StepFailureSuite extends munit.FunSuite:
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
-    assert(p.value.contains(".findings[0]."), p)
+    assert(p.sentence.contains(".findings[0]."), p)
 
   test("#941 not JSON, no answer at all, and a long answer is quoted only in part"):
     val bad = AgentParseError("{nope", io.circe.ParsingFailure("expected json value", new RuntimeException("x")))
     assert(
       Engine
         .answerProblem(bad, FinishReason.NaturalStop)
-        .value
+        .sentence
         .startsWith("the answer is not valid JSON: expected json value")
     )
     val none = AgentIncomplete("", FinishReason.MaxIterations, None)
     assertEquals(
-      Engine.answerProblem(none, FinishReason.MaxIterations),
+      (Engine.answerProblem(none, FinishReason.MaxIterations)).sentence,
       "the answer is not the JSON the schema asks for (iteration limit)"
     )
     assertEquals(Engine.undecoded(Left(none)), None, "nothing to hand back")
@@ -107,20 +108,23 @@ class StepFailureSuite extends munit.FunSuite:
     val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
     val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
     assert(
-      p.value.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.value.contains(
+      p.sentence.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.sentence.contains(
         "(iteration limit)"
       ),
       p
     )
     assertEquals(Engine.undecoded(Left(gaveUp)), Some("""{"notes": 5}"""))
     val long = AgentParseError("x" * 5000, RuntimeException("odd"))
-    assert(Engine.answerProblem(long, FinishReason.NaturalStop).value.length < Engine.AnswerExcerpt + 100)
+    assert(Engine.answerProblem(long, FinishReason.NaturalStop).sentence.length < Engine.AnswerExcerpt + 100)
 
   test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
     val raw = """{"notes": 5}"""
-    val problem = Problem("the answer does not match the schema at .notes: String")
+    val problem = Problem.Unclassified(Legacy.Text("the answer does not match the schema at .notes: String"))
     val prompt = Prompt.retry(List(problem), Some(raw))
-    assert(prompt.contains(s"- $problem") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"), prompt)
+    assert(
+      prompt.contains(s"- ${problem.sentence}") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"),
+      prompt
+    )
 
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
@@ -140,12 +144,13 @@ class StepFailureSuite extends munit.FunSuite:
     val f = r.finalAnswer.swap.toOption.get
     val p = Engine.answerProblem(f, r.finishReason)
     assert(
-      p.value.startsWith("the answer is not valid JSON: ") && p.value.contains("(answered)") && p.value.contains(
-        "the answer began: Here it is"
-      ),
+      p.sentence.startsWith("the answer is not valid JSON: ") && p.sentence.contains("(answered)") && p.sentence
+        .contains(
+          "the answer began: Here it is"
+        ),
       p
     )
-    assert(!p.value.contains("not the JSON the schema asks for"), p)
+    assert(!p.sentence.contains("not the JSON the schema asks for"), p)
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
     val cli = CliOutcomes.result(
@@ -164,7 +169,7 @@ class StepFailureSuite extends munit.FunSuite:
     assert(
       Engine
         .answerProblem(cli.finalAnswer.swap.toOption.get, cli.finishReason)
-        .value
+        .sentence
         .startsWith("the answer is not valid JSON")
     )
     // an error result is not a parse problem: no cause, as before
@@ -174,7 +179,7 @@ class StepFailureSuite extends munit.FunSuite:
         Vector.empty,
         Some(CliOutcome.FinalText("boom")),
         TokenUsage.Zero,
-        Some(api.Problem("crash")),
+        Some(Problem.Unclassified(Legacy.Text("crash"))),
         CliOutcome.Turns(1)
       ),
       LlmCall.User("u"),

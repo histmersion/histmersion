@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.plugin.*
@@ -80,7 +81,8 @@ final class HostAiHttp extends AiHttp:
 
   /** What a failed send was, from the type of the exception; its text is `<exception>: <message>`, cut at 300. */
   def failureOf(e: Throwable): AiHttp.Failure =
-    val reported = Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+    val reported =
+      Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
     e match
       case _: java.net.ConnectException | _: java.net.UnknownHostException | _: java.net.MalformedURLException |
           _: java.net.NoRouteToHostException | _: java.net.PortUnreachableException | _: java.net.ProtocolException |

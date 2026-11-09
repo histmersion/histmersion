@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.EnvVar
 
 import java.io.{InputStream, IOException}
@@ -43,10 +43,11 @@ object Subprocess:
     val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) =
       files.isFile(p) && files.isExecutable(p)
-    if t.isEmpty then Left(Problem("no command is configured (cli = \"…\")"))
+    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text("no command is configured (cli = \"…\")")))
     else if t.contains('/') then
       val p = Path.of(t)
-      if runnable(p) then Right(Vaults.Path(p.toString)) else Left(Problem(s"$t is not an executable file"))
+      if runnable(p) then Right(Vaults.Path(p.toString))
+      else Left(Problem.Unclassified(Legacy.Text(s"$t is not an executable file")))
     else
       ((path.toList
         .flatMap((_).value.split(java.io.File.pathSeparatorChar).toList)
@@ -56,7 +57,7 @@ object Subprocess:
         .map(_.toString)
         .toRight(s"$t was not found on the PATH"))
         .left
-        .map(refactorError => Problem(refactorError)))
+        .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
         .map(refactorValue => Vaults.Path(refactorValue))
 
   /** Run `argv` with `env` added to the server's environment, `stdin` written and closed (no stdin: closed at once, so
@@ -81,7 +82,7 @@ object Subprocess:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
     def start(argv: List[Processes.StartArgv], env: Map[EnvVar.Name, EnvVar.Value])(using
         processes: Processes
-    ): Either[plugin.Problem, Session] =
+    ): Either[Problem, Session] =
       processes.start(argv, env)
 
   /** Read a stream to its end on a thread of its own (a full pipe would block the tool), and hand the text over when
@@ -90,7 +91,9 @@ object Subprocess:
 
   /** Pure: the tool's own message for a log line — the first non-blank stderr line, bounded. */
   def problem(err: Problem): Problem =
-    Problem((err).value.linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
+    Problem.Unclassified(
+      Legacy.Text((err).legacyText.linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
+    )
 
   /** Pure: what a tool printed, without the one line break it ends with (`op read`, `bw get` and `keepassxc-cli show`
     * all end their value with one). Nothing else is trimmed: a value may begin or end with a space.
@@ -99,6 +102,6 @@ object Subprocess:
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
   def plain(what: Vaults.Operation, s: Text): Either[Problem, Plain] =
-    if (s).value.isEmpty then Left(Problem(s"$what is empty"))
-    else if (s).value.startsWith("-") then Left(Problem(s"$what may not start with '-'"))
+    if (s).value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$what is empty")))
+    else if (s).value.startsWith("-") then Left(Problem.Unclassified(Legacy.Text(s"$what may not start with '-'")))
     else Right(Plain((s).value))

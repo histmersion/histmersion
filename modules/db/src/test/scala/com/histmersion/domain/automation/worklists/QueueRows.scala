@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.db.*
 
 import com.histmersion.api.Write
@@ -28,7 +28,10 @@ object QueueRows:
 
   private def repoId(id: QueueItem.Id): QueueRepo.QueueItemId = QueueRepo.QueueItemId(id.value)
   private def notFound(id: QueueItem.Id): Api.Error =
-    Api.Error(Problem(s"No queue item #${id.value}"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.Unclassified(Legacy.Text(s"No queue item #${id.value}")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   def patch(ds: DataSource, id: QueueItem.Id, p: QueuePatch): Either[Api.Error, QueueItem] =
     transact(ds):

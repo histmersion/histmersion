@@ -1,6 +1,7 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
@@ -39,22 +40,22 @@ enum SettingError derives CanEqual:
   case NoFile(why: Problem)
   case Io(why: Problem)
 
-  def message: Problem = Problem(text)
+  def message: Problem = Problem.Unclassified(Legacy.Text(text))
 
   private def text: String = this match
-    case BadKey(why)            => why.value
+    case BadKey(why)            => why.legacyText
     case UnknownKey(k, closest) =>
       s"There is no setting called ${k.relative}." +
         (if closest.isEmpty then "" else s" Did you mean ${closest.map(_.relative).mkString(" or ")}?")
     case NotAValue(k) => s"${k.relative} is a group of settings, not one setting: set one of the settings inside it."
-    case BadValue(k, why)         => s"${k.relative}: $why."
+    case BadValue(k, why)         => s"${k.relative}: ${why.legacyText}."
     case WrongKind(k, want, got)  => s"${k.relative} takes ${want.describe}, not ${got.describe}."
     case CredentialInFile(k, env) =>
       s"${k.relative} holds a key or password itself, so it is not written into the settings file. " +
         env.fold("Set it in the server's environment instead.")(v =>
           s"Set the environment variable $v for the server instead."
         )
-    case NotAReference(k, why)  => s"${k.relative}: $why."
+    case NotAReference(k, why)  => s"${k.relative}: ${why.legacyText}."
     case LiteralNeedsConsent(k) =>
       s"${k.relative}: value: writes the key itself into the settings file, where anyone who can read the file can read it. " +
         "Use env:<NAME> or a password manager's entry, or confirm that you want value:."
@@ -63,11 +64,12 @@ enum SettingError derives CanEqual:
         "Change it in the file itself."
     case FromInclude(k, file) => s"${k.relative} is set in $file, which the settings file includes. Change it there."
     case Unreadable(why)      =>
-      s"The settings file does not read, so it is not changed: $why. Fix it in a text editor first."
-    case Invalid(why) => s"That change would leave settings the server cannot start with, so it was not made: $why"
-    case Changed      => "The settings file changed since it was read. Look at it again, then make the change."
-    case NoFile(why)  => why.value
-    case Io(why)      => s"The settings file could not be written: $why"
+      s"The settings file does not read, so it is not changed: ${why.legacyText}. Fix it in a text editor first."
+    case Invalid(why) =>
+      s"That change would leave settings the server cannot start with, so it was not made: ${why.legacyText}"
+    case Changed     => "The settings file changed since it was read. Look at it again, then make the change."
+    case NoFile(why) => why.legacyText
+    case Io(why)     => s"The settings file could not be written: ${why.legacyText}"
 
 object SettingError:
   object CredentialInFile:

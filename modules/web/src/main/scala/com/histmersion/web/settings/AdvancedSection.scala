@@ -1,7 +1,8 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
@@ -45,13 +46,14 @@ object AdvancedSection:
         )
       ),
       child <-- SettingsStore.current.map {
-        case None           => p(cls := "muted", "Loading…")
-        case Some(Left(m))  => ErrorLine.text(Problem(s"Could not read the settings: $m"))
+        case None          => p(cls := "muted", "Loading…")
+        case Some(Left(m)) =>
+          ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read the settings: ${m.sentence}")))
         case Some(Right(p)) =>
           div(
             cls := "advanced-file muted",
             p.file.fold("This server has no settings file.")(f => s"Settings file: $f"),
-            p.problems.map(x => ErrorLine.text(Problem(x.value)))
+            p.problems.map(x => ErrorLine.text(Problem.Unclassified(Legacy.Text(x.value))))
           )
       },
       div(cls := "advanced-save", SettingsForm.saveBar(draft)),

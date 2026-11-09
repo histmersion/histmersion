@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.calibre
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `calibre update --all` does, or did, to one Calibre entry. */

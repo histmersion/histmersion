@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.collection.mutable

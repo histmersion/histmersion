@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.workflows.Pipelines
@@ -77,7 +78,7 @@ private[workflows] trait GoalSweep:
           job = Some(JobInfo.Id(ctx.run.id.value))
         )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
-          site.workLists.add(WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
+          site.workLists.add(WorkListControllers.ListName("acquire"), item).left.map(_.message.sentence).map { added =>
             val _ = goals.link(
               goal,
               Goal.LinkKind.QueueItem,
@@ -89,7 +90,7 @@ private[workflows] trait GoalSweep:
         )(Right(true))
 
   protected def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
 
 object GoalSweep:
   type Limit = Limit.T

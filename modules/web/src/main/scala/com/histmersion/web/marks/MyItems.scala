@@ -1,7 +1,7 @@
 package com.histmersion
 package web.marks
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.personal.*
 import com.histmersion.web.{ApiClient, ApiFailure, Auth}
 import com.raquo.laminar.api.L.*
@@ -41,8 +41,9 @@ object MyItems:
 
   private def refused(e: Throwable): Unit =
     problem.set(Some(e match
-      case f: ApiFailure => Problem(f.getMessage)
-      case other         => Problem(Option(other.getMessage).getOrElse("the server could not be reached"))))
+      case f: ApiFailure => Problem.Unclassified(Legacy.Text(f.getMessage))
+      case other         =>
+        Problem.Unclassified(Legacy.Text(Option(other.getMessage).getOrElse("the server could not be reached")))))
 
   private def tracked[A](f: Future[A])(ok: A => Unit): Future[A] =
     problem.set(None)

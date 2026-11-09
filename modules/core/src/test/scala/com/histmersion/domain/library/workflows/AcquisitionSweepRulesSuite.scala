@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -41,7 +42,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
       List((com.histmersion.domain.library.Doi("10.1000/a"), Candidate.Query("q1")))
     )
     assertEquals(
-      skipped,
+      skipped.map((k, v) => k.sentence -> v),
       Map("in the corpus" -> 1, "already queued" -> 1, "no DOI" -> 1, "retracted" -> 1, "over the sweep limit" -> 1)
     )
 
@@ -59,31 +60,31 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     val ok = checkRanking(
       Ranking(
         List(
-          Pick(Pick.DoiText("https://doi.org/10.1000/A"), Problem("fits")),
-          Pick(Pick.DoiText("10.1000/a"), Problem("twice"))
+          Pick(Pick.DoiText("https://doi.org/10.1000/A"), Problem.Unclassified(Legacy.Text("fits"))),
+          Pick(Pick.DoiText("10.1000/a"), Problem.Unclassified(Legacy.Text("twice")))
         )
       ),
       List(c),
       last = LastAttempt(false)
     )
-    assertEquals(ok.map(_._1), Right(List((c, "fits"))))
+    assertEquals(ok.map(_._1.map((c, p) => (c, p.sentence))), Right(List((c, "fits"))))
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem("invented")))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem.Unclassified(Legacy.Text("invented"))))),
         List(c),
         last = LastAttempt(false)
       ).isLeft
     )
     assertEquals(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem("invented")))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem.Unclassified(Legacy.Text("invented"))))),
         List(c),
         last = LastAttempt(true)
       ).map(_._1),
       Right(Nil)
     )
     assertEquals(
-      acquireText(c, Goal.Slug("g"), Problem("fits")),
+      acquireText(c, Goal.Slug("g"), Problem.Unclassified(Legacy.Text("fits"))),
       "(2020). A. https://doi.org/10.1000/a (open access) — for goal g: fits"
     )
 
@@ -106,10 +107,14 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
   ):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
     val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(2)) { (n, _) =>
-      if n == "c" then Left(Problem("no legal open-access copy of c")) else Right(n.toUpperCase)
+      if n == "c" then Left(Problem.Unclassified(Legacy.Text("no legal open-access copy of c")))
+      else Right(n.toUpperCase)
     }
     assertEquals(ok.map(_._2), List("A", "D"))
-    assertEquals(ko.map((p, why) => (p._1, why)), List("c" -> "no legal open-access copy of c"))
+    assertEquals(
+      ko.map((p, why) => (p._1, why)).map((a, p) => (a, p.sentence)),
+      List("c" -> "no legal open-access copy of c")
+    )
     assertEquals(
       AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(0))(p => Right(p._1)),
       (Nil, Nil),

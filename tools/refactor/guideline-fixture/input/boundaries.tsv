@@ -1,2 +1,3 @@
 path	kind	reason
 modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	sql	fixture: binds parameters and reads rows
+modules/core/src/main/scala/com/histmersion/util/problem/Edge.scala	render	fixture: shows outside text

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 

@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.StatusCode
@@ -2759,7 +2761,7 @@ object Api:
 
     def splice(readme: Readme, index: Markdown): Either[Problem, Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
-      if b < 0 || e < b then Left(Problem(s"$Page has no $Begin … $End block"))
+      if b < 0 || e < b then Left(Problem.Unclassified(Legacy.Text(s"$Page has no $Begin … $End block")))
       else
         Right(
           Readme(
@@ -2774,5 +2776,5 @@ object Api:
   @main def generateApiIndex(repo: String): Unit =
     val p = java.nio.file.Path.of(repo).resolve(Index.Page)
     Index.splice(Index.Readme(java.nio.file.Files.readString(p)), Index.markdown(all)) match
-      case Left(e)  => throw IllegalStateException((e).value)
+      case Left(e)  => throw IllegalStateException((e).sentence)
       case Right(s) => val _ = java.nio.file.Files.writeString(p, (s).value)

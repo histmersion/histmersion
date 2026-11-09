@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -150,39 +152,46 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
-      failure(Problem(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")),
+      failure(
+        Problem.Unclassified(Legacy.Text(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found"))
+      ),
       Outcome.NoCopy
     )
-    assertEquals(failure(Problem("HTTP 503 from the converter")), Outcome.Failed)
+    assertEquals(failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))), Outcome.Failed)
     assertEquals(Outcome.values.toList.flatMap(o => Outcome.parse(o.wire)), Outcome.values.toList)
 
   test("the reason: the day, what was found and what each fetcher answered"):
     val msg = s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found — unpaywall: no copy — none; " +
       "landing: refused — bot-protection 403"
     assertEquals(
-      answers(Problem(msg)),
+      answers(Problem.Unclassified(Legacy.Text(msg))),
       "unpaywall: no copy — none; landing: refused — bot-protection 403"
     )
     assertEquals(
-      reason(now, Outcome.NoCopy, Detail(msg)),
+      (reason(now, Outcome.NoCopy, Detail(msg))).sentence,
       "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
     )
     assertEquals(
-      reason(now, Outcome.NoCopy, Detail(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")),
+      (reason(
+        now,
+        Outcome.NoCopy,
+        Detail(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")
+      )).sentence,
       "checked 2026-10-27: no legal copy (no legal open-access PDF found)"
     )
     assertEquals(
-      reason(now, Outcome.Closed, AcquireRecheck.Detail("a2020_x")),
+      (reason(now, Outcome.Closed, AcquireRecheck.Detail("a2020_x"))).sentence,
       "checked 2026-10-27: in the corpus with its original as [[a2020_x]] — closed"
     )
     assert(
-      reason(now, Outcome.Fetched, AcquireRecheck.Detail("unpaywall")).value.contains("a legal copy found (unpaywall)")
+      reason(now, Outcome.Fetched, AcquireRecheck.Detail("unpaywall")).sentence
+        .contains("a legal copy found (unpaywall)")
     )
     assertEquals(
-      reason(now, Outcome.Failed, AcquireRecheck.Detail("HTTP 503")),
+      (reason(now, Outcome.Failed, AcquireRecheck.Detail("HTTP 503"))).sentence,
       "checked 2026-10-27: no answer (HTTP 503)"
     )
-    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).value.length <= 500)
+    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).sentence.length <= 500)
 
   test("a pass's allowance: the day's cap, the pass's, and the shared allowance after the backlog, within the share"):
     assertEquals(allowance(settings, checkedToday = AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")

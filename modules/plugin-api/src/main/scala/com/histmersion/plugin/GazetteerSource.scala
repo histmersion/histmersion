@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Gazetteer sources, a part of the app that plugins extend: a dataset of historical places — polity outlines, a

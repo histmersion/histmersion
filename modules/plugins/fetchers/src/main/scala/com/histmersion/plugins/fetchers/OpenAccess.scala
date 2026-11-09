@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.fetchers
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Fetch, FetchedFile, SourceFetcher, UpstreamQuota, WorkKey}
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.parse.AcquireParse
@@ -73,7 +73,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
-        .fold[Fetch](Fetch.Miss(Problem("core needs a DOI")))(corePdf(ctx, _, key, quota))
+        .fold[Fetch](Fetch.Miss(Problem.Unclassified(Legacy.Text("core needs a DOI"))))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
@@ -107,7 +107,9 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       quota: UpstreamQuota
   ): Fetch =
     key.fold[Fetch](
-      Fetch.Miss(Problem("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
+      Fetch.Miss(
+        Problem.Unclassified(Legacy.Text("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
+      )
     ) { key =>
       CoreApi(cfg.core, http, quota).searchWorks(
         CoreApi.SearchWorksKey(key.value),
@@ -115,17 +117,17 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         PageSize(1),
         OpenAccess.Lookup
       ) match
-        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(Problem(skip.message.value))
+        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
         case Left(CoreFailure.Failed(why))       =>
-          ctx.log.info(Plugin.Log.Line(s"CORE lookup failed ($why)"))
-          Fetch.Miss(Problem(s"core has no copy of $doi"))
+          ctx.log.info(Plugin.Log.Line(s"CORE lookup failed (${why.legacyText})"))
+          Fetch.Miss(Problem.Unclassified(Legacy.Text(s"core has no copy of $doi")))
         case Right(json) =>
           AcquireParse
             .coreDownloadUrls(json)
             .iterator
             .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
             .nextOption()
-            .fold(Fetch.Miss(Problem(s"core has no copy of $doi")))(Fetch.Found(_))
+            .fold(Fetch.Miss(Problem.Unclassified(Legacy.Text(s"core has no copy of $doi"))))(Fetch.Found(_))
     }
 
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
@@ -243,7 +245,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
         http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
-            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.problem})")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.problem.legacyText})")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
             Some(
               FetchedFile(

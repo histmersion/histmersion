@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,5 +19,5 @@ object ModuleKey:
   def parse(raw: Text): Either[Problem, ModuleKey] = (raw).value.trim.split(':').toList match
     case List(g, a) =>
       (for group <- GroupId.either(g); artifact <- ArtifactId.either(a)
-      yield ModuleKey(group, artifact)).left.map(refactorError => Problem(refactorError))
-    case _ => Left(Problem.notKey(raw))
+      yield ModuleKey(group, artifact)).left.map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))
+    case _ => Left(Problem.Unclassified(Legacy.Text(s"not group:artifact: '$raw'")))

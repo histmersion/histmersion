@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
 
@@ -44,7 +44,7 @@ object EventProviders:
     def names(json: Json): Either[Problem, Map[String, List[String]]] =
       val c = json.hcursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem(err.hcursor.get[String]("info").getOrElse("error")))
+        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.hcursor.get[String]("info").getOrElse("error"))))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
@@ -72,7 +72,7 @@ object EventProviders:
     def claims(json: Json, property: WikidataProperty): Either[Problem, Map[String, List[String]]] =
       val c = json.hcursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem(err.hcursor.get[String]("info").getOrElse("error")))
+        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.hcursor.get[String]("info").getOrElse("error"))))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
@@ -129,18 +129,24 @@ object EventProviders:
       case (Some(la), Some(lo)) =>
         def in(b: BBox) = b.contains(lo, la)
         val inRegion = t.region.forall(in)
-        if t.area.exists(b => !in(b)) then Left(Problem("outside --bbox"))
+        if t.area.exists(b => !in(b)) then Left(Problem.Unclassified(Legacy.Text("outside --bbox")))
         else
           r.kind.value match
             case EventTaxonomy.Eruption =>
               val min = if inRegion then t.regionVei.value else t.outsideVei.value
               if min > 0 && r.vei.forall(_.value < min) then
-                Left(Problem(s"VEI below $min${if inRegion then "" else " outside the region"}"))
+                Left(
+                  Problem.Unclassified(Legacy.Text(s"VEI below $min${if inRegion then "" else " outside the region"}"))
+                )
               else Right(())
             case EventTaxonomy.Earthquake =>
               val min = if inRegion then t.regionMagnitude.value else t.outsideMagnitude.value
               if min > 0 && r.magnitude.forall(_.value < min) then
-                Left(Problem(s"magnitude below $min${if inRegion then "" else " outside the region"}"))
+                Left(
+                  Problem.Unclassified(
+                    Legacy.Text(s"magnitude below $min${if inRegion then "" else " outside the region"}")
+                  )
+                )
               else Right(())
             case _ => Right(())
-      case _ => Left(Problem("no position"))
+      case _ => Left(Problem.Unclassified(Legacy.Text("no position")))

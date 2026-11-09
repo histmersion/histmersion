@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -78,13 +78,15 @@ object LocalInstall:
     for
       d <- UserPaths
         .dataDir(dataDir, env, osName)
-        .toRight(Problem("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)"))
+        .toRight(Problem.Unclassified(Legacy.Text("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)")))
       _ <- Either.cond(
         kitAt(install),
         (),
-        Problem(
-          s"no Histmersion install with a relink kit at $install " +
-            "(set cli.plugins.install-dir / HISTMERSION_INSTALL_DIR, or install a bundle built with the kit)"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"no Histmersion install with a relink kit at $install " +
+              "(set cli.plugins.install-dir / HISTMERSION_INSTALL_DIR, or install a bundle built with the kit)"
+          )
         )
       )
     yield LocalInstall(install.toAbsolutePath.normalize, d.toAbsolutePath.normalize)

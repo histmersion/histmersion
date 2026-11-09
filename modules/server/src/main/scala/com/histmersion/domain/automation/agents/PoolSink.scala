@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.server.agents.PlanPools
 
 import com.histmersion.api.automation.PlanQuota.*

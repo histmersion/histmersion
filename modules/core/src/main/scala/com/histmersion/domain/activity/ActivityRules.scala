@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.automation.{Activity, ListFilters}
 import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 
@@ -86,7 +88,7 @@ object ActivityRules:
       before: Option[ActivityCursor.Wire],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: String) = Api.Error(api.Problem(m))
+    def bad(m: String) = Api.Error(Problem.Unclassified(Legacy.Text(m)))
     for
       s <- show
         .map(_.value.trim)
@@ -99,11 +101,11 @@ object ActivityRules:
       t <- since
         .map(v => ListFilters.TimeBound(v.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(p => bad(p.value)))
+        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(p => bad(p.sentence)))
       c <- before
         .map(w => ActivityCursor.Wire(w.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(p => bad(p.value)))
+        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(p => bad(p.sentence)))
     yield ActivityQuery(
       s,
       t,

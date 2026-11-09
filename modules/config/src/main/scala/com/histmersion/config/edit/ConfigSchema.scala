@@ -130,7 +130,7 @@ object ConfigSchema:
 
   def restartOf(key: SettingKey): Option[SettingField.Restart] =
     ConfigReload.RestartOnly.collectFirst {
-      case (k, why) if HotPlan.keyMatches(ConfigReload.Key(key.value), k) => SettingField.Restart(why.value)
+      case (k, why) if HotPlan.keyMatches(ConfigReload.Key(key.value), k) => SettingField.Restart(why.legacyText)
     }
 
   /** Levenshtein distance, for "did you mean". */

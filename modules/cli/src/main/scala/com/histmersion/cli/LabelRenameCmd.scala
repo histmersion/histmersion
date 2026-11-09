@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.AliasKinds
@@ -32,7 +33,7 @@ object LabelRenameCmd:
         .mapValidated((from, to, json) =>
           LabelRenames
             .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
-            .leftMap(_.message.value)
+            .leftMap(_.message.sentence)
             .toValidatedNel
             .map(t => (from.trim, LabelRename.To(t.value), json))
         )

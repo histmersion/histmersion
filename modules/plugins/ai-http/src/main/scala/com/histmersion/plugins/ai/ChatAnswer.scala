@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
@@ -21,13 +21,11 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
   def turn: Either[Problem, AiTurn] =
     if (status).value / 100 != 2 then
       Left(
-        Problem(
-          (ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))).value
-        )
+        ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))
       )
     else
       decode((body).value)(using ChatAnswer.response).left.map(
-        (refactorCallback => Problem(refactorCallback.getMessage))
+        (refactorCallback => Problem.Unclassified(Legacy.Text(refactorCallback.getMessage)))
       )
 
 object ChatAnswer:
@@ -75,10 +73,10 @@ object ChatAnswer:
     parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         node.as(using error) match
-          case Right(Some(message)) => Problem((message).value)
-          case Right(None)          => Problem(s"statusCode: $status, response: $body")
-          case Left(_)              => Problem(fallback)
-      case None => Problem(fallback)
+          case Right(Some(message)) => message
+          case Right(None)          => Problem.Unclassified(Legacy.Text(s"statusCode: $status, response: $body"))
+          case Left(_)              => Problem.Unclassified(Legacy.Text(fallback))
+      case None => Problem.Unclassified(Legacy.Text(fallback))
 
   private val error: Decoder[Option[Problem]] = Decoder.instance { c =>
     for
@@ -87,7 +85,7 @@ object ChatAnswer:
       _ <- c.downField("type").as[Option[String]]
       _ <- c.downField("param").as[Option[String]]
       _ <- c.downField("code").as[Option[String]]
-    yield (m).map(refactorValue => Problem(refactorValue))
+    yield (m).map(refactorValue => Problem.Unclassified(Legacy.Text(refactorValue)))
   }
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =

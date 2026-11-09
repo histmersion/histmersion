@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `smithsonian`: the Smithsonian's Open Access API (an api.data.gov key, sent as a header): one search by the place's

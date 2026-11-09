@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.Write
@@ -24,9 +25,9 @@ trait JobControlService:
 
 object JobControlService:
   private def notFound(id: Job.Id) =
-    Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
   private def conflict(why: String) =
-    Api.Error(Problem(why), Some(Api.Error.Code(JobActions.CodeConflict)))
+    Api.Error(Problem.Unclassified(Legacy.Text(why)), Some(Api.Error.Code(JobActions.CodeConflict)))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
   def apply(ds: DataSource, stops: JobStops, runs: (Job.Id, JobAction) => Either[Api.Error, Unit]): JobControlService =
@@ -41,11 +42,11 @@ object JobControlService:
     def control(id: Job.Id, action: JobAction): Either[Api.Error, JobInfo] =
       def current = Transactor(ds).read(JobRepo.get(id)).toRight(notFound(id))
       current.flatMap { job =>
-        JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.value)).flatMap {
+        JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.sentence)).flatMap {
           case JobControlStep.Run(a)         => runs(id, a).flatMap(_ => current)
           case JobControlStep.RequestStop(s) => stops.request(id, s); current
-          case JobControlStep.Resume         => stops.resume(id).left.map(p => conflict(p.value)).flatMap(_ => current)
-          case JobControlStep.CancelNow      =>
+          case JobControlStep.Resume    => stops.resume(id).left.map(p => conflict(p.sentence)).flatMap(_ => current)
+          case JobControlStep.CancelNow =>
             stops.forget(id)
             Transactor(ds)
               .transact(
@@ -55,7 +56,7 @@ object JobControlService:
                     job.state,
                     JobState.Cancelled,
                     job.progress.map(p => JobRow.Progress(p.value)),
-                    Some(Problem(JobControlRules.CancelledByPerson))
+                    Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
                   )
               )
               .toRight(conflict(s"job $id moved on; look again"))
@@ -94,7 +95,9 @@ object JobControlService:
             m + (key -> j.copy(
               status = to.wire,
               progress = progress.orElse(j.progress),
-              error = Option.when(to == JobState.Cancelled)(Problem(JobControlRules.CancelledByPerson)).orElse(j.error)
+              error = Option
+                .when(to == JobState.Cancelled)(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
+                .orElse(j.error)
             ))
           )
       ): Unit
@@ -102,11 +105,11 @@ object JobControlService:
     def control(id: Job.Id, action: JobAction): Either[Api.Error, JobInfo] =
       def current = get(id).toRight(notFound(id))
       current.flatMap { job =>
-        JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.value)).flatMap {
+        JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.sentence)).flatMap {
           case JobControlStep.Run(a)         => runs(id, a).flatMap(_ => current)
           case JobControlStep.RequestStop(s) => stops.request(id, s); current
-          case JobControlStep.Resume         => stops.resume(id).left.map(p => conflict(p.value)).flatMap(_ => current)
-          case JobControlStep.CancelNow      =>
+          case JobControlStep.Resume    => stops.resume(id).left.map(p => conflict(p.sentence)).flatMap(_ => current)
+          case JobControlStep.CancelNow =>
             if JobState.next(job.state, JobState.Cancelled).isEmpty then Left(conflict(s"job $id moved on; look again"))
             else
               stops.forget(id)

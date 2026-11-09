@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.{Environment, SeaFloorSource, UserPaths}
@@ -30,11 +30,11 @@ class BasemapWiringSuite extends munit.FunSuite:
         RetryPolicy.RetryAfterCap(300),
         now
       ),
-      Some(RetryWait(RetryWait.Ms(2000L), Problem("HTTP 429")))
+      Some(RetryWait(RetryWait.Ms(2000L), Problem.Unclassified(Legacy.Text("HTTP 429"))))
     )
     assertEquals(
       p.slowDown(RangeHttp.StatusCode(503), None, 1, RetryPolicy.MaxRetries(3), RetryPolicy.RetryAfterCap(300), now),
-      Some(RetryWait(RetryWait.Ms(2000L), Problem("HTTP 503")))
+      Some(RetryWait(RetryWait.Ms(2000L), Problem.Unclassified(Legacy.Text("HTTP 503"))))
     )
     assertEquals(
       p.slowDown(RangeHttp.StatusCode(503), None, 3, RetryPolicy.MaxRetries(3), RetryPolicy.RetryAfterCap(300), now),

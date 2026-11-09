@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.personal
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Write
@@ -50,16 +51,16 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("a bookmark's target is checked: an item names its id, a point its position, a period its years in order"):
     val c = fixture()
-    assert(c.addBookmark(me, Bookmark.New(Target(ItemKind.Source))).left.exists(_.message.value.contains("its id")))
+    assert(c.addBookmark(me, Bookmark.New(Target(ItemKind.Source))).left.exists(_.message.sentence.contains("its id")))
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Point, lat = Some(Latitude(1)))))
         .left
-        .exists(_.message.value.contains("lat and lon"))
+        .exists(_.message.sentence.contains("lat and lon"))
     )
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Period, from = Some(Year(-1000)), to = Some(Year(-1200)))))
         .left
-        .exists(_.message.value.contains("before it starts"))
+        .exists(_.message.sentence.contains("before it starts"))
     )
     val p = c.addBookmark(
       me,
@@ -79,12 +80,12 @@ class PersonalControllersSuite extends munit.FunSuite:
     assert(
       c.addNote(me, Note.New(Target(ItemKind.View, view = Some(ViewState("a=b"))), Note.Text("x")))
         .left
-        .exists(_.message.value.contains("cannot"))
+        .exists(_.message.sentence.contains("cannot"))
     )
     assert(
       c.addNote(me, Note.New(Target.item(ItemKind.Source, ItemKey("zz")), Note.Text("   ")))
         .left
-        .exists(_.message.value.contains("some text"))
+        .exists(_.message.sentence.contains("some text"))
     )
     val n = c.addNote(
       me,
@@ -103,7 +104,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     )
     val stale = c.editNote(me, n.id, Note.Edit(Note.Text("three"), Some(n.updatedAt)))
     assertEquals(stale.left.map(_.code), Left(Some(Write.CodePrecondition)))
-    assert(stale.left.exists(_.message.value.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
+    assert(stale.left.exists(_.message.sentence.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
     assertEquals(
       c.editNote(me, n.id, Note.Edit(Note.Text("four"), Some(Note.At("yesterday")))).left.map(_.code),
       Left(Some(Write.CodePrecondition))

@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.catalogue.EventEntry
@@ -100,7 +101,13 @@ final class EventsControllers(
   private def validScale(scale: Option[EventSummary.Scale]): Either[Api.Error, Unit] =
     scale match
       case Some(v) if EventScale.parse(v).isEmpty =>
-        Left(invalid(Problem(s"scale '$v' is not ${(EventScale.all.map(_.value) :+ EventScale.Auto).mkString(" | ")}")))
+        Left(
+          invalid(
+            Problem.Unclassified(
+              Legacy.Text(s"scale '$v' is not ${(EventScale.all.map(_.value) :+ EventScale.Auto).mkString(" | ")}")
+            )
+          )
+        )
       case _ => Right(())
 
   /** An event's geometry is a GeoJSON geometry the store reads: WKT, a Feature or bad coordinates are a 400 naming the
@@ -112,12 +119,10 @@ final class EventsControllers(
       case Some(v) =>
         EventGeometry
           .check(EventGeometry.Geojson(v))
-          .left
-          .map(_.transformInto[Problem])
           .flatMap(gj =>
             events
               .geometryError(EventDetailRow.Geometry(gj.value))
-              .map(m => Problem(s"geometry is not a valid GeoJSON geometry: $m"))
+              .map(m => Problem.Unclassified(Legacy.Text(s"geometry is not a valid GeoJSON geometry: ${m.sentence}")))
               .toLeft(())
           )
           .left
@@ -127,13 +132,15 @@ final class EventsControllers(
   private def validWikidata(q: Option[EventPatch.Wikidata]): Either[Api.Error, Unit] =
     q.map(_.value.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
-        Left(invalid(Problem(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)")))
+        Left(
+          invalid(Problem.Unclassified(Legacy.Text(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)")))
+        )
       case _ => Right(())
 
   private def now(id: Event.Id): Event.Id = current(AliasKinds.EventRecords, id)
 
   def get(id: Event.Id): Either[Api.Error, EventEntry] =
-    events.get(now(id)).map(card).toRight(notFound(Problem(s"No event '$id'")))
+    events.get(now(id)).map(card).toRight(notFound(Problem.Unclassified(Legacy.Text(s"No event '$id'"))))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
   def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
@@ -159,7 +166,7 @@ final class EventsControllers(
         Right(
           EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), EventDeleted.Deleted(true))
         )
-      else Left(notFound(Problem(s"No event '$id'")))
+      else Left(notFound(Problem.Unclassified(Legacy.Text(s"No event '$id'"))))
 
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
     * keeps resolving. Answers the event's id before and after.
@@ -173,7 +180,10 @@ final class EventsControllers(
         LabelRenames
           .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
           .flatMap(l =>
-            Event.Id.either(l.value).left.map(why => invalid(Problem(s"'${l.value}' is not an event id: $why")))
+            Event.Id
+              .either(l.value)
+              .left
+              .map(why => invalid(Problem.Unclassified(Legacy.Text(s"'${l.value}' is not an event id: $why"))))
           )
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.CitationLint
@@ -41,7 +42,7 @@ class LintSuite extends munit.FunSuite:
     )
 
   test("an unknown rule is an error, never a silently clean report"):
-    val e = Lint.select(List(Rule.Name("no-findings"), Rule.Name("no-vibes"))).fold(_.value, _ => "")
+    val e = Lint.select(List(Rule.Name("no-findings"), Rule.Name("no-vibes"))).fold(_.sentence, _ => "")
     assert(e.contains("no-vibes"), e)
     assert(e.contains("no-findings"), "the error lists the known rules")
 

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.ocr
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -21,7 +22,7 @@ enum ConverterState derives CanEqual:
   def render: ConverterState.Summary = this match
     case Ok           => ConverterState.Summary("ok")
     case Busy(id)     => ConverterState.Summary(s"converter busy: job $id")
-    case Down(reason) => ConverterState.Summary(reason.value)
+    case Down(reason) => ConverterState.Summary(reason.sentence)
 
   /** Busy is healthy: the server is doing exactly what it is for. */
   def healthy: Boolean = this match
@@ -40,4 +41,4 @@ object ConverterState:
     val JobId: Job.Id.type = Job.Id
 
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
-    if probe.value == "ok" then Ok else busyJob.fold(Down(Problem(probe.value)))(Busy(_))
+    if probe.value == "ok" then Ok else busyJob.fold(Down(Problem.Unclassified(Legacy.Text(probe.value))))(Busy(_))

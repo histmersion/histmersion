@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Plural, Wording}
@@ -205,7 +206,7 @@ object ManagersView:
       else
         infer.flatMap((inf, ai, aa) =>
           models.collectFirst { case Left(e) => e } match
-            case Some(e) => Left(s"models: $e")
+            case Some(e) => Left(s"models: ${e.sentence}")
             case None    =>
               Right(
                 ManagerConfig(
@@ -504,7 +505,7 @@ object ManagersView:
     )
 
   private def errorLine(message: Signal[Option[String]]): Modifier[HtmlElement] =
-    ErrorLine(message.map(_.map(Problem(_))))
+    ErrorLine(message.map(_.map((text => Problem.Unclassified(Legacy.Text(text))))))
 
   /** The focus: the active goals (why each was chosen, what it does or waits for, its pace), the queue in the order the
     * next become active, and why the others cannot use a slot; pin / unpin a goal and set the cap (each behind the
@@ -591,7 +592,7 @@ object ManagersView:
                 Option.when(g.pinned.value)(span(cls := "muted", " · pinned")),
                 span(cls := "muted", s" · ${g.title}")
               ),
-              div(cls := "job-progress", g.why.value),
+              div(cls := "job-progress", g.why.sentence),
               g.doing.map(d => div(cls := "muted", s"now: $d")),
               div(cls := "job-meta muted", focusPace(g).value),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
@@ -611,7 +612,7 @@ object ManagersView:
                 div(
                   cls := "job-main",
                   div(cls := "job-subject", goalLink(g.slug)),
-                  div(cls := "muted", g.why.value),
+                  div(cls := "muted", g.why.sentence),
                   child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
                 )
               )
@@ -1049,7 +1050,7 @@ object ManagersView:
                         s" · ${Wording.manager(Wording.Id(x.manager.value))}"
                       )
                     ),
-                    div(cls := "muted", x.why.value)
+                    div(cls := "muted", x.why.sentence)
                   )
                 )
               )
@@ -1110,7 +1111,7 @@ object ManagersView:
                           (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
                     ),
-                    div(cls := "job-progress", w.why.value),
+                    div(cls := "job-progress", w.why.sentence),
                     Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
                     div(
                       cls := "job-meta muted",
@@ -1561,7 +1562,7 @@ object ManagersView:
             cls := "muted",
             "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
               h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
-              Option(h.reason).filter(_.value.nonEmpty).fold("")(r => s" — $r")
+              Option(h.reason).filter(_.sentence.nonEmpty).fold("")(r => s" — ${r.sentence}")
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),

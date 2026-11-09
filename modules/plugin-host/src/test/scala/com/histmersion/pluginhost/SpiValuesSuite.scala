@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -63,14 +64,20 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.licenceOf(Licence("CC0-1.0")), "CC0-1.0")
 
   test("from a plugin: a value its type refuses is a Left naming it, never an exception"):
-    assertEquals(SpiValues.latitudeOf(Latitude(95.0)), Left("latitude 95.0 is not between -90 and 90"))
-    assertEquals(SpiValues.longitudeOf(Longitude(200.0)), Left("longitude 200.0 is not between -180 and 180"))
     assertEquals(
-      SpiValues.doiOf(Doi("nature14317")),
+      SpiValues.latitudeOf(Latitude(95.0)).left.map(_.sentence),
+      Left("latitude 95.0 is not between -90 and 90")
+    )
+    assertEquals(
+      SpiValues.longitudeOf(Longitude(200.0)).left.map(_.sentence),
+      Left("longitude 200.0 is not between -180 and 180")
+    )
+    assertEquals(
+      SpiValues.doiOf(Doi("nature14317")).left.map(_.sentence),
       Left("DOI 'nature14317' is not a DOI (10.<registrant>/<suffix>)")
     )
     assertEquals(
-      SpiValues.wikidataOf(WikidataId("q12")),
+      SpiValues.wikidataOf(WikidataId("q12")).left.map(_.sentence),
       Left("Wikidata id 'q12' is not a Wikidata item (Q and its number)")
     )
     assertEquals(SpiValues.optional(Some(Latitude(-91.0)))(SpiValues.latitudeOf).isLeft, true)
@@ -124,7 +131,10 @@ class SpiValuesSuite extends munit.FunSuite:
 
   test("a catalogue record whose dating is no dating is still refused, naming the catalogue and the value"):
     assertEquals(
-      PluginEvents.record(CatalogRecord.Provider("zq"), event.modify(_.notBefore).setTo(Some(Year(-1180)))),
+      PluginEvents
+        .record(CatalogRecord.Provider("zq"), event.modify(_.notBefore).setTo(Some(Year(-1180))))
+        .left
+        .map(_.sentence),
       Left("q-1: its dating runs backwards")
     )
 
@@ -132,7 +142,7 @@ class SpiValuesSuite extends munit.FunSuite:
     val (doi, why) = SpiValues.kept(Some(Doi("10.1/x")))(SpiValues.doiOf)
     assertEquals((doi.map(d => d.value: String), why), (Some("10.1/x"), None))
     assertEquals(
-      SpiValues.kept(Some(Doi("x")))(SpiValues.doiOf),
+      SpiValues.kept(Some(Doi("x")))(SpiValues.doiOf) match { case (d, w) => (d, w.map(_.sentence)) },
       (None, Some("DOI 'x' is not a DOI (10.<registrant>/<suffix>)"))
     )
     assertEquals(SpiValues.kept(Option.empty[Doi])(SpiValues.doiOf), (None, None))
@@ -142,8 +152,8 @@ class SpiValuesSuite extends munit.FunSuite:
     val got = PluginEvents.record(CatalogRecord.Provider("zq"), legacy)
     assert(
       got.left.exists(w =>
-        w.value.startsWith("q-1: catalogue 'zq' handed over a record the host cannot read") &&
-          w.value.contains("plugin SPI 2")
+        w.sentence.startsWith("q-1: catalogue 'zq' handed over a record the host cannot read") &&
+          w.sentence.contains("plugin SPI 2")
       ),
       got.toString
     )
@@ -165,7 +175,10 @@ class SpiValuesSuite extends munit.FunSuite:
     assert(rec.rights.isRight)
     val broken = PluginMedia.record(item.modify(_.period).setTo(Some("1999").asInstanceOf[Option[Period]]))
     assertEquals(broken.period, None)
-    assert(broken.rights.left.exists(_.value.startsWith("k1: a period the host cannot read")), broken.rights.toString)
+    assert(
+      broken.rights.left.exists(_.sentence.startsWith("k1: a period the host cannot read")),
+      broken.rights.toString
+    )
 
   test("a query asks for the import's years and area as the SPI's values"):
     assertEquals(

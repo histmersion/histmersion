@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -87,7 +87,7 @@ object Png:
 
   /** An 8-bit RGB or RGBA, non-interlaced PNG's pixels (`0xAARRGGBB`). */
   def decode(png: PngBytes): Either[Problem, Vp8l.Image] =
-    if !isPng(png) then Left(Problem("not a PNG"))
+    if !isPng(png) then Left(Problem.Unclassified(Legacy.Text("not a PNG")))
     else
       val b: Array[Byte] = png.value
       def be32(i: Int) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)
@@ -113,7 +113,7 @@ object Png:
         case 6 => 4
         case _ => 0
       if w <= 0 || h <= 0 || depth != 8 || bpp == 0 || interlace != 0 then
-        Left(Problem("only 8-bit RGB(A) non-interlaced PNGs are read"))
+        Left(Problem.Unclassified(Legacy.Text("only 8-bit RGB(A) non-interlaced PNGs are read")))
       else
         val stride = w * bpp
         val raw = new Array[Byte](h * (stride + 1))
@@ -123,7 +123,7 @@ object Png:
         while got < raw.length && !inf.finished() && !inf.needsInput() && !inf.needsDictionary() do
           got += inf.inflate(raw, got, raw.length - got)
         inf.end()
-        if got < raw.length then Left(Problem("truncated PNG data"))
+        if got < raw.length then Left(Problem.Unclassified(Legacy.Text("truncated PNG data")))
         else
           val cur = new Array[Int](stride)
           val prev = new Array[Int](stride)

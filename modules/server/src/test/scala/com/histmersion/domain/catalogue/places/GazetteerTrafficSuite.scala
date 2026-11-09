@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.domain.CoreQuota
@@ -50,7 +51,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val probe = new HttpTransport:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = {
-        asked.add(url.value); Left(Plugin.Http.Failure.Transport(plugin.Problem("probe")))
+        asked.add(url.value); Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("probe"))))
       }
     val _ = ImportRunner.places(sources(name), PluginGazetteers.http(probe))
     asked.peek()
@@ -107,11 +108,11 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     val made = places(name)
     sb ++= requests(name)
     made match
-      case Left(e)   => sb ++= s"places: failed: ${normalised(e.value, name)}\n"
+      case Left(e)   => sb ++= s"places: failed: ${normalised(e.sentence, name)}\n"
       case Right(ps) => sb ++= s"places: ${ps.size}\n" + ps.map(p => s"  $p\n").mkString
     val dry = dryRun(name)
     sb ++= requests(name)
-    sb ++= s"dry run: ${dry.fold(e => s"failed: ${normalised(e.value, name)}", _.toString)}\n"
+    sb ++= s"dry run: ${dry.fold(e => s"failed: ${normalised(e.sentence, name)}", _.toString)}\n"
 
   private def zipped(name: String): Array[Byte] =
     GazetteerLoopback.zip(
@@ -144,7 +145,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     loop.answerWith(503, "busy".getBytes(UTF_8))
     val failed = places(Chronontology)
     sb ++= requests(Chronontology)
-    sb ++= s"places: ${failed.fold(e => s"failed: ${normalised(e.value, Chronontology)}", _.size.toString)}\n"
+    sb ++= s"places: ${failed.fold(e => s"failed: ${normalised(e.sentence, Chronontology)}", _.size.toString)}\n"
     sb.result()
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/gazetteers.txt")

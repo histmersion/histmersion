@@ -1,7 +1,7 @@
 package com.histmersion
 package util.mcp
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.Api
@@ -10,9 +10,9 @@ import com.histmersion.api.Api
 class McpOutSuite extends munit.FunSuite:
 
   test("a refusal is the reason in italics; an answer is its Markdown"):
-    assertEquals(McpOut.refusal(Api.Error(Problem("No source 'x'"))), "_No source 'x'_")
+    assertEquals(McpOut.refusal(Api.Error(Problem.Unclassified(Legacy.Text("No source 'x'")))), "_No source 'x'_")
     assertEquals(
-      McpOut.markdown(Left(Api.Error(Problem("nope"))): Either[Api.Error, Int])(_.toString),
+      McpOut.markdown(Left(Api.Error(Problem.Unclassified(Legacy.Text("nope")))): Either[Api.Error, Int])(_.toString),
       "_nope_"
     )
     assertEquals(McpOut.markdown(Right(3): Either[Api.Error, Int])(n => s"**$n**"), "**3**")

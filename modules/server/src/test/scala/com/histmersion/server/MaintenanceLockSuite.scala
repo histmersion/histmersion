@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -68,19 +69,19 @@ class MaintenanceLockSuite extends DbSuite:
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] = Left(
-      Problem("not used")
+      Problem.Unclassified(Legacy.Text("not used"))
     )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */
   private def underLock[A](f: => Either[Api.Error, A]): Either[Api.Error, A] =
-    var out: Either[Api.Error, A] = Left(Api.Error(Problem("never ran")))
+    var out: Either[Api.Error, A] = Left(Api.Error(Problem.Unclassified(Legacy.Text("never ran"))))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) { out = f; Right(()) }
     out
 
   private def refused(name: String)(f: => Either[Api.Error, ?]): Unit =
     val r = underLock(f)
     val e = r.swap.toOption.getOrElse(fail(s"$name was NOT refused while a restore held the lock"))
-    assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message}")
+    assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message.sentence}")
 
   private val png =
     AssetInput(

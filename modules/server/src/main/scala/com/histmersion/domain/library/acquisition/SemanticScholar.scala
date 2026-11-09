@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse
@@ -41,7 +42,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             scribe.warn(s"acquire: Semantic Scholar unavailable ($err) — using OpenAlex citations")
             openalexCiting(work, since, limit.value).map((openalex, _))
       case None => openalexCiting(work, since, limit.value).map((openalex, _))
-    found.left.map(Problem(_))
+    found.left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   private def s2(doi: String, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
     def page(offset: Offset, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =
@@ -59,7 +60,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             headers
           )
           .left
-          .map(_.problem.value)
+          .map(_.problem.sentence)
           .flatMap { j =>
             val rows = AcquireParse.s2Citations(j).map(_.wire)
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_.value >= y.value)))
@@ -87,5 +88,5 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             )
           )
           .left
-          .map(_.problem.value)
+          .map(_.problem.sentence)
           .map(AcquireParse.openalexCitations(_).map(_.wire))

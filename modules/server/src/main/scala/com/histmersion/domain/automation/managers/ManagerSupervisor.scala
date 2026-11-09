@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -281,7 +282,7 @@ final class ManagerSupervisor(
           )
       case (item, Some((status, error))) =>
         val st = RunState.parse(Run.State.Wire(status.value)).getOrElse(RunState.Failed)
-        val problem = error.map(e => Problem(e.value))
+        val problem = error
         byItem.get(itemKindOf(item)) match
           case Some(k) => k.evaluate(this, m, s, item, st, problem, now, out)
           case None    => evaluateStep(m, s, item, st, problem, now, out, Unknown)
@@ -365,7 +366,10 @@ final class ManagerSupervisor(
           out += TickLine(s"${item.target}: done")
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
-        val hold = Hold(reason = api.Problem(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
+        val hold = Hold(
+          reason = Problem.Unclassified(Legacy.Text(note.value)),
+          untilApproval = Some(Hold.UntilApproval(approval.value))
+        )
         if Transactor(ds).transact(
             ManagerRepo.evaluated(
               item.id,
@@ -478,7 +482,7 @@ final class ManagerSupervisor(
       Some(itemId),
       None,
       Feed.Evaluated,
-      s"$slug ${if isNew then "queued" else "queued again"} for review ($why, priority ${ManagerSupervisor.ChainPriority})"
+      s"$slug ${if isNew then "queued" else "queued again"} for review (${why.sentence}, priority ${ManagerSupervisor.ChainPriority})"
     )
     out += TickLine(s"$slug: review chained")
 
@@ -830,7 +834,7 @@ final class ManagerSupervisor(
         .setTo(m.config.models.getOrElse(Nil).filter(o => Role.parse(o.role).exists(roles.contains)))
     agents.prepare(req, None) match
       case Left(e) =>
-        val note = s"not started: ${e.message}".take(500)
+        val note = s"not started: ${e.message.sentence}".take(500)
         if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == note) then
           recordEvent(m.id, Some(item.id), None, Feed.Starved, note)
         None
@@ -933,7 +937,7 @@ final class ManagerSupervisor(
         itemKind: ManagerContext.ItemKind,
         raw: ManagerItem.Target
     ): Either[Api.Error, ManagerContext.ItemTarget] =
-      Left(Api.Error(api.Problem(s"unknown item kind '$itemKind'")))
+      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$itemKind'"))))
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
@@ -1132,7 +1136,9 @@ final class ManagerSupervisor(
     r.managerId.foreach { mid =>
       val stalled = r.error.exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Stalled))
       val text =
-        s"${r.target}: run ${r.status}" + r.error.filter(_.value.nonEmpty).fold("")(e => s" — ${e.value.take(300)}")
+        s"${r.target}: run ${r.status}" + r.error
+          .filter(_.sentence.nonEmpty)
+          .fold("")(e => s" — ${e.sentence.take(300)}")
       recordEvent(mid, r.managerItem, Some(runIdOf(r.id)), if stalled then Feed.Stall else Feed.Settled, text)
       nudge()
     }

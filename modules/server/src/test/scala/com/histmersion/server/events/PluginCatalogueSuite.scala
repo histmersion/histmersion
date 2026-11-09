@@ -1,9 +1,9 @@
 package com.histmersion
 package server.events
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -118,8 +118,8 @@ class PluginCatalogueSuite extends DbSuite:
                 Right(
                   CataloguePage(List(ev(CatalogueEvent.Id("b3"), CatalogueEvent.Label("Zq Battle Three"), Year(-1100))))
                 )
-              else Left(Problem("upstream down"))
-            case other => Left(Problem(s"no part $other"))
+              else Left(Problem.Unclassified(Legacy.Text("upstream down")))
+            case other => Left(Problem.Unclassified(Legacy.Text(s"no part $other")))
         }
 
   private def fake = FakeMediaHttp(url =>
@@ -196,7 +196,7 @@ class PluginCatalogueSuite extends DbSuite:
       Caller.Local,
       EventImportRequest(EventImportRequest.Provider("usgs"), dryRun = EventImportRequest.DryRun(true))
     )
-    assert(job.left.exists(_.message.value.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
+    assert(job.left.exists(_.message.sentence.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
 
   test("the plugin switched off: its catalogue is out of the import; its events stay on the map"):
     val off = ServerPlugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
@@ -205,7 +205,7 @@ class PluginCatalogueSuite extends DbSuite:
       h.eventImports
         .importJob(Caller.Local, EventImportRequest(CatalogueRequest, dryRun = EventImportRequest.DryRun(true)))
         .left
-        .exists(_.message.value.contains("unknown event catalogue"))
+        .exists(_.message.sentence.contains("unknown event catalogue"))
     )
     assert(!h.eventImporter.catalogues.exists(_.id == CatalogueInfo))
     val e = EventFixtures.get(ds, BEventRow.Id("zq_quakes_b1")).getOrElse(fail("gone"))
@@ -277,7 +277,7 @@ class PluginCatalogueSuite extends DbSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem("no")))
+              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("no"))))
           },
         ConfigFactory.empty
       )

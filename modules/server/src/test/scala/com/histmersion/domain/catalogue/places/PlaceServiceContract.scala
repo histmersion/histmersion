@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.{Dataset, Write}
@@ -332,7 +333,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       Place.OverrideEdit.Put(
         Some(Place.OverrideEdit.Put.Kind("polity")),
         Some((Some(Year(-1500L)), Some(Year(-1100L)))),
-        Some(Problem("the survey"))
+        Some(Problem.Unclassified(Legacy.Text("the survey")))
       ),
       Tolerance
     )
@@ -357,7 +358,9 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     )
     val listed = p.overrides(Some(com.histmersion.domain.catalogue.Place.Id("zzp_hill")))
     assertEquals(
-      listed.map(o => (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason, o.sourceKind)),
+      listed.map(o =>
+        (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason.map(_.sentence), o.sourceKind)
+      ),
       List(("zzp_hill", Some("polity"), Some(-1500L), Some(-1100L), true, Some("the survey"), "site"))
     )
     assertEquals(listed.map(o => (o.sourcePeriodStart, o.sourcePeriodEnd)), List((Some(-1650L), Some(-1180L))))
@@ -430,15 +433,19 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(
-      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_march"), Some(Problem("a child")))
-        .left
+      p.remove(
+        com.histmersion.domain.catalogue.Place.Id("zzp_march"),
+        Some(Problem.Unclassified(Legacy.Text("a child")))
+      ).left
         .map(_.code),
       Left(Some(Write.CodeInvalid)),
       "it has a child"
     )
     assertEquals(
-      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_lost"), Some(Problem("a phantom")))
-        .map(g => (g.placeId, g.into)),
+      p.remove(
+        com.histmersion.domain.catalogue.Place.Id("zzp_lost"),
+        Some(Problem.Unclassified(Legacy.Text("a phantom")))
+      ).map(g => (g.placeId, g.into)),
       Right(("zzp_lost", None))
     )
     assertEquals(

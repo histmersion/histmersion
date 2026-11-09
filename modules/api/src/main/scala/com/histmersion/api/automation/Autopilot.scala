@@ -1,6 +1,8 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -96,7 +98,7 @@ object Autopilot:
       title: FocusGoal.Title = Goal.Title(""),
       status: FocusGoal.Status = FocusGoal.Status(""),
       stage: FocusGoal.Stage = FocusGoal.Stage(""),
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       pinned: FocusGoal.Pinned = FocusGoal.Pinned(false),
       priority: FocusGoal.Priority = FocusGoal.Priority(0),
       since: Option[FocusGoal.Since] = None,
@@ -133,7 +135,7 @@ object Autopilot:
   final case class FocusWaiting(
       slug: FocusWaiting.Slug,
       code: FocusWaiting.Code,
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,

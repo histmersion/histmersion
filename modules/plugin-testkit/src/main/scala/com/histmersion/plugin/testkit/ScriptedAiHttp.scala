@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.Header
 
 import com.histmersion.domain.CoreQuota
@@ -50,7 +50,8 @@ final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) ex
 
   private def next(r: AiHttpRequest): Either[AiHttp.Failure, AiHttp.Response] = synchronized {
     seen += r
-    if left.isEmpty then Left(AiHttp.Failure.Refused(Problem("no scripted answer"))) else left.dequeue()
+    if left.isEmpty then Left(AiHttp.Failure.Refused(Problem.Unclassified(Legacy.Text("no scripted answer"))))
+    else left.dequeue()
   }
 
 object ScriptedAiHttp:

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.backup
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.jobs.WorkCarrier
 
 import java.time.Instant
@@ -49,7 +49,7 @@ final class BackupJobs(
                 .Try(p.run())
                 .toEither
                 .left
-                .map(e => Api.Error(Problem(s"backup crashed: ${e.getMessage}")))
+                .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"backup crashed: ${e.getMessage}"))))
                 .flatten
             )
           }
@@ -72,4 +72,4 @@ final class BackupJobs(
       j.result.get() match
         case Right(r) => Backup.Status.done(r)
         case Left(e)  =>
-          Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, Problem(e.message.value))
+          Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, e.message)

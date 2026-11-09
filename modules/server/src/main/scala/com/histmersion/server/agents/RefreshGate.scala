@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.api.automation.PlanQuota.*
 import io.circe.{parser, Json}
 

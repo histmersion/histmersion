@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.aliases.AliasKinds
@@ -81,7 +82,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     )
     assertEquals(c.list(None, None, None, Some(PageSize(1)), None).attestations, List(a))
     assertEquals(c.get(f.id).map(_.id), Right(f.id))
-    assert(c.get(Attestation.Id(999)).left.exists(_.message.value == "No attestation 999"))
+    assert(c.get(Attestation.Id(999)).left.exists(_.message.sentence == "No attestation 999"))
 
   test("an unknown kind is invalid, a missing source not found; a held lock refuses every write"):
     val c = controllers()
@@ -95,7 +96,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     )
     assert(
       bad.left.exists(e =>
-        e.message.value.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")
+        e.message.sentence.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")
       )
     )
     val none = c.create(
@@ -106,8 +107,8 @@ class AttestationsControllersSuite extends munit.FunSuite:
         Attestation.TargetId("zz_hill")
       )
     )
-    assertEquals(none.left.map(_.message), Left("No source 'zzgone1900_y'"))
-    assert(c.delete(Caller.Local, Attestation.Id(5)).left.exists(_.message.value == "No attestation 5"))
+    assertEquals(none.left.map(_.message).left.map(_.sentence), Left("No source 'zzgone1900_y'"))
+    assert(c.delete(Caller.Local, Attestation.Id(5)).left.exists(_.message.sentence == "No attestation 5"))
     val gate = WriteGate()
     val locked = controllers(gate)
     val held = gate.exclusively(WriteGate.OperationName("restore"))(

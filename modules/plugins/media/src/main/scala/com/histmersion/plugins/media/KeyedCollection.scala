@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -39,13 +39,16 @@ abstract class KeyedCollection(
     MediaCollection.Description(text + (if key.isEmpty then " — NO KEY SET: not asked" else ""))
 
   override def check: Either[Problem, Unit] =
-    if !conf.enabled.value then Left(Problem(s"${title.value} is switched off (${settings.value}.enabled = false)"))
+    if !conf.enabled.value then
+      Left(Problem.Unclassified(Legacy.Text(s"${title.value} is switched off (${settings.value}.enabled = false)")))
     else
       key
         .toRight(
-          Problem(
-            s"${title.value} needs ${needs.value}: set histmersion.plugins.${plugin.value}.api-key to a secret " +
-              "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${title.value} needs ${needs.value}: set histmersion.plugins.${plugin.value}.api-key to a secret " +
+                "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+            )
           )
         )
         .map(_ => ())
@@ -58,7 +61,11 @@ abstract class KeyedCollection(
     case Plugin.Http.Failure.Status(code, why) if code.refusesAccess =>
       Plugin.Http.Failure.Status(
         code,
-        Problem(s"$why — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)")
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${why.legacyText} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)"
+          )
+        )
       )
     case other => other
 

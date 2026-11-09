@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
 import Processes.Failure
@@ -42,8 +43,9 @@ object Processes:
 
     /** The sentence for a person. */
     def problem: Problem = this match
-      case TimedOut(tool, after) => Problem(s"$tool did not answer within ${after.toSeconds} s")
-      case NotStarted(why)       => why
+      case TimedOut(tool, after) =>
+        Problem.Unclassified(Legacy.Text(s"$tool did not answer within ${after.toSeconds} s"))
+      case NotStarted(why) => why
 
   /** The file name of a tool. */
   type Tool = Tool.T
@@ -87,9 +89,9 @@ object Processes:
         stdin: Option[RunStdin],
         timeout: FiniteDuration
     ): Either[Failure, Result] =
-      Left(Failure.NotStarted(Problem("this host supplies no processes")))
+      Left(Failure.NotStarted(Problem.Unclassified(Legacy.Text("this host supplies no processes"))))
     def start(argv: List[StartArgv], env: Map[EnvVar.Name, EnvVar.Value]): Either[Problem, Session] =
-      Left(Problem("this host supplies no processes"))
+      Left(Problem.Unclassified(Legacy.Text("this host supplies no processes")))
     def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(
-      Problem("this host supplies no processes")
+      Problem.Unclassified(Legacy.Text("this host supplies no processes"))
     )

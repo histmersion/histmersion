@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -51,7 +52,7 @@ class AssetsControllersSuite extends munit.FunSuite:
     assert(
       c.putFigures(Citekey("zqnew2001_x"), List(png.modify(_.base64).setTo(AssetInput.Base64("%%%"))))
         .left
-        .exists(_.message.value.contains("not valid base64"))
+        .exists(_.message.sentence.contains("not valid base64"))
     )
     assertEquals(c.figures(Citekey("zqold")).map(_.name), List("a.png"))
     assertEquals(c.figure(Citekey("zqold"), AssetService.AssetName("a.png")).map(_._2), Right("image/png"))
@@ -62,7 +63,10 @@ class AssetsControllersSuite extends munit.FunSuite:
 
   test("a picture's uid that is not one is not found; the cards of what holds none are empty"):
     val (c, _) = controllers()
-    assertEquals(c.show(AssetService.AssetUid("not-a-uid")).left.map(_.message), Left("No picture 'not-a-uid'"))
+    assertEquals(
+      c.show(AssetService.AssetUid("not-a-uid")).left.map(_.message).left.map(_.sentence),
+      Left("No picture 'not-a-uid'")
+    )
     assertEquals(
       c.thumb(AssetService.AssetUid("00000000-0000-0000-0000-000000000000")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
@@ -87,5 +91,5 @@ class AssetsControllersSuite extends munit.FunSuite:
         )
       )
     )
-    val (a, b) = held.fold(e => fail(e.message.value), identity)
+    val (a, b) = held.fold(e => fail(e.message.sentence), identity)
     assert(a.isLeft && b.isLeft, (a, b))

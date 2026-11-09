@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.ocr.Chunk
 
 import com.histmersion.api.LatinFold
@@ -65,7 +66,7 @@ object PassageFinder:
       timeoutMs: TimeoutMs
   )(using timer: Timer): Either[Problem, PassageResult] =
     val q = Option(query.value).getOrElse("").trim
-    if q.isEmpty then Left(Problem("the query is empty — give the words to find"))
+    if q.isEmpty then Left(Problem.Unclassified(Legacy.Text("the query is empty — give the words to find")))
     else
       compile(Query(q), regex).flatMap { pattern =>
         val text = body(segments).value
@@ -100,9 +101,11 @@ object PassageFinder:
         catch
           case _: TimedOut =>
             Left(
-              Problem(
-                s"the regex ran longer than $timeoutMs ms over this body — make it more specific " +
-                  "(anchor it, avoid nested repetition like (a+)+)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"the regex ran longer than $timeoutMs ms over this body — make it more specific " +
+                    "(anchor it, avoid nested repetition like (a+)+)"
+                )
               )
             )
       }
@@ -116,8 +119,10 @@ object PassageFinder:
         case e: PatternSyntaxException =>
           val at = if e.getIndex >= 0 then s" at position ${e.getIndex}" else ""
           Left(
-            Problem(
-              s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)"
+              )
             )
           )
     else

@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.personal.*
@@ -45,11 +45,11 @@ object NotesCmd:
       case (None, Some(f)) =>
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
-        else Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
+        else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
       case _ =>
         Left(
           Cli.Error(
-            Problem("give the note's text with --text or --file (one of them)"),
+            Problem.Unclassified(Legacy.Text("give the note's text with --text or --file (one of them)")),
             exitCode = ExitCode.Usage
           )
         )

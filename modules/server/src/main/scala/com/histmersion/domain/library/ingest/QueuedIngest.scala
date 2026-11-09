@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.ingest
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
@@ -82,7 +82,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
         upload
       )
       .left
-      .map(e => Problem(e.message.value))
+      .map(e => e.message)
       .map(a =>
         base
           .modify(_.jobId)

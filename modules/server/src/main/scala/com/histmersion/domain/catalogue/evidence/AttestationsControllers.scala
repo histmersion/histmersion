@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.aliases.AliasKinds
@@ -40,7 +40,7 @@ final class AttestationsControllers(
   private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
   private def notFound(id: Attestation.Id) =
-    Api.Error(Problem(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No attestation $id")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def refId(targetType: Attestation.TargetType, id: Attestation.TargetId): Attestation.TargetId =
     AliasKinds
@@ -75,7 +75,7 @@ final class AttestationsControllers(
         wire <- AttestationTarget
           .check(AttestationTarget.Wire(in.targetType.value))
           .left
-          .map(p => invalid(p.transformInto[Problem]))
+          .map(p => invalid(p))
         t = Attestation.TargetType(wire.value)
         _ <- Either.cond(
           Citekey.option(ck).flatMap(sources.canonical).isDefined,

@@ -43,23 +43,23 @@ object Text:
       case Io.Database(op, reported)           => s"the database refused to ${words(op.productPrefix)} — $reported"
       case Config.Setting(key, fault)          => s"$key ${fault.said}"
       case Config.Unavailable(capability)      => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope)         => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Plugin.Load(plugin, fault)          => s"plugin $plugin did not load: ${fault.said}"
-      case Plugin.Rejected(plugin, item, why)  => s"$plugin did not take $item: ${words(why.productPrefix)}"
-      case Plugin.Vault(vault, failure)        => s"secret vault $vault failed: ${failure.said}"
-      case Plugin.Said(plugin, claim, text)    => s"$plugin (${words(claim.productPrefix)}): $text"
-      case Problem.Run.Paused(reason, at)              => s"paused for ${words(reason.productPrefix)}${until(at)}"
-      case Problem.Run.NoModel(role, tried)            => s"no model of the $role chain can run${triedModels(tried)}"
-      case Problem.Run.Blocked(block)                  => s"held back: ${block.said}"
-      case Problem.Run.Interrupted                     => "interrupted by a restart"
-      case Problem.Run.Cancelled(by)                   => s"cancelled by ${words(by.productPrefix)}"
-      case Problem.Run.Draining(since)                 => s"stopped while the autopilot drains (since ${since.iso})"
-      case Problem.Run.Aborted(step, cause)            => s"step $step cannot go on: ${words(cause.productPrefix)}"
-      case Content.Finding(cause)              => cause.said
-      case Content.Proposal(rule, at)          => s"$at: ${rule.said}"
-      case Internal.Unexpected(where, e, r)    => s"$where failed unexpectedly ($e) — $r"
-      case Unclassified(text)                  => s"$text"
-      case Stored.Unrecognised(text)           => s"$text"
+      case Config.Reload(stage, scope) => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
+      case Plugin.Load(plugin, fault)  => s"plugin $plugin did not load: ${fault.said}"
+      case Plugin.Rejected(plugin, item, why)   => s"$plugin did not take $item: ${words(why.productPrefix)}"
+      case Plugin.Vault(vault, failure)         => s"secret vault $vault failed: ${failure.said}"
+      case Plugin.Said(plugin, claim, text)     => s"$plugin (${words(claim.productPrefix)}): $text"
+      case Problem.Run.Paused(reason, at)       => s"paused for ${words(reason.productPrefix)}${until(at)}"
+      case Problem.Run.NoModel(role, tried)     => s"no model of the $role chain can run${triedModels(tried)}"
+      case Problem.Run.Blocked(block)           => s"held back: ${block.said}"
+      case Problem.Run.Interrupted              => "interrupted by a restart"
+      case Problem.Run.Cancelled(by)            => s"cancelled by ${words(by.productPrefix)}"
+      case Problem.Run.Draining(since)          => s"stopped while the autopilot drains (since ${since.iso})"
+      case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${words(cause.productPrefix)}"
+      case Content.Finding(cause)               => cause.said
+      case Content.Proposal(rule, at)           => s"$at: ${rule.said}"
+      case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
+      case Unclassified(text)                   => s"$text"
+      case Stored.Unrecognised(text)            => s"$text"
 
   extension (problems: Problems)
     /** One sentence per problem, in order. */
@@ -80,93 +80,106 @@ object Text:
 
   private def oneOf(known: Vector[Raw]): String = if known.isEmpty then "" else s" (one of: ${known.mkString(", ")})"
 
-  extension (bounds: Invalid.Bounds) private def range: String = bounds match
-    case Invalid.Bounds(Some(least), Some(greatest)) => s"not between $least and $greatest"
-    case Invalid.Bounds(Some(least), None)           => s"below $least"
-    case Invalid.Bounds(None, Some(greatest))        => s"above $greatest"
-    case Invalid.Bounds(None, None)                  => "out of range"
+  extension (bounds: Invalid.Bounds)
+    private def range: String = bounds match
+      case Invalid.Bounds(Some(least), Some(greatest)) => s"not between $least and $greatest"
+      case Invalid.Bounds(Some(least), None)           => s"below $least"
+      case Invalid.Bounds(None, Some(greatest))        => s"above $greatest"
+      case Invalid.Bounds(None, None)                  => "out of range"
 
-  extension (rule: Invalid.Exclusion) private def of(fields: NonEmptyVector[Field]): String =
-    val named = fields.toVector.mkString(", ")
-    rule match
-      case Invalid.Exclusion.Together  => s"give $named together, or none of them"
-      case Invalid.Exclusion.OneOf     => s"give exactly one of $named"
-      case Invalid.Exclusion.AtMostOne => s"give at most one of $named"
-      case Invalid.Exclusion.Ordered   => s"$named must be in order"
+  extension (rule: Invalid.Exclusion)
+    private def of(fields: NonEmptyVector[Field]): String =
+      val named = fields.toVector.mkString(", ")
+      rule match
+        case Invalid.Exclusion.Together  => s"give $named together, or none of them"
+        case Invalid.Exclusion.OneOf     => s"give exactly one of $named"
+        case Invalid.Exclusion.AtMostOne => s"give at most one of $named"
+        case Invalid.Exclusion.Ordered   => s"$named must be in order"
 
+  extension (activity: Conflict.Activity)
+    private def named: String = activity match
+      case Conflict.Activity.CalibreGui => "the Calibre GUI"
+      case other                        => s"a ${words(other.productPrefix)}"
 
-  extension (activity: Conflict.Activity) private def named: String = activity match
-    case Conflict.Activity.CalibreGui => "the Calibre GUI"
-    case other                        => s"a ${words(other.productPrefix)}"
+  extension (rule: Refused.Rule)
+    private def said: String = rule match
+      case Refused.Rule.RunTokenRequired  => "a live run token is required"
+      case Refused.Rule.ApiKeyRequired    => "the API key is required"
+      case Refused.Rule.WorkingDirDenied  => "the command may not write in this working directory"
+      case Refused.Rule.ReadOnlyQuery     => "a query may only read: it holds a statement that writes"
+      case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
+      case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
 
-  extension (rule: Refused.Rule) private def said: String = rule match
-    case Refused.Rule.RunTokenRequired  => "a live run token is required"
-    case Refused.Rule.ApiKeyRequired    => "the API key is required"
-    case Refused.Rule.WorkingDirDenied  => "the command may not write in this working directory"
-    case Refused.Rule.ReadOnlyQuery     => "a query may only read: it holds a statement that writes"
-    case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
-    case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
+  extension (limit: Refused.Limit)
+    private def named: String = limit match
+      case Refused.Limit.DailySpend    => "today's agent spend"
+      case Refused.Limit.MonthlySpend  => "this month's agent spend"
+      case Refused.Limit.RunSpend      => "the run's spend"
+      case Refused.Limit.ProviderQuota => "the provider's quota"
+      case Refused.Limit.RateLimit     => "the rate limit"
+      case Refused.Limit.PlanAllowance => "the plan's allowance"
 
-  extension (limit: Refused.Limit) private def named: String = limit match
-    case Refused.Limit.DailySpend    => "today's agent spend"
-    case Refused.Limit.MonthlySpend  => "this month's agent spend"
-    case Refused.Limit.RunSpend      => "the run's spend"
-    case Refused.Limit.ProviderQuota => "the provider's quota"
-    case Refused.Limit.RateLimit     => "the rate limit"
-    case Refused.Limit.PlanAllowance => "the plan's allowance"
+  extension (kind: Io.Kind)
+    private def missed: String = kind match
+      case Io.Kind.File       => "is not a file"
+      case Io.Kind.Directory  => "is not a directory"
+      case Io.Kind.Present    => "is not there"
+      case Io.Kind.Absent     => "is there already"
+      case Io.Kind.Executable => "is not executable"
 
-  extension (kind: Io.Kind) private def missed: String = kind match
-    case Io.Kind.File       => "is not a file"
-    case Io.Kind.Directory  => "is not a directory"
-    case Io.Kind.Present    => "is not there"
-    case Io.Kind.Absent     => "is there already"
-    case Io.Kind.Executable => "is not executable"
+  extension (damage: Io.Damage)
+    private def said: String = damage match
+      case Io.Damage.Checksum                => "fails its checksum"
+      case Io.Damage.Truncated               => "is cut short"
+      case Io.Damage.Undecodable             => "cannot be decoded"
+      case Io.Damage.Length(expected, found) => s"holds $found units, not $expected"
 
-  extension (damage: Io.Damage) private def said: String = damage match
-    case Io.Damage.Checksum                => "fails its checksum"
-    case Io.Damage.Truncated               => "is cut short"
-    case Io.Damage.Undecodable             => "cannot be decoded"
-    case Io.Damage.Length(expected, found) => s"holds $found units, not $expected"
+  extension (ending: Io.Ending)
+    private def said: String = ending match
+      case Io.Ending.Exited(code, stderr) => s"exited with $code — $stderr"
+      case Io.Ending.TimedOut(after)      => s"did not finish within $after ms"
+      case Io.Ending.NotStarted(reported) => s"could not be started — $reported"
 
-  extension (ending: Io.Ending) private def said: String = ending match
-    case Io.Ending.Exited(code, stderr) => s"exited with $code — $stderr"
-    case Io.Ending.TimedOut(after)      => s"did not finish within $after ms"
-    case Io.Ending.NotStarted(reported) => s"could not be started — $reported"
+  extension (fault: Config.Fault)
+    private def said: String = fault match
+      case Config.Fault.Empty            => "is empty"
+      case Config.Fault.Unset(variable)  => s"reads $variable, which is not set"
+      case Config.Fault.Malformed(raw)   => s"is not valid: '$raw'"
+      case Config.Fault.Unknown(raw)     => s"has an unknown value '$raw'"
+      case Config.Fault.Conflicts(other) => s"contradicts $other"
+      case Config.Fault.NoSecret         => "names a secret no vault holds"
 
-  extension (fault: Config.Fault) private def said: String = fault match
-    case Config.Fault.Empty            => "is empty"
-    case Config.Fault.Unset(variable)  => s"reads $variable, which is not set"
-    case Config.Fault.Malformed(raw)   => s"is not valid: '$raw'"
-    case Config.Fault.Unknown(raw)     => s"has an unknown value '$raw'"
-    case Config.Fault.Conflicts(other) => s"contradicts $other"
-    case Config.Fault.NoSecret         => "names a secret no vault holds"
+  extension (fault: Plugin.Fault)
+    private def said: String = fault match
+      case Plugin.Fault.Threw(reported) => s"loading it threw — $reported"
+      case other                        => words(other.productPrefix)
 
-  extension (fault: Plugin.Fault) private def said: String = fault match
-    case Plugin.Fault.Threw(reported) => s"loading it threw — $reported"
-    case other                        => words(other.productPrefix)
-
-  extension (failure: Plugin.Retrieval) private def said: String = failure match
-    case Plugin.Retrieval.TimedOut(after) => s"it did not answer within $after ms"
-    case Plugin.Retrieval.Failed(stderr)  => s"its tool failed — $stderr"
-    case other                               => words(other.productPrefix)
+  extension (failure: Plugin.Retrieval)
+    private def said: String = failure match
+      case Plugin.Retrieval.TimedOut(after) => s"it did not answer within $after ms"
+      case Plugin.Retrieval.Failed(stderr)  => s"its tool failed — $stderr"
+      case other                            => words(other.productPrefix)
 
   private def triedModels(tried: Vector[Problem.Run.Model]): String =
     if tried.isEmpty then "" else s" (passed over: ${tried.mkString(", ")})"
 
-  extension (block: Problem.Run.Block) private def said: String = block match
-    case Problem.Run.Block.PoolFull(pool) => s"the $pool pool runs as many as it may"
-    case other                    => words(other.productPrefix)
+  extension (block: Problem.Run.Block)
+    private def said: String = block match
+      case Problem.Run.Block.PoolFull(pool) => s"the $pool pool runs as many as it may"
+      case other                            => words(other.productPrefix)
 
-  extension (cause: Content.Flaw) private def said: String = cause match
-    case Content.Flaw.HandWrittenSourcesCited => "a hand-written Sources cited section (the page generates it)"
-    case Content.Flaw.UncitedParagraph        => "a paragraph cites no source"
-    case Content.Flaw.UnknownCitekey          => "a citation names no source in the corpus"
-    case Content.Flaw.FormattingIntroduced    => "a formatting error the last edits introduced"
-    case Content.Flaw.MissingSection          => "a required section is missing"
+  extension (cause: Content.Flaw)
+    private def said: String = cause match
+      case Content.Flaw.HandWrittenSourcesCited => "a hand-written Sources cited section (the page generates it)"
+      case Content.Flaw.UncitedParagraph        => "a paragraph cites no source"
+      case Content.Flaw.UnknownCitekey          => "a citation names no source in the corpus"
+      case Content.Flaw.FormattingIntroduced    => "a formatting error the last edits introduced"
+      case Content.Flaw.MissingSection          => "a required section is missing"
 
-  extension (rule: Content.Requirement) private def said: String = rule match
-    case Content.Requirement.NoYearZero               => "there is no year 0; use BCE years as negative numbers"
-    case Content.Requirement.CitesNoSource            => "the text cites no source"
-    case Content.Requirement.UnknownCitekey           => "it names a source that is not in the corpus"
-    case Content.Requirement.OutsidePeriod            => "it falls outside the period"
-    case Content.Requirement.TooManyClaims(cap, gave) => s"at most $cap claims per source (you gave $gave)"
+  extension (rule: Content.Requirement)
+    private def said: String = rule match
+      case Content.Requirement.NoYearZero               => "there is no year 0; use BCE years as negative numbers"
+      case Content.Requirement.CitesNoSource            => "the text cites no source"
+      case Content.Requirement.UnknownCitekey           => "it names a source that is not in the corpus"
+      case Content.Requirement.OutsidePeriod            => "it falls outside the period"
+      case Content.Requirement.TooManyClaims(cap, gave) => s"at most $cap claims per source (you gave $gave)"

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -93,7 +94,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
           case _                           => OutputComparison.none
       )
       .map(CompareRunsViews.comparison)
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
 
   test("a recorded run reaches the domain whole: its head, the models it was told to use, every step's record"):
     val s = step(
@@ -102,7 +103,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       StepInfo.Status("failed"),
       model = Some(StepInfo.Model("anthropic:x")),
       actual = Some(StepInfo.ActualModel("x-2026")),
-      error = Some(Problem("bad")),
+      error = Some(Problem.Unclassified(Legacy.Text("bad"))),
       usage = Usage(Usage.Input(20), Usage.Output(4), Usage.CacheRead(5), Usage.CacheWrite(1)),
       cost = StepInfo.CostUsd(0.01),
       attempt = StepInfo.Attempt(2)
@@ -156,7 +157,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
           Some(CompareRuns.Step.FirstCallTokens(6200L)),
           Some(CompareRuns.Step.Turns(7)),
           Some(CompareRuns.Step.Output("{}")),
-          Some(domain.Problem("bad"))
+          Some(Problem.Unclassified(Legacy.Text("bad")))
         )
       )
     )
@@ -260,7 +261,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       StepInfo.Name("classify"),
       StepInfo.Status("failed"),
       model = Some(StepInfo.Model("claude-code:haiku")),
-      error = Some(Problem("bad"))
+      error = Some(Problem.Unclassified(Legacy.Text("bad")))
     )
     val a2 = step(
       StepInfo.Seq(3),

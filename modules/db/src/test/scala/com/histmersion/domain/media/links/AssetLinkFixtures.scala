@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.links
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 
 import com.augustnagro.magnum.*
@@ -31,7 +31,7 @@ object AssetLinkFixtures:
       if !AssetLinkRepo.figureExists(Citekey.assume(in.citekey.value), AssetInfoRow.Name(in.assetName.value)) then
         Left(
           Api.Error(
-            Problem(s"No asset '${in.citekey}/${in.assetName}'"),
+            Problem.Unclassified(Legacy.Text(s"No asset '${in.citekey}/${in.assetName}'")),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
 import com.histmersion.upstreams.dating.CatalogDating
@@ -33,10 +33,10 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[plugin.Problem, CataloguePage] =
+  ): Either[Problem, CataloguePage] =
     classes.find((qid, _) => part.value == s"class:$qid") match
       case None =>
-        Left(plugin.Problem(s"'$part' is no class of the configured events.wikidata.classes"))
+        Left(Problem.Unclassified(Legacy.Text(s"'$part' is no class of the configured events.wikidata.classes")))
       case Some((qid, kind)) =>
         val q = WikidataCatalogue.sparql(
           qid,
@@ -44,13 +44,10 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
           CatalogDating.HistoricalYear(query.to.value.toLong),
           cfg.labelLanguages
         )
-        CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q)).left
-          .map(e => plugin.Problem(e.value))
+        CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q))
           .flatMap(j =>
             WikidataCatalogue
               .parse(j, CatalogueEvent.Kind(kind.value))
-              .left
-              .map(e => plugin.Problem(e.value))
           )
           .map(CataloguePage(_))
 
@@ -128,7 +125,7 @@ object WikidataCatalogue:
     */
   def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
     json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
-      case None       => Left(Problem("no results in the answer"))
+      case None       => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
       case Some(rows) =>
         val bs = rows.toList.map(_.hcursor)
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {

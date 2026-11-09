@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.config.*
@@ -61,14 +61,16 @@ object BackgroundJob:
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
   def busy(what: Work, current: Option[Work], code: Option[Api.Error.Code] = None): Api.Error =
     Api.Error(
-      Problem(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"),
+      Problem.Unclassified(
+        Legacy.Text(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`")
+      ),
       code
     )
 
   /** What a thrown exception tells a job's error line. Pure. */
   def describe(e: Throwable): Problem = e match
-    case _: InterruptedException => Problem("interrupted")
-    case _                       => Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+    case _: InterruptedException => Problem.Unclassified(Legacy.Text("interrupted"))
+    case _                       => Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
     * body ended by itself after a stop was asked ends as it ended). Pure.
@@ -158,7 +160,7 @@ object BackgroundJob:
         val (out, thrown) =
           try (body(job, report), None)
           catch
-            case s: JobStopped => (Outcome.failed(Problem("stopped")), Some(s.stop))
+            case s: JobStopped => (Outcome.failed(Problem.Unclassified(Legacy.Text("stopped"))), Some(s.stop))
             case e: Throwable  =>
               if !e.isInstanceOf[InterruptedException] then
                 scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
@@ -179,7 +181,7 @@ object BackgroundJob:
                     JobState.Running,
                     JobState.Failed,
                     o.summary.map(m => JobRow.Progress(m.value)),
-                    Some(Problem(e.value))
+                    Some(e)
                   )
                 )
           case Left(JobStop.Pause) =>
@@ -199,7 +201,7 @@ object BackgroundJob:
                 JobState.Running,
                 JobState.Cancelled,
                 Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Cancel, last.get).value)),
-                Some(Problem(JobControlRules.CancelledByPerson))
+                Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
               )
             )
       finally slot.free()
@@ -222,7 +224,7 @@ object BackgroundJob:
     if !slot.claim(Work("resuming")) then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
       stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(Problem(busy(what, slot.current, busyCode).message.value))
+      Left(busy(what, slot.current, busyCode).message)
     else
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
       Right(())

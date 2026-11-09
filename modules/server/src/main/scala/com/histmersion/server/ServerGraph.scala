@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.search.QueryAccess
@@ -91,18 +92,20 @@ final class ServerGraph private (
       case None      => Deps.NoReload().modify(_.generation).setTo(generation)
       case Some(src) =>
         val report = (try src.read()
-        catch case NonFatal(e) => Left(Problem(s"reading the config failed: ${e.getMessage}"))) match
+        catch
+          case NonFatal(e) => Left(Problem.Unclassified(Legacy.Text(s"reading the config failed: ${e.getMessage}")))
+        ) match
           case Left(e) =>
             ReloadReport(
               published = ReloadReport.Published(false),
               generation,
-              errors = List(ReloadReport.Errors(e.value)),
+              errors = List(ReloadReport.Errors(e.sentence)),
               file = file
             )
           case Right(next) =>
             val changed = ConfigReload.changed(running.loaded.merged, next.merged)
             val (applied, restart) = ConfigReload.split(changed)
-            val warnings = next.file.warnings.map(w => ReloadReport.Warnings(w.value))
+            val warnings = next.file.warnings.map(w => ReloadReport.Warnings(w.sentence))
             val base = ReloadReport(
               published = ReloadReport.Published(false),
               generation,
@@ -115,7 +118,7 @@ final class ServerGraph private (
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)
               AppConfig.fromMerged(eff).map(src.adjust) match
                 case Left(e) =>
-                  base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: $e")))
+                  base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: ${e.sentence}")))
                 case Right(app) =>
                   val hc = HotConfig(app, next.modify(_.config).setTo(app).modify(_.merged).setTo(eff))
                   graph.reload(
@@ -123,7 +126,7 @@ final class ServerGraph private (
                     applied.map(k => Hot.Graph.Def.Name(k.value)),
                     drain = math.max(0, app.config.drainSeconds.value).seconds
                   ) match
-                    case Left(e)  => base.modify(_.errors).setTo(List(ReloadReport.Errors(e.value)))
+                    case Left(e)  => base.modify(_.errors).setTo(List(ReloadReport.Errors(e.sentence)))
                     case Right(o) =>
                       base
                         .modify(_.published)
@@ -177,8 +180,6 @@ final class ServerGraph private (
               Right(true)
             case _ => Right(false)
       }
-      .left
-      .map(p => Problem(p.value))
 
   /** Close every component — the server's end. */
   def close(): Unit = graph.close()
@@ -215,9 +216,14 @@ object ServerGraph:
           ) { ctx =>
             val db = ctx.config.app.db
             for
-              _ <- prepare(ctx.config.app).left.map(e => Problem(e.value))
+              _ <- prepare(ctx.config.app)
               p = useInScope(Db.pool(db))(_.close())
-              _ <- Db.canConnect(p).left.map(e => Problem(s"cannot connect to ${redact(db.url.value)}: $e"))
+              _ <- Db
+                .canConnect(p)
+                .left
+                .map(e =>
+                  Problem.Unclassified(Legacy.Text(s"cannot connect to ${redact(db.url.value)}: ${e.sentence}"))
+                )
             yield p
           }
         mig <- graph.node[Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
@@ -231,7 +237,11 @@ object ServerGraph:
             Right(v)
           catch
             case NonFatal(e) =>
-              Left(Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}")
+                )
+              )
         }
         q <- graph.node[ReadOnlyPool](
           Hot.Graph.Def.Name(QueryPool),
@@ -252,7 +262,7 @@ object ServerGraph:
         }
       yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())
-    built.left.map(p => Problem(p.value))
+    built
 
   /** The read-only role (migration V011) given its password and statement timeout from config here (a migration must
     * not carry a secret; see `reference.conf`), and its own small pool.
@@ -266,7 +276,7 @@ object ServerGraph:
     QueryAccess
       .provision(app, cfg.query)
       .left
-      .foreach(m => scribe.error(s"could not provision the read-only role '${cfg.query.user}': $m"))
+      .foreach(m => scribe.error(s"could not provision the read-only role '${cfg.query.user}': ${m.sentence}"))
     val q = useInScope(QueryAccess.pool(cfg.db, cfg.query))(_.close())
     Db.canConnect(q) match
       case Right(_) =>
@@ -274,7 +284,7 @@ object ServerGraph:
         ReadOnlyPool(q, Some(q))
       case Left(m) =>
         scribe.error(
-          s"the read-only role '${cfg.query.user}' cannot connect ($m) — /api/query will " +
+          s"the read-only role '${cfg.query.user}' cannot connect (${m.sentence}) — /api/query will " +
             "run as the APPLICATION role, protected only by the statement check and the read-only " +
             "transaction. Grant the application role CREATEROLE, or create histmersion_query by hand."
         )

@@ -1,7 +1,8 @@
 package com.histmersion
 package server.views
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
 
@@ -158,7 +159,12 @@ object EventCardTools:
             case Some(raw) =>
               Event.Id
                 .option(raw)
-                .toRight(Api.Error(Problem(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                .toRight(
+                  Api.Error(
+                    Problem.Unclassified(Legacy.Text(s"No event '$raw'")),
+                    Some(Api.Error.Code(Write.CodeNotFound))
+                  )
+                )
                 .flatMap(page.get) match
                 case Right(d) => ToolResult.text(d.markdown.value)
                 case Left(e)  => McpOut.error(e)
@@ -192,7 +198,7 @@ object EventCardTools:
         .input[PatchEventInput]
         .handle { in =>
           EventGeometry.of(in.geometry, in.lat, in.lon) match
-            case Left(msg)   => McpOut.text(McpOut.refusal(msg.value))
+            case Left(msg)   => McpOut.text(McpOut.refusal(msg.sentence))
             case Right(geom) =>
               val p = EventPatch(
                 label = in.label,
@@ -209,7 +215,10 @@ object EventCardTools:
               Event.Id
                 .option(in.id.value)
                 .toRight(
-                  Api.Error(Problem(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+                  Api.Error(
+                    Problem.Unclassified(Legacy.Text(s"No event '${in.id.value}'")),
+                    Some(Api.Error.Code(Write.CodeNotFound))
+                  )
                 )
                 .flatMap(page.patch(Caller.Local, _, p)) match
                 case Right(d) =>

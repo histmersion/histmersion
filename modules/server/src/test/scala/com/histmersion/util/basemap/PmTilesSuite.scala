@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import io.circe.Json
@@ -138,7 +139,7 @@ class PmTilesSuite extends munit.FunSuite:
     )
     tiles.sortBy[Long](_._1.value).foreach((id, b) => w.add(id, b))
     w.finish(template(PmTiles.Zoom(3)), Json.obj("name" -> Json.fromString("test")))
-    val r = BasemapFixtures.open(out).fold(e => fail(e.value), identity)
+    val r = BasemapFixtures.open(out).fold(e => fail(e.sentence), identity)
     try
       assertEquals(r.header.maxZoom, 3)
       assertEquals(r.header.addressedTiles, 85L)
@@ -167,7 +168,7 @@ class PmTilesSuite extends munit.FunSuite:
       w.add(id, PmTiles.TileBytes(java.nio.ByteBuffer.allocate(8 + rnd.nextInt(200)).putLong(id.value).array()))
     )
     w.finish(template(PmTiles.Zoom(9)), Json.obj())
-    val r = BasemapFixtures.open(out).fold(e => fail(e.value), identity)
+    val r = BasemapFixtures.open(out).fold(e => fail(e.sentence), identity)
     try
       assert(r.header.leafLength.value > 0, "leaves were needed")
       List(ids(0), ids(1), ids(20000), ids.last).foreach { id =>
@@ -181,10 +182,10 @@ class PmTilesSuite extends munit.FunSuite:
   test("a read interrupted mid-way (a cancelled tile request) does not break the archive for the other requests"):
     val dir = java.nio.file.Files.createTempDirectory("pmtiles-int")
     val p = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = PmTiles.Zoom(3))
-    val f = BasemapFixtures.open(p).fold(e => fail(e.value), identity)
+    val f = BasemapFixtures.open(p).fold(e => fail(e.sentence), identity)
     try
       val before =
-        f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).fold(e => fail(e.value), identity).get
+        f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).fold(e => fail(e.sentence), identity).get
       // an interrupted thread reading: the JDK closes the shared channel
       val t = Thread.ofVirtual().unstarted { () =>
         Thread.currentThread().interrupt();

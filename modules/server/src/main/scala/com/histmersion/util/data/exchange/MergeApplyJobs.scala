@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
 import com.histmersion.api.exchange.{Bundle, MergePlan}
@@ -30,9 +30,11 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
       if runs.running then
         Left(
           Api.Error(
-            Problem(
-              "a merge apply is still running — follow it with " +
-                "`GET /api/merge/apply/{job}` and apply again when it is done"
+            Problem.Unclassified(
+              Legacy.Text(
+                "a merge apply is still running — follow it with " +
+                  "`GET /api/merge/apply/{job}` and apply again when it is done"
+              )
             ),
             Some(Api.Error.Code(Backup.CodeMaintenance))
           )
@@ -46,7 +48,9 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
             .Try(run())
             .toEither
             .left
-            .map(e => Problem(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            .map(e =>
+              Problem.Unclassified(Legacy.Text(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            )
             .flatten
           try runs.finish(id, outcome)
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)

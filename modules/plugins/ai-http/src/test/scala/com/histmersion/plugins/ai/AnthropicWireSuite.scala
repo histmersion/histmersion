@@ -93,7 +93,10 @@ class AnthropicWireSuite extends munit.FunSuite:
         )
       )
     )
-    assert(AnthropicRequest.of(r).left.exists(_.value.startsWith("DecodingFailure")), AnthropicRequest.of(r).toString)
+    assert(
+      AnthropicRequest.of(r).left.exists(_.legacyText.startsWith("DecodingFailure")),
+      AnthropicRequest.of(r).toString
+    )
 
   private val ok =
     """{"id":"m","type":"message","role":"assistant","model":"claude-y","content":[{"type":"thinking","thinking":"…"},""" +
@@ -115,22 +118,23 @@ class AnthropicWireSuite extends munit.FunSuite:
 
   test("a failure: an error status's body as it came; an error in a success answer by its message; else why"):
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(529), AnthropicAnswer.Body("""{"type":"error"}""")).turn,
+      AnthropicAnswer(AnthropicAnswer.Status(529), AnthropicAnswer.Body("""{"type":"error"}""")).turn.left
+        .map(_.legacyText),
       Left("""{"type":"error"}""")
     )
     assertEquals(
       AnthropicAnswer(
         AnthropicAnswer.Status(200),
         AnthropicAnswer.Body("""{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""")
-      ).turn,
+      ).turn.left.map(_.legacyText),
       Left("Overloaded")
     )
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"""")).turn,
+      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"""")).turn.left.map(_.legacyText),
       Left("exhausted input")
     )
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"}""")).turn,
+      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"}""")).turn.left.map(_.legacyText),
       Left("DecodingFailure at .error: Missing required field")
     )
     // a content block of an unknown type is not a message
@@ -138,7 +142,7 @@ class AnthropicWireSuite extends munit.FunSuite:
       AnthropicAnswer(
         AnthropicAnswer.Status(200),
         AnthropicAnswer.Body(ok.replace("thinking\",\"thinking", "unknown\",\"thinking"))
-      ).turn,
+      ).turn.left.map(_.legacyText),
       Left("DecodingFailure at .error: Missing required field")
     )
 

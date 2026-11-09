@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.Problem
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.{ByteCount, ServiceState, Wording}
 import com.raquo.laminar.api.L.*
 
@@ -175,7 +175,7 @@ object AboutView:
             Some(s"v${p.version}"),
             Option.when(p.provides.nonEmpty)(p.provides.mkString(", ")),
             Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
-            p.error,
+            p.error.map(_.sentence),
             Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))
           ).flatten.mkString(" · ")
           Row(

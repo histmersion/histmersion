@@ -1,7 +1,7 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.web.{ApiClient, ApiFailure}
 import com.raquo.laminar.api.L.*
@@ -51,8 +51,9 @@ object SettingsStore:
   def clearResult(): Unit = result.set(None)
 
   def message(e: Throwable): Problem = e match
-    case f: ApiFailure => Problem(f.getMessage)
-    case other         => Problem(Option(other.getMessage).getOrElse("the server could not be reached"))
+    case f: ApiFailure => Problem.Unclassified(Legacy.Text(f.getMessage))
+    case other         =>
+      Problem.Unclassified(Legacy.Text(Option(other.getMessage).getOrElse("the server could not be reached")))
 
   /** A field of the page read now. */
   def field(key: ConfigEdit.Field.Key): Signal[Option[ConfigEdit.Field]] =
@@ -66,7 +67,7 @@ object SettingsStore:
       cls := "settings-notice",
       role := "status",
       child.maybe <-- result.signal.map(_.map {
-        case Left(why) => ErrorLine.text(Problem(why.value))
+        case Left(why) => ErrorLine.text(why)
         case Right(w)  => written(w)
       })
     )
@@ -85,7 +86,9 @@ object SettingsStore:
       ),
       Option.when(w.restart.nonEmpty)(restartLine(w)),
       w.warnings.map(x => p(cls := "settings-warning", x.value)),
-      reloadErrors.map(e => ErrorLine.text(Problem(s"The server did not take the change on: $e"))),
+      reloadErrors.map(e =>
+        ErrorLine.text(Problem.Unclassified(Legacy.Text(s"The server did not take the change on: $e")))
+      ),
       button(typ := "button", cls := "btn btn--ghost btn--sm", "Dismiss", onClick --> (_ => clearResult()))
     )
 
@@ -114,7 +117,7 @@ object SettingsStore:
             )
           ),
           child.maybe <-- restarting.signal.map(_.map {
-            case Left(why) => ErrorLine.text(Problem(why.value))
+            case Left(why) => ErrorLine.text(why)
             case Right(m)  => span(cls := "muted", m)
           })
         )

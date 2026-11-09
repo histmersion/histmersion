@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.ingest
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The files the server itself can see, as the MCP `ingest` tool names one (a path a MODEL chose): confined to

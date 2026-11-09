@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
@@ -117,9 +118,9 @@ object MergeMarkdown:
       case MergeJobState.Running =>
         (s"**Applying** plan ${j.planHash} — job `${j.job}`, ${(j.elapsedMs).value / 1000} s so far (a backup is taken first).")
       case MergeJobState.Failed =>
-        (s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}")
+        (s"**The merge apply failed** (job `${j.job}`): ${j.error.map(_.sentence).getOrElse("no reason given")}")
       case MergeJobState.Interrupted =>
-        (s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}")
+        (s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText).sentence}")
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
   def merges(ms: List[MergeInfo]): String =
@@ -192,7 +193,7 @@ object MergeMarkdown:
     val lines = List(
       i.left.map(s => s"here `${s.label}`" + s.lines.map(l => s" · $l").mkString),
       i.right.map(s => s"bundle `${s.label}`" + s.lines.map(l => s" · $l").mkString),
-      Option.when(i.why.nonEmpty)("why " + i.why.mkString(" · ")),
+      Option.when(i.why.nonEmpty)("why " + i.why.map(_.sentence).mkString(" · ")),
       Option.when(i.options.nonEmpty)(
         "decide " + i.options.map(k => s"`${MergeDecision.Kind.wireOf(k)}${argHint(i, k)}`").mkString(" | ") +
           i.suggested.filter(_ => i.decision.isEmpty).fold("")(s => s" (suggested `${s.wire}`)")

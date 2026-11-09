@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
@@ -60,7 +60,8 @@ object TerrariumPng:
   /** A Terrarium PNG's elevations (metres, row by row) and its width: 8-bit RGB or RGBA, not interlaced. */
   def decode(file: Png.PngBytes): Either[Problem, (Array[Float], TileSize)] =
     val png: Array[Byte] = file.value
-    if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then Left(Problem("not a PNG"))
+    if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then
+      Left(Problem.Unclassified(Legacy.Text("not a PNG")))
     else
       val b = ByteBuffer.wrap(png)
       val width = b.getInt(16); val height = b.getInt(20)
@@ -70,7 +71,7 @@ object TerrariumPng:
         case RgbaColourType => 4
         case _              => 0
       if depth != 8 || channels == 0 || interlace != 0 then
-        Left(Problem(s"a PNG of colour type $colour, depth $depth, interlace $interlace"))
+        Left(Problem.Unclassified(Legacy.Text(s"a PNG of colour type $colour, depth $depth, interlace $interlace")))
       else
         val idat = ByteArrayOutputStream()
         var at = 8 // the next chunk
@@ -100,7 +101,7 @@ object TerrariumPng:
           def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
           def up(i: Int) = if y > 0 then out(dst - stride + i) & 0xff else 0
           def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
-          if f < 0 || f > 4 then Left(Problem(s"PNG filter $f"))
+          if f < 0 || f > 4 then Left(Problem.Unclassified(Legacy.Text(s"PNG filter $f")))
           else
             for i <- 0 until stride do
               val x = raw(src + i) & 0xff
@@ -144,8 +145,12 @@ object TerrariumPng:
       val out = new Array[Byte](expected)
       var n = 0 // bytes inflated so far
       while n < expected && !inf.finished() && !inf.needsInput() do n += inf.inflate(out, n, expected - n)
-      Either.cond(n == expected, out, Problem(s"the PNG's image data holds $n bytes, not $expected"))
+      Either.cond(
+        n == expected,
+        out,
+        Problem.Unclassified(Legacy.Text(s"the PNG's image data holds $n bytes, not $expected"))
+      )
     catch
       case e: java.util.zip.DataFormatException =>
-        Left(Problem(s"the PNG's image data does not inflate: ${e.getMessage}"))
+        Left(Problem.Unclassified(Legacy.Text(s"the PNG's image data does not inflate: ${e.getMessage}")))
     finally inf.end()

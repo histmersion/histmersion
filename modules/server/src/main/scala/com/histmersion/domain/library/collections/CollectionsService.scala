@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -179,10 +180,10 @@ object CollectionsService:
       archiveRows: Limit
   ) extends CollectionsService:
 
-    private def fail(message: String): Api.Error = Api.Error(Problem(message))
+    private def fail(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     private def usage(message: String): Api.Error =
-      Api.Error(Problem(message), Some(Api.Error.Code(CollectionsApi.Usage)))
-    private def failed(problem: plugin.Problem): Api.Error = fail(problem.value)
+      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(CollectionsApi.Usage)))
+    private def failed(problem: Problem): Api.Error = fail(problem.sentence)
 
     private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
 
@@ -191,7 +192,7 @@ object CollectionsService:
       com.histmersion.domain.library.Citekey
         .parse(raw.value)
         .left
-        .map(p => Write.invalid(Problem(p.value)))
+        .map(p => Write.invalid(p))
 
     private def lookup(name: CollectionName): Either[Api.Error, HostCollection] =
       registry()
@@ -199,8 +200,9 @@ object CollectionsService:
         .map(HostCollection(HostCollection.Name(name.value), _))
         .toRight(
           Api.Error(
-            Problem(
-              s"no source collection '$name' is registered on this server — its plugin is off or not installed"
+            Problem.Unclassified(
+              Legacy
+                .Text(s"no source collection '$name' is registered on this server — its plugin is off or not installed")
             ),
             Some(Api.Error.Code(CollectionsApi.NoCollection))
           )
@@ -221,7 +223,7 @@ object CollectionsService:
           .filter(c.can)
           .map(k => CollectionInfo.Capabilities(k.toString.toLowerCase(java.util.Locale.ROOT))),
         CollectionInfo.Reachable(reach.isRight),
-        reach.left.toOption.map(p => Problem(p.value))
+        reach.left.toOption
       )
 
     def collections(): List[CollectionInfo] =
@@ -297,7 +299,7 @@ object CollectionsService:
           library
             .queueItem(CollectionLibrary.QueueItemId(i.value))
             .flatMap(found =>
-              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(p => usage(p.value)).map(_ => ())
+              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(p => usage(p.sentence)).map(_ => ())
             )
         )
         item <- c
@@ -307,7 +309,7 @@ object CollectionsService:
           .flatMap(_.toRight(fail(s"no Calibre book with id ${req.id}")))
         _ <- c.admits(item).left.map(failed)
         file <- c.file(item, req.format.map(f => SourceCollection.FileFormat(f.value))).left.map(failed)
-        ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.value)))(checked)
+        ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.sentence)))(checked)
         existing <- library.pushMeta(ck) match
           case Right(m)                => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
           case Left(e) if e.isNotFound => Right(None)
@@ -315,7 +317,7 @@ object CollectionsService:
         target <- ImportTarget
           .of(ck, ImportTarget.Id(req.id.value), ImportTarget.OfExplicit(req.citekey.isDefined), existing)
           .left
-          .map(p => usage(p.value))
+          .map(p => usage(p.sentence))
         record <- upsert(ck, item, target)
       yield
         val cover = Option.when(req.cover.value)(coverOf(c, ck, item))
@@ -332,7 +334,7 @@ object CollectionsService:
           record,
           cover,
           conversion.flatMap(_.toOption),
-          conversion.flatMap(_.left.toOption.map(e => Problem(e.message.value))),
+          conversion.flatMap(_.left.toOption.map(e => e.message)),
           conversion.flatMap(_.left.toOption.flatMap(_.code).map(code => CollectionImported.JobErrorCode(code.value)))
         )
 
@@ -401,7 +403,8 @@ object CollectionsService:
         item: CollectionItem
     ): CollectionCover =
       c.cover(item) match
-        case Left(why) => CollectionCover(CollectionCover.Line(s"$ck: $why"), warning = CollectionCover.Warning(true))
+        case Left(why) =>
+          CollectionCover(CollectionCover.Line(s"$ck: ${why.sentence}"), warning = CollectionCover.Warning(true))
         case Right(Some(fc)) =>
           library.putCover(
             SourceCoverParams(
@@ -414,7 +417,10 @@ object CollectionsService:
           ) match
             case Right(_) => CollectionCover(CollectionCover.Line("Cover: from the Calibre library"))
             case Left(e)  =>
-              CollectionCover(CollectionCover.Line(s"$ck: ${e.message}"), warning = CollectionCover.Warning(true))
+              CollectionCover(
+                CollectionCover.Line(s"$ck: ${e.message.sentence}"),
+                warning = CollectionCover.Warning(true)
+              )
         case Right(None) =>
           CoverChoice.choose(
             None,
@@ -497,7 +503,10 @@ object CollectionsService:
         o <- library
           .original(ck)
           .left
-          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Problem(e.message.value + hint)))
+          .map(e =>
+            if hint.isEmpty then e
+            else e.modify(_.message).setTo(Problem.Unclassified(Legacy.Text(e.message.sentence + hint)))
+          )
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(o.disposition.value))
           .toRight(fail(s"the server did not say what format '$ck' is"))
@@ -595,11 +604,11 @@ object CollectionsService:
         case CollectionUpdateOutcome.Change(cs)         => ("would-change", changes(cs), None)
         case CollectionUpdateOutcome.Applied(cs)        => ("updated", changes(cs), None)
         case CollectionUpdateOutcome.Failed(cs, reason) =>
-          ("failed", changes(cs), Some(Problem(reason.value)))
+          ("failed", changes(cs), Some(reason))
         case CollectionUpdateOutcome.UpToDate        => ("up-to-date", Nil, None)
         case CollectionUpdateOutcome.Shared          => ("shared", Nil, None)
         case CollectionUpdateOutcome.Missing         => ("missing", Nil, None)
-        case CollectionUpdateOutcome.Refused(reason) => ("refused", Nil, Some(Problem(reason.value)))
+        case CollectionUpdateOutcome.Refused(reason) => ("refused", Nil, Some(reason))
       CollectionUpdateRow(
         CollectionUpdateRow.Id(e.id.value),
         e.keys.map(k => CollectionUpdateRow.Citekeys(k.value)),
@@ -685,7 +694,7 @@ object CollectionsService:
               checked(r.citekey)
                 .flatMap(pushOne(c, _))
                 .fold(
-                  e => CollectionSync.Push(r.citekey, None, Some(Problem(e.message.value))),
+                  e => CollectionSync.Push(r.citekey, None, Some(e.message)),
                   (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
                 )
             }

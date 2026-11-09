@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.assets
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.Write
@@ -167,7 +167,7 @@ private[assets] object AssetRepo:
     if !exists(citekey, name) then
       Left(
         Api.Error(
-          api.Problem(s"No asset '${citekey.value}/${name.value}'"),
+          Problem.Unclassified(Legacy.Text(s"No asset '${citekey.value}/${name.value}'")),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )

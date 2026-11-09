@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -24,25 +24,24 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting("agents.providers.anthropic.base-url"))
 
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
-    base.left
-      .map(p => Problem(p.value))
+    base
       .flatMap(_ =>
         Either.cond(
           settings.apiKey.value.nonEmpty,
           (),
-          Problem("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
+          Problem.Unclassified(Legacy.Text("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment"))
         )
       )
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val schema = request.answerSchemaRendered.orElse(request.answerSchema)
     val sent: Either[String, AiTurn] = for
-      url <- base.left.map(_.value).map(_.endpoint("v1", "messages"))
-      body <- AnthropicRequest.of(request).left.map(_.value)
+      url <- base.left.map(_.legacyText).map(_.endpoint("v1", "messages"))
+      body <- AnthropicRequest.of(request).left.map(_.legacyText)
       _ <- Either.cond(
         schema.isEmpty || AnthropicProvider.structuredOutput(request.model),
         (),
-        AnthropicProvider.noStructuredOutput(request.model).value
+        AnthropicProvider.noStructuredOutput(request.model).legacyText
       )
       answer <- http
         .post(
@@ -55,14 +54,14 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         .map(e =>
           SendFailure(e)
             .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
-            .value
+            .legacyText
         )
       turn <- AnthropicAnswer(
         AnthropicAnswer.Status(answer.status.value),
         AnthropicAnswer.Body(answer.body.value)
-      ).turn.left.map(why => s"RuntimeException: Claude API error: ${why.value}")
+      ).turn.left.map(why => s"RuntimeException: Claude API error: ${why.legacyText}")
     yield turn
-    sent.left.map(m => AiFailure.Error(Problem(m)))
+    sent.left.map(m => AiFailure.Error(Problem.Unclassified(Legacy.Text(m))))
 
 object AnthropicProvider:
   type WithoutStructuredOutput = WithoutStructuredOutputValue
@@ -95,7 +94,9 @@ object AnthropicProvider:
     (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
 
   def noStructuredOutput(model: AiTurn.Request.Model): Problem =
-    Problem(
-      s"UnsupportedModelForStructuredOutputException: Model '${model.value}' does not support structured output. " +
-        "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805)."
+    Problem.Unclassified(
+      Legacy.Text(
+        s"UnsupportedModelForStructuredOutputException: Model '${model.value}' does not support structured output. " +
+          "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805)."
+      )
     )

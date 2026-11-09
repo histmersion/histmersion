@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.places.ExternalIds
@@ -100,19 +100,20 @@ object MediaMatch:
   ): Either[Problem, Basis] =
     val named =
       rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, k)))
-    if named.isEmpty then Left(Problem("no place on the record"))
+    if named.isEmpty then Left(Problem.Unclassified(Legacy.Text("no place on the record")))
     else if specific.value then
       named.iterator.map((f, v, k) => (f, v, resolve(k))).find(_._3.nonEmpty) match
-        case None                                         => Left(Problem("its place is not on the map"))
+        case None => Left(Problem.Unclassified(Legacy.Text("its place is not on the map")))
         case Some((f, v, ids)) if ids == Set(target.id)   => Right(Basis(s"$f = $v"))
-        case Some((_, _, ids)) if ids.contains(target.id) => Left(Problem("its place name is ambiguous on the map"))
-        case Some(_)                                      => Left(Problem("names another place on the map"))
+        case Some((_, _, ids)) if ids.contains(target.id) =>
+          Left(Problem.Unclassified(Legacy.Text("its place name is ambiguous on the map")))
+        case Some(_) => Left(Problem.Unclassified(Legacy.Text("names another place on the map")))
     else
       named.find((_, _, k) => target.keys(k)) match
-        case None            => Left(Problem("its place is not this one"))
+        case None            => Left(Problem.Unclassified(Legacy.Text("its place is not this one")))
         case Some((f, v, k)) =>
           if resolve(k) == Set(target.id) then Right(Basis(s"$f = $v"))
-          else Left(Problem("its place name is ambiguous on the map"))
+          else Left(Problem.Unclassified(Legacy.Text("its place name is ambiguous on the map")))
 
   /** Pure: the museum rule — geography, then the dates ([[dated]]); the basis names both. */
   def museum(
@@ -130,16 +131,17 @@ object MediaMatch:
     */
   def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[Year]): Either[Problem, Basis] =
     (rec.period, target.period) match
-      case (None, _)                                     => Left(Problem("no dates on the record"))
-      case (Some(r), _) if latest.exists(y => r.end > y) => Left(Problem(s"made after ${year(latest.get)}"))
-      case (_, None)                                     => Left(Problem("the place has no period to compare"))
-      case (Some(r), Some(p))                            =>
+      case (None, _) => Left(Problem.Unclassified(Legacy.Text("no dates on the record")))
+      case (Some(r), _) if latest.exists(y => r.end > y) =>
+        Left(Problem.Unclassified(Legacy.Text(s"made after ${year(latest.get)}")))
+      case (_, None)          => Left(Problem.Unclassified(Legacy.Text("the place has no period to compare")))
+      case (Some(r), Some(p)) =>
         val window = latest
           .filter(y => y >= p.start && y < p.end)
           .flatMap(y => DeepTime.span(DeepTime.SignedYear(p.start.value.toLong), DeepTime.SignedYear(y.value.toLong)))
           .getOrElse(p)
         if overlaps(r, window) then Right(Basis(s"$basis; ${years(r)} within ${years(window)}"))
-        else Left(Problem("its dates do not overlap the place's"))
+        else Left(Problem.Unclassified(Legacy.Text("its dates do not overlap the place's")))
 
   /** What a gazetteer id names on the map: the ids of the map places carrying it, equivalents of one site counted once
     * — the caller's lookup.
@@ -175,21 +177,24 @@ object MediaMatch:
       .find(_._3.nonEmpty)
     val geo = finer match
       case Some((f, v, ids)) if ids == Set(target.id)    => Right(Basis(s"$f = $v"))
-      case Some((f, _, ids)) if !ids.contains(target.id) => Left(Problem(s"its $f names another place on the map"))
-      case Some((f, _, _)) => idAlone.toRight(Problem(s"its $f name is ambiguous on the map"))
+      case Some((f, _, ids)) if !ids.contains(target.id) =>
+        Left(Problem.Unclassified(Legacy.Text(s"its $f names another place on the map")))
+      case Some((f, _, _)) => idAlone.toRight(Problem.Unclassified(Legacy.Text(s"its $f name is ambiguous on the map")))
       case None            =>
         idAlone match
           case Some(basis)                                   => Right(basis)
-          case None if byId.exists(_._2.contains(target.id)) => Left(Problem("its place id is ambiguous on the map"))
-          case None if byId.nonEmpty => Left(Problem("its place id names another place on the map"))
-          case None                  => geography(rec, target, resolve, specific = GeographySpecific(true))
+          case None if byId.exists(_._2.contains(target.id)) =>
+            Left(Problem.Unclassified(Legacy.Text("its place id is ambiguous on the map")))
+          case None if byId.nonEmpty =>
+            Left(Problem.Unclassified(Legacy.Text("its place id names another place on the map")))
+          case None => geography(rec, target, resolve, specific = GeographySpecific(true))
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Year): Either[Problem, Basis] =
     rec.period match
-      case None                       => Left(Problem("no date on the map"))
-      case Some(p) if p.end > maxYear => Left(Problem(s"made after $maxYear"))
+      case None                       => Left(Problem.Unclassified(Legacy.Text("no date on the map")))
+      case Some(p) if p.end > maxYear => Left(Problem.Unclassified(Legacy.Text(s"made after $maxYear")))
       case Some(p)                    =>
         geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo =>
           Basis(s"$geo; map of ${years(p)}")

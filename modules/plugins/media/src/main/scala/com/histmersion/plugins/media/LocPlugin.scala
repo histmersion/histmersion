@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `media-loc`: `histmersion media import loc` — the Library of Congress's public-domain maps. */
 import com.histmersion.plugin.Plugin

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -67,7 +68,7 @@ object BasemapExtractTool:
   private def workOf(out: Path): (Store, Store.Key) = at(out.resolveSibling(out.getFileName.toString + ".work"))
 
   /** The failure of a step, as the tool's own error. */
-  private def orDie[A](r: Either[Problem, A]): A = r.fold(p => sys.error(p.value), identity)
+  private def orDie[A](r: Either[Problem, A]): A = r.fold(p => sys.error(p.sentence), identity)
 
   /** The politeness the configuration asks for. */
   private def paceOf(cfg: BasemapConfig): BasemapFetch.Pace = BasemapFetch.Pace(
@@ -201,7 +202,8 @@ object BasemapExtractTool:
       )
     )
     orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
-    val drop = Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.value), identity)
+    val drop =
+      Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.sentence), identity)
     val rules = if keepAll then Map.empty[Mvt.LayerName, Mvt.Rule] else BasemapService.mvtRules(drop)
     val meta = BasemapFetch.localMetadata(
       plan,
@@ -233,7 +235,7 @@ object BasemapExtractTool:
       BasemapService.mvtRules(
         Basemap
           .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
-          .fold(p => sys.error(p.value), identity)
+          .fold(p => sys.error(p.sentence), identity)
       )
     val h = f.header
     val b = boxOf(h)

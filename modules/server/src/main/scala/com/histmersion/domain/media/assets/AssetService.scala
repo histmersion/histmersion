@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.assets
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.DeepTime
@@ -195,7 +195,10 @@ object AssetService:
       db.transact(AssetRepo.patch(citekey, name, p))
         .flatMap(_ =>
           detail(citekey, name).toRight(
-            Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
+            Api.Error(
+              Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
           )
         )
     def sourceFigures(citekey: Citekey): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
@@ -406,7 +409,10 @@ object AssetService:
       }
 
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
-      def missing = Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
+      def missing = Api.Error(
+        Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
+        Some(Api.Error.Code(Write.CodeNotFound))
+      )
       named(citekey, name) match
         case None    => Left(missing)
         case Some(a) =>

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.approvals.ApprovalChecks
@@ -76,8 +77,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         )
       case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
-          case Some(w) if w.written.value => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"compiled (${w.why})"))
-          case Some(w)                    =>
+          case Some(w) if w.written.value =>
+            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"compiled (${w.why.sentence})"))
+          case Some(w) =>
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
             c.approvalsOf(run, Approval.Kind.ArticlePublish)
               .lastOption
@@ -89,7 +91,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                       a.note.fold("")(_.withoutAutopilotMark.value).take(300) + ")"
                   )
                 )
-              case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why}"), None)
+              case None =>
+                StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why.sentence}"), None)
           case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: nothing compiled — $progress"), None)
       case PlanGoalItem =>
         // a blocking approval: the run ends only once its plan was decided
@@ -133,7 +136,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         c.chainReview(
           review,
           Slug.assume(item.target.value),
-          domain.Problem(s"compiled by ${m.id}"),
+          Problem.Unclassified(Legacy.Text(s"compiled by ${m.id}")),
           out
         )
         c.event(
@@ -166,7 +169,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         com.histmersion.domain.automation.Goal.Slug
           .option(g)
-          .toRight(Api.Error(Problem(s"No goal '$g'")))
+          .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
           .flatMap(site.goal(_))
           .map(_.slug)
           .flatMap(s =>
@@ -174,15 +177,21 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m.goal.forall(_ == s),
               ManagerContext.ItemTarget(s.value),
               Api.Error(
-                Problem(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s")
+                Problem.Unclassified(
+                  Legacy.Text(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s")
+                )
               )
             )
           )
       case ArticleCompile =>
         Left(
-          Api.Error(Problem(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+          Api.Error(
+            Problem.Unclassified(
+              Legacy.Text(s"'$ArticleCompile' items come from an approved article plan (propose-articles)")
+            )
+          )
         )
-      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
 
   /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
     * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the
@@ -201,7 +210,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       a.approvalKind match
         case Some(ApprovalKind.ArticlePlan) =>
           a.articles match
-            case None       => Verdict.Leave(domain.Problem("the approval carries no readable plan"))
+            case None       => Verdict.Leave(Problem.Unclassified(Legacy.Text("the approval carries no readable plan")))
             case Some(plan) =>
               val goal = a.subject.map(_.value).getOrElse(plan.goal.value)
               val min =
@@ -258,9 +267,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 ),
                 AutopilotPolicy.Cap(c.publishCap.value)
               )
-            case (None, _) => Verdict.Leave(domain.Problem("the approval carries no readable draft"))
-            case (_, None) => Verdict.Leave(domain.Problem("the run that drafted it is gone"))
-        case _ => Verdict.Leave(domain.Problem("not a kind the autopilot decides"))
+            case (None, _) => Verdict.Leave(Problem.Unclassified(Legacy.Text("the approval carries no readable draft")))
+            case (_, None) => Verdict.Leave(Problem.Unclassified(Legacy.Text("the run that drafted it is gone")))
+        case _ => Verdict.Leave(Problem.Unclassified(Legacy.Text("not a kind the autopilot decides")))
     }
 
   def dispatch(

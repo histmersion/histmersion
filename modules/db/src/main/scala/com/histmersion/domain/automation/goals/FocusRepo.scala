@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.automation.goals
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
@@ -162,7 +165,7 @@ object FocusRepo:
           WHERE status IN ('stopped', 'failed')"""
       .query[(String, String)]
       .run()
-      .map((goal, why) => Goal.Slug.assume(goal) -> Problem(why))
+      .map((goal, why) => Goal.Slug.assume(goal) -> Problem.Unclassified(Legacy.Text(why)))
       .toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
@@ -211,15 +214,15 @@ object FocusRepo:
   def joined(slug: Goal.Slug, why: Problem, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
-      sql"""INSERT INTO goal_focus (slug, active, since, why, updated_at) VALUES ($slug, true, $t::timestamptz, $why, now())
-            ON CONFLICT (slug) DO UPDATE SET active = true, since = $t::timestamptz, why = $why, updated_at = now()""".update
+      sql"""INSERT INTO goal_focus (slug, active, since, why, updated_at) VALUES ($slug, true, $t::timestamptz, ${why.sentence}, now())
+            ON CONFLICT (slug) DO UPDATE SET active = true, since = $t::timestamptz, why = ${why.sentence}, updated_at = now()""".update
         .run()
 
   /** The goal left the active set now, `why`. */
   def left(slug: Goal.Slug, why: Problem, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
-      sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
+      sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = ${why.sentence}, updated_at = now()
             WHERE slug = $slug""".update.run()
 
   /** A person's pin. False = no such goal. */
@@ -235,8 +238,10 @@ object FocusRepo:
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
   def clearActive(why: Problem, now: java.time.Instant)(using DbCon): RowCount =
     val t = now.toString
-    RowCount(sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
-          WHERE active""".update.run())
+    RowCount(
+      sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = ${why.sentence}, updated_at = now()
+          WHERE active""".update.run()
+    )
 
   /** A person's cap (None = the config's). */
   def maxOverride(using DbCon): Option[GoalFocus.Settings.Max] =

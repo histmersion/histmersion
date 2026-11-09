@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
 
@@ -27,7 +27,11 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
   override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
   def search(place: MediaPlace, http: Plugin.Http) =
-    Left(Plugin.Http.Failure.Transport(Problem("the Wikidata pictures are found for a batch of targets at once")))
+    Left(
+      Plugin.Http.Failure.Transport(
+        Problem.Unclassified(Legacy.Text("the Wikidata pictures are found for a batch of targets at once"))
+      )
+    )
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
   final private case class Asked(
@@ -101,9 +105,9 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       asked = targets.map(_.target),
       unanswered = targets.filter(t => unanswered(t.qid)).map(_.target).toSet,
       read = MediaFound.Read(items.size),
-      failed = answers.collect { case (ids, Left(e)) => MediaFound.Failed(s"Wikidata ${ids.head}…: $e") } ++ judged.map(
-        j => MediaFound.Failed(j.value)
-      ),
+      failed = answers.collect { case (ids, Left(e)) =>
+        MediaFound.Failed(s"Wikidata ${ids.head}…: ${e.legacyText}")
+      } ++ judged.map(j => MediaFound.Failed(j.legacyText)),
       categories = targets
         .filter(_.target.kind == MediaTarget.Places)
         .flatMap(t =>

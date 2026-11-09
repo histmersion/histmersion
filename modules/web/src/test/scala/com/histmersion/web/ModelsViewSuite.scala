@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -102,7 +102,7 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Pipeline("enrich-source"),
       Agents.RunInfo.Target("a2020_b"),
       Agents.RunInfo.Status("paused"),
-      error = Some(Problem("allowance: all models …")),
+      error = Some(Problem.Unclassified(Legacy.Text("allowance: all models …"))),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z")),
       pausedFor = Some(Agents.PauseReason.Allowance)
     )
@@ -141,7 +141,7 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Pipeline("review-article"),
       Agents.RunInfo.Target("x"),
       Agents.RunInfo.Status("paused"),
-      error = Some(Problem("plan-quota: …")),
+      error = Some(Problem.Unclassified(Legacy.Text("plan-quota: …"))),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z")),
       pausedFor = Some(Agents.PauseReason.PlanQuota)
     )

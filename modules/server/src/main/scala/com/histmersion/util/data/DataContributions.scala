@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
@@ -37,11 +37,14 @@ object DataContributions:
 
   def of(contributions: List[DataContribution]): Either[List[Problem], DataContributions] =
     val owners = contributions.map(_.owner.value)
-    val twice = owners.diff(owners.distinct).distinct.map(o => Problem(s"owner $o is registered twice"))
+    val twice =
+      owners.diff(owners.distinct).distinct.map(o => Problem.Unclassified(Legacy.Text(s"owner $o is registered twice")))
     val claims = contributions.flatMap(c => c.tables.map(t => t.name.value -> c.owner.value))
     val shared = claims
       .groupMap(_._1)(_._2)
       .toList
       .sortBy(_._1)
-      .collect { case (t, os) if os.size > 1 => Problem(s"table $t is claimed by ${os.mkString(", ")}") }
+      .collect {
+        case (t, os) if os.size > 1 => Problem.Unclassified(Legacy.Text(s"table $t is claimed by ${os.mkString(", ")}"))
+      }
     Either.cond(twice.isEmpty && shared.isEmpty, DataContributions(contributions), twice ++ shared)

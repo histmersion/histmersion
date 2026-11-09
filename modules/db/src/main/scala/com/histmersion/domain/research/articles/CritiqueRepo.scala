@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.library.sources.CitekeyResolver
 
 import com.histmersion.api.Write
@@ -34,7 +35,7 @@ private[articles] object CritiqueRepo:
         CritiqueReason(
           Citekey(s),
           Citekey(d),
-          api.Problem(r),
+          Problem.Unclassified(Legacy.Text(r)),
           Some(CritiqueReason.By(b))
         )
       )
@@ -58,7 +59,7 @@ private[articles] object CritiqueRepo:
   private def check(reasons: List[CritiqueReason], by: By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
-      case Some(m) => Left(Api.Error(api.Problem(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
+      case Some(m) => Left(Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
         def stored(c: Citekey): Option[com.histmersion.domain.library.Citekey] =
@@ -71,19 +72,19 @@ private[articles] object CritiqueRepo:
               case (None, _) =>
                 Left(
                   Api.Error(
-                    api.Problem(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
+                    Problem.Unclassified(Legacy.Text(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey")),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
               case (_, None) =>
                 Left(
                   Api.Error(
-                    api.Problem(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
+                    Problem.Unclassified(Legacy.Text(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey")),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
-              case (Some(a), Some(b)) if r.reason.value.isEmpty => Right(done :+ Change.Remove(a, b))
-              case (Some(a), Some(b))                           =>
+              case (Some(a), Some(b)) if r.reason.sentence.isEmpty => Right(done :+ Change.Remove(a, b))
+              case (Some(a), Some(b))                              =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
                   .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)]
@@ -94,9 +95,11 @@ private[articles] object CritiqueRepo:
                   case None =>
                     Left(
                       Api.Error(
-                        api.Problem(
-                          s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
-                            "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)"
+                        Problem.Unclassified(
+                          Legacy.Text(
+                            s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
+                              "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)"
+                          )
                         ),
                         Some(Api.Error.Code(Write.CodeInvalid))
                       )
@@ -106,7 +109,7 @@ private[articles] object CritiqueRepo:
                       done :+ Change.Set(
                         s,
                         d,
-                        Problem(r.reason.value),
+                        r.reason,
                         By(r.by.map(_.value.trim).filter(_.nonEmpty).getOrElse(by.value).take(200))
                       )
                     )
@@ -128,7 +131,7 @@ private[articles] object CritiqueRepo:
                 WHERE slug = $slug AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))""".update.run()
         case Change.Set(s, d, reason, who) =>
           sql"DELETE FROM article_critique_reasons WHERE slug = $slug AND src = $d AND dst = $s".update.run()
-          sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, $reason, $who)
+          sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, ${reason.sentence}, $who)
                 ON CONFLICT (slug, src, dst) DO UPDATE SET reason = EXCLUDED.reason, set_by = EXCLUDED.set_by, set_at = now()""".update
             .run()
       }.sum)

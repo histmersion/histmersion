@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -56,7 +57,7 @@ class YearsSuite extends munit.FunSuite:
   }
 
   test("parse: year 0 is refused with the convention, not as garbage"):
-    assert(Years.parse(Years.Text("0")).left.exists(_.value.contains(Years.NoYearZero.value)))
+    assert(Years.parse(Years.Text("0")).left.exists(_.sentence.contains(Years.NoYearZero.sentence)))
 
   // ── conversion ───────────────────────────────────────────────────────────────────────────────
   test("astronomical ↔ historical: no year 0 on the historical side"):

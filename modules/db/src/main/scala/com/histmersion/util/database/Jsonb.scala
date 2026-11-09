@@ -1,6 +1,8 @@
 package com.histmersion
 package util.database
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
@@ -30,7 +32,7 @@ object Jsonb:
 
   /** The stored text as an `A`, or why it does not decode. */
   def decode[A: Decoder](text: JsonText): Either[Problem, A] =
-    io.circe.parser.decode[A](text.value).left.map(e => Problem(e.getMessage))
+    io.circe.parser.decode[A](text.value).left.map(e => Problem.Unclassified(Legacy.Text(e.getMessage)))
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
   def write[A: Encoder](a: A, dropNulls: DropNulls = DropNulls(false)): JsonText =

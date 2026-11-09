@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -158,7 +159,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
         List(plan.id, filter.id)
       )
       assertEquals(
-        a(s).closeForRun(run, domain.Problem("rejected: the run was cancelled")),
+        a(s).closeForRun(run, Problem.Unclassified(Legacy.Text("rejected: the run was cancelled"))),
         1,
         "only the step's"
       )
@@ -166,7 +167,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
         a(s).approval(idOf(plan)).map(x => (x.state, x.result)),
         Some(("rejected", Some("rejected: the run was cancelled")))
       )
-      assertEquals(a(s).closeForRun(run, domain.Problem("again")), 0)
+      assertEquals(a(s).closeForRun(run, Problem.Unclassified(Legacy.Text("again"))), 0)
   }
 
   stest("what the autopilot approved since a moment, and who decided each") { s =>
@@ -254,7 +255,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       a(s)
         .approvalPage(None, ApprovalQuery.Limit(2), Some(ApprovalQuery.Cursor("nope")), None)
         .left
-        .exists(_.value.contains("No approval 'nope'"))
+        .exists(_.sentence.contains("No approval 'nope'"))
     )
     assert(a(s).approvalPage(None, ApprovalQuery.Limit(2), Some(ApprovalQuery.Cursor("999999")), None).isLeft)
     def page(q: ApprovalQuery) = a(s).approvalPage(q, ApprovalQuery.Limit(50), None, None).map(_._1.map(_.id))

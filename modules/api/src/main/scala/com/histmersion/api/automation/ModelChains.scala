@@ -1,6 +1,9 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -28,7 +31,7 @@ object ModelChains:
     if parts.forall(_.isEmpty) then Right(Nil)
     else
       (parseModels((parts).map(refactorValue => ModelRef.Model.Spec(refactorValue)), known)).left.map(refactorError =>
-        Problem((refactorError).value)
+        refactorError
       )
 
   def parseModels(
@@ -40,9 +43,10 @@ object ModelChains:
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then Left(Problem(s"a chain names a model twice: ${dup.mkString(", ")}"))
+        if dup.nonEmpty then
+          Left(Problem.Unclassified(Legacy.Text(s"a chain names a model twice: ${dup.mkString(", ")}")))
         else Right(ms)
-      case errs => Left(Problem(errs.mkString("; ")))
+      case errs => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
 
@@ -91,9 +95,13 @@ object ModelChains:
       }
       secs match
         case None =>
-          Left(Problem(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
+          Left(
+            Problem.Unclassified(
+              Legacy.Text(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)")
+            )
+          )
         case Some(x) if x < 60 || x > MaxSeconds.value =>
-          Left(Problem(s"window '$s' must be between 1 minute and 90 days"))
+          Left(Problem.Unclassified(Legacy.Text(s"window '$s' must be between 1 minute and 90 days")))
         case Some(x) => Right(Window(Seconds(x)))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
@@ -124,13 +132,18 @@ object ModelChains:
         .toOption
         .map(_ * mult)
         .filter(_ > 0)
-        .toRight(Problem(s"'$raw' is not a positive amount"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"'$raw' is not a positive amount")))
 
     def parse(s: Spec): Either[Problem, Limit] =
       val t = (s).value.trim
       t.lastIndexOf('/') match
-        case -1 => Left(Problem(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
-        case i  =>
+        case -1 =>
+          Left(
+            Problem.Unclassified(
+              Legacy.Text(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
+            )
+          )
+        case i =>
           val (lhs, win) = (t.substring(0, i).trim, t.substring(i + 1))
           val words = lhs.split("\\s+").toList.filter(_.nonEmpty)
           val parsed: Either[Problem, (BigDecimal, Measure)] = words match
@@ -138,16 +151,21 @@ object ModelChains:
             case List(a, m)                   =>
               Measure
                 .parse(Measure.Wire(m))
-                .toRight(Problem(s"'$m' is neither tokens nor usd"))
+                .toRight(Problem.Unclassified(Legacy.Text(s"'$m' is neither tokens nor usd")))
                 .flatMap(me => amount((a)).map(_ -> me))
-            case _ => Left(Problem(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
+            case _ =>
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
+                )
+              )
           for
             am <- parsed
             w <- Window.parse(LimitSpec.Window(win))
             _ <- Either.cond(
               am._2 == Measure.Usd || am._1.isWhole,
               (),
-              Problem(s"'$t': a token count is a whole number")
+              Problem.Unclassified(Legacy.Text(s"'$t': a token count is a whole number"))
             )
           yield Limit(am._1, am._2, w)
 
@@ -158,12 +176,12 @@ object ModelChains:
         a <- Either.cond(
           amt > 0 && !amt.isNaN && !amt.isInfinite,
           BigDecimal(amt),
-          Problem(s"a limit's amount must be positive, not $amt")
+          Problem.Unclassified(Legacy.Text(s"a limit's amount must be positive, not $amt"))
         )
         _ <- Either.cond(
           s.measure == Measure.Usd || a.isWhole,
           (),
-          Problem(s"a token count is a whole number, not $amt")
+          Problem.Unclassified(Legacy.Text(s"a token count is a whole number, not $amt"))
         )
       yield Limit(a, s.measure, w)
 
@@ -193,8 +211,10 @@ object ModelChains:
         ProviderKind
           .parse(com.histmersion.api.automation.ProviderKind.Wire(p), known)
           .map(Provider(_))
-          .toRight(Problem(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
-      else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_)).left.map(e => Problem(e.value))
+          .toRight(
+            Problem.Unclassified(Legacy.Text(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
+          )
+      else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_))
 
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
     def text: String =
@@ -213,14 +233,16 @@ object ModelChains:
 
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
       if (reservePct).value < 0 || (reservePct).value > 99 then
-        Left(Problem(s"a reserve is 0 to 99 %, not $reservePct"))
+        Left(Problem.Unclassified(Legacy.Text(s"a reserve is 0 to 99 %, not $reservePct")))
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
         if windows.nonEmpty then
           Left(
-            Problem(
-              s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"
+              )
             )
           )
         else Right(Allowance(target, limits, reservePct))
@@ -232,7 +254,7 @@ object ModelChains:
     val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
-        case -1 => Left(Problem(s"'$e' is not <provider:model or provider:*> = <limits>"))
+        case -1 => Left(Problem.Unclassified(Legacy.Text(s"'$e' is not <provider:model or provider:*> = <limits>")))
         case i  =>
           parseAllowance(
             Target.Spec(e.substring(0, i)),
@@ -244,9 +266,10 @@ object ModelChains:
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        if dup.nonEmpty then Left(Problem(s"an allowance is given twice for ${dup.mkString(", ")}"))
+        if dup.nonEmpty then
+          Left(Problem.Unclassified(Legacy.Text(s"an allowance is given twice for ${dup.mkString(", ")}")))
         else Right(as)
-      case errs => Left(Problem(errs.mkString("; ")))
+      case errs => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
 
   def parseAllowance(
       target: Target.Spec,
@@ -256,14 +279,14 @@ object ModelChains:
     val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
-      t <- Target.parse(target, known).left.map(e => Problem(e.value))
+      t <- Target.parse(target, known)
       rs <- reserves match
         case Nil      => Right(Allowance.ReservePct(0))
         case r :: Nil => parseReserve(Allowance.ReserveSpec(r.drop("reserve".length)))
-        case _        => Left(Problem(s"${t.wire}: more than one reserve"))
+        case _        => Left(Problem.Unclassified(Legacy.Text(s"${t.wire}: more than one reserve")))
       ls <- limits.map(l => Limit.parse(Limit.Spec(l))).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Problem(s"${t.wire}: ${errs.mkString("; ")}"))
+        case (errs, _) => Left(Problem.Unclassified(Legacy.Text(s"${t.wire}: ${errs.map(_.sentence).mkString("; ")}")))
       a <- Allowance.of(t, ls, rs)
     yield a
 
@@ -276,7 +299,7 @@ object ModelChains:
       .toIntOption
       .toRight(s"'${(s).value.trim}' is not a reserve percentage"))
       .left
-      .map(refactorError4 => Problem(refactorError4)))
+      .map(refactorError4 => Problem.Unclassified(Legacy.Text(refactorError4))))
       .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -31,27 +31,27 @@ object Awmc extends DownloadedGazetteer:
     Some(GazetteerRights.LicenceUrl("https://opendatacommons.org/licenses/odbl/1-0/"))
   )
 
-  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+  def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     io.circe.parser
       .parse(text.value)
       .left
-      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))
           .flatMap(_.asArray)
           .map(_.toList)
           .orElse(doc.asArray.map(_.toList))
-          .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
+          .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
-  def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
-    j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
+  def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
+    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       def text(keys: String*): Option[String] = str(props, keys*).map(_.value)
       val title = text("TITLE", "title", "name", "NAME").getOrElse("")
-      if title.isEmpty then Left(DownloadedGazetteer.Problem(s"feature #$ordinal has no TITLE"))
+      if title.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no TITLE")))
       else
         val pType = text("P_TYPE", "TYPE", "type").getOrElse("region")
         val pid = text("PID")

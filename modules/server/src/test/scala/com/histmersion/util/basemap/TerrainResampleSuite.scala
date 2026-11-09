@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
@@ -40,7 +41,7 @@ class TerrainResampleSuite extends munit.FunSuite:
 
   expected.foreach { (name, w, h, digest) =>
     test(s"a lossless WebP decodes as libwebp decodes it: $name") {
-      val img = Vp8l.decode(resource(name)).fold(e => fail(e.value), identity)
+      val img = Vp8l.decode(resource(name)).fold(e => fail(e.sentence), identity)
       assertEquals((img.width, img.height), (w, h))
       assertEquals(rgbDigest(img), digest)
       assert(img.pixels.value.forall(p => (p >>> 24) == 0xff), "opaque")
@@ -57,14 +58,14 @@ class TerrainResampleSuite extends munit.FunSuite:
 
   test("the fixture's Mapterhorn relief tiles decode as libwebp decodes them") {
     val f = fixture.getOrElse(fail("the browser fixture is not in the repository"))
-    val pm = BasemapFixtures.open(f).fold(e => fail(e.value), identity)
+    val pm = BasemapFixtures.open(f).fold(e => fail(e.sentence), identity)
     try
       val zero = pm
         .tile(PmTiles.Zoom(0), PmTiles.TileColumn(0), PmTiles.TileRow(0))
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
         .getOrElse(fail("no tile 0/0/0"))
       assertEquals(
-        rgbDigest(Vp8l.decode(zero).fold(e => fail(e.value), identity)),
+        rgbDigest(Vp8l.decode(zero).fold(e => fail(e.sentence), identity)),
         "aaf149389ba79323fb5bfe65cc6c4fd4b9f39ec6a2c6cddb2ae3a9d6e6019a72"
       )
       // tile 4805 of the archive's order: a zoom-6 tile of the Aegean
@@ -73,8 +74,8 @@ class TerrainResampleSuite extends munit.FunSuite:
         y <- 0L until 64L
         if PmTiles.tileId(PmTiles.Zoom(6), PmTiles.TileColumn(x), PmTiles.TileRow(y)).value == 4805L
       yield (PmTiles.TileColumn(x), PmTiles.TileRow(y))).head
-      val six = pm.tile(PmTiles.Zoom(6), x, y).fold(e => fail(e.value), identity).getOrElse(fail(s"no tile 6/$x/$y"))
-      val img = Vp8l.decode(six).fold(e => fail(e.value), identity)
+      val six = pm.tile(PmTiles.Zoom(6), x, y).fold(e => fail(e.sentence), identity).getOrElse(fail(s"no tile 6/$x/$y"))
+      val img = Vp8l.decode(six).fold(e => fail(e.sentence), identity)
       assertEquals((img.width, img.height), (512, 512))
       assertEquals(rgbDigest(img), "86c85c084ed47555729aa200be04a4e436f59151824b816128e873d41e07ff58")
       // terrarium: heights on Earth
@@ -89,7 +90,7 @@ class TerrainResampleSuite extends munit.FunSuite:
         .decode(PmTiles.TileBytes("RIFF\u0000\u0000\u0000\u0000WEBPVP8 ".getBytes("ISO-8859-1") ++ new Array[Byte](12)))
         .isLeft
     )
-    assertEquals(Vp8l.decode(PmTiles.TileBytes("hello".getBytes)).left.map(_.value.take(10)), Left("not a WebP"))
+    assertEquals(Vp8l.decode(PmTiles.TileBytes("hello".getBytes)).left.map(_.sentence.take(10)), Left("not a WebP"))
     // a truncated stream: an error, never an exception
     val t = resource("terr-z6.webp")
     assert(Vp8l.decode(PmTiles.TileBytes(t.value.take(t.value.length / 2))).isLeft)
@@ -140,7 +141,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     val px = Png.Pixels(Array.tabulate(w.value * h.value)(i => 0xff000000 | ((i * 7919) & 0xffffff)))
     val png = Png.encodeRgb(w, h, px)
     assert(Png.isPng(png))
-    val back = Png.decode(png).fold(e => fail(e.value), identity)
+    val back = Png.decode(png).fold(e => fail(e.sentence), identity)
     assertEquals((back.width, back.height), (w, h))
     assert(back.pixels.value.sameElements(px.value))
     // the relief: a resampled tile decodes with either decoder

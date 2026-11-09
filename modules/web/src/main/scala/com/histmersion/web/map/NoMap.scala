@@ -1,7 +1,8 @@
 package com.histmersion
 package web.map
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -39,7 +40,7 @@ object NoMap:
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
   def message(why: Problem): (MessageText, MessageText) =
     (
-      MessageText(s"The map cannot be drawn here: $why."),
+      MessageText(s"The map cannot be drawn here: ${why.sentence}."),
       MessageText(
         "Every base map — the online ones and the local ones — is drawn with WebGL 2. Turn on hardware " +
           "(graphics) acceleration in the browser's settings, or open the page in a current Chrome, Edge, " +

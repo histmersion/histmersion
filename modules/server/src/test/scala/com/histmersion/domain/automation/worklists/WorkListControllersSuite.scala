@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
@@ -39,11 +40,19 @@ class WorkListControllersSuite extends munit.FunSuite:
   test("an unknown list, an empty text, a bad status or instant are refused with today's messages"):
     val c = controllers()
     assertEquals(
-      c.add(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x"))).left.map(_.message),
+      c.add(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x")))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
     assertEquals(
-      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  "))).left.map(_.message),
+      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  ")))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("queue item text is empty")
     )
     assert(
@@ -51,21 +60,25 @@ class WorkListControllersSuite extends munit.FunSuite:
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))
       ).left
-        .exists(_.message.value.contains("unknown status"))
+        .exists(_.message.sentence.contains("unknown status"))
     )
     assert(
       c.add(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))
       ).left
-        .exists(_.message.value.contains("ISO-8601"))
+        .exists(_.message.sentence.contains("ISO-8601"))
     )
     assertEquals(
-      c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" ")))).left.map(_.message),
+      c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" "))))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("queue item text is empty")
     )
     assertEquals(
-      c.delete(QueueItemId(42)).left.map(e => (e.message, e.code)),
+      c.delete(QueueItemId(42)).left.map(e => (e.message.sentence, e.code)),
       Left(("No queue item #42", Some("not_found")))
     )
 
@@ -73,7 +86,7 @@ class WorkListControllersSuite extends munit.FunSuite:
     val c = controllers()
     val file = Queue.QueueItem.Text("# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n")
     val r =
-      c.importText(Kind.Label("tasks"), Queue.QueueImport(file)).fold(e => fail(e.message.value), identity)
+      c.importText(Kind.Label("tasks"), Queue.QueueImport(file)).fold(e => fail(e.message.sentence), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
     assertEquals(c.exportText(Kind.Label("tasks")).map(_.value.contains("- [x] read Kuhrt")), Right(true))
     assertEquals(c.files().map(_._1), Kind.values.toList.map(_.file))

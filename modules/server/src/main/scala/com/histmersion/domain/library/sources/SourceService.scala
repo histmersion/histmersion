@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Licence
@@ -243,7 +243,7 @@ object SourceService:
     private def held(raw: String): Citekey = Citekey.assume(raw)
     private def apiKey(ck: Citekey): ApiCitekey = ApiCitekey(ck.value)
     private def invalid(message: String): Api.Error =
-      Api.Error(Problem(message), Some(Api.Error.Code(Write.CodeInvalid)))
+      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
 
     private def currentIn(st: LibraryState, id: Citekey): Option[Citekey] =
       if st.sources.contains(sk(id)) then Some(id) else st.aliases.get(ak(id)).map(v => held(v.value))
@@ -485,7 +485,7 @@ object SourceService:
           case Some(existing) =>
             Source.Write.precondition(existing, patch) match
               case Left(msg) =>
-                answer = Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
+                answer = Left(Api.Error(msg, Some(Api.Error.Code(Write.CodePrecondition))))
                 st
               case Right(_) =>
                 Source.Write.applyPatch(
@@ -503,7 +503,7 @@ object SourceService:
       Citekeys
         .renameTo(from, Citekeys.RenameToNewRaw(to.value))
         .left
-        .map(p => Write.invalid(Problem(p.value)))
+        .map(p => Write.invalid(p))
         .flatMap { validated =>
           val at = clock.instant()
           var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(apiKey(from)))

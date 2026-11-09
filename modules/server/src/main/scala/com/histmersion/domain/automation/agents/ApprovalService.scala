@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, StepInfo}
@@ -145,8 +146,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left
-        .map(_.transformInto[Problem])
+      )
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -160,8 +160,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left
-        .map(_.transformInto[Problem])
+      )
     def approvalFacets(
         q: ApprovalQuery
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
@@ -220,7 +219,7 @@ object ApprovalService:
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
     def closeForRun(jobId: Job.Id, why: Problem): RowCount =
-      db.transact(AgentRepo.closeForRun(jobId, why.transformInto[api.Problem]))
+      db.transact(AgentRepo.closeForRun(jobId, why))
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       db.transact(
         AgentRepo.decide(
@@ -318,7 +317,7 @@ object ApprovalService:
       def cursor(c: String): Either[Problem, ApprovalRecord] =
         c.trim.toLongOption
           .flatMap(id => rows.find(_.id.value == id))
-          .toRight(Problem(s"No approval '$c' to page from"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"No approval '$c' to page from")))
       for
         b <- before.fold(Right(None))(c => cursor(c.value).map(Some(_)))
         u <- upTo.fold(Right(None))(c => cursor(c.value).map(Some(_)))
@@ -480,7 +479,7 @@ object ApprovalService:
         _.modify(_.state)
           .setTo(ApprovalRecord.State(ApprovalState.Rejected.wire.value))
           .modify(_.result)
-          .setTo(Some(ApprovalRecord.Result(why.value)))
+          .setTo(Some(ApprovalRecord.Result(why.sentence)))
           .modify(_.decidedAt)
           .setTo(Some(at))
       )

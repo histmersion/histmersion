@@ -1,6 +1,7 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A setting as it may be SHOWN — to a person, a client or an agent: its values as HOCON writes them, and for a

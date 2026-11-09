@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.Title
@@ -65,7 +65,7 @@ object Referable:
         .get(key)
         .map(rec => ItemRef(kind, key, rec.uid))
         .orElse(r.aliases.get(key).flatMap(r.live.get).map(rec => ItemRef(kind, key, rec.uid)))
-        .toRight(Problem(s"no ${kind.value} '${key.value}'"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"no ${kind.value} '${key.value}'")))
 
     def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
       val r = records.get

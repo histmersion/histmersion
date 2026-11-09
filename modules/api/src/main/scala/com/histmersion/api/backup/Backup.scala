@@ -1,6 +1,8 @@
 package com.histmersion
 package api.backup
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -87,12 +89,18 @@ object Backup:
 
   def safeName(raw: Name): Either[Problem, Result.File] =
     val n = Option(raw).map((_).value.trim).getOrElse("")
-    if n.isEmpty then Left(Problem("no backup file given"))
-    else if n.length > 128 then Left(Problem(s"backup file name is too long (${n.length} chars)"))
-    else if !n.endsWith(Extension) then Left(Problem(s"'$n' is not a $Extension file"))
-    else if n.length == Extension.length then Left(Problem(s"'$n' has no name before $Extension"))
+    if n.isEmpty then Left(Problem.Unclassified(Legacy.Text("no backup file given")))
+    else if n.length > 128 then
+      Left(Problem.Unclassified(Legacy.Text(s"backup file name is too long (${n.length} chars)")))
+    else if !n.endsWith(Extension) then Left(Problem.Unclassified(Legacy.Text(s"'$n' is not a $Extension file")))
+    else if n.length == Extension.length then
+      Left(Problem.Unclassified(Legacy.Text(s"'$n' has no name before $Extension")))
     else if !Safe.matches(n) then
-      Left(Problem(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only")
+        )
+      )
     else Right(Result.File(n))
 
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
@@ -116,7 +124,7 @@ object Backup:
 
   def parseJdbc(url: JdbcUrl): Either[Problem, PgTarget] =
     val u = Option(url).map((_).value.trim).getOrElse("")
-    if !u.startsWith(JdbcScheme) then Left(Problem(s"not a PostgreSQL JDBC URL: '$u'"))
+    if !u.startsWith(JdbcScheme) then Left(Problem.Unclassified(Legacy.Text(s"not a PostgreSQL JDBC URL: '$u'")))
     else
       val rest = u.drop(JdbcScheme.length).takeWhile(_ != '?')
       val (authority, db) =
@@ -139,10 +147,12 @@ object Backup:
             .map(Some(_))
             .toRight(s"'$p' is not a port number in '$u'"))
             .left
-            .map(refactorError => Problem(refactorError)))
+            .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
             .map(refactorValue2 => (refactorValue2).map(refactorValue3 => PgTarget.Port(refactorValue3)))
       for
-        name <- Some(db.trim).filter(_.nonEmpty).toRight(Problem(s"JDBC URL has no database name: '$u'"))
+        name <- Some(db.trim)
+          .filter(_.nonEmpty)
+          .toRight(Problem.Unclassified(Legacy.Text(s"JDBC URL has no database name: '$u'")))
         p <- port
       yield PgTarget(
         (Some(host).filter(_.nonEmpty)).map(refactorValue10 => PgTarget.Host(refactorValue10)),
@@ -164,19 +174,20 @@ object Backup:
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn((l).value).isDefined)
     if exit == ExitCode(0) || completed then Right((notable).map(refactorValue9 => Outcome(refactorValue9)))
-    else Left(Problem(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}"))
+    else
+      Left(Problem.Unclassified(Legacy.Text(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}")))
 
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: String): Api.Error =
     Api.Error(
-      Problem(s"$op is unavailable: a restore is in progress on this server"),
+      Problem.Unclassified(Legacy.Text(s"$op is unavailable: a restore is in progress on this server")),
       Some(Api.Error.Code(CodeMaintenance))
     )
 
   def missing(file: Result.File): Api.Error =
     Api.Error(
-      Problem(s"no backup named '$file' in the backups directory"),
+      Problem.Unclassified(Legacy.Text(s"no backup named '$file' in the backups directory")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
@@ -254,4 +265,4 @@ object Backup:
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
     def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, error: Problem): Status =
-      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), error = Some(Problem((error).value)))
+      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), error = Some(error))

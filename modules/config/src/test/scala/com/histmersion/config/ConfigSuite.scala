@@ -41,7 +41,7 @@ class ConfigSuite extends munit.FunSuite:
     Files.writeString(d.resolve("histmersion.conf"), text)
 
   private def loaded(e: org.ekrich.config.Config, file: Path): LoadedConfig =
-    AppConfig.loadWithUserFile(e, Some(file)).fold(m => fail(m.value), identity)
+    AppConfig.loadWithUserFile(e, Some(file)).fold(m => fail(m.legacyText), identity)
 
   test("user file: the environment beats the file, the file beats reference.conf (a key with an env mapping)"):
     val f = confFile("histmersion { server { port = 8123 }, agents.step.max-tokens = 999 }")
@@ -75,23 +75,23 @@ class ConfigSuite extends munit.FunSuite:
 
   test("user file: one that does not parse stops the load with an error naming the file"):
     val f = confFile("histmersion { server { port = 8123 \n")
-    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("a broken file loaded")).value
+    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("a broken file loaded")).legacyText
     assert(e.startsWith(s"Histmersion config file $f: "), e)
     assert(!e.stripPrefix(s"Histmersion config file $f: ").startsWith(f.toString), s"the file named once: $e")
 
   test("user file: a value of the wrong type is an error naming the file and the key"):
     val f = confFile("histmersion.server.port = eighty")
-    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("a mistyped file loaded")).value
+    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("a mistyped file loaded")).legacyText
     assert(e.contains(f.toString), e)
     assert(e.contains("port"), e)
     assert(e.contains("'histmersion.server.port' must be a number"), e)
     val shadowed = AppConfig.loadWithUserFile(env("HISTMERSION_PORT" -> "8011"), Some(f))
     assert(
-      shadowed.swap.exists(_.value.contains("'histmersion.server.port' must be a number")),
+      shadowed.swap.exists(_.legacyText.contains("'histmersion.server.port' must be a number")),
       s"a mistyped setting is an error even while an env var shadows it: $shadowed"
     )
     val nested = confFile("histmersion { agents { scheduler { enabled = sometimes } } }")
-    val e2 = AppConfig.loadWithUserFile(env(), Some(nested)).swap.getOrElse(fail("loaded")).value
+    val e2 = AppConfig.loadWithUserFile(env(), Some(nested)).swap.getOrElse(fail("loaded")).legacyText
     assert(
       e2.contains(nested.toString) && e2.contains("'histmersion.agents.scheduler.enabled' must be true or false"),
       e2
@@ -166,7 +166,7 @@ class ConfigSuite extends munit.FunSuite:
 
   test("user file: a single value where a block belongs is an error, not a silent wipe of the block"):
     val f = confFile("histmersion.agents = true")
-    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("loaded")).value
+    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("loaded")).legacyText
     assert(e.contains(f.toString) && e.contains("histmersion.agents"), e)
 
   test("user file: unknown keys are reported as warnings, the rest still applies"):
@@ -179,8 +179,11 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(l.file.unknownKeys, List("histmersion.agents.step.max-token", "server.port"))
     val w = l.file.warnings
     assertEquals(w.size, 2)
-    assert(w.head.value.contains(f.toString) && w.head.value.contains("histmersion.agents.step.max-token"), w.head)
-    assert(w(1).value.contains("settings go under histmersion"), w(1))
+    assert(
+      w.head.legacyText.contains(f.toString) && w.head.legacyText.contains("histmersion.agents.step.max-token"),
+      w.head
+    )
+    assert(w(1).legacyText.contains("settings go under histmersion"), w(1))
 
   test("claude-code env: the defaults switch features off; nothing about thinking, structured outputs or web fetch"):
     val cc = AppConfig.load(env()).agents.providers.claudeCode
@@ -237,7 +240,7 @@ class ConfigSuite extends munit.FunSuite:
     assert(!l.config.agents.providers.claudeCode.disableSlashCommands.value)
 
   test("user file: no location at all (HOME unset) is the defaults"):
-    val l = AppConfig.loadWithUserFile(env(), None).fold(m => fail(m.value), identity)
+    val l = AppConfig.loadWithUserFile(env(), None).fold(m => fail(m.legacyText), identity)
     assertEquals(l.file, UserConfigFile(None, loaded = UserConfigFile.Loaded(false)))
 
   test("the installer's template reads as a file with no settings"):
@@ -285,7 +288,7 @@ class ConfigSuite extends munit.FunSuite:
 
   test("plugins: a single value where the plugins block belongs is an error"):
     val f = confFile("histmersion.plugins = true")
-    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("loaded")).value
+    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("loaded")).legacyText
     assert(e.contains("histmersion.plugins"), e)
 
   test("the generic env layer: any defaults tree, only keys that are exactly a set ${?VAR}"):
@@ -416,7 +419,7 @@ class ConfigSuite extends munit.FunSuite:
   test("the schedule from config minutes: 0 is off, a negative number is refused"):
     assertEquals(ScheduledRefresh.fromMinutes(Minutes(0)), Right(ScheduledRefresh.Off))
     assertEquals(ScheduledRefresh.fromMinutes(Minutes(30)).map(minutes), Right(Some(30)))
-    assert(ScheduledRefresh.fromMinutes(Minutes(-5)).left.exists(_.value.contains("-5")))
+    assert(ScheduledRefresh.fromMinutes(Minutes(-5)).left.exists(_.legacyText.contains("-5")))
 
   private def minutes(s: ScheduledRefresh): Option[Int] = s match
     case ScheduledRefresh.Every(i) => Some(i.value)

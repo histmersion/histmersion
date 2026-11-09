@@ -16,8 +16,8 @@ import Answer.Entry
 import Text.sentence
 
 /** The body of every failed request: `{"problems": [{"group", "case", "data", "text"}]}`, always a list. `data` is the
-  * case's fields as its derived codec writes them; `text` is its English sentence, for `curl` and for clients that do not
-  * render problems themselves. The companion maps a problem to its HTTP status, by group (and by case where a group
+  * case's fields as its derived codec writes them; `text` is its English sentence, for `curl` and for clients that do
+  * not render problems themselves. The companion maps a problem to its HTTP status, by group (and by case where a group
   * mixes them).
   */
 final case class Answer(problems: Vector[Entry]) derives KindlingsCodecAsObject, KindlingsSchema
@@ -43,32 +43,32 @@ object Answer:
   extension (problem: Problem)
     /** The status of a response that fails with this problem. */
     def status: StatusCode = problem match
-      case _: Invalid                  => StatusCode.BadRequest
-      case _: NotFound                 => StatusCode.NotFound
-      case _: Conflict.Stale           => StatusCode.PreconditionFailed
-      case _: Conflict.Busy            => StatusCode.ServiceUnavailable
-      case _: Conflict.AlreadyExists   => StatusCode.Conflict
-      case _: Conflict.Renamed         => StatusCode.Conflict
-      case _: Conflict.WrongState      => StatusCode.Conflict
-      case _: Conflict.Referenced      => StatusCode.Conflict
-      case _: Refused.Policy           => StatusCode.Forbidden
-      case _: Refused.Quota            => StatusCode.TooManyRequests
-      case _: Refused.Disabled         => StatusCode.Forbidden
-      case _: Upstream.Http            => StatusCode.BadGateway
-      case _: Upstream.Unreachable     => StatusCode.BadGateway
-      case _: Upstream.BadReply        => StatusCode.BadGateway
-      case _: Upstream.Timeout         => StatusCode.GatewayTimeout
-      case _: Io                       => StatusCode.InternalServerError
-      case _: Config                   => StatusCode.ServiceUnavailable
-      case _: Plugin.Load              => StatusCode.InternalServerError
-      case _: Plugin.Vault             => StatusCode.InternalServerError
-      case _: Plugin.Rejected          => StatusCode.UnprocessableEntity
-      case Plugin.Said(_, claim, _)    => claim.status
-      case _: Problem.Run                    => StatusCode.Conflict
-      case _: Content                  => StatusCode.UnprocessableEntity
-      case _: Internal                 => StatusCode.InternalServerError
-      case _: Unclassified             => StatusCode.InternalServerError
-      case _: Stored                   => StatusCode.InternalServerError
+      case _: Invalid                => StatusCode.BadRequest
+      case _: NotFound               => StatusCode.NotFound
+      case _: Conflict.Stale         => StatusCode.PreconditionFailed
+      case _: Conflict.Busy          => StatusCode.ServiceUnavailable
+      case _: Conflict.AlreadyExists => StatusCode.Conflict
+      case _: Conflict.Renamed       => StatusCode.Conflict
+      case _: Conflict.WrongState    => StatusCode.Conflict
+      case _: Conflict.Referenced    => StatusCode.Conflict
+      case _: Refused.Policy         => StatusCode.Forbidden
+      case _: Refused.Quota          => StatusCode.TooManyRequests
+      case _: Refused.Disabled       => StatusCode.Forbidden
+      case _: Upstream.Http          => StatusCode.BadGateway
+      case _: Upstream.Unreachable   => StatusCode.BadGateway
+      case _: Upstream.BadReply      => StatusCode.BadGateway
+      case _: Upstream.Timeout       => StatusCode.GatewayTimeout
+      case _: Io                     => StatusCode.InternalServerError
+      case _: Config                 => StatusCode.ServiceUnavailable
+      case _: Plugin.Load            => StatusCode.InternalServerError
+      case _: Plugin.Vault           => StatusCode.InternalServerError
+      case _: Plugin.Rejected        => StatusCode.UnprocessableEntity
+      case Plugin.Said(_, claim, _)  => claim.status
+      case _: Problem.Run            => StatusCode.Conflict
+      case _: Content                => StatusCode.UnprocessableEntity
+      case _: Internal               => StatusCode.InternalServerError
+      case _: Unclassified           => StatusCode.InternalServerError
+      case _: Stored                 => StatusCode.InternalServerError
 
     /** When a refused request may be sent again: the end of a spent allowance, when it is known. */
     def retryAfter: Option[EpochMs] = problem match
@@ -168,7 +168,7 @@ object Answer:
         case p: Io           => io.encodeObject(p)
         case p: Config       => config.encodeObject(p)
         case p: Plugin       => plugin.encodeObject(p)
-        case p: Problem.Run        => run.encodeObject(p)
+        case p: Problem.Run  => run.encodeObject(p)
         case p: Content      => content.encodeObject(p)
         case p: Internal     => internal.encodeObject(p)
         case p: Unclassified => JsonObject.singleton("Unclassified", Json.fromJsonObject(unclassified.encodeObject(p)))

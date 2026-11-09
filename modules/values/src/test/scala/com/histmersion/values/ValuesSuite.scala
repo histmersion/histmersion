@@ -15,7 +15,7 @@ class ValuesSuite extends munit.FunSuite:
     )
     assertEquals(Period.from(Year(-3100), Year(-3300)), Left(Period.Error.EndsBeforeStart(Year(-3100), Year(-3300))))
     assertEquals(
-      Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message,
+      (Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message).legacyText,
       "the period ends (-3300) before it starts (-3100)"
     )
     assert(Period.point(Year(-1200)).isPoint && !Period.from(Year(1), Year(2)).toOption.get.isPoint)

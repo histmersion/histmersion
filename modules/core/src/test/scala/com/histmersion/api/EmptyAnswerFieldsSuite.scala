@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -38,7 +39,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("probe: an empty title or citekey, and a null year for a record that has one, are problems"):
     val empty = ProbeAnswer(Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title(""), None)
     assertEquals(
-      empty.problems(Some(ProbeAnswer.RecordYear(1956))),
+      empty.problems(Some(ProbeAnswer.RecordYear(1956))).map(_.sentence),
       List(
         "the title is empty — copy the source's exact title from get_source",
         "the year is missing — give the source's publication year from get_source"
@@ -48,7 +49,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       ProbeAnswer(Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(Year(1956)))
         .problems(Some(ProbeAnswer.RecordYear(1956)))
         .head
-        .value
+        .sentence
         .startsWith("the citekey is empty")
     )
     // a record with no year is rightly answered with null
@@ -85,14 +86,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       CheckClassificationMaxAbsYear(50000),
       last = Last(false)
     )
-    assertEquals(noSummary.left.toOption, Some(List("the summary is empty")))
+    assertEquals(noSummary.left.toOption.map(_.map(_.sentence)), Some(List("the summary is empty")))
     assert(
       checkClassification(
         classification(status = com.histmersion.domain.library.Source.Status.Wire("")),
         CheckClassificationMaxAbsYear(50000),
         last = Last(true)
       ).left
-        .exists(_.exists(_.value.contains("is not a status")))
+        .exists(_.exists(_.sentence.contains("is not a status")))
     )
     val noEvidence = checkClassification(
       classification(evidence = Classification.StatusEvidence("")),
@@ -100,7 +101,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       last = Last(false)
     )
     assertEquals(
-      noEvidence.left.toOption,
+      noEvidence.left.toOption.map(_.map(_.sentence)),
       Some(List("the status evidence is empty — say, from the text, why that status"))
     )
     // unassessed needs none (the schema: "empty if unassessed")
@@ -147,19 +148,22 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         open,
         last = Last(false)
       ).left.toOption.get
-    assert(problems(proposal(FindingProposal.Claim(""))).head.value.contains("the claim is empty"))
+    assert(problems(proposal(FindingProposal.Claim(""))).head.sentence.contains("the claim is empty"))
     assert(
-      problems(proposal(FindingProposal.Claim("Tin by sea."), quote = AgentProposals.Proposal.Quote(""))).head.value
+      problems(proposal(FindingProposal.Claim("Tin by sea."), quote = AgentProposals.Proposal.Quote(""))).head.sentence
         .contains("the quote is not in the text")
     )
     assert(
       problems(
         proposal(FindingProposal.Claim("Tin by sea."), confidence = com.histmersion.domain.library.Confidence.Wire(""))
-      ).head.value.contains("is not a confidence")
+      ).head.sentence.contains("is not a confidence")
     )
 
   test("notes: empty notes fail"):
-    assertEquals(checkNotes(Notes(Notes.Value("  ")), _ => true, _ => true), Left(List("the notes are empty")))
+    assertEquals(
+      checkNotes(Notes(Notes.Value("  ")), _ => true, _ => true).left.map(_.map(_.sentence)),
+      Left(List("the notes are empty"))
+    )
 
   // ── compile-article ───────────────────────────────────────────────────────────────────────────
 
@@ -171,7 +175,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("extract: an empty claim, quote or confidence fails; an unused record must say why"):
     def problems(c: ClaimAnswer) =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), Problem("tin"), List(c)),
+        ExtractAnswer(ExtractAnswer.Relevant(true), Problem.Unclassified(Legacy.Text("tin")), List(c)),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
@@ -182,7 +186,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assertEquals(
       problems(
         ClaimAnswer(ClaimAnswer.Claim(""), quote, None, None, com.histmersion.domain.library.Confidence.Wire("high"))
-      ),
+      ).map(_.sentence),
       List("claim 1 (): no claim")
     )
     assert(
@@ -194,22 +198,22 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           None,
           com.histmersion.domain.library.Confidence.Wire("high")
         )
-      ).head.value.endsWith("no quote")
+      ).head.sentence.endsWith("no quote")
     )
     assert(
       problems(
         ClaimAnswer(ClaimAnswer.Claim("Tin."), quote, None, None, com.histmersion.domain.library.Confidence.Wire(""))
-      ).head.value.contains("is not a confidence")
+      ).head.sentence.contains("is not a confidence")
     )
     assertEquals(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Problem(""), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Problem.Unclassified(Legacy.Text("")), Nil),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
         last = CompileArticle.Last(false)
-      ).left.toOption,
+      ).left.toOption.map(_.map(_.sentence)),
       Some(List("say why the record is not used"))
     )
 
@@ -282,11 +286,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       check(DraftAnswer(Title("Tin"), Article.SummaryText("Where tin came from."), body)).isRight,
       check(DraftAnswer(Title("Tin"), Article.SummaryText("Where tin came from."), body))
     )
-    val ps = check(DraftAnswer(Title(""), Article.SummaryText(""), body)).left.toOption.get.map(_.value)
+    val ps = check(DraftAnswer(Title(""), Article.SummaryText(""), body)).left.toOption.get.map(_.sentence)
     assert(ps.contains("the title is empty — give the new article's title"), ps)
     assert(ps.contains("the summary is empty — say in one or two sentences what the article answers"), ps)
     assertEquals(
-      check(DraftAnswer(Title("Tin"), Article.SummaryText("x"), Article.Body(""))).left.toOption.map(_.head),
+      check(DraftAnswer(Title("Tin"), Article.SummaryText("x"), Article.Body(""))).left.toOption
+        .map(_.head)
+        .map(_.sentence),
       Some("the text is empty")
     )
     // extending: the title and summary are the article's own
@@ -481,7 +487,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         List(
           RejectionAnswer(
             RejectionAnswer.Id("S1"),
-            Problem(" "),
+            Problem.Unclassified(Legacy.Text(" ")),
             RejectionAnswer.Citekey("a2019_tin"),
             RejectionAnswer.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
           )
@@ -640,17 +646,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         last = LastRound(false)
       ).left.toOption.get
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id(""), Problem("wordy, but exact"))).contains(
+      problems(WontFixAnswer(WontFixAnswer.Id(""), Problem.Unclassified(Legacy.Text("wordy, but exact")))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(noWontFixId, Problem("wordy, but exact"))).contains(
+      problems(WontFixAnswer(noWontFixId, Problem.Unclassified(Legacy.Text("wordy, but exact")))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id("R1"), Problem(" ")))
+      problems(WontFixAnswer(WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text(" "))))
         .contains("won't fix R1: give the reason")
     )
     assert(problems(WontFixAnswer(WontFixAnswer.Id("R1"), noWontFixReason)).contains("won't fix R1: give the reason"))
@@ -669,7 +675,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       last = LastRound(false)
     ).left.toOption.get
     assertEquals(
-      problems(PlanAnswer(PlanAnswer.Rationale(""), Nil, List(PlanAnswer.Queries("bronze age tin")), Nil)),
+      problems(PlanAnswer(PlanAnswer.Rationale(""), Nil, List(PlanAnswer.Queries("bronze age tin")), Nil))
+        .map(_.sentence),
       List("the rationale is empty — say how the plan covers the goal")
     )
     assert(
@@ -680,16 +687,24 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           Nil,
           Nil
         )
-      )
+      ).map(_.sentence)
         .contains("sub-goal 'tin-trade' has no title")
     )
     assert(
       problems(PlanAnswer(PlanAnswer.Rationale("why"), Nil, List(PlanAnswer.Queries("")), Nil))
+        .map(_.sentence)
         .contains("an empty query")
     )
     assert(
-      problems(PlanAnswer(PlanAnswer.Rationale("why"), Nil, Nil, List(WorkAnswer(noWorkDoi, Problem("x")))))
-        .exists(_.value.contains("is not a DOI"))
+      problems(
+        PlanAnswer(
+          PlanAnswer.Rationale("why"),
+          Nil,
+          Nil,
+          List(WorkAnswer(noWorkDoi, Problem.Unclassified(Legacy.Text("x"))))
+        )
+      )
+        .exists(_.sentence.contains("is not a DOI"))
     )
 
   test("ranking: a pick with an empty DOI fails; its reason stays optional"):
@@ -707,12 +722,16 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       )
     )
     assert(
-      checkRanking(Ranking(List(Pick(Pick.DoiText(""), Problem("fits")))), offered, last = LastAttempt(false)).left
-        .exists(_.head.value.contains("is not one of the listed candidates"))
+      checkRanking(
+        Ranking(List(Pick(Pick.DoiText(""), Problem.Unclassified(Legacy.Text("fits"))))),
+        offered,
+        last = LastAttempt(false)
+      ).left
+        .exists(_.head.sentence.contains("is not one of the listed candidates"))
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.1000/a"), Problem("")))),
+        Ranking(List(Pick(Pick.DoiText("10.1000/a"), Problem.Unclassified(Legacy.Text(""))))),
         offered,
         last = LastAttempt(false)
       ).isRight

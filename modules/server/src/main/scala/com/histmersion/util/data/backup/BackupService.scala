@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.backup
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
@@ -79,7 +80,7 @@ object BackupService:
 
   private def guards(registry: DataContributions): List[GuardedTable] = registry.backups.flatMap(_._2.guarded)
 
-  private def problem(message: String): Api.Error = Api.Error(Problem(message))
+  private def problem(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
 
   private def command(parts: String*): List[ProcessLaunch.Command] = parts.toList.map(ProcessLaunch.Command(_))
 
@@ -116,7 +117,7 @@ object BackupService:
 
   private def resolving(store: Store, file: PreparedBackup.File): Either[Api.Error, Store.Key] =
     for
-      name <- Backup.safeName(Backup.Name(file.value)).left.map(m => problem(m.value))
+      name <- Backup.safeName(Backup.Name(file.value)).left.map(m => problem(m.sentence))
       known <- listing(store)
       _ <- if known.exists(_.file == name) then Right(()) else Left(Backup.missing(name))
       key <- Store.Key.either(name.value).left.map(m => problem(m))
@@ -153,7 +154,7 @@ object BackupService:
     store
       .makeDirectory()
       .left
-      .map(e => problem(s"backups directory ${store.where().value} is not usable: ${e.message.value}"))
+      .map(e => problem(s"backups directory ${store.where().value} is not usable: ${e.message.sentence}"))
       .map(_ => store)
 
   final private class Implementation(
@@ -219,7 +220,7 @@ object BackupService:
       try
         scala.util
           .Try {
-            val p = processes.start(launch).fold(e => throw java.io.IOException(e.value), identity)
+            val p = processes.start(launch).fold(e => throw java.io.IOException(e.sentence), identity)
             val ended = p.waitFor(Processes.WaitTimeout(timeoutS.toLong), TimeUnit.SECONDS)
             if !ended then
               p.destroyForcibly()
@@ -250,7 +251,7 @@ object BackupService:
         .getOrElse(Nil)
 
     private def target: Either[Api.Error, Backup.PgTarget] =
-      Backup.parseJdbc(Backup.JdbcUrl(settings().db.url.value)).left.map(m => problem(s"cannot back up: ${m.value}"))
+      Backup.parseJdbc(Backup.JdbcUrl(settings().db.url.value)).left.map(m => problem(s"cannot back up: ${m.sentence}"))
 
     /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message, not a stack
       * trace.
@@ -277,17 +278,17 @@ object BackupService:
             reservation <- dir
               .reserve(key, TempName.Suffixed(TempName.Suffixed.Suffix(Pending)))
               .left
-              .map(e => problem(e.message.value))
+              .map(e => problem(e.message.sentence))
             stored <-
               try
                 for
-                  part <- reservation.onDisk.left.map(e => problem(e.message.value))
+                  part <- reservation.onDisk.left.map(e => problem(e.message.sentence))
                   res <- run(List(pgDump) ++ command(t.args*) ++ command("-Fc", "-f", part.toString))
                   _ <- succeeded("pg_dump", res)
                   done <- reservation
                     .commit()
                     .left
-                    .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.value}"))
+                    .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.sentence}"))
                 yield done
               finally reservation.close()
           yield Backup.Result(
@@ -305,7 +306,7 @@ object BackupService:
 
     def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile] =
       val dir = store
-      resolving(dir, file).flatMap(k => dir.onDiskFile(k).left.map(e => problem(e.message.value)))
+      resolving(dir, file).flatMap(k => dir.onDiskFile(k).left.map(e => problem(e.message.sentence)))
 
     /** `pg_restore --clean --if-exists`. NOTE: `pg_restore` exits 0 even when it skipped statements the server did not
       * understand (a dump taken by a newer `pg_dump` emits `SET transaction_timeout`, which Postgres < 17 rejects), so
@@ -319,7 +320,7 @@ object BackupService:
       for
         t <- target
         pgRestore <- exe("pg_restore")
-        file <- store.onDisk(archive).left.map(e => problem(e.message.value))
+        file <- store.onDisk(archive).left.map(e => problem(e.message.sentence))
         started = System.nanoTime()
         res <- run(
           List(pgRestore) ++ command(t.args*) ++
@@ -328,7 +329,7 @@ object BackupService:
         warnings <- Backup
           .restoreOutcome(Backup.ExitCode(res._1.value), res._2.map(Backup.ToolOutput(_)))
           .left
-          .map(m => problem(m.value))
+          .map(m => problem(m.sentence))
       yield (RestoreDuration((System.nanoTime() - started) / 1000000L), warnings.map(o => RestoreNote(o.value)))
 
     def guardedRows: RowCount =
@@ -356,7 +357,7 @@ object BackupService:
             dir
               .put(key, ByteSource.Content(dumped))
               .left
-              .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.value}"))
+              .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.sentence}"))
               .map(s =>
                 Backup.Result(
                   Backup.Result.File(name.value),
@@ -371,7 +372,7 @@ object BackupService:
     def list: Either[Api.Error, List[Backup.Info]] = listing(store)
     def resolve(file: PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
     def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile] =
-      resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => problem(e.message.value)))
+      resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => problem(e.message.sentence)))
     def restore(archive: Store.Key): Either[Api.Error, (RestoreDuration, List[RestoreNote])] =
       store.get(archive).toRight(Backup.missing(Backup.Result.File(archive.value))).map(_ => (RestoreDuration(0L), Nil))
     def guardedRows: RowCount = rows.get

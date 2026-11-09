@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentsControllers
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
@@ -99,7 +100,7 @@ final class AcquireRecheckService(
 
   private def jobIdOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
 
-  private def stopReason(j: JobInfo): String = j.error.fold("stopped")(_.value)
+  private def stopReason(j: JobInfo): String = j.error.fold("stopped")(_.sentence)
 
   private def resumable(j: JobInfo): Boolean =
     j.status == JobState.Failed.wire && j.error.exists(e => Stopped.from(e).cause.resumable)
@@ -107,7 +108,7 @@ final class AcquireRecheckService(
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
 
-  private def error(message: String): Api.Error = Api.Error(Problem(message))
+  private def error(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -213,14 +214,26 @@ final class AcquireRecheckService(
         .exists(i => i.list == Queue.Kind.Acquire.label && i.status.value == Queue.Open)
     ) match
       case Some(id) =>
-        Left(Api.Error(Problem(s"no open acquisition item #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case None if in.limit.exists(_.value < 0)    => Left(Write.invalid(Problem("--limit is 0 or more")))
+        Left(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"no open acquisition item #$id")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
+        )
+      case None if in.limit.exists(_.value < 0) =>
+        Left(Write.invalid(Problem.Unclassified(Legacy.Text("--limit is 0 or more"))))
       case None if in.all.value && in.id.isDefined =>
-        Left(Write.invalid(Problem("--all re-checks every open item; --id one of them — not both")))
+        Left(
+          Write.invalid(
+            Problem.Unclassified(Legacy.Text("--all re-checks every open item; --id one of them — not both"))
+          )
+        )
       case None if in.all.value && in.limit.isDefined =>
         Left(
           Write.invalid(
-            Problem("--all re-checks every open item, past every cap; --limit caps a pass — not both")
+            Problem.Unclassified(
+              Legacy.Text("--all re-checks every open item, past every cap; --limit caps a pass — not both")
+            )
           )
         )
       case None if !in.dryRun.value && jobSlot.isRunning => Left(busy)
@@ -342,7 +355,7 @@ final class AcquireRecheckService(
           case Right(job) =>
             Some(Line(s"acquire re-check: job ${j.id} (${stopReason(j)}) resumed as job ${job.id}"))
           case Left(e) =>
-            scribe.warn(s"acquire re-check: job ${j.id} could not be resumed: ${e.message}")
+            scribe.warn(s"acquire re-check: job ${j.id} could not be resumed: ${e.message.sentence}")
             None
       }
     }
@@ -379,7 +392,7 @@ final class AcquireRecheckService(
       val up = upstream()
       if !up.connected then
         BackgroundJob.Outcome.failed(
-          Problem("the acquisition toolset is not connected: nothing tried")
+          Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected: nothing tried"))
         )
       else
         val gen = up.fetcherGeneration
@@ -444,7 +457,10 @@ final class AcquireRecheckService(
             )
           )
         stop.fold(BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary(line.value)))(why =>
-          BackgroundJob.Outcome(Some(BackgroundJob.Outcome.Summary(line.value)), Some(Problem(why)))
+          BackgroundJob.Outcome(
+            Some(BackgroundJob.Outcome.Summary(line.value)),
+            Some(Problem.Unclassified(Legacy.Text(why)))
+          )
         )
     finally passing.unlock()
 
@@ -519,7 +535,7 @@ final class AcquireRecheckService(
             RecheckRow.Item(f.item.id.value),
             doiOf(f).map(apiDoi),
             RecheckRow.Action(if i < picks.size then WouldTry else Due),
-            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${l.reason}")),
+            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${l.reason.sentence}")),
             into.map(apiCk)
           )
         } ++ (if in.id.isDefined then noDoi else Nil)
@@ -570,7 +586,7 @@ final class AcquireRecheckService(
       Queue.fulfil(f.item, apiCk(citekey), job.map(j => Queue.QueueItem.ClosedBy(j.value)))
     ) match
       case Left(e) =>
-        scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message}")
+        scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message.sentence}")
         None
       case Right(_) =>
         checks.record(
@@ -578,7 +594,7 @@ final class AcquireRecheckService(
           now,
           generation,
           Outcome.Closed,
-          domain.Problem(AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value)).value)
+          AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value))
         )
         Some(
           RecheckRow(
@@ -604,18 +620,18 @@ final class AcquireRecheckService(
         try
           upstream().ingestLegalInto(d, into) match
             case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey))
-            case Left(m)  => (AcquireRecheck.failure(domain.Problem(m.value)), m.value, into.map(apiCk))
+            case Left(m)  => (AcquireRecheck.failure(m), m.sentence, into.map(apiCk))
         catch
           case e: InterruptedException => throw e
           case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
     val why = AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail))
-    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, domain.Problem(why.value))
+    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, why)
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),
         doi.map(apiDoi),
         RecheckRow.Action(outcome.wire.value),
-        RecheckRow.Detail(why.value),
+        RecheckRow.Detail(why.sentence),
         ck
       ),
       outcome,

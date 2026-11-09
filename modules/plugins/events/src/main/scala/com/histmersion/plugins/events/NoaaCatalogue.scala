@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.{ACursor, Json}
@@ -36,19 +36,18 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[plugin.Problem, CataloguePage] =
+  ): Either[Problem, CataloguePage] =
     part.value match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt
         val ds = NoaaCatalogue.Dataset(dataset)
         CatalogueJson(http)(
           NoaaCatalogue.url(cfg.url, ds, query.from, query.to, NoaaCatalogue.PageNumber(p), cfg.pageSize)
-        ).left
-          .map(e => plugin.Problem(e.value))
-          .flatMap(j => NoaaCatalogue.parse(ds, j).left.map(e => plugin.Problem(e.value)))
+        )
+          .flatMap(j => NoaaCatalogue.parse(ds, j))
           .map((rs, pages) => CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}"))))
       case other =>
-        Left(plugin.Problem(s"'$other' is no page of NOAA's datasets"))
+        Left(Problem.Unclassified(Legacy.Text(s"'$other' is no page of NOAA's datasets")))
 
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
@@ -101,7 +100,7 @@ object NoaaCatalogue:
   def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
     val c = json.hcursor
     c.downField("items").focus.flatMap(_.asArray) match
-      case None        => Left(Problem("no items in the answer"))
+      case None        => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
       case Some(items) =>
         Right((items.toList.flatMap(i => record(dataset, i.hcursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 

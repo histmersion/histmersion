@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.library.CalibreEntryCheck
 import com.monovore.decline.Command
 import com.histmersion.api.library.AuthorName
@@ -95,16 +95,16 @@ class DeleteCmdSuite extends munit.FunSuite:
         CalibreCliConfig.LibraryDir("/lib"),
         _ => fail("not read without a library")
       ),
-      CalibreEntryCheck.Unchecked(Problem("no Calibre library at /lib"))
+      CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text("no Calibre library at /lib")))
     )
     assertEquals(
       DeleteCmd.calibreCheck(
         Source.CalibreId("1885"),
         true,
         CalibreCliConfig.LibraryDir("/lib"),
-        _ => Left(Problem("sqlite3: locked\nmore"))
+        _ => Left(Problem.Unclassified(Legacy.Text("sqlite3: locked\nmore")))
       ),
-      CalibreEntryCheck.Unchecked(Problem("sqlite3: locked"))
+      CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text("sqlite3: locked")))
     )
     assert(
       DeleteCmd

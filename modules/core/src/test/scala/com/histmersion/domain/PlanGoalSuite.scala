@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -45,8 +47,8 @@ class PlanGoalSuite extends munit.FunSuite:
       ),
       List(PlanAnswer.Queries("Bronze Age tin"), PlanAnswer.Queries("bronze age tin")),
       List(
-        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), Problem("the isotopes")),
-        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Problem("again"))
+        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), Problem.Unclassified(Legacy.Text("the isotopes"))),
+        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Problem.Unclassified(Legacy.Text("again")))
       )
     )
     val (p, warns) = check(a, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).toOption.get
@@ -72,21 +74,21 @@ class PlanGoalSuite extends munit.FunSuite:
         SubGoalAnswer(SubGoalAnswer.Slug("ok-slug"), SubGoalAnswer.Title(" "))
       ),
       List(PlanAnswer.Queries("x" * 41)),
-      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Problem("?")))
+      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Problem.Unclassified(Legacy.Text("?"))))
     )
     val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).left.toOption.get
-    assert(ps.exists(_.value.contains("invalid slug")), ps)
-    assert(ps.exists(_.value.contains("has no title")), ps)
-    assert(ps.exists(_.value.contains("longer than 40")), ps)
-    assert(ps.exists(_.value.contains("is not a DOI")), ps)
+    assert(ps.exists(_.sentence.contains("invalid slug")), ps)
+    assert(ps.exists(_.sentence.contains("has no title")), ps)
+    assert(ps.exists(_.sentence.contains("longer than 40")), ps)
+    assert(ps.exists(_.sentence.contains("is not a DOI")), ps)
     val tooMany = answer(queries = List(PlanAnswer.Queries("a"), PlanAnswer.Queries("b"), PlanAnswer.Queries("c")))
     assert(
       check(tooMany, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(false)).left
-        .exists(_.exists(_.value.contains("at most 2 queries")))
+        .exists(_.exists(_.sentence.contains("at most 2 queries")))
     )
     assert(
       check(answer(), Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(false)).left
-        .exists(_.exists(_.value.contains("proposes nothing")))
+        .exists(_.exists(_.sentence.contains("proposes nothing")))
     )
 
   test("what a retry cannot change is dropped with a note: the goal itself, an existing goal, a known query"):
@@ -111,13 +113,13 @@ class PlanGoalSuite extends munit.FunSuite:
           SubGoalAnswer(SubGoalAnswer.Slug("BAD SLUG"), SubGoalAnswer.Title("x")),
           SubGoalAnswer(SubGoalAnswer.Slug("good"), SubGoalAnswer.Title("Good"))
         ),
-        works = List(WorkAnswer(WorkAnswer.Doi("nope"), Problem("")))
+        works = List(WorkAnswer(WorkAnswer.Doi("nope"), Problem.Unclassified(Legacy.Text(""))))
       )
     val (p, warns) = check(a, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(true)).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("good"))
     assertEquals(p.works, Nil)
     assert(
-      warns.exists(_.value.contains("not a DOI")) && p.dropped.exists(_.value.contains("invalid slug")),
+      warns.exists(_.sentence.contains("not a DOI")) && p.dropped.exists(_.value.contains("invalid slug")),
       (warns, p.dropped)
     )
 
@@ -127,9 +129,9 @@ class PlanGoalSuite extends munit.FunSuite:
       Nil,
       Nil,
       List(
-        ProposedWork(Doi("10.1000/a"), Problem("a")),
-        ProposedWork(Doi("10.1000/b"), Problem("b")),
-        ProposedWork(Doi("10.1000/c"), Problem("c"))
+        ProposedWork(Doi("10.1000/a"), Problem.Unclassified(Legacy.Text("a"))),
+        ProposedWork(Doi("10.1000/b"), Problem.Unclassified(Legacy.Text("b"))),
+        ProposedWork(Doi("10.1000/c"), Problem.Unclassified(Legacy.Text("c")))
       ),
       Nil
     )
@@ -159,7 +161,7 @@ class PlanGoalSuite extends munit.FunSuite:
               isRetracted = Work.IsRetracted(true)
             )
           )
-        case _ => Left(Problem("404 from Crossref"))
+        case _ => Left(Problem.Unclassified(Legacy.Text("404 from Crossref")))
       }
     val plan = verify(p, Goal.Slug("g"), lookup)
     assertEquals(
@@ -172,7 +174,7 @@ class PlanGoalSuite extends munit.FunSuite:
           Nil,
           Some(com.histmersion.api.library.Citekey("a2020_x")),
           inCorpus = PlannedWork.InCorpus(true),
-          why = api.Problem("a")
+          why = Problem.Unclassified(Legacy.Text("a"))
         )
       )
     )
@@ -186,7 +188,7 @@ class PlanGoalSuite extends munit.FunSuite:
         Some(com.histmersion.api.library.Title("Tin isotopes")),
         Some(com.histmersion.api.catalogue.Year(2024)),
         List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")),
-        why = api.Problem("dates the tin")
+        why = Problem.Unclassified(Legacy.Text("dates the tin"))
       )
     val t = acquireText(w, Goal.Slug("bronze-age"))
     assertEquals(

@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -286,7 +286,7 @@ class IngestHttpSuite extends munit.FunSuite:
             cfg,
             ServerConfig.Host("127.0.0.1"),
             ServerConfig.Port(0),
-            FakeConverter(Some(Problem("converter at http://x is unreachable")))
+            FakeConverter(Some(Problem.Unclassified(Legacy.Text("converter at http://x is unreachable"))))
           )
           .start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -396,7 +396,7 @@ class IngestHttpSuite extends munit.FunSuite:
           cfg,
           ServerConfig.Host("127.0.0.1"),
           ServerConfig.Port(0),
-          FakeConverter(Some(Problem("converter exploded")))
+          FakeConverter(Some(Problem.Unclassified(Legacy.Text("converter exploded"))))
         )
         .start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -473,7 +473,7 @@ class IngestHttpSuite extends munit.FunSuite:
     val entered = CountDownLatch(1)
     val release = CountDownLatch(1)
     val conv = new ConverterClient:
-      def health = Left(Problem("converter at http://sidecar did not finish within 5 s"))
+      def health = Left(Problem.Unclassified(Legacy.Text("converter at http://sidecar did not finish within 5 s")))
       def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)

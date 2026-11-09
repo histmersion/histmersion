@@ -1,7 +1,8 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.backup.Backup
 import com.histmersion.web.{ApiClient, Auth}
 import com.raquo.laminar.api.L.*
@@ -71,12 +72,13 @@ object BackupsSection:
             )
           ),
           child.maybe <-- said.signal.map(_.map {
-            case Left(why) => ErrorLine.text(Problem(why.value))
+            case Left(why) => ErrorLine.text(why)
             case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
           }),
           child <-- list.signal.map {
-            case None             => p(cls := "muted", "Loading…")
-            case Some(Left(m))    => ErrorLine.text(Problem(s"Could not list the backups: $m"))
+            case None          => p(cls := "muted", "Loading…")
+            case Some(Left(m)) =>
+              ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not list the backups: ${m.sentence}")))
             case Some(Right(Nil)) => p(cls := "muted", "No backup yet.")
             case Some(Right(bs))  =>
               table(

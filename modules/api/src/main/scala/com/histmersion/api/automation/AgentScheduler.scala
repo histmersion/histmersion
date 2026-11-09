@@ -1,6 +1,8 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -29,7 +31,7 @@ object AgentScheduler:
       jobType: Started.JobType,
       target: Started.Target,
       goal: Option[Goal.Slug] = None,
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -56,7 +58,7 @@ object AgentScheduler:
       priority: Waiting.Priority = Waiting.Priority(0),
       waitedMinutes: Waiting.WaitedMinutes = Waiting.WaitedMinutes((0).toLong),
       code: Waiting.Code = Waiting.Code(""),
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       behind: List[Waiting.Behind] = Nil,
       position: Waiting.Position = Waiting.Position(0)
   ) derives KindlingsCodecAsObject,
@@ -184,7 +186,7 @@ object AgentScheduler:
       target: WhyInfo.Target = WhyInfo.Target(""),
       status: WhyInfo.Status = WhyInfo.Status(""),
       code: WhyInfo.Code = WhyInfo.Code(""),
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       behind: List[WhyInfo.Behind] = Nil,
       position: WhyInfo.Position = WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,

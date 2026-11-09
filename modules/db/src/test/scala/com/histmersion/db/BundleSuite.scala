@@ -1,7 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -447,7 +448,7 @@ class BundleSuite extends DbSuite with Bounded:
       QueueAdd(
         Queue.QueueItem.Text("read alpha"),
         Some(Queue.QueueItem.Topic("Hittites")),
-        reason = Some(Problem("why"))
+        reason = Some(Problem.Unclassified(Legacy.Text("why")))
       )
     )
     val _ = QueueRows.add(
@@ -506,14 +507,14 @@ class BundleSuite extends DbSuite with Bounded:
   private def entries(bundle: Array[Byte]): List[(String, Array[Byte])] =
     val r = BundleTar.Reader(java.io.ByteArrayInputStream(bundle))
     Iterator
-      .continually(r.next().fold(e => fail(e.value), identity))
+      .continually(r.next().fold(e => fail(e.sentence), identity))
       .takeWhile(_.isDefined)
       .flatten
       .map(e => e.name.value -> r.readAll())
       .toList
 
   private def manifestOf(bundle: Array[Byte]): Bundle.Manifest =
-    BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e.value), identity)
+    BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e.sentence), identity)
 
   private def importInto(
       ds: DataSource,
@@ -757,7 +758,7 @@ class BundleSuite extends DbSuite with Bounded:
       )
     entries(bundle).tail
       .filterNot(e => gone(e._1))
-      .foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
+      .foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.sentence), identity))
     w.finish()
     out.toByteArray
 
@@ -1014,7 +1015,7 @@ class BundleSuite extends DbSuite with Bounded:
     def rebuild(f: ((String, Array[Byte])) => (String, Array[Byte])): Array[Byte] =
       val out = java.io.ByteArrayOutputStream()
       val w = BundleTar.Writer(out)
-      es.map(f).foreach((p, b) => w.bytes(BundleTar.Entry.Name(p), b).fold(e => fail(e.value), identity))
+      es.map(f).foreach((p, b) => w.bytes(BundleTar.Entry.Name(p), b).fold(e => fail(e.sentence), identity))
       w.finish()
       out.toByteArray
     def verify(b: Array[Byte]) =

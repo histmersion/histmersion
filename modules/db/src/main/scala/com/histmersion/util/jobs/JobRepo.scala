@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.given
 
 import com.histmersion.config.*
@@ -61,7 +62,7 @@ object JobRepo:
       JobInfo.Status(r.status.value),
       r.citekey.map(c => Citekey(c.value)),
       r.progress.map(p => JobInfo.Progress(p.value)),
-      r.error.map(e => api.Problem(e.value)),
+      r.error,
       r.sha256.map(h => Sha256(h.value)),
       JobInfo.CreatedAt(r.createdAt.value),
       JobInfo.UpdatedAt(r.updatedAt.value),
@@ -179,7 +180,7 @@ object JobRepo:
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[JobInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(Param.S.V(c.value)))) match
-      case Some(c) => Left(Problem(s"No job '${c.value}' to page from"))
+      case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No job '${c.value}' to page from")))
       case None    =>
         val (rows, more) = Keyset.pageOn[JobRow](
           select,
@@ -235,7 +236,7 @@ object JobRepo:
     */
   def failInterrupted(except: List[Job.Id] = Nil)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.InterruptedSentence},
+      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.InterruptedSentence.sentence},
                           progress = NULL, updated_at = now()
           WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
             AND kind <> ${AgentJobKinds.Agent.kind}
@@ -330,7 +331,7 @@ object JobRepo:
       queued: RunRow.Status,
       except: List[Run.Id]
   )(using DbCon): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-    val moved = sql"""UPDATE jobs SET status = $paused, error = $error, updated_at = now()
+    val moved = sql"""UPDATE jobs SET status = $paused, error = ${error.sentence}, updated_at = now()
                       WHERE kind = $kind AND status = $running AND NOT (id = ANY($except::text[]))
                       RETURNING id, origin""".query[(Run.Id, Option[RunRow.Origin])].run()
     val waiting = sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $queued
@@ -389,7 +390,7 @@ object JobRepo:
           MergeApplyJob.OfPlanHash(plan),
           MergeApplyJob.OfElapsedMs(math.max(0L, ms)),
           error
-            .map(Problem(_))
+            .map((text => Problem.Unclassified(Legacy.Text(text))))
             .map(p =>
               if p == JobState.InterruptedSentence then MergeApplyJob.Failure.Interrupted
               else MergeApplyJob.Failure.Other(p)

@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -225,7 +226,7 @@ class MediaCollectionsJobSuite extends DbSuite:
         ImportFixtures.Limit(10_000),
         refresh = ImportFixtures.Refresh(false)
       )
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id.value).toSet), ts.toString)
     assert(
       ImportFixtures

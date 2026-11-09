@@ -1,6 +1,7 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import org.ekrich.config.{
   ConfigException,
   ConfigFactory,
@@ -64,11 +65,12 @@ object SettingValue:
     val t = Option(raw).map(_.value).getOrElse("")
     kind match
       case SettingKind.Text   => Right(Text(Text.Value(t)))
-      case SettingKind.Number => number(t).toRight(Problem(s"'${t.trim}' is not a number"))
-      case SettingKind.Flag   => flag(t).toRight(Problem(s"'${t.trim}' is not true or false"))
+      case SettingKind.Number => number(t).toRight(Problem.Unclassified(Legacy.Text(s"'${t.trim}' is not a number")))
+      case SettingKind.Flag   => flag(t).toRight(Problem.Unclassified(Legacy.Text(s"'${t.trim}' is not true or false")))
       case SettingKind.Items  => items(t)
-      case SettingKind.Block  => Left(Problem("this is a block of settings: set one of the keys inside it"))
-      case SettingKind.Any    =>
+      case SettingKind.Block  =>
+        Left(Problem.Unclassified(Legacy.Text("this is a block of settings: set one of the keys inside it")))
+      case SettingKind.Any =>
         Right(
           flag(t)
             .orElse(number(t))
@@ -92,11 +94,16 @@ object SettingValue:
     else if s.startsWith("[") then
       try
         ConfigFactory.parseString(s"v = $s").getValue("v") match
-          case l: ConfigList => fromConfig(l).toRight(Problem(s"'$s' holds something other than plain values"))
-          case _             => Left(Problem(s"'$s' is not a list"))
+          case l: ConfigList =>
+            fromConfig(l).toRight(Problem.Unclassified(Legacy.Text(s"'$s' holds something other than plain values")))
+          case _ => Left(Problem.Unclassified(Legacy.Text(s"'$s' is not a list")))
       catch
         case e: ConfigException =>
-          Left(Problem(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}"))
+          Left(
+            Problem.Unclassified(
+              Legacy.Text(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}")
+            )
+          )
     else Right(Items(s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(x => Text(Text.Value(x)))))
 
   /** A value as HOCON holds it — `None` for an object or null. */

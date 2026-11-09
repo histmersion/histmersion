@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -129,7 +130,7 @@ final class CompileArticlePipeline(
 
   private def snapshot(ctx: RunCtx, target: RunInfo.Target): Either[String, Snap] =
     val p = ctx.run.params
-    Slug.parse(target.value).left.map(_.value).flatMap { slug =>
+    Slug.parse(target.value).left.map(_.sentence).flatMap { slug =>
       site.articles.get(slug) match
         case Right(v) =>
           val a = v.article
@@ -175,7 +176,7 @@ final class CompileArticlePipeline(
               f
             )
           )
-        case Left(e) => Left(e.message.value)
+        case Left(e) => Left(e.message.sentence)
     }
 
   private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
@@ -250,9 +251,7 @@ final class CompileArticlePipeline(
                   MaxClaims(research.compile.maxClaims.value),
                   CompileArticle.Last(last.value)
                 )
-                .left
-                .map(_.map(p => Problem(p.value)))
-                .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
+                .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
             }
             .map(sofar :+ _)
         }
@@ -328,9 +327,7 @@ final class CompileArticlePipeline(
             corpus,
             CompileArticle.Last(last.value)
           )
-          .left
-          .map(_.map(p => Problem(p.value)))
-          .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
+          .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
       }
     }
 
@@ -349,13 +346,19 @@ final class CompileArticlePipeline(
         site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ())
       )(Right(()))
     if !decided.approved.value then
-      Right(Written(written = Written.Value(false), Problem("the draft was rejected"), None))
+      Right(Written(written = Written.Value(false), Problem.Unclassified(Legacy.Text("the draft was rejected")), None))
     else
       d.mode match
         case DraftMode.Create =>
           if site.articleStore.exists(s.slug) then
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
-            Right(Written(written = Written.Value(false), Problem("the slug was taken meanwhile"), None))
+            Right(
+              Written(
+                written = Written.Value(false),
+                Problem.Unclassified(Legacy.Text("the slug was taken meanwhile")),
+                None
+              )
+            )
           else
             val put = Article.Put(
               d.title,
@@ -370,13 +373,23 @@ final class CompileArticlePipeline(
               site.articles
                 .put(s.slug, put)
                 .left
-                .map(_.message.value)
-                .map(_ => Written(written = Written.Value(true), Problem("created"), None))
-            )(Right(Written(written = Written.Value(false), Problem(AgentsMarkdown.DryRunNote), None)))
+                .map(_.message.sentence)
+                .map(_ => Written(written = Written.Value(true), Problem.Unclassified(Legacy.Text("created")), None))
+            )(
+              Right(
+                Written(
+                  written = Written.Value(false),
+                  Problem.Unclassified(Legacy.Text(AgentsMarkdown.DryRunNote)),
+                  None
+                )
+              )
+            )
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale =
-            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(api.Problem("")))
+            s.reasons
+              .filter(r => d.cited.contains(r.citekey))
+              .map(_.modify(_.reason).setTo(Problem.Unclassified(Legacy.Text(""))))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),
@@ -388,12 +401,18 @@ final class CompileArticlePipeline(
             site.articles.patch(s.slug, patch).map(_ => true)
           )(Right(false)) match
             case Right(false) =>
-              Right(Written(written = Written.Value(false), Problem(AgentsMarkdown.DryRunNote), None))
+              Right(
+                Written(
+                  written = Written.Value(false),
+                  Problem.Unclassified(Legacy.Text(AgentsMarkdown.DryRunNote)),
+                  None
+                )
+              )
             case Right(_) =>
               Right(
                 Written(
                   written = Written.Value(true),
-                  Problem("appended"),
+                  Problem.Unclassified(Legacy.Text("appended")),
                   site.articleStore.latestVersion(s.slug).map(v => Written.PreviousVersion(v.value))
                 )
               )
@@ -401,8 +420,14 @@ final class CompileArticlePipeline(
               task(
                 "the article changed while the draft waited for approval; the section was NOT appended — compile again"
               )
-              Right(Written(written = Written.Value(false), Problem("the article changed meanwhile"), None))
-            case Left(e) => Left(e.message.value)
+              Right(
+                Written(
+                  written = Written.Value(false),
+                  Problem.Unclassified(Legacy.Text("the article changed meanwhile")),
+                  None
+                )
+              )
+            case Left(e) => Left(e.message.sentence)
 
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
@@ -426,7 +451,7 @@ final class CompileArticlePipeline(
       ) match
         case Right(r) => Some(r.id.value)
         case Left(e)  =>
-          ctx.warn(s"review: no review-article run started — ${e.message}; run it by hand")
+          ctx.warn(s"review: no review-article run started — ${e.message.sentence}; run it by hand")
           None
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
@@ -449,7 +474,7 @@ final class CompileArticlePipeline(
         .logLine(
           d,
           CompileArticle.Written(w.written.value),
-          domain.Problem(w.why.value),
+          w.why,
           review.map(Run.Id.assume(_)),
           ctx.runId
         )
@@ -457,7 +482,7 @@ final class CompileArticlePipeline(
     )
 
   private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
 
 object CompileArticlePipeline:
 

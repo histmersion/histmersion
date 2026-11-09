@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.Write
@@ -87,7 +87,9 @@ object MergeRepo:
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
         Api.Error(
-          api.Problem(s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)"),
+          Problem.Unclassified(
+            Legacy.Text(s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)")
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -105,14 +107,14 @@ object MergeRepo:
         case Nil     =>
           Left(
             Api.Error(
-              api.Problem(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)"),
+              Problem.Unclassified(Legacy.Text(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)")),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
         case _ =>
           Left(
             Api.Error(
-              api.Problem(s"'$idOrPrefix' names more than one merge — give more of its id"),
+              Problem.Unclassified(Legacy.Text(s"'$idOrPrefix' names more than one merge — give more of its id")),
               Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
@@ -165,7 +167,7 @@ object MergeRepo:
           .map(Some(_))
           .toRight(
             Api.Error(
-              api.Problem(s"'$u' is neither a uid nor a citekey here"),
+              Problem.Unclassified(Legacy.Text(s"'$u' is neither a uid nor a citekey here")),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )

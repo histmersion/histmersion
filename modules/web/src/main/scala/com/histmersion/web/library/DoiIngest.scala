@@ -1,7 +1,6 @@
 package com.histmersion
 package web.library
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 /** "Add by DOI": what a person types — a DOI, a doi.org link, `arxiv:<id>` or a bare arXiv id — as the ingest the
   * server is asked for. The web UI asks the LEGAL open-access chain only, always: the server's configuration may allow
@@ -19,7 +18,11 @@ object DoiIngest:
   def request(typed: String): Either[Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
     if t.isEmpty then
-      Left(Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234).")
+        )
+      )
     else if t.matches(Doi) then
       Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly(true)))
     else if t.matches(Arxiv) then
@@ -29,4 +32,4 @@ object DoiIngest:
           legalOnly = Ingest.Request.LegalOnly(true)
         )
       )
-    else Left(Problem(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id."))
+    else Left(Problem.Unclassified(Legacy.Text(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id.")))

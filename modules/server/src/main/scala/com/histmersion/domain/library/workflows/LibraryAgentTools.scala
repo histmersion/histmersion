@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.SearchMarkdown
@@ -71,7 +72,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             bodyChars(in.chars)
           )
           .fold(
-            e => s"No source '${in.citekey}': ${e.message}",
+            e => s"No source '${in.citekey}': ${e.message.sentence}",
             md =>
               section.map(_.value.toLowerCase) match
                 case None | Some("all") =>
@@ -128,7 +129,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             facetsIn.toFilter
           )
           .fold(
-            e => e.message.value,
+            e => e.message.sentence,
             fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`")
           )
       }
@@ -155,7 +156,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         site.query
           .run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value)))
-          .fold(e => e.message.value, r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
+          .fold(e => e.message.sentence, r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
       }
     },
     contribution(LibraryAgentTools.Followups) {
@@ -167,7 +168,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         upstream()
           .followups(AgentUpstream.FollowupsId(in.id.value), in.since, in.limit)
           .fold(
-            m => s"followups unavailable: $m",
+            m => s"followups unavailable: ${m.sentence}",
             r => cap(AcquireMarkdown.followups(r), max, "ask for fewer papers (`limit`) or recent ones (`since`)")
           )
       }

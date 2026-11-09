@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -120,7 +121,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       else
         Lpf
           .parse(text, com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value)))
-          .fold(e => fail(s"$f: $e"), identity)
+          .fold(e => fail(s"$f: ${e.sentence}"), identity)
           .filter(in => Wanted.contains(in.place.id.value))
     }
 
@@ -197,12 +198,12 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     val before = names(Galilee)
     val r = PlaceFixtures
       .addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en"))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
     val again = PlaceFixtures
       .addName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en"))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((again.changed, again.wasImported), (true, true))
     assertEquals(
       PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).map(_.changed),
@@ -264,8 +265,8 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
           lang = Some(com.histmersion.api.catalogue.Place.Add.Lang("hr"))
         )
       )
-      .fold(e => fail(e.message.value), identity)
-    val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
+    val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message.sentence), identity)
     assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", Place.Kind.Site, Some("fixture: a hand-checked map")))
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")

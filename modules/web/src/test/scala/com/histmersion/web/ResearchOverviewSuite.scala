@@ -1,8 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.automation.Manager
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -167,7 +167,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
         Autopilot.FocusWaiting(
           Autopilot.FocusWaiting.Slug("a"),
           Autopilot.FocusWaiting.Code("person"),
-          Problem("an approval only a person decides")
+          Problem.Unclassified(Legacy.Text("an approval only a person decides"))
         )
       )
     )

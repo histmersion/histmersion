@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Stopped
 import com.histmersion.api.automation.{Goal as ApiGoal, Managers, Queue}
@@ -219,7 +219,7 @@ object RunService:
       Count(n)
     private def info(r: JobRunState): RunInfo =
       val ss = stepsOf(jobOf(r)).map(_.step)
-      val error = r.error.map(e => Problem(e.value))
+      val error = r.error
       val status = RunInfo.Status(r.row.status.value)
       RunInfo(
         RunInfo.Id(r.id.value),
@@ -315,7 +315,7 @@ object RunService:
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
       val cursors = before.toList ++ upTo.toList.map(u => AgentRepo.PageCursor(u.value))
       cursors.find(c => runOf(c).isEmpty) match
-        case Some(c) => Left(Problem(s"No agent run '${c.value}' to page from"))
+        case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No agent run '${c.value}' to page from")))
         case None    =>
           val ordering = summon[Ordering[(Instant, Long)]]
           val all = newest(runs.filter(matches(q, "")))
@@ -415,7 +415,7 @@ object RunService:
           r.promptHash.map(h => StepInfo.PromptHash(h.value)),
           r.usage,
           StepInfo.CostUsd(r.costUsd.toDouble),
-          r.error.map(e => Problem(e.value)),
+          r.error,
           r.output.map(o => StepInfo.Output(o.value.take(outputChars.value))),
           StepInfo.StartedAt(text(r.startedAt)),
           StepInfo.FinishedAt(text(s.finishedAt)),

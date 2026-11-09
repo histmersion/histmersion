@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import scala.annotation.tailrec
 import org.ekrich.config.{
   Config,
@@ -107,7 +108,10 @@ private[config] object ConfigLayers:
           if !Try(known.hasPathOrNull(path)).getOrElse(false) then loop(tail, settings, unknown :+ Keys.Unknown(path))
           else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
             if isBlock then loop(tail, settings, unknown)
-            else Left(Problem(s"'$path' is a block of settings ($path { … }), not a single value"))
+            else
+              Left(
+                Problem.Unclassified(Legacy.Text(s"'$path' is a block of settings ($path { … }), not a single value"))
+              )
           else loop(tail, settings :+ Keys.Settings(path), unknown)
     loop(leaves(user.root, Nil), Nil, Nil)
 
@@ -137,15 +141,15 @@ private[config] object ConfigLayers:
       case STRING => (v.valueType == STRING || v.valueType == NUMBER || v.valueType == BOOLEAN, "a string")
       case LIST   => (v.valueType == LIST, "a list [ … ]")
       case _      => (true, "")
-    Option.unless(ok)(Problem(s"'$path' must be $want, not $shown"))
+    Option.unless(ok)(Problem.Unclassified(Legacy.Text(s"'$path' must be $want, not $shown")))
 
   /** `file` as HOCON; `None` when there is no such file. */
   def parse(file: Path): Either[Problem, Option[Config]] =
     if !Files.exists(file) then Right(None)
-    else if !Files.isRegularFile(file) then Left(Problem(s"$file is not a file"))
+    else if !Files.isRegularFile(file) then Left(Problem.Unclassified(Legacy.Text(s"$file is not a file")))
     else
       try Right(Some(ConfigFactory.parseFile(file.toFile, ConfigParseOptions.defaults.setAllowMissing(false))))
-      catch case e: ConfigException => Left(Problem(e.getMessage))
+      catch case e: ConfigException => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
 
   /** Is `o` the origin of `file` itself, not of a file it includes? */
   def sameFile(o: ConfigOrigin, file: Path): Boolean =
@@ -156,10 +160,11 @@ private[config] object ConfigLayers:
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
   def describe(err: ConfigDecodingError): Problem =
     err match
-      case ConfigDecodingError.Multiple(errs) => Problem(errs.toList.map(describe).mkString("; "))
-      case e                                  =>
+      case ConfigDecodingError.Multiple(errs) =>
+        Problem.Unclassified(Legacy.Text(errs.toList.map(describe).mkString("; ")))
+      case e =>
         val key = ("histmersion" :: e.path).mkString(".")
-        Problem(s"$key: ${e.message}")
+        Problem.Unclassified(Legacy.Text(s"$key: ${e.message}"))
 
   /** The three layers resolved: env overrides > `user` > reference.conf, with the environment also available to
     * substitutions (`${?VAR}`) in the user file.

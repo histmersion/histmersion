@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.{TimeSpan, Years}
 import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -130,12 +130,16 @@ object CatalogMerge:
       def storedMatch: Option[Placement] =
         byKey
           .get(r.key)
-          .map(Placement.Existing(_, Problem(s"${r.provider} ${r.providerId} already recorded")))
+          .map(
+            Placement.Existing(_, Problem.Unclassified(Legacy.Text(s"${r.provider} ${r.providerId} already recorded")))
+          )
           .orElse(
             r.wikidata
               .flatMap(q => byWd.get(q))
               .flatMap(es => best(es)(ofStored(r)))
-              .map(e => Placement.Existing(e.id, Problem(s"same Wikidata item ${r.wikidata.get}")))
+              .map(e =>
+                Placement.Existing(e.id, Problem.Unclassified(Legacy.Text(s"same Wikidata item ${r.wikidata.get}")))
+              )
           )
           .orElse(
             best(
@@ -149,7 +153,9 @@ object CatalogMerge:
                 Placement
                   .Existing(
                     e.id,
-                    Problem(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'")
+                    Problem.Unclassified(
+                      Legacy.Text(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'")
+                    )
                   )
               )
           )
@@ -174,13 +180,15 @@ object CatalogMerge:
           )
           .map {
             case Placement.Existing(id, _) =>
-              Placement.Existing(id, Problem("merged with another record of this run"))
+              Placement.Existing(id, Problem.Unclassified(Legacy.Text("merged with another record of this run")))
             case Placement.New(id, _) =>
-              Placement.New(id, Problem("merged with another catalogue's record of it"))
+              Placement.New(id, Problem.Unclassified(Legacy.Text("merged with another catalogue's record of it")))
           }
       val p = storedMatch
         .orElse(runMatch)
-        .getOrElse(Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Problem("new")))
+        .getOrElse(
+          Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Problem.Unclassified(Legacy.Text("new")))
+        )
       acc :+ ((i, r, p))
     }
     placed.sortBy(_._1).map((_, r, p) => r -> p).toList

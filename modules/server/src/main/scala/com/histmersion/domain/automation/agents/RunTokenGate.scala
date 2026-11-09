@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import io.netty.buffer.Unpooled
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.*
@@ -28,7 +29,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
     discarding = !req.isInstanceOf[LastHttpContent]
     val keepAlive = HttpUtil.isKeepAlive(req)
     val _ = ReferenceCountUtil.release(req)
-    val body = s"""{"message":"$msg"}""".getBytes(StandardCharsets.UTF_8)
+    val body = s"""{"message":"${msg.sentence}"}""".getBytes(StandardCharsets.UTF_8)
     val resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.wrappedBuffer(body))
     resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json")
     resp.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, body.length)
@@ -46,14 +47,19 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
           tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)) match
             case None =>
               scribe.warn(s"agent MCP: refused a request to $path without a live run token")
-              refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, Problem("a live run token is required"))
+              refuse(
+                ctx,
+                req,
+                HttpResponseStatus.UNAUTHORIZED,
+                Problem.Unclassified(Legacy.Text("a live run token is required"))
+              )
             case Some(g) if path != RunTokens.Path && path != s"${RunTokens.Path}/${g.agent}" =>
               scribe.warn(s"agent MCP: a token of ${g.agent} (run ${g.run.getOrElse("-")}) asked for $path — refused")
               refuse(
                 ctx,
                 req,
                 HttpResponseStatus.FORBIDDEN,
-                Problem("this run token is not for that agent")
+                Problem.Unclassified(Legacy.Text("this run token is not for that agent"))
               )
             case Some(g) =>
               if path == RunTokens.Path then

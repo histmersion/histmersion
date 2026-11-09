@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.ByteCount
 import com.histmersion.api.Sha256
 import com.histmersion.api.given
@@ -41,7 +42,7 @@ object BundleReader:
     @annotation.tailrec
     def loop(first: Boolean): Unit =
       tar.next() match
-        case Left(e)     => problems += e.value
+        case Left(e)     => problems += e.sentence
         case Right(None) =>
           if first then problems += "empty bundle: no manifest.json"
         case Right(Some(e)) =>
@@ -52,7 +53,7 @@ object BundleReader:
             case Bundle.ManifestPath =>
               BundleFormat.parseManifest(tar.readAll()) match
                 case Right(m) => manifest = Some(m)
-                case Left(p)  => problems += p.value
+                case Left(p)  => problems += p.sentence
             case p if Bundle.Files.all.contains(p) =>
               if payloads.contains(p) then problems += s"$p appears twice"
               payloads(p) = tar.readAll()

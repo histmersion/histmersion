@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -23,12 +23,8 @@ final class BitwardenVault(
     for
       i <- Subprocess
         .plain(Vaults.Operation("the item"), Subprocess.Text(item.value))
-        .left
-        .map(e => Problem(e.value))
       g <- Subprocess
         .plain(Vaults.Operation("the field"), Subprocess.Text(f.value))
-        .left
-        .map(e => Problem(e.value))
       argv = List(exe.value, "get", g.value, i.value, "--nointeraction").map(a => Processes.RunArgv(a))
       env: Map[EnvVar.Name, EnvVar.Value] = session
         .map(s => Map(EnvVar.Name("BW_SESSION") -> EnvVar.Value(s.value)))

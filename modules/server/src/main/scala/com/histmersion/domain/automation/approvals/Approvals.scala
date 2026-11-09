@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -31,7 +32,8 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[Problem, String] = _ => Left(Problem("no managers to apply it"))
+    applyHint: Managers.HintProposal => Either[Problem, String] = _ =>
+      Left(Problem.Unclassified(Legacy.Text("no managers to apply it")))
 ):
 
   def list(
@@ -55,7 +57,7 @@ final class Approvals(
       page <- store
         .approvalPage(q, limit, before, upTo)
         .left
-        .map(m => Api.Error(Problem(m.value), Some(Api.Error.Code(Write.CodeNotFound))))
+        .map(m => Api.Error(m, Some(Api.Error.Code(Write.CodeNotFound))))
     yield
       val (rows, more) = page
       val (counts, facets) = store.approvalFacets(q)
@@ -80,8 +82,9 @@ final class Approvals(
           .map(Some(_))
           .toRight(
             Api.Error(
-              Problem(
-                s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"
+              Problem.Unclassified(
+                Legacy
+                  .Text(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})")
               )
             )
           )
@@ -99,15 +102,17 @@ final class Approvals(
     for
       d <- Decision
         .parse(Decision.Wire(decision.value))
-        .toRight(Api.Error(Problem(s"unknown decision '$decision' (approve or reject)")))
+        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown decision '$decision' (approve or reject)"))))
       a <- store
         .approval(id)
-        .toRight(Api.Error(Problem(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"No approval $id")), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
       _ <- Either.cond(
         a.state == ApprovalState.Open.wire,
         (),
         Api.Error(
-          Problem(s"approval $id is already ${a.state}"),
+          Problem.Unclassified(Legacy.Text(s"approval $id is already ${a.state}")),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -134,7 +139,7 @@ final class Approvals(
         store.decide(id, to, note, None),
         (),
         Api.Error(
-          Problem(s"approval ${a.id} was decided meanwhile"),
+          Problem.Unclassified(Legacy.Text(s"approval ${a.id} was decided meanwhile")),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -142,14 +147,14 @@ final class Approvals(
         case (Decision.Reject, _) => store.settle(id, ApprovalState.Rejected, DomainApproval.Outcome("rejected"))
         case (Decision.Approve, ApprovalKind.HintEffect) =>
           a.hintEffect
-            .toRight(Problem("the approval carries no readable action"))
+            .toRight(Problem.Unclassified(Legacy.Text("the approval carries no readable action")))
             .flatMap(applyHint) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w".take(1000)))
-            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
+            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
         case (Decision.Approve, k) if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
           effects.applySubject(a) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
-            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
+            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
         case (Decision.Approve, _) =>
           store.settle(
             id,
@@ -164,7 +169,9 @@ final class Approvals(
           )
       out <- store
         .approval(id)
-        .toRight(Api.Error(Problem(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"No approval ${a.id}")), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
     yield out
 
   private def decideBlocking(
@@ -181,13 +188,15 @@ final class Approvals(
         store.decide(id, to, note, Some(result)),
         (),
         Api.Error(
-          Problem(s"approval ${a.id} was decided meanwhile"),
+          Problem.Unclassified(Legacy.Text(s"approval ${a.id} was decided meanwhile")),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
       out <- store
         .approval(id)
-        .toRight(Api.Error(Problem(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"No approval ${a.id}")), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
     yield out
 
   private def decideSource(
@@ -199,7 +208,7 @@ final class Approvals(
       apply <- store
         .payload(id)
         .flatMap(p => effects.proposal(ApprovalEffects.Payload(p.value)))
-        .toRight(Api.Error(Problem(s"approval $id carries no readable proposal")))
+        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"approval $id carries no readable proposal"))))
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened
       to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
@@ -207,7 +216,7 @@ final class Approvals(
         store.decide(id, to, clean, None),
         (),
         Api.Error(
-          Problem(s"approval $id was decided meanwhile"),
+          Problem.Unclassified(Legacy.Text(s"approval $id was decided meanwhile")),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -216,8 +225,10 @@ final class Approvals(
         case Decision.Approve =>
           apply() match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
-            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
+            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
       out <- store
         .approval(id)
-        .toRight(Api.Error(Problem(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"No approval $id")), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
     yield out

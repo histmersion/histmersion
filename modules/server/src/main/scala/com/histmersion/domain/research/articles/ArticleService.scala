@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.{ResearchState, Slug}
@@ -272,10 +273,10 @@ object ArticleService:
           case None           => Left(Articles.notFound(Article.Slug(slug.value)))
           case Some(existing) =>
             Articles.precondition(existing, patch) match
-              case Left(msg) => Left(refused(msg.value, Write.CodePrecondition))
+              case Left(msg) => Left(refused(msg.sentence, Write.CodePrecondition))
               case Right(_)  =>
                 Articles.applyPatch(existing, patch) match
-                  case Left(msg)      => Left(refused(msg.value, Write.CodeInvalid))
+                  case Left(msg)      => Left(refused(msg.sentence, Write.CodeInvalid))
                   case Right(updated) =>
                     critiqueRefusal(patch.critiqueReasons) match
                       case Some(refusal) => Left(refusal)
@@ -292,14 +293,14 @@ object ArticleService:
       attempt()
 
     private def refused(message: String, code: String): Api.Error =
-      Api.Error(Problem(message), Some(Api.Error.Code(code)))
+      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(code)))
 
     /** A reason names its two sources by citekey; with no source stored, the first reason is refused as the database
       * refuses it (its text checked first).
       */
     private def critiqueRefusal(reasons: List[CritiqueReason]): Option[Api.Error] =
       val tidy = reasons.map(CritiqueReason.tidy)
-      tidy.collectFirst { case Left(m) => refused(m.value, Write.CodeInvalid) }.orElse {
+      tidy.collectFirst { case Left(m) => refused(m.sentence, Write.CodeInvalid) }.orElse {
         tidy.collectFirst { case Right(r) =>
           refused(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Write.CodeInvalid)
         }
@@ -390,7 +391,7 @@ object ArticleService:
       val rewritten = moved.articles.keys.toList.sorted.filter { s =>
         val a = moved.articles(s).article
         (a.body.value + " " + a.summary
-          .fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
+          .fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k ${v.sentence}").mkString(" ")).toLowerCase
           .contains(needle)
       }
       @tailrec def loop(

@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
@@ -52,13 +52,21 @@ object IngestCmd:
   ): Either[Cli.Error, Unit] =
     if citekey.value.trim.isEmpty then
       Left(
-        Cli.Error(Problem("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage)
+        Cli.Error(
+          Problem.Unclassified(Legacy.Text("uploading a file needs --citekey to store it under")),
+          exitCode = ExitCode.Usage
+        )
       )
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
     else if scala.util.Try(Files.size(file)).getOrElse(0L) == 0L then
-      Left(Cli.Error(Problem(s"$file is empty — there is nothing to convert"), exitCode = ExitCode.Usage))
+      Left(
+        Cli.Error(
+          Problem.Unclassified(Legacy.Text(s"$file is empty — there is nothing to convert")),
+          exitCode = ExitCode.Usage
+        )
+      )
     else
       val prov = provenance.orElse(Some(Ingest.Params.Provenance("manual")))
       val params =

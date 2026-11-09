@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.reading
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
@@ -20,5 +20,5 @@ object ReadingShow:
       .fold[Either[Problem, ReadingShow]](Right(Read))(t =>
         values
           .find(_.wire.value == t)
-          .toRight(Problem(s"show '$t': one of ${values.map(_.wire.value).mkString(", ")}"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"show '$t': one of ${values.map(_.wire.value).mkString(", ")}")))
       )

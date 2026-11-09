@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
@@ -83,9 +83,9 @@ object FocusService:
           FocusRepo.GoalRow.Pinned(f.pinned.value),
           FocusRepo.GoalRow.Priority(f.priority.value),
           t(f.since).map(FocusRepo.GoalRow.Since(_)),
-          f.why.map(w => Problem(w.value)),
+          f.why,
           t(f.leftAt).map(FocusRepo.GoalRow.LeftAt(_)),
-          f.leftWhy.map(w => Problem(w.value))
+          f.leftWhy
         )
       }
     def goalsOf(
@@ -118,7 +118,7 @@ object FocusService:
         .collect {
           case (g, i) if i.status.value == "stopped" || i.status.value == "failed" =>
             com.histmersion.domain.automation.Goal.Slug.assume(g) ->
-              Problem(i.outcome.fold(i.status.value)(_.value))
+              Problem.Unclassified(Legacy.Text(i.outcome.fold(i.status.value)(_.value)))
         }
         .toMap
     def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] =

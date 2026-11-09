@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{GazetteerPlace, Plugin}
 import io.circe.Json
 
@@ -20,8 +20,8 @@ object PleiadesLinks:
   def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.Url =
     Plugin.Http.Url(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
 
-  val OnFlickr: Problem = Problem("on Flickr (its API needs a key)")
-  val Category: Problem = Problem("a Commons category, not a file")
+  val OnFlickr: Problem = Problem.Unclassified(Legacy.Text("on Flickr (its API needs a key)"))
+  val Category: Problem = Problem.Unclassified(Legacy.Text("a Commons category, not a file"))
 
   private val Pictures = """(?i).*\.(jpe?g|png|gif|tiff?|webp)$""".r
   private val PictureHosts = List("geograph.org.uk/photo", "panoramio.com/photo", "/photos/", "/image/", "iiif")
@@ -56,14 +56,14 @@ object PleiadesLinks:
           name
             .map(n => Commons.fileTitle(decode(Text(n))))
             .filter(_.value.nonEmpty)
-            .toRight(Problem("an unreadable Commons file URL"))
+            .toRight(Problem.Unclassified(Legacy.Text("an unreadable Commons file URL")))
         )
       else
         filePart.findFirstMatchIn(u) match
           case Some(m) =>
             Some(
               Right[Problem, Commons.File.Title](Commons.fileTitle(decode(Text(m.group(1)))))
-                .filterOrElse(_.value.nonEmpty, Problem("an unreadable Commons file URL"))
+                .filterOrElse(_.value.nonEmpty, Problem.Unclassified(Legacy.Text("an unreadable Commons file URL")))
             )
           case None if lower.contains("category:") => Some(Left(Category))
           case None                                => None
@@ -71,7 +71,11 @@ object PleiadesLinks:
     else if Pictures.matches(u.split("[?#]").head) || PictureHosts.exists(lower.contains) then
       Some(
         Left(
-          Problem(s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)")
+          Problem.Unclassified(
+            Legacy.Text(
+              s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)"
+            )
+          )
         )
       )
     else None
@@ -81,7 +85,11 @@ object PleiadesLinks:
     val c = json.hcursor
     c.downField("references").focus.flatMap(_.asArray) match
       case None =>
-        Left(Problem(c.str("message").getOrElse("no references in the answer (not a Pleiades place record)")))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(c.str("message").getOrElse("no references in the answer (not a Pleiades place record)"))
+          )
+        )
       case Some(refs) =>
         Right(
           refs.toList

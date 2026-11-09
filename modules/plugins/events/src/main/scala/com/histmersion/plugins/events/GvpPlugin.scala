@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.events
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `events-gvp`: `histmersion events import gvp` — the Smithsonian Global Volcanism Program's Holocene eruptions. */
 import com.histmersion.plugin.Plugin

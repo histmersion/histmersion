@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -59,7 +60,7 @@ class PeriodsSuite extends munit.FunSuite:
     }
   }"""
 
-  private def parsed = PeriodO.parse(dump).fold(e => fail(e.value), identity)
+  private def parsed = PeriodO.parse(dump).fold(e => fail(e.sentence), identity)
   private def byId(ps: List[HistoricalPeriod]) = ps.map(p => p.id -> p).toMap
 
   test("ISO 8601 years count a year 0; signed years do not"):
@@ -284,7 +285,7 @@ class PeriodsSuite extends munit.FunSuite:
   // ── the committed seed: the presets a fresh install gets ──────────────────────────────────────
   private lazy val seed =
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
-    PeriodO.parse(Files.readString(root.resolve("db/periods/periodo-seed.json"))).fold(e => fail(e.value), identity)
+    PeriodO.parse(Files.readString(root.resolve("db/periods/periodo-seed.json"))).fold(e => fail(e.sentence), identity)
 
   test("the seed reads cleanly and every curated parent is in it"):
     // #771: the only definitions left out are EAMENA's two Palaeolithic periods that PeriodO dates
@@ -414,7 +415,7 @@ class PeriodsSuite extends munit.FunSuite:
   test("a seed's presets and version are read; an unknown region heading is refused"):
     val d = PeriodO
       .parse(withOverlay("""{"version": 3, "presets": {"p0aaa01": "aegean", "p0bbb01": "eastern-europe"}}"""))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(d.version, Some(3))
     assertEquals(d.presets, Map("p0aaa01" -> PresetRegion.Aegean, "p0bbb01" -> PresetRegion.EasternEurope))
     assert(d.curated)
@@ -422,7 +423,7 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(rows(HistoricalPeriod.Id("p0aaa01")).preset, Some(PresetRegion.Aegean))
     assertEquals(rows(HistoricalPeriod.Id("p0aaa02")).preset, None)
     val bad = PeriodO.parse(withOverlay("""{"presets": {"p0aaa01": "atlantis"}}"""))
-    assert(bad.left.exists(_.value.contains("atlantis")), bad.toString)
+    assert(bad.left.exists(_.sentence.contains("atlantis")), bad.toString)
     assert(!parsed.curated)
 
   test("a curated seed re-files its own rows; a raw dump keeps where the store has them"):

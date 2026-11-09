@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.config.AppConfig
@@ -44,7 +44,7 @@ final class LibraryWorkflows(
       site.sources
         .patch(p.citekey, p.patch)
         .left
-        .map(e => e.message.transformInto[Problem])
+        .map(e => e.message)
         .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
   )
 

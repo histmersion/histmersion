@@ -76,8 +76,8 @@ class KeyedParsersSuite extends munit.FunSuite:
   test("Smithsonian: records — CC0 from the media item's usage.access, its screen image stored, places and dates"):
     val rs = Smithsonian
       .records(fixture("si-search.json"))
-      .fold(e => fail(e.value), identity)
-      .map(_.fold(e => fail(e.value), identity))
+      .fold(e => fail(e.legacyText), identity)
+      .map(_.fold(e => fail(e.legacyText), identity))
     assertEquals(rs.map(_.key), List("fsg_F1909.1185", "fsg_F1908.119", "fsg_F1916.118"))
     val bead = rs.head
     assertEquals(bead.title, "Bead")
@@ -91,7 +91,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       List("origin" -> "Egypt", "continent" -> "Africa"),
       "Egypt once; then the coarser levels"
     )
-    val rights = bead.rights.fold(e => fail(e.value), identity)
+    val rights = bead.rights.fold(e => fail(e.legacyText), identity)
     assertEquals(rights.licence, Licence("CC0-1.0"))
     assertEquals(
       licences.readName(LicenceReader.ReadNameName(rights.licence.value)),
@@ -112,11 +112,14 @@ class KeyedParsersSuite extends munit.FunSuite:
     val restricted =
       parse(row.noSpaces.replace("\"access\":\"CC0\"", "\"access\":\"Usage conditions apply\"")).toOption.get
     assertEquals(
-      Smithsonian.record(restricted).map(_.rights.left.toOption),
+      Smithsonian.record(restricted).map(_.rights.left.toOption.map(_.legacyText)),
       Right(Some("no CC0 image (usage.access Usage conditions apply)"))
     )
     val none = parse(row.noSpaces.replace("\"online_media\"", "\"x_online_media\"")).toOption.get
-    assertEquals(Smithsonian.record(none).map(_.rights.left.toOption), Right(Some("no image on the record")))
+    assertEquals(
+      Smithsonian.record(none).map(_.rights.left.toOption.map(_.legacyText)),
+      Right(Some("no image on the record"))
+    )
     // an accession or collection date is not the object's date
     val accession = parse(row.noSpaces.replace("\"label\":\"Date\"", "\"label\":\"Accession Date\"")).toOption.get
     assertEquals(Smithsonian.record(accession).map(_.period), Right(None))
@@ -126,13 +129,16 @@ class KeyedParsersSuite extends munit.FunSuite:
       """{"error":{"code":"API_KEY_INVALID","message":"An invalid api_key was supplied. Get one at https://api.si.edu:443"}}"""
     ).toOption.get
     assertEquals(
-      Smithsonian.records(gov),
+      Smithsonian.records(gov).left.map(_.legacyText),
       Left("API_KEY_INVALID: An invalid api_key was supplied. Get one at https://api.si.edu:443")
     )
     val edan = parse(
       """{"status":400,"responseCode":0,"response":{"error":"bad request: one of your params did not pass validation"}}"""
     ).toOption.get
-    assertEquals(Smithsonian.records(edan), Left("bad request: one of your params did not pass validation"))
+    assertEquals(
+      Smithsonian.records(edan).left.map(_.legacyText),
+      Left("bad request: one of your params did not pass validation")
+    )
     val empty = parse(
       """{"status":200,"responseCode":1,"response":{"rows":[],"rowCount":0,"message":"content found"}}"""
     ).toOption.get
@@ -201,8 +207,8 @@ class KeyedParsersSuite extends munit.FunSuite:
     val rs =
       Europeana
         .records(fixture("eu-search.json"), api, licences)
-        .fold(e => fail(e.value), identity)
-        .map(_.fold(e => fail(e.value), identity))
+        .fold(e => fail(e.legacyText), identity)
+        .map(_.fold(e => fail(e.legacyText), identity))
     assertEquals(rs.size, 3)
     val gate = rs.head
     assertEquals(gate.key, "9200999/fixture_mycenae_lion_gate")
@@ -247,7 +253,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       )
     )
     assertEquals(gate.originalUrl, Some("https://images.fixture.example/lion-gate.jpg"))
-    val r = gate.rights.fold(e => fail(e.value), identity)
+    val r = gate.rights.fold(e => fail(e.legacyText), identity)
     assertEquals(r.licence, Licence("http://creativecommons.org/licenses/by-sa/4.0/"), "its edm:rights URL")
     assertEquals(
       licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value)),
@@ -268,7 +274,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       Right("Plan of the citadel, Fixture Library, via Europeana, Public Domain Mark")
     )
     assertEquals(
-      rs(2).rights.left.toOption,
+      rs(2).rights.left.toOption.map(_.legacyText),
       Some("not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)")
     )
 
@@ -291,7 +297,10 @@ class KeyedParsersSuite extends munit.FunSuite:
     val bad = parse(
       """{"success":false,"error":"API key is invalid","message":"Please register for an API key","code":"401_key_invalid"}"""
     ).toOption.get
-    assertEquals(Europeana.records(bad, api, licences), Left("API key is invalid: Please register for an API key"))
+    assertEquals(
+      Europeana.records(bad, api, licences).left.map(_.legacyText),
+      Left("API key is invalid: Please register for an API key")
+    )
     val none = parse("""{"success":true,"itemsCount":0,"totalResults":0}""").toOption.get
     assertEquals(Europeana.records(none, api, licences), Right(Nil))
 
@@ -309,14 +318,17 @@ class KeyedParsersSuite extends munit.FunSuite:
       )
     ).toOption.get
     assertEquals(
-      Europeana.item(differs, rec, licences).left.toOption,
+      Europeana.item(differs, rec, licences).left.toOption.map(_.legacyText),
       Some("the full record's licence (CC-BY-NC-4.0) differs from the search's (CC-BY-SA-4.0)")
     )
     val noResource = parse(text.replace("\"webResourceEdmRights\"", "\"x\"")).toOption.get
     assert(Europeana.item(noResource, rec, licences).isRight, "the aggregation's edmRights answers")
     val neither =
       parse(text.replace("\"webResourceEdmRights\"", "\"x\"").replace("\"edmRights\"", "\"y\"")).toOption.get
-    assertEquals(Europeana.item(neither, rec, licences).left.toOption, Some("no licence on the full record"))
+    assertEquals(
+      Europeana.item(neither, rec, licences).left.toOption.map(_.legacyText),
+      Some("no licence on the full record")
+    )
 
   // ── relevance: natural-history specimens and modern objects ─────────────────────────────────
 
@@ -342,8 +354,8 @@ class KeyedParsersSuite extends munit.FunSuite:
   test("Europeana: a specimen record — its aggregator or its institution excluded — is withheld with the reason"):
     val rs = Europeana
       .records(fixture("eu-search-orkney.json"), api, licences, ex)
-      .fold(e => fail(e.value), identity)
-      .map(_.fold(e => fail(e.value), identity))
+      .fold(e => fail(e.legacyText), identity)
+      .map(_.fold(e => fail(e.legacyText), identity))
     assertEquals(
       rs.map(r => r.key -> r.withheld),
       List[(String, Option[String])](
@@ -380,7 +392,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       )
     ).toOption.get
     assertEquals(
-      Europeana.item(specimen, rec, licences, ex).left.toOption,
+      Europeana.item(specimen, rec, licences, ex).left.toOption.map(_.legacyText),
       Some("an excluded type (Preserved Specimen)")
     )
     assert(Europeana.item(specimen, rec, licences).isRight, "no exclusions, no refusal")

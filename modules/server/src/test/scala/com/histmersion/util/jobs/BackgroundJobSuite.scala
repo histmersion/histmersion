@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.database.Transactor
@@ -27,16 +28,19 @@ class BackgroundJobSuite extends DbSuite:
 
   test("an outcome: a summary, and why it failed when it did"):
     assertEquals(Outcome.of(Right(Outcome.Summary("3 places"))), Outcome(Some(Outcome.Summary("3 places")), None))
-    assertEquals(Outcome.of(Left(Problem("HTTP 404"))), Outcome(None, Some(Problem("HTTP 404"))))
-    assert(Outcome.failed(Problem("x")).failed && !Outcome.done(Outcome.Summary("y")).failed)
+    assertEquals(
+      Outcome.of(Left(Problem.Unclassified(Legacy.Text("HTTP 404")))),
+      Outcome(None, Some(Problem.Unclassified(Legacy.Text("HTTP 404"))))
+    )
+    assert(Outcome.failed(Problem.Unclassified(Legacy.Text("x"))).failed && !Outcome.done(Outcome.Summary("y")).failed)
 
   test("a refusal names the running job; an exception names its class"):
     assertEquals(
-      BackgroundJob.busy(BackgroundJob.Work("a vacuum job"), Some(BackgroundJob.Work("job 42"))).message,
+      (BackgroundJob.busy(BackgroundJob.Work("a vacuum job"), Some(BackgroundJob.Work("job 42"))).message).sentence,
       "a vacuum job is already running (job 42) — see `histmersion jobs`"
     )
-    assertEquals(BackgroundJob.describe(InterruptedException()), "interrupted")
-    assertEquals(BackgroundJob.describe(IllegalStateException("boom")), "IllegalStateException: boom")
+    assertEquals((BackgroundJob.describe(InterruptedException())).sentence, "interrupted")
+    assertEquals((BackgroundJob.describe(IllegalStateException("boom"))).sentence, "IllegalStateException: boom")
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
@@ -68,7 +72,7 @@ class BackgroundJobSuite extends DbSuite:
         progress(JobInfo.Progress(s"working on ${job.kind}"))
         Outcome.done(Outcome.Summary("all done"))
       }
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
@@ -77,7 +81,9 @@ class BackgroundJobSuite extends DbSuite:
           Outcome.done(Outcome.Summary("no"))
         )
         .left
-        .map(_.message),
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left(s"a test job is already running (job ${j.id}) — see `histmersion jobs`")
     )
     go.countDown()
@@ -90,15 +96,15 @@ class BackgroundJobSuite extends DbSuite:
     val slot = BackgroundJob.Slot()
     val f = BackgroundJob
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
-        Outcome(Some(Outcome.Summary("half")), Some(Problem("disk full")))
+        Outcome(Some(Outcome.Summary("half")), Some(Problem.Unclassified(Legacy.Text("disk full"))))
       )
-      .fold(e => fail(e.message.value), identity)
-    assertEquals(await(f.id).error, Some("disk full"))
+      .fold(e => fail(e.message.sentence), identity)
+    assertEquals(await(f.id).error.map(_.sentence), Some("disk full"))
     Thread.sleep(50)
     val x = BackgroundJob
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
         throw IllegalStateException("boom")
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val failed = await(x.id)
-    assertEquals((failed.status, failed.error), ("failed", Some("IllegalStateException: boom")))
+    assertEquals((failed.status, failed.error.map(_.sentence)), ("failed", Some("IllegalStateException: boom")))

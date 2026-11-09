@@ -1,6 +1,8 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
@@ -251,7 +253,7 @@ object Lpf:
       .sortBy(r => (r.parentId.value, r.kind.value))
 
   def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[Problem, Place.Input] =
-    j.asObject.toRight(Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
+    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
         .orElse(str(f, "title", "label"))
@@ -265,7 +267,7 @@ object Lpf:
       val id = str(f, "@id", "id")
         .orElse(str(props, "@id", "id", "pid"))
         .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
-      if id.isEmpty then Left(Problem(s"feature #$ordinal has no id and no title"))
+      if id.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no id and no title")))
       else
         val kind = str(props, "kind")
           .flatMap(parseKind)
@@ -314,25 +316,31 @@ object Lpf:
       json: String,
       defaultKind: Place.KindValue = Place.KindValue(Place.Kind.Region)
   ): Either[Problem, List[Place.Input]] =
-    io.circe.parser.parse((json)).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
-      val found: Option[List[Json]] =
-        doc.asArray
-          .map(_.toList)
-          .orElse(doc.asObject.flatMap(_("features")).flatMap(_.asArray).map(_.toList))
-          .orElse(
-            doc.asObject
-              .filter(o => o.contains("geometry") || o.contains("properties"))
-              .map(o => List(Json.fromJsonObject(o)))
+    io.circe.parser
+      .parse((json))
+      .left
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .flatMap { doc =>
+        val found: Option[List[Json]] =
+          doc.asArray
+            .map(_.toList)
+            .orElse(doc.asObject.flatMap(_("features")).flatMap(_.asArray).map(_.toList))
+            .orElse(
+              doc.asObject
+                .filter(o => o.contains("geometry") || o.contains("properties"))
+                .map(o => List(Json.fromJsonObject(o)))
+            )
+        val features: Either[Problem, List[Json]] =
+          found.toRight(
+            Problem.Unclassified(Legacy.Text("not a FeatureCollection: no `features` array and not a feature"))
           )
-      val features: Either[Problem, List[Json]] =
-        found.toRight(Problem("not a FeatureCollection: no `features` array and not a feature"))
-      features.flatMap { fs =>
-        val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, (i)))
-        parsed.collectFirst { case Left(e) => e } match
-          case Some(e) => Left(e)
-          case None    => Right(parsed.collect { case Right(p) => p })
+        features.flatMap { fs =>
+          val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, (i)))
+          parsed.collectFirst { case Left(e) => e } match
+            case Some(e) => Left(e)
+            case None    => Right(parsed.collect { case Right(p) => p })
+        }
       }
-    }
 
   private def renderFeature(in: Place.Input): Json =
     val leftover = in.place.properties

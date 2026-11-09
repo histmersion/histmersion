@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import java.io.InputStream
 
 /** Where an import puts the bytes of one blob use. */

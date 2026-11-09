@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -32,8 +32,12 @@ object Capabilities:
 
   def withoutWebgl2(c: Capabilities): Option[Problem] =
     if !c.webgl.value then
-      Some(Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
-    else if !c.webgl2.value then Some(Problem("this browser draws WebGL 1 only, not WebGL 2"))
+      Some(
+        Problem.Unclassified(
+          Legacy.Text("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
+        )
+      )
+    else if !c.webgl2.value then Some(Problem.Unclassified(Legacy.Text("this browser draws WebGL 1 only, not WebGL 2")))
     else None
 
   /** Pure: a WebGL renderer string that names a software rasteriser. */

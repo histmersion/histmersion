@@ -1,8 +1,8 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Header
-import com.histmersion.plugin.Problem
 
 import io.circe.Json
 
@@ -26,9 +26,11 @@ extension (http: Plugin.Http)
           .left
           .map(e =>
             Plugin.Http.Failure.Transport(
-              Problem(
-                s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
-                  s"unparseable JSON (${e.getMessage})"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
+                    s"unparseable JSON (${e.getMessage})"
+                )
               )
             )
           )

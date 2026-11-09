@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.checks
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.Transactor
 import io.github.iltotore.iron.constraint.any.Pure
@@ -28,7 +28,9 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
       val unknown = wanted.filter(w => named(w).isEmpty)
       if unknown.nonEmpty then
         Left(
-          Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
+          Problem.Unclassified(
+            Legacy.Text(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
+          )
         )
       else Right(wanted.flatMap(named).distinct)
 

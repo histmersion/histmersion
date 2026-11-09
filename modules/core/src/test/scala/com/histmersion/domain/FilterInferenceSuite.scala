@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -24,10 +25,12 @@ class FilterInferenceSuite extends munit.FunSuite:
   private val f = Article.Filter(topics = List(Filter.Topics("tin")))
 
   test("filterOf: an empty filter, a blank rationale and an unknown status are refused; a filter is tidied"):
-    assert(filterOf(FilterAnswer(FilterAnswer.Rationale("why"))).left.exists(_.head.value.contains("selects nothing")))
+    assert(
+      filterOf(FilterAnswer(FilterAnswer.Rationale("why"))).left.exists(_.head.sentence.contains("selects nothing"))
+    )
     assert(
       filterOf(FilterAnswer(FilterAnswer.Rationale(" "), topics = List(Filter.Topics("tin")))).left
-        .exists(_.head.value.contains("rationale"))
+        .exists(_.head.sentence.contains("rationale"))
     )
     assertEquals(
       filterOf(
@@ -69,7 +72,7 @@ class FilterInferenceSuite extends munit.FunSuite:
         Nil,
         lim,
         last = Last(false)
-      ).left.exists(_.head.value.contains("at least 3"))
+      ).left.exists(_.head.sentence.contains("at least 3"))
     )
     assert(
       judge(
@@ -82,7 +85,7 @@ class FilterInferenceSuite extends munit.FunSuite:
         Nil,
         lim,
         last = Last(false)
-      ).left.exists(_.head.value.contains("at most 50"))
+      ).left.exists(_.head.sentence.contains("at most 50"))
     )
     val missing = judge(
       Slug("zz"),
@@ -96,7 +99,7 @@ class FilterInferenceSuite extends munit.FunSuite:
       last = Last(false)
     )
     assert(
-      missing.left.exists(ps => ps.head.value.contains("1 of the 3") && ps.head.value.contains("b, c")),
+      missing.left.exists(ps => ps.head.sentence.contains("1 of the 3") && ps.head.sentence.contains("b, c")),
       missing.toString
     )
     judge(

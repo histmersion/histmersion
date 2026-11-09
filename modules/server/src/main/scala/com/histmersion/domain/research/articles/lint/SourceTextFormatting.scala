@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.articles.lint
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.sources.SourceFormatting
 import com.histmersion.server.{LinkTarget, MarkdownLint}
@@ -29,4 +29,4 @@ final class SourceTextFormatting(
     (Source.Text(fixed.value), done.map(d => Source.Text(d.value)))
 
   def refusal(issues: List[FormatIssue]): Option[Problem] =
-    MarkdownLint.refusal(issues).map(p => Problem(p.value))
+    MarkdownLint.refusal(issues)

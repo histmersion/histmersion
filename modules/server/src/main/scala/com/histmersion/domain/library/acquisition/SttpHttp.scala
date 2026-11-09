@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.domain.Problem
 import com.histmersion.config.AcquireConfig
 
 import com.histmersion.domain.{CoreQuota, HttpPolicy}
@@ -28,8 +28,8 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
 
   private def failure(f: Plugin.Http.Failure): Http.Failure = f match
     case Plugin.Http.Failure.Status(code, why) =>
-      Http.Failure.Status(HttpAnswer.Code(code.value), why.transformInto[Problem])
-    case Plugin.Http.Failure.Transport(why) => Http.Failure.Transport(why.transformInto[Problem])
+      Http.Failure.Status(HttpAnswer.Code(code.value), why)
+    case Plugin.Http.Failure.Transport(why) => Http.Failure.Transport(why)
 
   def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))
@@ -39,7 +39,9 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
       io.circe.parser
         .parse(s.value)
         .left
-        .map(e => Http.Failure.Transport(Problem(s"$url returned unparseable JSON: ${e.getMessage}")))
+        .map(e =>
+          Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: ${e.getMessage}")))
+        )
     )
 
 object SttpHttp:

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.given
@@ -150,8 +152,8 @@ object PlanGoal:
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
         Slug
           .parse(Option(g.slug).fold("")(_.value))
-          .flatMap(s => Goal.Slug.either(s.value).left.map(Problem(_))) match
-          case Left(m)                                                  => problems += s"sub-goal: $m"; acc
+          .flatMap(s => Goal.Slug.either(s.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))) match
+          case Left(m)                                                  => problems += s"sub-goal: ${m.sentence}"; acc
           case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) =>
             problems += s"sub-goal '$s' has no title"; acc
           case Right(s) if s == goal                           => dropped += s"sub-goal '$s' is the goal itself"; acc
@@ -185,7 +187,8 @@ object PlanGoal:
         Doi.normalize(Option(w.doi).fold("")(_.value)) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d) => acc :+ ProposedWork(d, Problem(Option(w.why).fold("")(_.value.trim)))
+          case Some(d)                           =>
+            acc :+ ProposedWork(d, Problem.Unclassified(Legacy.Text(Option(w.why).fold("")(_.sentence.trim))))
       }
       .toList
 
@@ -199,7 +202,7 @@ object PlanGoal:
       problems += "the rationale is empty — say how the plan covers the goal"
 
     val ps = problems.result()
-    if ps.nonEmpty && !last.value then Left(ps.map(Problem(_)))
+    if ps.nonEmpty && !last.value then Left(ps.map((text => Problem.Unclassified(Legacy.Text(text)))))
     else
       val kept = Proposed(
         Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
@@ -208,7 +211,7 @@ object PlanGoal:
         works.take(caps.works.value),
         (dropped.result() ++ ps).map(Proposed.Dropped(_))
       )
-      Right((kept, ps.map(p => Problem(s"plan: dropped — $p"))))
+      Right((kept, ps.map(p => Problem.Unclassified(Legacy.Text(s"plan: dropped — $p")))))
 
   // ── the upstream check (§14: DOIs are verified before a person sees them) ───────────────────────
 
@@ -255,11 +258,11 @@ object PlanGoal:
           r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
           PlannedWork.InCorpus(r.inDb.value),
           PlannedWork.IsOa(r.isOa.value),
-          api.Problem(w.why.value)
+          w.why
         )
     }
     val dropped = looked.collect {
-      case (w, Left(m))                         => Plan.Dropped(s"${w.doi}: not verified upstream — $m")
+      case (w, Left(m))                         => Plan.Dropped(s"${w.doi}: not verified upstream — ${m.sentence}")
       case (w, Right(r)) if r.isRetracted.value => Plan.Dropped(s"${w.doi}: retracted upstream")
     }
     Plan(
@@ -280,7 +283,7 @@ object PlanGoal:
     val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = w.title.fold(w.doi.value)(_.value)
-    val why = Option(w.why).map(_.value.trim).filter(_.nonEmpty).fold("")(r => s": $r")
+    val why = Option(w.why).map(_.sentence.trim).filter(_.nonEmpty).fold("")(r => s": $r")
     AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
 
   /** The log line of an applied (or rejected) plan. */

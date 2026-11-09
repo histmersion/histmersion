@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import cats.syntax.all.*
@@ -99,7 +99,7 @@ object Ops:
                   Queue.Kind.Label(list),
                   Queue.QueueItem.Text(text),
                   topic.map(Queue.QueueItem.Topic(_)),
-                  reason.map(Problem(_))
+                  reason.map((text => Problem.Unclassified(Legacy.Text(text))))
                 )
               )
             case "add" :: Nil => Left(s"add needs the item text — $usage")
@@ -132,7 +132,8 @@ object Ops:
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
-    if !Files.isDirectory(dir) then Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+    if !Files.isDirectory(dir) then
+      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir")), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
@@ -220,7 +221,7 @@ object Ops:
     */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then
-      Left(Cli.Error(Problem(s"no such file: $p"), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $p")), exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))
@@ -312,7 +313,7 @@ object Ops:
         Output.jsonFlag
       ).mapN { (args, topic, reason, all, dryRun, limit, item, noWait, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all, dryRun, limit, item, noWait) match
-          case Left(msg)  => Left(Cli.Error(Problem(msg), exitCode = ExitCode.Usage))
+          case Left(msg)  => Left(Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
     }

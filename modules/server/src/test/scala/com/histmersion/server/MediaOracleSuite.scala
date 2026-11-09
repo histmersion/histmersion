@@ -1,7 +1,7 @@
 package com.histmersion
 package server
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -242,7 +242,7 @@ class MediaOracleSuite extends DbSuite:
           |}
           |""".stripMargin
       )
-      .fold(e => fail(e.value), _.config.media)
+      .fold(e => fail(e.sentence), _.config.media)
     List("defaults" -> defaults, "configured" -> configured).foreach { (what, cfg) =>
       names.foreach { n =>
         val csv = BuiltinMedia.licencesFor(n, cfg)
@@ -286,7 +286,7 @@ class MediaOracleSuite extends DbSuite:
         PluginMedia
           .rights(r)
           .fold(
-            why => s"refused: $why",
+            why => s"refused: ${why.sentence}",
             a =>
               s"${lic(a.licence)} url=${a.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} author=${a.author.map(x => (x.value: String)).asJson.noSpaces} " +
                 s"credit=${(a.credit.value: String).asJson.noSpaces}"
@@ -927,8 +927,6 @@ class MediaOracleSuite extends DbSuite:
       ctx.mediaCollections
         .add(Registry.AddId("zq-own"), OwnCollection)
         .flatMap(_ => ctx.mediaCollections.add(Registry.AddId("zq-search"), Searched))
-        .left
-        .map(why => Problem(why.value))
 
   private object OwnCollection extends MediaCollection:
     val title = MediaCollection.Title("Zq own pictures")
@@ -1040,7 +1038,7 @@ class MediaOracleSuite extends DbSuite:
             it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.Geography.Value("Nowhere at all")),
-            Left(Plugin.Http.Failure.Transport(Problem("an unreadable record")))
+            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("an unreadable record"))))
           )
         }
 
@@ -1059,7 +1057,7 @@ class MediaOracleSuite extends DbSuite:
       .load("""histmersion.plugins.zq-own.enabled = true
               |histmersion.media.collections.per-collection { "zq-own" = "cc0,public-domain,cc-by,cc-by-sa" }
               |""".stripMargin)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     val wire = MediaWire.Wire(ownRoute)
     val plugins = ServerPlugins.offlineWith(
       List(OwnPlugin()),
@@ -1068,7 +1066,7 @@ class MediaOracleSuite extends DbSuite:
     )
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
     def report(r: Either[Api.Error, MediaImportReport]): String =
-      r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
+      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)
       sb ++= s"## $name\n" + wire.take() + report(r)
@@ -1168,7 +1166,7 @@ class MediaOracleSuite extends DbSuite:
     def covers(name: String, req: MediaCoversRequest): Unit =
       val r = handlers.covers.covers(req)
       sb ++= s"## covers: $name\n" + wire.take() +
-        r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
+        r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     covers(
       "dry run",
       MediaCoversRequest(
@@ -1229,7 +1227,7 @@ class MediaOracleSuite extends DbSuite:
       MediaCovers
         .calibreStep(client, cal, only, refresh, dry, None)
         .fold(
-          e => s"## $name\nrefused: ${e.message}\n",
+          e => s"## $name\nrefused: ${e.message.sentence}\n",
           (r, asks) =>
             s"## $name\nreport: ${r.asJson.spaces2SortKeys}\nasks: ${asks.map((c, i) => ((c.value: String), (i.value: String))).asJson.noSpaces}\n"
         )

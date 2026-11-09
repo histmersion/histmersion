@@ -1,7 +1,8 @@
 package com.histmersion
 package server.plugins
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.server.ServerPlugins
@@ -44,7 +45,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     ): Either[Http.Failure, HttpAnswer.Body] = fail(s"asked $url")
 
   private def loaded(user: String, env: Map[String, String]): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e.sentence), identity)
 
   /** As the server builds it: discovered, a former plugin's settings (oa-index) mapped first ([[LegacyPlugins]]), the
     * host's settings supplied.
@@ -130,7 +131,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Http.Failure, Http.Text] = Left(Http.Failure.Transport(Problem("no")))
+    ): Either[Http.Failure, Http.Text] = Left(Http.Failure.Transport(Problem.Unclassified(Legacy.Text("no"))))
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -197,7 +198,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
   test("oa-core whose secret cannot be resolved fails alone, naming the reference and never a value"):
     val g = generation("histmersion.plugins.oa-core.api-key = \"env:NOT_SET_CORE_KEY\"")
     assertEquals(state(g, "oa-core"), Some("failed"))
-    assert(g.report.plugins.find(_.id.value == "oa-core").flatMap(_.error).exists(_.value.contains("NOT_SET_CORE_KEY")))
+    assert(
+      g.report.plugins.find(_.id.value == "oa-core").flatMap(_.error).exists(_.sentence.contains("NOT_SET_CORE_KEY"))
+    )
     assertEquals(chain(g), Today.filterNot(_ == "core"))
 
   // ── the former oa-index plugin's settings (LegacyPlugins) ───────────────────────────────────────
@@ -342,13 +345,16 @@ class FetcherPluginsSuite extends munit.FunSuite:
         else None
       body
         .map(b => HttpAnswer.Body(b.getBytes("UTF-8")))
-        .toRight(Http.Failure.Status(HttpAnswer.Code(404), Problem(s"$url: HTTP 404")))
+        .toRight(Http.Failure.Status(HttpAnswer.Code(404), Problem.Unclassified(Legacy.Text(s"$url: HTTP 404"))))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url)
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(t =>
-        io.circe.parser.parse(t.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage)))
+        io.circe.parser
+          .parse(t.value)
+          .left
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
       )
 
   /** The index steps and the landing step of a generation built over `http`, run in today's order with one memo for the
@@ -361,7 +367,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
     )
     assertEquals(
       FetchChain(steps, registered = id => g.registered.exists(_.value == id.value))
-        .fetch(Some(LandingDoi), None),
+        .fetch(Some(LandingDoi), None)
+        .left
+        .map(_.sentence),
       Left(FetchChain.NoCopy)
     )
     g
@@ -418,7 +426,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
         registered = id => g.registered.exists(_.value == id.value)
       )
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
-    assertEquals(got, Left(FetchChain.NoCopy))
+    assertEquals(got.left.map(_.sentence), Left(FetchChain.NoCopy))
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
     assert(!h.asked.exists(u => u.startsWith(s"${host.unpaywall.url}/") || u.startsWith(s"${host.openalex.url}/")))
 

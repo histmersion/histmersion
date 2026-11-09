@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -163,30 +164,30 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(EventGeometry.check(EventGeometry.Geojson(s"  $pt\n")), Right(pt))
     assert(EventGeometry.check(EventGeometry.Geojson("""{"type":"MultiPolygon","coordinates":[]}""")).isRight)
     val wkt = EventGeometry.check(EventGeometry.Geojson("POINT(36.5 34.55)"))
-    assert(wkt.left.exists(_.value.contains("not WKT")), wkt.toString)
+    assert(wkt.left.exists(_.sentence.contains("not WKT")), wkt.toString)
     assert(
       EventGeometry
         .check(EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))"))
         .left
-        .exists(_.value.contains("not WKT"))
+        .exists(_.sentence.contains("not WKT"))
     )
     assert(
       EventGeometry
         .check(EventGeometry.Geojson("""{"type":"Feature","geometry":null}"""))
         .left
-        .exists(_.value.contains("not a Feature"))
+        .exists(_.sentence.contains("not a Feature"))
     )
     assert(
-      EventGeometry.check(EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.value.contains("'Circle'"))
+      EventGeometry.check(EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.sentence.contains("'Circle'"))
     )
     assert(
       EventGeometry
         .check(EventGeometry.Geojson("""{"coordinates":[1,2]}"""))
         .left
-        .exists(_.value.contains("no \"type\""))
+        .exists(_.sentence.contains("no \"type\""))
     )
     assert(EventGeometry.check(EventGeometry.Geojson("[1,2]")).isLeft)
-    assert(EventGeometry.check(EventGeometry.Geojson("near Kadesh")).left.exists(_.value.contains("not GeoJSON")))
+    assert(EventGeometry.check(EventGeometry.Geojson("near Kadesh")).left.exists(_.sentence.contains("not GeoJSON")))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
     assertEquals(
@@ -205,8 +206,8 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals((TimeSpan(endFrom = Some(Year(-1110)), notAfter = Some(Year(-1100)))).outer, Some((-1110L, -1100L)))
     // points recorded out of order are ordered, not inverted
     assertEquals((TimeSpan(notBefore = Some(Year(-1000)), notAfter = Some(Year(-1100)))).outer, Some((-1100L, -1000L)))
-    assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(Year(-1200)))), Some("end not recorded"))
-    assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(Year(-1200)))), Some("start not recorded"))
+    assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(Year(-1200)))).map(_.sentence), Some("end not recorded"))
+    assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(Year(-1200)))).map(_.sentence), Some("start not recorded"))
     assertEquals(EventGeo.missingEnd(TimeSpan(Some(Year(-1300)), None, None, Some(Year(-1250)))), None)
     assertEquals(EventGeo.missingEnd(TimeSpan()), None)
 

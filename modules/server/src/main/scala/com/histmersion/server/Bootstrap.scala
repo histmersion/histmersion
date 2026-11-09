@@ -1,8 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.Problem
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.{Plural, Write}
@@ -70,16 +71,16 @@ final class Bootstrap(
           PeriodSources.PeriodoUrl(cfg.periods.periodoUrl.value),
           cfg.periods.collections.map(c => PeriodSources.Collections(c.value))
         ),
-      () => bundledSeed.left.map(_.transformInto[domain.Problem]),
+      () => bundledSeed,
       url =>
-        download(HttpDownload.Url(url.value)).left
-          .map(p => domain.Problem(p.value))
+        download(HttpDownload.Url(url.value))
           .map(t => PeriodImports.Document(t.value))
     )
 
   /** The bundled seed's text. */
   private def bundledSeed: Either[Problem, PeriodImports.Document] =
-    if !Files.isRegularFile(periodsSeed) then Left(Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
+    if !Files.isRegularFile(periodsSeed) then
+      Left(Problem.Unclassified(Legacy.Text(s"no period seed at $periodsSeed (set init.data-dir)")))
     else Right(PeriodImports.Document(Files.readString(periodsSeed)))
 
   // ── the gazetteer ───────────────────────────────────────────────────────────────────────────────
@@ -125,7 +126,9 @@ final class Bootstrap(
         .parse(source)
         .toRight(
           Api.Error(
-            Problem(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})"),
+            Problem.Unclassified(
+              Legacy.Text(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})")
+            ),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
@@ -176,7 +179,7 @@ final class Bootstrap(
                 )
               )
               .left
-              .map(_.value)
+              .map(_.sentence)
           )
         )
       ).flatten ++ p.fetch.map(s =>
@@ -199,12 +202,12 @@ final class Bootstrap(
     val summary = if done.isEmpty then "nothing to do" else done.mkString("; ")
     BackgroundJob.Outcome(
       Some(BackgroundJob.Outcome.Summary(summary)),
-      Option.when(failed.nonEmpty)(Problem(failed.mkString("; ")))
+      Option.when(failed.nonEmpty)(Problem.Unclassified(Legacy.Text(failed.mkString("; "))))
     )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
   private def seedPlaces(note: JobInfo.Progress => Unit): Either[String, String] =
-    gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.value).map(_.value)
+    gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.sentence).map(_.value)
 
   private def skippedNote(r: Period.ImportResult): String =
     if r.skippedCount.value == 0 then "" else s", ${r.skippedCount} skipped"
@@ -223,7 +226,7 @@ final class Bootstrap(
           gazetteerImports
             .load(k, apply = GazetteerLoad.LoadApply(!check), note)
             .left
-            .map(_.value)
+            .map(_.sentence)
             .map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
@@ -233,7 +236,7 @@ final class Bootstrap(
         periodImports
           .fetch(Nil)
           .left
-          .map(_.value)
+          .map(_.sentence)
           .map(periods)
           .map(r =>
             s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}${skippedNote(r)}"
@@ -242,18 +245,18 @@ final class Bootstrap(
         gazetteerImports
           .land(dryRun = GazetteerControllers.DryRun(false))
           .left
-          .map(_.value)
+          .map(_.sentence)
           .map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
         val available = Bootstrap.sources ++ gazetteerImports.thirdParty
         gazetteerImports
           .source(
             BuiltinGazetteers.Entry.Name(other),
-            domain.Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
+            Problem.Unclassified(Legacy.Text(s"unknown source '$other' (available: ${available.mkString(", ")})"))
           )
           .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun(false)))
           .left
-          .map(_.value)
+          .map(_.sentence)
           .map(r => s"${r.places} place(s)")
 
 object Bootstrap:

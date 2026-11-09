@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.findings
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -102,7 +104,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
                 List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value)))
               )
             ),
-            List(api.Problem("by default both are kept; merge makes them one finding")),
+            List(Problem.Unclassified(Legacy.Text("by default both are kept; merge makes them one finding"))),
             List(km.Both, km.Merge),
             Some(MergeDecision.of(km.Both)),
             cond,

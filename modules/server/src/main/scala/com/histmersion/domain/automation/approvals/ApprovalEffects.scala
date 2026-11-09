@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
@@ -34,4 +34,4 @@ object ApprovalEffects:
     def applySubject(a: ApprovalInfo): Either[Problem, String] =
       subjects.find(s => Approval.Kind.parse(Approval.Kind.Wire(a.kind.value)).contains(s.kind)) match
         case Some(s) => s.apply(a)
-        case None    => Left(Problem(s"no domain applies a ${a.kind} approval"))
+        case None    => Left(Problem.Unclassified(Legacy.Text(s"no domain applies a ${a.kind} approval")))

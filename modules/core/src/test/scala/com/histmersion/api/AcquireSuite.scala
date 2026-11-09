@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -285,7 +286,7 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(rows.size, 3)
     assertEquals(rows.head.doi, "10.1177/1758835919874651")
     assertEquals(rows.head.nature, Some("Retraction"))
-    assert(rows.head.reason.exists(_.value.contains("Duplication of Image")))
+    assert(rows.head.reason.exists(_.sentence.contains("Duplication of Image")))
     // the second row's Notes column contains a comma AND a newline inside quotes
     assertEquals(rows(1).doi, "10.1038/nature00000") // lower-cased by normalizeDoi
     assertEquals(rows(2).doi, "10.1126/science.yyy") // resolver prefix stripped
@@ -358,18 +359,23 @@ class AcquireSuite extends munit.FunSuite:
       isOa = WorkRef.IsOa(true),
       oaStatus = Some(WorkRef.OaStatus("gold"))
     )
-    val refusal = api.Problem(
-      "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
-        "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
+    val refusal = Problem.Unclassified(
+      Legacy.Text(
+        "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
+          "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
+      )
     )
     val text = Acquire
       .browserDownloadText(
         w,
         com.histmersion.api.library.Doi("10.1515/zz"),
         Citekey("k"),
-        List(refusal, refusal, api.Problem(" "))
+        List(refusal, refusal, Problem.Unclassified(Legacy.Text(" ")))
       )
       .getOrElse(fail("an item"))
       .value
-    assert(text.contains(s"download it in the browser ($refusal), then histmersion ingest <file> --citekey k"), text)
-    assertEquals(text.sliding(refusal.value.length).count(_ == refusal.value), 1, "each refusal once")
+    assert(
+      text.contains(s"download it in the browser (${refusal.sentence}), then histmersion ingest <file> --citekey k"),
+      text
+    )
+    assertEquals(text.sliding(refusal.sentence.length).count(_ == refusal.sentence), 1, "each refusal once")

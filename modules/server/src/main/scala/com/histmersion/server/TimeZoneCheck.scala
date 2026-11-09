@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.zone.ZoneRulesProvider
 import scala.util.Try
@@ -63,8 +64,8 @@ object TimeZoneCheck:
       offset(p.zone, p.at) match
         case Right(o) if o == p.offset => Nil
         case Right(o)                  => List(s"${p.zone} at ${p.at}: $o, expected ${p.offset}")
-        case Left(err)                 => List(s"${p.zone}: $err")
-    } ++ default.left.toOption.map(err => s"the default zone: $err")
+        case Left(err)                 => List(s"${p.zone}: ${err.sentence}")
+    } ++ default.left.toOption.map(err => s"the default zone: ${err.sentence}")
     val problems = (if zones.value > 0 then Nil else List("no zone ids")) ++ wrong
     if problems.isEmpty then
       (
@@ -78,7 +79,7 @@ object TimeZoneCheck:
 
   /** The check against this JDK (or binary). */
   def jdk(): (Boolean, Report) =
-    def err(t: Throwable) = Problem(s"${t.getClass.getSimpleName}: ${t.getMessage}")
+    def err(t: Throwable) = Problem.Unclassified(Legacy.Text(s"${t.getClass.getSimpleName}: ${t.getMessage}"))
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)
     val version = Try(ZoneRulesProvider.getVersions("Europe/Warsaw").lastKey).toOption
     report(

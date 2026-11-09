@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, PlacesMarkdown, Year}
@@ -133,7 +133,9 @@ object PlacesTools:
     Place.Id
       .either(raw)
       .left
-      .map(_ => Api.Error(Problem(s"No place '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ =>
+        Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+      )
 
   private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
 
@@ -162,7 +164,7 @@ object PlacesTools:
           in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(raw) =>
               Place.Id.either(raw) match
-                case Left(_)   => McpOut.error(Api.Error(Problem(s"No place '$raw'")))
+                case Left(_)   => McpOut.error(Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$raw'"))))
                 case Right(id) =>
                   places.get(id, asOf) match
                     case Right(d) =>
@@ -274,7 +276,7 @@ object PlacesTools:
                         places.merge(
                           me,
                           found,
-                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason.map(q => Problem(q.value)))
+                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason)
                         )
                       )
                       .map(PlacesMarkdown.placeGone)
@@ -284,7 +286,7 @@ object PlacesTools:
                     placeId(pid)
                       .flatMap(found =>
                         places
-                          .remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => Problem(q.value))))
+                          .remove(me, found, ApiPlace.RemoveIn(in.reason))
                       )
                       .map(PlacesMarkdown.placeGone)
                   )
@@ -299,7 +301,7 @@ object PlacesTools:
                             in.kind.map(k => ApiPlace.OverrideSet.Kind(k.value)),
                             in.periodStart.map(year),
                             in.periodEnd.map(year),
-                            in.reason.map(q => Problem(q.value)),
+                            in.reason,
                             ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
                             in.pointLat.map(l => Latitude(l.value)),
                             in.pointLon.map(l => Longitude(l.value))

@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.settings.ConfigSource
@@ -72,9 +73,13 @@ object Supervisor:
     val data = UserPaths.dataDir(rc.dataDir, env, osName)
     for
       h <- home.toRight(
-        Problem("runtime.home is empty and the executable's location is unknown (set HISTMERSION_HOME)")
+        Problem.Unclassified(
+          Legacy.Text("runtime.home is empty and the executable's location is unknown (set HISTMERSION_HOME)")
+        )
       )
-      d <- data.toRight(Problem("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)"))
+      d <- data.toRight(
+        Problem.Unclassified(Legacy.Text("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)"))
+      )
     yield Layout(h.toAbsolutePath.normalize, d.toAbsolutePath.normalize)
 
   /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and the memory
@@ -279,7 +284,7 @@ object Supervisor:
   def start(cfg: AppConfig, paths: UserPaths): AppConfig =
     val exe = currentExecutable
     val l = layout(cfg.runtime, exe, paths.environment.lookup, paths.osName)
-      .fold(e => throw IllegalStateException(e.value), identity)
+      .fold(e => throw IllegalStateException(e.sentence), identity)
     if !Files.isExecutable(l.pgBin.resolve("pg_ctl")) then
       throw IllegalStateException(
         s"no PostgreSQL in the bundle: ${l.pgBin.resolve("pg_ctl")} is missing (HISTMERSION_HOME=${l.home})"
@@ -340,7 +345,7 @@ object Supervisor:
       paths: UserPaths
   ): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
-      .fold(e => throw IllegalStateException(e.value), identity)
+      .fold(e => throw IllegalStateException(e.sentence), identity)
     val bind = paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
     ConfigSource(
       read,
@@ -350,7 +355,7 @@ object Supervisor:
           .Try(ensureDatabase(c))
           .toEither
           .left
-          .map(e => Problem(s"cannot create the database: ${e.getMessage}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"cannot create the database: ${e.getMessage}")))
     )
 
   private def initCluster(l: Layout, user: DbConfig.User, password: DbConfig.Password): Unit =
@@ -366,7 +371,7 @@ object Supervisor:
   /** `CREATE DATABASE` on first run (the cluster starts with only `postgres`). */
   private def ensureDatabase(cfg: AppConfig): Unit =
     val target =
-      Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).fold(e => throw IllegalStateException(e.value), identity)
+      Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).fold(e => throw IllegalStateException(e.sentence), identity)
     val dbUrl = cfg.db.url.value
     val adminUrl = dbUrl.take(dbUrl.lastIndexOf('/') + 1) + "postgres"
     val c = java.sql.DriverManager.getConnection(adminUrl, cfg.db.user.value, cfg.db.password.value)
@@ -398,7 +403,7 @@ object Supervisor:
           output = ProcessOutput.AppendTo(Storage.at(Location.Logs, l.logs), Store.Key("converter.log"))
         )
         val started = System.nanoTime()
-        val p = processes.start(launch).fold(e => throw java.io.IOException(e.value), identity)
+        val p = processes.start(launch).fold(e => throw java.io.IOException(e.sentence), identity)
         converter.set(Some(p))
         scribe.info(s"runtime: converter started on 127.0.0.1:${port.value} (pid ${p.pid})")
         val code = p.waitFor()
@@ -432,4 +437,4 @@ object Supervisor:
             Map(ProcessLaunch.EnvironmentKey("PROJ_DATA") -> ProcessLaunch.EnvironmentValue(l.projData.toString))
         )
       )
-      .fold(e => throw java.io.IOException(e.value), r => (r.exitCode.value, r.lines.map(_.value)))
+      .fold(e => throw java.io.IOException(e.sentence), r => (r.exitCode.value, r.lines.map(_.value)))

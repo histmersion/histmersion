@@ -1,6 +1,7 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
@@ -43,7 +44,7 @@ class SettingsControllersSuite extends munit.FunSuite:
 
   test("the page: every setting with what the file says, what applies and from where"):
     val f = Fixture(Some(Commented), env = Map("HISTMERSION_TREE_DEPTH" -> "3"))
-    val p = f.c.page(None).fold(e => fail(e.message.value), identity)
+    val p = f.c.page(None).fold(e => fail(e.message.sentence), identity)
     assertEquals(p.field(ConfigEdit.Field.Key("backups.keep")).flatMap(_.value), Some("3"))
     assertEquals(p.field(ConfigEdit.Field.Key("backups.keep")).map(_.source), Some("file"))
     assertEquals(p.field(ConfigEdit.Field.Key("ui.tree-depth")).map(_.source), Some("environment"))
@@ -65,7 +66,7 @@ class SettingsControllersSuite extends munit.FunSuite:
       Some(ConfigFileState.Text("histmersion.plugins.media-europeana.api-key = \"value:hunter2\"\n")),
       env = Map("HISTMERSION_API_KEY" -> "s3cret-key")
     )
-    val p = f.c.page(None).fold(e => fail(e.message.value), identity)
+    val p = f.c.page(None).fold(e => fail(e.message.sentence), identity)
     val europeana = p.field(ConfigEdit.Field.Key("plugins.media-europeana.api-key")).get
     assertEquals(
       europeana.credential,
@@ -86,24 +87,27 @@ class SettingsControllersSuite extends munit.FunSuite:
 
   test("a change is written into the text, the rest kept, then reloaded; the same change again changes nothing"):
     val f = Fixture(Some(Commented))
-    val w = write(f, K("backups.keep") -> Some(V("8"))).fold(e => fail(e.message.value), identity)
+    val w = write(f, K("backups.keep") -> Some(V("8"))).fold(e => fail(e.message.sentence), identity)
     assertEquals(w.changed, List("histmersion.backups.keep"))
     assertEquals(f.file.get, Some(Commented.value.replace("keep = 3", "keep = 8")))
     assertEquals(f.reloads.get, 1)
     assert(w.reload.exists(_.published.value))
-    val again = write(f, K("backups.keep") -> Some(V("8"))).fold(e => fail(e.message.value), identity)
+    val again = write(f, K("backups.keep") -> Some(V("8"))).fold(e => fail(e.message.sentence), identity)
     assertEquals(again.changed, Nil)
     assertEquals(f.reloads.get, 1, "nothing changed: no reload")
-    write(f, K("backups.keep") -> None).fold(e => fail(e.message.value), identity)
+    write(f, K("backups.keep") -> None).fold(e => fail(e.message.sentence), identity)
     assert(!f.file.get.get.value.contains("keep"), f.file.get.get)
 
   test("refusals carry their code: a refused value, a credential's value, a changed file"):
     val f = Fixture(Some(Commented))
     val bad = write(f, K("backups.keep") -> Some(V("lots"))).left.toOption.get
     assertEquals(bad.code, Some(ConfigEdit.CodeRefused))
-    assert(bad.message.value.contains("backups.keep"), bad.message)
+    assert(bad.message.sentence.contains("backups.keep"), bad.message)
     val cred = write(f, K("auth.api-key") -> Some(V("s3cret"))).left.toOption.get
-    assert(cred.message.value.contains("HISTMERSION_API_KEY") && !cred.message.value.contains("s3cret"), cred.message)
+    assert(
+      cred.message.sentence.contains("HISTMERSION_API_KEY") && !cred.message.sentence.contains("s3cret"),
+      cred.message
+    )
     val before = f.c.page(None).toOption.get.version
     f.file.set(Some(ConfigFileState.Text(Commented.value + "# edited by hand\n")))
     val stale = f.c.write(
@@ -129,13 +133,13 @@ class SettingsControllersSuite extends munit.FunSuite:
           literalConsent = ConfigEdit.Write.LiteralConsent(true)
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assert(w.warnings.exists(_.value.contains("anyone who can read")), s"${w.warnings}")
     assert(w.created.value)
 
   test("restart-only settings are said, and the restart is offered only where the server can be restarted"):
     val f = Fixture(Some(Commented))
-    val w = write(f, K("server.port") -> Some(V("8123"))).fold(e => fail(e.message.value), identity)
+    val w = write(f, K("server.port") -> Some(V("8123"))).fold(e => fail(e.message.sentence), identity)
     assertEquals(w.restart.map(_.key), List("histmersion.server.port"))
     assert(!w.restartable.value)
     assertEquals(f.c.restart().left.toOption.flatMap(_.code), Some(ConfigEdit.CodeUnavailable))
@@ -148,5 +152,5 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(Fixture(Some(ConfigFileState.Text("# only comments\n"))).c.setupDue)
     assert(!Fixture(Some(Commented)).c.setupDue, "a file of one's own: not a first run")
     val f = Fixture(Some(ConfigFileState.Text("# only comments\n")))
-    write(f, K("setup.completed") -> Some(V("true"))).fold(e => fail(e.message.value), identity)
+    write(f, K("setup.completed") -> Some(V("true"))).fold(e => fail(e.message.sentence), identity)
     assert(!f.c.setupDue)

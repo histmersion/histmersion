@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
@@ -62,8 +63,8 @@ class FilterTabSuite extends munit.FunSuite:
     val s = TabState.first(TabPage(rows, RowCount(412)), ResultsPaging.PageNumber(25))
     val l = TabState.loading(s)
     assert(l.loading.value && l.rows == rows && l.shown.value == 25)
-    val f = TabState.failed(l, Problem("HTTP 500"))
-    assert(!f.loading.value && f.error.map(_.value).contains("HTTP 500") && f.rows == rows)
+    val f = TabState.failed(l, Problem.Unclassified(Legacy.Text("HTTP 500")))
+    assert(!f.loading.value && f.error.map(_.sentence).contains("HTTP 500") && f.rows == rows)
     assertEquals(TabState.loading(f).error, None, "a new request clears the old error")
 
   test("TabState: show more reveals the loaded rows first, then asks for the next page past them"):

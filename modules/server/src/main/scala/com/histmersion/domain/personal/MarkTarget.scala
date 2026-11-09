@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -101,7 +101,7 @@ object MarkTarget:
   /** The target, when its zoom (if any) is one the map has. */
   def zoomChecked(t: Target): Either[Problem, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
-      case Some(z) => Left(Problem(s"zoom $z: between 0 and ${MaxZoom.toInt}"))
+      case Some(z) => Left(Problem.Unclassified(Legacy.Text(s"zoom $z: between 0 and ${MaxZoom.toInt}")))
       case None    => Right(t)
 
   /** The kind of record an item kind of the wire names. */

@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How often a plan pool is read while the autopilot is on and queued work wants it, besides the reading a run's own
@@ -21,4 +22,4 @@ object ScheduledRefresh:
         .either(minutes.value)
         .map(Every(_))
         .left
-        .map(_ => Problem(s"$minutes is not 0 (off) or a positive number of minutes"))
+        .map(_ => Problem.Unclassified(Legacy.Text(s"$minutes is not 0 (off) or a positive number of minutes")))

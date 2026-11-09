@@ -1,7 +1,8 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.settings.ConfigEdit
@@ -52,8 +53,9 @@ object SettingsForm:
       div(
         cls := "settings-card-body",
         children <-- SettingsStore.current.map {
-          case None           => List(p(cls := "muted", "Loading…"))
-          case Some(Left(m))  => List(ErrorLine.text(Problem(s"Could not read the settings: $m")))
+          case None          => List(p(cls := "muted", "Loading…"))
+          case Some(Left(m)) =>
+            List(ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read the settings: ${m.sentence}"))))
           case Some(Right(p)) =>
             items.flatMap(i =>
               p.field(i.key)

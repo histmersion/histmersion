@@ -25,7 +25,7 @@ final class Downloads(http: Plugin.Http):
         )
         None
       case Left(e) =>
-        log.info(Plugin.Log.Line(s"$source fetch failed (${e.problem})"))
+        log.info(Plugin.Log.Line(s"$source fetch failed (${e.problem.legacyText})"))
         None
 
 object Downloads:

@@ -1,7 +1,8 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.web.Auth
@@ -60,9 +61,9 @@ object KeysSection:
   /** The reference a form and its entry write, or why not. Pure. */
   def reference(form: Form, entry: ReferenceEntry): Either[Problem, Reference] =
     val t = entry.value.trim
-    if t.isEmpty then Left(Problem(s"Write ${form.hint}."))
+    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"Write ${form.hint}.")))
     else if form == Form.Env && !t.matches("[A-Za-z_][A-Za-z0-9_]*") then
-      Left(Problem(s"$t is not an environment variable's name."))
+      Left(Problem.Unclassified(Legacy.Text(s"$t is not an environment variable's name.")))
     else Right(Reference(s"${form.scheme}:$t"))
 
   /** The keys that hold the value itself, by what they open. */
@@ -115,8 +116,9 @@ object KeysSection:
         div(cls := "settings-card-body", Auth.keyPane)
       ),
       child <-- SettingsStore.current.map {
-        case None            => p(cls := "muted", "Loading…")
-        case Some(Left(m))   => ErrorLine.text(Problem(s"Could not read the settings: $m"))
+        case None          => p(cls := "muted", "Loading…")
+        case Some(Left(m)) =>
+          ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read the settings: ${m.sentence}")))
         case Some(Right(pg)) =>
           val creds = pg.fields.filter(_.credential.isDefined)
           div(
@@ -178,7 +180,7 @@ object KeysSection:
     val problem = Var(Option.empty[String])
     def save(): Unit =
       reference(form.now(), ReferenceEntry(entry.now())) match
-        case Left(why) => problem.set(Some(why.value))
+        case Left(why) => problem.set(Some(why.sentence))
         case Right(r)  =>
           problem.set(None)
           SettingsStore
@@ -248,5 +250,5 @@ object KeysSection:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(m))))
+      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem.Unclassified(Legacy.Text(m)))))
     )

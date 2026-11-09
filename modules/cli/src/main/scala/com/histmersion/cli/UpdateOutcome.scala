@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 

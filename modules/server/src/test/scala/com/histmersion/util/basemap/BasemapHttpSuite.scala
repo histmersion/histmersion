@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -151,7 +152,7 @@ class BasemapHttpSuite extends DbSuite:
       val t = get(s"$url/vector/3/4/3?layers=water:p~sea&keys=kind,name")
       assertEquals(t.statusCode, 200)
       val fs =
-        Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.value), identity)
+        Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.sentence), identity)
       assert(
         fs.nonEmpty && fs.forall((l, g, p) =>
           l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p
@@ -223,7 +224,7 @@ class BasemapHttpSuite extends DbSuite:
         TerrainResample
           .decode(Png.PngBytes(r.body))
           .fold(
-            e => fail(e.value),
+            e => fail(e.sentence),
             i => {
               assertEquals((i.width, i.height), (512, 512))
               i.pixels.value.map(px => TerrainResample.metres(TerrainResample.Pixel(px)).value)

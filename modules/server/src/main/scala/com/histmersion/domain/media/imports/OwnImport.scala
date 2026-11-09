@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite, SpiValues}
@@ -54,7 +55,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
   /** A use's Wikidata statement as the host checks it: one that is no item is left out, with a warning. */
   private def wikidataOf(u: MediaUse): Option[Wikidata.Id] =
     val (q, why) = SpiValues.kept(u.wikidata)(SpiValues.wikidataOf)
-    why.foreach(w => scribe.warn(s"media import: ${u.item.key}: $w, left out"))
+    why.foreach(w => scribe.warn(s"media import: ${u.item.key}: ${w.sentence}, left out"))
     q
 
   private def typeOf(t: MediaTarget.Id): Target.TargetType = t.kind match
@@ -71,7 +72,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
   /** The host's reading of an item's stated licence, and its judgement. */
   private def judge(item: MediaItem): Verdict =
     item.rights match
-      case Left(why)     => Verdict(None, Left(why.value))
+      case Left(why)     => Verdict(None, Left(why.sentence))
       case Right(rights) =>
         val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.map(_.value).getOrElse("").trim
         val read = Licence.ofStatement(Licence.Statement(stated))
@@ -82,7 +83,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
           case Some(why) => Verdict(key, Left(why.value))
           case None      =>
             PluginMedia.rights(rights) match
-              case Left(why)                            => Verdict(key, Left(why.value))
+              case Left(why)                            => Verdict(key, Left(why.sentence))
               case Right(r) if !allow.allows(r.licence) =>
                 Verdict(key, Left(s"licence ${r.licence.family.wire} not allowed for $provider"))
               case Right(r) =>
@@ -349,7 +350,9 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       case None       =>
         item.imageUrl
           .toRight("no image")
-          .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(f => s"${f.problem}"))
+          .flatMap(u =>
+            fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(f => s"${f.problem.sentence}")
+          )
           .flatMap { (bytes, got) =>
             if bytes.value.length.toLong > cfg.maxBytes.value then
               Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -365,7 +368,8 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                         i.rendition.flatMap(_.thumbHeight).map(_.value)
                       )
                     )
-                  case Left(why) => scribe.warn(s"media: thumbnail of ${item.key} not fetched: ${why.problem}"); None
+                  case Left(why) =>
+                    scribe.warn(s"media: thumbnail of ${item.key} not fetched: ${why.problem.sentence}"); None
               }
               Right((bytes.value, got.value, t))
           }

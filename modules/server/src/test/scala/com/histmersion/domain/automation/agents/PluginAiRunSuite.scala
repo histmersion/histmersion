@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -125,7 +125,12 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     val all = builtin ++ ServerPlugins.providers ++ ours
     val u = ConfigFactory.parseString(user)
     val host =
-      FirstPartySettings.hostView(AppConfig.loadWithUserFile(env, None).fold(p => fail(p.value), _.merged), u, env, all)
+      FirstPartySettings.hostView(
+        AppConfig.loadWithUserFile(env, None).fold(p => fail(p.sentence), _.merged),
+        u,
+        env,
+        all
+      )
     PluginHost.build(
       all,
       u,
@@ -134,7 +139,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem("offline")))
+              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
           },
         env
       ),
@@ -203,7 +208,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     )
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -296,7 +301,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
           ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
         )
         .left
-        .exists(_.message.value.contains("unknown provider 'hello-ai'"))
+        .exists(_.message.sentence.contains("unknown provider 'hello-ai'"))
     )
-    assert(gone.picker.chain(Role.Extractor).left.exists(_.value.contains("unknown provider 'hello-ai'")))
+    assert(gone.picker.chain(Role.Extractor).left.exists(_.sentence.contains("unknown provider 'hello-ai'")))
     assert(!gone.doctor(offline = AgentsControllers.Offline(true)).providers.exists(_.provider.value == "hello-ai"))

@@ -18,7 +18,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     )
 
   private def load(id: Plugin.Info.Id, stubs: Map[HttpTransport.Url, StubAnswer] = Map.empty) =
-    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.value), identity)
+    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.legacyText), identity)
 
   private val plugins =
     List(
@@ -42,7 +42,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
 
   test("awmc and chronontology: one request to the dataset, every place kept with the dataset's credit"):
     val awmc = load(
@@ -93,10 +93,10 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      missing.readGazetteer(Registries.GazetteerSourcesKey("cliopatria")).failure,
+      missing.readGazetteer(Registries.GazetteerSourcesKey("cliopatria")).failure.map(_.legacyText),
       Some(s"HTTP 404 from ${Cliopatria.url}")
     )
     assertEquals(
-      missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure,
+      missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure.map(_.legacyText),
       Some("the plugin registered no gazetteer source 'nowhere'")
     )

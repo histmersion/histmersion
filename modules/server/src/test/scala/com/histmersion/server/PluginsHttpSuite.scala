@@ -1,9 +1,8 @@
 package com.histmersion
 package server
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import hearth.kindlings.optics.syntax.*
 
@@ -47,7 +46,7 @@ class PluginsHttpSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(Plugin.Http.Failure.Transport(Problem("offline")))
+            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
         },
       env,
       (_, _, _) => ()

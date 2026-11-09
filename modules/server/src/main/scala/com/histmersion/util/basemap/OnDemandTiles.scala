@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.config.BasemapOnDemandConfig
 import com.histmersion.util.storage.{ByteSource, Store}
@@ -52,7 +53,7 @@ final class OnDemandTiles(
   private val remoteFiles = store.sub(OnDemandTiles.Remote)
 
   private def done(written: Either[Store.Error, ?]): Unit =
-    written.left.foreach(e => throw IOException(e.message.value))
+    written.left.foreach(e => throw IOException(e.message.sentence))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
   final private case class Remote(
@@ -94,7 +95,8 @@ final class OnDemandTiles(
 
   /** One request to the provider: within the concurrency and the rate. */
   private def request[A](f: => Either[Problem, A]): Either[Problem, A] =
-    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(Problem("too many tile requests waiting"))
+    if !gate.tryAcquire(60, TimeUnit.SECONDS) then
+      Left(Problem.Unclassified(Legacy.Text("too many tile requests waiting")))
     else
       try
         val wait = synchronized {
@@ -152,7 +154,7 @@ final class OnDemandTiles(
             _ <- Either.cond(
               h.rootOffset.value + h.rootLength.value <= b.length,
               (),
-              Problem("root directory outside the first 16 KiB")
+              Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
             )
             root <- PmTiles
               .decompress(
@@ -220,7 +222,7 @@ final class OnDemandTiles(
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
-        case Some(_) if depth >= 3 => Left(Problem("PMTiles directories nested too deep"))
+        case Some(_) if depth >= 3 => Left(Problem.Unclassified(Legacy.Text("PMTiles directories nested too deep")))
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
@@ -283,7 +285,7 @@ final class OnDemandTiles(
       cache.get(key) match
         case Some(hit)                          => Right(hit.map(b => PmTiles.TileBytes(b.value)))
         case None if offlineUntil > now().value =>
-          Left(Problem("the provider was unreachable a moment ago; not asked again yet"))
+          Left(Problem.Unclassified(Legacy.Text("the provider was unreachable a moment ago; not asked again yet")))
         case None =>
           val mine = CompletableFuture[Either[Problem, Option[PmTiles.TileBytes]]]()
           Option(inflight.putIfAbsent(key.value, mine)) match
@@ -292,7 +294,7 @@ final class OnDemandTiles(
                 .Try(other.get(120, TimeUnit.SECONDS))
                 .toEither
                 .left
-                .map(e => Problem(s"tile ${key.value}: ${e.getMessage}"))
+                .map(e => Problem.Unclassified(Legacy.Text(s"tile ${key.value}: ${e.getMessage}")))
                 .flatten
             case None =>
               try
@@ -301,12 +303,16 @@ final class OnDemandTiles(
                   case Right(b) => cache.put(key, b.map(t => DiskLru.Bytes(t.value)))
                   case Left(e)  =>
                     offlineUntil = now().value + c.retryAfterSeconds.value * 1000L
-                    scribe.warn(s"basemap: on-demand tile ${key.value} (${store.where().value}) not read: ${e.value}")
+                    scribe.warn(
+                      s"basemap: on-demand tile ${key.value} (${store.where().value}) not read: ${e.sentence}"
+                    )
                 mine.complete(r)
                 r
               catch
                 case e: Throwable =>
-                  mine.complete(Left(Problem(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
+                  mine.complete(
+                    Left(Problem.Unclassified(Legacy.Text(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
+                  )
                   throw e
               finally { val _ = inflight.remove(key.value, mine) }
 
@@ -322,7 +328,7 @@ object OnDemandTiles:
   private val Head = Store.Key.applyUnsafe("head.bin")
 
   /** The provider's file changed under a read (another ETag or size). */
-  val Changed: Problem = Problem("the provider's file changed")
+  val Changed: Problem = Problem.Unclassified(Legacy.Text("the provider's file changed"))
 
   /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}` (one GET a
     * tile; a 404 is "none").

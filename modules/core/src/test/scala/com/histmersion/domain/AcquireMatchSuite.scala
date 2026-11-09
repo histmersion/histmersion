@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -84,7 +85,7 @@ class AcquireMatchSuite extends munit.FunSuite:
   test("a DOI in the item's reason closes it too"):
     val withReason = item(QueueItem.Id(3), QueueItem.Text("Kristiansen's Brill volume"))
       .modify(_.reason)
-      .setTo(Some(api.Problem("doi 10.1163/9789004441385")))
+      .setTo(Some(Problem.Unclassified(Legacy.Text("doi 10.1163/9789004441385"))))
     assertEquals(
       AcquireMatch.decide(
         List(withReason),
@@ -209,7 +210,7 @@ class AcquireMatchSuite extends munit.FunSuite:
     assertEquals(AcquireMatch.describe(Decision.Close(Brill)), "ticked off acquisition item #1 (same DOI)")
     assert(
       AcquireMatch
-        .describe(Decision.Close(Brill), _ => Left(Problem("gone")))
+        .describe(Decision.Close(Brill), _ => Left(Problem.Unclassified(Legacy.Text("gone"))))
         .value
         .contains("NOT ticked off: gone")
     )

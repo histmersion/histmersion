@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -77,7 +78,7 @@ class ArticlesSuite extends munit.FunSuite:
         .left
         .toOption
         .get
-        .value
+        .sentence
         .contains("must not be after"),
       true
     )
@@ -159,8 +160,8 @@ class ArticlesSuite extends munit.FunSuite:
     assertEquals(Articles.precondition(existing, Article.Patch(ifUpdatedAt = existing.updatedAt)), Right(()))
     val e =
       Articles.precondition(existing, Article.Patch(ifUpdatedAt = Some(Article.UpdatedAt("older")))).left.toOption.get
-    assert(e.value.contains("has moved on"), e)
-    assert(e.value.contains("Re-read"), e)
+    assert(e.sentence.contains("has moved on"), e)
+    assert(e.sentence.contains("Re-read"), e)
 
   // ── kinds ────────────────────────────────────────────────────────────────────────────────────
   test("a wiki directory maps to the singular kind it holds"):
@@ -300,7 +301,7 @@ class ArticlesSuite extends munit.FunSuite:
     val body = Article.Body("# Title\n\n## Sources\n\nData.")
     val result = Articles.appendUnderSection(body, Article.Section("## Missing"), Article.Prose("New content."))
     assert(result.isLeft)
-    assert(result.left.toOption.get.value.contains("no heading matching"))
+    assert(result.left.toOption.get.sentence.contains("no heading matching"))
 
   test("appendUnderSection appends at the end when the section is the last heading"):
     val body = Article.Body("# Title\n\n## Last Section\n\nSome content.")
@@ -334,7 +335,7 @@ class ArticlesSuite extends munit.FunSuite:
           summary = Some(Article.SummaryText(s))
         )
       )
-      assert(put.left.exists(_.value.contains("stand-in")), s"put accepted '$s': $put")
+      assert(put.left.exists(_.sentence.contains("stand-in")), s"put accepted '$s': $put")
       val patch = Articles.applyPatch(existing, Article.Patch(summary = Some(Article.SummaryText(s))))
       assert(patch.isLeft, s"patch accepted '$s'")
 

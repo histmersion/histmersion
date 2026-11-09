@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -733,5 +734,5 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       MergeResolutionsFile
         .parse(MergeResolutionsFile.Text(orphan))
         .left
-        .exists(_.exists(_.value.contains("A-1234abcd")))
+        .exists(_.exists(_.sentence.contains("A-1234abcd")))
     )

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Queue.*
@@ -24,7 +25,7 @@ class QueueLinksSuite extends munit.FunSuite:
   test("ticking an item off records the run or job that did it; reopening forgets it"):
     val done = applyPatch(open, fulfil(open, Citekey("drake2012"), Some(QueueItem.ClosedBy("job-9"))))
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("job-9"), Some("run-1")))
-    assert(done.reason.exists(_.value.contains("[[drake2012]]")))
+    assert(done.reason.exists(_.sentence.contains("[[drake2012]]")))
     assertEquals(
       applyPatch(done, QueuePatch(text = Some(QueueItem.Text("Drake 2012, the book")))).closedBy,
       Some("job-9"),

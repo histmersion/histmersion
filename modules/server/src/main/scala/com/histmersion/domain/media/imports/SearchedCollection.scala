@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{PluginMedia, Polite}
 

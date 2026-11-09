@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map.maplibre
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.web.map.*
 import org.scalajs.dom
 

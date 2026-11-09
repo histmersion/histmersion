@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
@@ -32,7 +34,7 @@ object Years:
 
   def shift(h: Years.ShiftH, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
 
-  val NoYearZero: Problem = Problem("there is no year 0 (1 BCE is -1, 1 CE is 1)")
+  val NoYearZero: Problem = Problem.Unclassified(Legacy.Text("there is no year 0 (1 BCE is -1, 1 CE is 1)"))
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"
@@ -47,19 +49,26 @@ object Years:
       .trim
     def isBce(era: Era.Wire) = (era).value.matches(EraBce)
     def signed(num: String, era: Option[Era.Wire]): Either[Problem, Year] =
-      (num).toLongOption.toRight(Problem(s"'${(raw).value.trim}' is not a year")).flatMap { n =>
+      (num).toLongOption.toRight(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}' is not a year"))).flatMap { n =>
         era match
           case None                => Right(Year(n))
           case Some(e) if isBce(e) => Right(Year(-math.abs(n)))
           case Some(_) if n < 0    =>
-            Left(Problem(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead"))
+            Left(
+              Problem
+                .Unclassified(Legacy.Text(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead"))
+            )
           case Some(_) => Right(Year(n))
       }
     val parsed = t match
       case Typed(num, era)    => signed((num), Option(Era.Wire(era)))
       case EraFirst(era, num) => signed((num), Some(Era.Wire(era)))
-      case _                  => Left(Problem(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)"))
-    parsed.flatMap(y => if y.value == 0 then Left(Problem(s"'${(raw).value.trim}': $NoYearZero")) else Right(y))
+      case _                  =>
+        Left(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")))
+    parsed.flatMap(y =>
+      if y.value == 0 then Left(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}': ${NoYearZero.sentence}")))
+      else Right(y)
+    )
 
   def isoAstronomical(xsd: Iso.Wire): Option[Astronomical] =
     val s = (xsd).value.trim

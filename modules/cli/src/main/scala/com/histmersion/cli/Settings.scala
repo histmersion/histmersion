@@ -1,6 +1,8 @@
 package com.histmersion
 package cli
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 import com.monovore.decline.*
 import com.histmersion.config.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -19,5 +21,5 @@ object Settings:
   lazy val app: AppConfig = loaded match
     case Right(l)  => l.config
     case Left(err) =>
-      scribe.warn(s"warning: $err — going on with the defaults and the environment")
+      scribe.warn(s"warning: ${err.sentence} — going on with the defaults and the environment")
       AppConfig.load()

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
 import com.histmersion.api.research.Article
@@ -124,7 +125,10 @@ class ArticleEditsSuite extends munit.FunSuite:
     val r = applyAll(
       Body,
       es,
-      a => Option.when(a.text.exists(_.value.contains("ghost")))(Problem("its text is refused: ghost"))
+      a =>
+        Option.when(a.text.exists(_.value.contains("ghost")))(
+          Problem.Unclassified(Legacy.Text("its text is refused: ghost"))
+        )
     )
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
     assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
@@ -100,7 +101,7 @@ class GazetteerStoreSuite extends DbSuite:
     val sb = StringBuilder()
     def run(name: Registries.GazetteerSourcesKey, served: String, body: Array[Byte]): Unit =
       loop.answerWith(200, body)
-      sb ++= s"## import $name: $served\nresult: ${importOnce(name)}\n"
+      sb ++= s"## import $name: $served\nresult: ${importOnce(name).left.map(_.sentence)}\n"
       val _ = loop.take()
     run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria.geojson, zipped", zipped("cliopatria.geojson"))
     run(Registries.GazetteerSourcesKey("awmc"), "awmc.geojson", fixture("awmc.geojson"))
@@ -118,7 +119,7 @@ class GazetteerStoreSuite extends DbSuite:
     // the names the server takes, and what it says to one it does not know
     val h = ServerWiring(Deps(cfg, ds))
     sb ++= s"## names\ninit.fetch-sources: ${Bootstrap.sources.mkString(", ")}\n"
-    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(Caller.Local, Api.ExternalPlaces.Source("nowhere"), dryRun = Api.Apply(true))}\n"
+    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(Caller.Local, Api.ExternalPlaces.Source("nowhere"), dryRun = Api.Apply(true)).left.map(e => s"Error(${e.message.sentence},${e.code})")}\n"
     sb.result()
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/gazetteers-stored.txt")

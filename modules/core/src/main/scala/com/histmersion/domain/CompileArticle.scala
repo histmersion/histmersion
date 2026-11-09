@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import FailureTransformers.{apiAsDomain, domainAsApi}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.research.Articles
@@ -123,16 +124,20 @@ object CompileArticle:
   ): Either[List[Problem], (Extracted, List[Problem])] =
     val checked = a.claims.zipWithIndex.map { (c, i) =>
       val label = s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})"
-      if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Problem(s"$label: no claim"))
+      if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Problem.Unclassified(Legacy.Text(s"$label: no claim")))
       else
         AgentVerify.confidence(Option(c.confidence).getOrElse(com.histmersion.domain.library.Confidence.Wire(""))) match
-          case Left(m)     => Left(Problem(s"$label: $m"))
+          case Left(m)     => Left(Problem.Unclassified(Legacy.Text(s"$label: ${m.sentence}")))
           case Right(conf) =>
             val q = Option(c.quote).map(_.value.trim).getOrElse("")
             val m = AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), record, minRatio)
-            if q.isEmpty then Left(Problem(s"$label: no quote"))
+            if q.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$label: no quote")))
             else if !m.accepted then
-              Left(Problem(s"$label: the quote is not in the record of $citekey — copy it exactly"))
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"$label: the quote is not in the record of $citekey — copy it exactly")
+                )
+              )
             else
               Right(
                 Claim(
@@ -150,18 +155,27 @@ object CompileArticle:
       checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(AgentVerify.Text(c.claim.value)))
     val tooMany =
       Option.when(claims.size > maxClaims.value)(
-        Problem(s"at most $maxClaims claims per source (you gave ${claims.size})")
+        Problem.Unclassified(Legacy.Text(s"at most $maxClaims claims per source (you gave ${claims.size})"))
       )
-    val reason = Option(a.reason).map(_.value.trim).filter(_.nonEmpty)
+    val reason = Option(a.reason).map(_.sentence.trim).filter(_.nonEmpty)
     val noReason =
-      Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(Problem("say why the record is not used"))
+      Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(
+        Problem.Unclassified(Legacy.Text("say why the record is not used"))
+      )
     val problems = checked.collect { case Left(m) => m } ++ tooMany.toList ++ noReason.toList
     if problems.nonEmpty && !last.value then Left(problems)
     else
       val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
       val notUsed =
-        Option.when(kept.isEmpty)(Problem(reason.getOrElse("no claim could be verified in its record")))
-      Right((Extracted(citekey, kept, notUsed), problems.map(p => Problem(s"extract $citekey: dropped — $p"))))
+        Option.when(kept.isEmpty)(
+          Problem.Unclassified(Legacy.Text(reason.getOrElse("no claim could be verified in its record")))
+        )
+      Right(
+        (
+          Extracted(citekey, kept, notUsed),
+          problems.map(p => Problem.Unclassified(Legacy.Text(s"extract $citekey: dropped — ${p.sentence}")))
+        )
+      )
 
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
 
@@ -222,12 +236,13 @@ object CompileArticle:
       .filter(f => f.status != Source.Status.Current && f.status != Source.Status.Foundational)
       .map(_.citekey)
     val notUsed = extracted.collect {
-      case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse(Problem("no claim")))
+      case e if e.claims.isEmpty =>
+        NotUsed(e.citekey, e.notUsed.getOrElse(Problem.Unclassified(Legacy.Text("no claim"))))
     } ++
       facts.collect {
         case f
             if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
-          NotUsed(f.citekey, Problem("retracted: may be cited only to note the retraction"))
+          NotUsed(f.citekey, Problem.Unclassified(Legacy.Text("retracted: may be cited only to note the retraction")))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
@@ -248,7 +263,8 @@ object CompileArticle:
     val weight =
       ev.claims.toList.filter(_._2.hasClaims).sortBy(-_._2.value).map((ck, n) => s"[[$ck]] $n").mkString(", ")
     val notUsed =
-      if ev.notUsed.isEmpty then "none" else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason}").mkString("\n- ")
+      if ev.notUsed.isEmpty then "none"
+      else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason.sentence}").mkString("\n- ")
     Description(
       s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
         s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
@@ -305,7 +321,7 @@ object CompileArticle:
       Citekey.option(ck.value).flatMap(statusOf).filter(StatedStatuses.contains).flatMap { st =>
         bs.find(_.contains(s"[[$ck]]"))
           .filterNot(_.toLowerCase.contains(st.wire.value))
-          .map(_ => Problem(s"the first citation of [[$ck]] does not say it is ${st.wire}"))
+          .map(_ => Problem.Unclassified(Legacy.Text(s"the first citation of [[$ck]] does not say it is ${st.wire}")))
       }
     }
 
@@ -335,7 +351,7 @@ object CompileArticle:
       case DraftMode.Extend =>
         section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
           case Some(s) =>
-            Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(_.apiAsDomain)
+            Articles.appendUnderSection(current, s, Article.Prose(text.value.trim))
           case None =>
             Right(Article.Body(if current.value.trim.isEmpty then text.value.trim
             else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
@@ -387,10 +403,10 @@ object CompileArticle:
     val whole = combined(mode, current, text, section)
     val fatal = List(
       Option.when(text.value.isEmpty)("the text is empty"),
-      whole.left.toOption.map(m => s"$m — name an existing heading, or null to add at the end")
+      whole.left.toOption.map(m => s"${m.sentence} — name an existing heading, or null to add at the end")
     ).flatten ++ AgentVerify
       .linkProblems(AgentVerify.Text(text.value), corpus.isCitekey, corpus.isTarget)
-      .map(_.value) ++
+      .map(_.sentence) ++
       Option
         .when(ReviewArticle.headings(text).exists(h => h.trim.equalsIgnoreCase("sources cited")))(
           "a Sources cited section is generated by the page; do not write one"
@@ -419,19 +435,23 @@ object CompileArticle:
             )
           )
           .modify(_.reason)
-          .setTo(api.Problem(Option(r.reason).map(_.value.trim).getOrElse("")))
+          .setTo(Problem.Unclassified(Legacy.Text(Option(r.reason).map(_.sentence.trim).getOrElse(""))))
       )
     val reasonProblems = stated.flatMap { r =>
       if !inFilterKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
       else if citesAllKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
-      else if r.reason.value.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
+      else if r.reason.sentence.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
       else Coverage.Reason.merge(Map.empty, List(r)).left.toOption
     }
     val writerReasons = stated
-      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty)
-      .map(r => r.citekey -> Problem(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)))
+      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.sentence.nonEmpty)
+      .map(r =>
+        r.citekey -> Problem.Unclassified(
+          Legacy.Text(r.reason.sentence.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
+        )
+      )
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
@@ -458,16 +478,17 @@ object CompileArticle:
          else Nil) ++
         mech.filter(_.kind.value == "language").map(_.problem.value) ++
         citesHere.filterNot(allowed).map(ck => s"[[$ck]] is cited but no claim of it is in the claim table") ++
-        statusesSilent(body, corpus.statusOf).map(_.value) ++
+        statusesSilent(body, corpus.statusOf).map(_.sentence) ++
         Option.when(citesHere.isEmpty)("the text cites no source").toList ++
         newArticle.toList ++
         handWritten ++ reasonProblems ++
         unexplained.map(ck => s"[[$ck]] has claims in the table but is neither cited nor given a reason")
     val problems = fatal ++ soft
-    if fatal.nonEmpty || (soft.nonEmpty && !last.value) then Left(problems.map(Problem(_)))
+    if fatal.nonEmpty || (soft.nonEmpty && !last.value) then
+      Left(problems.map((text => Problem.Unclassified(Legacy.Text(text)))))
     else
       val summary = Option(a.summary).map(s => Article.SummaryText(s.value.trim)).filter(_.value.nonEmpty)
-      val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: $r") ++
+      val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: ${r.sentence}") ++
         unexplained.map(ck => s"$ck: claims extracted but neither cited nor given a reason")
       Right(
         (
@@ -483,9 +504,9 @@ object CompileArticle:
             notUsed.map(com.histmersion.api.library.Citekey(_)),
             soft.map(ArticleDraft.Problems(_)),
             filter,
-            Coverage.Reason.list(reasons.map((k, v) => k -> v.domainAsApi))
+            Coverage.Reason.list(reasons.map((k, v) => k -> v))
           ),
-          soft.map(p => Problem(s"self-check: $p"))
+          soft.map(p => Problem.Unclassified(Legacy.Text(s"self-check: $p")))
         )
       )
 
@@ -518,7 +539,7 @@ object CompileArticle:
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>
         s"appended a section${d.section.fold("")(s => s" under '$s'")} citing ${d.cited.size} source(s)"
-    val outcome = if written.value then what else s"nothing written — $why"
+    val outcome = if written.value then what else s"nothing written — ${why.sentence}"
     LogLine(
       s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})"
     )

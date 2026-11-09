@@ -1,7 +1,7 @@
 package com.histmersion
 package util.storage
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -15,7 +15,7 @@ object Resources:
   def classpath(loader: ClassLoader): Resources = new Resources:
     def text(name: ResourceName): Either[Problem, Blob.Text] =
       Option(loader.getResourceAsStream(name.value))
-        .toRight(Problem(s"missing prompt resource $name"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"missing prompt resource $name")))
         .map(in =>
           try Blob.Text(String(in.readAllBytes(), UTF_8))
           finally in.close()
@@ -23,4 +23,4 @@ object Resources:
 
   final class InMemory(contents: Map[ResourceName, Blob.Text]) extends Resources:
     def text(name: ResourceName): Either[Problem, Blob.Text] =
-      contents.get(name).toRight(Problem(s"missing prompt resource $name"))
+      contents.get(name).toRight(Problem.Unclassified(Legacy.Text(s"missing prompt resource $name")))

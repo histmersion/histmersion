@@ -1,7 +1,6 @@
 package com.histmersion
 package server.views
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters
@@ -40,11 +39,11 @@ object JobListView:
       st <- ListFilters
         .known(ListFilters.FacetName("status"), n.status.map(s => ListFilters.Term(s.value)), JobStatuses)
         .left
-        .map(p => Api.Error(Problem(p.value)))
+        .map(p => Api.Error(p))
       tr <- ListFilters
         .range(n.since.map(s => ListFilters.TimeBound(s.value)), n.until.map(u => ListFilters.TimeBound(u.value)), now)
         .left
-        .map(p => Api.Error(Problem(p.value)))
+        .map(p => Api.Error(p))
     yield JobQuery(
       st.map(t => JobQuery.Status(t.value)),
       n.kind.map(k => JobQuery.Kinds(k.value)),

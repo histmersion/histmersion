@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.maintenance
 
+import com.histmersion.api.problem.Text.sentence
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
@@ -80,7 +81,7 @@ object PgRelocation:
   def relocate(pg: Store, macOS: MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
     val here =
-      pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.value), _.toRealPath().toString)
+      pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.sentence), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().value.trim).filter(_.nonEmpty) else None
     recorded.filter(_ != here).map { from =>
       val (fb, tb) = (from.getBytes(UTF_8), here.getBytes(UTF_8))
@@ -94,11 +95,11 @@ object PgRelocation:
             val (out, skipped) = patch(FileBytes(bytes), PatchFrom(fb), PatchTo(tb))
             pg.write(k, ByteSource.Content(out.value))
               .left
-              .foreach(e => throw java.io.IOException(e.message.value)) // in place: keeps the permissions
+              .foreach(e => throw java.io.IOException(e.message.sentence)) // in place: keeps the permissions
             files += 1
             tooLong += skipped.value
             if macOS.value && isMachO(out.value) then
-              val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message.value), _.toString)
+              val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message.sentence), _.toString)
               val rc = processes
                 .start(
                   ProcessLaunch(
@@ -106,13 +107,13 @@ object PgRelocation:
                     output = ProcessOutput.Discarded
                   )
                 )
-                .fold(e => throw java.io.IOException(e.value), _.waitFor())
+                .fold(e => throw java.io.IOException(e.sentence), _.waitFor())
               if rc.value != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
               signed += 1
         }
       pg.write(marker, ByteSource.Content(here.getBytes(UTF_8)))
         .left
-        .foreach(e => throw java.io.IOException(e.message.value))
+        .foreach(e => throw java.io.IOException(e.message.sentence))
       Result(Result.Files(files), Result.Signed(signed), Result.TooLong(tooLong))
     }
 

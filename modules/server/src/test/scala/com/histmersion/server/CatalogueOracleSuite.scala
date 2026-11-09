@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.Geocoding
@@ -493,7 +494,7 @@ class CatalogueOracleSuite extends DbSuite:
           to = Some(EventImportRequest.To(-1000))
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
     val imported = connect(ds)(
       sql"SELECT id FROM events WHERE catalogue IS NOT NULL ORDER BY id".query[String].run().toList
@@ -550,7 +551,7 @@ class CatalogueOracleSuite extends DbSuite:
   private lazy val oracleLoaded: LoadedConfig =
     AppConfig
       .loadWithUserText(org.ekrich.config.ConfigFactory.empty, "histmersion.events.gvp.request-interval-ms = 0\n")
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
 
   // ── the reads ──────────────────────────────────────────────────────────────────────────────
 

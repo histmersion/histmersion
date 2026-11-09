@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.events
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `events-wikidata`: `histmersion events import wikidata` — Wikidata's battles, sieges, wars, treaties … (the
   * configured classes).

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*

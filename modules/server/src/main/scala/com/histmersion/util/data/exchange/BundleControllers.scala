@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.PageSize
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
@@ -88,9 +89,11 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       .applyStatus(job)
       .toRight(
         Api.Error(
-          Problem(
-            s"no merge apply '$job' on this server " +
-              "(`histmersion merge list` shows what was merged)"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"no merge apply '$job' on this server " +
+                "(`histmersion merge list` shows what was merged)"
+            )
           ),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
@@ -110,7 +113,12 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     MergeResolutionsFile
       .parse(text)
       .left
-      .map(es => Api.Error(Problem(es.mkString("; ")), Some(Api.Error.Code(Write.CodeInvalid))))
+      .map(es =>
+        Api.Error(
+          Problem.Unclassified(Legacy.Text(es.map(_.sentence).mkString("; "))),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
 
   def merges(limit: Option[Api.Merge.Limit]): List[MergeInfo] =
     bundles.merges(limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.ListLimit))
@@ -130,7 +138,8 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
     val source = HandedFile.source(f)
-    if source.size.value <= 0 then Left(Api.Error(Problem("the upload is empty — send a .hmx bundle as the body")))
+    if source.size.value <= 0 then
+      Left(Api.Error(Problem.Unclassified(Legacy.Text("the upload is empty — send a .hmx bundle as the body"))))
     else Right(source)
 
 object BundleControllers:
@@ -149,7 +158,9 @@ object BundleControllers:
       .left
       .map(_ =>
         Api.Error(
-          Problem(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)")
+          Problem.Unclassified(
+            Legacy.Text(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)")
+          )
         )
       )
 
@@ -164,9 +175,11 @@ object BundleControllers:
           .map(_ => Some(BundleScope.Since.At(s)))
           .toRight(
             Api.Error(
-              Problem(
-                s"since '$s' is not a moment — give an ISO-8601 time with its offset, " +
-                  "e.g. 2026-10-03T09:12:00Z (a bundle's manifest asOf)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"since '$s' is not a moment — give an ISO-8601 time with its offset, " +
+                    "e.g. 2026-10-03T09:12:00Z (a bundle's manifest asOf)"
+                )
               )
             )
           )

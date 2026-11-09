@@ -29,6 +29,10 @@ object GuidelineInventory {
     stringProblems: List[String] = List("com/histmersion/Problem.", "com/histmersion/api/Problem.", "com/histmersion/domain/Problem.",
       "com/histmersion/plugin/Problem.", "com/histmersion/pluginresolver/Problem."),
     unclassifiedProblem: String = "com/histmersion/util/problem/Problem.Unclassified.",
+    legacyTextAccessor: String = "com/histmersion/util/problem/Problem.legacyText(",
+    unrecognisedProblem: String = "com/histmersion/util/problem/Problem.Stored.Unrecognised.",
+    externalText: String = "com/histmersion/util/problem/External.",
+    closedProblem: String = "com/histmersion/util/problem/Problem",
     controllerFile: String = ".*(Controller|Controllers|Routes)\\.scala",
     rawSqlOwners: List[String] = List("com/histmersion/util/database/Sql#", "com/histmersion/util/database/Sql."),
     rawSqlText: List[String] = List("com/histmersion/util/database/Sql.Text."),
@@ -92,10 +96,12 @@ object GuidelineInventory {
     "silentCompare" -> "==/!=/contains/indexOf whose sides have unrelated types (opaque newtype vs primitive, two newtypes, enum vs primitive/newtype)",
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
-    "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one",
+    "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one. Since G60 step 1 the closed `com.histmersion.util.problem.Problem` is the only one: any other top-level type, trait, class, enum or (non-newtype) object named `Problem` is a finding too",
     "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==`, `!=`, a match on a literal or a regex, a Regex, or a reading apart (`takeWhile`, `split`, `stripPrefix`, `indexOf`…) of the text of a failure, a stored state or a message: the `.value` of a String newtype named for one (Problem, Error, Reason, Failure, Why, Message, Detail, Note, Outcome, Warning, State…), a Throwable's `getMessage`/`toString`, or a `message`/`error`/`detail`/`note`/`why`/`reason` field, outside the newtype's own companion and a boundary file. A caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
     "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
-    "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
+    "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Also every read of the temporary accessor `legacyText` (an unclassified problem's text where the api's renderer is out of reach; detail `legacyText`). Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
+    "G60external" -> "`.value` of an outside text a problem carries (`util.problem.External.*`: an exception's message, a process's stderr, a reply's start, a plugin's or a model's words) outside a `render` boundary file and outside the newtype's own companion: outside text is shown at an edge, never read anywhere else",
+    "G60unrecognised" -> "main code only: a construction of `util.problem.Problem.Stored.Unrecognised`, the text an older version stored that no case writes; only the stored column's reader (and the cases' examples) builds one",
     "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
@@ -145,7 +151,6 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
   private val plainCalls = new ConcurrentLinkedQueue[PlainCall]()
   private val unclassified = new ConcurrentHashMap[String, (Int, String)]()
   private val stale = new ConcurrentLinkedQueue[String]()
-  private val topProblems = new ConcurrentLinkedQueue[(String, String, String, Int)]()
   private val controller = policy.controllerFile.r
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
@@ -463,6 +468,18 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
             report("G60fromString", a, s"${obj.stripPrefix("com/histmersion/").stripSuffix(".")}.$how;${textShape(a)}")
           }
         if (unclassified(a.fun)) report("G60fromString", a, s"Unclassified;${textShape(a)}")
+        if (scope == "main" && (a.fun match {
+              case n: Term.Name => n.symbol.value.startsWith(policy.unrecognisedProblem)
+              case Term.Select(q, n) if n.value == "apply" => q match { case qn: Term.Name => qn.symbol.value.startsWith(policy.unrecognisedProblem); case qs: Term.Select => qs.name.symbol.value.startsWith(policy.unrecognisedProblem); case _ => false }
+              case Term.Select(_, n) => n.symbol.value.startsWith(policy.unrecognisedProblem)
+              case _ => false
+            })) report("G60unrecognised", a, "Stored.Unrecognised")
+      case sel @ Term.Select(_, n) if !inImport(sel) && n.symbol.value.startsWith(policy.legacyTextAccessor) =>
+        report("G60fromString", sel, "legacyText")
+      case sel @ Term.Select(q, n) if isIronValue(n) && !inImport(sel) && boundaryKinds.get(path).forall(_ != "render") =>
+        termType(q).flatMap(newtypeOf).filter(_.value.startsWith(policy.externalText)).foreach { nt =>
+          if (!allowedInCompanion(sel, Some(nt))) report("G60external", sel, s"value:${nt.displayName}")
+        }
     }
 
     doc.tree.traverse {
@@ -509,10 +526,22 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case o: Defn.Object if isNewtypeObject(o.name.symbol) && !o.name.symbol.isLocal =>
         val base = newtypeParents(o.name.symbol).map(_._2.value)
         if (base.exists(b => b == "java/lang/String#" || b == "scala/Predef.String#") && problemWord.findFirstIn(o.name.value).nonEmpty) {
-          if (topLevelProblem.pattern.matcher(o.name.symbol.value).matches) topProblems.add((mod, scope, path, o.pos.startLine + 1))
-          else report("G5problem", o, o.name.symbol.value.stripPrefix("com/histmersion/"))
+          if (!topLevelProblem.pattern.matcher(o.name.symbol.value).matches) report("G5problem", o, o.name.symbol.value.stripPrefix("com/histmersion/"))
+          else report("G5problem", o, "a second top-level Problem: " + o.name.symbol.value.stripPrefix("com/histmersion/").replaceAll("Problem\\$package\\.", ""))
         }
         if (positionalName.pattern.matcher(o.name.value).matches) report("G55positional", o, "newtype:" + o.name.value)
+      // the one closed Problem of the application: any other top-level definition of that name is a copy of it (a
+      // newtype is reported at its companion, not again at its `type Problem = Problem.T` alias)
+      case d: Defn if d.parent.exists(p => p.is[Pkg.Body] || p.is[Pkg] || p.is[Source]) && (d match {
+            case t: Defn.Trait => t.name.value == "Problem"; case c: Defn.Class => c.name.value == "Problem"
+            case e: Defn.Enum => e.name.value == "Problem"; case o: Defn.Object => o.name.value == "Problem"
+            case t: Defn.Type => t.name.value == "Problem" && !(t.body match { case Type.Select(q, Type.Name("T")) => q.syntax == "Problem"; case _ => false })
+            case _ => false
+          }) =>
+        val sym = d match { case t: Defn.Trait => t.name.symbol; case c: Defn.Class => c.name.symbol; case e: Defn.Enum => e.name.symbol
+          case t: Defn.Type => t.name.symbol; case o: Defn.Object => o.name.symbol; case _ => Symbol.None }
+        val companionOfClosed = sym.value.startsWith(policy.closedProblem)
+        if (!companionOfClosed) report("G5problem", d, "a second top-level Problem: " + sym.value.stripPrefix("com/histmersion/"))
       case t: Defn.Type if !t.name.symbol.isLocal && positionalName.pattern.matcher(t.name.value).matches &&
           !(t.body match { case Type.Select(q, Type.Name("T")) => q.syntax.split('.').last == t.name.value; case _ => false }) =>
         report("G55positional", t, "alias:" + t.name.value)
@@ -823,10 +852,6 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           findings.add(Finding("G44plaindef", d.module, d.path, d.line, s"${d.name}(${ps.mkString(",")});calls=${fed.size}"))
         }
       }
-    }
-    // G5problem: a second top-level Problem in one module and scope is a copy of the layer's one
-    topProblems.asScala.toList.groupBy(p => (p._1, p._2)).values.foreach { ps =>
-      ps.sortBy(p => (p._3, p._4)).drop(1).foreach(p => findings.add(Finding("G5problem", p._1, p._3, p._4, "second top-level Problem")))
     }
     val rows = findings.asScala.toList.sortBy(f => (f.rule, f.path, f.line, f.detail))
     val header = "rule\tmodule\tpath\tline\tdetail"

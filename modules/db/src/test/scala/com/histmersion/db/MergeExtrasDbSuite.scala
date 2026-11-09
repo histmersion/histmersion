@@ -1,7 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -463,7 +464,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     val _ = ArticleFixtures
       .rename(work, Slug("zz_first_slug"), Slug("zz_second_slug"))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
     val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
     EventFixtures.put(
@@ -503,14 +504,14 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(m.redirects.value >= 1 && m.ledgerRows.value >= 2, m.toString)
     val d = Transactor(home)
       .read(MergeRepo.detail(MergeRepo.MergeIdOrPrefix(m.id.toString.take(8))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
     assertEquals(d.merge.backup, Some("stub.dump"))
     val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
     val led =
       Transactor(home)
         .read(MergeRepo.ledger(Some(MergeRepo.UidText(evUid.toString)), None, PageSize(50), TestExchange.rules))
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
     assertEquals(led.redirects.map(_.uid), List(evUid))
     assert(Transactor(home).read(MergeRepo.detail(MergeRepo.MergeIdOrPrefix("zzzz"))).isLeft)
@@ -531,7 +532,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       EventFixtures
         .rename(ds, BEventRow.Id("zz_ev_other"), BEventRow.Id("zz_ev_a"))
         .left
-        .exists(_.message.value.contains("old id of 'zz_ev_b'"))
+        .exists(_.message.sentence.contains("old id of 'zz_ev_b'"))
     )
     assert(EventFixtures.rename(ds, BEventRow.Id("zz_ev_b"), BEventRow.Id("zz_ev_a")).isRight)
     assertEquals(EventFixtures.renamedTo(ds, BEventRow.Id("zz_ev_a")), None)
@@ -735,7 +736,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
           com.histmersion.domain.catalogue.Place.Id("zz_pl_a")
         )
         .left
-        .exists(_.message.value.contains("old id of 'zz_pl_b'"))
+        .exists(_.message.sentence.contains("old id of 'zz_pl_b'"))
     )
     assert(
       PlaceFixtures
@@ -745,7 +746,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
           com.histmersion.domain.catalogue.Place.Id("zz_pl_other")
         )
         .left
-        .exists(_.message.value.contains("already the id"))
+        .exists(_.message.sentence.contains("already the id"))
     )
     assert(
       PlaceFixtures
@@ -790,9 +791,11 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     val c = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("0")))
-    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left(Problem("merge apply crashed: boom"))))
+    Transactor(ds).transact(
+      JobRepo.finishMergeApply(c, Left(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
+    )
     assertEquals(
-      applyJob(ds, c).map(j => (j.state, j.error)),
+      applyJob(ds, c).map(j => (j.state, j.error.map(_.sentence))),
       Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
     )
     // not a merge apply, or nothing: no answer

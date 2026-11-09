@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.media.covers
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.pluginhost.{figureRules, HttpTransport, Polite}
 import com.histmersion.upstreams.media.MediaText
 
@@ -68,7 +69,7 @@ final class SourcePictures(
       case Right(t) if t.bytes.value.nonEmpty => Some(t)
       case Right(_)                           => None
       case Left(why)                          =>
-        scribe.info(s"media: no thumbnail for $name (${why.value}) — the card shows the picture itself")
+        scribe.info(s"media: no thumbnail for $name (${why.sentence}) — the card shows the picture itself")
         None
 
   // ── illustrations ─────────────────────────────────────────────────────────────────────────────
@@ -152,7 +153,7 @@ final class SourcePictures(
           val got = fetch.file(HttpTransport.Url(url.value), Polite.Mime("image/jpeg")) match
             case Left(Plugin.Http.Failure.Status(code, _)) if code.isNotFound => refused("Open Library has no cover")
             case Left(why)                                                    =>
-              Left(CoverRefusal.Failed(SourcePictures.OpenLibraryText(s"Open Library: ${why.problem}")))
+              Left(CoverRefusal.Failed(SourcePictures.OpenLibraryText(s"Open Library: ${why.problem.sentence}")))
             case Right((bytes, _)) if bytes.value.length > cfg.maxBytes.value =>
               refused(s"cover of ${bytes.value.length} bytes is larger than media.max-bytes")
             case Right((bytes, mime)) if !mime.value.startsWith("image/") =>
@@ -236,7 +237,8 @@ final class SourcePictures(
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
   def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes): Either[Api.Error, MediaItem] =
-    val bad = (m: String) => Left(Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid))))
+    val bad = (m: String) =>
+      Left(Api.Error(Problem.Unclassified(Legacy.Text(m)), Some(Api.Error.Code(Write.CodeInvalid))))
     if p.provider.value != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
     else if p.key.value.trim.isEmpty then bad("the cover's key (its Calibre id) is missing")
@@ -249,7 +251,12 @@ final class SourcePictures(
         case Some(mime) =>
           Citekey.option(p.citekey.value.trim).flatMap(sources.current) match
             case None =>
-              Left(Api.Error(Problem(s"No source '${p.citekey}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+              Left(
+                Api.Error(
+                  Problem.Unclassified(Legacy.Text(s"No source '${p.citekey}'")),
+                  Some(Api.Error.Code(Write.CodeNotFound))
+                )
+              )
             case Some(current) =>
               val ck = Citekey.assume(current.value)
               val key = p.key.value.trim
@@ -287,7 +294,7 @@ final class SourcePictures(
                 MediaRole.Wire(MediaRole.Cover),
                 Some(AssetService.LinkProperty(MediaProvider.Calibre))
               )
-              assets.show(uid).toRight(Api.Error(Problem(s"cover of '$ck' not stored")))
+              assets.show(uid).toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"cover of '$ck' not stored"))))
 
   // ── a run over the corpus ─────────────────────────────────────────────────────────────────────
 

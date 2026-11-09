@@ -1,6 +1,9 @@
 package com.histmersion
 package api.exchange
-import com.histmersion.api.Problem
+
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.WireEnumValues
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
@@ -93,13 +96,17 @@ object MergeDecision:
       case i  => (s.take(i), Some(s.drop(i + 1).trim))
     Kind.values.find(d => Kind.wireOf(d) == Kind.Wire(k)) match
       case None =>
-        Left(Problem(s"'$s' is not a decision (${Kind.values.map(Kind.wireOf).mkString(", ")})"))
+        Left(
+          Problem.Unclassified(Legacy.Text(s"'$s' is not a decision (${Kind.values.map(Kind.wireOf).mkString(", ")})"))
+        )
       case Some(d) if ((d.takesArgument) == (true)) && arg.forall(_.isEmpty) =>
-        Left(Problem(s"'$s': ${Kind.wireOf(d)} needs an argument (${Kind.wireOf(d)}:<value>)"))
+        Left(
+          Problem.Unclassified(Legacy.Text(s"'$s': ${Kind.wireOf(d)} needs an argument (${Kind.wireOf(d)}:<value>)"))
+        )
       case Some(d) if !((d.takesArgument) == (true)) && arg.isDefined =>
-        Left(Problem(s"'$s': ${Kind.wireOf(d)} takes no argument"))
+        Left(Problem.Unclassified(Legacy.Text(s"'$s': ${Kind.wireOf(d)} takes no argument")))
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
   given Encoder[MergeDecision] = Encoder.encodeString.contramap((refactorCallback => (refactorCallback.wire).value))
-  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(Wire(s)).left.map(_.value))
+  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(Wire(s)).left.map(_.sentence))
   given Schema[MergeDecision] = Schema.string[MergeDecision]

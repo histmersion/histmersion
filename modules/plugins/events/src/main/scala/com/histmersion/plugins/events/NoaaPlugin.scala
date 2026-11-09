@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.events
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `events-noaa`: `histmersion events import noaa` — NOAA NCEI's significant earthquakes, eruptions and tsunamis. */
 import com.histmersion.plugin.Plugin

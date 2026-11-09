@@ -1,6 +1,9 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.exchange.MergeIssue
 import sttp.tapir.*
 
@@ -313,7 +316,7 @@ object ListFilters:
 
   def known(what: FacetName, vs: List[Term], known: Seq[Term]): Either[Problem, List[Term]] =
     vs.find(v => !known.contains(v)) match
-      case Some(v) => Left(Problem(s"unknown $what '$v' (one of: ${known.mkString(", ")})"))
+      case Some(v) => Left(Problem.Unclassified(Legacy.Text(s"unknown $what '$v' (one of: ${known.mkString(", ")})")))
       case None    => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
@@ -329,14 +332,16 @@ object ListFilters:
           .Try(LocalDate.parse(d))
           .toOption
           .map(day => (if (end) == (true) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
-          .toRight(Problem(s"'$s' is not a date"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not a date")))
       case _ =>
         scala.util
           .Try(Instant.parse((s).value.trim))
           .toOption
           .toRight(
-            Problem(
-              s"'$s' is neither a date (2026-10-01), an instant (2026-10-01T12:00:00Z) nor a time ago (7d, 12h, 30m)"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"'$s' is neither a date (2026-10-01), an instant (2026-10-01T12:00:00Z) nor a time ago (7d, 12h, 30m)"
+              )
             )
           )
 
@@ -346,9 +351,23 @@ object ListFilters:
       now: Instant
   ): Either[Problem, (Option[Instant], Option[Instant])] =
     for
-      s <- since.fold(Right(None))(timeBound(_, end = (false), now).map(Some(_)).left.map(m => Problem(s"since: $m")))
-      u <- until.fold(Right(None))(timeBound(_, end = (true), now).map(Some(_)).left.map(m => Problem(s"until: $m")))
-      _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), Problem("since must lie before until"))
+      s <- since.fold(Right(None))(
+        timeBound(_, end = (false), now)
+          .map(Some(_))
+          .left
+          .map(m => Problem.Unclassified(Legacy.Text(s"since: ${m.sentence}")))
+      )
+      u <- until.fold(Right(None))(
+        timeBound(_, end = (true), now)
+          .map(Some(_))
+          .left
+          .map(m => Problem.Unclassified(Legacy.Text(s"until: ${m.sentence}")))
+      )
+      _ <- Either.cond(
+        s.zip(u).forall((a, b) => a.isBefore(b)),
+        (),
+        Problem.Unclassified(Legacy.Text("since must lie before until"))
+      )
     yield (s, u)
 
   /** `%`, `,`, `=` and anything outside printable ASCII become `%XX` (UTF-8), so any value survives a header.

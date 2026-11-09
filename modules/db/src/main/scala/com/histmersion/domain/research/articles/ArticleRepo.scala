@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.CitekeyResolver
@@ -90,7 +91,7 @@ private[articles] object ArticleRepo:
     a.filter.map(_.asJson.deepDropNullValues.noSpaces)
   private def reasonsJson(a: Article): String =
     io.circe.Json
-      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> io.circe.Json.fromString(v.value))*)
+      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> io.circe.Json.fromString(v.sentence))*)
       .noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
@@ -100,7 +101,7 @@ private[articles] object ArticleRepo:
     Jsonb
       .read[Map[String, String]](Jsonb.JsonText(json))
       .getOrElse(Map.empty)
-      .map((ck, reason) => Citekey(ck) -> Problem(reason))
+      .map((ck, reason) => Citekey(ck) -> Problem.Unclassified(Legacy.Text(reason)))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -122,10 +123,10 @@ private[articles] object ArticleRepo:
       case None           => Left(Articles.notFound(Article.Slug(slug.value)))
       case Some(existing) =>
         Articles.precondition(existing, p) match
-          case Left(msg) => Left(Api.Error(api.Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
+          case Left(msg) => Left(Api.Error(msg, Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
             Articles.applyPatch(existing, p) match
-              case Left(msg) => Left(Api.Error(api.Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+              case Left(msg) => Left(Api.Error(msg, Some(Api.Error.Code(Write.CodeInvalid))))
               // the critique reasons (V091) sit beside the row: checked first, so a refused one
               // writes nothing; a patch of them alone leaves the article, its versions and its
               // token as they are (`by`: who set them, when a reason does not say)
@@ -233,15 +234,17 @@ private[articles] object ArticleRepo:
     else if exists(newSlug) then
       Left(
         Api.Error(
-          api.Problem(s"'${newSlug.value}' is already the slug of another article"),
+          Problem.Unclassified(Legacy.Text(s"'${newSlug.value}' is already the slug of another article")),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          api.Problem(
-            s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
+            )
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )

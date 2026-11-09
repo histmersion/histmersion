@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -132,7 +133,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "links":[{"type":"closeMatch","identifier":"wd:Q193236"},{"type":"exactMatch","identifier":"pl:638753"},
                {"type":"primaryTopicOf","identifier":"https://en.wikipedia.org/wiki/Hattusa"}],
       "geometry":{"type":"Point","coordinates":[34.615,40.019]}}""")
-    val r = Gazetteer.fromFeature(f, Gazetteer.FromFeatureDataset("anatolia"), 0).fold(e => fail(e.value), identity)
+    val r = Gazetteer.fromFeature(f, Gazetteer.FromFeatureDataset("anatolia"), 0).fold(e => fail(e.sentence), identity)
     assertEquals(r.own, Some(ExternalId(LinkScheme.Whg, ExternalId.Id("99"))))
     assertEquals(r.ref, "whg:99")
     assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("whg_99"))
@@ -175,7 +176,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "p1\tKaneš\tKt archive\tTR\twd:Q1192387; tgn:7016542\tKanesh@en; Neša@hit; Kültepe\tsettlement\t35.635\t38.850\t-2000\t-1700"
     )
     val r =
-      Gazetteer.fromTsvRow(header, row, Gazetteer.FromTsvRowDataset("kultepe"), 2).fold(e => fail(e.value), identity)
+      Gazetteer.fromTsvRow(header, row, Gazetteer.FromTsvRowDataset("kultepe"), 2).fold(e => fail(e.sentence), identity)
     assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("lpf_kultepe_p1"))
     assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(Year(-2000)), Some(Year(-1700))))
@@ -454,7 +455,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "descriptions":[{"value":" former country in Modern Day Spain ","lang":"EN"},
                       {"value":"microestado de Europa (siglo VIII-1769)","lang":"es"},
                       {"value":"former country in Modern Day Spain","lang":"en"}, {"value":"  "}]}""")
-    val r = Gazetteer.fromFeature(f, Gazetteer.FromFeatureDataset(""), 1).fold(e => fail(e.value), identity)
+    val r = Gazetteer.fromFeature(f, Gazetteer.FromFeatureDataset(""), 1).fold(e => fail(e.sentence), identity)
     assertEquals(
       r.descriptions,
       List(

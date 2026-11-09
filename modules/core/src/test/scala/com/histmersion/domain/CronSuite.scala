@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -49,12 +50,12 @@ class CronSuite extends munit.FunSuite:
     assertEquals(next("0 0 29 2 *", "2026-10-04T12:00:00Z"), Some(at("2028-02-29T00:00:00Z")))
 
   test("refused: the wrong number of fields, out of range, backwards, a bad step, a date that never comes"):
-    assert(Cron.parse(Cron.Text("* * * *")).left.exists(_.value.contains("five fields")))
-    assert(Cron.parse(Cron.Text("60 * * * *")).left.exists(_.value.contains("minute")))
-    assert(Cron.parse(Cron.Text("0 24 * * *")).left.exists(_.value.contains("hour")))
-    assert(Cron.parse(Cron.Text("0 0 5-2 * *")).left.exists(_.value.contains("backwards")))
-    assert(Cron.parse(Cron.Text("*/0 * * * *")).left.exists(_.value.contains("step")))
-    assert(Cron.parse(Cron.Text("0 0 30 2 *")).left.exists(_.value.contains("never fires")))
+    assert(Cron.parse(Cron.Text("* * * *")).left.exists(_.sentence.contains("five fields")))
+    assert(Cron.parse(Cron.Text("60 * * * *")).left.exists(_.sentence.contains("minute")))
+    assert(Cron.parse(Cron.Text("0 24 * * *")).left.exists(_.sentence.contains("hour")))
+    assert(Cron.parse(Cron.Text("0 0 5-2 * *")).left.exists(_.sentence.contains("backwards")))
+    assert(Cron.parse(Cron.Text("*/0 * * * *")).left.exists(_.sentence.contains("step")))
+    assert(Cron.parse(Cron.Text("0 0 30 2 *")).left.exists(_.sentence.contains("never fires")))
     assert(Cron.parse(Cron.Text("")).isLeft)
 
   test("the shortest gap between firings (how a too-frequent schedule is refused)"):

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
@@ -19,7 +20,9 @@ object PluginTree:
         fs <- defs.fragments
         ss <- defs.skills
       yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
-    files.left.map(Problem(_)).map(_.map((path, text) => SafePath.Candidate(path) -> text))
+    files.left
+      .map((text => Problem.Unclassified(Legacy.Text(text))))
+      .map(_.map((path, text) => SafePath.Candidate(path) -> text))
 
   val Owned: List[Owned] = List(OwnedValue("plugin/agents"), OwnedValue("plugin/skills"))
 
@@ -29,7 +32,7 @@ object PluginTree:
   private[agents] def writeTree(store: Store, tree: Map[SafePath.Candidate, String]): Either[Problem, Unit] =
     try
       val entries = tree.toList.map { (name, text) =>
-        Store.Key.of(name.value).fold(error => throw IllegalArgumentException(error.value), identity) -> text
+        Store.Key.of(name.value).fold(error => throw IllegalArgumentException(error.sentence), identity) -> text
       }
       val wanted = entries.map(_._1.value).toSet
       def prune(key: Store.Key, root: Store.Key): Unit =
@@ -42,17 +45,17 @@ object PluginTree:
         else if store.isFile(key) && !wanted(key.value) then
           val _ = store.delete(key)
       Owned.foreach { name =>
-        val key = Store.Key.of(name.value).fold(error => throw IllegalArgumentException(error.value), identity)
+        val key = Store.Key.of(name.value).fold(error => throw IllegalArgumentException(error.sentence), identity)
         if store.exists(key) || store.isLink(key) then prune(key, key)
       }
       entries.foreach { (key, text) =>
         if store.isLink(key.parent) then
           val _ = store.delete(key.parent)
-        store.makeDirectory(key.parent).fold(error => throw java.io.IOException(error.message.value), identity)
+        store.makeDirectory(key.parent).fold(error => throw java.io.IOException(error.message.sentence), identity)
         store
           .write(key, ByteSource.Content(text.getBytes(UTF_8)))
-          .fold(error => throw java.io.IOException(error.message.value), _ => ())
+          .fold(error => throw java.io.IOException(error.message.sentence), _ => ())
       }
       scribe.info(s"wrote ${tree.size} file(s) under ${store.where()}")
       Right(())
-    catch case error: java.io.IOException => Left(Problem(error.getMessage))
+    catch case error: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(error.getMessage)))

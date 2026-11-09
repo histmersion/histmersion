@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.storage.Reservation
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -29,7 +29,7 @@ trait RangeHttp:
 
   /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
   def file(url: RangeHttp.Url): Either[Problem, Option[RangeHttp.ResponseBytes]] = Left(
-    Problem(s"${url.value}: whole files are not read by this client")
+    Problem.Unclassified(Legacy.Text(s"${url.value}: whole files are not read by this client"))
   )
 
 object RangeHttp:
@@ -71,11 +71,13 @@ object RangeHttp:
     val count: Long = length.value
     if code.value == 200 then
       Left(
-        Problem(
-          s"${url.value} ignores range requests (answered 200 to a range) — refused rather than download the whole file"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${url.value} ignores range requests (answered 200 to a range) — refused rather than download the whole file"
+          )
         )
       )
-    else if code.value != 206 then Left(Problem(s"${url.value}: HTTP ${code.value}"))
+    else if code.value != 206 then Left(Problem.Unclassified(Legacy.Text(s"${url.value}: HTTP ${code.value}")))
     else
       range.flatMap(contentRange) match
         // a range past the end of the file is answered up to its end
@@ -83,8 +85,10 @@ object RangeHttp:
           Right(total)
         case Some((a, b, total)) =>
           Left(
-            Problem(
-              s"${url.value} answered bytes ${a.value}-${b.value}/${total.fold("*")(_.value.toString)} for $want-${want + count - 1}"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${url.value} answered bytes ${a.value}-${b.value}/${total.fold("*")(_.value.toString)} for $want-${want + count - 1}"
+              )
             )
           )
-        case None => Left(Problem(s"${url.value} sent no Content-Range"))
+        case None => Left(Problem.Unclassified(Legacy.Text(s"${url.value} sent no Content-Range")))

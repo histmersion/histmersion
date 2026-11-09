@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.exchange.EditionsPolicy
 
 import com.histmersion.domain.{AuthorName, MergeSettings, Title}
@@ -78,7 +79,9 @@ object SourceMatcher:
     def score: Evidence.Score = Evidence.Score(parts.map(_._2.value).sum)
     def strongKey: Boolean = strong.nonEmpty
     def why: List[Problem] =
-      strong.map(k => Problem(s"$k equal (strong key)")) ++ parts.map((l, w) => Problem(s"$l (${signed(w)})"))
+      strong.map(k => Problem.Unclassified(Legacy.Text(s"$k equal (strong key)"))) ++ parts.map((l, w) =>
+        Problem.Unclassified(Legacy.Text(s"${l.sentence} (${signed(w)})"))
+      )
 
   object Evidence:
     /** The sum of the weights of the parts. */
@@ -160,7 +163,7 @@ object SourceMatcher:
     ) || says(a) || says(b)
 
   private def part(reason: String, weight: Double): (Problem, Evidence.Weight) =
-    (Problem(reason), Evidence.Weight(weight))
+    (Problem.Unclassified(Legacy.Text(reason)), Evidence.Weight(weight))
 
   private def venueFingerprint(s: Bundle.Source): Option[Fingerprint] =
     s.venue.map(v => MergeText.fingerprint(MergeText.Text(v.value))).filter(_.value.nonEmpty)

@@ -1,6 +1,8 @@
 package com.histmersion
 package api.jobs
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.Problem
+
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
