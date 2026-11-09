@@ -193,7 +193,8 @@ lazy val newtype = projectMatrix
     description := "The base trait of every Histmersion newtype: an Iron RefinedType with CanEqual and a lifted Ordering"
   )
   .settings(commonDeps)
-  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
+  // Hearth prints the companion's type for its name at compile time (CompanionMacro): the version Kindlings uses
+  .settings(libraryDependencies ++= Seq("io.github.iltotore" %% "iron" % V.iron, "com.kubuszok" %% "hearth" % V.hearth))
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 

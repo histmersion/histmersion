@@ -19,17 +19,21 @@ class NewtypeParseSuite extends munit.FunSuite:
   import NewtypeParseSuite.*
   import Problem.*
 
-  test("a newtype knows its full name, written down by the compiler"):
+  test("a newtype knows its full name, as Hearth names its T"):
     assertEquals(Shelf.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Shelf")
     assertEquals(Catalogue.Year.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year")
 
-  test("a newtype knows its Iron constraint by name and by Iron's description"):
+  /** Hearth's name of `Interval.Closed[-5000, 3000]`: Iron's alias followed to what it stands for. */
+  private val ClosedYears =
+    "DescribedAs[([V >: scala.Nothing <: scala.Any] => DescribedAs[Greater[V] | StrictEqual[V], compileTime.+[\"Should be greater than or equal to \", V]])[-5000] & ([V >: scala.Nothing <: scala.Any] => DescribedAs[Less[V] | StrictEqual[V], compileTime.+[\"Should be less than or equal to \", V]])[3000], \"Should be included in [-5000, 3000]\"]"
+
+  test("a newtype knows its Iron constraint by Hearth's name and by Iron's description"):
     assertEquals(Shelf.constraint, Newtype.Constraint("Match[\"[a-z]+\"]", "Should match [a-z]+"))
     assertEquals(
       Catalogue.Year.constraint,
-      Newtype.Constraint("Interval.Closed[-5000, 3000]", "Should be included in [-5000, 3000]")
+      Newtype.Constraint(ClosedYears, "Should be included in [-5000, 3000]")
     )
-    assertEquals(Label.constraint, Newtype.Constraint("Pure", "Always valid"))
+    assertEquals(Label.constraint, Newtype.Constraint("True", "Always valid"))
 
   test("parse gives the value, or Malformed with the type, the constraint and the raw input"):
     assertEquals(Shelf.parse("top"), Right(Shelf("top")))
@@ -50,7 +54,9 @@ class NewtypeParseSuite extends munit.FunSuite:
           Invalid.Malformed(
             TypeName("com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year"),
             Constraint(
-              Constraint.Name("Interval.Closed[-5000, 3000]"),
+              Constraint.Name(
+                "DescribedAs[([V >: scala.Nothing <: scala.Any] => DescribedAs[Greater[V] | StrictEqual[V], compileTime.+[\"Should be greater than or equal to \", V]])[-5000] & ([V >: scala.Nothing <: scala.Any] => DescribedAs[Less[V] | StrictEqual[V], compileTime.+[\"Should be less than or equal to \", V]])[3000], \"Should be included in [-5000, 3000]\"]"
+              ),
               Constraint.Description("Should be included in [-5000, 3000]")
             ),
             Raw("9999")

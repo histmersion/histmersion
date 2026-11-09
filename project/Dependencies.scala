@@ -11,6 +11,7 @@ object Dependencies {
     val chimp = "0.6.0"
     val circe = "0.14.17"
     val kindlings = "0.3.3" // com.kubuszok — Hearth-based circe / tapir-schema / sconfig derivation
+    val hearth = "0.4.3" // com.kubuszok — the macro commons Kindlings 0.3.3 is built on (its version, not a newer one)
     val decline = "2.6.2"
     val ox = "1.0.2" // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped
     // StructuredTaskScope for its own ThreadHerd → JDK 25 (JEP 505) safe
