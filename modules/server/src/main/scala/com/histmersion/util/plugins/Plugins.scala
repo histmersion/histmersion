@@ -245,9 +245,9 @@ object Plugins:
   def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
     HostServices(http, env, log, files = new DiskLocalFiles, processes = new SystemProcesses)
 
-  private def quotaOf(quota: HostServices.Quotas): HostServices.QuotaArg1 => UpstreamQuota =
+  private def quotaOf(quota: HostServices.Quotas): HostServices.Upstream => UpstreamQuota =
     upstream => quota(upstream.value)
 
-  private def log(id: HostServices.LogArg1, warn: HostServices.LogArg2, message: HostServices.LogArg3): Unit =
+  private def log(id: HostServices.PluginId, warn: Boolean, message: HostServices.Line): Unit =
     val line = if id.value.isEmpty then s"plugins: $message" else s"plugin $id: $message"
-    if warn.value then scribe.warn(line) else scribe.info(line)
+    if warn then scribe.warn(line) else scribe.info(line)

@@ -420,11 +420,11 @@ object ClaudeCode:
   /** The plan's usage limit, as the CLI reports it: `… usage limit reached|<epoch seconds>` (older releases) or a
     * sentence about the limit (newer) — the reset time when the text carries one.
     */
-  final case class Limit(message: Limit.Message, until: Option[java.time.Instant])
+  final case class Limit(message: Limit.Sentence, until: Option[java.time.Instant])
 
   object Limit:
-    type Message = Message.T
-    object Message extends Newtype[String, Pure]
+    type Sentence = Sentence.T
+    object Sentence extends Newtype[String, Pure]
 
   def usageLimit(r: Result): Option[Limit] =
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")
@@ -435,7 +435,7 @@ object ClaudeCode:
       ))
     ) {
       val epoch = "\\|(\\d{9,11})".r.findFirstMatchIn(all).flatMap(_.group(1).toLongOption)
-      Limit(Limit.Message(s"claude -p: ${all.take(300)}"), epoch.map(java.time.Instant.ofEpochSecond))
+      Limit(Limit.Sentence(s"claude -p: ${all.take(300)}"), epoch.map(java.time.Instant.ofEpochSecond))
     }
 
   /** The one JSON object of a text answer: the body of a ```json fence, else the text from its first `{` to its last

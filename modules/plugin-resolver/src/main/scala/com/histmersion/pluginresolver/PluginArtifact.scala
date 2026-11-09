@@ -11,11 +11,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * one. Without a POM it has no dependencies of its own.
   */
 final case class PluginArtifact(jar: Path, pom: Option[PluginArtifact.Pom]):
-  def fileName: PluginArtifact.FileNameResult = PluginArtifact.FileNameResult(jar.getFileName.toString)
+  def fileName: Resolver.FileName = Resolver.FileName(jar.getFileName.toString)
 
 object PluginArtifact:
-  type FileNameResult = Resolver.FileName
-  val FileNameResult: Resolver.FileName.type = Resolver.FileName
-
   type Pom = Pom.T
   object Pom extends Newtype[String, Pure]

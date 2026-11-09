@@ -17,7 +17,7 @@ import com.histmersion.domain.HttpPolicy
   */
 class SpiBackingSuite extends munit.FunSuite:
 
-  private def services(quota: HostServices.QuotaArg1 => UpstreamQuota = _ => UpstreamQuota.Unlimited): HostServices =
+  private def services(quota: HostServices.Upstream => UpstreamQuota = _ => UpstreamQuota.Unlimited): HostServices =
     HostServices(
       () =>
         new Plugin.Http {
@@ -35,7 +35,7 @@ class SpiBackingSuite extends munit.FunSuite:
       env: Map[String, String] = Map.empty,
       fallback: Plugin.Info.Id => Config = _ => ConfigFactory.empty,
       firstParty: Plugin.Info.Id => Boolean = _ => false,
-      quota: HostServices.QuotaArg1 => UpstreamQuota = _ => UpstreamQuota.Unlimited
+      quota: HostServices.Upstream => UpstreamQuota = _ => UpstreamQuota.Unlimited
   ): Generation =
     import scala.jdk.CollectionConverters.*
     PluginHost.build(

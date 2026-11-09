@@ -10,6 +10,6 @@ final class HelloDepsFetcher(greeting: HelloDepsFetcher.Greeting) extends Source
     Fetch.Miss(Problem(s"hello-deps has no copy ($greeting)"))
 
 object HelloDepsFetcher:
-  type Greeting = _root_.com.histmersion.fixtures.hellolib.Shout.ApplyResult
-  val Greeting: _root_.com.histmersion.fixtures.hellolib.Shout.ApplyResult.type =
-    _root_.com.histmersion.fixtures.hellolib.Shout.ApplyResult
+  type Greeting = _root_.com.histmersion.fixtures.hellolib.Shout.Shouted
+  val Greeting: _root_.com.histmersion.fixtures.hellolib.Shout.Shouted.type =
+    _root_.com.histmersion.fixtures.hellolib.Shout.Shouted

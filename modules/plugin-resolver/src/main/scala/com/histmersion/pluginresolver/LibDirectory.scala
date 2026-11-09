@@ -35,7 +35,7 @@ object LibDirectory:
   ): Unit =
     Files.createDirectories(lib)
     val wanted = deps.map(_.libName).toSet
-    jarsIn(lib).filterNot(p => wanted(Dependency.LibNameResult(p.getFileName.toString))).foreach(Files.delete)
+    jarsIn(lib).filterNot(p => wanted(Resolver.FileName(p.getFileName.toString))).foreach(Files.delete)
     deps.foreach { d =>
       val target = lib.resolve((d.libName).value)
       if !Files.isRegularFile(target) || sha256(target) != sha256(d.file) then

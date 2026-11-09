@@ -113,7 +113,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
           Some(AgentRepo.MessageRecord.Content("again")),
           Some(AgentRepo.MessageRecord.ToolName("t")),
           Some(AgentRepo.MessageRecord.ToolInput("{}")),
-          Some(AgentRepo.MessageRecord.ToolResult("r")),
+          Some(AgentRepo.MessageRecord.ToolOutput("r")),
           None
         )
       )

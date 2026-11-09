@@ -14,24 +14,22 @@ final case class HostServices(
     http: () => Plugin.Http,
     env: Config,
     log: (
-        HostServices.LogArg1,
-        HostServices.LogArg2,
-        HostServices.LogArg3
+        HostServices.PluginId,
+        Boolean,
+        HostServices.Line
     ) => Unit, // (plugin id, is a warning, message)
-    quota: HostServices.QuotaArg1 => UpstreamQuota = _ => UpstreamQuota.Unlimited,
+    quota: HostServices.Upstream => UpstreamQuota = _ => UpstreamQuota.Unlimited,
     files: LocalFiles = LocalFiles.Unavailable,
     processes: Processes = Processes.Unavailable
 )
 
 object HostServices:
   /** The budgets of the metered upstreams the host lends plugins, by upstream name. */
-  type LogArg1 = LogArg1.T
-  object LogArg1 extends Newtype[String, Pure]
-  type LogArg2 = LogArg2.T
-  object LogArg2 extends Newtype[Boolean, Pure]
-  type LogArg3 = LogArg3.T
-  object LogArg3 extends Newtype[String, Pure]
-  type QuotaArg1 = QuotaArg1.T
-  object QuotaArg1 extends Newtype[String, Pure]
+  type PluginId = PluginId.T
+  object PluginId extends Newtype[String, Pure]
+  type Line = Line.T
+  object Line extends Newtype[String, Pure]
+  type Upstream = Upstream.T
+  object Upstream extends Newtype[String, Pure]
 
   type Quotas = String => UpstreamQuota

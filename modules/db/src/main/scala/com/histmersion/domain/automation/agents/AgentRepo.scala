@@ -390,7 +390,7 @@ object AgentRepo:
       content: Option[MessageRecord.Content],
       toolName: Option[MessageRecord.ToolName],
       toolInput: Option[MessageRecord.ToolInput],
-      toolResult: Option[MessageRecord.ToolResult],
+      toolResult: Option[MessageRecord.ToolOutput],
       latencyMs: Option[MessageRecord.LatencyMs]
   )
 
@@ -405,8 +405,8 @@ object AgentRepo:
     object ToolName extends Newtype[String, Pure]
     type ToolInput = ToolInput.T
     object ToolInput extends Newtype[String, Pure]
-    type ToolResult = ToolResult.T
-    object ToolResult extends Newtype[String, Pure]
+    type ToolOutput = ToolOutput.T
+    object ToolOutput extends Newtype[String, Pure]
     type LatencyMs = LatencyMs.T
     object LatencyMs extends Newtype[Int, Pure]
 

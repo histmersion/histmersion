@@ -12,11 +12,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param warn
   *   logged as a warning
   */
-final case class LogLine(source: LogLine.Source, warn: Boolean, message: LogLine.Message):
+final case class LogLine(source: LogLine.Source, warn: Boolean, message: LogLine.Text):
   override def toString: String = s"${if warn then "WARN" else "INFO"} [${source.value}] ${message.value}"
 
 object LogLine:
   type Source = Source.T
   object Source extends Newtype[String, Pure]
-  type Message = Message.T
-  object Message extends Newtype[String, Pure]
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]
