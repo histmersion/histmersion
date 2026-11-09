@@ -31,8 +31,33 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
       )
 
 object ChatAnswer:
-  type FinishReason = FinishReason.T
-  object FinishReason extends Newtype[String, Pure]
+  /** Why the provider stopped the first choice: the `finish_reason` values its API documents, and any other as it
+    * came.
+    */
+  type FinishText = FinishText.T
+  object FinishText extends Newtype[String, Pure]
+
+  enum FinishReason derives CanEqual:
+    case Stop, Length, ToolCalls, ContentFilter, FunctionCall
+    case Other(raw: FinishText)
+
+    /** The SPI's reading of it. */
+    def stop: AiStop = this match
+      case Stop                     => AiStop.EndTurn
+      case ToolCalls                => AiStop.ToolUse
+      case Length                   => AiStop.MaxTokens
+      case ContentFilter | FunctionCall | Other(_) => AiStop.Other
+
+  object FinishReason:
+
+    /** The reason a provider's answer states (`function_calls` is read as `tool_calls`, as it always has been). */
+    def parse(raw: FinishText): FinishReason = raw.value match
+      case "stop"                           => Stop
+      case "length"                         => Length
+      case "tool_calls" | "function_calls"  => ToolCalls
+      case "content_filter"                 => ContentFilter
+      case "function_call"                  => FunctionCall
+      case _                                => Other(raw)
 
   /** The most of an unreadable error answer's body its description keeps. */
 
@@ -154,7 +179,7 @@ object ChatAnswer:
       finish <- c.downField("finish_reason").as[String]
       _ <- c.downField("index").as[Int]
       _ <- c.downField("logprobs").as(using Decoder.decodeOption(using logprobs))
-    yield (AiTurn.Text((m._1).value), m._2, FinishReason(finish))
+    yield (AiTurn.Text((m._1).value), m._2, FinishReason.parse(FinishText(finish)))
   }
 
   private val usage: Decoder[AiUsage] = product { c =>
@@ -203,13 +228,7 @@ object ChatAnswer:
       AiTurn(
         first.map(_._1).getOrElse(AiTurn.Text("")),
         first.map(_._2).getOrElse(Nil),
-        first.map(_._3) match
-          case None                                                                             => AiStop.EndTurn
-          case Some(reason) if reason.value == "stop"                                           => AiStop.EndTurn
-          case Some(reason) if reason.value == "tool_calls" || reason.value == "function_calls" => AiStop.ToolUse
-          case Some(reason) if reason.value == "length"                                         => AiStop.MaxTokens
-          case Some(_)                                                                          => AiStop.Other
-        ,
+        first.fold(AiStop.EndTurn)(_._3.stop),
         Some(u),
         Some(AiTurn.ServedBy(model))
       )

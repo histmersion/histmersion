@@ -24,8 +24,8 @@ object PointAreas:
     */
   type ReportMaxItems = ReportMaxItems.T
   object ReportMaxItems extends Newtype[Int, Pure]
-  type FixedResult = FixedResult.T
-  object FixedResult extends Newtype[String, Pure]
+  type FixedLine = FixedLine.T
+  object FixedLine extends Newtype[String, Pure]
   type FixedRemoved = FixedRemoved.T
   object FixedRemoved extends Newtype[Int, Pure]
   type FixedRemaining = FixedRemaining.T
@@ -38,14 +38,14 @@ object PointAreas:
   enum Dating derives CanEqual:
     case Dated, EndOnly, Undated
 
-    def wire: Dating.WireResult = this match
-      case Dated   => Dating.WireResult("dated")
-      case EndOnly => Dating.WireResult("end-only")
-      case Undated => Dating.WireResult("undated")
+    def wire: Dating.Wire = this match
+      case Dated   => Dating.Wire("dated")
+      case EndOnly => Dating.Wire("end-only")
+      case Undated => Dating.Wire("undated")
 
   object Dating:
-    type WireResult = WireResult.T
-    object WireResult extends Newtype[String, Pure]
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     def of(startUnknown: Boolean, lowerInf: Boolean, upperInf: Boolean): Dating =
       if startUnknown then EndOnly
@@ -78,7 +78,7 @@ object PointAreas:
       alone: Listed.Alone = Listed.Alone(0),
       pinned: Listed.Pinned = Listed.Pinned(0)
   ):
-    def detail: Listed.DetailResult =
+    def detail: Listed.Detail =
       val what = s"$label ($source $kind, ${dating.wire})"
       val held =
         if findings.value == 0 then ""
@@ -92,11 +92,11 @@ object PointAreas:
       val kept = if pinned.value > 0 then
         s" — kept: named by $pinned attestation(s)/asset link(s)/place override(s); move or reset those first"
       else ""
-      Listed.DetailResult(what + held + kept)
+      Listed.Detail(what + held + kept)
 
   object Listed:
-    type DetailResult = DetailResult.T
-    object DetailResult extends Newtype[String, Pure]
+    type Detail = Detail.T
+    object Detail extends Newtype[String, Pure]
 
     type Id = Id.T
     object Id extends Newtype[String, Pure]
@@ -155,8 +155,8 @@ object PointAreas:
       remaining: FixedRemaining,
       findings: FixedFindings,
       sources: FixedSources
-  ): FixedResult =
-    FixedResult(
+  ): FixedLine =
+    FixedLine(
       s"${Lint.PlaceImportedPointArea}: $removed point-only imported area(s) removed" +
         (if findings.value > 0 then
            s", ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))} of ${Plural.count(Plural.CountN(sources.value.toLong), Plural.CountSingular("source"))} matched to places again"

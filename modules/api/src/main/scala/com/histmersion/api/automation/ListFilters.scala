@@ -32,8 +32,6 @@ object ListFilters:
   type TimeBound = TimeBound.T
   object TimeBound extends Newtype[String, Pure]
 
-  type FacetLineResult = FacetLine
-  val FacetLineResult: FacetLine.type = FacetLine
 
   val FacetsHeader = "X-Facet-Counts"
 

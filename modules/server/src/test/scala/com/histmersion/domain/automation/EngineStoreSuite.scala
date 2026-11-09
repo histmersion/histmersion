@@ -73,11 +73,11 @@ object EngineStoreSuite:
     protected def fresh(test: String): Option[EngineStores] =
       val state = AtomicReference(AutomationState.empty)
       val clock = Moving()
-      val titles = TrieMap.empty[(Goal.LinkKind, BGoalLinkRow.Ref), GoalLinkTargets.TitleResult]
+      val titles = TrieMap.empty[(Goal.LinkKind, BGoalLinkRow.Ref), GoalLinkTargets.LinkTitle]
       val targets = new GoalLinkTargets:
-        def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult] =
+        def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.LinkTitle] =
           titles.get((kind, ref))
-        def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueListResult] = None
+        def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueLines] = None
       val jobs = JobRuns.InMemory(AtomicReference(Map.empty[Run.Id, JobRunState]), () => Instant.now(clock))
       Some(new EngineStores:
         val autopilot = AutopilotRowService.InMemory(state, clock)
@@ -90,11 +90,11 @@ object EngineStoreSuite:
         val focus = FocusService.InMemory(state, clock)
         val agentState = AgentStateService.InMemory(state, clock)
         def article(slug: Slug, title: Title): Unit =
-          titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.TitleResult(title.value))
+          titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.LinkTitle(title.value))
         def source(citekey: Citekey, title: Title): Unit =
           titles.update(
             (Goal.LinkKind.Source, BGoalLinkRow.Ref(citekey.value)),
-            GoalLinkTargets.TitleResult(title.value)
+            GoalLinkTargets.LinkTitle(title.value)
           )
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
 

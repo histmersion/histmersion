@@ -21,5 +21,5 @@ final case class QueueListing(
       com.histmersion.api.json.Schema:
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
-  def markdown: Option[Queue.MarkdownResult] =
+  def markdown: Option[Queue.Markdown] =
     Queue.Kind.parse(list).map(k => Queue.markdown(k, items, checks.map(c => c.item -> c.reason).toMap))

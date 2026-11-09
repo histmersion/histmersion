@@ -42,14 +42,6 @@ object Target:
   type CheckWhat = String
   object CheckWhat:
     inline def apply(v: String): String = v
-  type WhereResult = Where
-  val WhereResult: Where.type = Where
-  type Round1Result = String
-  object Round1Result:
-    inline def apply(v: String): String = v
-  type DegreesResult = String
-  object DegreesResult:
-    inline def apply(v: String): String = v
   type DegreesPlus = String
   object DegreesPlus:
     inline def apply(v: String): String = v

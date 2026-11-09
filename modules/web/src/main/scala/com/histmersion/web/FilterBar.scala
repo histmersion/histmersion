@@ -127,10 +127,10 @@ object FilterBar:
       // a status reads as the status code: its mark and its word
       display =
         if c.state.key == UiState.status.key then
-          wire => ChipInput.Config.DisplayResult(Wording.statusOf(Api.GoalQuery.Status(wire.value)))
-        else v => ChipInput.Config.DisplayResult(Label.display(Label.Text(v.value)).value),
+          wire => ChipInput.Config.Display(Wording.statusOf(Api.GoalQuery.Status(wire.value)))
+        else v => ChipInput.Config.Display(Label.display(Label.Text(v.value)).value),
       mark = v =>
-        Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
+        Option.when(c.state.key == UiState.status.key)(ChipInput.Config.Mark(s"st-${v.value.trim.toLowerCase}"))
     )
     div(cls := "f", label(c.label.value), ChipInput.ofStrings(chipConfig, c.state.signal))
 

@@ -12,20 +12,14 @@ final case class JobKindEntry(
     name: JobKindName,
     meaning: JobKindMeaning,
     stoppable: JobKindEntry.Stoppable = JobKindEntry.Stoppable(false),
-    subject: JobDetail => Option[JobKindEntry.SubjectResult] = _ => None,
+    subject: JobDetail => Option[JobKinds.Subject] = _ => None,
     ownControl: JobKindEntry.OwnControl = JobKindEntry.OwnControl(false)
 )
 
 object JobKindEntry:
-  /** An entry from its owner's words. */
-  type SubjectResult = JobKinds.Subject
-  val SubjectResult: JobKinds.Subject.type = JobKinds.Subject
-
   export com.histmersion.api.jobs.JobKindMeaning as OfMeaning
   type OfStoppable = Stoppable
   val OfStoppable: Stoppable.type = Stoppable
-  type OfSubjectResult = JobKinds.Subject
-  val OfSubjectResult: JobKinds.Subject.type = JobKinds.Subject
   type OfOwnControl = OwnControl
   val OfOwnControl: OwnControl.type = OwnControl
 

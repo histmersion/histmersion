@@ -65,8 +65,6 @@ object Place:
     object Wire extends Newtype[String, Pure]
     type All = All.T
     object All extends Newtype[String, Pure]
-    type ParseResult = Parsed
-    val ParseResult: Parsed.type = Parsed
     type ParseS = ParseS.T
     object ParseS extends Newtype[String, Pure]
 
@@ -224,12 +222,6 @@ object Place:
   object Card:
     type Note = Note.T
     object Note extends Newtype[String, Pure]
-    type ShapeNoteResult = Note
-    val ShapeNoteResult: Note.type = Note
-    type LocationNoteResult = Note
-    val LocationNoteResult: Note.type = Note
-    type ShapeNotesResult = Note
-    val ShapeNotesResult: Note.type = Note
 
   final case class Counts(
       sources: Counts.Sources,
@@ -581,8 +573,6 @@ object Place:
     val UrlScheme: Scheme.type = Scheme
     type UrlExternalId = ExternalId
     val UrlExternalId: ExternalId.type = ExternalId
-    type SchemeTitleResult = SchemeTitle
-    val SchemeTitleResult: SchemeTitle.type = SchemeTitle
 
     type Scheme = Scheme.T
     object Scheme extends Newtype[String, Pure]
@@ -815,8 +805,6 @@ object Place:
   object Overrides:
     type PointText = PointText.T
     object PointText extends Newtype[String, Pure]
-    type PointTextResult = PointText
-    val PointTextResult: PointText.type = PointText
 
     val MaxReason = 500
 
@@ -949,8 +937,6 @@ object Place:
   object Record:
     type DateSourceText = DateSourceText.T
     object DateSourceText extends Newtype[String, Pure]
-    type DateSourceTextResult = DateSourceText
-    val DateSourceTextResult: DateSourceText.type = DateSourceText
 
     type DateSource = DateSource.T
     object DateSource extends Newtype[String, Pure]
@@ -972,8 +958,6 @@ object Place:
   object Register:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-    type NameResult = Name
-    val NameResult: Name.type = Name
 
     type Property = Property.T
     object Property extends Newtype[String, Pure]

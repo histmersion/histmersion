@@ -28,10 +28,8 @@ object Queue:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  type RenderResult = RenderResult.T
-  object RenderResult extends Newtype[String, Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends Newtype[String, Pure]
+  type Markdown = Markdown.T
+  object Markdown extends Newtype[String, Pure]
 
   final case class QueueItem(
       id: QueueItem.Id,
@@ -348,7 +346,7 @@ object Queue:
     case Item(lines: String)
     case Note(lines: String)
 
-  def render(kind: Kind, items: List[QueueItem]): RenderResult =
+  def render(kind: Kind, items: List[QueueItem]): Markdown =
     val (preamble, rest) = items.partition(_.topic.isEmpty)
     val groups = rest
       .groupBy(_.topic)
@@ -374,7 +372,7 @@ object Queue:
                    else Block.Item(bullet(kind, i)))
       )
     }
-    RenderResult((join(blocks.result())))
+    Markdown((join(blocks.result())))
 
   private def headingLines(prev: Vector[String], next: Vector[String]): List[Block] =
     if next.isEmpty then Nil
@@ -418,9 +416,9 @@ object Queue:
       kind: Kind,
       items: List[QueueItem],
       notes: Map[QueueItem.Id, Problem] = Map.empty
-  ): MarkdownResult =
+  ): Markdown =
     val shown = items.filterNot(_.status == QueueItem.Status(Note))
-    if shown.isEmpty then MarkdownResult(s"_${kind.label}: nothing queued._")
+    if shown.isEmpty then Markdown(s"_${kind.label}: nothing queued._")
     else
       val groups = shown.groupBy(_.topic).toList.sortBy((_, is) => is.map(_.id).min)
       val blocks = groups.map { (topic, is) =>
@@ -438,4 +436,4 @@ object Queue:
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }
-      MarkdownResult(s"### ${kind.label} (${shown.size} item(s))${blocks.mkString}")
+      Markdown(s"### ${kind.label} (${shown.size} item(s))${blocks.mkString}")

@@ -24,7 +24,7 @@ object Pom:
   object ElementText extends Newtype[String, Pure]
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  export PluginArtifact.{Pom as CoordinatesXml, Pom as EmbeddedResult, Pom as OfResult}
+  export PluginArtifact.Pom as CoordinatesXml
   export PluginArtifact.Pom as ParseXml
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
@@ -47,13 +47,13 @@ object Pom:
     * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
     * shaded into it: no POM can be told to be the plugin's then.
     */
-  def of(jar: Path): Option[Pom.OfResult] =
+  def of(jar: Path): Option[Pom.CoordinatesXml] =
     val beside = besideJar(jar)
-    if Files.isRegularFile(beside) then Some(Pom.OfResult(Files.readString(beside, UTF_8))) else embedded(jar)
+    if Files.isRegularFile(beside) then Some(Pom.CoordinatesXml(Files.readString(beside, UTF_8))) else embedded(jar)
 
   def besideJar(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
 
-  private def embedded(jar: Path): Option[Pom.EmbeddedResult] =
+  private def embedded(jar: Path): Option[Pom.CoordinatesXml] =
     (Try {
       val zip = ZipFile(jar.toFile)
       try

@@ -19,14 +19,14 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[SafePath.Base])(using Tex
 
   // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
   // eventually exhausts the process's file descriptors.
-  def notes: List[SeedFolder.NotesResult] =
+  def notes: List[SeedFolder.Note] =
     scala.util.Using.resource(Files.list(dir)) { s =>
       s.iterator.asScala
         .map(_.getFileName.toString)
         .filter(_.endsWith(".md"))
         .toList
         .sorted
-        .map(SeedFolder.NotesResult(_))
+        .map(SeedFolder.Note(_))
     }
 
   def read(name: SeedFolder.Name): Option[SeedNote] =

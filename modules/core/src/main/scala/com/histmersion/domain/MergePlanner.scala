@@ -899,7 +899,7 @@ object MergePlanner:
           kind: Bundle.Kind,
           rows: List[A],
           uid: A => UUID,
-          label: A => PlanQuestions.LabelTakenLabelResult,
+          label: A => PlanQuestions.LabelTakenLabel,
           owner: A => Option[UUID],
           what: PlanQuestions.LabelTakenWhat,
           options: List[MergeDecision.Kind],

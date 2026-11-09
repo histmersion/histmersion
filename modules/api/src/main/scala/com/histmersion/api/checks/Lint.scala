@@ -35,8 +35,8 @@ object Lint:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends Newtype[String, Pure]
+  type Markdown = Markdown.T
+  object Markdown extends Newtype[String, Pure]
 
   final case class LintItem(citekey: Citekey, detail: LintItem.Detail)
       derives KindlingsCodecAsObject,
@@ -492,7 +492,7 @@ object Lint:
   def report(r: Rule, items: List[LintItem], maxItems: ItemLimit): LintRuleReport =
     LintRuleReport(r.name, r.description, LintRuleReport.Count(items.size), items.take(math.max(0, (maxItems).value)))
 
-  def markdown(rep: LintReport): MarkdownResult =
+  def markdown(rep: LintReport): Markdown =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
     val (clean, dirty) = rep.rules.partition(_.count == LintRuleReport.Count(0))
     val head =
@@ -506,4 +506,4 @@ object Lint:
     val cleanLine =
       if clean.isEmpty then ""
       else s"\n\n_clean: ${clean.map(_.rule).mkString(", ")}_"
-    MarkdownResult(s"$fixed$head${blocks.mkString}$cleanLine")
+    Markdown(s"$fixed$head${blocks.mkString}$cleanLine")

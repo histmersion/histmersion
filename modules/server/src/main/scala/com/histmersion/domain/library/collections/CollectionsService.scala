@@ -310,8 +310,8 @@ object CollectionsService:
         ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.value)))(checked)
         existing <- library.pushMeta(ck) match
           case Right(m) => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
-          case Left(e) if e.message.value.startsWith("No source") => Right(None)
-          case Left(e)                                            => Left(e)
+          case Left(e) if e.isNotFound => Right(None)
+          case Left(e)                 => Left(e)
         target <- ImportTarget
           .of(ck, ImportTarget.Id(req.id.value), ImportTarget.OfExplicit(req.citekey.isDefined), existing)
           .left

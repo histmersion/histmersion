@@ -42,8 +42,8 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
       folds.fold(f, o, Bundle.Kind.Place)
       placeLine(o) = es => foldPlace(localPlace(o), placeIn(es, o))
       folds.count(_.modify(_.placesMerged).using(n => MergeTally.PlacesMerged(n.value + 1)))
-    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned")
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
+      PlanMerge.InfoText(s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned")
 
   // a place the bundle renamed (its uid is here under another id, #888): the import follows the rename — unless the
   // new id is a different place's here; then ours keeps its id, and what the bundle points at the new id points at

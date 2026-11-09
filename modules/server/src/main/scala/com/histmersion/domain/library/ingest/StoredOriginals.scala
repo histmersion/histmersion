@@ -18,7 +18,7 @@ import com.histmersion.domain.library.Citekey
 final class StoredOriginals(originals: () => Store, spool: () => Store) extends SourceOriginals:
 
   /** The files that exist now, each named where it is. A key that is not a valid citekey names nothing. */
-  def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult] =
+  def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] =
     val o = originals()
     val s = spool()
     val stored = plan.sha256
@@ -28,15 +28,15 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
         o.list()
           .filter(f => f.isFile && f.key.name.value.startsWith(sha.value + "."))
           .sortBy(_.key.value)
-          .map(f => SourceOriginals.FindResult(o.where(f.key).value))
+          .map(f => SourceOriginals.FoundFile(o.where(f.key).value))
       )
     val acquired = plan.keys.filter(k => Citekey.valid(k.value)).flatMap { k =>
       Store.Key.of(k.value).toOption.filter(s.isDirectory).toList.flatMap { dir =>
         s.list(dir)
           .filter(_.isFile)
           .sortBy(f => s.where(f.key).value)
-          .map(f => SourceOriginals.FindResult(s.where(f.key).value)) :+
-          SourceOriginals.FindResult(s.where(dir).value)
+          .map(f => SourceOriginals.FoundFile(s.where(f.key).value)) :+
+          SourceOriginals.FoundFile(s.where(dir).value)
       }
     }
     (stored ++ acquired).distinct
@@ -44,7 +44,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Remove `files` (files first, then the directories they were in, when empty). Best effort: every failure is logged
     * and returned as `path: reason`, and never undoes the delete it follows.
     */
-  def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult] =
+  def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] =
     val o = originals()
     val s = spool()
     val named = files.map(f => f -> keyIn(o, f.value).map(o -> _).orElse(keyIn(s, f.value).map(s -> _)))
@@ -54,8 +54,8 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
         // a directory still holding a file stays, as the file system refuses to remove it
         val why =
           if st.isDirectory(k) then
-            Option.when(st.names(k).nonEmpty || st.deleteTree(k).isEmpty)(SourceOriginals.RemoveResult(s"$f: $f"))
-          else Option.when(!st.delete(k) && st.exists(k))(SourceOriginals.RemoveResult(s"$f: it could not be removed"))
+            Option.when(st.names(k).nonEmpty || st.deleteTree(k).isEmpty)(SourceOriginals.RemovedFile(s"$f: $f"))
+          else Option.when(!st.delete(k) && st.exists(k))(SourceOriginals.RemovedFile(s"$f: it could not be removed"))
         why.foreach(w => scribe.warn(s"delete: the stored original could not be removed — ${w.value}"))
         why
       }

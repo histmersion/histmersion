@@ -8,16 +8,16 @@ package domain.automation.goals
 import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 trait GoalLinkTargets:
-  def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult]
-  def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueListResult]
+  def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.LinkTitle]
+  def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueLines]
 
 object GoalLinkTargets:
   /** Nothing exists anywhere. */
-  type TitleResult = TitleResult.T
-  object TitleResult extends Newtype[String, Pure]
-  type QueueListResult = QueueListResult.T
-  object QueueListResult extends Newtype[String, Pure]
+  type LinkTitle = LinkTitle.T
+  object LinkTitle extends Newtype[String, Pure]
+  type QueueLines = QueueLines.T
+  object QueueLines extends Newtype[String, Pure]
 
   val none: GoalLinkTargets = new GoalLinkTargets:
-    def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[TitleResult] = None
-    def queueList(ref: BGoalLinkRow.Ref): Option[QueueListResult] = None
+    def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[LinkTitle] = None
+    def queueList(ref: BGoalLinkRow.Ref): Option[QueueLines] = None

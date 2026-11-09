@@ -44,5 +44,3 @@ object JobKinds:
   object Subject extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
-  type SubjectResult = Subject
-  val SubjectResult: Subject.type = Subject

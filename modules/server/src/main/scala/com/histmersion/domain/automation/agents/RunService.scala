@@ -434,7 +434,7 @@ object RunService:
             m.message.content.map(c => MessageInfo.Content(c.value)),
             m.message.toolName.map(t => MessageInfo.ToolName(t.value)),
             m.message.toolInput.map(t => MessageInfo.ToolInput(t.value)),
-            m.message.toolResult.map(t => MessageInfo.ToolResult(t.value)),
+            m.message.toolResult.map(t => MessageInfo.ToolOutput(t.value)),
             m.message.latencyMs.map(l => MessageInfo.LatencyMs(l.value))
           )
         )

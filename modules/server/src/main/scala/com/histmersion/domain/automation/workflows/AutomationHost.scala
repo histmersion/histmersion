@@ -67,12 +67,12 @@ trait AutomationHost:
   def workLookup: PlanGoal.Lookup
 
   /** The values of a search field the corpus uses, the most used first (a plan's vocabulary). */
-  def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.VocabularyResult]
+  def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.Term]
 
   // ── the autopilot's housekeeping (util.data) ─────────────────────────────────────────────────
 
   /** Why the housekeeping may not run now (a maintenance operation holds the database), if it may not. */
-  def housekeepingBlock: Option[AutomationHost.HousekeepingBlockResult]
+  def housekeepingBlock: Option[AutomationHost.HousekeepingBlock]
 
   /** Start a backup; its status at once. */
   def backup(): Either[Api.Error, Backup.Status]
@@ -92,9 +92,9 @@ object AutomationHost:
   object RunOptionsRoundsCap extends Newtype[Int, Pure]
   type LinkRefRaw = LinkRefRaw.T
   object LinkRefRaw extends Newtype[String, Pure]
-  type VocabularyResult = VocabularyResult.T
-  object VocabularyResult extends Newtype[String, Pure]
+  type Term = Term.T
+  object Term extends Newtype[String, Pure]
   type VocabularyField = VocabularyField.T
   object VocabularyField extends Newtype[String, Pure]
-  type HousekeepingBlockResult = HousekeepingBlockResult.T
-  object HousekeepingBlockResult extends Newtype[String, Pure]
+  type HousekeepingBlock = HousekeepingBlock.T
+  object HousekeepingBlock extends Newtype[String, Pure]

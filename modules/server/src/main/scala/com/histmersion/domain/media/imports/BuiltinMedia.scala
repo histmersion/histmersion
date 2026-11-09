@@ -34,8 +34,6 @@ object BuiltinMedia:
   object KeyedNeed extends Newtype[String, Pure]
   type EntryName = Entry.Name
   val EntryName: Entry.Name.type = Entry.Name
-  type CanonicalResult = CanonicalResult.T
-  object CanonicalResult extends Newtype[String, Pure]
   type CanonicalAsked = CanonicalAsked.T
   object CanonicalAsked extends Newtype[String, Pure]
   type CheckOfName = EntryName
@@ -51,13 +49,10 @@ object BuiltinMedia:
       title: Entry.Title,
       check: Entry.Check,
       provider: Entry.Provider,
-      licences: MediaConfig => Entry.LicencesResult
+      licences: MediaConfig => Licences
   )
 
   object Entry:
-    type LicencesResult = Licences
-    val LicencesResult: Licences.type = Licences
-
     type Name = Registries.MediaCollectionsKey
     val Name: Registries.MediaCollectionsKey.type = Registries.MediaCollectionsKey
     type Title = Title.T
@@ -167,21 +162,21 @@ object BuiltinMedia:
   def entry(name: EntryName): Option[Entry] = byName.get(name)
 
   /** The other names `media import` takes for a built-in collection. */
-  val aliases: Map[Alias, CanonicalResult] = Map(
-    Alias("si") -> CanonicalResult("smithsonian"),
-    Alias("smithsonian-open-access") -> CanonicalResult("smithsonian"),
-    Alias("commons") -> CanonicalResult("wikidata"),
-    Alias(MediaProvider.Commons) -> CanonicalResult("wikidata"),
-    Alias("depictions") -> CanonicalResult("depicts"),
-    Alias(MediaProvider.CommonsDepicts) -> CanonicalResult("depicts"),
-    Alias(MediaProvider.Met) -> CanonicalResult("met"),
-    Alias("cma") -> CanonicalResult("cleveland"),
-    Alias(MediaProvider.Cleveland) -> CanonicalResult("cleveland"),
-    Alias("artic") -> CanonicalResult("aic"),
-    Alias(MediaProvider.ArtInstitute) -> CanonicalResult("aic"),
-    Alias(MediaProvider.LibraryOfCongress) -> CanonicalResult("loc"),
-    Alias("open-context") -> CanonicalResult("opencontext"),
-    Alias("oc") -> CanonicalResult("opencontext")
+  val aliases: Map[Alias, EntryName] = Map(
+    Alias("si") -> EntryName("smithsonian"),
+    Alias("smithsonian-open-access") -> EntryName("smithsonian"),
+    Alias("commons") -> EntryName("wikidata"),
+    Alias(MediaProvider.Commons) -> EntryName("wikidata"),
+    Alias("depictions") -> EntryName("depicts"),
+    Alias(MediaProvider.CommonsDepicts) -> EntryName("depicts"),
+    Alias(MediaProvider.Met) -> EntryName("met"),
+    Alias("cma") -> EntryName("cleveland"),
+    Alias(MediaProvider.Cleveland) -> EntryName("cleveland"),
+    Alias("artic") -> EntryName("aic"),
+    Alias(MediaProvider.ArtInstitute) -> EntryName("aic"),
+    Alias(MediaProvider.LibraryOfCongress) -> EntryName("loc"),
+    Alias("open-context") -> EntryName("opencontext"),
+    Alias("oc") -> EntryName("opencontext")
   )
 
   /** Names a plugin's collection may not take: the built-in imports, their aliases, and every provider the host stores
@@ -195,9 +190,9 @@ object BuiltinMedia:
   /** Pure: the name an import request means — an alias resolved, blank = `wikidata`, else as given (lower case): the
     * registry decides whether it exists.
     */
-  def canonical(asked: CanonicalAsked): CanonicalResult =
+  def canonical(asked: CanonicalAsked): EntryName =
     val s = asked.value.trim.toLowerCase(java.util.Locale.ROOT)
-    if s.isEmpty then CanonicalResult("wikidata") else aliases.getOrElse(Alias(s), CanonicalResult(s))
+    if s.isEmpty then EntryName("wikidata") else aliases.getOrElse(Alias(s), EntryName(s))
 
   /** Pure: the registered names in the order lists show them — the built-ins in their order, then the plugins'
     * collections in registration order.

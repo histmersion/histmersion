@@ -7,15 +7,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   * delete removes, and their removal after the delete committed, best effort.
   */
 trait SourceOriginals:
-  def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult]
+  def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile]
 
   /** The files that could not be removed, each with why. */
-  def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult]
+  def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile]
 
 object SourceOriginals:
-  type FindResult = FindResult.T
-  object FindResult extends Newtype[String, Pure]
-  type RemoveResult = RemoveResult.T
-  object RemoveResult extends Newtype[String, Pure]
+  type FoundFile = FoundFile.T
+  object FoundFile extends Newtype[String, Pure]
+  type RemovedFile = RemovedFile.T
+  object RemovedFile extends Newtype[String, Pure]
   type RemoveFiles = RemoveFiles.T
   object RemoveFiles extends Newtype[String, Pure]

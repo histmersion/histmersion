@@ -57,7 +57,7 @@ private[places] object PointAreaRepo:
       sources: Removal.Sources
   ):
     /** The line `lint --fix` reports it with. */
-    def line: PointAreas.FixedResult =
+    def line: PointAreas.FixedLine =
       PointAreas.fixed(
         PointAreas.FixedRemoved(removed.value),
         PointAreas.FixedRemaining(remaining.value),

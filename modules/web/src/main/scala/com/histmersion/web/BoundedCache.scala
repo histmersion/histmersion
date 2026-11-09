@@ -16,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
     val maxWeight: BoundedCache.MaxWeight = BoundedCache.MaxWeight(Long.MaxValue),
-    weigh: V => BoundedCache.WeighResult = (_: V) => BoundedCache.WeighResult(0L)
+    weigh: V => BoundedCache.Weighed = (_: V) => BoundedCache.Weighed(0L)
 )(using CanEqual[K, K]):
   require(maxEntries.value > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
@@ -95,8 +95,8 @@ object BoundedCache:
   object MaxEntries extends Newtype[Int, Pure]
   type MaxWeight = MaxWeight.T
   object MaxWeight extends Newtype[Long, Pure]
-  type WeighResult = WeighResult.T
-  object WeighResult extends Newtype[Long, Pure]
+  type Weighed = Weighed.T
+  object Weighed extends Newtype[Long, Pure]
 
   type ReweighW = ReweighW.T
   object ReweighW extends Newtype[Long, Pure]

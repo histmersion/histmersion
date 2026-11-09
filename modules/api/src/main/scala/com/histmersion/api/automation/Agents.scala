@@ -565,7 +565,7 @@ object Agents:
       content: Option[MessageInfo.Content] = None,
       toolName: Option[MessageInfo.ToolName] = None,
       toolInput: Option[MessageInfo.ToolInput] = None,
-      toolResult: Option[MessageInfo.ToolResult] = None,
+      toolResult: Option[MessageInfo.ToolOutput] = None,
       latencyMs: Option[MessageInfo.LatencyMs] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -584,8 +584,8 @@ object Agents:
     object ToolName extends Newtype[String, Pure]
     type ToolInput = ToolInput.T
     object ToolInput extends Newtype[String, Pure]
-    type ToolResult = ToolResult.T
-    object ToolResult extends Newtype[String, Pure]
+    type ToolOutput = ToolOutput.T
+    object ToolOutput extends Newtype[String, Pure]
     type LatencyMs = LatencyMs.T
     object LatencyMs extends Newtype[Int, Pure]
 

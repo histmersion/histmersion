@@ -60,7 +60,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     maintenance.guard(WriteGate.OperationName("queue/delete"))(queues.delete(id).left.map(WorkListControllers.error))
 
   /** The list rendered as its `meta/<FILE>.md`. Notes are included — they ARE the file's prose. */
-  def exportText(list: Kind.Label): Either[Api.Error, Queue.RenderResult] =
+  def exportText(list: Kind.Label): Either[Api.Error, Queue.Markdown] =
     kindOf(WorkListControllers.KindOfList(list.value)).map(k => Queue.render(k, queues.list(k, QueueScope.All)))
 
   def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
@@ -78,7 +78,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       }
 
   /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
-  def files(): List[(Kind.File, Queue.RenderResult)] =
+  def files(): List[(Kind.File, Queue.Markdown)] =
     Kind.values.toList.map(k => k.file -> Queue.render(k, queues.list(k, QueueScope.All)))
 
 object WorkListControllers:

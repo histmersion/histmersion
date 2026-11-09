@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait SeedFolder:
   /** The notes' file names, in name order. */
-  def notes: List[SeedFolder.NotesResult]
+  def notes: List[SeedFolder.Note]
 
   /** The note `name`: `None` when it has no frontmatter. Throws what reading it threw. */
   def read(name: SeedFolder.Name): Option[SeedNote]
@@ -23,5 +23,5 @@ object SeedFolder:
   object MaxBytes extends Newtype[Long, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type NotesResult = NotesResult.T
-  object NotesResult extends Newtype[String, Pure]
+  type Note = Note.T
+  object Note extends Newtype[String, Pure]

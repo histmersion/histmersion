@@ -127,8 +127,6 @@ object PlanQuota:
     object Floor extends Newtype[Int, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-    type OfResult = Floor
-    val OfResult: Floor.type = Floor
     export Reading.{Kind as OfKind, Limit as OfLimit}
 
     type ByKindKey = ByKindKey.T

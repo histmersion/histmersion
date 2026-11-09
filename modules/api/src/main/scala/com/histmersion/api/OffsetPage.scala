@@ -15,8 +15,8 @@ object OffsetPage:
   type FullSetMax = FullSetMaxValue
   type FullSetMaxValue = FullSetMaxValue.T
   object FullSetMaxValue extends Newtype[Int, Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends Newtype[String, Pure]
+  type Markdown = Markdown.T
+  object Markdown extends Newtype[String, Pure]
 
   val FullSetMax: FullSetMax = FullSetMaxValue(500)
 
@@ -31,9 +31,9 @@ object OffsetPage:
       val full = if p.total.value <= FullSetMax.value then s" — full set: limit=${p.total.value}" else ""
       (s"\n\n_showing ${p.offset.value + 1}–${p.offset.value + p.shown.value} of ${p.total.value}$next${full}_")
 
-  def markdown[A](p: OffsetPage, noun: String, empty: String, items: List[A])(line: A => String): MarkdownResult =
+  def markdown[A](p: OffsetPage, noun: String, empty: String, items: List[A])(line: A => String): Markdown =
     if items.isEmpty then
       p.offset.value match
-        case 0 => MarkdownResult((empty))
-        case o => MarkdownResult(s"$empty\n\n_offset=$o is past the end: there are ${p.total.value}_")
-    else MarkdownResult(s"${header(p, ((noun)))}\n\n${items.map(line).mkString("\n")}${footer(p)}")
+        case 0 => Markdown((empty))
+        case o => Markdown(s"$empty\n\n_offset=$o is past the end: there are ${p.total.value}_")
+    else Markdown(s"${header(p, ((noun)))}\n\n${items.map(line).mkString("\n")}${footer(p)}")

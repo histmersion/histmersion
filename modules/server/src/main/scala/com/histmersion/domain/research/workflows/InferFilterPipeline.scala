@@ -190,7 +190,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
                   ApprovalService.Payload(json),
                   ApprovalState.Approved,
                   Some(
-                    ApprovalService.OpenSubjectResult(
+                    ApprovalService.SubjectOutcome(
                       s"applied automatically (agents.approvals.article-filter): ${p.filter.line}"
                     )
                   )

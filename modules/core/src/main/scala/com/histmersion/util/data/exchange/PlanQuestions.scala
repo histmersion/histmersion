@@ -43,7 +43,7 @@ trait PlanQuestions extends PairQuestions:
       kind: Bundle.Kind,
       rows: List[A],
       uid: A => UUID,
-      label: A => PlanQuestions.LabelTakenLabelResult,
+      label: A => PlanQuestions.LabelTakenLabel,
       owner: A => Option[UUID],
       what: PlanQuestions.LabelTakenWhat,
       options: List[MergeDecision.Kind],
@@ -52,7 +52,7 @@ trait PlanQuestions extends PairQuestions:
   ): Unit
 
 object PlanQuestions:
-  type LabelTakenLabelResult = LabelTakenLabelResult.T
-  object LabelTakenLabelResult extends Newtype[String, Pure]
+  type LabelTakenLabel = LabelTakenLabel.T
+  object LabelTakenLabel extends Newtype[String, Pure]
   type LabelTakenWhat = LabelTakenWhat.T
   object LabelTakenWhat extends Newtype[String, Pure]

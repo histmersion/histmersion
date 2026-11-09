@@ -14,8 +14,6 @@ object Aliases:
   type Rule = RuleValue
   type RuleValue = RuleText
   val RuleValue: RuleText.type = RuleText
-  type RuleResult = RuleText
-  val RuleResult: RuleText.type = RuleText
 
   val Rule: Rule =
     RuleText(

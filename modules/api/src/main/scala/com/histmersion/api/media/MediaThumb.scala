@@ -36,8 +36,6 @@ object MediaThumb:
   type ThumbPath = ThumbPath.T
   object ThumbPath extends Newtype[String, Pure]
 
-  type MarkdownLineResult = MarkdownLine
-  val MarkdownLineResult: MarkdownLine.type = MarkdownLine
 
   type Role = Role.T
   object Role extends Newtype[String, Pure]

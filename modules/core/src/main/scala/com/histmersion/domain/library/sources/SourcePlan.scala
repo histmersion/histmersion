@@ -342,7 +342,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       Bundle.Kind.Source,
       questions.localized.sources.filter(s => questions.here(s.uid)),
       (s: Bundle.Source) => s.uid,
-      (s: Bundle.Source) => PlanQuestions.LabelTakenLabelResult(s.citekey.value),
+      (s: Bundle.Source) => PlanQuestions.LabelTakenLabel(s.citekey.value),
       (s: Bundle.Source) => in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
       PlanQuestions.LabelTakenWhat("citekey"),
       lr,

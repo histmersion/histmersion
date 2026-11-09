@@ -80,8 +80,8 @@ class ArticlesControllersSuite extends munit.FunSuite:
     def refusal(issues: List[FormatIssue]): Option[Problem] = None
 
   private val originals = new SourceOriginals:
-    def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult] = Nil
-    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult] = Nil
+    def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] = Nil
+    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] = Nil
 
   private def controllers(gate: WriteGate = WriteGate()): ArticlesControllers =
     val sourceStore =

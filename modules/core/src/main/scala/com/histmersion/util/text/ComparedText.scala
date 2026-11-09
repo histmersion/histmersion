@@ -10,8 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ComparedText:
 
-  type NormaliseResult = NormaliseResult.T
-  object NormaliseResult extends Newtype[String, Pure]
+  type Normalised = Normalised.T
+  object Normalised extends Newtype[String, Pure]
   type NormaliseS = NormaliseS.T
   object NormaliseS extends Newtype[String, Pure]
 
@@ -31,7 +31,7 @@ object ComparedText:
     * ASCII quotes and dashes, soft hyphens dropped, words hyphenated across a line break re-joined, Markdown
     * emphasis/heading marks dropped, whitespace collapsed.
     */
-  def normalise(s: NormaliseS): NormaliseResult =
+  def normalise(s: NormaliseS): Normalised =
     var t = Normalizer.normalize(s.value, Normalizer.Form.NFKC).toLowerCase(java.util.Locale.ROOT) // local accumulator
     ligatures.foreach((a, b) => t = t.replace(a, b))
     t = t
@@ -43,4 +43,4 @@ object ComparedText:
       .replaceAll("[*_#>|]", " ")
       .replaceAll("\\s+", " ")
       .trim
-    NormaliseResult(t)
+    Normalised(t)

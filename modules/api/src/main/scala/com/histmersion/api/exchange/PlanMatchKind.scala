@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
   * the plan's Markdown lists, and how a line of it reads.
   */
-final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A => PlanMatchKind.LineResult)(using
+final class PlanMatchKind[A](listed: A => Boolean, line: A => PlanMatchKind.MatchLine)(using
     encoder: Encoder[A],
     decoder: Decoder[A],
     schemaOf: Schema[List[A]]
@@ -25,10 +25,7 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
   def lines(m: PlanMatches, limit: PlanMatchKind.LineLimit): List[PlanMatchKind.MatchLine] =
     m.rows
       .flatMap(decoder.decodeJson(_).toOption)
-      .filter {
-        val refactorFunction = listed;
-        (refactorValue) => ((refactorFunction(refactorValue)) == PlanMatchKind.ListedResult(true))
-      }
+      .filter(listed)
       .take((limit).value)
       .map {
         val refactorFunction3 = line;
@@ -40,10 +37,4 @@ object PlanMatchKind:
   object LineLimit extends Newtype[Int, Pure]
   type MatchLine = MatchLine.T
   object MatchLine extends Newtype[String, Pure]
-  type ListedResult = ListedResult.T
-  object ListedResult extends Newtype[Boolean, Pure]
-  type LineResult = MatchLine
-  val LineResult: MatchLine.type = MatchLine
 
-  type LinesResult = MatchLine
-  val LinesResult: MatchLine.type = MatchLine
