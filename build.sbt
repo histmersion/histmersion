@@ -224,7 +224,7 @@ lazy val values = projectMatrix
 
 lazy val api = projectMatrix
   .in(file("modules/api"))
-  .dependsOn(newtype)
+  .dependsOn(newtype, problem)
   .settings(
     name := "histmersion-api",
     description := "The wire contract: records, Tapir endpoints, circe codecs and schemas, Markdown (JVM and Scala.js)"

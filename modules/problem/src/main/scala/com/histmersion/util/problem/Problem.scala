@@ -12,9 +12,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * What failed is named by its type and the constraint it failed, both written down by the compiler where the value is
   * parsed (`Citekey.parse(raw)`), plus the raw input: no case carries a hand-kept vocabulary of what can fail.
   *
-  * Several failures at once are [[Problems]]: one `Problem` or a [[NonEmptyVector]] of them.
+  * Several failures at once are [[Problems]]: one `Problem` or a [[NonEmptyVector]] of them. A case's name is its
+  * `productPrefix`, its fields' names its `productElementNames`.
   */
-sealed trait Problem derives CanEqual
+sealed trait Problem extends Product, Serializable derives CanEqual
 
 object Problem:
 
@@ -30,7 +31,9 @@ object Problem:
     def of[A, C](newtype: Newtype[A, C]): TypeName = of(newtype.typeName)
 
   /** An Iron constraint a value failed: its type as written and Iron's description of it. */
-  final case class Constraint(name: Constraint.Name, description: Constraint.Description) derives CanEqual
+  import Constraint.{Description, Name}
+
+  final case class Constraint(name: Name, description: Description) derives CanEqual
 
   object Constraint:
     /** The constraint's type as source code writes it: `Match["[a-z]+"]`, `Interval.Closed[0, 9]`. */
@@ -61,15 +64,21 @@ object Problem:
 
   /** A count of things. */
   type Count = Count.T
-  object Count extends Newtype[Long, Pure]
+  object Count extends Newtype[Long, Pure]:
+    /** A count written in decimal digits. */
+    def read(digits: String): Option[Count] = digits.toLongOption.map(Count(_))
 
   /** A length of time, in milliseconds. */
   type Millis = Millis.T
-  object Millis extends Newtype[Long, Pure]
+  object Millis extends Newtype[Long, Pure]:
+    /** A length of time written in decimal digits of milliseconds. */
+    def read(digits: String): Option[Millis] = digits.toLongOption.map(Millis(_))
 
   /** A moment, as milliseconds since 1970-01-01T00:00Z (the same on the JVM and in the browser). */
   type EpochMs = EpochMs.T
-  object EpochMs extends Newtype[Long, Pure]
+  object EpochMs extends Newtype[Long, Pure]:
+    /** The moment `millis` milliseconds after 1970-01-01T00:00Z. */
+    def of(millis: Long): EpochMs = EpochMs(millis)
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T
@@ -79,7 +88,8 @@ object Problem:
     * outside them (`Unclassified`, `Stored`).
     */
   enum Group derives CanEqual:
-    case Invalid, NotFound, Conflict, Refused, Upstream, Io, Config, Plugin, Run, Content, Internal, Unclassified, Stored
+    case Invalid, NotFound, Conflict, Refused, Upstream, Io, Config, Plugin, Run, Content, Internal, Unclassified,
+      Stored
 
   // ---- the groups ---------------------------------------------------------------------------------------------
 
@@ -91,19 +101,23 @@ object Problem:
   object Invalid:
 
     /** `raw` is no value of the type `typeName`: it fails `constraint`. */
-    final case class Malformed(typeName: TypeName, constraint: Constraint, raw: Raw, at: Vector[Field] = Vector.empty) extends Invalid
+    final case class Malformed(typeName: TypeName, constraint: Constraint, raw: Raw, at: Vector[Field] = Vector.empty)
+        extends Invalid
 
     /** `raw` is none of the values of `typeName` the operation knows (`known`, when the list is short). */
-    final case class Unknown(typeName: TypeName, raw: Raw, known: Vector[Raw], at: Vector[Field] = Vector.empty) extends Invalid
+    final case class Unknown(typeName: TypeName, raw: Raw, known: Vector[Raw], at: Vector[Field] = Vector.empty)
+        extends Invalid
 
     /** `field` is required and was not given, or was empty. */
     final case class Missing(field: Field, at: Vector[Field] = Vector.empty) extends Invalid
 
     /** `raw` is a value of `typeName`, but outside what the operation takes. */
-    final case class OutOfRange(typeName: TypeName, raw: Raw, bounds: Bounds, at: Vector[Field] = Vector.empty) extends Invalid
+    final case class OutOfRange(typeName: TypeName, raw: Raw, bounds: Bounds, at: Vector[Field] = Vector.empty)
+        extends Invalid
 
     /** The `fields` given break `rule` together, though each is a value on its own. */
-    final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field] = Vector.empty) extends Invalid
+    final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field] = Vector.empty)
+        extends Invalid
 
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw]) derives CanEqual
@@ -154,8 +168,8 @@ object Problem:
     /** `activity` is running and must finish first. */
     final case class Busy(activity: Activity) extends Conflict
 
-    /** Other values refer to it: `by`, each with how many refer. */
-    final case class Referenced(typeName: TypeName, key: Raw, by: NonEmptyVector[Reference]) extends Conflict
+    /** `count` values of the type `by` refer to it (one problem per type of referrer). */
+    final case class Referenced(typeName: TypeName, key: Raw, by: TypeName, count: Count) extends Conflict
 
     /** A version of a value as the store writes it: a time or a revision, in its wire spelling. */
     type Stamp = Stamp.T
@@ -164,9 +178,6 @@ object Problem:
     /** A state in its wire spelling (`running`, `settled`). */
     type State = State.T
     object State extends Newtype[String, Pure]
-
-    /** What refers to a value: the type of the referrers and how many there are. */
-    final case class Reference(typeName: TypeName, count: Count) derives CanEqual
 
     /** The work that holds the store or a resource while it runs. */
     enum Activity derives CanEqual:
@@ -212,7 +223,9 @@ object Problem:
 
     /** An amount of an allowance: money, calls or tokens, as its limit counts them. */
     type Amount = Amount.T
-    object Amount extends Newtype[Double, Pure]
+    object Amount extends Newtype[Double, Pure]:
+      /** An amount written as a decimal number. */
+      def read(number: String): Option[Amount] = number.toDoubleOption.map(Amount(_))
 
     /** A feature a setting switches on and off, by its name. */
     type Feature = Feature.T
@@ -245,7 +258,9 @@ object Problem:
 
     /** An HTTP status code. */
     type Status = Status.T
-    object Status extends Newtype[Int, Pure]
+    object Status extends Newtype[Int, Pure]:
+      /** A status written in decimal digits. */
+      def read(digits: String): Option[Status] = digits.toIntOption.map(Status(_))
 
     /** What a reply was expected to be. */
     enum Shape derives CanEqual:
@@ -257,10 +272,10 @@ object Problem:
   object Io:
 
     /** `op` on `path` failed. */
-    final case class File(op: FileOp, path: Path, reported: External.Reported) extends Io
+    final case class File(op: Access, path: Path, reported: External.Reported) extends Io
 
     /** `path` is not what the operation needs: `expected`. */
-    final case class Wrong(path: Path, expected: PathKind) extends Io
+    final case class Wrong(path: Path, expected: Kind) extends Io
 
     /** Data in `format` is damaged at `at`. */
     final case class Corrupt(format: Format, at: Where, damage: Damage) extends Io
@@ -281,12 +296,14 @@ object Problem:
 
     /** A process's exit status. */
     type ExitCode = ExitCode.T
-    object ExitCode extends Newtype[Int, Pure]
+    object ExitCode extends Newtype[Int, Pure]:
+      /** An exit status written in decimal digits. */
+      def read(digits: String): Option[ExitCode] = digits.toIntOption.map(ExitCode(_))
 
-    enum FileOp derives CanEqual:
+    enum Access derives CanEqual:
       case Read, Write, Create, Delete, Move, List
 
-    enum PathKind derives CanEqual:
+    enum Kind derives CanEqual:
       case File, Directory, Present, Absent, Executable
 
     enum Format derives CanEqual:
@@ -371,7 +388,7 @@ object Problem:
     final case class Rejected(plugin: Id, item: Raw, refusal: Refusal) extends Plugin
 
     /** The secret vault `vault` failed: `failure`. */
-    final case class Vault(vault: Id, failure: VaultFailure) extends Plugin
+    final case class Vault(vault: Id, failure: Retrieval) extends Plugin
 
     /** `plugin` failed in a way no other case names: `claim` is what kind of failure it reports, `text` its words. */
     final case class Said(plugin: Id, claim: Claim, text: External.PluginSaid) extends Plugin
@@ -392,7 +409,7 @@ object Problem:
       case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted
 
     /** How a vault failed. */
-    enum VaultFailure derives CanEqual:
+    enum Retrieval derives CanEqual:
       case NoVault, NoEntry, EmptyValue, Locked
 
       /** It did not answer within `after`. */
@@ -469,15 +486,15 @@ object Problem:
   object Content:
 
     /** A review finding about an article: `cause`. */
-    final case class Finding(cause: FindingCause) extends Content
+    final case class Finding(cause: Flaw) extends Content
 
     /** An agent's proposal breaks `rule` at `at`. */
-    final case class Proposal(rule: ProposalRule, at: Where) extends Content
+    final case class Proposal(rule: Requirement, at: Where) extends Content
 
-    enum FindingCause derives CanEqual:
+    enum Flaw derives CanEqual:
       case HandWrittenSourcesCited, UncitedParagraph, UnknownCitekey, FormattingIntroduced, MissingSection
 
-    enum ProposalRule derives CanEqual:
+    enum Requirement derives CanEqual:
       case NoYearZero, CitesNoSource, UnknownCitekey, OutsidePeriod
 
       /** At most `cap` claims per source; it gave `gave`. */
@@ -508,8 +525,8 @@ object Problem:
 
   object Stored:
 
-    /** A sentence no case writes: text an older version stored, kept as it was. No code builds one but the reader of
-      * a stored column.
+    /** A sentence no case writes: text an older version stored, kept as it was. No code builds one but the reader of a
+      * stored column.
       */
     final case class Unrecognised(text: Text) extends Stored
 
@@ -547,12 +564,12 @@ object Problem:
 
     /** The same problem, found in `field` of the request: an input's path gets `field` in front. */
     def within(field: Field): Problem = problem match
-      case Invalid.Malformed(t, c, raw, at)      => Invalid.Malformed(t, c, raw, field +: at)
-      case Invalid.Unknown(t, raw, known, at)    => Invalid.Unknown(t, raw, known, field +: at)
-      case Invalid.Missing(f, at)                => Invalid.Missing(f, field +: at)
-      case Invalid.OutOfRange(t, raw, b, at)     => Invalid.OutOfRange(t, raw, b, field +: at)
-      case Invalid.Inconsistent(fs, rule, at)    => Invalid.Inconsistent(fs, rule, field +: at)
-      case other                                 => other
+      case Invalid.Malformed(t, c, raw, at)   => Invalid.Malformed(t, c, raw, field +: at)
+      case Invalid.Unknown(t, raw, known, at) => Invalid.Unknown(t, raw, known, field +: at)
+      case Invalid.Missing(f, at)             => Invalid.Missing(f, field +: at)
+      case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
+      case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
+      case other                              => other
 
   // ---- one of each ------------------------------------------------------------------------------------------
 
@@ -565,18 +582,31 @@ object Problem:
     Vector(
       Invalid.Malformed(
         citekey,
-        Constraint(Constraint.Name("Match[\"[a-z][a-z0-9_-]*\"]"), Constraint.Description("Should match [a-z][a-z0-9_-]*")),
+        Constraint(
+          Constraint.Name("Match[\"[a-z][a-z0-9_-]*\"]"),
+          Constraint.Description("Should match [a-z][a-z0-9_-]*")
+        ),
         Raw("Gimbutas 1956"),
         Vector(Field("edges"), Field("dst"))
       ),
-      Invalid.Unknown(TypeName("com.histmersion.domain.library.Source.Status"), Raw("dubious"), Vector(Raw("current"), Raw("contested"))),
+      Invalid.Unknown(
+        TypeName("com.histmersion.domain.library.Source.Status"),
+        Raw("dubious"),
+        Vector(Raw("current"), Raw("contested"))
+      ),
       Invalid.Missing(Field("rationale")),
-      Invalid.OutOfRange(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
+      Invalid
+        .OutOfRange(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
       NotFound.Entity(citekey, Raw("anthony2007")),
       Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
-      Conflict.Stale(citekey, Raw("anthony2007"), Conflict.Stamp("2026-11-01T10:00:00Z"), Conflict.Stamp("2026-11-02T08:30:00Z")),
+      Conflict.Stale(
+        citekey,
+        Raw("anthony2007"),
+        Conflict.Stamp("2026-11-01T10:00:00Z"),
+        Conflict.Stamp("2026-11-02T08:30:00Z")
+      ),
       Conflict.WrongState(
         TypeName("com.histmersion.util.jobs.Job.Id"),
         Raw("412"),
@@ -587,27 +617,42 @@ object Problem:
       Conflict.Referenced(
         TypeName("com.histmersion.domain.catalogue.Place.Id"),
         Raw("pleiades_579885"),
-        NonEmptyVector.of(Conflict.Reference(TypeName("com.histmersion.domain.library.Finding"), Count(3L)))
+        TypeName("com.histmersion.domain.library.Finding"),
+        Count(3L)
       ),
       Refused.Policy(Refused.Rule.RunTokenRequired),
-      Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(5.0), Some(EpochMs(1762732800000L))),
+      Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),
       Upstream.Http(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
       Upstream.Unreachable(core, url, reported),
       Upstream.Timeout(core, url, Millis(30000L)),
       Upstream.BadReply(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),
-      Io.File(Io.FileOp.Read, Io.Path("/tmp/bundle.hmx"), External.Reported("java.nio.file.NoSuchFileException: /tmp/bundle.hmx")),
-      Io.Wrong(Io.Path("/srv/seed"), Io.PathKind.Directory),
+      Io.File(
+        Io.Access.Read,
+        Io.Path("/tmp/bundle.hmx"),
+        External.Reported("java.nio.file.NoSuchFileException: /tmp/bundle.hmx")
+      ),
+      Io.Wrong(Io.Path("/srv/seed"), Io.Kind.Directory),
       Io.Corrupt(Io.Format.Png, Where("terrarium tile 3/4/2"), Io.Damage.Length(Count(1024L), Count(1000L))),
-      Io.Process(Io.Tool("calibredb"), Io.Ending.Exited(Io.ExitCode(2), External.Stderr("calibredb: library is locked"))),
-      Io.Database(Io.DbOp.Migrate, External.Reported("org.postgresql.util.PSQLException: relation \"jobs\" does not exist")),
+      Io.Process(
+        Io.Tool("calibredb"),
+        Io.Ending.Exited(Io.ExitCode(2), External.Stderr("calibredb: library is locked"))
+      ),
+      Io.Database(
+        Io.DbOp.Migrate,
+        External.Reported("org.postgresql.util.PSQLException: relation \"jobs\" does not exist")
+      ),
       Config.Setting(SettingKey("histmersion.agents.providers.codex.command"), Config.Fault.Empty),
       Config.Unavailable(Config.Capability.Originals),
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Plugin.Load(Plugin.Id("media-met"), Plugin.Fault.NullComponent),
       Plugin.Rejected(Plugin.Id("media-smithsonian"), Raw("edanmdm:nmnhanthro_8371234"), Plugin.Refusal.NoImage),
-      Plugin.Vault(Plugin.Id("keepassxc"), Plugin.VaultFailure.TimedOut(Millis(20000L))),
-      Plugin.Said(Plugin.Id("gazetteer-awmc"), Plugin.Claim.Unavailable, External.PluginSaid("the AWMC server is in maintenance")),
+      Plugin.Vault(Plugin.Id("keepassxc"), Plugin.Retrieval.TimedOut(Millis(20000L))),
+      Plugin.Said(
+        Plugin.Id("gazetteer-awmc"),
+        Plugin.Claim.Unavailable,
+        External.PluginSaid("the AWMC server is in maintenance")
+      ),
       Run.Paused(Run.PauseReason.Allowance, Some(EpochMs(1762732800000L))),
       Run.NoModel(Run.Role("reviewer"), Vector(Run.Model("claude-opus-5-5"), Run.Model("gpt-6"))),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
@@ -615,9 +660,13 @@ object Problem:
       Run.Cancelled(Run.Actor.Person),
       Run.Draining(EpochMs(1762732800000L)),
       Run.Aborted(Run.Step("draft"), Run.AbortCause.CheckpointMismatch),
-      Content.Finding(Content.FindingCause.UncitedParagraph),
-      Content.Proposal(Content.ProposalRule.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
-      Internal.Unexpected(Where("backup"), Internal.ExceptionName("java.lang.IllegalStateException"), External.Reported("java.lang.IllegalStateException: pg_dump vanished")),
+      Content.Finding(Content.Flaw.UncitedParagraph),
+      Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
+      Internal.Unexpected(
+        Where("backup"),
+        Internal.ExceptionName("java.lang.IllegalStateException"),
+        External.Reported("java.lang.IllegalStateException: pg_dump vanished")
+      ),
       Unclassified(Legacy.Text("cannot open the bundle")),
       Stored.Unrecognised(Stored.Text("merge apply crashed: NullPointerException"))
     )

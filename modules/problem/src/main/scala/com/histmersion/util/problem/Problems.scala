@@ -2,9 +2,9 @@ package com.histmersion
 package util.problem
 
 /** One problem or several. A function that can fail for several reasons at once returns `Either[Problems, A]`; one that
-  * returns `Either[Problem, A]` already conforms. The operations are on [[Problem]]'s companion (`toVector`, `++`, `at`,
-  * `exists`, `fold`, `Either.and`, the tuples' `allOrProblems`), so they need no import; compare two with `==` only as
-  * values of `Problems`, and never match on the union: `fold` or `toVector` it.
+  * returns `Either[Problem, A]` already conforms. The operations are on [[Problem]]'s companion (`toVector`, `++`,
+  * `at`, `exists`, `fold`, `Either.and`, the tuples' `allOrProblems`), so they need no import; compare two with `==`
+  * only as values of `Problems`, and never match on the union: `fold` or `toVector` it.
   */
 type Problems = Problem | NonEmptyVector[Problem]
 
