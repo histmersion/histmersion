@@ -23,6 +23,8 @@ object GuidelineInventory {
     projectPrefix: String = "com/histmersion/",
     semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
     testMarkers: List[String] = List("/src/test/"),
+    textBranchTypes: String = "(?i).*(problem|error|reason|refus|fail|why|because|message|detail|note|outcome|warning|stopped|state)(s|text)?",
+    textBranchFields: Set[String] = Set("message", "error", "detail", "note", "why", "reason"),
     controllerFile: String = ".*(Controller|Controllers|Routes)\\.scala",
     rawSqlOwners: List[String] = List("com/histmersion/util/database/Sql#", "com/histmersion/util/database/Sql."),
     rawSqlText: List[String] = List("com/histmersion/util/database/Sql.Text."),
@@ -87,7 +89,7 @@ object GuidelineInventory {
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
     "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one",
-    "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==` or `!=` on the `.value` of a layer `Problem` (outside its own companion): a caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
+    "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==`, `!=`, a match on a literal or a regex, a Regex, or a reading apart (`takeWhile`, `split`, `stripPrefix`, `indexOf`…) of the text of a failure, a stored state or a message: the `.value` of a String newtype named for one (Problem, Error, Reason, Failure, Why, Message, Detail, Note, Outcome, Warning, State…), a Throwable's `getMessage`/`toString`, or a `message`/`error`/`detail`/`note`/`why`/`reason` field, outside the newtype's own companion and a boundary file. A caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
     "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
     "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
@@ -344,6 +346,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     }
 
     val textBranchOps = Set("contains", "startsWith", "endsWith", "matches")
+    val textParseOps = Set("takeWhile", "dropWhile", "split", "stripPrefix", "stripSuffix", "indexOf", "lastIndexOf", "substring", "splitAt", "span")
     def allowedInCompanion(t: Tree, nt: Option[Symbol]): Boolean = {
       val enclosing = enclosingNewtypes(t)
       enclosing.nonEmpty && nt.forall(enclosing.contains)
@@ -392,13 +395,6 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           case _ => None
         }
         (compared.map("compare:" + _) orElse lambdaOp.map("lambda:" + _) orElse direct).foreach(d => if (!allowedInCompanion(s, nt)) report("G49", s, s"$d;$ntName"))
-        // G5textBranch: a text operation on the .value of a layer Problem in main code (an enum where a caller branches)
-        val textBranch = s.parent match {
-          case Some(Term.Select(_, m)) if textBranchOps(m.value) => Some(m.value)
-          case Some(i: Term.ApplyInfix) if (i.lhs eq s) && (textBranchOps(i.op.value) || Set("==", "!=")(i.op.value)) => Some(i.op.value)
-          case _ => None
-        }
-        if (scope == "main" && !boundary && ntName == "Problem" && !allowedInCompanion(s, nt)) textBranch.foreach(op => report("G5textBranch", s, s"$op:Problem"))
       // G44/G45: construction from a raw value
       case a: Term.Apply if constructionOf(a.fun).nonEmpty && !inImport(a) =>
         val (obj, how) = constructionOf(a.fun).get
@@ -500,6 +496,104 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           val renamed = if (t.body.syntax.split('.').last == t.name.value) "" else ";renamed"
           if (!ts.isNone && companionKey(ts) == companionKey(vs)) report("G46", t, s"${t.name.value}=${companionKey(ts)}$renamed")
           else if (t.body.syntax.replace("_root_.", "") == v.rhs.syntax.replace("_root_.", "")) report("G46", t, s"${t.name.value}=${t.body.syntax.replace("_root_.", "")};unresolved")
+        case _ =>
+      }
+    }
+
+    // ---- G5textBranch: a branch on the text of a failure, a stored state or a message ----------------------------
+    // Subject: the value of a String newtype named for an error, a state or a message, the message of a Throwable, or a
+    // `message`/`error`/`detail`/`note`/`why`/`reason` field. Operation: contains, startsWith, endsWith, matches, == or
+    // != against a constant, takeWhile/split/stripPrefix/indexOf/... (reading the text apart), a match on a literal or a regex, or a Regex applied to it. A comparison of two such values
+    // (no constant operand) is a value comparison, not a branch on the text.
+    if (scope == "main" && !boundary) {
+      def isStringBase(sym: Symbol): Boolean = sym.value == "java/lang/String#" || sym.value == "scala/Predef.String#"
+      def stringish(t: Option[s.Type], depth: Int = 0): Boolean = t.map(dealias(_)).exists { tpe =>
+        newtypeOf(tpe).flatMap(newtypeParents).exists(p => isStringBase(p._2)) || isStringBase(typeSymbol(tpe)) ||
+          (depth == 0 && (tpe match {
+            case r: s.TypeRef if (r.symbol == "scala/Option#" || r.symbol == "scala/collection/immutable/List#") && r.typeArguments.size == 1 =>
+              stringish(Some(r.typeArguments.head), 1)
+            case _ => false
+          }))
+      }
+      def textNamed(name: String): Boolean = policy.textBranchTypes.r.pattern.matcher(name).matches
+      def throwableText(n: Name): Boolean = Set("getMessage", "getLocalizedMessage", "toString")(n.value) && {
+        val owner = n.symbol.value.takeWhile(_ != '#')
+        owner == "java/lang/Throwable" || owner.endsWith("Exception") || owner.endsWith("Error")
+      }
+      def fieldNamed(t: Term): Option[String] = t match {
+        case n: Term.Name if policy.textBranchFields.contains(n.value) && stringish(termType(n)) => Some("field:" + n.value)
+        case Term.Select(_, n) if policy.textBranchFields.contains(n.value) && stringish(termType(t)) => Some("field:" + n.value)
+        case _ => None
+      }
+      /** What a term is a text of, if it is the text of a failure, a stored state or a message. */
+      def textSubject(t: Term): Option[String] = t match {
+        case Term.Select(q, n) if isIronValue(n) =>
+          termType(q).flatMap(newtypeOf).filter(nt => newtypeParents(nt).exists(p => isStringBase(p._2)) && textNamed(nt.displayName)).map(_.displayName)
+            .orElse(fieldNamed(q))
+        case Term.Select(_, n) if throwableText(n) => Some("Throwable." + n.value)
+        case a: Term.Apply if a.argClause.values.isEmpty && (a.fun match { case Term.Select(_, n) => throwableText(n); case _ => false }) =>
+          Some("Throwable." + a.fun.asInstanceOf[Term.Select].name.value)
+        case p: Term.Placeholder =>
+          ancestors(p).collectFirst { case f: Term.AnonymousFunction => f }.flatMap(f => f.parent.flatMap(_.parent)).collect {
+            case a: Term.Apply => a.fun
+          }.collect { case Term.Select(recv, _) => recv }.flatMap(r => fieldNamed(r) orElse (r match {
+            case Term.Select(q, n) if isIronValue(n) => fieldNamed(q)
+            case _ => None
+          }))
+        case other => fieldNamed(other)
+      }
+      def objectConstant(sym: Symbol): Boolean = info(sym).exists(i =>
+        (i.kind == s.SymbolInformation.Kind.OBJECT || i.kind == s.SymbolInformation.Kind.FIELD || i.kind == s.SymbolInformation.Kind.METHOD) &&
+          sym.owner.value.endsWith(".") && (i.signature match { case m: s.MethodSignature => m.parameterLists.forall(_.symlinks.isEmpty); case _ => true }))
+      def isConstant(t: Term): Boolean = isLiteral(t) || t.is[Term.Interpolate] || (t match {
+        case sel: Term.Select if isIronValue(sel.name) || sel.name.value == "r" => isConstant(sel.qual)
+        case sel: Term.Select => objectConstant(sel.name.symbol)
+        case n: Term.Name => objectConstant(n.symbol)
+        case a: Term.Apply if a.argClause.values.size == 1 =>
+          (a.fun match { case n: Term.Name => isNewtypeObject(n.symbol); case sel: Term.Select => isNewtypeObject(sel.name.symbol); case _ => false }) && isConstant(a.argClause.values.head)
+        case _ => false
+      })
+      def constantOperand(t: Term): Boolean = t match {
+        case Term.Select(q, n) if isIronValue(n) => constantOperand(q)
+        case other => isConstant(other)
+      }
+      def ownText(t: Tree, subject: Term): Boolean = {
+        val nt = (subject match { case Term.Select(q, n) if isIronValue(n) => termType(q).flatMap(newtypeOf); case _ => None })
+        allowedInCompanion(t, nt) && nt.nonEmpty
+      }
+      def flag(t: Tree, op: String, subject: String): Unit = report("G5textBranch", t, s"$op:$subject")
+      val regexOps = Set("findFirstIn", "findFirstMatchIn", "findPrefixOf", "findPrefixMatchOf", "findAllIn", "findAllMatchIn", "unapplySeq", "matcher", "replaceAllIn", "replaceFirstIn")
+      doc.tree.traverse {
+        // subject.op(constant), or a constant list tested for the subject
+        case a: Term.Apply if a.fun.is[Term.Select] && (textBranchOps ++ textParseOps)(a.fun.asInstanceOf[Term.Select].name.value) =>
+          val sel = a.fun.asInstanceOf[Term.Select]
+          val direct = textSubject(sel.qual).filter(_ => (textParseOps(sel.name.value) || a.argClause.values.exists(constantOperand)) && !ownText(a, sel.qual)).map(sel.name.value -> _)
+          val listed = if (sel.name.value != "contains") None else {
+            val constants = sel.qual match {
+              case ap: Term.Apply => ap.argClause.values.nonEmpty && ap.argClause.values.forall(constantOperand)
+              case l => constantOperand(l)
+            }
+            if (constants) a.argClause.values.headOption.flatMap(x => textSubject(x).filterNot(_ => ownText(a, x))).map("contains-in" -> _) else None
+          }
+          (direct orElse listed).foreach { case (op, subject) => flag(a, op, subject) }
+        // subject op constant (infix), constant == subject
+        case i: Term.ApplyInfix if textBranchOps(i.op.value) || Set("==", "!=")(i.op.value) =>
+          val op = i.op.value
+          val direct = textSubject(i.lhs).filter(_ => i.argClause.values.exists(constantOperand) && !ownText(i, i.lhs))
+          val flipped = if (Set("==", "!=")(op)) i.argClause.values.headOption.flatMap(textSubject).filter(_ => constantOperand(i.lhs) && !ownText(i, i.argClause.values.head)) else None
+          (direct orElse flipped).foreach(flag(i, op, _))
+        // regex application
+        case a: Term.Apply if a.fun.is[Term.Select] && regexOps(a.fun.asInstanceOf[Term.Select].name.value) =>
+          a.argClause.values.flatMap(textSubject).headOption.foreach(flag(a, "regex", _))
+        // match on a literal, an interpolation or a regex pattern
+        case m: Term.Match =>
+          textSubject(m.expr).filter { _ =>
+            m.cases.exists(c => c.pat.collect {
+              case _: Lit.String => true
+              case _: Pat.Interpolate => true
+              case e: Pat.Extract => termType(e.fun).map(dealias(_)).exists(tt => typeSymbol(tt).value == "scala/util/matching/Regex#")
+            }.nonEmpty)
+          }.filterNot(_ => ownText(m, m.expr)).foreach(flag(m, "match", _))
         case _ =>
       }
     }
