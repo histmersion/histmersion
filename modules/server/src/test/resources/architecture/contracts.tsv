@@ -1416,7 +1416,7 @@ unwrap	server:util/ocr/HttpConverterClient.scala	.value outside a boundary	8
 unwrap	server:util/ocr/JatsConverter.scala	.value outside a boundary	4
 unwrap	server:util/plugins/HostProvided.scala	.value outside a boundary	1
 unwrap	server:util/plugins/LegacyPlugins.scala	.value outside a boundary	10
-unwrap	server:util/plugins/Plugins.scala	.value outside a boundary	18
+unwrap	server:util/plugins/Plugins.scala	.value outside a boundary	17
 unwrap	server:util/process/ProcessResult.scala	.value outside a boundary	1
 unwrap	server:util/process/Processes.scala	.value outside a boundary	9
 unwrap	server:util/settings/ConfigViews.scala	.value outside a boundary	2
