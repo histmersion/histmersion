@@ -31,7 +31,7 @@ G44	cli	main	333
 G44	cli	test	134
 G44	config	main	165
 G44	config	test	71
-G44	core	main	2748
+G44	core	main	2738
 G44	core	test	1200
 G44	db	main	501
 G44	db	test	1472
@@ -126,8 +126,8 @@ G47fqn	api	main	822
 G47fqn	cli	main	49
 G47fqn	cli	test	57
 G47fqn	config	main	3
-G47fqn	core	main	151
-G47fqn	core	test	377
+G47fqn	core	main	150
+G47fqn	core	test	376
 G47fqn	db	main	365
 G47fqn	db	test	388
 G47fqn	files	main	10
@@ -202,7 +202,7 @@ G49	cli	test	17
 G49	config	main	69
 G49	config	test	8
 G49	console	main	1
-G49	core	main	915
+G49	core	main	905
 G49	core	test	239
 G49	db	main	1004
 G49	db	test	359

@@ -452,11 +452,11 @@ object CompileArticle:
         .toList
     val soft =
       mech
-        .filter(f => f.kind.value == "citation" && f.problem.value.contains("no [[citekey]]"))
+        .filter(_.problem.isUncitedParagraph)
         .take(3)
         .map(f => s"a paragraph with no [[citekey]]: \"${f.quote.value.take(80)}\"") ++
         (if mode == DraftMode.Create then
-           mech.filter(f => f.kind.value == "section" && f.problem.value.startsWith("no ")).map(_.problem.value)
+           mech.filter(_.problem.isMissingSection).map(_.problem.value)
          else Nil) ++
         mech.filter(_.kind.value == "language").map(_.problem.value) ++
         citesHere.filterNot(allowed).map(ck => s"[[$ck]] is cited but no claim of it is in the claim table") ++
