@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -62,7 +63,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Right("excavation = Mykénai; 1400–1200 BCE within 1600–1100 BCE")
     )
     assertEquals(
-      MediaMatch.museum(r, greece, onMap),
+      MediaMatch.museum(r, greece, onMap).left.map(_.sentence),
       Left("names another place on the map"),
       "an object from Mycenae is not filed under Greece too"
     )
@@ -73,9 +74,12 @@ class MediaCollectionsSuite extends munit.FunSuite:
     )
 
   test("museum rule: uncertain and ambiguous values, missing or disjoint dates are never matched"):
-    assertEquals(MediaMatch.museum(rec(List("culture" -> "Mycenae ?")), mycenae, onMap), Left("no place on the record"))
     assertEquals(
-      MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap),
+      MediaMatch.museum(rec(List("culture" -> "Mycenae ?")), mycenae, onMap).left.map(_.sentence),
+      Left("no place on the record")
+    )
+    assertEquals(
+      MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap).left.map(_.sentence),
       Left("no place on the record")
     )
     val thebes = MediaMatch.PlaceInfo(
@@ -85,27 +89,33 @@ class MediaCollectionsSuite extends munit.FunSuite:
       DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L))
     )
     assertEquals(
-      MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap),
+      MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap).left.map(_.sentence),
       Left("its place name is ambiguous on the map")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), None), mycenae, onMap),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), None), mycenae, onMap).left.map(_.sentence),
       Left("no dates on the record")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae")), mycenae.modify(_.period).setTo(None), onMap),
+      MediaMatch
+        .museum(rec(List("excavation" -> "Mycenae")), mycenae.modify(_.period).setTo(None), onMap)
+        .left
+        .map(_.sentence),
       Left("the place has no period to compare")
     )
     assertEquals(
-      MediaMatch.museum(
-        rec(List("excavation" -> "Mycenae"), DeepTime.span(DeepTime.SignedYear(1700L), DeepTime.SignedYear(1750L))),
-        mycenae,
-        onMap
-      ),
+      MediaMatch
+        .museum(
+          rec(List("excavation" -> "Mycenae"), DeepTime.span(DeepTime.SignedYear(1700L), DeepTime.SignedYear(1750L))),
+          mycenae,
+          onMap
+        )
+        .left
+        .map(_.sentence),
       Left("its dates do not overlap the place's")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae, Tomb 5")), mycenae, onMap),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae, Tomb 5")), mycenae, onMap).left.map(_.sentence),
       Left("its place is not on the map"),
       "whole value against whole name: never a substring"
     )
@@ -118,26 +128,32 @@ class MediaCollectionsSuite extends munit.FunSuite:
     assertEquals(MediaMatch.map(m, mycenae, onMap, Year(1928)), Right("location = mycenae; map of 1880–1880 CE"))
     assertEquals(MediaMatch.map(m, greece, onMap, Year(1928)), Right("location = greece; map of 1880–1880 CE"))
     assertEquals(
-      MediaMatch.map(
-        m.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1950L), DeepTime.SignedYear(1950L))),
-        greece,
-        onMap,
-        Year(1928)
-      ),
+      MediaMatch
+        .map(
+          m.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1950L), DeepTime.SignedYear(1950L))),
+          greece,
+          onMap,
+          Year(1928)
+        )
+        .left
+        .map(_.sentence),
       Left("made after 1928")
     )
     assertEquals(
-      MediaMatch.map(
-        rec(List("location" -> "thebes"), DeepTime.span(DeepTime.SignedYear(1880L), DeepTime.SignedYear(1880L))),
-        MediaMatch.PlaceInfo(
-          MediaMatch.PlaceInfo.Id("thebes_egypt"),
-          MediaMatch.PlaceInfo.Label("Thebes"),
-          Set(MediaMatch.PlaceInfo.Keys("thebes")),
-          None
-        ),
-        onMap,
-        Year(1928)
-      ),
+      MediaMatch
+        .map(
+          rec(List("location" -> "thebes"), DeepTime.span(DeepTime.SignedYear(1880L), DeepTime.SignedYear(1880L))),
+          MediaMatch.PlaceInfo(
+            MediaMatch.PlaceInfo.Id("thebes_egypt"),
+            MediaMatch.PlaceInfo.Label("Thebes"),
+            Set(MediaMatch.PlaceInfo.Keys("thebes")),
+            None
+          ),
+          onMap,
+          Year(1928)
+        )
+        .left
+        .map(_.sentence),
       Left("its place name is ambiguous on the map")
     )
 

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.ListFilters.*
@@ -62,9 +63,10 @@ class ListFiltersSuite extends munit.FunSuite:
       Right(Some(Instant.parse("2026-10-02T00:00:00Z")))
     )
     assert(
-      range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now).left.exists(_.value.contains("before"))
+      range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now).left
+        .exists(_.sentence.contains("before"))
     )
-    assert(range(Some(TimeBound("soon")), None, now).left.exists(_.value.startsWith("since:")))
+    assert(range(Some(TimeBound("soon")), None, now).left.exists(_.sentence.startsWith("since:")))
     assertEquals(range(None, None, now), Right((None, None)))
 
   test("a closed vocabulary names the first unknown value and the words allowed"):
@@ -73,7 +75,7 @@ class ListFiltersSuite extends munit.FunSuite:
       Right(List("edge"))
     )
     assertEquals(
-      known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))),
+      known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))).left.map(_.sentence),
       Left("unknown kind 'bogus' (one of: edge)")
     )
 

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
 import com.histmersion.domain.automation.{Pipeline, Run}
@@ -189,7 +190,7 @@ object JobRuns:
             r.modify(_.row.status)
               .setTo(to)
               .modify(_.error)
-              .setTo(error.map(e => Problem(e.value)))
+              .setTo(error)
               .modify(_.progress)
               .setTo(progress.map(p => JobRunState.Progress(p.value)))
               .modify(_.resumeAt)
@@ -212,7 +213,14 @@ object JobRuns:
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.forall(_.isAfter(now)))
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
-        .map((id, r) => (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, Problem(r.error.fold("")(_.value))))
+        .map((id, r) =>
+          (
+            id,
+            Pipeline.Wire(r.row.pipeline.value),
+            r.row.model,
+            Problem.Unclassified(Legacy.Text(r.error.fold("")(_.sentence)))
+          )
+        )
         .toVector
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.progress).setTo(Some(JobRunState.Progress(text.value)))))
@@ -239,9 +247,7 @@ object JobRuns:
         .filter((id, r) => r.row.status == running && !except.contains(id))
         .sortBy[Long]((_, r) => r.created.value)
       moving.foreach((id, _) =>
-        change(kind, id)(x =>
-          touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(Problem(error.value))))
-        ): Unit
+        change(kind, id)(x => touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(error)))): Unit
       )
       val waiting = mine(kind)
         .filter((id, r) => r.row.status == queued && !except.contains(id))

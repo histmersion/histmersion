@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -54,7 +55,7 @@ final class FilterTab[Q, Row](
         state.signal.map(s => ResultsPaging.Failed(s.error.nonEmpty))
       ),
       child.maybe <-- state.signal.map(
-        _.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: $m"))
+        _.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: ${m.sentence}"))
       ),
       child.maybe <-- state.signal.map(s =>
         Option
@@ -83,7 +84,7 @@ final class FilterTab[Q, Row](
     state.update(TabState.loading)
     latest(fetch(q, Filter.Offset(0)))(
       p => state.set(TabState.first(p, page)),
-      m => state.update(TabState.failed(_, Problem(m)))
+      m => state.update(TabState.failed(_, Problem.Unclassified(Legacy.Text(m))))
     )
 
   /** "show more": the loaded rows first, then the next page from the server. */
@@ -95,7 +96,7 @@ final class FilterTab[Q, Row](
         state.update(TabState.loading)
         latest(fetch(q, Filter.Offset(offset.value)))(
           p => state.update(TabState.appended(_, p, page)),
-          m => state.update(TabState.failed(_, Problem(m)))
+          m => state.update(TabState.failed(_, Problem.Unclassified(Legacy.Text(m))))
         )
 
 object FilterTab:

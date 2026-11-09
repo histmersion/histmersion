@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.data.{DataOwner, TableName}
@@ -38,7 +39,7 @@ class CarriedKindsSuite extends munit.FunSuite:
     val withoutTombstones =
       TestExchange.carried.filterNot(_.entry.value == com.histmersion.api.exchange.Bundle.Files.Tombstones)
     assertEquals(
-      CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption,
+      CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption.map(_.map(_.sentence)),
       Some(
         List(
           s"no carried kind writes ${com.histmersion.api.exchange.Bundle.Files.Tombstones}",

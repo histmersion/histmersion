@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -44,4 +45,4 @@ object LocalFiles:
     def staged[A](name: StagedName, bytes: Content)(
         use: Path => Either[Problem, A]
     ): Either[Problem, A] =
-      Left(Problem("this host supplies no local files"))
+      Left(Problem.Unclassified(Legacy.Text("this host supplies no local files")))

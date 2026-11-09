@@ -1,6 +1,8 @@
 package com.histmersion
 package api.exchange
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.Problem
+
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given

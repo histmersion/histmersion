@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `media-pleiades`: `histmersion media import pleiades` — the Commons files Pleiades place records link. */
 import com.histmersion.plugin.Plugin

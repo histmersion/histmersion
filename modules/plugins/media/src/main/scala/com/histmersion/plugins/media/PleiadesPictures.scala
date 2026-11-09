@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `pleiades`: pictures a Pleiades place record links. For each place on the map that carries a Pleiades id, its place
@@ -29,13 +29,15 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     Either.cond(
       conf.enabled.value,
       (),
-      Problem(
-        "Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)"
+      Problem.Unclassified(
+        Legacy.Text("Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
       )
     )
 
   def search(place: MediaPlace, http: Plugin.Http) = Left(
-    Plugin.Http.Failure.Transport(Problem("the Pleiades pictures are found for a batch of places"))
+    Plugin.Http.Failure.Transport(
+      Problem.Unclassified(Legacy.Text("the Pleiades pictures are found for a batch of places"))
+    )
   )
 
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
@@ -81,12 +83,12 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       failed = read
         .flatMap { (p, pids, answers) =>
           (if pids.isEmpty then List(s"place ${p.id.value} (${p.label.value}): no Pleiades id") else Nil) ++
-            answers.collect { case (pid, Left(e)) => s"Pleiades place ${pid.value} (${p.id.value}): $e" }
+            answers.collect { case (pid, Left(e)) => s"Pleiades place ${pid.value} (${p.id.value}): ${e.legacyText}" }
         }
-        .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.value)),
+        .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.legacyText)),
       notTaken = read
         .flatMap(_._3.flatMap(_._2.toOption.toList.flatten.flatMap(_.file.left.toOption)))
-        .map(why => MediaFound.NotTaken(s"$why"))
+        .map(why => MediaFound.NotTaken(s"${why.legacyText}"))
     )
 
   override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =

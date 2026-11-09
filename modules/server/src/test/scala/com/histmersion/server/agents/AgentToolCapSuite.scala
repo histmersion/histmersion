@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -68,7 +68,7 @@ class AgentToolCapSuite extends DbSuite:
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
-    ): Either[Problem, ConvertedDoc] = Left(Problem("not used"))
+    ): Either[Problem, ConvertedDoc] = Left(Problem.Unclassified(Legacy.Text("not used")))
 
   private val Body = (1 to 400).map(i => s"Paragraph $i of the book about serpents and heroes.").mkString("\n\n") +
     "\n\nThe hero slew the serpent at the end."

@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
@@ -44,12 +44,12 @@ final class EventImportsControllers(
       provider <- imports
         .resolve(CatalogRecord.Provider(req.provider.value))
         .left
-        .map(p => invalid(p.transformInto[Problem]))
+        .map(p => invalid(p))
       area <- req.bbox.map(_.value.trim).filter(_.nonEmpty) match
         case Some(b) =>
           BBox
             .parse(BBox.Text(b))
-            .toRight(invalid(Problem(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")))
+            .toRight(invalid(Problem.Unclassified(Legacy.Text(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat"))))
             .map(Some(_))
         case None => Right(None)
       job <- jobs.start(
@@ -75,7 +75,7 @@ final class EventImportsControllers(
           imports
             .resolveStored(CatalogRecord.Provider(p))
             .left
-            .map(why => invalid(why.transformInto[Problem]))
+            .map(why => invalid(why))
             .map(Some(_))
         case None => Right(None)
       job <- jobs.start(
@@ -102,7 +102,7 @@ final class EventImportsControllers(
   ): Either[Api.Error, Correction.List] =
     status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) if !Correction.Status.all.exists(_.value == s) =>
-        Left(invalid(Problem(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}")))
+        Left(invalid(Problem.Unclassified(Legacy.Text(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}"))))
       case st =>
         Right(
           corrections.list(

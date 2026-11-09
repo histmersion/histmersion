@@ -1,7 +1,8 @@
 package com.histmersion
 package util.storage
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.ByteCount
 
 import java.time.Instant
@@ -153,35 +154,36 @@ object Store:
       else
         scala.util
           .Try {
-            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").left.map(p => Problem(p.value)).flatMap { key =>
-              store.reserve(key, TempName.Unique).left.map(e => Problem(e.message.value)).flatMap { r =>
+            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").flatMap { key =>
+              store.reserve(key, TempName.Unique).left.map(e => e.message).flatMap { r =>
                 try
                   val md = MessageDigest.getInstance("SHA-256")
                   val out = DigestOutputStream(r.output(), md)
                   try { val _ = in.transferTo(out) }
                   finally out.close()
                   val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
-                  if actual != sha256 then Left(Problem(s"its content hashes to $actual"))
-                  else r.commit().left.map(e => Problem(e.message.value)).map(_ => ())
+                  if actual != sha256 then Left(Problem.Unclassified(Legacy.Text(s"its content hashes to $actual")))
+                  else r.commit().left.map(e => e.message).map(_ => ())
                 finally r.close()
               }
             }
           }
           .toEither
           .left
-          .map(e => Problem(s"cannot store it in ${store.where()}: ${e.getMessage}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"cannot store it in ${store.where()}: ${e.getMessage}")))
           .flatten
 
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
   enum Error(val message: Problem) derives CanEqual:
-    case NotFound(where: Error.NotFound.Where) extends Error(Problem(s"$where: no such file"))
-    case NotAFile(where: Error.NotAFile.Where) extends Error(Problem(s"$where is not a file"))
-    case Failed(reason: Problem) extends Error(Problem(reason.value))
+    case NotFound(where: Error.NotFound.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where: no such file")))
+    case NotAFile(where: Error.NotAFile.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where is not a file")))
+    case Failed(reason: Problem) extends Error(reason)
 
     /** An in-memory store has no file to hand to another program. */
-    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(Problem(s"$where is not on disk"))
+    case NotOnDisk(where: Error.NotOnDisk.Where)
+        extends Error(Problem.Unclassified(Legacy.Text(s"$where is not on disk")))
 
   object Error:
     object NotFound:
@@ -211,7 +213,7 @@ object Store:
 
     /** A name made of one segment or several, each checked. */
     def of(segments: String*): Either[Problem, Key] =
-      either(segments.filter(_.nonEmpty).mkString("/")).left.map(Problem(_))
+      either(segments.filter(_.nonEmpty).mkString("/")).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
     extension (key: Key)
       def isRoot: Boolean = key.value.isEmpty
@@ -220,7 +222,8 @@ object Store:
       def /(child: String): Either[Problem, Key] = of(key.value, child)
 
       /** `key/child` for a child the caller built from checked parts. */
-      def child(name: EntryName): Key = (key / name.value).fold(e => throw IllegalArgumentException(e.value), identity)
+      def child(name: EntryName): Key =
+        (key / name.value).fold(e => throw IllegalArgumentException(e.sentence), identity)
 
       def segments: List[Segment] = if key.isRoot then Nil else key.value.split('/').toList.map(Segment(_))
 

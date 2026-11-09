@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.research.Slug
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
@@ -48,20 +49,20 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           Citekey
             .parse(raw.value)
             .left
-            .map(p => refused(p.value))
+            .map(p => refused(p.sentence))
             .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
             .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
         Some(
-          Slug.parse(raw.value).map(sl => AutomationHost.CanonicalKey(sl.value)).left.map(p => refused(p.value))
+          Slug.parse(raw.value).map(sl => AutomationHost.CanonicalKey(sl.value)).left.map(p => refused(p.sentence))
         )
       case TargetKind.Article =>
         Some(
           Slug
             .parse(raw.value)
             .left
-            .map(p => refused(p.value))
+            .map(p => refused(p.sentence))
             .flatMap(sl => h.research.articles.get(sl))
             .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
         )
@@ -76,7 +77,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         )
       case TargetKind.Manager => None
 
-  private def refused(why: String): Api.Error = Api.Error(Problem(why))
+  private def refused(why: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(why)))
 
   def runOptions(
       p: Pipeline,
@@ -85,7 +86,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       roundsCap: AutomationHost.RunOptionsRoundsCap
   ): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>
-      Left(Api.Error(Problem(s"$what is an option of ${owner.wire}, not of ${p.wire}")))
+      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"$what is an option of ${owner.wire}, not of ${p.wire}"))))
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
@@ -96,7 +97,11 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         wrong("an acquisition item", Pipeline.EnrichSource)
       case _ if p != Pipeline.CompileArticle && compileOpts => wrong("a title, kind or filter", Pipeline.CompileArticle)
       case _ if req.rounds.exists(n => n.value < 1 || n.value > roundsCap.value) =>
-        Left(Api.Error(Problem(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)")))
+        Left(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)"))
+          )
+        )
       case Pipeline.CompileArticle =>
         val exists = Slug.parse(target.value).exists(h.research.articleStore.exists)
         val filter =
@@ -104,27 +109,29 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             req.tags.exists(_.value.trim.nonEmpty)
         for
           _ <- req.kind.fold[Either[Api.Error, Unit]](Right(()))(k =>
-            Articles.kindOf(Article.Kind.Wire(k.value)).left.map(p => refused(p.value)).map(_ => ())
+            Articles.kindOf(Article.Kind.Wire(k.value)).left.map(p => refused(p.sentence)).map(_ => ())
           )
           _ <- Either.cond(
             exists || filter,
             (),
             Api.Error(
-              Problem(
-                s"'$target' is a new article: give a filter (query, topics or tags) " +
-                  "for the sources to compile it from"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"'$target' is a new article: give a filter (query, topics or tags) " +
+                    "for the sources to compile it from"
+                )
               )
             )
           )
           _ <- Either.cond(
             exists || req.title.exists(_.value.trim.nonEmpty),
             (),
-            Api.Error(Problem(s"'$target' is a new article: give its title"))
+            Api.Error(Problem.Unclassified(Legacy.Text(s"'$target' is a new article: give its title")))
           )
         yield ()
       case _ =>
         req.acquireItem.fold(Right(()))(id =>
-          Queue.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(p => refused(p.value))
+          Queue.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(p => refused(p.sentence))
         )
 
   def runRoles(p: Pipeline): List[Role] =
@@ -135,14 +142,14 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       Slug
         .parse(raw.value)
         .left
-        .map(p => refused(p.value))
+        .map(p => refused(p.sentence))
         .flatMap(sl => h.research.articles.get(sl))
         .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
     else
       Citekey
         .parse(raw.value)
         .left
-        .map(p => refused(p.value))
+        .map(p => refused(p.sentence))
         .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
         .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
 
@@ -156,8 +163,6 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def workLookup: PlanGoal.Lookup = doi =>
     upstream()
       .meta(doi)
-      .left
-      .map(p => domain.Problem(p.value))
       .map(w =>
         PlanGoal.Work(
           w.title.map(t => PlanGoal.Work.Title(t.value)),
@@ -178,7 +183,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       .sortBy(-_.count.value)
       .map(f => AutomationHost.Term(f.value.value))
   def housekeepingBlock: Option[AutomationHost.HousekeepingBlock] =
-    h.upkeep.housekeepingBlock.map(r => AutomationHost.HousekeepingBlock(r.value))
+    h.upkeep.housekeepingBlock.map(r => AutomationHost.HousekeepingBlock(r.sentence))
   def backup(): Either[Api.Error, Backup.Status] = h.upkeep.backup()
   def backupStatus: Either[Api.Error, Backup.Status] = h.upkeep.backupStatus
   def lintFix(): Either[Api.Error, LintFixResult] = h.checks.guardedLintFix(Nil)

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -47,7 +48,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   import InferFilterPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Problem(p.value))).flatMap(runFor(ctx, _))
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
@@ -70,8 +71,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               Prompt.UserText(input(loaded)),
               ResearchAnswers.filter
             )((a, last) =>
-              check(slug, loaded, a, FilterInference.Last(last.value)).left
-                .map(_.map(p => Problem(p.value)))
+              check(slug, loaded, a, FilterInference.Last(last.value))
                 .map(Checked(_))
             )
             recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, inferred))
@@ -84,7 +84,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: Slug): Either[String, Loaded] =
-    site.articles.get(slug).left.map(_.message.value).map { v =>
+    site.articles.get(slug).left.map(_.message.sentence).map { v =>
       val a = v.article
       val canonical = Slug.assume(a.slug.value)
       val stored = site.articleStore.load(canonical)
@@ -170,7 +170,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
           Recorded(
             None,
             applied = false,
-            Recorded.Line(s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}")
+            Recorded.Line(s"no filter passed the checks: ${inf.problems.map(_.sentence).mkString("; ").take(600)}")
           )
         )
       case Some(p) =>
@@ -182,7 +182,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         cfg.approvals.filterMode match
           case Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
-              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message.value).map { _ =>
+              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message.sentence).map { _ =>
                 val a = ctx.approvalStore.openSubject(
                   jobId,
                   ApprovalKind.ArticleFilter,
@@ -229,7 +229,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
             )
 
   private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.value).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentence).map(_.value)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
@@ -287,8 +287,8 @@ object InferFilterPipeline:
     * records one by now (a person set it meanwhile). Left = why it was not applied.
     */
   def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[String, String] =
-    Slug.parse(p.slug.value).left.map(_.value).flatMap { slug =>
-      articles.get(slug).left.map(_.message.value).flatMap { v =>
+    Slug.parse(p.slug.value).left.map(_.sentence).flatMap { slug =>
+      articles.get(slug).left.map(_.message.sentence).flatMap { v =>
         val canonical = Slug.assume(v.article.slug.value)
         val has = store.load(canonical).flatMap(_.filter)
         if has.isDefined then
@@ -297,7 +297,7 @@ object InferFilterPipeline:
           articles
             .patch(canonical, Article.Patch(filter = Some(p.filter)))
             .left
-            .map(_.message.value)
+            .map(_.message.sentence)
             .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")
       }
     }

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import FailureTransformers.domainAsApi
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.library.Citekey
 
@@ -41,7 +42,7 @@ object PlanArticles:
       query: Option[ArticleAnswer.Query] = None,
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
     type Slug = Slug.T
@@ -122,14 +123,14 @@ object PlanArticles:
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
         Articles.slugOf(Article.Slug(Option(x.slug).fold("")(_.value))) match
-          case Left(m) => problems += Problem(s"article '${x.slug}': $m"); acc
+          case Left(m) => problems += Problem.Unclassified(Legacy.Text(s"article '${x.slug}': ${m.sentence}")); acc
           case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) =>
-            problems += Problem(s"article '$s' has no title"); acc
+            problems += Problem.Unclassified(Legacy.Text(s"article '$s' has no title")); acc
           case Right(s) if acc.exists(_.slug == s) => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
           case Right(s)                            =>
             val kind = x.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse("concept")
             Articles.kindOf(Article.Kind.Wire(kind)) match
-              case Left(m)  => problems += Problem(s"article '$s': $m"); acc
+              case Left(m)  => problems += Problem.Unclassified(Legacy.Text(s"article '$s': ${m.sentence}")); acc
               case Right(k) =>
                 Article.Filter.normalise(
                   Article.Filter(
@@ -138,27 +139,36 @@ object PlanArticles:
                     tags = x.tags.map(t => Article.Filter.Tags(t.value))
                   )
                 ) match
-                  case Left(m)     => problems += Problem(s"article '$s': $m"); acc
+                  case Left(m)     => problems += Problem.Unclassified(Legacy.Text(s"article '$s': ${m.sentence}")); acc
                   case Right(None) =>
-                    problems += Problem(s"article '$s' has no filter: give a query, topics or tags"); acc
+                    problems += Problem.Unclassified(
+                      Legacy.Text(s"article '$s' has no filter: give a query, topics or tags")
+                    );
+                    acc
                   case Right(Some(f)) =>
                     acc :+ Candidate(
                       s,
                       Article.Title(x.title.value.trim),
                       k,
                       f,
-                      Problem(Option(x.why).map(_.value.trim).getOrElse(""))
+                      Problem.Unclassified(Legacy.Text(Option(x.why).map(_.sentence.trim).getOrElse("")))
                     )
       }
       .toList
-    if kept.size > maxArticles.value then problems += Problem(s"at most $maxArticles articles (you gave ${kept.size})")
-    if a.articles.isEmpty then problems += Problem("the plan proposes no article")
+    if kept.size > maxArticles.value then
+      problems += Problem.Unclassified(Legacy.Text(s"at most $maxArticles articles (you gave ${kept.size})"))
+    if a.articles.isEmpty then problems += Problem.Unclassified(Legacy.Text("the plan proposes no article"))
     if Option(a.rationale).forall(_.value.trim.isEmpty) then
-      problems += Problem("the rationale is empty — say how the articles cover the area")
+      problems += Problem.Unclassified(Legacy.Text("the rationale is empty — say how the articles cover the area"))
     val ps = problems.result()
     if ps.nonEmpty && !last.value then Left(ps)
     else
-      Right((kept.take(maxArticles.value), dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: $p"))))
+      Right(
+        (
+          kept.take(maxArticles.value),
+          dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: ${p.sentence}"))
+        )
+      )
 
   /** Verify the candidates against the corpus: `slugFree` (no article and no old slug of one), `hits` (a filter's
     * source count and its sources), `existing` (each article of the area with its sources). Every candidate that passes
@@ -221,7 +231,7 @@ object PlanArticles:
                         c.title,
                         c.kind,
                         c.filter,
-                        c.why.domainAsApi,
+                        c.why,
                         n,
                         w.fold(ProposedArticle.Overlap(0.0))(_._2),
                         w.filter(_._2.value > 0).map(x => ProposedArticle.OverlapWith(x._1.value))

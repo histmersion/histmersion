@@ -50,24 +50,24 @@ class HotPlanSuite extends munit.FunSuite:
       HotNode(HotNode.Name("free"), Nil, Nil)
     )
     val e = HotPlan.order(cyc).swap.getOrElse(fail("a cycle was ordered"))
-    assert(e.value.contains("cycle"), e)
-    assert(e.value.contains("a → c → b → a"), e)
+    assert(e.legacyText.contains("cycle"), e)
+    assert(e.legacyText.contains("a → c → b → a"), e)
     val self = HotPlan
       .order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), Nil)))
       .swap
       .getOrElse(fail("self-loop ordered"))
-    assert(self.value.contains("a → a"), self)
+    assert(self.legacyText.contains("a → a"), self)
     assert(
       HotPlan
         .order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("nope")), Nil)))
         .swap
-        .exists(_.value.contains("a → nope"))
+        .exists(_.legacyText.contains("a → nope"))
     )
     assert(
       HotPlan
         .order(List(HotNode(HotNode.Name("a"), Nil, Nil), HotNode(HotNode.Name("a"), Nil, Nil)))
         .swap
-        .exists(_.value.contains("twice"))
+        .exists(_.legacyText.contains("twice"))
     )
 
   test("keyMatches: the key, a key under it, a block above it — not a sibling sharing a prefix"):
@@ -144,17 +144,17 @@ class HotPlanSuite extends munit.FunSuite:
     val f = d.resolve("histmersion.conf")
     val env = org.ekrich.config.ConfigFactory.parseMap(Map("HISTMERSION_DB_POOL_MAX" -> "3").asJava)
     Files.writeString(f, """histmersion { db.url = "jdbc:postgresql://h/a_test", limits.search = 7 }""")
-    val first = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.value), identity)
+    val first = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.legacyText), identity)
     Files.writeString(
       f,
       """histmersion { db.url = "jdbc:postgresql://h/b_test", limits.search = 7, server.port = 9123 }"""
     )
-    val second = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.value), identity)
+    val second = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.legacyText), identity)
     val changed = ConfigReload.changed(first.merged, second.merged)
     assertEquals(changed, List("histmersion.db.url", "histmersion.server.port"))
     val cfg = AppConfig
       .fromMerged(ConfigReload.effective(first.merged, second.merged, changed))
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.legacyText), identity)
     assertEquals(cfg.db.url, "jdbc:postgresql://h/b_test")
     assertEquals(cfg.db.pool.max, 3) // the environment still wins
     assertEquals(cfg.server.port, first.config.server.port)

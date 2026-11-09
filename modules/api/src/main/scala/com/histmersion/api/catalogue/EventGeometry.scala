@@ -1,6 +1,8 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 object EventGeometry:
@@ -11,18 +13,19 @@ object EventGeometry:
 
   def point(lat: Latitude, lon: Longitude): Either[Problem, Geojson] =
     if (lat).value.isNaN || (lat).value < -90 || (lat).value > 90 then
-      Left(Problem(s"lat $lat is not between -90 and 90"))
+      Left(Problem.Unclassified(Legacy.Text(s"lat $lat is not between -90 and 90")))
     else if (lon).value.isNaN || (lon).value < -180 || (lon).value > 180 then
-      Left(Problem(s"lon $lon is not between -180 and 180"))
+      Left(Problem.Unclassified(Legacy.Text(s"lon $lon is not between -180 and 180")))
     else Right(Geojson(s"""{"type":"Point","coordinates":[${fmt(((lon).value))},${fmt(((lat).value))}]}"""))
 
   def of(geometry: Option[Geojson], lat: Option[Latitude], lon: Option[Longitude]): Either[Problem, Option[Geojson]] =
     (geometry.map((_).value.trim).filter(_.nonEmpty), lat, lon) match
-      case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left(Problem("give geometry or lat/lon, not both"))
-      case (g @ Some(_), None, None)                     => Right((g).map(refactorValue => Geojson(refactorValue)))
-      case (None, Some(a), Some(o))                      => point(a, o).map(Some(_))
-      case (None, None, None)                            => Right(None)
-      case _                                             => Left(Problem("lat and lon go together"))
+      case (Some(_), Some(_), _) | (Some(_), _, Some(_)) =>
+        Left(Problem.Unclassified(Legacy.Text("give geometry or lat/lon, not both")))
+      case (g @ Some(_), None, None) => Right((g).map(refactorValue => Geojson(refactorValue)))
+      case (None, Some(a), Some(o))  => point(a, o).map(Some(_))
+      case (None, None, None)        => Right(None)
+      case _                         => Left(Problem.Unclassified(Legacy.Text("lat and lon go together")))
 
   /** The GeoJSON geometry types of RFC 7946 (a Feature is not one). */
   val GeometryTypes: Set[Type] =
@@ -43,18 +46,29 @@ object EventGeometry:
 
   def check(g: Geojson): Either[Problem, Geojson] =
     val t = (g).value.trim
-    if WktShape.matches(t) then Left(Problem(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)"))
+    if WktShape.matches(t) then
+      Left(Problem.Unclassified(Legacy.Text(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")))
     else
       io.circe.parser.parse(t) match
-        case Left(_)  => Left(Problem(s"geometry is not GeoJSON: expected an object such as $Example"))
+        case Left(_) =>
+          Left(Problem.Unclassified(Legacy.Text(s"geometry is not GeoJSON: expected an object such as $Example")))
         case Right(j) =>
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
             case Some(tp) if GeometryTypes(Type(tp))          => Right(Geojson(t))
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
-              Left(Problem(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member"))
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member")
+                )
+              )
             case Some(tp) =>
-              Left(Problem(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}"))
-            case None => Left(Problem(s"geometry has no \"type\": expected an object such as $Example"))
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}")
+                )
+              )
+            case None =>
+              Left(Problem.Unclassified(Legacy.Text(s"geometry has no \"type\": expected an object such as $Example")))
 
   // a plain decimal, never `1.0E-4`, and never with a locale's comma
   private def fmt(d: Double): String = (BigDecimal((d)).bigDecimal.stripTrailingZeros.toPlainString)

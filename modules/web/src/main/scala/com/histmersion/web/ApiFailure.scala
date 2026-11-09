@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.scalajs.js
@@ -15,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
   * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.
   */
-final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends Exception(error.message.value):
+final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends Exception(error.message.sentence):
   def unauthorized: Boolean = status.value == 401 || status.value == 403
   def conflict: Boolean = status.value == 412
   def duplicate: Boolean = status.value == 409
@@ -28,8 +29,8 @@ object ApiFailure:
   def of(status: Status, decoded: Option[Api.Error]): ApiFailure =
     ApiFailure(
       status,
-      decoded.getOrElse(Api.Error(Problem(status.value match
+      decoded.getOrElse(Api.Error(Problem.Unclassified(Legacy.Text(status.value match
         case 401 | 403 => "the server refused the change: an API key is required"
         case 0         => "the server could not be reached"
-        case s         => s"unexpected response from the server (HTTP $s)")))
+        case s         => s"unexpected response from the server (HTTP $s)"))))
     )

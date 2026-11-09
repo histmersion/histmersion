@@ -106,25 +106,31 @@ class ChatWireSuite extends munit.FunSuite:
 
   test("a success answer that cannot be read says why, at the field"):
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body("[]")).turn,
+      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body("[]")).turn.left.map(_.legacyText),
       Left("DecodingFailure at : Got value '[]' with wrong type, expecting object")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body(ok.replace(""""role":"assistant",""", ""))).turn,
+      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body(ok.replace(""""role":"assistant",""", ""))).turn.left
+        .map(_.legacyText),
       Left("DecodingFailure at .choices[0].message.role: Missing required field")
     )
 
   test("an error status: its message; none, the status and body; another shape, its body's first 500 characters"):
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn,
+      ChatAnswer(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn.left
+        .map(_.legacyText),
       Left("slow down")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":{"type":"server_error"}}""")).turn,
+      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":{"type":"server_error"}}""")).turn.left
+        .map(_.legacyText),
       Left("""statusCode: 500, response: {"error":{"type":"server_error"}}""")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn,
+      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn.left.map(_.legacyText),
       Left("""{"error":null}""")
     )
-    assertEquals(ChatAnswer(ChatAnswer.Status(400), ChatAnswer.Body("x" * 700)).turn, Left("x" * 500))
+    assertEquals(
+      ChatAnswer(ChatAnswer.Status(400), ChatAnswer.Body("x" * 700)).turn.left.map(_.legacyText),
+      Left("x" * 500)
+    )

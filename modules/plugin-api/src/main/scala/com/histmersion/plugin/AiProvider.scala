@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** AI providers, the fifth part of the app that plugins extend: who serves a model the embedded agents call. A plugin

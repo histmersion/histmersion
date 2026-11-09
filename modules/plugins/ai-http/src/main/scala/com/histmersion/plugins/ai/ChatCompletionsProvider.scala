@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -34,12 +34,15 @@ final class ChatCompletionsProvider(
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
-    base.left
-      .map(p => Problem(p.value))
+    base
       .flatMap(_ =>
         keyed match
           case Some((label, variable)) if settings.apiKey.value.isEmpty =>
-            Left(Problem(s"no ${label.value} API key — set ${variable.value} in the server's environment"))
+            Left(
+              Problem.Unclassified(
+                Legacy.Text(s"no ${label.value} API key — set ${variable.value} in the server's environment")
+              )
+            )
           case _ => Right(())
       )
 
@@ -48,7 +51,7 @@ final class ChatCompletionsProvider(
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent: Either[String, AiTurn] = for
-      url <- base.left.map(_.value).map(_.endpoint("chat", "completions"))
+      url <- base.left.map(_.legacyText).map(_.endpoint("chat", "completions"))
       body = ChatRequest.of(request, settings.strictTools).body
       answer <- http
         .post(
@@ -61,12 +64,12 @@ final class ChatCompletionsProvider(
         .map(e =>
           SendFailure(e)
             .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
-            .value
+            .legacyText
         )
       turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn.left
-        .map(why => s"RuntimeException: OpenAI API error: ${why.value}")
+        .map(why => s"RuntimeException: OpenAI API error: ${why.legacyText}")
     yield turn
-    sent.left.map(m => AiFailure.Error(Problem(m)))
+    sent.left.map(m => AiFailure.Error(Problem.Unclassified(Legacy.Text(m))))
 
 object ChatCompletionsProvider:
   type Name = Name.T

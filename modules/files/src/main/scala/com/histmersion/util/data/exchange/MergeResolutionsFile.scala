@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -41,7 +41,7 @@ object MergeResolutionsFile:
       .Try(Option(yaml.load[AnyRef](text.value)))
       .toEither
       .left
-      .map(e => List(Problem(s"not YAML: ${e.getMessage}")))
+      .map(e => List(Problem.Unclassified(Legacy.Text(s"not YAML: ${e.getMessage}"))))
       .flatMap {
         case None                         => Right(MergeResolutions())
         case Some(m: java.util.Map[?, ?]) =>
@@ -104,7 +104,7 @@ object MergeResolutionsFile:
             .sorted
             .foreach(k => errors += s"texts: $k has a text but no decision under resolve")
           val es = errors.result()
-          if es.nonEmpty then Left(es.map(Problem(_)))
+          if es.nonEmpty then Left(es.map((text => Problem.Unclassified(Legacy.Text(text)))))
           else
             Right(
               MergeResolutions(
@@ -113,7 +113,7 @@ object MergeResolutionsFile:
                 bundle
               )
             )
-        case Some(other) => Left(List(Problem(s"expected a map at the top, found '$other'")))
+        case Some(other) => Left(List(Problem.Unclassified(Legacy.Text(s"expected a map at the top, found '$other'"))))
       }
 
   /** `ID=decision` of a `--resolve` flag. */

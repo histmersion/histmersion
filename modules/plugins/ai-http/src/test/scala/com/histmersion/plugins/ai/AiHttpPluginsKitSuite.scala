@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
 import com.histmersion.pluginhost.Registries
@@ -15,7 +15,7 @@ import com.histmersion.domain.CoreQuota
 class AiHttpPluginsKitSuite extends munit.FunSuite:
 
   private def load(id: Plugin.Info.Id, env: Map[String, String] = Map.empty, config: String = "") =
-    PluginHarness.load(id, config, env = env).fold(e => fail(e.value), identity)
+    PluginHarness.load(id, config, env = env).fold(e => fail(e.legacyText), identity)
 
   private val keys = Map("ANTHROPIC_API_KEY" -> "k-test", "OPENAI_API_KEY" -> "k-test")
 
@@ -73,15 +73,23 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
   test("a provider plugin has no setting the host owns: a base URL in its block is refused"):
     val refused =
       PluginHarness.load(Plugin.Info.Id("ai-openai"), "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
-    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
 
   test("without a key the hosted providers refuse every model, saying where the key goes; a local server needs none"):
     assertEquals(
-      load(Plugin.Info.Id("ai-anthropic")).aiTurn(Registries.AiProvidersKey("anthropic"), request()).check,
+      load(Plugin.Info.Id("ai-anthropic"))
+        .aiTurn(Registries.AiProvidersKey("anthropic"), request())
+        .check
+        .left
+        .map(_.legacyText),
       Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
     )
     assertEquals(
-      load(Plugin.Info.Id("ai-openai")).aiTurn(Registries.AiProvidersKey("openai"), request()).check,
+      load(Plugin.Info.Id("ai-openai"))
+        .aiTurn(Registries.AiProvidersKey("openai"), request())
+        .check
+        .left
+        .map(_.legacyText),
       Left("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
     )
     val http = ScriptedAiHttp(json(AiHttp.Response.Body(chatAnswer)))
@@ -136,19 +144,25 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     assertEquals(http.requests.head.url, "https://api.openai.com/v1/chat/completions")
     assertEquals(
       r.turn,
-      Some(Left(AiFailure.Error(Problem("RuntimeException: OpenAI API error: Rate limit reached"))))
+      Some(
+        Left(
+          AiFailure.Error(Problem.Unclassified(Legacy.Text("RuntimeException: OpenAI API error: Rate limit reached")))
+        )
+      )
     )
 
   test("a client that cannot connect is described as the providers always described it"):
-    val http = ScriptedAiHttp(Left(AiHttp.Failure.Connect(Problem("ConnectException: "))))
+    val http = ScriptedAiHttp(Left(AiHttp.Failure.Connect(Problem.Unclassified(Legacy.Text("ConnectException: ")))))
     val r = load(Plugin.Info.Id("ai-anthropic"), keys).aiTurn(Registries.AiProvidersKey("anthropic"), request(), http)
     assertEquals(
       r.turn,
       Some(
         Left(
           AiFailure.Error(
-            Problem(
-              "ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages"
+            Problem.Unclassified(
+              Legacy.Text(
+                "ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages"
+              )
             )
           )
         )

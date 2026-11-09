@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `media-cleveland`: `histmersion media import cleveland` — The Cleveland Museum of Art's Open Access objects. */
 import com.histmersion.plugin.Plugin

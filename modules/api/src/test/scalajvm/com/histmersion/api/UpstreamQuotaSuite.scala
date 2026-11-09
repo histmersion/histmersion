@@ -3,6 +3,7 @@ package api
 
 /** CORE's budget as `histmersion about`, the autopilot status and a candidate sweep show it. */
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
@@ -34,7 +35,7 @@ class UpstreamQuotaSuite extends munit.FunSuite:
       .modify(_.blockedUntil)
       .setTo(Some(UpstreamQuota.BlockedUntil("2026-10-26T18:52:11Z")))
       .modify(_.blockedWhy)
-      .setTo(Some(Problem("HTTP 429")))
+      .setTo(Some(Problem.Unclassified(Legacy.Text("HTTP 429"))))
     assert(UpstreamQuotaMarkdown.line(blocked).endsWith("· **not asked until 2026-10-26T18:52:11Z** (HTTP 429)"))
 
   test("about and the autopilot status carry the line; without a budget yet, neither does"):

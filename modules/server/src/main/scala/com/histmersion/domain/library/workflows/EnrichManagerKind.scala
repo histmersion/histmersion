@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.AgentsControllers
@@ -56,12 +57,12 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     itemKind.value match
       case SourceEnrich =>
         Citekey.option(raw.value.trim) match
-          case None     => Left(Api.Error(api.Problem(s"No source '${raw.value.trim}'")))
+          case None     => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '${raw.value.trim}'"))))
           case Some(ck) =>
             site.sources
               .get(ck, body = SourcesControllers.GetBody(false))
               .map(s => ManagerContext.ItemTarget(s.source.citekey.value))
-      case other => Left(Api.Error(api.Problem(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
@@ -73,7 +74,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val text = raw.value
     val asSource = Citekey
       .option(text)
-      .toRight(Api.Error(api.Problem(s"No source '$text'")))
+      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$text'"))))
       .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)))
     asSource
       .map(s =>
@@ -82,12 +83,12 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       .orElse {
         val cited = Slug
           .option(text)
-          .toRight(Api.Error(api.Problem(s"No article '$text'")))
+          .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No article '$text'"))))
           .flatMap(slug => site.articleSources(slug))
           .orElse(
             com.histmersion.domain.automation.Goal.Slug
               .option(text)
-              .toRight(Api.Error(api.Problem(s"No goal '$text'")))
+              .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$text'"))))
               .flatMap(slug =>
                 a.host
                   .goal(slug)
@@ -102,7 +103,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         cited.left
           .map(_ =>
             Api.Error(
-              api.Problem(s"'$text' is no source, article or goal"),
+              Problem.Unclassified(Legacy.Text(s"'$text' is no source, article or goal")),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
@@ -110,7 +111,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
             val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
             (
               todo.map(t => ManagerContext.ItemTarget(t._1.value)),
-              done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.value)}"))
+              done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.sentence)}"))
             )
           }
       }
@@ -118,7 +119,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[Problem] =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption match
-      case None      => Some(Problem("no such source"))
+      case None      => Some(Problem.Unclassified(Legacy.Text("no such source")))
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
         AutoEnrich.enrichedBy(
@@ -149,7 +150,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     try
       autoEnrichLock.synchronized {
         site.sources.get(citekey, body = SourcesControllers.GetBody(false)) match
-          case Left(e)    => Some(AutoEnrich.notQueued(domain.Problem(e.message.value)))
+          case Left(e)    => Some(AutoEnrich.notQueued(e.message))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
             // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
@@ -170,7 +171,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     Origin.FromIngest,
                     None
                   ).fold(
-                    e => AutoEnrich.notQueued(domain.Problem(e.message.value)),
+                    e => AutoEnrich.notQueued(e.message),
                     r => AutoEnrich.queued(Run.Id.assume(r.id.value))
                   )
                 )
@@ -181,7 +182,9 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
         Some(
           AutoEnrich.notQueued(
-            domain.Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+            Problem.Unclassified(
+              Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+            )
           )
         )
 
@@ -250,7 +253,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
               )
               .flatten
             enriched match
-              case Some(why) => settle(ItemStatus.Done, s"already enriched: $why")
+              case Some(why) => settle(ItemStatus.Done, s"already enriched: ${why.sentence}")
               case None      =>
                 c.start(
                   m,

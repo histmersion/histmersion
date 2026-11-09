@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
@@ -18,14 +18,14 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[Problem, AiTurn] =
-    if (status).value / 100 != 2 then Left(Problem((body).value))
+    if (status).value / 100 != 2 then Left(Problem.Unclassified(Legacy.Text((body).value)))
     else
       parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
-            case Right(message) => Left(Problem((message).value))
-            case Left(e)        => Left(Problem(e.getMessage))
+            case Right(message) => Left(message)
+            case Left(e)        => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
 
 object AnthropicAnswer:
 
@@ -42,7 +42,7 @@ object AnthropicAnswer:
     for
       _ <- objectAt(c)
       m <- c.downField("error").as(using errorDetail)
-    yield Problem((m).value)
+    yield m
   }
 
   private val errorDetail: Decoder[Problem] = Decoder.instance { c =>
@@ -50,7 +50,7 @@ object AnthropicAnswer:
       _ <- objectAt(c)
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
-    yield Problem(m)
+    yield Problem.Unclassified(Legacy.Text(m))
   }
 
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown

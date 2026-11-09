@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
@@ -15,4 +16,4 @@ final class ModelLimitReached(
     val model: ModelRef,
     val until: Option[java.time.Instant],
     message: Problem
-) extends RuntimeException(message.value)
+) extends RuntimeException(message.sentence)

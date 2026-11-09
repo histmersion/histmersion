@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.data.exchange.BundleImport
@@ -180,7 +181,9 @@ private[sources] object SourceBundleRepo:
             referrers
           )
           .left
-          .foreach(e => throw ImportAbort(List(api.Problem(s"source $from → $to: ${e.message}"))))
+          .foreach(e =>
+            throw ImportAbort(List(Problem.Unclassified(Legacy.Text(s"source $from → $to: ${e.message.sentence}"))))
+          )
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
       }
     }
@@ -197,7 +200,11 @@ private[sources] object SourceBundleRepo:
               referrers
             )
             .left
-            .foreach(e => throw ImportAbort(List(api.Problem(s"source $old → ${s.citekey}: ${e.message}"))))
+            .foreach(e =>
+              throw ImportAbort(
+                List(Problem.Unclassified(Legacy.Text(s"source $old → ${s.citekey}: ${e.message.sentence}")))
+              )
+            )
         }
       }
       if w.inserts(s.uid) then
@@ -353,7 +360,7 @@ private[sources] object SourceBundleRepo:
               .store(sha, ContentStore.Ext(ext.value), in)
               .left
               .toOption
-              .map(m => api.Problem(s"original $sha: $m"))
+              .map(m => Problem.Unclassified(Legacy.Text(s"original $sha: ${m.sentence}")))
           )
         )
       case _ => None

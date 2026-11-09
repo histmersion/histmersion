@@ -1,7 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
 
 import com.histmersion.server.ServerPlugins
@@ -26,7 +26,7 @@ final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends H
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Either[Plugin.Http.Failure, HttpAnswer] =
     requests += url.value -> headers.map((k, v) => k.value -> v.value)
-    route(url.value).left.map(m => Plugin.Http.Failure.Transport(plugin.Problem(m)))
+    route(url.value).left.map(m => Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(m))))
 
 object FakeMediaHttp:
   /** The answer a fake server gives: its status, its headers and body as they go over the wire. */

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.config.AppConfig
@@ -55,7 +56,8 @@ final class GazetteerImports(
     * over every file that reported a dangling parent, then `finding_places`.
     */
   def seed(seed: Store, note: JobInfo.Progress => Unit): Either[Problem, GazetteerImports.Summary] =
-    if !seed.isDirectory(Store.Key.Root) then Left(Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
+    if !seed.isDirectory(Store.Key.Root) then
+      Left(Problem.Unclassified(Legacy.Text(s"no gazetteer seed at ${seed.where()} (set init.data-dir)")))
     else
       def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed
@@ -72,7 +74,7 @@ final class GazetteerImports(
       ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
-          .toRight(Problem(s"${f.value}: not found"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"${f.value}: not found")))
           .flatMap(blob =>
             Lpf
               .parse(
@@ -80,7 +82,7 @@ final class GazetteerImports(
                 com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value))
               )
               .left
-              .map(e => Problem(s"${f.value}: $e"))
+              .map(e => Problem.Unclassified(Legacy.Text(s"${f.value}: ${e.sentence}")))
           )
           .map(
             _.grouped(batch).foldLeft(
@@ -111,7 +113,7 @@ final class GazetteerImports(
             importFile(f, kind).map(r => (n + r.places.value, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
           }
         }
-      if files.isEmpty then Left(Problem(s"no JSON files under ${seed.where()}"))
+      if files.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"no JSON files under ${seed.where()}")))
       else
         for
           first <- pass(files)

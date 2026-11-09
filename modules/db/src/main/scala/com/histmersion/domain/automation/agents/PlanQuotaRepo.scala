@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
@@ -93,7 +95,7 @@ object PlanQuotaRepo:
         Pool(
           Pool.Held(h),
           f.map(Pool.Floors(_)),
-          r.map(Problem(_)),
+          r.map((text => Problem.Unclassified(Legacy.Text(text)))),
           u.map(Pool.RefusalUntil(_)),
           t.map(Pool.PlanType(_))
         )

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
@@ -84,8 +84,6 @@ final class PluginCollection(
       case Some(it) =>
         PluginMedia
           .guard(col.complete(it, PluginMedia.http(fetch)))
-          .left
-          .map(why => Problem(why.value))
           .map(PluginMedia.record)
 
 object PluginCollection:

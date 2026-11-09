@@ -1,7 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -124,7 +124,7 @@ class PortalsSuite extends munit.FunSuite:
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] = Left(
-      Problem("not used")
+      Problem.Unclassified(Legacy.Text("not used"))
     )
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")

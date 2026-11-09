@@ -1,6 +1,7 @@
 package com.histmersion
 package files
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -56,14 +57,14 @@ class BundleEntitiesSuite extends munit.FunSuite:
   private def tar(entries: (String, Array[Byte])*): Array[Byte] =
     val out = ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
-    entries.foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
+    entries.foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.sentence), identity))
     w.finish()
     out.toByteArray
 
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator
-      .continually(r.next().fold(e => fail(e.value), identity))
+      .continually(r.next().fold(e => fail(e.sentence), identity))
       .takeWhile(_.isDefined)
       .flatten
       .map(e => e.name.value -> String(r.readAll(), UTF_8))

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A metered upstream's budget, kept by the host for the whole server — across plugin generations, config reloads and

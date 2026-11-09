@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -141,7 +142,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
+        (_, ref) => clients.get(ref).toRight(Problem.Unclassified(Legacy.Text(s"no scripted client for ${ref.wire}")))
       ),
       h
     )
@@ -200,7 +201,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -210,9 +211,9 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     a.pools.record(PoolId.ClaudePlan, low())
     val run = startAndRun(a)
     assertEquals(run.status, "paused", run.error)
-    assert(run.error.exists(_.value.startsWith("plan-quota:")), run.error)
-    assert(run.error.exists(_.value.contains("five_hour: 10% left, floor 25%")), run.error)
-    assert(run.error.exists(_.value.contains("does not fall from a plan to a paid key")), run.error)
+    assert(run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
+    assert(run.error.exists(_.sentence.contains("five_hour: 10% left, floor 25%")), run.error)
+    assert(run.error.exists(_.sentence.contains("does not fall from a plan to a paid key")), run.error)
     assert(run.resumeAt.isDefined, "it resumes by itself at the reset")
     assertEquals((plan.steps.size, paid.steps.size), (0, 0), "nothing was called, nothing paid")
     // the window resets: the run goes on, on the plan
@@ -249,7 +250,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assertEquals(a.pools.poolOf(Gpt), Some(PoolId.ChatgptPlan))
     a.pools.record(PoolId.ClaudePlan, low())
     a.setPool(PlanQuota.PoolIdText("chatgpt-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val reset =
       Transactor(ds)
         .read(PlanQuotaRepo.readings(PoolId.ClaudePlan))
@@ -258,13 +259,13 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         .get
     val run = startAndRun(a)
     assertEquals(run.status, "paused", run.error)
-    assert(run.error.exists(_.value.startsWith("plan-quota:")), run.error)
-    assert(!run.error.exists(_.value.contains("no window frees by itself")), run.error)
+    assert(run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
+    assert(!run.error.exists(_.sentence.contains("no window frees by itself")), run.error)
     assert(
-      run.error.exists(_.value.contains(s"next reset at ${java.time.Instant.ofEpochMilli(reset.value)}")),
+      run.error.exists(_.sentence.contains(s"next reset at ${java.time.Instant.ofEpochMilli(reset.value)}")),
       run.error
     )
-    assert(run.error.exists(_.value.contains("the ChatGPT plan is held")), run.error)
+    assert(run.error.exists(_.sentence.contains("the ChatGPT plan is held")), run.error)
     assertEquals(
       run.resumeAt.map(t => java.time.Instant.parse(t.value).toEpochMilli / 1000),
       Some(reset.value / 1000),
@@ -322,7 +323,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     def planUsable = a.models.chains.find(_.role.value == "extractor").get.models.head.usable.value
     assert(planUsable, "no reading: unknown, usable")
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
-      .fold(e => fail(e.message.value), st => assert(st.held.value && !st.usable.value, st))
+      .fold(e => fail(e.message.sentence), st => assert(st.held.value && !st.usable.value, st))
     assert(!planUsable)
     assertEquals(
       a.picker.pick(Role.Extractor, None).left.toOption.collect { case PickFailure.Exhausted(_, at, r) => (at, r) },
@@ -350,7 +351,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     // floors saved over config
     val st = a
       .setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(floors = Some(PlanQuota.PoolSet.Floors("five_hour=10"))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((st.floors, st.floorsSource), ("five_hour=10", "saved"))
     assert(planUsable, "30% left ≥ 10 + 10")
     assert(
@@ -365,13 +366,13 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.setPool(PlanQuota.PoolIdText("nobody-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
         .left
-        .exists(_.message.value.contains("unknown pool"))
+        .exists(_.message.sentence.contains("unknown pool"))
     )
     // the ChatGPT plan refused by the provider
     Transactor(ds).transact(
       PlanQuotaRepo.setRefusal(
         PoolId.ChatgptPlan,
-        Some(domain.Problem("ordinary usage not allowed")),
+        Some(Problem.Unclassified(Legacy.Text("ordinary usage not allowed"))),
         None,
         Some(PlanQuotaRepo.Pool.PlanType("prolite"))
       )
@@ -379,7 +380,9 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val q = a.quota
     val gpt = q.plans.find(_.pool.value == "chatgpt-plan").get
     assert(
-      !gpt.usable.value && gpt.reason.contains("ordinary usage not allowed") && gpt.planType.contains("prolite"),
+      !gpt.usable.value && gpt.reason.map(_.sentence).contains("ordinary usage not allowed") && gpt.planType.contains(
+        "prolite"
+      ),
       gpt
     )
     assertEquals(q.plans.find(_.pool.value == "claude-plan").map(_.covers), Some(List("claude-code:*")))
@@ -405,7 +408,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val doc = AgentDoctor(
       baseCfg.modify(_.agents).setTo(unpricedPlan.agents),
       a.picker,
-      m => a.resolve(m).left.map(p => Problem(p.value))
+      m => a.resolve(m)
     ).report(online = Agents.DoctorReport.Online(false))
     val check =
       doc.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == s"model ${Plan.wire}").get
@@ -421,15 +424,15 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
           budgetTokens = Some(RunRequest.BudgetTokens(1500L))
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused", r.error)
-    assert(r.error.map(_.value).exists(e => e.startsWith("budget:") && e.contains("tokens")), r.error)
+    assert(r.error.map(_.sentence).exists(e => e.startsWith("budget:") && e.contains("tokens")), r.error)
     assertEquals((r.costUsd, r.usage.total), (0.0, 2200L))
     // with room, it finishes on the plan for 0 USD
     a.control(runId(run.id), Agents.Action("resume"), None, Some(AgentsControllers.BudgetTokens(100000L)))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals((done.status, done.costUsd), ("done", 0.0), done.error)
@@ -439,7 +442,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.runnable(Role.Extractor, Some(AgentsControllers.ModelName("anthropic:zzUnpriced")))
         .left
-        .exists(_.value.contains("has no price"))
+        .exists(_.sentence.contains("has no price"))
     )
     val keyed = unpricedPlan
       .modify(_.agents)
@@ -456,7 +459,10 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
       )
     val (k, _) = handlers(Map(Plan -> ScriptedClient(Plan)), keyed)
     val refused = k.runnable(Role.Extractor, None)
-    assert(refused.left.exists(e => e.value.contains("has no price") && e.value.contains("use an API key")), refused)
+    assert(
+      refused.left.exists(e => e.sentence.contains("has no price") && e.sentence.contains("use an API key")),
+      refused
+    )
     assert(k.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).isLeft)
     // priced, it runs metered — and draws on no plan pool
     val priced = keyed.modify(_.agents).setTo(keyed.agents.modify(_.prices).setTo(AgentsConfig.Prices("sonnet=3/15")))
@@ -526,7 +532,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    assert(!stop.allow.value && stop.reason.exists(_.value.contains("floor 25%")) && stop.resetsAt.isDefined, stop)
+    assert(!stop.allow.value && stop.reason.exists(_.sentence.contains("floor 25%")) && stop.resetsAt.isDefined, stop)
 
   test("REST: quota, hold, and the guard endpoint takes a RUN TOKEN where writes need the API key"):
     val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()

@@ -1,7 +1,7 @@
 package com.histmersion
 package web.library
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.web.{ApiClient, Auth, ErrorLine, SourceLink}
 import com.raquo.laminar.api.L.*
 
@@ -33,7 +33,10 @@ object DoiForm:
                 r.fold(
                   e =>
                     State.Failed(
-                      Problem(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}")
+                      Problem.Unclassified(
+                        Legacy
+                          .Text(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}")
+                      )
                     ),
                   State.Added(_)
                 )

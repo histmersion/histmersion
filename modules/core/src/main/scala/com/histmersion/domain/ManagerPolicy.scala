@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Manager as ApiManager
 import com.histmersion.api.given
@@ -202,9 +204,11 @@ object ManagerPolicy:
       c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
         case Some(gap) =>
           Left(
-            Problem(
-              s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
-                "(agents.scheduler.min-interval-minutes)"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
+                  "(agents.scheduler.min-interval-minutes)"
+              )
             )
           )
         case None => Right(c)
@@ -326,7 +330,7 @@ object ManagerPolicy:
       case Run.State.Cancelled => Next.Stop(ItemOutcome("stopped: its run was cancelled"), None, state)
       case _                   =>
         val n = failures.value + 1
-        val why = error.map(_.value).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
+        val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
             ItemOutcome(s"stopped: ${counted(n, "failed run")}$why"),

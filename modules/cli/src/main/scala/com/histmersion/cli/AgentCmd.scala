@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import cats.syntax.all.*
@@ -71,7 +72,8 @@ object AgentCmd:
     )
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then Left(Cli.Error(Problem("--remove takes no --limit"), exitCode = ExitCode.Usage))
+          if limits.nonEmpty then
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text("--remove takes no --limit")), exitCode = ExitCode.Usage))
           else
             c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
               .map(r =>
@@ -82,7 +84,7 @@ object AgentCmd:
           limits
             .traverse(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l)))
             .left
-            .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
+            .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
             .flatMap { ls =>
               c.call(AgentsApi.setAllowance)(
                 ModelChains.AllowanceSet(
@@ -147,9 +149,11 @@ object AgentCmd:
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
             case (None, false) =>
-              Left(Cli.Error(Problem("give the floors, or --reset"), exitCode = ExitCode.Usage))
+              Left(
+                Cli.Error(Problem.Unclassified(Legacy.Text("give the floors, or --reset")), exitCode = ExitCode.Usage)
+              )
             case (Some(_), true) =>
-              Left(Cli.Error(Problem("--reset takes no floors"), exitCode = ExitCode.Usage))
+              Left(Cli.Error(Problem.Unclassified(Legacy.Text("--reset takes no floors")), exitCode = ExitCode.Usage))
             case _ =>
               c.call(AgentsApi.setPool)(
                 (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(floors = Some(PlanQuota.PoolSet.Floors(f.getOrElse("")))))
@@ -169,7 +173,10 @@ object AgentCmd:
                 PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(v.trim.equalsIgnoreCase("on")))
               )
             ).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
-          case other => Left(Cli.Error(Problem(s"'$other' is neither on nor off"), exitCode = ExitCode.Usage))
+          case other =>
+            Left(
+              Cli.Error(Problem.Unclassified(Legacy.Text(s"'$other' is neither on nor off")), exitCode = ExitCode.Usage)
+            )
       }
     }
     val refresh = Opts.subcommand(
@@ -235,7 +242,9 @@ object AgentCmd:
             Cli.out.println(AgentsMarkdown.run(d, withMessages = false))
             Left(
               Cli.Error(
-                Problem(s"agent run $id ${d.run.status}: ${d.run.error.map(_.value).getOrElse("")}"),
+                Problem.Unclassified(
+                  Legacy.Text(s"agent run $id ${d.run.status}: ${d.run.error.map(_.sentence).getOrElse("")}")
+                ),
                 exitCode = ExitCode.Refused
               )
             )
@@ -305,7 +314,9 @@ object AgentCmd:
         ev._2
           .traverse(m => ModelOverride.parse(ModelOverride.Wire(m)))
           .left
-          .map(m => Cli.Error(Problem(s"--model-for $m"), exitCode = ExitCode.Usage))
+          .map(m =>
+            Cli.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${m.sentence}")), exitCode = ExitCode.Usage)
+          )
           .flatMap { over =>
             c.call(AgentsApi.startRun)(
               RunRequest(
@@ -374,7 +385,7 @@ object AgentCmd:
             (ApprovalInfo.Id(id), d.wire, DecisionRequest(note.map(DecisionRequest.Note(_))))
           ) match
             case Right(a) => Cli.out.println(AgentsMarkdown.approvalLine(a)); None
-            case Left(e)  => Cli.err.println(s"#$id: ${e.message}"); Some(e)
+            case Left(e)  => Cli.err.println(s"#$id: ${e.message.sentence}"); Some(e)
         }
         failed match
           case Nil        => Right(())
@@ -383,7 +394,11 @@ object AgentCmd:
             Left(
               first
                 .modify(_.message)
-                .setTo(Problem(s"${failed.size} of ${ids.size} not decided — ${first.message}"))
+                .setTo(
+                  Problem.Unclassified(
+                    Legacy.Text(s"${failed.size} of ${ids.size} not decided — ${first.message.sentence}")
+                  )
+                )
             )
       }
   }

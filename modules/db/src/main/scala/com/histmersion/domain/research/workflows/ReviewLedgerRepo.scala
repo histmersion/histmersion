@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.ReviewLedger.Ledger
@@ -27,7 +28,7 @@ private[workflows] object ReviewLedgerRepo:
         Jsonb
           .decode[Ledger](Jsonb.JsonText(json))
           .left
-          .map(e => s"the review ledger of '$slug' does not decode: $e")
+          .map(e => s"the review ledger of '$slug' does not decode: ${e.sentence}")
           .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */

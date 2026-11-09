@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.periods
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.Caller
@@ -21,7 +22,8 @@ class PeriodsControllersSuite extends munit.FunSuite:
   private def controllers(
       download: PeriodSources.PeriodoUrl => Either[Problem, PeriodImports.Document] = _ =>
         Right(PeriodImports.Document(dump)),
-      seed: () => Either[Problem, PeriodImports.Document] = () => Left(Problem("no period seed here")),
+      seed: () => Either[Problem, PeriodImports.Document] = () =>
+        Left(Problem.Unclassified(Legacy.Text("no period seed here"))),
       gate: WriteGate = WriteGate()
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
@@ -42,44 +44,49 @@ class PeriodsControllersSuite extends munit.FunSuite:
     val c = controllers()
     val r = c
       .importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("local")), PeriodImports.DatasetBody(dump))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(r.roots, 2)
-    val lba = c.period(HistoricalPeriod.Id("zzqauthlba")).fold(e => fail(e.message.value), identity)
+    val lba = c.period(HistoricalPeriod.Id("zzqauthlba")).fold(e => fail(e.message.sentence), identity)
     assertEquals(lba.parent.map(_.id), Some("zzqauthbronze"))
-    val node = c.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.value), identity)
+    val node = c.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.sentence), identity)
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
     assertEquals(c.search(Some(PeriodSearch.Text("Zzq Late")), None, None, None).map(_.id), List("zzqauthlba"))
-    assertEquals(c.period(HistoricalPeriod.Id("zz_none")).left.map(_.message), Left("No period 'zz_none'"))
+    assertEquals(
+      c.period(HistoricalPeriod.Id("zz_none")).left.map(_.message).left.map(_.sentence),
+      Left("No period 'zz_none'")
+    )
 
   test("a fetch takes the configured collections; an unknown source, dataset or collection is refused"):
     val c = controllers()
-    val r = c.fetch(Caller.Local, PeriodSources.PeriodoUrl("PeriodO"), Nil).fold(e => fail(e.message.value), identity)
+    val r =
+      c.fetch(Caller.Local, PeriodSources.PeriodoUrl("PeriodO"), Nil).fold(e => fail(e.message.sentence), identity)
     assertEquals(r.roots, 1)
     assertEquals(r.periods, 4)
     assert(c.period(HistoricalPeriod.Id("zzqother01")).isLeft)
     assert(
       c.fetch(Caller.Local, PeriodSources.PeriodoUrl("chronontology"), Nil)
         .left
-        .exists(_.message.value.contains("unknown period source"))
+        .exists(_.message.sentence.contains("unknown period source"))
     )
     assert(
       c.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope")))
         .left
-        .exists(_.message.value.contains("zzqnope"))
+        .exists(_.message.sentence.contains("zzqnope"))
     )
     assert(
       c.importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("other")), PeriodImports.DatasetBody(dump))
         .left
-        .exists(_.message.value.contains("seed or local"))
+        .exists(_.message.sentence.contains("seed or local"))
     )
-    val dead = controllers(download = _ => Left(Problem("HTTP 503 from https://periodo.test/dump")))
+    val dead =
+      controllers(download = _ => Left(Problem.Unclassified(Legacy.Text("HTTP 503 from https://periodo.test/dump"))))
     assert(
-      dead.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.value.contains("503"))
+      dead.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.sentence.contains("503"))
     )
 
   test("the seed's absence is the answer of a seed; a held lock refuses every write"):
     assertEquals(
-      controllers().seed(Caller.Local, replace = PeriodImports.Replace(false)).left.map(_.message),
+      controllers().seed(Caller.Local, replace = PeriodImports.Replace(false)).left.map(_.message).left.map(_.sentence),
       Left("no period seed here")
     )
     val gate = WriteGate()
@@ -93,5 +100,5 @@ class PeriodsControllersSuite extends munit.FunSuite:
         )
       )
     }
-    val (a, b, d) = held.fold(e => fail(e.message.value), identity)
+    val (a, b, d) = held.fold(e => fail(e.message.sentence), identity)
     assert(List(a, b, d).forall(_.isLeft), List(a, b, d))

@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -53,9 +54,9 @@ class QueryRepoSuite extends DbSuite:
     val _ = ds // migrate first: V011 creates the role
     QueryAccess.provision(ds, cfg.query) match
       case Right(_) => ()
-      case Left(m)  => fail(s"could not provision the read-only role: $m")
+      case Left(m)  => fail(s"could not provision the read-only role: ${m.sentence}")
     val q = testQueryPool(dbCfg, cfg.query)
-    Db.canConnect(q).left.foreach(m => fail(s"the read-only role cannot connect: $m"))
+    Db.canConnect(q).left.foreach(m => fail(s"the read-only role cannot connect: ${m.sentence}"))
     q
 
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
@@ -127,7 +128,7 @@ class QueryRepoSuite extends DbSuite:
   // ── writes are refused BY POSTGRES ───────────────────────────────────────────────────────────
 
   private def refused(sql: String): String =
-    val e = run(sql).left.getOrElse(fail(s"'$sql' was NOT refused")).value
+    val e = run(sql).left.getOrElse(fail(s"'$sql' was NOT refused")).sentence
     assert(e.toLowerCase.contains("read-only transaction"), s"'$sql' failed for the wrong reason: $e")
     e
 
@@ -156,11 +157,11 @@ class QueryRepoSuite extends DbSuite:
     assert(probeExists)
 
   test("a syntax error is a value carrying Postgres's message, not an exception"):
-    val e = run("select * fom sources").left.getOrElse(fail("expected a failure")).value
+    val e = run("select * fom sources").left.getOrElse(fail("expected a failure")).sentence
     assert(e.toLowerCase.contains("syntax"), e)
 
   test("an empty statement is refused before it reaches the database"):
-    assertEquals(run("   "), Left("empty statement"))
+    assertEquals(run("   ").left.map(_.sentence), Left("empty statement"))
 
   // ── the limits ───────────────────────────────────────────────────────────────────────────────
 
@@ -180,7 +181,7 @@ class QueryRepoSuite extends DbSuite:
     assert(cell.contains("(+4900 chars)"), cell.takeRight(30))
 
   test("statement_timeout aborts a long statement"):
-    val e = run("select pg_sleep(5)", timeoutMs = 200).left.getOrElse(fail("expected a timeout")).value
+    val e = run("select pg_sleep(5)", timeoutMs = 200).left.getOrElse(fail("expected a timeout")).sentence
     assert(e.toLowerCase.contains("statement timeout") || e.toLowerCase.contains("canceling"), e)
 
   test("a refused statement leaves the connection usable for the next one"):
@@ -217,7 +218,7 @@ class QueryRepoSuite extends DbSuite:
   test("`SET TRANSACTION READ WRITE; SELECT …` is refused, and nothing was executed"):
     val e = run(s"SET TRANSACTION READ WRITE; select * from sources").left
       .getOrElse(fail("the disarming batch was NOT refused"))
-      .value
+      .sentence
     assert(e.contains("statements"), e)
     assert(probeExists)
 
@@ -228,7 +229,7 @@ class QueryRepoSuite extends DbSuite:
     assert(run("select 1; select 2").isLeft)
 
   test("a lone SET is refused by the keyword check"):
-    val e = run("set statement_timeout = 0").left.getOrElse(fail("a lone SET was NOT refused")).value
+    val e = run("set statement_timeout = 0").left.getOrElse(fail("a lone SET was NOT refused")).sentence
     assert(e.contains("'SET'"), e)
 
   // ── the ROLE is what stops a superuser-only function ─────────────────────────────────────────
@@ -243,7 +244,7 @@ class QueryRepoSuite extends DbSuite:
   test("pg_read_file is permission denied — the read-only TRANSACTION never stopped this"):
     val e = run("select pg_read_file('/etc/hostname')").left
       .getOrElse(fail("pg_read_file was NOT refused"))
-      .value
+      .sentence
     assert(e.toLowerCase.contains("permission denied"), e)
 
   test("the read-only role cannot even be talked into a writable transaction"):

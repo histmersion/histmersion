@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -22,9 +22,7 @@ final class BitwardenPlugin extends Plugin:
     for
       exe <- Subprocess
         .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
-        .left
-        .map(e => Problem(e.value))
-      session <- Vaults.optional(c.session, ctx).left.map(e => Problem(e.value))
+      session <- Vaults.optional(c.session, ctx)
       _ <- ctx.secretVaults
         .add(
           Registry.AddId(info.id.value),

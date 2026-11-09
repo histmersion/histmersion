@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -106,7 +107,7 @@ class MapRegionsSuite extends munit.FunSuite:
         None,
         MapRegions.ZoomText(""),
         dryRun = Basemap.FetchQuery.DryRun(true)
-      ).left.exists(_.value.contains("west must be < east"))
+      ).left.exists(_.sentence.contains("west must be < east"))
     )
     assert(
       request(
@@ -124,7 +125,7 @@ class MapRegionsSuite extends munit.FunSuite:
         None,
         MapRegions.ZoomText("deep"),
         dryRun = Basemap.FetchQuery.DryRun(true)
-      ).left.exists(_.value.contains("0 to"))
+      ).left.exists(_.sentence.contains("0 to"))
     )
     assert(
       request(

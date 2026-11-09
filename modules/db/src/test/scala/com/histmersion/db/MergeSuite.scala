@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -690,12 +691,12 @@ class MergeSuite extends DbSuite with Bounded:
     // the ISBN and the near-identical OCR are what matched them
     val matched = RegisteredPlanMatches.kind.all(p.sources)
     assert(
-      matched.exists(m => m.rightCitekey.value == "west1997_east" && m.why.exists(_.value.startsWith("ISBN"))),
+      matched.exists(m => m.rightCitekey.value == "west1997_east" && m.why.exists(_.sentence.startsWith("ISBN"))),
       matched.toString
     )
     assert(
       matched.exists(m =>
-        m.rightCitekey.value == "olsen2015_penelope" && m.why.exists(_.value.contains("OCR bodies alike"))
+        m.rightCitekey.value == "olsen2015_penelope" && m.why.exists(_.sentence.contains("OCR bodies alike"))
       ),
       matched.find(_.rightCitekey.value == "olsen2015_penelope").toString
     )
@@ -1225,16 +1226,16 @@ class MergeSuite extends DbSuite with Bounded:
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied.value, first.problems.mkString("\n"))
     transact(a) {
-      ArticleFixtures.renameIn(Slug("zz_old_slug"), Slug("zz_new_slug")).fold(e => fail(e.message.value), identity)
+      ArticleFixtures.renameIn(Slug("zz_old_slug"), Slug("zz_new_slug")).fold(e => fail(e.message.sentence), identity)
       EventFixtures
         .renameIn(BEventRow.Id("zz_old_event"), BEventRow.Id("zz_new_event"))
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
       GoalRepo
         .renameIn(
           com.histmersion.domain.automation.Goal.Slug("zz_old_goal"),
           com.histmersion.domain.automation.Goal.Slug("zz_new_goal")
         )
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     }
     // the rename rewrote the link in the other article over there
     assertEquals(ArticleFixtures.load(a, Slug("zz_linker")).map(_.body), Some("See [[zz_new_slug]]."))

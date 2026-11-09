@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.gazetteers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.Registry

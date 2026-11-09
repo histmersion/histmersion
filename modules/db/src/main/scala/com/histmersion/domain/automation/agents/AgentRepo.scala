@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.*
@@ -231,7 +234,7 @@ object AgentRepo:
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", str(c.value))) match
-      case Some(c) => Left(Problem(s"No agent run '${c.value}' to page from"))
+      case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No agent run '${c.value}' to page from")))
       case None    =>
         val (rows, more) = Keyset.pageOn[RunRow](
           runFrom,
@@ -572,7 +575,7 @@ object AgentRepo:
           .modify(_.evidence)
           .setTo(
             ApprovalInfo.Evidence(
-              p.map(x => Option(x.why.value).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse("")
+              p.map(x => Option(x.why.sentence).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse("")
             )
           )
       case _ =>
@@ -658,7 +661,7 @@ object AgentRepo:
       c.value.trim.toLongOption
         .map(lng(_))
         .filter(Keyset.existsOn("approvals", _))
-        .toRight(Problem(s"No approval '${c.value}' to page from"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"No approval '${c.value}' to page from")))
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
@@ -797,7 +800,7 @@ object AgentRepo:
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
   def closeForRun(jobId: Job.Id, why: Problem)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
+      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = ${why.sentence}, decided_at = now()
           WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
     )
 

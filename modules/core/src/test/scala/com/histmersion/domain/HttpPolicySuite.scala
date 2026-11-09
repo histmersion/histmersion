@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -38,7 +39,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(Step.Wait.Ms(7000), Problem("HTTP 429"))
+      Step.Wait(Step.Wait.Ms(7000), Problem.Unclassified(Legacy.Text("HTTP 429")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -49,7 +50,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(Step.Wait.Ms(3000), Problem("HTTP 503"))
+      Step.Wait(Step.Wait.Ms(3000), Problem.Unclassified(Legacy.Text("HTTP 503")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -60,7 +61,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(Step.Wait.Ms(4000), Problem("HTTP 503"))
+      Step.Wait(Step.Wait.Ms(4000), Problem.Unclassified(Legacy.Text("HTTP 503")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -72,7 +73,7 @@ class HttpPolicySuite extends munit.FunSuite:
         now,
         Some(HttpPolicy.SlowDown("maxlag"))
       ),
-      Step.Wait(Step.Wait.Ms(1000), Problem("maxlag"))
+      Step.Wait(Step.Wait.Ms(1000), Problem.Unclassified(Legacy.Text("maxlag")))
     )
 
   test("it gives up after the retries, on a wait longer than the cap, and on any other error"):
@@ -85,7 +86,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 429 after 3 retries"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 429 after 3 retries")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -96,7 +97,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 429: asked to wait 3600 s"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 429: asked to wait 3600 s")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -107,7 +108,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 404"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 404")))
     )
     assertEquals(
       HttpPolicy.decide(
@@ -118,7 +119,7 @@ class HttpPolicySuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(Problem("HTTP 500"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 500")))
     )
     assertEquals(
       HttpPolicy.decide(

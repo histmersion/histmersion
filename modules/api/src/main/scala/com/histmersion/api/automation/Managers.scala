@@ -1,6 +1,9 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -160,7 +163,7 @@ object Managers:
       title: Article.Title,
       kind: Article.Kind.Wire,
       filter: Article.Filter,
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -274,7 +277,9 @@ object Managers:
           (kv).value.split("=", 2) match
             case Array(k0, v0) =>
               val (k, v) = (k0.trim, v0.trim)
-              def int = v.toIntOption.filter(_ >= 0).toRight(Problem(s"$k: '$v' is not a whole number"))
+              def int = v.toIntOption
+                .filter(_ >= 0)
+                .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a whole number")))
               k match
                 case "maxRuns" | "max-runs"                       => int.map(n => c.copy(maxRuns = Some(MaxRuns(n))))
                 case "maxOpen" | "max-open"                       => int.map(n => c.copy(maxOpen = Some(MaxOpen(n))))
@@ -307,7 +312,11 @@ object Managers:
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(Sweep.Wire(w)).isEmpty) match
                     case Some(w) =>
-                      Left(Problem(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})"))
+                      Left(
+                        Problem.Unclassified(
+                          Legacy.Text(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
+                        )
+                      )
                     case None =>
                       Right(
                         c.copy(sweeps =
@@ -323,12 +332,12 @@ object Managers:
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
-                    .toRight(Problem(s"$k: '$v' is not a number of USD (0 = no cap)"))
+                    .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a number of USD (0 = no cap)")))
                     .map(d => c.copy(dailyUsd = Some(DailyUsd(d))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption
                     .filter(_ > 0)
-                    .toRight(Problem(s"$k: '$v' is not a positive number"))
+                    .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a positive number")))
                     .map(d => c.copy(budgetUsd = Some(BudgetUsd(d))))
                 case "includeTags" | "include-tags" | "tags" =>
                   Right(
@@ -359,16 +368,16 @@ object Managers:
                     }
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
-                    case (errs, _) => Left(Problem(errs.mkString("; ")))
-                case other => Left(Problem(s"unknown manager setting '$other'"))
-            case _ => Left(Problem(s"'$kv' is not key=value"))
+                    case (errs, _) => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
+                case other => Left(Problem.Unclassified(Legacy.Text(s"unknown manager setting '$other'")))
+            case _ => Left(Problem.Unclassified(Legacy.Text(s"'$kv' is not key=value")))
         }
       }
 
     private def bool(k: String, v: String): Either[Problem, Boolean] = (v).toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
-      case _                      => Left(Problem(s"$k: '$v' is not true or false"))
+      case _                      => Left(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not true or false")))
 
   final case class ItemCounts(
       pending: ItemCounts.Pending = ItemCounts.Pending(0),
@@ -514,7 +523,7 @@ object Managers:
   final case class Hold(
       until: Option[Hold.Until] = None,
       untilSource: Option[Hold.UntilSource] = None,
-      reason: Problem = Problem(""),
+      reason: Problem = Problem.Unclassified(Legacy.Text("")),
       hint: Option[Hold.Hint] = None,
       untilApproval: Option[Hold.UntilApproval] = None,
       focus: Option[Hold.Focus] = None
@@ -592,7 +601,7 @@ object Managers:
       authors: List[AuthorName] = Nil,
       venue: Option[Source.Venue] = None,
       goals: List[Goal.Slug] = Nil,
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       foundBy: Option[OaWork.FoundBy] = None,
       acquireText: Option[OaWork.AcquireText] = None
   ) derives KindlingsCodecAsObject,
@@ -701,7 +710,7 @@ object Managers:
       text: HintProposal.Text,
       effect: HintEffect,
       by: HintProposal.By = HintProposal.By(""),
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema

@@ -1,7 +1,7 @@
 package com.histmersion
 package files
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -137,8 +137,8 @@ class ArticleNoteSuite extends munit.FunSuite:
         )
       ),
       reasons = Map(
-        Citekey("graves2017_greek") -> Problem("retells the myths"),
-        Citekey("nilsson1927_minoan") -> Problem("Attic origin only in passing")
+        Citekey("graves2017_greek") -> Problem.Unclassified(Legacy.Text("retells the myths")),
+        Citekey("nilsson1927_minoan") -> Problem.Unclassified(Legacy.Text("Attic origin only in passing"))
       )
     )
     val c = Article.Coverage.compute(

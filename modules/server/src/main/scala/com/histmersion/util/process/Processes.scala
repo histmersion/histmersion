@@ -1,7 +1,7 @@
 package com.histmersion
 package util.process
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.storage.HandedFile
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, IOException, OutputStream}
@@ -42,20 +42,20 @@ object Processes:
             val env = pb.environment()
             launch.environment.foreach((k, v) => env.put(k.value, v.value))
             Right(OsProcess(pb.start()))
-          catch case e: IOException => Left(Problem(e.getMessage))
+          catch case e: IOException => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
       yield started
 
     private def directory(launch: ProcessLaunch): Either[Problem, Option[HandedFile]] = launch.workingStore match
       case None    => Right(None)
-      case Some(s) => s.onDiskFile(Store.Key.Root).left.map(e => Problem(e.message.value)).map(Some(_))
+      case Some(s) => s.onDiskFile(Store.Key.Root).left.map(e => e.message).map(Some(_))
 
     private def log(launch: ProcessLaunch): Either[Problem, Option[ProcessBuilder.Redirect]] = launch.output match
       case ProcessOutput.Piped            => Right(None)
       case ProcessOutput.Discarded        => Right(Some(ProcessBuilder.Redirect.DISCARD))
       case ProcessOutput.AppendTo(s, key) =>
-        s.onDiskFile(key).left.map(e => Problem(e.message.value)).map(f => Some(ProcessBuilder.Redirect.appendTo(f)))
+        s.onDiskFile(key).left.map(e => e.message).map(f => Some(ProcessBuilder.Redirect.appendTo(f)))
       case ProcessOutput.WriteTo(s, key) =>
-        s.onDiskFile(key).left.map(e => Problem(e.message.value)).map(f => Some(ProcessBuilder.Redirect.to(f)))
+        s.onDiskFile(key).left.map(e => e.message).map(f => Some(ProcessBuilder.Redirect.to(f)))
 
     def run(launch: ProcessLaunch): Either[Problem, ProcessResult] =
       start(launch).map { p =>

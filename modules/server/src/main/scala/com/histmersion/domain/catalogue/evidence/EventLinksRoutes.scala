@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.catalogue.EventsApi
 import com.histmersion.domain.Caller
@@ -19,7 +19,12 @@ object EventLinksRoutes:
     def eventId(id: com.histmersion.api.catalogue.Event.Id) =
       Event.Id
         .option(id.value)
-        .toRight(Api.Error(Problem(s"No event '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"No event '${id.value}'")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
+        )
     List(
       EventsApi.leads.serverLogicSuccess[Identity](q => links.leads(q)),
       EventsApi.candidatesJob.serverLogic[Identity](req => links.candidatesJob(me, req)),

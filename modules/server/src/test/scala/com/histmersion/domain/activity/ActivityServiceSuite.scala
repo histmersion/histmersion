@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.activity
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Activity
@@ -61,7 +62,7 @@ class ActivityServiceSuite extends DbSuite:
         at(ago(2)),
         state = Entry.State("failed"),
         what = Entry.What("media-import"),
-        error = Some(Problem("HTTP 500")),
+        error = Some(Problem.Unclassified(Legacy.Text("HTTP 500"))),
         job = Some(Entry.Job("j1"))
       ),
       Entry(
@@ -203,7 +204,7 @@ class ActivityServiceSuite extends DbSuite:
         (decision.state, decision.what, decision.goal, decision.job, decision.approval),
         ("approved", "edge", Some("g1"), Some("r1"), Some(1L))
       )
-      assertEquals(es(w.key("j1")).error, Some("HTTP 500"))
+      assertEquals(es(w.key("j1")).error.map(_.sentence), Some("HTTP 500"))
 
     test(s"$label: the counts: one running, one problem this week"):
       assertEquals(

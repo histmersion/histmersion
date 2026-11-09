@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 
 import com.histmersion.api.automation.Managers.*
@@ -116,19 +118,30 @@ object AutopilotPolicy:
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
     }
-    if n == 0 then Verdict.Reject(Problem("the plan names no article"))
-    else if bad.nonEmpty then Verdict.Reject(Problem(s"checks failed — ${bad.mkString("; ")}"))
+    if n == 0 then Verdict.Reject(Problem.Unclassified(Legacy.Text("the plan names no article")))
+    else if bad.nonEmpty then
+      Verdict.Reject(Problem.Unclassified(Legacy.Text(s"checks failed — ${bad.mkString("; ")}")))
     else if n > cap.value then
-      Verdict.Leave(Problem(s"${counted(n, "article")} exceed the daily cap of $cap for one research area"))
+      Verdict.Leave(
+        Problem.Unclassified(
+          Legacy.Text(s"${counted(n, "article")} exceed the daily cap of $cap for one research area")
+        )
+      )
     else if approvedToday.value + n > cap.value then
       Verdict.Leave(
-        Problem(s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow")
+        Problem.Unclassified(
+          Legacy.Text(
+            s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
+          )
+        )
       )
     else
       Verdict.Approve(
-        Problem(
-          s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
-            s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
+              s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
+          )
         )
       )
 
@@ -166,28 +179,36 @@ object AutopilotPolicy:
     * tomorrow.
     */
   def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if !d.filterRecorded.value then Verdict.Reject(Problem("the run records no coverage filter"))
+    if !d.filterRecorded.value then
+      Verdict.Reject(Problem.Unclassified(Legacy.Text("the run records no coverage filter")))
     else if d.hits.forall(_.value < minSources.value) then
       Verdict.Reject(
-        Problem(
-          s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
+          )
         )
       )
     else if d.problems.nonEmpty then
       Verdict.Reject(
-        Problem(
-          s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
+          )
         )
       )
-    else if d.cited.value == 0 then Verdict.Reject(Problem("the text cites no source"))
-    else if d.create.value && !d.slugFree.value then Verdict.Reject(Problem(s"the slug ${d.slug} is taken now"))
+    else if d.cited.value == 0 then Verdict.Reject(Problem.Unclassified(Legacy.Text("the text cites no source")))
+    else if d.create.value && !d.slugFree.value then
+      Verdict.Reject(Problem.Unclassified(Legacy.Text(s"the slug ${d.slug} is taken now")))
     else if approvedToday.value >= cap.value then
-      Verdict.Leave(Problem(s"the daily cap of $cap drafts is reached; decided tomorrow"))
+      Verdict.Leave(Problem.Unclassified(Legacy.Text(s"the daily cap of $cap drafts is reached; decided tomorrow")))
     else
       Verdict.Approve(
-        Problem(
-          s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
-            s"no self-check problem; ${approvedToday.value + 1} of $cap today"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
+              s"no self-check problem; ${approvedToday.value + 1} of $cap today"
+          )
         )
       )
 
@@ -216,21 +237,26 @@ object AutopilotPolicy:
     * within `cap` plans a day.
     */
   def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if p.subGoals.value + p.queries.value + p.works.value == 0 then Verdict.Reject(Problem("the plan proposes nothing"))
+    if p.subGoals.value + p.queries.value + p.works.value == 0 then
+      Verdict.Reject(Problem.Unclassified(Legacy.Text("the plan proposes nothing")))
     else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
       Verdict.Reject(
-        Problem(
-          s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
-            s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
+              s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
+          )
         )
       )
     else if approvedToday.value >= cap.value then
-      Verdict.Leave(Problem(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
+      Verdict.Leave(Problem.Unclassified(Legacy.Text(s"the daily cap of $cap goal plans is reached; decided tomorrow")))
     else
       Verdict.Approve(
-        Problem(
-          s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
-            s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
+              s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"
+          )
         )
       )
 
@@ -382,8 +408,8 @@ object AutopilotPolicy:
     */
   val NotePrefix: NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
   def note(v: Verdict): Option[Note] = v match
-    case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — $r"))
-    case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — $r"))
+    case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — ${r.sentence}"))
+    case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — ${r.sentence}"))
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
@@ -466,7 +492,7 @@ object AutopilotPolicy:
         else if f.managed.value then
           (Goal.Status.Wire(Goal.Status.Seeding), "its seeding manager and watcher are active")
         else (f.status, "")
-      Option.when(rank(target) > cur)((target, Problem(why)))
+      Option.when(rank(target) > cur)((target, Problem.Unclassified(Legacy.Text(why))))
 
   // ── the managers every goal has ────────────────────────────────────────────────────────────────
 

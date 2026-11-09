@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.catalogue.PlacesMarkdown
@@ -89,10 +90,12 @@ object PlacesCmd:
       batch: Paging.Limit,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Place.ImportResult] =
-    if !Files.isRegularFile(file) then Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+    if !Files.isRegularFile(file) then
+      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
-        case Left(e)      => Left(Cli.Error(Problem(s"$file: $e"), exitCode = ExitCode.Usage))
+        case Left(e) =>
+          Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"$file: ${e.sentence}")), exitCode = ExitCode.Usage))
         case Right(items) =>
           val groups = items.grouped(batch.value.max(1)).toList
           val total = groups.size
@@ -226,7 +229,9 @@ object PlacesCmd:
           if !Files.isDirectory(d) then
             Left(
               Cli.Error(
-                Problem(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>"),
+                Problem.Unclassified(
+                  Legacy.Text(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>")
+                ),
                 exitCode = ExitCode.Usage
               )
             )
@@ -235,7 +240,7 @@ object PlacesCmd:
             if files.isEmpty then
               Left(
                 Cli.Error(
-                  Problem(s"no JSON files under $d — run db/places/fetch.sh first"),
+                  Problem.Unclassified(Legacy.Text(s"no JSON files under $d — run db/places/fetch.sh first")),
                   exitCode = ExitCode.Usage
                 )
               )
@@ -455,7 +460,7 @@ object PlacesCmd:
           "point",
           "Its corrected point, latitude,longitude (a place known by a point only; --reason must name the gazetteer value)"
         )
-        .mapValidated(p => Place.Overrides.parsePoint(Place.Overrides.PointText(p)).left.map(_.value).toValidatedNel)
+        .mapValidated(p => Place.Overrides.parsePoint(Place.Overrides.PointText(p)).left.map(_.sentence).toValidatedNel)
         .orNone,
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone,
       Opts.flag("reset", "Drop the override: the kind, period and point its source states come back").orFalse
@@ -468,7 +473,7 @@ object PlacesCmd:
               kind.map(Place.OverrideSet.Kind(_)),
               from.map(Year(_)),
               to.map(Year(_)),
-              reason.map(api.Problem(_)),
+              reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
               Place.OverrideSet.Reset(reset),
               point.map(_._1),
               point.map(_._2)
@@ -487,8 +492,10 @@ object PlacesCmd:
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone
     )
       .mapN { (id, into, reason) => (c: Client) =>
-        c.mergePlace(Place.Id(id), Place.MergeIn(Place.Id(into), reason.map(api.Problem(_))))
-          .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
+        c.mergePlace(
+          Place.Id(id),
+          Place.MergeIn(Place.Id(into), reason.map((text => Problem.Unclassified(Legacy.Text(text)))))
+        ).map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -498,7 +505,7 @@ object PlacesCmd:
   ) {
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
-        c.removePlace(Place.Id(id), Place.RemoveIn(reason.map(api.Problem(_))))
+        c.removePlace(Place.Id(id), Place.RemoveIn(reason.map((text => Problem.Unclassified(Legacy.Text(text))))))
           .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
       }
   }

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
 
@@ -29,7 +31,7 @@ object HintProposals:
 
   final case class HintAnswer(
       action: HintAnswer.Action,
-      why: Problem = Problem(""),
+      why: Problem = Problem.Unclassified(Legacy.Text("")),
       targets: List[HintAnswer.Targets] = Nil,
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
@@ -90,43 +92,52 @@ object HintProposals:
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
     def fail(ps: List[Problem]): Either[List[Problem], (Option[HintEffect], List[Description])] =
-      if last.value then Right((None, ps.map(p => Description(s"nothing proposed: $p")))) else Left(ps)
+      if last.value then Right((None, ps.map(p => Description(s"nothing proposed: ${p.sentence}")))) else Left(ps)
     if action == "none" || action.isEmpty then Right((None, Nil))
     else if !HintEffect.Proposable.contains(action) then
-      fail(List(Problem(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})")))
+      fail(
+        List(
+          Problem.Unclassified(
+            Legacy.Text(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})")
+          )
+        )
+      )
     else if action == HintEffect.Config then
       val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
-      if kvs.isEmpty then fail(List(Problem("config: give the settings to change as key=value")))
+      if kvs.isEmpty then
+        fail(List(Problem.Unclassified(Legacy.Text("config: give the settings to change as key=value"))))
       else
         ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
-          case Left(e)  => fail(List(Problem(s"config: $e")))
+          case Left(e)  => fail(List(Problem.Unclassified(Legacy.Text(s"config: ${e.sentence}"))))
           case Right(c) => Right((Some(HintEffect(HintEffect.Action(HintEffect.Config), config = Some(c))), Nil))
     else
       val problems = List(
         Option.when(unknown.nonEmpty && !last.value)(
-          Problem(s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed")
+          Problem.Unclassified(
+            Legacy.Text(s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed")
+          )
         ),
         Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
-          Problem(s"$action: name the items (targets) or a tag")
+          Problem.Unclassified(Legacy.Text(s"$action: name the items (targets) or a tag"))
         ),
         Option.when(
           action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
             _.value.trim.isEmpty
           )
-        )(Problem("hold: give `until` (a date) or `untilSource` (a DOI or citekey)")),
+        )(Problem.Unclassified(Legacy.Text("hold: give `until` (a date) or `untilSource` (a DOI or citekey)"))),
         a.until
           .map(_.value.trim)
           .filter(_.nonEmpty)
           .filter(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u)).isEmpty)
-          .map(u => Problem(s"hold: '$u' is not a date (2026-11-01)")),
+          .map(u => Problem.Unclassified(Legacy.Text(s"hold: '$u' is not a date (2026-11-01)"))),
         a.priority
           .map(_.value)
           .filter(p => p < -MaxPriority || p > MaxPriority)
-          .map(p => Problem(s"prioritise: priority $p is outside ±$MaxPriority"))
+          .map(p => Problem.Unclassified(Legacy.Text(s"prioritise: priority $p is outside ±$MaxPriority")))
       ).flatten
       if problems.nonEmpty then fail(problems)
       else if good.isEmpty && tag.isEmpty && item.isEmpty then
-        fail(List(Problem(s"$action: none of the items it names exists")))
+        fail(List(Problem.Unclassified(Legacy.Text(s"$action: none of the items it names exists"))))
       else
         Right(
           (

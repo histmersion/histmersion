@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
@@ -108,7 +108,9 @@ object Mvt:
 
   private def attempt[A](a: => A): Either[Problem, A] =
     try Right(a)
-    catch case e: IllegalArgumentException => Left(Problem(s"malformed vector tile: ${e.getMessage}"))
+    catch
+      case e: IllegalArgumentException =>
+        Left(Problem.Unclassified(Legacy.Text(s"malformed vector tile: ${e.getMessage}")))
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is empty) and not in
     * `drop`. A feature without a `kind` stays unless `keep` is given. `props`: only these property keys stay (every one

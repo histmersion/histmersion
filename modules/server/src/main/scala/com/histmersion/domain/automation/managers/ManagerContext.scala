@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.catalogue.CatalogProviderInfo
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -57,4 +57,5 @@ object CatalogProvider:
       case GvpName | "smithsonian" | "volcano" => Right(Gvp)
       case NoaaName | "ncei"                   => Right(Noaa)
       case WikidataName | "wd"                 => Right(Wikidata)
-      case other => Left(Problem(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})"))
+      case other                               =>
+        Left(Problem.Unclassified(Legacy.Text(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})")))

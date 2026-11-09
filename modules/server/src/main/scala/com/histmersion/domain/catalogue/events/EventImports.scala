@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.plugin.Problem as SpiProblem
-import com.histmersion.domain.Problem
 import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
@@ -67,7 +67,7 @@ final class EventImports(
 
   /** The catalogue an import names among the registered ones, or why none. */
   def resolve(asked: CatalogRecord.Provider): Either[Problem, CatalogRecord.Provider] =
-    BuiltinCatalogues.resolve(asked, registered()).left.map(why => Problem(why))
+    BuiltinCatalogues.resolve(asked, registered()).left.map(why => Problem.Unclassified(Legacy.Text(why)))
 
   /** The catalogue a re-derivation names: a built-in one even while it is switched off (its records are still there),
     * else a registered one.
@@ -77,7 +77,7 @@ final class EventImports(
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
   /** One catalogue part read: its key and the records (or why not). */
-  private type Fetched = Either[SpiProblem, List[CatalogRecord]]
+  private type Fetched = Either[Problem, List[CatalogRecord]]
 
   /** The import itself — blocking; the job runs it. Part by part: read, keep what passes the thresholds and the years,
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry
@@ -124,7 +124,8 @@ final class EventImports(
 
     def handle(part: PluginEvents.PartName, fetched: Fetched): Unit =
       fetched match
-        case Left(why)   => report = report.modify(_.failed).using(_ :+ EventImportReport.Failed(s"$part: $why"))
+        case Left(why) =>
+          report = report.modify(_.failed).using(_ :+ EventImportReport.Failed(s"$part: ${why.sentence}"))
         case Right(read) =>
           // a catalogue's dating held inside the present (and its own floor, the GVP's Holocene one); a
           // record dated from its stated year when it gives no span — as rederive does
@@ -150,15 +151,16 @@ final class EventImports(
           val judged = recs.map { r =>
             val span = r.timeSpan.outer
             val why =
-              if span.exists(_._1.value > to.value) then Left(Problem(s"after $to"))
-              else if from.exists(f => span.exists(_._2.value < f.value)) then Left(Problem(s"before ${from.get}"))
+              if span.exists(_._1.value > to.value) then Left(Problem.Unclassified(Legacy.Text(s"after $to")))
+              else if from.exists(f => span.exists(_._2.value < f.value)) then
+                Left(Problem.Unclassified(Legacy.Text(s"before ${from.get}")))
               else EventProviders.keep(r, th)
             r -> why
           }
           val room = (limit - report.kept.value).max(0)
           val kept0 = judged.collect { case (r, Right(_)) => r }
           val kept = kept0.take(room)
-          val skipped = judged.collect { case (_, Left(w)) => EventCount.Key(w.value) } ++
+          val skipped = judged.collect { case (_, Left(w)) => EventCount.Key(w.sentence) } ++
             List.fill(kept0.size - kept.size)(EventCount.Key("over --limit"))
           val named = if dryRun || provider != CatalogProvider.Wikidata then kept else withNames(kept, report)
           val placed = CatalogMerge.place(named, known, ec.tolerance)
@@ -241,7 +243,8 @@ final class EventImports(
       val read: PluginEvents.PartName => Boolean =
         if PluginEvents.safe(cat.everyPartEachImport).contains(true) then _ => false else p => done(p.value)
       PluginEvents.guard(Right(cat.parts(q))) match
-        case Left(why)    => report = report.modify(_.failed).using(_ :+ EventImportReport.Failed(s"parts: $why"))
+        case Left(why) =>
+          report = report.modify(_.failed).using(_ :+ EventImportReport.Failed(s"parts: ${why.sentence}"))
         case Right(parts) =>
           parts.distinct.foreach { first =>
             PluginEvents.readPart(cat, PluginEvents.PartName(first.value), q, h, read, full) { (part, got) =>
@@ -250,7 +253,9 @@ final class EventImports(
                 if rs.exists(_.isLeft) then
                   report = report
                     .modify(_.failed)
-                    .using(_ ++ rs.collect { case Left(w) => EventImportReport.Failed(s"$part: $w") }.take(20))
+                    .using(
+                      _ ++ rs.collect { case Left(w) => EventImportReport.Failed(s"$part: ${w.sentence}") }.take(20)
+                    )
                 rs.collect { case Right(c) => c.warnings }
                   .flatten
                   .foreach(w => scribe.warn(s"events import: $part: $w"))
@@ -263,7 +268,7 @@ final class EventImports(
       case None =>
         report = report
           .modify(_.failed)
-          .using(_ :+ EventImportReport.Failed(resolve(provider).fold(_.value, _ => provider.value)))
+          .using(_ :+ EventImportReport.Failed(resolve(provider).fold(_.sentence, _ => provider.value)))
       case Some(cat) => run(cat)
 
     // the parts still to read: none for a catalogue whose parts are all read at every import
@@ -326,7 +331,9 @@ final class EventImports(
         val s =
           store.save(
             batch
-              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, domain.Problem("re-derived")))
+              .map((id, _, b, _) =>
+                b -> CatalogMerge.Placement.Existing(id, Problem.Unclassified(Legacy.Text("re-derived")))
+              )
           )
         updated += s.updated.value
         counts = counts + s.corrections

@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -55,7 +55,7 @@ final class AcquisitionRoutes(
       Citekey
         .parse(ck.value)
         .left
-        .map(p => Write.invalid(p.transformInto[Problem]))
+        .map(p => Write.invalid(p))
         .flatMap(gaps.pushMeta)
     ),
     AcquireApi.calibrePushed.serverLogic[Identity](req => gaps.pushed(req)),

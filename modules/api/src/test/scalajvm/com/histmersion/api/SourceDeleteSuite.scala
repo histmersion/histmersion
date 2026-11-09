@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -22,7 +24,7 @@ class SourceDeleteSuite extends munit.FunSuite:
   )
 
   test("the refusal names every blocker and offers no override"):
-    val m = Source.Delete.refusal(Ck, blocked).value
+    val m = Source.Delete.refusal(Ck, blocked).sentence
     assert(m.contains("cited by article ahhiyawa (Ahhiyawa), troy"), m)
     assert(m.contains("still being written by job j1 (ingest)"), m)
     assert(m.contains("no override"), m)
@@ -85,7 +87,7 @@ class SourceDeleteSuite extends munit.FunSuite:
     val un = Source.Delete
       .calibreLine(
         Some(Source.CalibreId("1885")),
-        Some(CalibreEntryCheck.Unchecked(Problem("no Calibre library at /x")))
+        Some(CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text("no Calibre library at /x"))))
       )
       .value
     assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)

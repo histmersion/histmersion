@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
@@ -150,13 +150,17 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           .normalize(raw.value)
           .map(d => ManagerContext.ItemTarget(d.value))
           .toRight(
-            Api.Error(Problem(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
+            Api.Error(
+              Problem.Unclassified(
+                Legacy.Text(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)")
+              )
+            )
           )
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         Goal.Slug
           .option(g)
-          .toRight(Api.Error(Problem(s"No goal '$g'")))
+          .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
           .flatMap(work.agents.host.goal(_))
           .map(_.slug)
           .flatMap(s =>
@@ -164,10 +168,12 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
               .cond(
                 m.goal.forall(_ == s),
                 ManagerContext.ItemTarget(s.value),
-                Api.Error(Problem(s"manager ${m.id} watches ${m.goal.fold("?")(_.value)}, not $s"))
+                Api.Error(
+                  Problem.Unclassified(Legacy.Text(s"manager ${m.id} watches ${m.goal.fold("?")(_.value)}, not $s"))
+                )
               )
           )
-      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
 
   /** Each watcher's ingest backlog and the days it takes to drain. */
   override def backlog(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] =

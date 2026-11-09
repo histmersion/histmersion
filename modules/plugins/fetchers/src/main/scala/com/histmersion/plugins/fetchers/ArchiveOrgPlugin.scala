@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.plugin.Plugin
@@ -17,5 +16,3 @@ final class ArchiveOrgPlugin extends FetcherPlugin("archive-org"):
     ctx.sourceFetchers
       .add(Registry.AddId("archive-org"), ArchiveOrgFetcher(() => archive))
       .flatMap(_ => ctx.sourceCollections.add(Registry.AddId("archive-org"), ArchiveOrgCollection(() => archive)))
-      .left
-      .map(e => Problem(e.value))

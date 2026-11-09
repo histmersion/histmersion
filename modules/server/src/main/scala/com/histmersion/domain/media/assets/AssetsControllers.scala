@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.Citekey
@@ -39,7 +39,7 @@ final class AssetsControllers(
   private val Uuid = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
   private def notFound(uid: AssetService.AssetUid) =
-    Api.Error(Problem(s"No picture '$uid'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No picture '$uid'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def canonical(citekey: Citekey): Citekey =
     sources.current(citekey).map(c => Citekey.assume(c.value)).getOrElse(citekey)
@@ -59,7 +59,10 @@ final class AssetsControllers(
       .figure(canonical(citekey), AssetService.AssetName(AssetLinks.safeName(name.value).value))
       .map((mime, bytes) => (bytes, mime))
       .toRight(
-        Api.Error(Problem(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.Unclassified(Legacy.Text(s"No asset '$name' for '$citekey'")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
 
   /** Add figures to the source a client named: a name that is no citekey is refused (400). */
@@ -71,7 +74,7 @@ final class AssetsControllers(
       Citekey
         .parse(citekey.value)
         .left
-        .map(p => Write.invalid(p.transformInto[Problem]))
+        .map(p => Write.invalid(p))
         .flatMap(storeFigures(_, citekey, in))
     )
 
@@ -90,7 +93,7 @@ final class AssetsControllers(
       .lookup(citekey)
       .left
       .map {
-        case MediaSources.Error.Invalid(message) => Write.invalid(message.transformInto[Problem])
+        case MediaSources.Error.Invalid(message) => Write.invalid(message)
         case MediaSources.Error.NotFound         => Write.notFound(asked)
       }
       .flatMap { _ =>
@@ -109,7 +112,7 @@ final class AssetsControllers(
         NewFigure
           .of(a, ByteCount.option(cfg().limits.assetBytes.value).getOrElse(ByteCount(0L)))
           .left
-          .map(p => Api.Error(p.transformInto[Problem]))
+          .map(p => Api.Error(p))
           .map(xs :+ _)
       )
     }
@@ -117,7 +120,12 @@ final class AssetsControllers(
   def detail(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, AssetDetail] =
     assets
       .detail(citekey, name)
-      .toRight(Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(
+        Api.Error(
+          Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
 
   def patch(citekey: Citekey, name: AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
     maintenance.guard(WriteGate.OperationName("patch_asset"))(assets.patch(citekey, name, p))

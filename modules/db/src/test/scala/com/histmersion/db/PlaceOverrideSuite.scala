@@ -1,7 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -167,7 +168,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(0), Set(Regio, City), "as a site, Regio XII takes the city's findings by distance")
     val r = put(
       kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)),
-      reason = Some(Problem("one of the 14 regiones"))
+      reason = Some(Problem.Unclassified(Legacy.Text("one of the 14 regiones")))
     ).toOption.get
     assertEquals(
       (r.kindBefore, r.kindAfter, r.findingsBefore, r.findingsAfter, r.unlocated),
@@ -177,7 +178,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(1), Set(City))
     val o = PlaceFixtures.overrides(ds, Some(Regio))
     assertEquals(
-      o.map(x => (x.kind, x.periodSet, x.sourceKind, x.reason)),
+      o.map(x => (x.kind, x.periodSet, x.sourceKind, x.reason.map(_.sentence))),
       List((Some("region"), false, "site", Some("one of the 14 regiones")))
     )
     assertEquals(PlaceFixtures.overrides(ds, None).filter(_.placeId.value.startsWith("zzpo")).size, 1)
@@ -253,7 +254,11 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       ds,
       Tribe,
       Place.OverrideEdit
-        .Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Problem("kept a region"))),
+        .Put(
+          None,
+          Some((Some(Year(-508L)), Some(Year(-322L)))),
+          Some(Problem.Unclassified(Legacy.Text("kept a region")))
+        ),
       tol
     )
     assertEquals(listed, Set.empty[String])
@@ -303,7 +308,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     // the city is the only place of both findings once the Regio is a region
     val _ = put(kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)))
     val refused = PlaceFixtures.remove(ds, City, None)
-    assert(refused.left.exists(_.message.value.contains("2 finding(s) it is the only place of")), refused.toString)
+    assert(refused.left.exists(_.message.sentence.contains("2 finding(s) it is the only place of")), refused.toString)
     val road =
       Place(
         Place.Id("zzpo_road"),
@@ -321,14 +326,14 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       PlaceFixtures
         .remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None)
         .left
-        .exists(_.message.value.contains("1 name(s) added by hand"))
+        .exists(_.message.sentence.contains("1 name(s) added by hand"))
     )
     val _ = PlaceFixtures.removeName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
     val r = PlaceFixtures
       .remove(
         ds,
         com.histmersion.domain.catalogue.Place.Id("zzpo_road"),
-        Some(Problem("withdrawn by Pleiades, no replacement"))
+        Some(Problem.Unclassified(Legacy.Text("withdrawn by Pleiades, no replacement")))
       )
       .toOption
       .get
@@ -379,7 +384,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id: DPlace.Id,
       lon: Longitude,
       lat: Latitude,
-      reason: Problem = Problem("Pleiades representative point")
+      reason: Problem = Problem.Unclassified(Legacy.Text("Pleiades representative point"))
   ) =
     PlaceFixtures.setOverride(ds, id, Place.OverrideEdit.Put(None, None, Some(reason), Some(GeoPoint(lon, lat))), tol)
 
@@ -478,7 +483,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id,
       Longitude(152.5),
       Latitude(-32.5),
-      Problem("Pleiades reprPoint; the Wikidata coordinate is the capital")
+      Problem.Unclassified(Legacy.Text("Pleiades reprPoint; the Wikidata coordinate is the capital"))
     )
     assertEquals(geom(id), "POINT(152.5 -32.5)")
     assertEquals(listed, Nil)

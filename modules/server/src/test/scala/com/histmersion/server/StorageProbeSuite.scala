@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -179,7 +180,7 @@ class StorageProbeSuite extends munit.FunSuite:
           StorageLocations.install,
           cfg,
           None,
-          bs.list.left.map(_.message.value),
+          bs.list.left.map(_.message.sentence),
           MeasureBudget.unlimited
         )
       def entry(k: String) = r.entries.find(_.key.value == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))

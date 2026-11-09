@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.covers
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.domain.media.MediaJobs
@@ -32,7 +32,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     else if req.citekey.forall(_.value.trim.isEmpty) then
       Left(
         Api.Error(
-          Problem("a run over every source is a job: POST /api/media/covers/job"),
+          Problem.Unclassified(Legacy.Text("a run over every source is a job: POST /api/media/covers/job")),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

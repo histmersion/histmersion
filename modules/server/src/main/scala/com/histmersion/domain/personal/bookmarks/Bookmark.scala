@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal.bookmarks
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
@@ -44,7 +44,11 @@ object Bookmark:
 
   def idOf(raw: WireBookmark.Id): Either[Problem, WireBookmark.Id] =
     val id = Option(raw).fold("")(_.value.trim.toLowerCase)
-    Either.cond(PersonalUuid.matches(PersonalUuid.Text(id)), WireBookmark.Id(id), Problem(s"not a bookmark id: '$raw'"))
+    Either.cond(
+      PersonalUuid.matches(PersonalUuid.Text(id)),
+      WireBookmark.Id(id),
+      Problem.Unclassified(Legacy.Text(s"not a bookmark id: '$raw'"))
+    )
 
   def of(stored: StoredBookmark, described: Map[ItemRef, Described]): Bookmark =
     val (target, title) = stored.target.shown(described, stored.targetLabel)

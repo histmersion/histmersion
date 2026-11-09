@@ -1,7 +1,7 @@
 package com.histmersion
 package util.identity
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, Referable}
 import com.histmersion.util.database.Transactor
 
@@ -14,8 +14,8 @@ abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends
   def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef] =
     byKind
       .get(kind)
-      .toRight(Problem(s"no records of kind '${kind.value}'"))
-      .flatMap(t => db.read(t.resolve(key)).left.map(p => Problem(p.value)))
+      .toRight(Problem.Unclassified(Legacy.Text(s"no records of kind '${kind.value}'")))
+      .flatMap(t => db.read(t.resolve(key)))
 
   def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
     val asked = refs.filter(r => byKind.contains(r.kind))

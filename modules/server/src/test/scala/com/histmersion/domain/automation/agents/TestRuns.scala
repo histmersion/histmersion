@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.server.agents.*
 
 import com.histmersion.domain.library.workflows.*
@@ -109,7 +109,7 @@ object TestRuns:
             id,
             RunRow.Status(from.wire.value),
             RunRow.Status(t.wire.value),
-            error.map(_.transformInto[api.Problem]),
+            error,
             None,
             resumeAt
           )
@@ -121,7 +121,7 @@ object TestRuns:
       Job.Kind.assume(JobKind),
       RunRow.Status(RunState.Running.wire.value),
       RunRow.Status(RunState.Paused.wire.value),
-      api.Problem(PauseReason.Interrupted.wire.value),
+      Problem.Unclassified(Legacy.Text(PauseReason.Interrupted.wire.value)),
       RunRow.Status(RunState.Queued.wire.value),
       Nil
     )
@@ -140,6 +140,6 @@ object TestRuns:
         h.library.sources
           .patch(p.citekey, p.patch)
           .left
-          .map(e => Problem(e.message.value))
+          .map(e => e.message)
           .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
     )

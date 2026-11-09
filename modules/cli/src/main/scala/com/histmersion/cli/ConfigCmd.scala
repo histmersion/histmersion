@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.monovore.decline.*
 import com.histmersion.config.*
 
@@ -21,15 +22,21 @@ object ConfigCmd:
         val located = UserPaths.configFile(Environment.of(org.ekrich.config.ConfigFactory.systemEnvironment()).lookup)
         located match
           case None =>
-            Left(Cli.Error(Problem(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})")))
+            Left(
+              Cli.Error(
+                Problem.Unclassified(
+                  Legacy.Text(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})")
+                )
+              )
+            )
           case Some(p) =>
             Cli.out.println(p)
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
-              case Left(err) => Left(Cli.Error(Problem(err.value)))
+              case Left(err) => Left(Cli.Error(err))
               case Right(l)  =>
                 if !Files.exists(p) then Cli.err.println("(not there yet: the defaults and the environment apply)")
                 else
-                  l.file.warnings.foreach(w => Cli.err.println(s"warning: $w"))
+                  l.file.warnings.foreach(w => Cli.err.println(s"warning: ${w.sentence}"))
                   if l.file.unknownKeys.isEmpty then Cli.err.println("(reads cleanly)")
                 Right(())
     )
@@ -46,7 +53,8 @@ object ConfigCmd:
       c.configReload.flatMap { r =>
         Output.emit(json, r)(ReloadMarkdown.report)
         if r.errors.isEmpty then Right(())
-        else Left(Cli.Error(Problem("the config was not reloaded"), exitCode = ExitCode.Refused))
+        else
+          Left(Cli.Error(Problem.Unclassified(Legacy.Text("the config was not reloaded")), exitCode = ExitCode.Refused))
       }
     }
   }

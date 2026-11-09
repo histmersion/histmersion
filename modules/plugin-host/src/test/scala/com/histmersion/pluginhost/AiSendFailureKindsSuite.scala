@@ -1,8 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.AiHttp.Failure
-import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** What a failed send was, read from the type of the exception. */
@@ -39,6 +39,9 @@ class AiSendFailureKindsSuite extends munit.FunSuite:
   test("the reported text is the exception and its message"):
     assertEquals(
       http.failureOf(new IllegalArgumentException("URI with undefined scheme")).reported,
-      Problem("IllegalArgumentException: URI with undefined scheme")
+      Problem.Unclassified(Legacy.Text("IllegalArgumentException: URI with undefined scheme"))
     )
-    assertEquals(http.failureOf(new java.net.ConnectException()).reported, Problem("ConnectException: "))
+    assertEquals(
+      http.failureOf(new java.net.ConnectException()).reported,
+      Problem.Unclassified(Legacy.Text("ConnectException: "))
+    )

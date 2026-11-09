@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.ByteCount
@@ -52,7 +53,7 @@ class GeoTiffSuite extends munit.FunSuite:
           value = (r, c) => (-100 * r - c).toShort
         )
       )
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
     assertEquals((g.west.value, g.north.value, g.stepX.value, g.width.value, g.height.value), (10.0, 50.0, 0.5, 8, 6))
     assertEquals((g.east, g.south), (14.0, 47.0))
     assertEquals(g.noData, Some(-32768.toShort))
@@ -69,13 +70,13 @@ class GeoTiffSuite extends munit.FunSuite:
         step = Degrees.PerPixel(0.5),
         point = true
       )
-    ).fold(e => fail(e.value), identity)
+    ).fold(e => fail(e.sentence), identity)
     assertEquals((g.west.value, g.north.value), (9.75, 50.25))
 
   test("the window of a box, half-open on the east and south; none for a box that only touches the grid"):
     val g = parsed(
       tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))
-    ).fold(e => fail(e.value), identity)
+    ).fold(e => fail(e.sentence), identity)
     assertEquals(
       g.window(BBox(Longitude(10.6), Latitude(48.1), Longitude(11.4), Latitude(49.9))),
       Some(GridWindow(GridWindow.First(0), GridWindow.Last(3), GridWindow.FirstCol(1), GridWindow.LastCol(2)))
@@ -90,7 +91,7 @@ class GeoTiffSuite extends munit.FunSuite:
   test("row runs: whole rows that follow each other share a request, at most the size asked"):
     val g = parsed(
       tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))
-    ).fold(e => fail(e.value), identity)
+    ).fold(e => fail(e.sentence), identity)
     val w = GridWindow(GridWindow.First(1), GridWindow.Last(5), GridWindow.FirstCol(2), GridWindow.LastCol(3))
     assertEquals(
       g.runs(w, ByteCount.applyUnsafe(1L << 20)).map(r => (r.firstRow, r.rows, r.offset.value, r.length)),
@@ -100,7 +101,7 @@ class GeoTiffSuite extends munit.FunSuite:
     assertEquals(g.runs(w, ByteCount(1)).map(_.rows), List(1, 1, 1, 1, 1), "a request holds a row at least")
 
   test("refused: big-endian, BigTIFF, compressed, unsigned, tiled, or no georeference"):
-    def why(b: Array[Byte]) = parsed(b).left.getOrElse(fail("read")).value
+    def why(b: Array[Byte]) = parsed(b).left.getOrElse(fail("read")).sentence
     val ok = small()
     assert(why("MM".getBytes ++ ok.drop(2)).contains("little-endian"))
     assert(why(ok.updated(2, 43.toByte)).contains("BigTIFF"))

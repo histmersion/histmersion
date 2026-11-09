@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
 
@@ -78,4 +79,4 @@ object BundleExport:
             }
           }
         yield tar.finish()
-      written.left.map(_.value).map(_ => manifest)
+      written.left.map(_.sentence).map(_ => manifest)

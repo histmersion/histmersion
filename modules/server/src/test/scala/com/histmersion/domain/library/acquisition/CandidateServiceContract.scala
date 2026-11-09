@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Year
@@ -39,7 +40,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
       CandidateWatch.Index("openalex")
     )
     s.candidates.recordWatch(w, Some(CandidateWatch.Watermark("2026-10-01")), None, CandidateWatch.LastFound(3))
-    s.candidates.recordWatch(w, None, Some(domain.Problem("HTTP 503")), CandidateWatch.LastFound(0))
+    s.candidates.recordWatch(w, None, Some(Problem.Unclassified(Legacy.Text("HTTP 503"))), CandidateWatch.LastFound(0))
     s.candidates.recordWatch(
       CandidateWatch(
         CandidateWatch.Goal("zq-goal"),
@@ -53,7 +54,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
     )
     val got = s.candidates.watches(Goal.Slug("zq-goal"))
     assertEquals(
-      got.map(w => (w.kind, w.subject, w.watermark, w.lastError, w.lastFound)),
+      got.map(w => (w.kind, w.subject, w.watermark, w.lastError.map(_.sentence), w.lastFound)),
       List(
         ("citing", "10.5555/zq.x", Some("2026-10-02"), None, 1),
         ("query", "zq tin", Some("2026-10-01"), Some("HTTP 503"), 0)

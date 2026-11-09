@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin as spi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Year
@@ -78,7 +78,7 @@ object SpiValues:
       .either(y.value)
       .map(ok => com.histmersion.Year(ok.value))
       .left
-      .map(_ => Problem(s"year ${y.value} is not a year"))
+      .map(_ => Problem.Unclassified(Legacy.Text(s"year ${y.value} is not a year")))
 
   /** A plugin's period, its ends in either order (a period a plugin could not have built that way is still one span of
     * years).
@@ -90,32 +90,34 @@ object SpiValues:
       period <- Period
         .from(if a <= b then a else b, if a <= b then b else a)
         .left
-        .map(e => Problem(e.message.value))
+        .map(e => e.message)
     yield period
 
   def latitudeOf(l: Latitude): Either[Problem, com.histmersion.Latitude] =
     com.histmersion.Latitude
       .either(l.value)
       .left
-      .map(_ => Problem(s"latitude ${l.value} is not between -90 and 90"))
+      .map(_ => Problem.Unclassified(Legacy.Text(s"latitude ${l.value} is not between -90 and 90")))
 
   def longitudeOf(l: Longitude): Either[Problem, com.histmersion.Longitude] =
     com.histmersion.Longitude
       .either(l.value)
       .left
-      .map(_ => Problem(s"longitude ${l.value} is not between -180 and 180"))
+      .map(_ => Problem.Unclassified(Legacy.Text(s"longitude ${l.value} is not between -180 and 180")))
 
   def doiOf(d: spi.Doi): Either[Problem, Doi] =
     Doi
       .either(d.value)
       .left
-      .map(_ => Problem(s"DOI '${d.value}' is not a DOI (10.<registrant>/<suffix>)"))
+      .map(_ => Problem.Unclassified(Legacy.Text(s"DOI '${d.value}' is not a DOI (10.<registrant>/<suffix>)")))
 
   def wikidataOf(q: WikidataId): Either[Problem, Wikidata.Id] =
     Wikidata.Id
       .either(q.value)
       .left
-      .map(_ => Problem(s"Wikidata id '${q.value}' is not a Wikidata item (Q and its number)"))
+      .map(_ =>
+        Problem.Unclassified(Legacy.Text(s"Wikidata id '${q.value}' is not a Wikidata item (Q and its number)"))
+      )
 
   /** A licence statement, as the text the host reads (and judges itself). */
   def licenceOf(l: Licence): com.histmersion.domain.Licence.Id = com.histmersion.domain.Licence.Id(l.value)

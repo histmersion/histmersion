@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -32,7 +33,7 @@ object Secret:
     def from(v: org.ekrich.config.ConfigValue) =
       ConfigReader.stringReader
         .from(v)
-        .flatMap(s => parse(ParseText(s)).left.map(e => ConfigDecodingError.CannotConvert(Nil, (e).value, None)))
+        .flatMap(s => parse(ParseText(s)).left.map(e => ConfigDecodingError.CannotConvert(Nil, (e).legacyText, None)))
 
   /** Where a secret's value comes from. The config holds only this reference, never the value (except the discouraged
     * `value:` form, which is masked wherever it is shown).
@@ -88,23 +89,26 @@ object Secret:
     def parse(text: ParseText): Either[Problem, Ref] =
       val t = Option((text).value).getOrElse("").trim
       t.indexOf(':') match
-        case i if i <= 0 => Left(Problem(s"a secret is a reference ($Forms), not a bare value"))
-        case i           =>
+        case i if i <= 0 =>
+          Left(Problem.Unclassified(Legacy.Text(s"a secret is a reference ($Forms), not a bare value")))
+        case i =>
           val (scheme, rest) = (t.take(i), t.drop(i + 1))
           scheme match
             case ValueScheme =>
-              if rest.isEmpty then Left(Problem("value: has no value")) else Right(Value(Value.Literal(rest)))
+              if rest.isEmpty then Left(Problem.Unclassified(Legacy.Text("value: has no value")))
+              else Right(Value(Value.Literal(rest)))
             case EnvScheme =>
               rest.trim match
                 case EnvName() => Right(Env(Env.Name(rest.trim)))
-                case _         => Left(Problem(s"env:${rest.trim} is not an environment variable name"))
+                case _         =>
+                  Left(Problem.Unclassified(Legacy.Text(s"env:${rest.trim} is not an environment variable name")))
             case VaultName() =>
-              if rest.trim.isEmpty then Left(Problem(s"$scheme: names no entry"))
+              if rest.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$scheme: names no entry")))
               else Right(Vault(Vault.Value(scheme), Vault.Ref(rest.trim)))
             case _ =>
               Left(
-                Problem(
-                  s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)"
+                Problem.Unclassified(
+                  Legacy.Text(s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)")
                 )
               )
 

@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.mcp.McpOut
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -62,7 +63,7 @@ object OpsTools:
               Slug
                 .parse(raw)
                 .fold(
-                  p => ToolResult.text(McpOut.refusal(p.value)),
+                  p => ToolResult.text(McpOut.refusal(p.sentence)),
                   slug =>
                     (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
                       .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
@@ -71,7 +72,7 @@ object OpsTools:
               Citekey
                 .parse(raw)
                 .fold(
-                  p => ToolResult.text(McpOut.refusal(p.value)),
+                  p => ToolResult.text(McpOut.refusal(p.sentence)),
                   ck =>
                     (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
                       .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
@@ -148,7 +149,7 @@ object OpsTools:
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
-                reason = in.reason.map(Problem(_))
+                reason = in.reason.map((text => Problem.Unclassified(Legacy.Text(text))))
               )
             )
             added match

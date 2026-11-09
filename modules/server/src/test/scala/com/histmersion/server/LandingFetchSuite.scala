@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.pluginhost.{Challenge, HttpAnswer, OaFetcher}
@@ -31,14 +32,17 @@ class LandingFetchSuite extends munit.FunSuite:
       routes
         .applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404"))
         .left
-        .map(why => Http.Failure.Status(HttpAnswer.Code(404), Problem(why)))
+        .map(why => Http.Failure.Status(HttpAnswer.Code(404), Problem.Unclassified(Legacy.Text(why))))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(HttpAnswer.Body(_))
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(s =>
-        io.circe.parser.parse(s.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage)))
+        io.circe.parser
+          .parse(s.value)
+          .left
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
       )
 
   private def cfg = AppConfig.load().acquire
@@ -52,9 +56,9 @@ class LandingFetchSuite extends munit.FunSuite:
       .fetch(Some(doi), None)
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
 
-  private def fail2(http: FakeUpstream)(e: plugin.Problem) = fail(e.value + "\n" + http.asked.mkString("\n"))
+  private def fail2(http: FakeUpstream)(e: Problem) = fail(e.sentence + "\n" + http.asked.mkString("\n"))
 
   test("Zenodo: the record page OpenAlex gives as the PDF is resolved by the API to the record's open PDF"):
     val c = cfg
@@ -153,7 +157,7 @@ class LandingFetchSuite extends munit.FunSuite:
       case "https://sa.example-uni.edu/index.php/sa/article/view/12" => bytes(fixture("ojs_journal_synthetic.html"))
       case u if u.contains("/pdf/") || u.contains("/download/")      => Right(Pdf)
     }
-    assertEquals(fetch(c, http, doi), Left("no legal open-access PDF found"))
+    assertEquals(fetch(c, http, doi).left.map(_.sentence), Left("no legal open-access PDF found"))
     assert(
       !http.asked.exists(u => u.contains("tandfonline.com") || u.contains("journal.example.org")),
       http.asked.mkString("\n")
@@ -240,7 +244,7 @@ class LandingFetchSuite extends munit.FunSuite:
         bytes(fixture("openalex_10_17863_CAM_11325.json"))
       case `page` => Left(s"$page: HTTP 403 bot-protection challenge — treated as no copy")
     }
-    assertEquals(fetch(c, http, Doi("10.17863/CAM.11325")), Left("no legal open-access PDF found"))
+    assertEquals(fetch(c, http, Doi("10.17863/CAM.11325")).left.map(_.sentence), Left("no legal open-access PDF found"))
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
     assert(
       Challenge.isChallenge(

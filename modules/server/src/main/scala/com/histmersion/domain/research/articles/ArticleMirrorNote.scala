@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.api.Api
 import com.histmersion.util.data.mirror.Mirror
@@ -19,5 +18,5 @@ final class ArticleMirrorNote(articles: ArticlesControllers) extends Mirror.Note
     Slug
       .parse(id.value)
       .left
-      .map(p => Write.invalid(Problem(p.value)))
+      .map(p => Write.invalid(p))
       .flatMap(slug => articles.articleNote(slug).map(t => Frontmatter.NoteBody(t.value)))

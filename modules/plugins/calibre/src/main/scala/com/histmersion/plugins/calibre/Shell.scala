@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.calibre
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Processes
 import io.github.iltotore.iron.constraint.any.Pure
@@ -23,11 +23,14 @@ object Shell:
     def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
       processes
         .capture(cmd.map(a => Processes.CaptureArgv(a.value)))
-        .left
-        .map(e => Problem(e.value))
         .flatMap(result =>
           if result.exit.value == 0 then Right(result.out)
-          else Left(Problem(s"${cmd.head.value} exited ${result.exit.value}: ${result.err.value.trim.take(400)}"))
+          else
+            Left(
+              Problem.Unclassified(
+                Legacy.Text(s"${cmd.head.value} exited ${result.exit.value}: ${result.err.value.trim.take(400)}")
+              )
+            )
         )
     def isRunning(processMatch: ProcessMatch): Boolean = run(
       List(Processes.RunArgv("pgrep"), Processes.RunArgv("-f"), Processes.RunArgv(processMatch.value))

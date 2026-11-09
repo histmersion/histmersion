@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.activity
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 import com.histmersion.util.database.{Param, Sql}
@@ -43,7 +43,7 @@ final private[activity] case class ActivityRow(
     state,
     what,
     text,
-    error.map(_.transformInto[api.Problem]),
+    error,
     endedAt,
     goal,
     job,

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import ox.{forkDiscard, useInScope}
 

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.server.ServerPlugins
@@ -103,7 +104,7 @@ class CoreBudgetSuite extends munit.FunSuite:
            |  exhausted-pause-seconds = 60 }
            |$user""".stripMargin
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
 
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
   final private class Clock:
@@ -150,7 +151,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       .find(_.name.value == "core")
 
   private def missWhy(f: Fetch): String = f match
-    case Fetch.Miss(why) => why.value
+    case Fetch.Miss(why) => why.sentence
     case other           => fail(s"not a miss: $other")
 
   test("a 429 with X-RateLimit-Retry-After: the chain goes on without core, which is not asked again until that time"):
@@ -172,7 +173,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = Access.Open
-        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(plugin.Problem("nothing here either"))
+        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing here either")))
       val chain = FetchChain(
         List(
           FetchChain.Step.Id("core") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("core")),
@@ -183,7 +184,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
       assert(
-        out.answers.head.why.value
+        out.answers.head.why.sentence
           .startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
         out.answers.head.why
       )
@@ -192,12 +193,12 @@ class CoreBudgetSuite extends munit.FunSuite:
       clock.advance(60)
       assert(missWhy(lookup(g)).contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)"))
       val idx = coreIndex(cfg, g, budget).get
-      assert(idx.unavailable.exists(_.value.contains("2026-10-26T18:52:11Z")), idx.unavailable.toString)
+      assert(idx.unavailable.exists(_.sentence.contains("2026-10-26T18:52:11Z")), idx.unavailable.toString)
       assert(
         idx
           .search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10))
           .left
-          .exists(_.value.startsWith("CORE not asked"))
+          .exists(_.sentence.startsWith("CORE not asked"))
       )
       assertEquals(core.asked.size, 1)
       // after it, CORE is asked again: here it has the PDF
@@ -249,12 +250,12 @@ class CoreBudgetSuite extends munit.FunSuite:
       val g = generation(cfg, budget)
       val idx = coreIndex(cfg, g, budget).get
       assert(idx.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10)).isRight)
-      assert(idx.unavailable.exists(_.value.contains("search-daily-tokens")), idx.unavailable.toString)
+      assert(idx.unavailable.exists(_.sentence.contains("search-daily-tokens")), idx.unavailable.toString)
       assert(
         idx
           .search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10))
           .left
-          .exists(_.value.contains("search-daily-tokens"))
+          .exists(_.sentence.contains("search-daily-tokens"))
       )
       lookup(g); lookup(g)
       assert(missWhy(lookup(g)).contains("acquire.core.daily-tokens"))

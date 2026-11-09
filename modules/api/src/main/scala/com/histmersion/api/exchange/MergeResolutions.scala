@@ -1,6 +1,8 @@
 package com.histmersion
 package api.exchange
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -40,7 +42,8 @@ object MergeResolutions:
               MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)
             )
           )
-        case _ => Left(Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
+        case _ =>
+          Left(Problem.Unclassified(Legacy.Text(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left")))
 
     def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap

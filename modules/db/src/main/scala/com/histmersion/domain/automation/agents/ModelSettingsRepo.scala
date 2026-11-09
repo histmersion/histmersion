@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 
@@ -62,7 +65,7 @@ private[agents] object ModelSettingsRepo:
           Jsonb
             .decode[List[LimitSpec]](Jsonb.JsonText(json))
             .left
-            .map(e => Problem(s"saved limits of $t do not decode: $e")),
+            .map(e => Problem.Unclassified(Legacy.Text(s"saved limits of $t do not decode: ${e.sentence}"))),
           Saved.ReservePct(r)
         )
       }

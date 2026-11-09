@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -25,9 +25,11 @@ object PluginAuthoring:
         Files.isRegularFile(i.apiPom),
         i,
         Cli.Error(
-          Problem(
-            s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
-              s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
+                s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo"
+            )
           ),
           exitCode = ExitCode.Usage
         )
@@ -44,7 +46,7 @@ object PluginAuthoring:
       .map(h => Path.of(h, ".m2", "repository"))
       .toRight(
         Cli.Error(
-          Problem("HOME is unset: there is no local Maven repository (~/.m2/repository)"),
+          Problem.Unclassified(Legacy.Text("HOME is unset: there is no local Maven repository (~/.m2/repository)")),
           exitCode = ExitCode.Usage
         )
       )
@@ -74,7 +76,7 @@ object PluginAuthoring:
         .left
         .map(e =>
           Cli.Error(
-            Problem(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}"),
+            Problem.Unclassified(Legacy.Text(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}")),
             exitCode = ExitCode.Refused
           )
         )
@@ -94,7 +96,7 @@ object PluginAuthoring:
         PluginRepository
           .parse(raw, Files.isDirectory(_))
           .left
-          .map(e => Cli.Error(Problem(e), exitCode = ExitCode.Usage))
+          .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage))
           .map(r => (TemplateRepository.Remote(r), Nil))
       case None =>
         m2.flatMap(dir => publishToMavenLocal(install, dir)).map(copied => (TemplateRepository.MavenLocal, copied))
@@ -112,7 +114,10 @@ object PluginAuthoring:
     })
     if occupied then
       Left(
-        Cli.Error(Problem(s"$dir exists and is not empty — choose another --dir"), exitCode = ExitCode.Usage)
+        Cli.Error(
+          Problem.Unclassified(Legacy.Text(s"$dir exists and is not empty — choose another --dir")),
+          exitCode = ExitCode.Usage
+        )
       )
     else
       Right(files.map { f =>

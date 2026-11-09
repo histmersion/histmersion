@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.ingest
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Caller
@@ -70,8 +70,6 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
           provenance = Some(Source.Provenance(meta.provenance.value))
         )
       )
-      .left
-      .map(p => Problem(p.value))
       .map { s =>
         val _ = sources.put(s, Caller.Local)
       }
@@ -96,4 +94,4 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
       .map(_ => ())
       .left
-      .map(e => Problem(e.message.value))
+      .map(e => e.message)

@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
@@ -18,4 +19,8 @@ object SeaFloorSource:
   def parse(s: Wire): Either[Problem, SeaFloorSource] =
     values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
-      .toRight(Problem(s"'${s.value}' is not a sea-floor source (${values.map(_.wire.value).mkString(", ")})"))
+      .toRight(
+        Problem.Unclassified(
+          Legacy.Text(s"'${s.value}' is not a sea-floor source (${values.map(_.wire.value).mkString(", ")})")
+        )
+      )

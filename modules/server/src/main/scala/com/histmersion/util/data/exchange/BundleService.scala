@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.PageSize
@@ -109,23 +110,35 @@ object BundleService:
         _ <- usable(store)
         _ = pruneStale(store)
         key = Store.Key.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
-        part <- store.reserve(key).left.map(e => Api.Error(Problem(s"bundle export failed: ${e.message}")))
+        part <- store
+          .reserve(key)
+          .left
+          .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"bundle export failed: ${e.message.sentence}"))))
         m <- write(part, since)
         _ <- part
           .commit()
           .left
-          .map(e => Api.Error(Problem(s"could not finish ${store.where(key)}: ${e.message}")))
+          .map(e =>
+            Api.Error(Problem.Unclassified(Legacy.Text(s"could not finish ${store.where(key)}: ${e.message.sentence}")))
+          )
         file <- store
           .onDiskFile(key)
           .left
-          .map(e => Api.Error(Problem(s"could not finish ${store.where(key)}: ${e.message}")))
+          .map(e =>
+            Api.Error(Problem.Unclassified(Legacy.Text(s"could not finish ${store.where(key)}: ${e.message.sentence}")))
+          )
       yield file -> m
 
     private def usable(store: Store): Either[Api.Error, Unit] =
       store
         .makeDirectory()
         .left
-        .map(e => Api.Error(Problem(s"bundles directory ${store.where()} is not usable: ${e.message}")))
+        .map(e =>
+          Api.Error(
+            Problem
+              .Unclassified(Legacy.Text(s"bundles directory ${store.where()} is not usable: ${e.message.sentence}"))
+          )
+        )
 
     private def write(part: Reservation, since: Option[BundleScope.Since.At]) =
       val written =
@@ -136,7 +149,7 @@ object BundleService:
         catch case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
       written.left.map { e =>
         part.discard()
-        Api.Error(Problem(s"bundle export failed: $e"))
+        Api.Error(Problem.Unclassified(Legacy.Text(s"bundle export failed: $e")))
       }
 
     /** Finished exports past their download window, uploads nobody planned or imported for as long, and parts a crash
@@ -166,7 +179,7 @@ object BundleService:
       Sha256
         .either(upload.read(BundleReader.sha256Of).value)
         .left
-        .map(e => Api.Error(Problem(s"the upload's sha256 is unusable: $e")))
+        .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"the upload's sha256 is unusable: $e"))))
 
     private def importFrom(
         bundle: ByteSource,
@@ -187,7 +200,7 @@ object BundleService:
           w.rules
         )
         .left
-        .map(e => Api.Error(Problem(s"bundle import failed: $e")))
+        .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"bundle import failed: $e"))))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
@@ -199,9 +212,11 @@ object BundleService:
         case None =>
           Left(
             Api.Error(
-              Problem(
-                s"no uploaded bundle $sha — upload it first (POST /api/bundle/upload; " +
-                  "`histmersion merge plan <file>` does), or it was cleared after bundles.stale-minutes"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"no uploaded bundle $sha — upload it first (POST /api/bundle/upload; " +
+                    "`histmersion merge plan <file>` does), or it was cleared after bundles.stale-minutes"
+                )
               ),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
@@ -218,11 +233,13 @@ object BundleService:
         _ <- usable(store)
         _ = pruneStale(store)
         _ <- copyIn(store, key, upload).left.map(e =>
-          Api.Error(Problem(s"could not keep the bundle in ${store.where()}: $e"))
+          Api.Error(Problem.Unclassified(Legacy.Text(s"could not keep the bundle in ${store.where()}: $e")))
         )
         blob <- store
           .get(key)
-          .toRight(Api.Error(Problem(s"could not keep the bundle in ${store.where()}: it is gone")))
+          .toRight(
+            Api.Error(Problem.Unclassified(Legacy.Text(s"could not keep the bundle in ${store.where()}: it is gone")))
+          )
       yield
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(
@@ -233,7 +250,7 @@ object BundleService:
         )
 
     private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[String, Unit] =
-      store.reserve(key).left.map(_.message.value).flatMap { part =>
+      store.reserve(key).left.map(_.message.sentence).flatMap { part =>
         try
           scala.util
             .Try {
@@ -244,7 +261,7 @@ object BundleService:
             .toEither
             .left
             .map(e => Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
-            .flatMap(_ => part.commit().left.map(_.message.value).map(_ => ()))
+            .flatMap(_ => part.commit().left.map(_.message.sentence).map(_ => ()))
         finally part.close()
       }
 
@@ -262,7 +279,7 @@ object BundleService:
             w.rules
           )
           .left
-          .map(e => Api.Error(Problem(s"merge plan failed: $e")))
+          .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"merge plan failed: $e"))))
       }
 
     def importKept(
@@ -289,7 +306,7 @@ object BundleService:
               resolutions,
               MergeSettingsViews.settings(cfg.merge),
               planHash,
-              () => w.backup().fold(e => Left(BundleImporter.BackupFile(e.message.value)), f => Right(f.value)),
+              () => w.backup().fold(e => Left(BundleImporter.BackupFile(e.message.sentence)), f => Right(f.value)),
               w.carried,
               w.rules,
               w.followUps
@@ -300,7 +317,7 @@ object BundleService:
               r
             }
             .left
-            .map(e => Problem(s"merge apply failed: $e"))
+            .map(e => Problem.Unclassified(Legacy.Text(s"merge apply failed: $e")))
         }
       }
 

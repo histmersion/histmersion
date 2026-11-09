@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -361,7 +362,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         )
         val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))
         assertEquals((i.state, i.bundle, i.planHash), (MergeJobState.Interrupted, "c" * 64, "feedbeef"))
-        assert(i.error.exists(_.value.contains("never half applied")), i.toString)
+        assert(i.error.exists(_.sentence.contains("never half applied")), i.toString)
         // …and it no longer blocks the next apply
         val sha = decode[Bundle.Upload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
         assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").statusCode, 200)
@@ -369,7 +370,9 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
         assert(
           jobs.exists(j =>
-            j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)
+            j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error
+              .map(_.sentence)
+              .contains(JobState.Interrupted)
           ),
           jobs.toString
         )

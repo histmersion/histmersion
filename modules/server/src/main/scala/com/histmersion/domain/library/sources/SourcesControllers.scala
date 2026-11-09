@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SourcesMarkdown
@@ -52,7 +52,7 @@ final class SourcesControllers(
   /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one.
     */
   def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
-    Citekey.parse(ck.value).left.map(p => Write.invalid(p.transformInto[Problem]))
+    Citekey.parse(ck.value).left.map(p => Write.invalid(p))
 
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(c.value)
 
@@ -60,7 +60,7 @@ final class SourcesControllers(
     sources.current(id)
 
   private def notFound(citekey: Citekey): Api.Error =
-    Api.Error(Problem(s"No source '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$citekey'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def absolute(md: String, citekey: Citekey): String =
     AssetLinks.toAbsolute(AssetLinks.Body(md), apiCk(citekey), AssetLinks.Url(cfg().server.publicUrl.value)).value
@@ -90,7 +90,7 @@ final class SourcesControllers(
           illustration = figures.sourceThumb(ck)
         )
       )
-      .toRight(Api.Error(Problem(s"No source '$citekey'")))
+      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$citekey'"))))
 
   def citekeys: List[Citekey] = sources.citekeys
 
@@ -116,7 +116,7 @@ final class SourcesControllers(
       Source.Write
         .applyPut(apiCk(ck), in, sources.aliasesOf(ck).map(apiCk))
         .left
-        .map(m => Write.invalid(m.transformInto[Problem]))
+        .map(m => Write.invalid(m))
         .flatMap(s => strictGate(strict.value, issuesOf(s.summary, s.notes)).map(_ => s))
         .flatMap { s =>
           val _ = sources.put(s, Caller.Local); get(ck).map(withFormatting)
@@ -142,7 +142,7 @@ final class SourcesControllers(
       Citekeys
         .renameTo(from, Citekeys.RenameToNewRaw(req.newCitekey.value))
         .left
-        .map(m => Write.invalid(m.transformInto[Problem]))
+        .map(m => Write.invalid(m))
         .flatMap { now =>
           sources.rename(from, now, Caller.Local).flatMap { counts =>
             get(now, body = SourcesControllers.GetBody(false)).map(sw =>
@@ -196,7 +196,7 @@ final class SourcesControllers(
   private def notAnAlias(ck: Citekey): Either[Api.Error, Citekey] =
     sources.aliasOf(ck) match
       case Some(now) =>
-        Left(Write.invalid(Problem(s"'$ck' was renamed to '$now' — write to '$now' instead")))
+        Left(Write.invalid(Problem.Unclassified(Legacy.Text(s"'$ck' was renamed to '$now' — write to '$now' instead"))))
       case None => Right(ck)
 
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
@@ -207,14 +207,16 @@ final class SourcesControllers(
       SourceNote.Text(req.text.value),
       req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))
     ) match
-      case None         => Left(Api.Error(Problem("no YAML frontmatter in the note")))
+      case None         => Left(Api.Error(Problem.Unclassified(Legacy.Text("no YAML frontmatter in the note"))))
       case Some(parsed) =>
         val raw = parsed.citekey
         if raw.value.isEmpty then
-          Left(Api.Error(Problem("note has no citekey (none in the frontmatter, none supplied)")))
+          Left(
+            Api.Error(Problem.Unclassified(Legacy.Text("note has no citekey (none in the frontmatter, none supplied)")))
+          )
         else
           Citekey.parse(raw.value) match
-            case Left(problem) => Left(Write.invalid(problem.transformInto[Problem]))
+            case Left(problem) => Left(Write.invalid(problem))
             case Right(ck)     =>
               if sources.aliasOf(ck).isDefined then
                 notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
@@ -273,7 +275,7 @@ final class SourcesControllers(
     */
   private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
     if !strict then Right(())
-    else formatting.refusal(issues).fold(Right(()))(m => Left(Write.invalid(m.transformInto[Problem])))
+    else formatting.refusal(issues).fold(Right(()))(m => Left(Write.invalid(m)))
 
   /** `GET /api/sources/{citekey}/lint`. */
   def lint(citekey: Citekey): Either[Api.Error, FormatReport] =
@@ -335,8 +337,10 @@ final class SourcesControllers(
     if badSection then
       Left(
         Api.Error(
-          Problem(
-            s"unknown section '${section.map(_.value).getOrElse("")}' — one of: ${Source.Section.all.map(_.value).mkString(", ")}"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"unknown section '${section.map(_.value).getOrElse("")}' — one of: ${Source.Section.all.map(_.value).mkString(", ")}"
+            )
           )
         )
       )
@@ -402,7 +406,12 @@ final class SourcesControllers(
       .parse(q.citekey.value)
       .toOption
       .flatMap(currentOf)
-      .toRight(Api.Error(Problem(s"No source '${q.citekey}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(
+        Api.Error(
+          Problem.Unclassified(Legacy.Text(s"No source '${q.citekey}'")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
       .flatMap { ck =>
         PassageFinder
           .find(
@@ -416,7 +425,7 @@ final class SourcesControllers(
             PassageFinder.TimeoutMs(lim.regexTimeoutMs.value.toLong)
           )
           .left
-          .map(m => Write.invalid(m.transformInto[Problem]))
+          .map(m => Write.invalid(m))
       }
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */

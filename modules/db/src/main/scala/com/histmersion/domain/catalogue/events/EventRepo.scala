@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.EventEntry
@@ -256,11 +256,13 @@ private[events] object EventRepo:
     catch
       case e: java.sql.SQLException =>
         Some(
-          Problem(
-            Option(e.getMessage)
-              .map(_.linesIterator.next().trim)
-              .filter(_.nonEmpty)
-              .getOrElse(e.getClass.getSimpleName)
+          Problem.Unclassified(
+            Legacy.Text(
+              Option(e.getMessage)
+                .map(_.linesIterator.next().trim)
+                .filter(_.nonEmpty)
+                .getOrElse(e.getClass.getSimpleName)
+            )
           )
         )
 
@@ -324,7 +326,8 @@ private[events] object EventRepo:
     * flags a conflict when the catalogue changes to something else).
     */
   def patch(id: BEventRow.Id, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
-    if !exists(id) then Left(Api.Error(api.Problem(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(id) then
+      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
       p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
@@ -386,18 +389,21 @@ private[events] object EventRepo:
     */
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
-    if !exists(oldId) then Left(Api.Error(api.Problem(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(oldId) then
+      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$oldId'")), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newId) then
       Left(
         Api.Error(
-          api.Problem(s"'$newId' is already the id of another event"),
+          Problem.Unclassified(Legacy.Text(s"'$newId' is already the id of another event")),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          api.Problem(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
+          Problem.Unclassified(
+            Legacy.Text(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another")
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

@@ -1,6 +1,8 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.optics.syntax.*
 
 import io.circe.ACursor
@@ -59,52 +61,60 @@ object PeriodO:
   val MinSiblings: MinSiblings = MinSiblingsCount(3)
 
   def parse(json: String): Either[Problem, PeriodODataset] =
-    io.circe.parser.parse((json)).left.map(e => Problem(s"not JSON: ${e.getMessage}")).flatMap { doc =>
-      val c = doc.hcursor
-      val overlay = c.downField("histmersion")
-      def strings(key: Wire): List[(String, String)] = overlay
-        .downField((key).value)
-        .focus
-        .flatMap(_.asObject)
-        .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
-        .getOrElse(Nil)
-      val presets = strings(Wire("presets")).map((id, r) =>
-        PresetRegion
-          .fromWire(PresetRegion.Wire(r))
-          .map(PeriodODataset.PresetsKey(id) -> _)
-          .toRight(
-            Problem(
-              s"$id: no preset region '$r' (known: " +
-                PresetRegion.values.map(_.wire).mkString(", ") + ")"
-            )
-          )
-      )
-      for
-        auths <- c
-          .downField("authorities")
+    io.circe.parser
+      .parse((json))
+      .left
+      .map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.getMessage}")))
+      .flatMap { doc =>
+        val c = doc.hcursor
+        val overlay = c.downField("histmersion")
+        def strings(key: Wire): List[(String, String)] = overlay
+          .downField((key).value)
           .focus
           .flatMap(_.asObject)
-          .toRight(Problem("not a PeriodO dataset: no `authorities` object"))
-        ps <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
-      yield
-        val read = auths.toList.map((id, a) => authority(HistoricalPeriod.Id(id), a.hcursor))
-        PeriodODataset(
-          read.map(_._1),
-          strings(Wire("parents")).map((k, v) => PeriodODataset.ParentsKey(k) -> PeriodODataset.ParentsValue(v)).toMap,
-          read.flatMap(_._2),
-          ps,
-          overlay
-            .downField("version")
-            .focus
-            .flatMap(_.asNumber)
-            .flatMap(
-              (
-                  refactorCallback2 =>
-                    (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
+          .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
+          .getOrElse(Nil)
+        val presets = strings(Wire("presets")).map((id, r) =>
+          PresetRegion
+            .fromWire(PresetRegion.Wire(r))
+            .map(PeriodODataset.PresetsKey(id) -> _)
+            .toRight(
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"$id: no preset region '$r' (known: " +
+                    PresetRegion.values.map(_.wire).mkString(", ") + ")"
+                )
               )
             )
         )
-    }
+        for
+          auths <- c
+            .downField("authorities")
+            .focus
+            .flatMap(_.asObject)
+            .toRight(Problem.Unclassified(Legacy.Text("not a PeriodO dataset: no `authorities` object")))
+          ps <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
+        yield
+          val read = auths.toList.map((id, a) => authority(HistoricalPeriod.Id(id), a.hcursor))
+          PeriodODataset(
+            read.map(_._1),
+            strings(Wire("parents"))
+              .map((k, v) => PeriodODataset.ParentsKey(k) -> PeriodODataset.ParentsValue(v))
+              .toMap,
+            read.flatMap(_._2),
+            ps,
+            overlay
+              .downField("version")
+              .focus
+              .flatMap(_.asNumber)
+              .flatMap(
+                (
+                    refactorCallback2 =>
+                      (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
+                )
+              )
+          )
+      }
 
   private def authority(
       id: HistoricalPeriod.Id,

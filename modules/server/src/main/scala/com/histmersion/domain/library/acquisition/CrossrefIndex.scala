@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse

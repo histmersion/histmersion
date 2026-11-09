@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,5 +15,7 @@ object Slug extends Newtype[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
 
   def parse(raw: String): Either[Problem, Slug] =
     either((raw).trim.toLowerCase).left.map(_ =>
-      Problem(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
+      Problem.Unclassified(
+        Legacy.Text(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
+      )
     )

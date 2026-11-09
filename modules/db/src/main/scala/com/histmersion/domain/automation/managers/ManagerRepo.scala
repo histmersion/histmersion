@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.automation.managers
-import com.histmersion.domain.Problem
+
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
@@ -615,7 +618,7 @@ object ManagerRepo:
     */
   def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: Problem)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
-                                   priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
+                                   priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = ${why.sentence},
                                    state = state - 'history', updated_at = now()
           WHERE id = $itemId AND status = 'done'""".update.run() > 0
 
@@ -636,7 +639,7 @@ object ManagerRepo:
   /** Every open item of a manager cancelled (a stop); returns how many. */
   def cancelOpen(managerId: ManagerRow.Id, why: Problem)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
+      sql"""UPDATE manager_items SET status = 'cancelled', outcome = ${why.sentence}, updated_at = now()
           WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()
     )
 

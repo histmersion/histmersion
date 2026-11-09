@@ -1,7 +1,6 @@
 package com.histmersion
 package api.basemap
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.BBox
 import com.histmersion.api.given
@@ -38,14 +37,14 @@ object Basemap:
     Either.cond(
       n.matches("[a-z0-9][a-z0-9-]{0,40}"),
       Focus.Name(n),
-      Problem(s"'$s' is not a focus region name (letters, digits and -)")
+      Problem.Unclassified(Legacy.Text(s"'$s' is not a focus region name (letters, digits and -)"))
     )
 
   def focusRegion(spec: Focus.Spec): Either[Problem, (Focus.Name, BBox)] =
     (spec).value.trim.split("\\s+", 2).toList match
       case n :: b :: Nil =>
         for name <- validFocusName(Focus.Name(n)); box <- validBBox(Focus.Bbox(b.replace(" ", ""))) yield (name, box)
-      case _ => Left(Problem(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\""))
+      case _ => Left(Problem.Unclassified(Legacy.Text(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\"")))
 
   def focusNameOf(b: BBox): Focus.Name =
     def f(d: Double) = java.math
@@ -82,11 +81,11 @@ object Basemap:
   def validBBox(s: Focus.Bbox): Either[Problem, BBox] =
     if (s).value.trim.equalsIgnoreCase("world") then Right(World)
     else
-      BBox.parse(s).toRight(Problem(s"'$s' is not minLon,minLat,maxLon,maxLat")).flatMap { b =>
+      BBox.parse(s).toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not minLon,minLat,maxLon,maxLat"))).flatMap { b =>
         if (b.minLon).value >= (b.maxLon).value || (b.minLat).value >= (b.maxLat).value then
-          Left(Problem(s"'$s': west must be < east and south < north"))
+          Left(Problem.Unclassified(Legacy.Text(s"'$s': west must be < east and south < north")))
         else if (b.minLon).value < -180 || (b.maxLon).value > 180 || (b.minLat).value < -90 || (b.maxLat).value > 90
-        then Left(Problem(s"'$s' is outside the world"))
+        then Left(Problem.Unclassified(Legacy.Text(s"'$s' is outside the world")))
         else Right(b)
       }
 
@@ -123,11 +122,14 @@ object Basemap:
     }
     val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
     val mixed = rules.filter(r => r.drop.nonEmpty && r.spare.nonEmpty).map(_.layer)
-    if dup.nonEmpty then Left(Problem(s"basemap.vector.drop names ${dup.mkString(", ")} twice"))
+    if dup.nonEmpty then
+      Left(Problem.Unclassified(Legacy.Text(s"basemap.vector.drop names ${dup.mkString(", ")} twice")))
     else if mixed.nonEmpty then
       Left(
-        Problem(
-          s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other"
+          )
         )
       )
     else Right(rules)
@@ -185,7 +187,7 @@ object Basemap:
           .groupMapReduce(_._1)(_._2)(_.merge(_))
       ))
       .left
-      .map(refactorError => Problem(refactorError)))
+      .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
       .map(refactorValue6 =>
         (refactorValue6).iterator.map { case (refactorKey, refactorItem) =>
           (Layer.Wire(refactorKey), refactorItem)
@@ -331,7 +333,11 @@ object Basemap:
         case other      =>
           parse(Wire(other))
             .map(List(_))
-            .toRight(Problem(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)"))
+            .toRight(
+              Problem.Unclassified(
+                Legacy.Text(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
+              )
+            )
 
   final case class LayerInfo(
       layer: LayerInfo.Layer,

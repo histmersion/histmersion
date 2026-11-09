@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Plural
@@ -109,13 +110,15 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _ <- Either.cond(
         !guiRunning,
         (),
-        Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+        Problem.Unclassified(
+          Legacy.Text("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+        )
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), Problem(s"no such file: $file"))
+      _ <- Either.cond(Files.isRegularFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
       out <- shell.run(addCmd(file, meta))
       id <- Calibre
         .parseAddedId(out)
-        .toRight(Problem(s"calibredb add did not report a new id: ${out.trim.take(200)}"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"calibredb add did not report a new id: ${out.trim.take(200)}")))
       _ <- setMetadata(id, meta)
     yield id
 
@@ -131,7 +134,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     for
       _ <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      cur <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
+      cur <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
       changes <- Calibre.updatePlan(meta, cur)
       _ <- write(id, changes)
     yield changes
@@ -154,7 +157,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
             .setTo(
               write(e.calibreId, cs)
                 .fold(
-                  p => UpdateOutcome.Failed(cs, Problem(p.value)),
+                  p => UpdateOutcome.Failed(cs, p),
                   _ => UpdateOutcome.Applied(cs)
                 )
             )
@@ -167,7 +170,9 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb.value, libArgs, id, changes)).map(_ => ())
 
   private val GuiRunning =
-    Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+    Problem.Unclassified(
+      Legacy.Text("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+    )
 
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]] (`enrich-calibre` applies
     * approved fixes with it). Same guards as every other write.
@@ -180,7 +185,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         (),
         GuiRunning
       )
-      _ <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
+      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
       _ <- shell.run(cmd)
     yield ()
 
@@ -195,8 +200,8 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         (),
         GuiRunning
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), Problem(s"no such file: $file"))
-      _ <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
+      _ <- Either.cond(Files.isRegularFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
+      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb.value, libArgs, id, file))
     yield fmt
 
@@ -218,7 +223,11 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     else
       val cmd = List(cfg.calibredb.value, "set_metadata") ++ libArgs ++ List(id.toString) ++
         fields.flatMap(f => List("--field", f))
-      shell.run(cmd).map(_ => ()).left.map(e => Problem(s"added as $id but metadata was not set: $e"))
+      shell
+        .run(cmd)
+        .map(_ => ())
+        .left
+        .map(e => Problem.Unclassified(Legacy.Text(s"added as $id but metadata was not set: ${e.sentence}")))
 
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 object Calibre:
@@ -242,9 +251,11 @@ object Calibre:
     Either.cond(
       missing.isEmpty,
       (),
-      Problem(
-        s"empty or Unknown ${missing.mkString(" and ")} — fix the metadata first; " +
-          "an untitled / Unknown-Author entry is unfindable and must not be created"
+      Problem.Unclassified(
+        Legacy.Text(
+          s"empty or Unknown ${missing.mkString(" and ")} — fix the metadata first; " +
+            "an untitled / Unknown-Author entry is unfindable and must not be created"
+        )
       )
     )
 
@@ -298,10 +309,12 @@ object Calibre:
       case Some(linked) =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(
-          Problem(
-            s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
-              s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
-              "to import into that record on purpose"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
+                s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
+                "to import into that record on purpose"
+            )
           )
         )
 
@@ -320,7 +333,7 @@ object Calibre:
     Either.cond(
       ReplaceableFormats.contains(Book.Format(ext)),
       Book.Format(ext),
-      Problem(s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file")
+      Problem.Unclassified(Legacy.Text(s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file"))
     )
 
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
@@ -496,7 +509,7 @@ object Calibre:
             case None    => UpdateOutcome.Missing
             case Some(b) =>
               updatePlan(rs.head.meta, b).fold(
-                p => UpdateOutcome.Refused(Problem(p.value)),
+                p => UpdateOutcome.Refused(p),
                 cs => if cs.isEmpty then UpdateOutcome.UpToDate else UpdateOutcome.Change(cs)
               )
       UpdateEntry(id, keys.map(UpdateEntry.Citekeys(_)), outcome)
@@ -509,7 +522,7 @@ object Calibre:
       e.outcome match
         case UpdateOutcome.Change(cs)      => (e, cs, "")
         case UpdateOutcome.Applied(cs)     => (e, cs, "written")
-        case UpdateOutcome.Failed(cs, why) => (e, cs, s"FAILED: $why")
+        case UpdateOutcome.Failed(cs, why) => (e, cs, s"FAILED: ${why.sentence}")
     }
     val rows = changing.flatMap { (e, cs, note) =>
       cs.map(c =>
@@ -522,7 +535,7 @@ object Calibre:
           s"- ${e.calibreId}: linked from ${e.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
         case UpdateOutcome.Missing =>
           s"- ${e.calibreId}: no such Calibre entry (${e.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
-        case UpdateOutcome.Refused(why) => s"- ${e.calibreId} (${e.citekeys.mkString(", ")}): $why"
+        case UpdateOutcome.Refused(why) => s"- ${e.calibreId} (${e.citekeys.mkString(", ")}): ${why.sentence}"
     }
     val upToDate = entries.count(_.outcome == UpdateOutcome.UpToDate)
     val head =
@@ -557,18 +570,28 @@ object Calibre:
     val unknown = fields.map(_.name).filterNot(SettableFields.contains)
     def value(k: String) = fields.collectFirst { case f if f.name.value == k => f.value.value }
     for
-      _ <- Either.cond(fields.nonEmpty, (), Problem("nothing to set — pass --field <name>:<value>"))
+      _ <- Either.cond(
+        fields.nonEmpty,
+        (),
+        Problem.Unclassified(Legacy.Text("nothing to set — pass --field <name>:<value>"))
+      )
       _ <- Either.cond(
         unknown.isEmpty,
         (),
-        Problem(s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
+        Problem.Unclassified(
+          Legacy.Text(s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
+        )
       )
       _ <- value("title").fold(Right(()))(t =>
-        Either.cond(!isBlank(t), (), Problem("refusing a blank or Unknown title"))
+        Either.cond(!isBlank(t), (), Problem.Unclassified(Legacy.Text("refusing a blank or Unknown title")))
       )
       _ <- value("authors").fold(Right(()))(a =>
         Either
-          .cond(a.split("&").map(_.trim).forall(x => !isBlank(x)), (), Problem("refusing a blank or Unknown author"))
+          .cond(
+            a.split("&").map(_.trim).forall(x => !isBlank(x)),
+            (),
+            Problem.Unclassified(Legacy.Text("refusing a blank or Unknown author"))
+          )
       )
     yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
       fields.flatMap(f => List("--field", s"${f.name}:${f.value}"))
@@ -590,7 +613,7 @@ object Calibre:
       io.circe.parser
         .parse(out)
         .left
-        .map(e => Problem(s"calibredb returned unparseable JSON: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: ${e.getMessage}")))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.hcursor
           c.downField("id").as[Int].toOption.map { id =>
@@ -623,7 +646,7 @@ object Calibre:
       io.circe.parser
         .parse(out)
         .left
-        .map(e => Problem(s"sqlite3 returned unparseable JSON: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: ${e.getMessage}")))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.hcursor
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
@@ -1146,7 +1169,7 @@ object Calibre:
           e.citekeys.map(k => Citekeys(k.value)),
           State(state),
           changes.map(ch => Change(Change.Field(ch.field.name.value), ch.from, ch.to)),
-          reason.map(r => Problem(r.value))
+          reason
         )
       def of(r: CollectionUpdateRow): UpdateRow =
         UpdateRow(

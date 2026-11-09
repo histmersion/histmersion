@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.places.ExternalIds
@@ -74,7 +76,7 @@ class MediaPortalsSuite extends munit.FunSuite:
       Some(MediaRecord.ImageUrl("i")),
       None,
       None,
-      Left(Problem("x")),
+      Left(Problem.Unclassified(Legacy.Text("x"))),
       geo,
       period,
       ids
@@ -107,23 +109,33 @@ class MediaPortalsSuite extends munit.FunSuite:
     )
     val finer = gp("context", "Lion Gate") :: geo
     assertEquals(
-      MediaMatch.withIds(
-        rec(List(ext("pleiades", "697725")), finer),
-        petra,
-        idsOnMap,
-        namesOnMap,
-        Set(MediaRecord.Geography.Field("context"))
-      ),
+      MediaMatch
+        .withIds(
+          rec(List(ext("pleiades", "697725")), finer),
+          petra,
+          idsOnMap,
+          namesOnMap,
+          Set(MediaRecord.Geography.Field("context"))
+        )
+        .left
+        .map(_.sentence),
       Left("its context names another place on the map")
     )
     assertEquals(
-      MediaMatch.withIds(
-        rec(List(ext("pleiades", "697725")), geo, DeepTime.span(DeepTime.SignedYear(800L), DeepTime.SignedYear(900L))),
-        petra,
-        idsOnMap,
-        namesOnMap,
-        Set(MediaRecord.Geography.Field("context"))
-      ),
+      MediaMatch
+        .withIds(
+          rec(
+            List(ext("pleiades", "697725")),
+            geo,
+            DeepTime.span(DeepTime.SignedYear(800L), DeepTime.SignedYear(900L))
+          ),
+          petra,
+          idsOnMap,
+          namesOnMap,
+          Set(MediaRecord.Geography.Field("context"))
+        )
+        .left
+        .map(_.sentence),
       Left("its dates do not overlap the place's")
     )
 
@@ -138,23 +150,29 @@ class MediaPortalsSuite extends munit.FunSuite:
     )
     val geo = List(gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(
-        rec(List(ext("pleiades", "697725")), geo),
-        jordan,
-        idsOnMap,
-        namesOnMap,
-        Set(MediaRecord.Geography.Field("context"))
-      ),
+      MediaMatch
+        .withIds(
+          rec(List(ext("pleiades", "697725")), geo),
+          jordan,
+          idsOnMap,
+          namesOnMap,
+          Set(MediaRecord.Geography.Field("context"))
+        )
+        .left
+        .map(_.sentence),
       Left("its place id names another place on the map")
     )
     assertEquals(
-      MediaMatch.withIds(
-        rec(List(ext("pleiades", "1")), geo),
-        petra,
-        idsOnMap,
-        namesOnMap,
-        Set(MediaRecord.Geography.Field("context"))
-      ),
+      MediaMatch
+        .withIds(
+          rec(List(ext("pleiades", "1")), geo),
+          petra,
+          idsOnMap,
+          namesOnMap,
+          Set(MediaRecord.Geography.Field("context"))
+        )
+        .left
+        .map(_.sentence),
       Left("its place id is ambiguous on the map")
     )
 
@@ -173,7 +191,10 @@ class MediaPortalsSuite extends munit.FunSuite:
       Right("context = Petra; 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
-      MediaMatch.withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set(MediaRecord.Geography.Field("context"))),
+      MediaMatch
+        .withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set(MediaRecord.Geography.Field("context")))
+        .left
+        .map(_.sentence),
       Left("no dates on the record")
     )
 
@@ -195,6 +216,9 @@ class MediaPortalsSuite extends munit.FunSuite:
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
-      MediaMatch.withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set(MediaRecord.Geography.Field("context"))),
+      MediaMatch
+        .withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set(MediaRecord.Geography.Field("context")))
+        .left
+        .map(_.sentence),
       Left("its context name is ambiguous on the map")
     )

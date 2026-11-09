@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Wording
@@ -255,7 +256,7 @@ object QueueView:
   final case class AddDraft(
       text: AddDraft.Text = AddDraft.Text(""),
       topic: AddDraft.Topic = AddDraft.Topic(""),
-      reason: Problem = Problem("")
+      reason: Problem = Problem.Unclassified(Legacy.Text(""))
   )
 
   object AddDraft:
@@ -270,13 +271,16 @@ object QueueView:
     * no topic joins today's date, server-side); the worklog takes no reason.
     */
   def validateAdd(sp: Spec, d: AddDraft): Either[Problem, Queue.QueueAdd] =
-    if d.text.value.trim.isEmpty then Left(Problem(EmptyText))
+    if d.text.value.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(EmptyText)))
     else
       Right(
         Queue.QueueAdd(
           text = Queue.QueueItem.Text(d.text.value.strip),
           topic = Some(d.topic.value.trim).filter(_.nonEmpty).map(Queue.QueueItem.Topic(_)),
-          reason = Some(d.reason.value.trim).filter(_ => sp.reasons).filter(_.nonEmpty).map(Problem(_))
+          reason = Some(d.reason.sentence.trim)
+            .filter(_ => sp.reasons)
+            .filter(_.nonEmpty)
+            .map((text => Problem.Unclassified(Legacy.Text(text))))
         )
       )
 
@@ -288,7 +292,7 @@ object QueueView:
       text: Queue.QueueItem.Text,
       topic: Queue.QueueItem.Topic
   ): Either[Problem, Option[Queue.QueuePatch]] =
-    if text.value.trim.isEmpty then Left(Problem(EmptyText))
+    if text.value.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(EmptyText)))
     else
       val t = text.value.strip
       val tp = topic.value.trim
@@ -530,7 +534,7 @@ object QueueView:
     val error = Var(Option.empty[String])
     def submit(): Unit =
       validateAdd(sp, draft.now()) match
-        case Left(m)   => error.set(Some(m.value))
+        case Left(m)   => error.set(Some(m.sentence))
         case Right(in) =>
           error.set(None)
           // the topic stays: the next item usually goes under the same one
@@ -580,8 +584,10 @@ object QueueView:
               cls := "field",
               placeholder := "optional — why it is wanted",
               controlled(
-                value <-- draft.signal.map(_.reason.value),
-                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(Problem(v))))
+                value <-- draft.signal.map(_.reason.sentence),
+                onInput.mapToValue --> (v =>
+                  draft.update(_.modify(_.reason).setTo(Problem.Unclassified(Legacy.Text(v))))
+                )
               )
             )
           )
@@ -667,8 +673,8 @@ object QueueView:
           case _            => div(cls := "item-text", segments(UiLabels.Text(item.text.value)).map(render))
         },
         item.reason
-          .filter(_.value.trim.nonEmpty)
-          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(r.value)).map(render))),
+          .filter(_.sentence.trim.nonEmpty)
+          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(r.sentence)).map(render))),
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.value.take(10)}")),
         check
           .filter(_ => !done)
@@ -676,7 +682,7 @@ object QueueView:
             div(
               cls := "item-reason muted",
               title := s"checked ${c.checks} time(s)",
-              segments(UiLabels.Text(c.reason.value)).map(render)
+              segments(UiLabels.Text(c.reason.sentence)).map(render)
             )
           ),
         Option.when(goals.nonEmpty)(
@@ -817,7 +823,7 @@ object QueueView:
     val error = Var(Option.empty[String])
     def save(): Unit =
       editPatch(item, text.now(), topic.now()) match
-        case Left(m)        => error.set(Some(m.value))
+        case Left(m)        => error.set(Some(m.sentence))
         case Right(None)    => close()
         case Right(Some(p)) => ops.edit(item, p, close)
     div(

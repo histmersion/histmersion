@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
@@ -27,8 +28,10 @@ object HotPlan:
     val dup = names.diff(names.distinct).distinct
     val known = names.toSet
     val missing = nodes.flatMap(n => depNames(n).filterNot(known).map(d => s"${n.name} → $d"))
-    if dup.nonEmpty then Left(Problem(s"hot graph: node name used twice: ${dup.mkString(", ")}"))
-    else if missing.nonEmpty then Left(Problem(s"hot graph: dependency on no node: ${missing.mkString(", ")}"))
+    if dup.nonEmpty then
+      Left(Problem.Unclassified(Legacy.Text(s"hot graph: node name used twice: ${dup.mkString(", ")}")))
+    else if missing.nonEmpty then
+      Left(Problem.Unclassified(Legacy.Text(s"hot graph: dependency on no node: ${missing.mkString(", ")}")))
     else
       val byName = nodes.map(n => n.name -> n).toMap
       // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
@@ -39,7 +42,10 @@ object HotPlan:
           val doneSet = done.toSet
           left.find(depNames(_).forall(doneSet)) match
             case Some(n) => go(left.filterNot(_.name == n.name), done :+ n.name)
-            case None    => Left(Problem(s"hot graph: dependency cycle ${cycle(left, byName).mkString(" → ")}"))
+            case None    =>
+              Left(
+                Problem.Unclassified(Legacy.Text(s"hot graph: dependency cycle ${cycle(left, byName).mkString(" → ")}"))
+              )
       go(nodes, Vector.empty)
 
   /** One cycle among `left` (every node of which waits on another of them), as a closed path. */

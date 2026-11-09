@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import cats.data.Validated
@@ -61,9 +62,10 @@ object CalibreCmd:
   object Unlinked extends Newtype[Boolean, Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
-  private def fail(msg: String): Cli.Error = Cli.Error(Problem(msg), exitCode = ExitCode.Refused)
+  private def fail(msg: String): Cli.Error =
+    Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = ExitCode.Refused)
 
-  private def failProblem(p: Problem): Cli.Error = fail(p.value)
+  private def failProblem(p: Problem): Cli.Error = fail(p.sentence)
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
   private def server(c: Client): Option[CollectionsClient] =
@@ -236,7 +238,7 @@ object CalibreCmd:
         res.jobError match
           case Some(e) =>
             val code = if res.jobErrorCode.contains(CollectionsApi.Usage) then ExitCode.Usage else ExitCode.Refused
-            Left(Cli.Error(Problem(e.toString), exitCode = code))
+            Left(Cli.Error(e, exitCode = code))
           case None =>
             res.job.fold(Right(())) { a =>
               Cli.out.println(
@@ -265,7 +267,7 @@ object CalibreCmd:
             Queue
               .fulfillable(i, l.items.find(_.id == i))
               .left
-              .map(e => Cli.Error(Problem(e.value), exitCode = ExitCode.Usage))
+              .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
               .map(_ => ())
           )
       )
@@ -274,7 +276,7 @@ object CalibreCmd:
         .left
         .map(failProblem)
         .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
-      _ <- Calibre.guard(book.title, book.authors).left.map(e => fail(s"Calibre id $id has $e"))
+      _ <- Calibre.guard(book.title, book.authors).left.map(e => fail(s"Calibre id $id has ${e.sentence}"))
       file <- book
         .pick(format)
         .toRight(
@@ -291,7 +293,7 @@ object CalibreCmd:
       target <- Calibre
         .importTarget(ck, id, ImportTarget.Explicit(citekey.isDefined), existing)
         .left
-        .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
+        .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
       res <- upsert(c, ck, book, target)
       _ =
         if json.value then Cli.out.println(Output.json(res))
@@ -339,7 +341,7 @@ object CalibreCmd:
         ) match
           case Right(r) if r.covers.value > 0 => Cli.out.println(s"Cover: from Open Library (ISBN $isbn)")
           case _ => Cli.out.println(s"Cover: none (no cover file in Calibre, none at Open Library)")
-      case MediaCovers.Outcome.Skipped(why) => Cli.out.println(s"Cover: none ($why)")
+      case MediaCovers.Outcome.Skipped(why) => Cli.out.println(s"Cover: none (${why.sentence})")
       case MediaCovers.Outcome.Failed(why)  => Cli.err.println(s"warning: cover not stored — $why")
 
   /** Create the source, or enrich it if the citekey already exists — a re-import must never wipe the findings and notes
@@ -519,7 +521,10 @@ object CalibreCmd:
         got <- c
           .original(ck, raw.toFile)
           .left
-          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Problem(e.message.value + hint)))
+          .map(e =>
+            if hint.isEmpty then e
+            else e.modify(_.message).setTo(Problem.Unclassified(Legacy.Text(e.message.sentence + hint)))
+          )
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(got._2.value))
           .toRight(fail(s"the server did not say what format '$ck' is"))
@@ -786,7 +791,7 @@ object CalibreCmd:
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
             case (ck, Right((id, _))) => Cli.out.println(s"  + $ck → Calibre id $id")
-            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.message}")
+            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.message.sentence}")
           }
           val failed = results.count(_._2.isLeft)
           Cli.out.println(s"pushed ${results.size - failed} source(s), $failed failed$note")
@@ -831,7 +836,7 @@ object CalibreCmd:
           r.pushes.foreach(p =>
             p.id match
               case Some(id) => Cli.out.println(s"  + ${p.citekey} → Calibre id $id")
-              case None     => Cli.err.println(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")
+              case None     => Cli.err.println(s"  ! ${p.citekey}: ${p.error.map(_.sentence).getOrElse("")}")
           )
           val failed = r.pushes.count(_.id.isEmpty)
           Cli.out.println(s"pushed ${r.pushes.size - failed} source(s), $failed failed$note")
@@ -854,9 +859,11 @@ object CalibreCmd:
       else
         Left(
           Cli.Error(
-            Problem(
-              s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.citekey).mkString(", ")}" +
-                (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.citekey).mkString(", ")}" +
+                  (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
+              )
             ),
             exitCode = ExitCode.Usage
           )
@@ -901,9 +908,11 @@ object CalibreCmd:
         // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
         Left(
           Cli.Error(
-            Problem(
-              s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.gap.citekey).mkString(", ")}" +
-                (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.gap.citekey).mkString(", ")}" +
+                  (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
+              )
             ),
             exitCode = ExitCode.Usage
           )

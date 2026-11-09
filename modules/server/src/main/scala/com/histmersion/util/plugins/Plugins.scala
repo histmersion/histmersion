@@ -1,9 +1,9 @@
 package com.histmersion
 package util.plugins
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Header
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
@@ -86,7 +86,7 @@ object Plugins:
       legacy.user,
       legacy.env,
       HostServices(http, loaded.env, log, quotaOf(quota), files = new DiskLocalFiles, processes = new SystemProcesses),
-      errors ++ legacy.warnings.map(w => Problem(w.value)),
+      errors ++ legacy.warnings.map(w => Problem.Unclassified(Legacy.Text(w.value))),
       carry,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)
@@ -94,7 +94,7 @@ object Plugins:
     g.modify(_.report.set)
       .setTo(set)
       .modify(_.report.warnings)
-      .using(_ ++ setError.map(e => PluginsReport.Warnings(e.value)))
+      .using(_ ++ setError.map(e => PluginsReport.Warnings(e.sentence)))
 
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
@@ -222,7 +222,7 @@ object Plugins:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem("offline")))
+              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
           },
         env
       ),

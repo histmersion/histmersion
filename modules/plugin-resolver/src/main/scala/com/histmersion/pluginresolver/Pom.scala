@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import org.w3c.dom.{Element, Node}
 import org.xml.sax.helpers.DefaultHandler
 
@@ -35,11 +36,13 @@ object Pom:
       parent = child(project, ElementName("parent"))
       group <- text(project, ElementName("groupId"))
         .orElse(parent.flatMap(text(_, ElementName("groupId"))))
-        .toRight(Problem("the POM names no groupId"))
-      artifact <- text(project, ElementName("artifactId")).toRight(Problem("the POM names no artifactId"))
+        .toRight(Problem.Unclassified(Legacy.Text("the POM names no groupId")))
+      artifact <- text(project, ElementName("artifactId")).toRight(
+        Problem.Unclassified(Legacy.Text("the POM names no artifactId"))
+      )
       version <- text(project, ElementName("version"))
         .orElse(parent.flatMap(text(_, ElementName("version"))))
-        .toRight(Problem("the POM names no version"))
+        .toRight(Problem.Unclassified(Legacy.Text("the POM names no version")))
       coords <- ModuleCoordinates.parse(ModuleCoordinates.Text(s"$group:$artifact:$version"))
     yield coords
 
@@ -79,8 +82,8 @@ object Pom:
       builder.setErrorHandler(new DefaultHandler)
       builder.parse(ByteArrayInputStream((xml).value.getBytes(UTF_8))).getDocumentElement
     }.toEither.left
-      .map(e => Problem(s"not a POM: ${e.getMessage}"))
-      .filterOrElse(_.getLocalName == "project", Problem("not a POM: no <project>"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"not a POM: ${e.getMessage}")))
+      .filterOrElse(_.getLocalName == "project", Problem.Unclassified(Legacy.Text("not a POM: no <project>")))
 
   private def child(e: Element, name: ElementName): Option[Element] =
     val nodes = e.getChildNodes

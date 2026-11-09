@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import io.github.iltotore.iron.constraint.any.Pure
@@ -109,11 +110,12 @@ object HttpPolicy:
     if Throttled(code) || slowDown.isDefined then
       val why = slowDown.fold(s"HTTP $code")(_.value)
       val wait = retryAfterMs(retryAfter, now).getOrElse(backoffMs(attempt)).value.max(0L)
-      if attempt.value >= maxRetries.value then Step.GiveUp(Problem(s"$why after $maxRetries retries"))
+      if attempt.value >= maxRetries.value then
+        Step.GiveUp(Problem.Unclassified(Legacy.Text(s"$why after $maxRetries retries")))
       else if wait > maxRetryAfterSeconds.value.toLong * 1000L then
-        Step.GiveUp(Problem(s"$why: asked to wait ${wait / 1000} s"))
-      else Step.Wait(Step.Wait.Ms(wait), Problem(why))
-    else if code.value >= 400 then Step.GiveUp(Problem(s"HTTP $code"))
+        Step.GiveUp(Problem.Unclassified(Legacy.Text(s"$why: asked to wait ${wait / 1000} s")))
+      else Step.Wait(Step.Wait.Ms(wait), Problem.Unclassified(Legacy.Text(why)))
+    else if code.value >= 400 then Step.GiveUp(Problem.Unclassified(Legacy.Text(s"HTTP $code")))
     else Step.Accept
 
   // ── trust (#1568) ────────────────────────────────────────────────────────────────────────────────

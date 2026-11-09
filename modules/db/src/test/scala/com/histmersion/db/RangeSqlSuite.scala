@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -81,7 +82,7 @@ class RangeSqlSuite extends DbSuite:
       "goal 'g'"
     )
     assert(
-      r.exists(_.left.exists(e => e.message.value.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
+      r.exists(_.left.exists(e => e.message.sentence.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
       r.toString
     )
 

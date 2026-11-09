@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.automation.workflows
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.agents.RunCtx
 
 import com.histmersion.api.automation.Queue.QueueAdd
@@ -53,6 +53,6 @@ private[histmersion] object Pipelines:
       workLists
         .add(WorkListControllers.ListName("log"), entry)
         .left
-        .map(e => e.message.transformInto[Problem])
+        .map(e => e.message)
         .map(_ => line)
     )(Right(line))

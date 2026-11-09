@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.workflows.Pipelines
 
 import chimp.server.*
@@ -97,7 +98,7 @@ object AgentsTools:
               ) match
                 case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
                 case Left(e)  => McpOut.error(e)
-            case (errs, _) => McpOut.text(McpOut.refusal(errs.mkString("; ")))
+            case (errs, _) => McpOut.text(McpOut.refusal(errs.map(_.sentence).mkString("; ")))
         }
 
     val status =
@@ -242,7 +243,8 @@ object AgentsTools:
             kind
               .toRight(
                 Api.Error(
-                  Problem(s"unknown link kind '${in.kind}' (source, article, query, queue-item)")
+                  Problem
+                    .Unclassified(Legacy.Text(s"unknown link kind '${in.kind}' (source, article, query, queue-item)"))
                 )
               )
               .flatMap { k =>
@@ -283,7 +285,9 @@ object AgentsTools:
                 .map(_ => AgentsMarkdown.schedules(a.schedules))
             case (Some(g), Some(k)) =>
               in.cron
-                .toRight(Api.Error(Problem("give `cron` to set a schedule (or `remove: true`)")))
+                .toRight(
+                  Api.Error(Problem.Unclassified(Legacy.Text("give `cron` to set a schedule (or `remove: true`)")))
+                )
                 .flatMap(c =>
                   AgentsControllers
                     .goalSlug(g)
@@ -302,7 +306,11 @@ object AgentsTools:
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
             case _            =>
-              Left(Api.Error(Problem("give both `goal` and `kind`, or neither to list the schedules")))
+              Left(
+                Api.Error(
+                  Problem.Unclassified(Legacy.Text("give both `goal` and `kind`, or neither to list the schedules"))
+                )
+              )
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -346,7 +354,7 @@ object AgentsTools:
                 .map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
               if in.hold.isEmpty && in.floors.isEmpty then
-                Left(Api.Error(Problem("with `pool`, give `hold` and/or `floors`")))
+                Left(Api.Error(Problem.Unclassified(Legacy.Text("with `pool`, give `hold` and/or `floors`"))))
               else
                 a.setPool(
                   PlanQuota.PoolIdText(in.pool.get.trim),
@@ -378,9 +386,14 @@ object AgentsTools:
                       ModelChains.Allowance.ReservePct(in.reservePct)
                     )
                   ).map(AgentsMarkdown.allowance)
-                case (errs, _) => Left(Api.Error(Problem(errs.mkString("; "))))
+                case (errs, _) =>
+                  Left(Api.Error(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; ")))))
             case _ =>
-              Left(Api.Error(Problem("give `role` (with `models`) or `target` (with `limits`), not both")))
+              Left(
+                Api.Error(
+                  Problem.Unclassified(Legacy.Text("give `role` (with `models`) or `target` (with `limits`), not both"))
+                )
+              )
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -425,7 +438,7 @@ object AgentsTools:
           def target = in.target
             .map(_.trim)
             .filter(_.nonEmpty)
-            .toRight(Api.Error(Problem(s"`${in.action}` needs `target`")))
+            .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"`${in.action}` needs `target`"))))
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"  => Right(ManagersMarkdown.list(m.list))
             case "show"  => m.get(id).map(ManagersMarkdown.detail)
@@ -473,7 +486,7 @@ object AgentsTools:
                       Managers.ItemPatch.Action("hold"),
                       until = in.until.map(Managers.ItemPatch.Until(_)),
                       untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
-                      reason = in.text.map(Problem(_))
+                      reason = in.text.map((text => Problem.Unclassified(Legacy.Text(text))))
                     )
                   )
                 )
@@ -482,7 +495,7 @@ object AgentsTools:
               in.text
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem("`hint` needs `text`")))
+                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`hint` needs `text`"))))
                 .flatMap(t =>
                   m.addHint(
                     id,
@@ -515,7 +528,7 @@ object AgentsTools:
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem("`mode` needs `mode`: working, finish or pause")))
+                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`mode` needs `mode`: working, finish or pause"))))
                 .flatMap(md =>
                   m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp"))))
                 )
@@ -535,9 +548,11 @@ object AgentsTools:
             case other =>
               Left(
                 Api.Error(
-                  Problem(
-                    s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
-                      "drain, repair-acquire, focus)"
+                  Problem.Unclassified(
+                    Legacy.Text(
+                      s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
+                        "drain, repair-acquire, focus)"
+                    )
                   )
                 )
               )
@@ -576,14 +591,14 @@ object AgentsTools:
               in.item
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem("`why` needs `item`")))
+                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`why` needs `item`"))))
                 .flatMap(i => m.schedulerWhy(Managers.ManagerItem.Ref(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem("`strategy` needs `strategy`")))
+                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`strategy` needs `strategy`"))))
                 .flatMap(n =>
                   m.setScheduler(
                     AgentScheduler.SchedulerSet(
@@ -595,7 +610,11 @@ object AgentsTools:
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(AgentAutopilotConfig.StallDays(_)))))
             case other    =>
-              Left(Api.Error(Problem(s"unknown action '$other' (status, queue, why, strategy, stalls)")))
+              Left(
+                Api.Error(
+                  Problem.Unclassified(Legacy.Text(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
+                )
+              )
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 

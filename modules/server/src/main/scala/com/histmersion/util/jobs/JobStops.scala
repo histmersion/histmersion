@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -30,7 +30,9 @@ final class JobStops:
 
   /** Resume paused job `id` (its way to go on is used once). */
   def resume(id: Job.Id): Either[Problem, Unit] =
-    Option(resumers.remove(id)).toRight(Problem(s"job $id cannot be resumed by this server")).flatMap(_())
+    Option(resumers.remove(id))
+      .toRight(Problem.Unclassified(Legacy.Text(s"job $id cannot be resumed by this server")))
+      .flatMap(_())
 
   /** Paused job `id` was cancelled: it will not go on. */
   def forget(id: Job.Id): Unit =

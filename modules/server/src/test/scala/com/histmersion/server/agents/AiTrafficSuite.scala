@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.*
@@ -166,7 +167,7 @@ class AiTrafficSuite extends munit.FunSuite:
   // ── one scenario ───────────────────────────────────────────────────────────────────────────────
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
 
   private def providers(port: Int, extra: String = "", key: Boolean = true): String =
     val k = if key then "api-key = \"k-test\"\n" else ""
@@ -199,16 +200,16 @@ class AiTrafficSuite extends munit.FunSuite:
     )
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match
-      case Left(why)     => sb ++= s"client: refused: $why\n"
+      case Left(why)     => sb ++= s"client: refused: ${why.sentence}\n"
       case Right(client) =>
         sb ++= s"client: ${client.model.wire}\n"
         val outcome = AgentsControllers.call(client.model)(client.run(c))
         sb ++= up.requests
         outcome match
           case Left(Left(limit)) => sb ++= s"engine: plan limit: ${limit.getMessage} (until ${limit.until})\n"
-          case Left(Right(e))    => sb ++= s"engine: provider error: ${e.message}\n"
+          case Left(Right(e))    => sb ++= s"engine: provider error: ${e.message.sentence}\n"
           case Right(res)        =>
-            sb ++= s"answer: ${res.finalAnswer.fold(af => s"failed: ${Engine.answerProblem(af, res.finishReason)}", a => io.circe.Encoder[A].apply(a).noSpaces)}\n"
+            sb ++= s"answer: ${res.finalAnswer.fold(af => s"failed: ${Engine.answerProblem(af, res.finishReason).sentence}", a => io.circe.Encoder[A].apply(a).noSpaces)}\n"
             sb ++= s"raw answer: ${LlmClient.rawAnswer(res.finalAnswer)}\n"
             sb ++= s"finish: ${LlmClient.finish(res.finishReason)}; iterations: ${res.iterations}\n"
             res.toolCalls.foreach(t =>

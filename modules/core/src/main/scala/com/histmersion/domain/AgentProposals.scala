@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
@@ -86,7 +88,8 @@ object AgentProposals:
   def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
       case Approval.Kind.StatusChange =>
-        if p.status.isEmpty || p.status == current then Route.Skip(Problem(s"already ${current.fold("?")(_.wire)}"))
+        if p.status.isEmpty || p.status == current then
+          Route.Skip(Problem.Unclassified(Legacy.Text(s"already ${current.fold("?")(_.wire)}")))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
@@ -94,7 +97,7 @@ object AgentProposals:
         else Route.Ask
       case Approval.Kind.Edge =>
         if edgeMode == Approval.Mode.Auto then Route.Apply else Route.Ask
-      case k => Route.Skip(Problem(s"${k.wire} is not a source change"))
+      case k => Route.Skip(Problem.Unclassified(Legacy.Text(s"${k.wire} is not a source change")))
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 
@@ -158,28 +161,33 @@ object AgentProposals:
     val label = s"proposal for ${if raw.isEmpty then "?" else raw}"
     def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[Problem, Proposal.Quote] =
       val q = Proposal.Quote(a.quote.value.trim)
-      if q.value.isEmpty then Left(Problem(s"$label: no quote"))
+      if q.value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$label: no quote")))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
-      else Left(Problem(s"$label: the quote is not in the record of ${keys.mkString(" or ")}"))
+      else
+        Left(Problem.Unclassified(Legacy.Text(s"$label: the quote is not in the record of ${keys.mkString(" or ")}")))
     for
       ck <- com.histmersion.domain.library.Citekey
         .parse(raw)
         .toOption
         .filter(isCitekey)
-        .toRight(Problem(s"$label: '$raw' is not a citekey"))
-      _ <- Either.cond(a.evidence.value.trim.nonEmpty, (), Problem(s"$label: no evidence given"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"$label: '$raw' is not a citekey")))
+      _ <- Either.cond(
+        a.evidence.value.trim.nonEmpty,
+        (),
+        Problem.Unclassified(Legacy.Text(s"$label: no evidence given"))
+      )
       p <- a.kind.value.trim.toLowerCase match
         case "status" =>
           for
             st <- a.status
-              .toRight(Problem(s"$label: a status change names no status"))
+              .toRight(Problem.Unclassified(Legacy.Text(s"$label: a status change names no status")))
               .flatMap(AgentVerify.status)
               .left
-              .map(m => Problem(s"$label: $m"))
+              .map(m => Problem.Unclassified(Legacy.Text(s"$label: ${m.sentence}")))
             _ <- Either.cond(
               st != Source.Status.Unassessed,
               (),
-              Problem(s"$label: unassessed is not a change to propose")
+              Problem.Unclassified(Legacy.Text(s"$label: unassessed is not a change to propose"))
             )
             q <- quoted(List(ck))
           yield Proposal(
@@ -194,13 +202,17 @@ object AgentProposals:
             k <- a.edgeKind
               .flatMap(Edge.Kind.fromWire)
               .filter(EdgeKinds.contains)
-              .toRight(Problem(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}"))
+              .toRight(
+                Problem.Unclassified(
+                  Legacy.Text(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}")
+                )
+              )
             t <- a.target
               .map(_.value.trim)
               .flatMap(com.histmersion.domain.library.Citekey.parse(_).toOption)
               .filter(isCitekey)
-              .toRight(Problem(s"$label: the edge target is not a citekey"))
-            _ <- Either.cond(t != ck, (), Problem(s"$label: an edge from a source to itself"))
+              .toRight(Problem.Unclassified(Legacy.Text(s"$label: the edge target is not a citekey")))
+            _ <- Either.cond(t != ck, (), Problem.Unclassified(Legacy.Text(s"$label: an edge from a source to itself")))
             q <- quoted(List(ck, t))
           yield Proposal(
             Approval.Kind.Edge,
@@ -210,5 +222,5 @@ object AgentProposals:
             evidence = Proposal.Evidence(a.evidence.value.trim),
             quote = Some(q)
           )
-        case other => Left(Problem(s"$label: kind '$other' is neither status nor edge"))
+        case other => Left(Problem.Unclassified(Legacy.Text(s"$label: kind '$other' is neither status nor edge")))
     yield p

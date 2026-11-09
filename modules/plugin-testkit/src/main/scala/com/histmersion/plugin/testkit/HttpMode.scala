@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.testkit.internal.ProjectPaths
 import com.histmersion.pluginhost.HttpTransport
 
@@ -77,18 +77,20 @@ object HttpMode:
 
   private def choose(dir: Path, env: Map[String, String]): Either[Problem, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
-      case Some("live")                  => Right(Live)
-      case Some("record")                => Right(Record(dir))
-      case Some("replay")                => Right(Replay(dir))
-      case Some(other)                   => Left(Problem(s"$ModeVariable=$other: one of live, record, replay"))
+      case Some("live")   => Right(Live)
+      case Some("record") => Right(Record(dir))
+      case Some("replay") => Right(Replay(dir))
+      case Some(other) => Left(Problem.Unclassified(Legacy.Text(s"$ModeVariable=$other: one of live, record, replay")))
       case None if Recordings.exist(dir) => Right(Replay(dir))
       case None
           if env.get(LiveVariable).exists(v => Set("1", "true", "yes")(v.trim.toLowerCase(java.util.Locale.ROOT))) =>
         Right(Live)
       case None =>
         Left(
-          Problem(
-            s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
-              s"($ModeVariable=record to keep its answers for an offline replay)"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
+                s"($ModeVariable=record to keep its answers for an offline replay)"
+            )
           )
         )

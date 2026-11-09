@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -126,19 +127,23 @@ class CritiqueReasonsSuite extends DbSuite:
     )
     val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
     // the pair named the other way round is kept under the edge's direction; an explicit setter is kept
-    assert(patch(CritiqueReason(FrazerRef, BrownRef, Problem(" Cited for the\nrites only. "))).isRight)
+    assert(
+      patch(
+        CritiqueReason(FrazerRef, BrownRef, Problem.Unclassified(Legacy.Text(" Cited for the\nrites only. ")))
+      ).isRight
+    )
     assert(
       patch(
         CritiqueReason(
           SmithRef,
           FrazerRef,
-          Problem("x"),
+          Problem.Unclassified(Legacy.Text("x")),
           Some(Activity.Actor("skeptic (agent run abcd1234)"))
         )
       ).isRight
     )
     assertEquals(
-      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason, by)),
+      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason.sentence, by)),
       List(
         (Smith, Frazer, "x", Some("skeptic (agent run abcd1234)")),
         (Brown, Frazer, "Cited for the rites only.", Some("person"))
@@ -149,22 +154,26 @@ class CritiqueReasonsSuite extends DbSuite:
     assertEquals(h.research.articles.openCritiques(Slug), Some(0))
     // refused, nothing written: no edge, an unknown citekey, a reason too long — and the whole patch with them
     assert(
-      patch(CritiqueReason(LoneRef, FrazerRef, Problem("y"))).left
-        .exists(_.message.value.contains("no challenges/refutes/updates/superseded_by edge"))
+      patch(CritiqueReason(LoneRef, FrazerRef, Problem.Unclassified(Legacy.Text("y")))).left
+        .exists(_.message.sentence.contains("no challenges/refutes/updates/superseded_by edge"))
     )
     assert(
       patch(
-        CritiqueReason(com.histmersion.api.library.Citekey("zzcrit0000_ghost"), FrazerRef, Problem("y"))
-      ).left.exists(_.message.value.contains("is not a citekey"))
+        CritiqueReason(
+          com.histmersion.api.library.Citekey("zzcrit0000_ghost"),
+          FrazerRef,
+          Problem.Unclassified(Legacy.Text("y"))
+        )
+      ).left.exists(_.message.sentence.contains("is not a citekey"))
     )
-    assert(patch(CritiqueReason(BrownRef, FrazerRef, Problem("z" * 501))).isLeft)
+    assert(patch(CritiqueReason(BrownRef, FrazerRef, Problem.Unclassified(Legacy.Text("z" * 501)))).isLeft)
     assert(
       h.research.articles
         .patch(
           Slug,
           Article.Patch(
             title = Some(Article.Title("Changed")),
-            critiqueReasons = List(CritiqueReason(LoneRef, FrazerRef, Problem("y")))
+            critiqueReasons = List(CritiqueReason(LoneRef, FrazerRef, Problem.Unclassified(Legacy.Text("y"))))
           )
         )
         .isLeft
@@ -177,7 +186,7 @@ class CritiqueReasonsSuite extends DbSuite:
           Slug,
           Article.Patch(
             append = Some(Article.Patch.Append(s"More [[$Frazer]].")),
-            critiqueReasons = List(CritiqueReason(SmithRef, FrazerRef, Problem("")))
+            critiqueReasons = List(CritiqueReason(SmithRef, FrazerRef, Problem.Unclassified(Legacy.Text(""))))
           )
         )
         .isRight
@@ -187,14 +196,18 @@ class CritiqueReasonsSuite extends DbSuite:
 
   test("the reasons follow the article (rename, delete) and both sources (citekey rename, delete)"):
     seed()
-    assert(patch(CritiqueReason(BrownRef, FrazerRef, Problem("Cited for the rites only."))).isRight)
+    assert(
+      patch(CritiqueReason(BrownRef, FrazerRef, Problem.Unclassified(Legacy.Text("Cited for the rites only.")))).isRight
+    )
     // a citekey rename carries it; the old citekey still names the pair
     assert(
       h.library.sources.rename(Brown, Rename.Request(com.histmersion.api.library.Citekey("zzcrit1999_ritesb"))).isRight
     )
     assertEquals(stored.map(_._1), List("zzcrit1999_ritesb"))
-    assert(patch(CritiqueReason(BrownRef, FrazerRef, Problem("Renamed, still the same."))).isRight)
-    assertEquals(stored.map(r => (r._1, r._3)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
+    assert(
+      patch(CritiqueReason(BrownRef, FrazerRef, Problem.Unclassified(Legacy.Text("Renamed, still the same.")))).isRight
+    )
+    assertEquals(stored.map(r => (r._1, r._3.sentence)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
     // the article's rename carries it
     assert(h.research.articles.rename(Slug, LabelRename(LabelRename.To("zzcrit_bough2"))).isRight)
     assertEquals(ArticleFixtures.critiques(ds, com.histmersion.domain.research.Slug("zzcrit_bough2")).size, 1)
@@ -211,7 +224,8 @@ class CritiqueReasonsSuite extends DbSuite:
       h.research.articles
         .patch(
           com.histmersion.domain.research.Slug("zzcrit_bough2"),
-          Article.Patch(critiqueReasons = List(CritiqueReason(SmithRef, FrazerRef, Problem("x"))))
+          Article
+            .Patch(critiqueReasons = List(CritiqueReason(SmithRef, FrazerRef, Problem.Unclassified(Legacy.Text("x")))))
         )
         .isRight
     )

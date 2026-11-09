@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -87,9 +87,9 @@ object Smithsonian:
       case None if resp.long("rowCount").isDefined => Right(Nil)
       case None                                    =>
         val gov = c.downField("error")
-        Left(Problem(List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
+        Left(Problem.Unclassified(Legacy.Text(List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
           case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
-          case e  => e))
+          case e  => e)))
 
   private def labelled(c: ACursor, field: String): List[(Label, String)] =
     c.downField(field).focus.flatMap(_.asArray).toList.flatten.flatMap { e =>
@@ -110,7 +110,7 @@ object Smithsonian:
       .str("record_ID")
       .orElse(c.str("url").map(_.split(":", 2).last))
       .orElse(c.str("id"))
-      .toRight(Problem("no record id"))
+      .toRight(Problem.Unclassified(Legacy.Text("no record id")))
       .map { key =>
         val title = c.str("title").orElse(dnr.downField("title").str("content")).getOrElse(key)
         val page = dnr
@@ -135,10 +135,15 @@ object Smithsonian:
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[Problem, MediaRights] = cc0 match
           case Some(_) => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-          case None if media.isEmpty => Left(Problem("no image on the record"))
+          case None if media.isEmpty => Left(Problem.Unclassified(Legacy.Text("no image on the record")))
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
-            Left(Problem(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})"))
+            Left(
+              Problem.Unclassified(
+                Legacy
+                  .Text(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
+              )
+            )
         def resource(m: ACursor, label: String) =
           m.downField("resources")
             .focus
@@ -179,7 +184,7 @@ object Smithsonian:
           MediaItem.Title(title),
           MediaItem.PageUrl(page),
           image.map(i => MediaItem.ImageUrl(i)),
-          rights.left.map(p => plugin.Problem(p.value)),
+          rights,
           thumbUrl = thumb.map(t => MediaItem.ThumbUrl(t)),
           originalUrl = original.map(o => MediaItem.OriginalUrl(o)),
           geography = geo.map((f, v) => (MediaItem.Geography.Field(f), MediaItem.Geography.Value(v))),

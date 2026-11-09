@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.file.{Files, Path}
@@ -300,7 +301,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       val written = PluginAuthoring.write(root.resolve("mirror"), files)
       assertEquals(written.map(_.size), Right(files.size))
       assert(Files.isRegularFile(root.resolve("mirror/resources/META-INF/services/com.histmersion.plugin.Plugin")))
-      assert(PluginAuthoring.write(root.resolve("mirror"), files).left.exists(_.message.value.contains("not empty")))
+      assert(PluginAuthoring.write(root.resolve("mirror"), files).left.exists(_.message.sentence.contains("not empty")))
     finally
       Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach { p =>
         val _ = Files.deleteIfExists(p)
@@ -337,7 +338,9 @@ class PluginTemplateSuite extends munit.FunSuite:
       val m2 = root.resolve("home/.m2/repository")
       val old = PluginAuthoring.repository(None, Right(install), Right(m2))
       assert(
-        old.left.exists(e => e.message.value.contains("predates plugin dependencies") && e.exitCode == ExitCode.Usage),
+        old.left.exists(e =>
+          e.message.sentence.contains("predates plugin dependencies") && e.exitCode == ExitCode.Usage
+        ),
         old
       )
       Files.createDirectories(install.apiPom.getParent)
@@ -368,8 +371,8 @@ class PluginTemplateSuite extends munit.FunSuite:
         PluginAuthoring
           .repository(
             Some("https://example.org/m2"),
-            Left(Cli.Error(Problem("no install"))),
-            Left(Cli.Error(Problem("no HOME")))
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text("no install")))),
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text("no HOME"))))
           )
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))

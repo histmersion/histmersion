@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -313,13 +314,14 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assertEquals(guard(l, tinBefore, split, together, cites, minRatio).map(_.id), List("S1"))
     assert(
-      guard(l, tinBefore, split, together, cites, minRatio).head.why.value.contains("no longer cited in one paragraph")
+      guard(l, tinBefore, split, together, cites, minRatio).head.why.sentence
+        .contains("no longer cited in one paragraph")
     )
     val back = ReviewArticle.Fix.Body(
       tinBefore.value.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
     )
     assertEquals(
-      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, r.why.value.take(24))),
+      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, r.why.sentence.take(24))),
       List(("R1", "the text it fixed is bac"))
     )
     val dropped = ReviewArticle.Fix.Body(
@@ -467,8 +469,8 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         List(
           WontFix(
             ReviewArticle.WontFix.Id("S1"),
-            Problem(
-              "listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"
+            Problem.Unclassified(
+              Legacy.Text("listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph")
             )
           )
         )
@@ -594,7 +596,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           SetAsideAnswer(
             ReviewArticle.SetAsideAnswer.Id(""),
             Some(CritiqueRef.Wire("zz2021_crit>zz2020_new")),
-            Problem("The critique concerns its dating, not the ore source cited here.")
+            Problem.Unclassified(Legacy.Text("The critique concerns its dating, not the ore source cited here."))
           )
         )
       )
@@ -761,9 +763,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       List(
         WontFix(
           ReviewArticle.WontFix.Id("R1"),
-          Problem("the fixer neither applied nor rejected it")
+          Problem.Unclassified(Legacy.Text("the fixer neither applied nor rejected it"))
         ),
-        WontFix(ReviewArticle.WontFix.Id("C2"), Problem("the fixer did not answer it"))
+        WontFix(ReviewArticle.WontFix.Id("C2"), Problem.Unclassified(Legacy.Text("the fixer did not answer it")))
       )
     )
     val l = applyFix(

@@ -1,6 +1,7 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AgentSchedulerMarkdown:
@@ -12,7 +13,7 @@ object AgentSchedulerMarkdown:
   def waiting(w: Waiting): String =
     val place = if (w.position).value > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
-      s"waited ${minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
+      s"waited ${minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why.sentence}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
   def minutes(m: Waiting.WaitedMinutes): String =
@@ -53,7 +54,7 @@ object AgentSchedulerMarkdown:
     else
       "\n\n## Started by the last pass\n\n" +
         s.started
-          .map(x => s"- #${x.item} ${x.jobType} **${x.target}** (${x.manager}; ${goal(x.goal)}) — ${x.why}")
+          .map(x => s"- #${x.item} ${x.jobType} **${x.target}** (${x.manager}; ${goal(x.goal)}) — ${x.why.sentence}")
           .mkString("\n")
     val queue = "\n\n## Waiting (" + s.waitingTotal + ")\n\n" +
       (if s.waiting.isEmpty then "_Nothing waits._"
@@ -70,6 +71,6 @@ object AgentSchedulerMarkdown:
   def why(w: WhyInfo): String =
     s"# #${w.item} ${w.kind} ${w.target}\n\n- manager: ${w.manager}\n- status: ${w.status}" +
       w.run.fold("")(r => s" (run ${r.value.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +
-      s"\n- ${if w.code.value.nonEmpty then s"_${w.code}_: " else ""}${w.why}" +
+      s"\n- ${if w.code.value.nonEmpty then s"_${w.code}_: " else ""}${w.why.sentence}" +
       (if (w.position).value > 0 then s"\n- place in the order: ${w.position}" else "") +
       (if w.behind.isEmpty then "" else s"\n- behind: ${w.behind.mkString(", ")}")

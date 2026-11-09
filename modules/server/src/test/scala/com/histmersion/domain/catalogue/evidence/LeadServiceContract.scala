@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.TimeSpan
@@ -78,7 +78,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       s.eventImports.save(
         List(big, small).map(r =>
           r -> CatalogMerge.Placement
-            .New(Event.Id.assume(CatalogRecord.eventId(r).value), domain.Problem("new"))
+            .New(Event.Id.assume(CatalogRecord.eventId(r).value), Problem.Unclassified(Legacy.Text("new")))
         )
       )
     s.eventLinks.saveCandidates(

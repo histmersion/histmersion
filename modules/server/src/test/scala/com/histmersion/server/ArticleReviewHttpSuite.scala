@@ -1,7 +1,6 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*

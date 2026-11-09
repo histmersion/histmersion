@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.automation.AgentStateMarkdown
 
 import cats.syntax.all.*
@@ -34,7 +34,12 @@ object AgentStateCmd:
             c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr)))
               .map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
-            Left(Cli.Error(Problem(s"Invalid JSON: ${err.getMessage}"), exitCode = ExitCode.Usage))
+            Left(
+              Cli.Error(
+                Problem.Unclassified(Legacy.Text(s"Invalid JSON: ${err.getMessage}")),
+                exitCode = ExitCode.Usage
+              )
+            )
       }
   }
 

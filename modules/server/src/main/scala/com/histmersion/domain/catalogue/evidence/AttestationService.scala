@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.catalogue.CatalogueState
@@ -42,7 +42,7 @@ object AttestationService:
   def apply(db: Transactor): AttestationService = Implementation(db)
 
   private def missing(id: Attestation.Id) =
-    Api.Error(Problem(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No attestation $id")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   final private class Implementation(db: Transactor) extends AttestationService:
     def list(

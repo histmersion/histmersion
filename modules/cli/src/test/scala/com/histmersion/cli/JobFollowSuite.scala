@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
@@ -44,14 +45,14 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("a job that fails exits 2 with its error"):
     val r = JobFollow.job(
-      _ => Right(job(JobInfo.Status("failed"), Some(Problem("pdf is encrypted")))),
+      _ => Right(job(JobInfo.Status("failed"), Some(Problem.Unclassified(Legacy.Text("pdf is encrypted"))))),
       SpatialHierarchyResult.Job.Id("j1"),
       sleep = _ => (),
       progress = quiet,
       clear = () => ()
     )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-    assert(r.left.exists(_.message.value.contains("pdf is encrypted")))
+    assert(r.left.exists(_.message.sentence.contains("pdf is encrypted")))
 
   test("an unreadable job state counts as failed, not as success"):
     val r = JobFollow.job(
@@ -66,7 +67,7 @@ class JobFollowSuite extends munit.FunSuite:
   test("an unreachable server keeps its own exit code"):
     val r =
       JobFollow.job(
-        _ => Left(Cli.Error(Problem("cannot reach"))),
+        _ => Left(Cli.Error(Problem.Unclassified(Legacy.Text("cannot reach")))),
         SpatialHierarchyResult.Job.Id("j1"),
         sleep = _ => (),
         progress = quiet,
@@ -89,7 +90,8 @@ class JobFollowSuite extends munit.FunSuite:
     )
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
-    val next = server(backup(Backup.State.Wire("failed"), Some(Problem("pg_dump: permission denied"))))
+    val next =
+      server(backup(Backup.State.Wire("failed"), Some(Problem.Unclassified(Legacy.Text("pg_dump: permission denied")))))
     val r = JobFollow.backup(
       () => Right(next()),
       backup(Backup.State.Wire("running")),
@@ -98,7 +100,7 @@ class JobFollowSuite extends munit.FunSuite:
       progress = quiet
     )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-    assert(r.left.exists(_.message.value.contains("permission denied")))
+    assert(r.left.exists(_.message.sentence.contains("permission denied")))
 
   test("a backup done without a checksum exits 2; done with one is Right"):
     val noSum =

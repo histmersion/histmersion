@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.managers.ManagerContext
@@ -235,8 +236,9 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         )
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
-          case Some(w) if w.written.value => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why})"))
-          case Some(w) => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why}"))
+          case Some(w) if w.written.value =>
+            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why.sentence})"))
+          case Some(w) => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why.sentence}"))
           case None    => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing to extend — $progress"))
       case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 
@@ -253,7 +255,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       c.chainReview(
         ManagerLight.Id(m.id.value),
         Slug.assume(item.target.value),
-        domain.Problem(s"extended by run ${run.fold("")(_.value.take(8))}"),
+        Problem.Unclassified(Legacy.Text(s"extended by run ${run.fold("")(_.value.take(8))}")),
         out
       )
 
@@ -309,7 +311,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .flatMap(_._3) match
           case Some(itemId) =>
             Option
-              .when(c.restale(itemId, prio, domain.Problem(p.why.value)))(s"${p.target} (${p.why}$boost)")
+              .when(c.restale(itemId, prio, p.why))(s"${p.target} (${p.why.sentence}$boost)")
           case None =>
             val (_, isNew) = c.upsert(
               manager,
@@ -321,7 +323,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             )
             val label =
               if p.kind == ManagerPolicy.ItemKind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
-            Option.when(isNew)(s"$label (${p.why}$boost)")
+            Option.when(isNew)(s"$label (${p.why.sentence}$boost)")
       }
       if added.nonEmpty then
         c.event(
@@ -414,7 +416,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       goal: Option[Goal.Slug],
       room: Int,
       now: Instant
-  ): List[(Slug, domain.Problem, Option[ManagerContext.ItemId])] =
+  ): List[(Slug, Problem, Option[ManagerContext.ItemId])] =
     val last = Option(lastStale.get(m.id.value)).map(_.longValue).getOrElse(Long.MinValue)
     val every = math.max(1, cfg.managers.review.staleScanMinutes.value).toLong * 60000L
     if s.staleAfterDays.value <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil
@@ -482,7 +484,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .map(_ => Articles.notFound(Article.Slug(raw.value.trim)))
           .flatMap(site.articles.get(_))
           .map(v => ManagerContext.ItemTarget(v.article.slug.value))
-      case other => Left(Api.Error(api.Problem(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).

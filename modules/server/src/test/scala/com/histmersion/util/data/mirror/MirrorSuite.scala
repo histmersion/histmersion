@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.mirror
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.research.ResearchData
@@ -24,7 +25,8 @@ class MirrorSuite extends munit.FunSuite:
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
     def note(slug: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
-      if slug == MirrorPlacement.RecordId("gone") then Left(Api.Error(Problem("no such article")))
+      if slug == MirrorPlacement.RecordId("gone") then
+        Left(Api.Error(Problem.Unclassified(Legacy.Text("no such article"))))
       else Right(Frontmatter.NoteBody(s"article $slug"))
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))
@@ -45,7 +47,7 @@ class MirrorSuite extends munit.FunSuite:
     )
     assertEquals(mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("zz")), Right("article zz"))
     assertEquals(
-      mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone")).left.map(_.message),
+      mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone")).left.map(_.message).left.map(_.sentence),
       Left("no such article")
     )
 

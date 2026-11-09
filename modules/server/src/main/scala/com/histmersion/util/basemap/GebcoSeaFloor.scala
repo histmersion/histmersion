@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.{BBox, Plural}
 import com.histmersion.api.backup.Backup
@@ -59,7 +60,7 @@ final class GebcoSeaFloor(
             grid <- GeoTiffGrid
               .parse(head, (o, l) => http.bytes(url, o, l).map(_._1))
               .left
-              .map(e => Problem(s"$url: $e"))
+              .map(e => Problem.Unclassified(Legacy.Text(s"$url: ${e.sentence}")))
           yield grid.window(bbox).fold(done)(w => done :+ GebcoPart(name, url, grid, w, grid.runs(w, maxRequestBytes)))
         }
       }
@@ -94,7 +95,7 @@ final class GebcoSeaFloor(
       gapMs: BasemapFetch.Pace.GapMs,
       note: GebcoSeaFloor.Note => Unit
   ): Either[Problem, Unit] =
-    work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
+    work.makeDirectory().left.foreach(e => throw IOException(e.message.sentence))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
     all.zipWithIndex.foldLeft[Either[Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
       acc.flatMap { _ =>
@@ -106,15 +107,16 @@ final class GebcoSeaFloor(
           note(
             GebcoSeaFloor.Note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})")
           )
-          Using.resource(work.reserve(f).fold(e => throw IOException(e.message.value), identity)) { rows =>
+          Using.resource(work.reserve(f).fold(e => throw IOException(e.message.sentence), identity)) { rows =>
             http.download(part.url, run.offset, ByteCount.applyUnsafe(run.length.value), rows).flatMap { _ =>
               Either
                 .cond(
                   rows.size.value == run.length.value,
                   (),
-                  Problem(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}")
+                  Problem
+                    .Unclassified(Legacy.Text(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}"))
                 )
-                .flatMap(_ => rows.commit().left.map(e => Problem(e.message.value)).map(_ => ()))
+                .flatMap(_ => rows.commit().left.map(e => e.message).map(_ => ()))
             }
           }
       }

@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.Problem
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
 import com.histmersion.domain.Caller
@@ -42,7 +43,9 @@ final class GazetteerControllers(
       scribe.info(s"[import] $about…")
       val r = run
       r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
-      BackgroundJob.Outcome.of(r.left.map(Problem(_)).map(BackgroundJob.Outcome.Summary(_)))
+      BackgroundJob.Outcome.of(
+        r.left.map((text => Problem.Unclassified(Legacy.Text(text)))).map(BackgroundJob.Outcome.Summary(_))
+      )
     )
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external gazetteer. Idempotent:
@@ -61,8 +64,10 @@ final class GazetteerControllers(
         imports
           .source(
             BuiltinGazetteers.Entry.Name(name),
-            domain.Problem(
-              s"unknown source '$source' (available: ${(imports.available.map(_.value) :+ NaturalEarthLand.name).mkString(", ")})"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"unknown source '$source' (available: ${(imports.available.map(_.value) :+ NaturalEarthLand.name).mkString(", ")})"
+              )
             )
           )
           .left
@@ -74,7 +79,7 @@ final class GazetteerControllers(
                 imports
                   .fetch(src, dryRun = GazetteerControllers.DryRun(false))
                   .left
-                  .map(_.value)
+                  .map(_.sentence)
                   .map(r =>
                     s"${r.places} places, ${r.names} names, ${r.relations} relations" +
                       (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")
@@ -92,11 +97,11 @@ final class GazetteerControllers(
         imports
           .land(dryRun = GazetteerControllers.DryRun(false))
           .left
-          .map(_.value)
+          .map(_.sentence)
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
-  private def refused(problem: domain.Problem): Api.Error = Api.Error(problem.transformInto[Problem])
+  private def refused(problem: Problem): Api.Error = Api.Error(problem)
 
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(

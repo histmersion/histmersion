@@ -1,6 +1,6 @@
 package com.histmersion.api.research
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
 import com.histmersion.Newtype
 import hearth.kindlings.optics.syntax.*
@@ -232,7 +232,7 @@ object Article:
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
     private def endSentence(s: Problem): String =
-      val t = s.value
+      val t = s.sentence
       if t.endsWith(".") || t.endsWith("?") || t.endsWith("!") then t else s"$t."
 
     def method(c: Coverage): Method =
@@ -415,14 +415,19 @@ object Article:
     def parse(a: EditAnswer): Either[Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
-      if anchor.value.trim.isEmpty then Left(Problem("no anchor — copy the passage the edit is about from the body"))
+      if anchor.value.trim.isEmpty then
+        Left(Problem.Unclassified(Legacy.Text("no anchor — copy the passage the edit is about from the body")))
       else
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
           case Op.Replace if text.value.trim.isEmpty =>
-            Left(Problem("a replace with no new text — give the text, or use delete to remove the passage"))
+            Left(
+              Problem.Unclassified(
+                Legacy.Text("a replace with no new text — give the text, or use delete to remove the passage")
+              )
+            )
           case Op.Replace                   => Right(Edit.Replace(anchor, text))
-          case _ if text.value.trim.isEmpty => Left(Problem("no text to insert"))
+          case _ if text.value.trim.isEmpty => Left(Problem.Unclassified(Legacy.Text("no text to insert")))
           case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
           case Op.InsertBefore              => Right(Edit.InsertBefore(anchor, text))
 
@@ -446,7 +451,7 @@ object Article:
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
       def problems: scala.List[Applied.Issue] =
-        results.flatMap(r => r.problem.map(p => Applied.Issue(s"${r.label}: $p")))
+        results.flatMap(r => r.problem.map(p => Applied.Issue(s"${r.label}: ${p.sentence}")))
       def appliedCount: Applied.Count =
         Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
 
@@ -486,8 +491,10 @@ object Article:
         case scala.List(i) => Right((i, Offset((i).value + a.length)))
         case _ :: _ :: _   =>
           Left(
-            Problem(
-              s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"
+              )
             )
           )
         case Nil =>
@@ -499,14 +506,16 @@ object Article:
               Right((Offset(pos((i).value)), Offset(pos(last) + 1)))
             case Nil =>
               Left(
-                Problem(
-                  "the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    "the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
+                  )
                 )
               )
             case more =>
               Left(
-                Problem(
-                  s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"
+                Problem.Unclassified(
+                  Legacy.Text(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once")
                 )
               )
 
@@ -573,8 +582,8 @@ object Article:
       def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
-            Left(Problem("give `edits` (against the stored body) or `body` (a whole draft)"))
-          case (_ :: _, Some(_)) => Left(Problem("give `edits` or `body`, not both"))
+            Left(Problem.Unclassified(Legacy.Text("give `edits` (against the stored body) or `body` (a whole draft)")))
+          case (_ :: _, Some(_)) => Left(Problem.Unclassified(Legacy.Text("give `edits` or `body`, not both")))
           case (es, None)        => Right(Draft.Edits(es))
           case (Nil, Some(b))    => Right(Draft.Body(b))
     object ArticleCheckRequest:
@@ -613,13 +622,16 @@ object Article:
     def markdown(c: ArticleCheck): Markdown =
       val edits =
         if c.edits.isEmpty then ""
-        else "\n\n### Edits\n\n" + c.edits.map(r => s"- ${r.label}: ${r.problem.getOrElse("applies")}").mkString("\n")
+        else
+          "\n\n### Edits\n\n" + c.edits
+            .map(r => s"- ${r.label}: ${r.problem.map(_.sentence).getOrElse("applies")}")
+            .mkString("\n")
       val verdict =
         if (c.clean) == (true) then "No problems: these are the checks code runs on the answer, and it would pass them."
         else if (c.fatal) == ArticleCheck.Fatal(true) then
           s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}, at least one FATAL (never written):"
         else s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}:"
-      val problems = if (c.clean) == (true) then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
+      val problems = if (c.clean) == (true) then "" else "\n\n" + c.problems.map(p => s"- ${p.sentence}").mkString("\n")
       Markdown(
         s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems"
       )
@@ -712,14 +724,22 @@ object Article:
       )
       if unknown.nonEmpty then
         Left(
-          Problem(
-            s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}"
+            )
           )
         )
       else if tidy.from.zip(tidy.to).exists((a, b) => a > b) then
-        Left(Problem(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})"))
+        Left(
+          Problem.Unclassified(Legacy.Text(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})"))
+        )
       else if tidy.isEmpty && tidy.extraQueries.nonEmpty then
-        Left(Problem("extraQueries without a filter: give the query, topics or tags the article is compiled from"))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text("extraQueries without a filter: give the query, topics or tags the article is compiled from")
+          )
+        )
       else Right(Option.when(!tidy.isEmpty)(tidy))
 
   final case class Import(
@@ -1060,7 +1080,7 @@ object Article:
         title: Title,
         kind: Kind.Wire,
         filter: Filter,
-        why: Problem = Problem(""),
+        why: Problem = Problem.Unclassified(Legacy.Text("")),
         hits: ProposedArticle.Hits = ProposedArticle.Hits(0),
         overlap: ProposedArticle.Overlap = ProposedArticle.Overlap(0.0),
         overlapWith: Option[ProposedArticle.OverlapWith] = None
@@ -1110,7 +1130,7 @@ object Article:
       val as = p.articles.map { a =>
         val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${(a.overlap).value * 100}%.0f%%")
         s"- `${a.slug}` — ${a.title} (${a.kind}) · ${a.filter.line} → ${Plural.count(Plural.Count((a.hits).value.toLong), Plural.CountSingular("source"))}$ov" +
-          Option(a.why).filter(_.value.nonEmpty).fold("")(w => s": $w")
+          Option(a.why).filter(_.sentence.nonEmpty).fold("")(w => s": ${w.sentence}")
       }
       val dropped = p.dropped.map(d => s"- dropped: $d")
       Markdown(

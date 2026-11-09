@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.PlanQuota.*
@@ -48,7 +49,7 @@ class PlanPoolsSuite extends munit.FunSuite:
     val got = rs.map(r => s"${r.limit} ${r.kind} ${r.usedPct} ${r.rejected} ${r.model.getOrElse("-")}").toSet
     assertEquals(got, Set("codex 10080m 100.0 true -", "gpt-reserve 10080m 0.0 false gpt-5.6-luna"))
     assertEquals(rs.find(_.limit.value == "codex").flatMap(_.resetsAt), Some(1791625500000L))
-    assert(refusal.exists(_._1.value.contains("ordinaryUsageAllowed")))
+    assert(refusal.exists(_._1.sentence.contains("ordinaryUsageAllowed")))
     assertEquals(plan, Some("prolite"))
 
   test("codex: a plan whose primary is the 5-hour window and secondary the week"):
@@ -95,7 +96,7 @@ class PlanPoolsSuite extends munit.FunSuite:
     script.toFile.setExecutable(true)
     val t0 = System.nanoTime()
     val r = PlanPools.readCodex(CodexConfig.Command(script.toString), dir, AgentsConfig.DoctorTimeoutSeconds(2))
-    assert(r.left.exists(_.value.contains("did not answer")), r)
+    assert(r.left.exists(_.sentence.contains("did not answer")), r)
     assert((System.nanoTime() - t0) / 1000000000L < 15)
 
   test("a mod's report: percentUsed and the ISO reset"):

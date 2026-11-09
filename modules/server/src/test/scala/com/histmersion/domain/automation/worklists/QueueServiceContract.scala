@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Queue
@@ -123,10 +123,18 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("a blank topic or reason in a patch clears it; the rest of the row stays") { q =>
     val i = q.add(
       Kind.Tasks,
-      QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(Problem("why not")))
+      QueueAdd(
+        QueueItem.Text("tidy up"),
+        Some(QueueItem.Topic("Chores")),
+        reason = Some(Problem.Unclassified(Legacy.Text("why not")))
+      )
     )
     val p =
-      q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(Problem(" ")))).toOption.get
+      q.patch(
+        id(i),
+        QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(Problem.Unclassified(Legacy.Text(" "))))
+      ).toOption
+        .get
     assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))
     val r = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("Chores > Later")))).toOption.get
     assertEquals(r.topic, Some("Chores > Later"))

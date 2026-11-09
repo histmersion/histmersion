@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.sources.SourceService
@@ -81,7 +82,9 @@ final class CandidateSearch(
   ): Either[Api.Error, CandidateSweep] =
     goals
       .get(goal)
-      .toRight(Api.Error(Problem(s"no goal '$goal'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(
+        Api.Error(Problem.Unclassified(Legacy.Text(s"no goal '$goal'")), Some(Api.Error.Code(Write.CodeNotFound)))
+      )
       .map { g =>
         val c = cfg
         val now = today()
@@ -119,14 +122,14 @@ final class CandidateSearch(
         val leftOut =
           scala.collection.mutable.LinkedHashMap.empty[ScholarlyIndex.Name, (String, Int)] // this sweep's tally
         def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[String, List[WorkRef]] =
-          leftOut.get(i.name).orElse(i.unavailable.map(p => p.value -> 0)) match
+          leftOut.get(i.name).orElse(i.unavailable.map(p => p.sentence -> 0)) match
             case Some((why, n)) =>
               leftOut.update(i.name, (why, n + 1))
               Left(s"not asked this sweep — $why")
             case None =>
               val got = i.search(Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
-              got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why.value, 0))))
-              got.left.map(_.value)
+              got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why.sentence, 0))))
+              got.left.map(_.sentence)
         val read = (base ++ authorWatches).map { w =>
           val since = Candidates.since(
             w.watermark.map(m => Candidates.Watermark(m.value)),
@@ -143,7 +146,7 @@ final class CandidateSearch(
               Doi
                 .either(w.subject.value)
                 .flatMap(doi =>
-                  alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)).left.map(_.value)
+                  alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)).left.map(_.sentence)
                 )
             case Some(Candidates.WatchKind.Author) =>
               alerts
@@ -153,7 +156,7 @@ final class CandidateSearch(
                   CitationAlerts.ByAuthorLimit(c.perWatch.value)
                 )
                 .left
-                .map(_.value)
+                .map(_.sentence)
             case None => Left(s"unknown watch kind '${w.kind}'")
           (w, since, got)
         }
@@ -198,13 +201,13 @@ final class CandidateSearch(
             candidates.recordWatch(
               w,
               mark,
-              got.left.toOption.map(e => domain.Problem(e.take(500))),
+              got.left.toOption.map(e => Problem.Unclassified(Legacy.Text(e.take(500)))),
               lastFound
             )
           w.modify(_.watermark)
             .setTo(if dryRun.value then w.watermark else mark.orElse(w.watermark))
             .modify(_.lastError)
-            .setTo(got.left.toOption.map(Problem(_)))
+            .setTo(got.left.toOption.map((text => Problem.Unclassified(Legacy.Text(text)))))
             .modify(_.lastFound)
             .setTo(lastFound)
         }
@@ -224,7 +227,8 @@ final class CandidateSearch(
           CandidateSweep.Found(found.size),
           CandidateSweep.Added(added),
           CandidateSweep.Again(again),
-          skipped.map((reason, n) => CandidateSweep.SkippedKey(reason.value) -> CandidateSweep.SkippedValue(n.value)),
+          skipped
+            .map((reason, n) => CandidateSweep.SkippedKey(reason.sentence) -> CandidateSweep.SkippedValue(n.value)),
           unseen,
           CandidateSweep.DryRun(dryRun.value),
           notes

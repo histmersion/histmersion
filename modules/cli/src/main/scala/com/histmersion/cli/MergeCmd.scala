@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.EditionsPolicy
@@ -76,12 +77,12 @@ object MergeCmd:
       case None    => Right(MergeResolutions())
       case Some(p) =>
         val path = Path.of(p.value)
-        if !Files.isRegularFile(path) then Left(List(Problem(s"no such file: $p")))
+        if !Files.isRegularFile(path) then Left(List(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
         else
           MergeResolutionsFile
             .parse(MergeResolutionsFile.Text(Files.readString(path)))
             .left
-            .map(_.map(e => Problem(s"$p: $e")))
+            .map(_.map(e => Problem.Unclassified(Legacy.Text(s"$p: ${e.sentence}"))))
     val flags = f.resolve.map(MergeResolutionsFile.flag)
     val editions: Either[Problem, Option[EditionsPolicy]] = f.editions match
       case None    => Right(None)
@@ -89,10 +90,13 @@ object MergeCmd:
         EditionsPolicy.values
           .find(_.toString.equalsIgnoreCase(e.value.trim))
           .map(Some(_))
-          .toRight(Problem(s"--editions $e: expected merge or separate"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"--editions $e: expected merge or separate")))
     val errors =
       fromFile.left.toOption.getOrElse(Nil) ++ flags.flatMap(_.left.toOption) ++ editions.left.toOption.toList
-    if errors.nonEmpty then Left(Cli.Error(Problem(errors.mkString("\n")), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then
+      Left(
+        Cli.Error(Problem.Unclassified(Legacy.Text(errors.map(_.sentence).mkString("\n"))), exitCode = ExitCode.Usage)
+      )
     else
       Right(
         fromFile.toOption.get.overriddenBy(
@@ -125,7 +129,8 @@ object MergeCmd:
               .map(t => x.modify(_.text).setTo(Some(MergeResolution.Text(t))))
     }
     val errors = read.flatMap(_.left.toOption)
-    if errors.nonEmpty then Left(Cli.Error(Problem(errors.mkString("\n")), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then
+      Left(Cli.Error(Problem.Unclassified(Legacy.Text(errors.mkString("\n"))), exitCode = ExitCode.Usage))
     else Right(r.modify(_.resolve).setTo(read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
@@ -134,7 +139,7 @@ object MergeCmd:
       if u.manifest.isEmpty then
         Left(
           Cli.Error(
-            Problem(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}"),
+            Problem.Unclassified(Legacy.Text(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}")),
             exitCode = ExitCode.Refused
           )
         )
@@ -162,7 +167,7 @@ object MergeCmd:
         _ <- Either.cond(
           Files.isRegularFile(p),
           (),
-          Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage)
+          Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
         )
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
@@ -172,7 +177,12 @@ object MergeCmd:
             .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res).value))
             .toEither
             .left
-            .map(e => Cli.Error(Problem(s"could not write $t: ${e.getMessage}"), exitCode = ExitCode.Usage))
+            .map(e =>
+              Cli.Error(
+                Problem.Unclassified(Legacy.Text(s"could not write $t: ${e.getMessage}")),
+                exitCode = ExitCode.Usage
+              )
+            )
             .map(_ => ())
         }
         _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
@@ -181,7 +191,7 @@ object MergeCmd:
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
           Cli.Error(
-            Problem("the plan has problems or unusable resolutions (listed above)"),
+            Problem.Unclassified(Legacy.Text("the plan has problems or unusable resolutions (listed above)")),
             exitCode = ExitCode.Refused
           )
         )
@@ -209,7 +219,7 @@ object MergeCmd:
         _ <- Either.cond(
           Files.isRegularFile(p),
           (),
-          Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage)
+          Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
         )
         res0 <- resolutions(flags)
         res <- withTexts(res0)
@@ -220,8 +230,8 @@ object MergeCmd:
           (), {
             Cli.out.println(MergeMarkdown.plan(plan))
             Cli.Error(
-              Problem(
-                "the merge cannot be applied yet: decide what is open (listed above), then apply again"
+              Problem.Unclassified(
+                Legacy.Text("the merge cannot be applied yet: decide what is open (listed above), then apply again")
               ),
               exitCode = ExitCode.Refused
             )
@@ -237,7 +247,7 @@ object MergeCmd:
               )
             ),
           (),
-          Cli.Error(Problem("aborted"), exitCode = ExitCode.Usage)
+          Cli.Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage)
         )
         job <- c.mergeApply(MergeApplyRequest(Bundle.Name(u.sha256.value), hash, res))
         r <- follow(c, job)
@@ -245,7 +255,10 @@ object MergeCmd:
         _ <- Either.cond(
           r.applied.value,
           (),
-          Cli.Error(Problem("the merge was not applied (see above)"), exitCode = ExitCode.Refused)
+          Cli.Error(
+            Problem.Unclassified(Legacy.Text("the merge was not applied (see above)")),
+            exitCode = ExitCode.Refused
+          )
         )
       yield ()
     }
@@ -260,12 +273,15 @@ object MergeCmd:
     j.state match
       case MergeJobState.Done =>
         j.result.toRight(
-          Cli.Error(Problem(s"merge apply ${j.job}: done, but no result"), exitCode = ExitCode.Refused)
+          Cli.Error(
+            Problem.Unclassified(Legacy.Text(s"merge apply ${j.job}: done, but no result")),
+            exitCode = ExitCode.Refused
+          )
         )
       case MergeJobState.Failed =>
         Left(
           Cli.Error(
-            Problem(j.error.fold(s"merge apply ${j.job} failed")(_.value)),
+            Problem.Unclassified(Legacy.Text(j.error.fold(s"merge apply ${j.job} failed")(_.sentence))),
             exitCode = ExitCode.Refused
           )
         )
@@ -273,8 +289,8 @@ object MergeCmd:
       case MergeJobState.Interrupted =>
         Left(
           Cli.Error(
-            Problem(
-              s"merge apply ${j.job}: ${j.error.fold(MergeApplyJob.InterruptedText.value)(_.value)}"
+            Problem.Unclassified(
+              Legacy.Text(s"merge apply ${j.job}: ${j.error.fold(MergeApplyJob.InterruptedText.sentence)(_.sentence)}")
             ),
             exitCode = ExitCode.Refused
           )

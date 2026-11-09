@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
@@ -121,7 +122,7 @@ object ArticlePatches:
         !(f.clear.value && f.anyGiven),
         (),
         Cli.Error(
-          Problem("--clear-filter with --filter-* flags: give one or the other"),
+          Problem.Unclassified(Legacy.Text("--clear-filter with --filter-* flags: give one or the other")),
           exitCode = ExitCode.Usage
         )
       )
@@ -131,11 +132,16 @@ object ArticlePatches:
             Right(
               Coverage.Reason(
                 Citekey(r.value.take(i).trim),
-                Problem(r.value.drop(i + 1).trim)
+                Problem.Unclassified(Legacy.Text(r.value.drop(i + 1).trim))
               )
             )
           case _ =>
-            Left(Cli.Error(Problem(s"--reason: '$r' is not <citekey>=<reason>"), exitCode = ExitCode.Usage))
+            Left(
+              Cli.Error(
+                Problem.Unclassified(Legacy.Text(s"--reason: '$r' is not <citekey>=<reason>")),
+                exitCode = ExitCode.Usage
+              )
+            )
       }
     yield
       val filter =
@@ -166,7 +172,9 @@ object ArticlePatches:
         CritiqueReason
           .parse(r)
           .left
-          .map(m => Cli.Error(Problem(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
+          .map(m =>
+            Cli.Error(Problem.Unclassified(Legacy.Text(s"--critique-reason: ${m.sentence}")), exitCode = ExitCode.Usage)
+          )
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
@@ -176,14 +184,14 @@ object ArticlePatches:
       io.circe.parser
         .decode[Article.Patch](s.value)
         .left
-        .map(e => Cli.Error(Problem(s"--json: ${e.getMessage}"), exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(s"--json: ${e.getMessage}")), exitCode = ExitCode.Usage))
 
   private def read[A](file: Option[TextFile])(wrap: String => A): Either[Cli.Error, Option[A]] = file match
     case None    => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f.value)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
-      else Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
+      else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
 
   private def periodOf(s: Option[FilterFlags.Period]): Either[Cli.Error, Option[Period.Input]] = s match
     case None    => Right(None)
@@ -193,8 +201,17 @@ object ArticlePatches:
           (a.toLongOption, b.toLongOption) match
             case (Some(x), Some(y)) =>
               Right(Some(Period.Input(Year(x), Year(y))))
-            case _ => Left(Cli.Error(Problem(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
-        case _ => Left(Cli.Error(Problem(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
+            case _ =>
+              Left(
+                Cli.Error(
+                  Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end")),
+                  exitCode = ExitCode.Usage
+                )
+              )
+        case _ =>
+          Left(
+            Cli.Error(Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end")), exitCode = ExitCode.Usage)
+          )
 
   private def csv(s: Option[CsvText]): List[String] = s.map(csv1).getOrElse(Nil)
   private def csv1(s: CsvText): List[String] = s.value.split(",").toList.map(_.trim).filter(_.nonEmpty)

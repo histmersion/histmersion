@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `oa-landing`: the repository landing pages the open-access indexes and DataCite name for a DOI, resolved one step.
   */

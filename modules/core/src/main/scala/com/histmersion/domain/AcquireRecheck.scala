@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.jobs.JobState
@@ -164,7 +166,7 @@ object AcquireRecheck:
     * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
     */
   def answers(message: Problem): ReplyText =
-    val m = Option(message).fold("")(_.value.trim)
+    val m = Option(message).fold("")(_.sentence.trim)
     val rest =
       if !IngestBacklog.isNoLegalCopy(message) then m
       else
@@ -184,10 +186,10 @@ object AcquireRecheck:
       case Outcome.Closed  => s"checked $day: in the corpus with its original as [[$d]] — closed"
       case Outcome.Fetched => s"checked $day: a legal copy found ($d) — converting; the item closes once it is stored"
       case Outcome.NoCopy  =>
-        val a = answers(Problem(d))
+        val a = answers(Problem.Unclassified(Legacy.Text(d)))
         s"checked $day: no legal copy" + (if a.value.isEmpty then "" else s" ($a)")
       case Outcome.Failed => s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
-    Problem(text.take(500))
+    Problem.Unclassified(Legacy.Text(text.take(500)))
 
   /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched

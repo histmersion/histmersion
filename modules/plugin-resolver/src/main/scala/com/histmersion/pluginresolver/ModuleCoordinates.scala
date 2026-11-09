@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,6 +19,6 @@ object ModuleCoordinates:
     case List(g, a, v) =>
       for
         key <- ModuleKey.parse(ModuleKey.Text(s"$g:$a"))
-        version <- ModuleVersion.either(v).left.map(e => Problem(s"'$raw': version $e"))
+        version <- ModuleVersion.either(v).left.map(e => Problem.Unclassified(Legacy.Text(s"'$raw': version $e")))
       yield ModuleCoordinates(key, version)
-    case _ => Left(Problem.notCoordinates(raw))
+    case _ => Left(Problem.Unclassified(Legacy.Text(s"not group:artifact:version: '$raw'")))

@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -89,7 +90,7 @@ final class PolledList[A](
       // the last row shown is gone (the server cannot page from there): start over
       case Failure(_) if upTo.isDefined => restart()
       case Failure(e)                   =>
-        failure.set(Some(Problem(e.getMessage)))
+        failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage))))
         // keep trying while the window is open, at the slowest pace
         schedule(Some(Poll.Revision(Poll.MaxMs)))
       case Success((rows, page)) =>
@@ -113,7 +114,8 @@ final class PolledList[A](
             older.set(PolledList.Older(false))
             r match
               case Failure(e) =>
-                failure.set(Some(Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
+                failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage))));
+                schedule(Some(Poll.Revision(Poll.MaxMs)))
               case Success((rows, page)) =>
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, a => id(a).value))
@@ -136,7 +138,11 @@ final class PolledList[A](
 
   /** The error line: what the last request answered, `what` naming the list. */
   def errorLine(what: UiLabels.Text): HtmlElement =
-    div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(Problem(s"${what.value}: ${m.value}")))))
+    div(
+      child.maybe <-- failure.signal.map(
+        _.map(m => ErrorLine.text(Problem.Unclassified(Legacy.Text(s"${what.value}: ${m.sentence}"))))
+      )
+    )
 
 object PolledList:
   type ItemId = ItemId.T

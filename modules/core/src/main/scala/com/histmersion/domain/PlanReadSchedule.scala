@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.time.{Duration, Instant}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -24,16 +25,17 @@ object PlanReadSchedule:
       now: Instant
   ): ScheduledRead =
     schedule match
-      case ReadSchedule.Off             => ScheduledRead.NotDue(Problem("the schedule is off"))
+      case ReadSchedule.Off => ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("the schedule is off")))
       case ReadSchedule.Every(interval) =>
         val latest = List(newestReading, lastAttempt).flatten.maxOption
         val age = latest.map(Duration.between(_, now))
-        if !autopilotOn.value then ScheduledRead.NotDue(Problem("the autopilot is off"))
-        else if !wanted.value then ScheduledRead.NotDue(Problem("no queued work wants the pool"))
+        if !autopilotOn.value then ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("the autopilot is off")))
+        else if !wanted.value then
+          ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("no queued work wants the pool")))
         else
           age.filter(_.toMinutes < interval.toMinutes) match
             case Some(a) =>
               ScheduledRead.NotDue(
-                Problem(s"read ${a.toMinutes} min ago (every ${interval.toMinutes} min)")
+                Problem.Unclassified(Legacy.Text(s"read ${a.toMinutes} min ago (every ${interval.toMinutes} min)"))
               )
             case None => ScheduledRead.Due

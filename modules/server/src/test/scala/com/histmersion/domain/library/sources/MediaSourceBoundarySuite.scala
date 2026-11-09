@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Write
@@ -30,7 +31,7 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
 
   test("source parser errors reach the media boundary unchanged"):
     assertEquals(
-      controllers().putFiguresAsked(Citekey("../escape"), Nil).left.map(_.message),
+      controllers().putFiguresAsked(Citekey("../escape"), Nil).left.map(_.message).left.map(_.sentence),
       Left("invalid citekey '../escape' — it may not contain '..'")
     )
 

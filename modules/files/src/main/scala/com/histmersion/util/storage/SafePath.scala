@@ -1,6 +1,8 @@
 package com.histmersion
 package util.storage
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}
@@ -31,7 +33,7 @@ object SafePath:
   def confine(base: Option[Base], candidate: Candidate): Either[Problem, Path] =
     val root = base.map(_.value.trim).filter(_.nonEmpty)
     val raw = Option(candidate).map(_.value.trim).getOrElse("")
-    if raw.isEmpty then Left(Problem("no path given"))
+    if raw.isEmpty then Left(Problem.Unclassified(Legacy.Text("no path given")))
     else
       root match
         case None      => Right(Paths.get(raw).toAbsolutePath.normalize)
@@ -41,7 +43,8 @@ object SafePath:
             case r if r.isAbsolute => r.normalize
             case r                 => b.resolve(r).toAbsolutePath.normalize
           if p.startsWith(b) then Right(p)
-          else Left(Problem(s"'$candidate' is outside the configured corpus directory ($dir)"))
+          else
+            Left(Problem.Unclassified(Legacy.Text(s"'$candidate' is outside the configured corpus directory ($dir)")))
 
   /** The same test for an already-built [[Path]] — what the frontmatter reader needs. */
   def within(base: Option[Base], candidate: Path): Boolean =

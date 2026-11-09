@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
@@ -79,7 +79,7 @@ object ArtInstituteCollection:
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer"))
+          Problem.Unclassified(Legacy.Text(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer")))
         )
       case Some(rows) => Right(rows.toList.map(r => record(r, iiif, displayPx, thumbPx)))
 
@@ -90,14 +90,14 @@ object ArtInstituteCollection:
       thumbPx: ThumbPx
   ): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.long("id").toRight(Problem("no id")).map { id =>
+    c.long("id").toRight(Problem.Unclassified(Legacy.Text("no id"))).map { id =>
       val title = c.str("title").getOrElse(s"Artwork $id")
       val artist = c.str("artist_title")
       val credit = (List(Some(title), artist).flatten :+ "The Art Institute of Chicago" :+ "CC0").mkString(", ")
       val image = c.str("image_id")
       val rights =
         if !c.bool("is_public_domain").contains(true) then
-          Left(Problem("not public domain (is_public_domain is false)"))
+          Left(Problem.Unclassified(Legacy.Text("not public domain (is_public_domain is false)")))
         else Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
       MediaItem(
         MediaItem.Key(id.toString),

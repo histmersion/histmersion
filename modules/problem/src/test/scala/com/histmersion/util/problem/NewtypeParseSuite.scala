@@ -25,7 +25,10 @@ class NewtypeParseSuite extends munit.FunSuite:
 
   test("a newtype knows its Iron constraint by name and by Iron's description"):
     assertEquals(Shelf.constraint, Newtype.Constraint("Match[\"[a-z]+\"]", "Should match [a-z]+"))
-    assertEquals(Catalogue.Year.constraint, Newtype.Constraint("Interval.Closed[-5000, 3000]", "Should be included in [-5000, 3000]"))
+    assertEquals(
+      Catalogue.Year.constraint,
+      Newtype.Constraint("Interval.Closed[-5000, 3000]", "Should be included in [-5000, 3000]")
+    )
     assertEquals(Label.constraint, Newtype.Constraint("Pure", "Always valid"))
 
   test("parse gives the value, or Malformed with the type, the constraint and the raw input"):
@@ -46,7 +49,10 @@ class NewtypeParseSuite extends munit.FunSuite:
         Vector(
           Invalid.Malformed(
             TypeName("com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year"),
-            Constraint(Constraint.Name("Interval.Closed[-5000, 3000]"), Constraint.Description("Should be included in [-5000, 3000]")),
+            Constraint(
+              Constraint.Name("Interval.Closed[-5000, 3000]"),
+              Constraint.Description("Should be included in [-5000, 3000]")
+            ),
             Raw("9999")
           )
         )

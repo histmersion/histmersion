@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.jobs.JobKinds
@@ -32,8 +32,10 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     else
       Left(
         Api.Error(
-          Problem(
-            s"a media run is already going (${busy.get.fold("?")(_.value)}) — see `histmersion jobs`; try again when it ends"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"a media run is already going (${busy.get.fold("?")(_.value)}) — see `histmersion jobs`; try again when it ends"
+            )
           )
         )
       )

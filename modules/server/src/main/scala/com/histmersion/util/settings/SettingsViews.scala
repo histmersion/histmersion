@@ -1,7 +1,8 @@
 package com.histmersion
 package util.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
@@ -55,7 +56,7 @@ object SettingsViews:
           s.credentialShown.map(x => ConfigEdit.Credential.Shown(x.value))
         )
       ),
-      s.locked.map(p => ConfigEdit.Field.Locked(p.value))
+      s.locked.map(p => ConfigEdit.Field.Locked(p.sentence))
     )
 
   def written(
@@ -70,14 +71,16 @@ object SettingsViews:
       o.backup.map(b => ConfigEdit.Written.Backup(b.value)),
       ConfigEdit.Written.Version(o.version.value),
       ConfigEdit.Written.Created(o.created.value),
-      o.restart.map((k, why) => ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem(why.value))),
+      o.restart.map((k, why) =>
+        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem.Unclassified(Legacy.Text(why.value)))
+      ),
       o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,
       ConfigEdit.Written.Restartable(restartable)
     )
 
   def error(e: SettingError): Api.Error =
-    def refusal(code: String) = Api.Error(Problem(e.message.value), Some(Api.Error.Code(code)))
+    def refusal(code: String) = Api.Error(e.message, Some(Api.Error.Code(code)))
     e match
       case SettingError.Changed                        => refusal(ConfigEdit.CodeChanged)
       case SettingError.NoFile(_) | SettingError.Io(_) => refusal(ConfigEdit.CodeUnavailable)

@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -81,7 +81,7 @@ class RunsViewSuite extends munit.FunSuite:
       RunsView.pausedFor(
         run(
           RunInfo.Status("paused"),
-          Some(Problem("budget: the run spent 2 of its 2 USD")),
+          Some(Problem.Unclassified(Legacy.Text("budget: the run spent 2 of its 2 USD"))),
           Some(Agents.PauseReason.Budget)
         )
       ),
@@ -89,7 +89,11 @@ class RunsViewSuite extends munit.FunSuite:
     )
     assertEquals(
       RunsView.pausedFor(
-        run(RunInfo.Status("paused"), Some(Problem("interrupted")), Some(Agents.PauseReason.Interrupted))
+        run(
+          RunInfo.Status("paused"),
+          Some(Problem.Unclassified(Legacy.Text("interrupted"))),
+          Some(Agents.PauseReason.Interrupted)
+        )
       ),
       Some(Agents.PauseReason.Interrupted)
     )
@@ -235,7 +239,7 @@ class RunsViewSuite extends munit.FunSuite:
       model = Some(Agents.StepInfo.Model("anthropic:claude")),
       usage = Usage(Agents.Usage.Input(120), Agents.Usage.Output(45)),
       costUsd = Agents.StepInfo.CostUsd(0.25),
-      error = Some(Problem("provider: overloaded"))
+      error = Some(Problem.Unclassified(Legacy.Text("provider: overloaded")))
     )
     val cells = RunsView.stepCells(s)
     assertEquals(cells.map(_._1), RunsView.StepColumns)

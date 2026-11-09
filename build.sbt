@@ -213,7 +213,7 @@ lazy val problem = projectMatrix
 
 lazy val values = projectMatrix
   .in(file("modules/values"))
-  .dependsOn(newtype)
+  .dependsOn(newtype, problem)
   .settings(
     name := "histmersion-values",
     description := "The model's newtypes and vocabularies the server-side modules share, on Iron alone (JVM)"
@@ -305,7 +305,7 @@ lazy val core = projectMatrix
 
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
-  .dependsOn(newtype.jvm(scala3))
+  .dependsOn(newtype.jvm(scala3), problem.jvm(scala3))
   // sconfig, kindlings-sconfig-derivation and iron only (all in the plugin platform): no Histmersion class on a plugin's class path
   .settings(
     name := "histmersion-plugin-api",
@@ -552,7 +552,7 @@ lazy val console = project
 
 lazy val pluginResolver = project
   .in(file("modules/plugin-resolver"))
-  .dependsOn(console)
+  .dependsOn(console, problem.jvm(scala3))
   // run from the relink kit's tools/, never on the server's class path: coursier's jar carries native-image settings
   .settings(
     name := "histmersion-plugin-resolver",
@@ -882,6 +882,13 @@ lazy val server = project
         conv.toPath((newtype.jvm(scala3) / makePom).value).toFile,
         conv.toPath((newtype.jvm(scala3) / Compile / packageBin).value).toFile,
         conv.toPath((newtype.jvm(scala3) / Compile / packageSrc).value).toFile
+      )
+      // the closed Problem, which plugin-api's POM names
+      module(
+        (problem.jvm(scala3) / projectID).value,
+        conv.toPath((problem.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((problem.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((problem.jvm(scala3) / Compile / packageSrc).value).toFile
       )
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.StandardCharsets
@@ -167,18 +168,27 @@ object PmTiles:
 
   def parseHeader(b: HeaderBytes): Either[Problem, Header] =
     val a: Array[Byte] = b.value
-    if a.length < HeaderLength then Left(Problem(s"a PMTiles header is $HeaderLength bytes, got ${a.length}"))
-    else if !a.take(7).sameElements(Magic) then Left(Problem("not a PMTiles archive (no magic number)"))
-    else if a(7) != 3 then Left(Problem(s"PMTiles spec version ${a(7)} is not supported (only 3)"))
+    if a.length < HeaderLength then
+      Left(Problem.Unclassified(Legacy.Text(s"a PMTiles header is $HeaderLength bytes, got ${a.length}")))
+    else if !a.take(7).sameElements(Magic) then
+      Left(Problem.Unclassified(Legacy.Text("not a PMTiles archive (no magic number)")))
+    else if a(7) != 3 then
+      Left(Problem.Unclassified(Legacy.Text(s"PMTiles spec version ${a(7)} is not supported (only 3)")))
     else
       val bb = ByteBuffer.wrap(a).order(ByteOrder.LITTLE_ENDIAN)
       def l(at: Int) = bb.getLong(at)
       def e7(at: Int) = bb.getInt(at) / 1e7
       def u8(at: Int) = a(at) & 0xff
       def offset(at: Int): Either[Problem, ByteOffset] =
-        ByteOffset.either(l(at)).left.map(_ => Problem(s"a PMTiles header holds a negative offset at byte $at"))
+        ByteOffset
+          .either(l(at))
+          .left
+          .map(_ => Problem.Unclassified(Legacy.Text(s"a PMTiles header holds a negative offset at byte $at")))
       def count(at: Int): Either[Problem, ByteCount] =
-        ByteCount.either(l(at)).left.map(_ => Problem(s"a PMTiles header holds a negative length at byte $at"))
+        ByteCount
+          .either(l(at))
+          .left
+          .map(_ => Problem.Unclassified(Legacy.Text(s"a PMTiles header holds a negative length at byte $at")))
       for
         rootOffset <- offset(8)
         rootLength <- count(16)
@@ -348,7 +358,7 @@ object PmTiles:
     try
       val v = Varints(b.value)
       val n = v.next()
-      if n < 0 || n > 50_000_000 then Left(Problem(s"implausible PMTiles directory size $n"))
+      if n < 0 || n > 50_000_000 then Left(Problem.Unclassified(Legacy.Text(s"implausible PMTiles directory size $n")))
       else
         val k = n.toInt
         val ids = new Array[Long](k)
@@ -363,7 +373,8 @@ object PmTiles:
           val raw = v.next()
           offs(i) = if raw == 0 && i > 0 then offs(i - 1) + lens(i - 1) else raw - 1
         val negative = offs.indexWhere(_ < 0)
-        if negative >= 0 then Left(Problem(s"PMTiles directory entry $negative has a negative offset"))
+        if negative >= 0 then
+          Left(Problem.Unclassified(Legacy.Text(s"PMTiles directory entry $negative has a negative offset")))
         else
           Right(
             Vector.tabulate(k)(i =>
@@ -375,7 +386,7 @@ object PmTiles:
               )
             )
           )
-    catch case e: IllegalArgumentException => Left(Problem(e.getMessage))
+    catch case e: IllegalArgumentException => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
 
   /** The entry that holds `id` in one sorted directory: the last whose id is ≤ `id` — a leaf pointer (to look further
     * in) or a run that covers it. `None`: not in this directory.
@@ -403,11 +414,11 @@ object PmTiles:
       at <- ByteOffset
         .either(section.value + e.offset.value)
         .left
-        .map(_ => Problem(s"PMTiles entry offset ${e.offset.value} lies outside its file"))
+        .map(_ => Problem.Unclassified(Legacy.Text(s"PMTiles entry offset ${e.offset.value} lies outside its file")))
       n <- ByteCount
         .either(e.length.value.toLong)
         .left
-        .map(_ => Problem(s"PMTiles entry length ${e.length.value} is negative"))
+        .map(_ => Problem.Unclassified(Legacy.Text(s"PMTiles entry length ${e.length.value} is negative")))
     yield (at, n)
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
@@ -419,7 +430,7 @@ object PmTiles:
 
   def gunzip(b: CompressedBytes): Either[Problem, PlainBytes] =
     try Right(PlainBytes(Using.resource(GZIPInputStream(ByteArrayInputStream(b.value: Array[Byte])))(_.readAllBytes())))
-    catch case e: java.io.IOException => Left(Problem(s"corrupt gzip data: ${e.getMessage}"))
+    catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"corrupt gzip data: ${e.getMessage}")))
 
   def isGzip(b: TileBytes): Boolean =
     val a: Array[Byte] = b.value
@@ -428,7 +439,12 @@ object PmTiles:
   def decompress(b: CompressedBytes, c: Compression): Either[Problem, PlainBytes] = c match
     case Compression.None | Compression.Unknown => Right(PlainBytes(b.value))
     case Compression.Gzip                       => gunzip(b)
-    case other => Left(Problem(s"PMTiles ${other.toString.toLowerCase} compression is not supported (only gzip)"))
+    case other                                  =>
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"PMTiles ${other.toString.toLowerCase} compression is not supported (only gzip)")
+        )
+      )
 
   def compress(b: PlainBytes, c: Compression): CompressedBytes = c match
     case Compression.Gzip => gzip(b)
@@ -475,8 +491,9 @@ object PmTiles:
           find(dir, id) match
             case None                  => Right(None)
             case Some(e) if !e.isLeaf  => Right(Some(e))
-            case Some(_) if depth >= 3 => Left(Problem(s"${where.value}: directories nested too deep"))
-            case Some(e)               => leaf(e).flatMap(walk(_, depth + 1))
+            case Some(_) if depth >= 3 =>
+              Left(Problem.Unclassified(Legacy.Text(s"${where.value}: directories nested too deep")))
+            case Some(e) => leaf(e).flatMap(walk(_, depth + 1))
         walk(root, 0)
 
     /** The stored bytes of `z/x/y` (still compressed as [[PmTiles.Header.tileCompression]] says), or `None` when the
@@ -511,7 +528,7 @@ object PmTiles:
                 _ <- Either.cond(
                   h.rootOffset.value + h.rootLength.value <= bytes.length,
                   (),
-                  Problem("root directory outside the first 16 KiB")
+                  Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
                 )
                 root <- decompress(
                   CompressedBytes(
@@ -522,15 +539,16 @@ object PmTiles:
                   .flatMap(decodeDirectory)
                 meta <- metadata(reader, h)
               yield new File(where, reader, h, root, meta, maxLeaves)
-            catch case e: java.io.IOException => Left(Problem(s"${e.getMessage}"))
+            catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"${e.getMessage}")))
           if read.isLeft then reader.close()
           read
-        catch case e: java.io.IOException => Left(Problem(s"${e.getMessage}"))
-      opened.left.map(e => Problem(s"${where.value}: ${e.value}"))
+        catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"${e.getMessage}")))
+      opened.left.map(e => Problem.Unclassified(Legacy.Text(s"${where.value}: ${e.sentence}")))
 
     private def metadata(reader: RandomReader, h: Header): Either[Problem, Json] =
       if h.metadataLength.value <= 0 then Right(Json.obj())
-      else if h.metadataLength.value > 16L * 1024 * 1024 then Left(Problem("metadata over 16 MiB"))
+      else if h.metadataLength.value > 16L * 1024 * 1024 then
+        Left(Problem.Unclassified(Legacy.Text("metadata over 16 MiB")))
       else
         // a file that ends early leaves the rest zeros, as a buffer read up to the end does
         val length = h.metadataLength.value.toInt
@@ -543,5 +561,5 @@ object PmTiles:
             io.circe.parser
               .parse(String(b.value: Array[Byte], "UTF-8"))
               .left
-              .map(e => Problem(s"metadata is not JSON: ${e.getMessage}"))
+              .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: ${e.getMessage}")))
           )

@@ -1,7 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -32,10 +33,10 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("a chain reports every bad model and refuses a model named twice"):
     val e = parseChain(ModelChains.Chain.Spec("ollama:x > local: > claude-code:sonnet")).left.toOption.get
-    assert(e.value.contains("unknown provider 'ollama'") && e.value.contains("names no model"), e)
+    assert(e.sentence.contains("unknown provider 'ollama'") && e.sentence.contains("names no model"), e)
     assert(
       parseModels(List(ModelRef.Model.Spec("claude-code:sonnet"), ModelRef.Model.Spec("claude-code:sonnet"))).left
-        .exists(_.value.contains("twice"))
+        .exists(_.sentence.contains("twice"))
     )
 
   test("claude-code is a provider; its model ids are whatever the CLI accepts"):
@@ -52,7 +53,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(Window.parse(ModelChains.LimitSpec.Window("90m")).map(_.text), Right("90m"))
     assert(Window.parse(ModelChains.LimitSpec.Window("0h")).isLeft)
     assert(Window.parse(ModelChains.LimitSpec.Window("91d")).isLeft)
-    assert(Window.parse(ModelChains.LimitSpec.Window("fortnight")).left.exists(_.value.contains("not a window")))
+    assert(Window.parse(ModelChains.LimitSpec.Window("fortnight")).left.exists(_.sentence.contains("not a window")))
 
   test("limits: tokens with k/M suffixes, usd with a word or a dollar sign"):
     assertEquals(
@@ -68,10 +69,12 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(Limit.parse(ModelChains.Limit.Spec("1.5M tokens/5h")).map(_.amount), Right(BigDecimal(1500000)))
 
   test("limits: a fractional token count, a bad unit, no window, a non-positive amount are errors"):
-    assert(Limit.parse(ModelChains.Limit.Spec("1.5 tokens/5h")).left.exists(_.value.contains("whole number")))
-    assert(Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(_.value.contains("neither tokens nor usd")))
+    assert(Limit.parse(ModelChains.Limit.Spec("1.5 tokens/5h")).left.exists(_.sentence.contains("whole number")))
+    assert(
+      Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(_.sentence.contains("neither tokens nor usd"))
+    )
     assert(Limit.parse(ModelChains.Limit.Spec("5 usd")).isLeft)
-    assert(Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(_.value.contains("positive")))
+    assert(Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(_.sentence.contains("positive")))
     assert(
       Limit
         .fromSpec(LimitSpec(ModelChains.LimitSpec.Amount(-1), Measure.Usd, ModelChains.LimitSpec.Window("day")))
@@ -105,21 +108,21 @@ class ModelChainsSuite extends munit.FunSuite:
       )
     ).left.toOption.get
     List("is not <provider:model", "unknown provider 'nobody'", "neither tokens nor usd", "0 to 99").foreach(m =>
-      assert(e.value.contains(m), e)
+      assert(e.sentence.contains(m), e)
     )
     assert(
       parseAllowances(ModelChains.Allowance.Spec("local:x = 1 usd/day; local:x = 2 usd/day")).left
-        .exists(_.value.contains("twice"))
+        .exists(_.sentence.contains("twice"))
     )
     assert(
       parseAllowances(ModelChains.Allowance.Spec("local:x = 1 usd/day, 2 usd/day")).left
-        .exists(_.value.contains("same measure and window"))
+        .exists(_.sentence.contains("same measure and window"))
     )
 
   test("chains and allowances name a plugin provider only while it is registered"):
     assert(
       parseChain(ModelChains.Chain.Spec("gemini:pro > local:x")).left
-        .exists(_.value.contains("unknown provider 'gemini'"))
+        .exists(_.sentence.contains("unknown provider 'gemini'"))
     )
     assertEquals(
       parseChain(
@@ -130,7 +133,7 @@ class ModelChainsSuite extends munit.FunSuite:
     )
     assert(
       parseAllowances(ModelChains.Allowance.Spec("gemini:* = 1 usd/day")).left
-        .exists(_.value.contains("unknown provider 'gemini'"))
+        .exists(_.sentence.contains("unknown provider 'gemini'"))
     )
     val a = parseAllowances(
       ModelChains.Allowance.Spec("gemini:* = 1 usd/day"),
@@ -249,7 +252,7 @@ class ModelChainsSuite extends munit.FunSuite:
               ModelChains.ChainEntry.Model("claude-code:sonnet"),
               ready = ModelChains.ChainEntry.Ready(true),
               usable = ModelChains.ChainEntry.Usable(false),
-              Some(api.Problem("below its allowance")),
+              Some(Problem.Unclassified(Legacy.Text("below its allowance"))),
               Some(ModelChains.LimitStatus.FreesAt("2026-10-05T14:00:00Z"))
             ),
             ChainEntry(
@@ -303,7 +306,7 @@ class ModelChainsSuite extends munit.FunSuite:
               ModelChains.SettingSource.Wire("config"),
               Nil,
               None,
-              Some(api.Problem("no model"))
+              Some(Problem.Unclassified(Legacy.Text("no model")))
             )
           )
         )

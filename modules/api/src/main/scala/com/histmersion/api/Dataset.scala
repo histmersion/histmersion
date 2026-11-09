@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum Dataset derives CanEqual:
@@ -18,5 +19,8 @@ object Dataset:
       case None    => Right(Local)
       case Some(s) =>
         parse(Wire(s)).toRight(
-          Api.Error(Problem(s"dataset '$s' is not seed or local"), Some(Api.Error.Code(Write.CodeInvalid)))
+          Api.Error(
+            Problem.Unclassified(Legacy.Text(s"dataset '$s' is not seed or local")),
+            Some(Api.Error.Code(Write.CodeInvalid))
+          )
         )

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.{Paging, Plural, RowCount, YearFmt}
 import com.histmersion.api.library.Facet
 import com.histmersion.api.given
@@ -32,7 +33,7 @@ object AgentsMarkdown:
     if m.chains.isEmpty then
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${
-            if (r.ready) == RoleModel.Ready(true) then "ready" else r.problem.getOrElse("not ready")
+            if (r.ready) == RoleModel.Ready(true) then "ready" else r.problem.map(_.sentence).getOrElse("not ready")
           } |"
       }
       (head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
@@ -40,7 +41,8 @@ object AgentsMarkdown:
       val rows = m.chains.map { c =>
         val chain = if c.models.isEmpty then "—" else c.models.map(chainEntry).mkString(" → ")
         val now =
-          c.active.getOrElse(if c.models.isEmpty then c.problem.getOrElse("no model") else "**none: would pause**")
+          c.active.getOrElse(if c.models.isEmpty then c.problem.map(_.sentence).getOrElse("no model")
+          else "**none: would pause**")
         s"| ${c.role} | $chain | $now | ${c.source} |"
       }
       val allowances =
@@ -65,11 +67,13 @@ object AgentsMarkdown:
       else if !((e.ready) == ModelChains.ChainEntry.Ready(true)) then "not ready"
       else if (e.cooling) == ModelChains.ChainEntry.Cooling(true) then "cooling down"
       else "below its allowance"
-      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
+      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": ${p.sentence}")}${e.freesAt.fold("")(t =>
+          s" (frees $t)"
+        )}" +
         e.billing.fold("")(b => s" · $b")
     }
     (s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
-      (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n")))
+      (if lines.isEmpty then c.problem.map(_.sentence).getOrElse("no model") else lines.mkString("\n")))
 
   private def amount(v: Double, m: ModelChains.Measure): String = m match
     case ModelChains.Measure.Tokens =>
@@ -103,10 +107,14 @@ object AgentsMarkdown:
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
       if !((p.available) == PlanQuota.PoolStatus.Available(true)) then
-        s"**${p.reason.getOrElse("unavailable: no login")}**"
+        s"**${p.reason.map(_.sentence).getOrElse("unavailable: no login")}**"
       else if (p.held) == PlanQuota.PoolStatus.Held(true) then "**held** — no agent use until released"
-      else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then "usable" + p.reason.fold("")(r => s" ($r)")
-      else s"**paused** — ${p.reason.getOrElse("below its floor")}" + p.until.fold("")(u => s"; frees at $u")
+      else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then
+        "usable" + p.reason.fold("")(r => s" (${r.sentence})")
+      else
+        s"**paused** — ${p.reason.map(_.sentence).getOrElse("below its floor")}" + p.until.fold("")(u =>
+          s"; frees at $u"
+        )
     val windows =
       if p.windows.isEmpty then "\n\n_No reading yet: unknown until a run or a fresh reading reads it._"
       else
@@ -164,7 +172,7 @@ object AgentsMarkdown:
       else
         "\n\n## Cooling down\n\n" + q.cooldowns
           .map(c =>
-            s"- `${c.model}` — ${c.reason}; skipped until ${c.until} " +
+            s"- `${c.model}` — ${c.reason.sentence}; skipped until ${c.until} " +
               "unless a reading of its plan taken since says it is usable (`histmersion agent quota refresh <pool>`)"
           )
           .mkString("\n")
@@ -229,8 +237,8 @@ object AgentsMarkdown:
     val goal = r.goal.fold("")(g => s" · goal $g")
     s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.value.nonEmpty).fold("")(p => s" · $p") + r.error
-        .filter(_.value.nonEmpty)
-        .fold("")(e => s" · $e")
+        .filter(_.sentence.nonEmpty)
+        .fold("")(e => s" · ${e.sentence}")
 
   def runs(
       rs: List[RunInfo],
@@ -293,7 +301,7 @@ object AgentsMarkdown:
     val head = s"# Agent run ${r.id}${if (r.dryRun) == RunInfo.DryRun(true) then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
       Option(options(r)).filter((_).nonEmpty).fold("")(o => s" · $o") + "\n" +
-      s"- status: **${r.status}**${r.error.filter(_.value.nonEmpty).fold("")(e => s" — $e")}\n" +
+      s"- status: **${r.status}**${r.error.filter(_.sentence.nonEmpty).fold("")(e => s" — ${e.sentence}")}\n" +
       r.progress.filter(_.value.nonEmpty).fold("")(p => s"- last: $p\n") +
       s"- spent: ${tokens(r.usage)} · ${usd(r.costUsd.value)} of ${usd(r.budgetUsd.value)} USD · budget ${r.budgetTokens} tokens\n" +
       s"- started ${r.createdAt}, updated ${r.updatedAt}\n"
@@ -303,7 +311,7 @@ object AgentsMarkdown:
       "\n## Steps\n\n| # | step | kind | try | status | model | tokens | USD | note |\n|---|---|---|---|---|---|---|---|---|\n" +
         d.steps
           .map { s =>
-            val note = (s.error.map(_.value).toList ++ s.wouldWrite.map(w => s"$DryRunNote: ${w.what}"))
+            val note = (s.error.map(_.sentence).toList ++ s.wouldWrite.map(w => s"$DryRunNote: ${w.what}"))
               .map(_.replace("|", "\\|").replace("\n", " ").take(160))
               .mkString("; ")
             val shape = callShape(s.firstCallTokens.map(_.value), s.turns.map(_.value))
@@ -414,7 +422,7 @@ object AgentsMarkdown:
       else if (w.isOa) == Goal.Plans.PlannedWork.IsOa(true) then "to acquire (open access)"
       else "to acquire"
       s"- ${w.title.getOrElse(w.doi)} (${w.year.fold("n.d.")(_.toString)}) doi:${w.doi} — $where${
-          if w.why.value.isEmpty then "" else s": ${w.why}"
+          if w.why.sentence.isEmpty then "" else s": ${w.why.sentence}"
         }"
     }
     val dropped = p.dropped.map(d => s"- dropped: $d")

@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.MediaConfig
@@ -43,8 +45,9 @@ object PluginMedia:
     */
   def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Refusal] =
     rec.rights match
-      case _ if rec.withheld.isDefined          => rec.withheld.map(w => Refusal.Withheld(Problem(w.value)))
-      case Left(why)                            => Some(Refusal.Unreadable(Problem(why.value)))
+      case _ if rec.withheld.isDefined =>
+        rec.withheld.map(w => Refusal.Withheld(Problem.Unclassified(Legacy.Text(w.value))))
+      case Left(why)                            => Some(Refusal.Unreadable(why))
       case Right(r) if !allow.allows(r.licence) => Some(Refusal.LicenceNotAllowed(r.licence.family, provider))
       case Right(_) if rec.imageUrl.isEmpty     => Some(Refusal.NoImage)
       case Right(_)                             => None
@@ -67,8 +70,9 @@ object PluginMedia:
     def problem: Problem = this match
       case Withheld(why)                     => why
       case Unreadable(why)                   => why
-      case LicenceNotAllowed(family, source) => Problem(s"licence ${family.wire} not allowed for $source")
-      case NoImage                           => Problem("no image")
+      case LicenceNotAllowed(family, source) =>
+        Problem.Unclassified(Legacy.Text(s"licence ${family.wire} not allowed for $source"))
+      case NoImage => Problem.Unclassified(Legacy.Text("no image"))
 
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
     * of the request.
@@ -84,22 +88,26 @@ object PluginMedia:
 
   /** A plugin's answer to a request, or what it threw as a failure of that call (one that needed no answer). */
   def guardHttp[A](a: => Either[Plugin.Http.Failure, A]): Either[Plugin.Http.Failure, A] =
-    try Option(a).getOrElse(Left(Plugin.Http.Failure.Transport(plugin.Problem("the plugin answered nothing"))))
+    try
+      Option(a).getOrElse(
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
+      )
     catch
       case e: InterruptedException => throw e
       case NonFatal(e)             =>
         Left(
           Plugin.Http.Failure.Transport(
-            plugin.Problem(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+            Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
           )
         )
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[?, A]): Either[Problem, A] =
-    try Option(a).getOrElse(Left(Problem("the plugin answered nothing"))).left.map(e => Problem(s"$e"))
+  def guard[A](a: => Either[Problem, A]): Either[Problem, A] =
+    try Option(a).getOrElse(Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             => Left(Problem(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      case NonFatal(e)             =>
+        Left(Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")))
 
   /** Pure: the record a plugin's item becomes; its rights read by the HOST ([[rights]]). A period its type would refuse
     * makes the record unreadable (its rights a `Left` naming the value, so it is never kept), as does a record the host
@@ -108,20 +116,20 @@ object PluginMedia:
   def record(it: MediaItem): MediaRecord =
     val key = it.key.value.trim
     val period: Either[Problem, Option[com.histmersion.Period]] =
-      try SpiValues.optional(it.period)(SpiValues.periodOf).left.map(why => Problem(why.value))
+      try SpiValues.optional(it.period)(SpiValues.periodOf)
       catch
         case NonFatal(e) =>
           Left(
-            Problem(
-              s"a period the host cannot read (${e.getClass.getSimpleName}) — is the plugin " +
-                s"built against plugin SPI ${Spi.Version}?"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"a period the host cannot read (${e.getClass.getSimpleName}) — is the plugin " +
+                  s"built against plugin SPI ${Spi.Version}?"
+              )
             )
           )
     val stated: Either[Problem, MediaRights] =
       Option(it.rights)
-        .getOrElse(Left(plugin.Problem("no rights statement")))
-        .left
-        .map(why => Problem(why.value))
+        .getOrElse(Left(Problem.Unclassified(Legacy.Text("no rights statement"))))
     MediaRecord(
       MediaRecord.Key(key),
       MediaRecord.Title(it.title.value.trim),
@@ -130,10 +138,8 @@ object PluginMedia:
       it.thumbUrl.map(_.value.trim).filter(_.nonEmpty).map(MediaRecord.ThumbUrl(_)),
       it.originalUrl.map(_.value.trim).filter(_.nonEmpty).map(MediaRecord.OriginalUrl(_)),
       period.left
-        .map(why => Problem(s"$key: $why"))
-        .flatMap(_ => stated.flatMap(rights))
-        .left
-        .map(why => domain.Problem(why.value)),
+        .map(why => Problem.Unclassified(Legacy.Text(s"$key: ${why.sentence}")))
+        .flatMap(_ => stated.flatMap(rights)),
       it.geography.map((field, value) =>
         MediaRecord.Geography.Field(field.value) -> MediaRecord.Geography.Value(value.value)
       ),
@@ -162,7 +168,7 @@ object PluginMedia:
           .filter(_.family != Licence.Family.Unknown)
           .getOrElse(byStatement)
     val credit = Option(r.credit).map(_.value).getOrElse("").trim
-    if credit.isEmpty then Left(Problem("no credit line"))
+    if credit.isEmpty then Left(Problem.Unclassified(Legacy.Text("no credit line")))
     else
       Right(
         Attribution(

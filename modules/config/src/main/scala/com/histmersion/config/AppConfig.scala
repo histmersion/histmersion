@@ -1,6 +1,7 @@
 package com.histmersion
 package config
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey
@@ -49,7 +50,7 @@ object AppConfig:
   def load(env: org.ekrich.config.Config): AppConfig =
     decode(ConfigLayers.merged(ConfigLayers.reference, ConfigFactory.empty, env)) match
       case Right(cfg) => cfg
-      case Left(err)  => throw new RuntimeException(s"Histmersion config error: $err")
+      case Left(err)  => throw new RuntimeException(s"Histmersion config error: ${err.legacyText}")
 
   /** The server's and the CLI's load: reference.conf, then the user config file ([[UserPaths.configFile]]), then the
     * environment — env > file > reference.conf. A missing file is no error; one that does not parse or does not
@@ -70,8 +71,8 @@ object AppConfig:
     val reference = ConfigLayers.reference
     // sconfig's parse errors already start with the file (their origin): not twice
     def inFile(p: java.nio.file.Path)(msg: Problem) =
-      val text = s"$msg"
-      Problem(s"Histmersion config file $p: ${text.stripPrefix(s"$p: ")}")
+      val text = s"${msg.legacyText}"
+      Problem.Unclassified(Legacy.Text(s"Histmersion config file $p: ${text.stripPrefix(s"$p: ")}"))
     file match
       case None =>
         val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
@@ -116,9 +117,9 @@ object AppConfig:
     * it is not followed).
     */
   def loadWithUserText(env: org.ekrich.config.Config, text: String): Either[Problem, LoadedConfig] =
-    val within = (msg: Problem) => Problem(s"Histmersion config: $msg")
+    val within = (msg: Problem) => Problem.Unclassified(Legacy.Text(s"Histmersion config: ${msg.legacyText}"))
     try withUser(ConfigLayers.reference, ConfigFactory.parseString(text), env, None, within)
-    catch case e: org.ekrich.config.ConfigException => Left(within(Problem.of(e)))
+    catch case e: org.ekrich.config.ConfigException => Left(within(Problem.Unclassified.of(e)))
 
   private def withUser(
       reference: org.ekrich.config.Config,
@@ -157,10 +158,10 @@ object AppConfig:
 
   private def resolved(c: => org.ekrich.config.Config): Either[Problem, org.ekrich.config.Config] =
     try Right(c.resolve())
-    catch case e: org.ekrich.config.ConfigException => Left(Problem.of(e))
+    catch case e: org.ekrich.config.ConfigException => Left(Problem.Unclassified.of(e))
 
   private def configError(e: Problem): Problem =
-    Problem(s"Histmersion config error: $e")
+    Problem.Unclassified(Legacy.Text(s"Histmersion config error: ${e.legacyText}"))
 
   /** Decode the settings of a merged tree (`LoadedConfig.merged`, or one [[ConfigReload.effective]] made of it).
     */
@@ -168,4 +169,4 @@ object AppConfig:
 
   private def decode(c: => org.ekrich.config.Config): Either[Problem, AppConfig] =
     try ConfigReader[AppConfig].from(c.getConfig("histmersion").root).left.map(ConfigLayers.describe)
-    catch case e: org.ekrich.config.ConfigException => Left(Problem.of(e))
+    catch case e: org.ekrich.config.ConfigException => Left(Problem.Unclassified.of(e))

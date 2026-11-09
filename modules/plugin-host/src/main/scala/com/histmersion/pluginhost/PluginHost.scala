@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.EnvOverrides
 import com.histmersion.api.Sha256
 import com.histmersion.api.plugins.{PluginJar, PluginSet, PluginSetting, PluginsReport, PluginState, PluginStatus}
@@ -83,7 +85,11 @@ object PluginHost:
         case Left((provider, e)) =>
           loop(
             acc,
-            Problem(s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}") :: errs
+            Problem.Unclassified(
+              Legacy.Text(
+                s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e).sentence}"
+              )
+            ) :: errs
           )
     loop(Nil, Nil)
 
@@ -121,9 +127,11 @@ object PluginHost:
 
   /** What to do about a plugin built against another SPI generation. */
   def rebuild(built: Option[Plugin.Info.SpiVersion]): Problem =
-    Problem(
-      s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
-        s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
+    Problem.Unclassified(
+      Legacy.Text(
+        s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
+          s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
+      )
     )
 
   /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the library it
@@ -139,10 +147,12 @@ object PluginHost:
     foreignSpi(e)
       .map(rebuild)
       .getOrElse(
-        missingClass(e).fold(Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}"))(name =>
-          Problem(
-            s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
-              "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+        missingClass(e).fold(Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}")))(name =>
+          Problem.Unclassified(
+            Legacy.Text(
+              s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+                "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+            )
           )
         )
       )
@@ -156,18 +166,19 @@ object PluginHost:
   def check(infos: List[Plugin.Info], spi: Plugin.Info.SpiVersion): Map[Plugin.Info.Id, Problem] =
     val dup = infos.groupBy(_.id).collect {
       case (id, is) if is.size > 1 =>
-        id -> Problem(s"plugin id '$id' is claimed by ${is.size} plugins")
+        id -> Problem.Unclassified(Legacy.Text(s"plugin id '$id' is claimed by ${is.size} plugins"))
     }
     val bad = infos.flatMap { i =>
       if i.spiVersion != spi then
         Some(
-          i.id -> Problem(
-            s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi"
+          i.id -> Problem.Unclassified(
+            Legacy.Text(s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi")
           )
         )
       else if !i.id.value.matches(IdPattern) then
-        Some(i.id -> Problem(s"'${i.id}': a plugin id is kebab-case $IdPattern"))
-      else if Reserved(i.id.value) then Some(i.id -> Problem(s"'${i.id}' is a key of $Root, not a plugin id"))
+        Some(i.id -> Problem.Unclassified(Legacy.Text(s"'${i.id}': a plugin id is kebab-case $IdPattern")))
+      else if Reserved(i.id.value) then
+        Some(i.id -> Problem.Unclassified(Legacy.Text(s"'${i.id}' is a key of $Root, not a plugin id")))
       else None
     }.toMap
     bad ++ dup
@@ -180,7 +191,7 @@ object PluginHost:
     val unknown =
       listed
         .filterNot(ids.contains)
-        .map(id => Problem(s"$Root.$OrderKey names '$id', which is no plugin in this binary"))
+        .map(id => Problem.Unclassified(Legacy.Text(s"$Root.$OrderKey names '$id', which is no plugin in this binary")))
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 
   /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What a relink records
@@ -192,12 +203,14 @@ object PluginHost:
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =
     val path = s"$Root.$OrderKey"
-    Try(user.withFallback(env).resolve()).toEither.left.map(e => Problem(s"$path: ${e.getMessage}")).flatMap { c =>
-      if !c.hasPath(path) then Right(Nil)
-      else
-        Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty).map(Plugin.Info.Id(_))).toEither.left
-          .map(_ => Problem(s"$path must be a list of plugin ids [ … ]"))
-    }
+    Try(user.withFallback(env).resolve()).toEither.left
+      .map(e => Problem.Unclassified(Legacy.Text(s"$path: ${e.getMessage}")))
+      .flatMap { c =>
+        if !c.hasPath(path) then Right(Nil)
+        else
+          Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty).map(Plugin.Info.Id(_))).toEither.left
+            .map(_ => Problem.Unclassified(Legacy.Text(s"$path must be a list of plugin ids [ … ]")))
+      }
 
   /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of this binary. A
     * warning, never an error: removing a plugin must not break startup.
@@ -237,7 +250,7 @@ object PluginHost:
           .resolve()
       val trimmed = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
       Right(trimmed.toConfig)
-    catch case e: ConfigException => Left(Problem(s"$path: ${e.getMessage}"))
+    catch case e: ConfigException => Left(Problem.Unclassified(Legacy.Text(s"$path: ${e.getMessage}")))
 
   /** Pure: `enabled` of an effective block — a boolean or a boolean string (env); absent = disabled. */
   def enabled(block: Config, id: Plugin.Info.Id): Either[Problem, Boolean] =
@@ -247,7 +260,7 @@ object PluginHost:
       Option(v.unwrapped)
         .map(_.toString.trim.toLowerCase(java.util.Locale.ROOT))
         .flatMap(_.toBooleanOption)
-        .toRight(Problem(s"$Root.$id.enabled must be true or false"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"$Root.$id.enabled must be true or false")))
 
   /** Pure: each key the USER's block sets against the kind of value the plugin's defaults have there — the derived
     * readers report a wrong type without its key ("Expected NUMBER but got STRING"), so the key is found here first, as
@@ -265,10 +278,10 @@ object PluginHost:
         def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
         if k == "enabled" then
           Option.unless(v.valueType == BOOLEAN || text.toBooleanOption.isDefined)(
-            Problem(s"$path.enabled must be true or false")
+            Problem.Unclassified(Legacy.Text(s"$path.enabled must be true or false"))
           )
         else if !Try(defaults.hasPathOrNull(k)).getOrElse(false) then
-          Some(Problem(s"$path.$k: unknown setting (not in the plugin's defaults)"))
+          Some(Problem.Unclassified(Legacy.Text(s"$path.$k: unknown setting (not in the plugin's defaults)")))
         else if defaults.getIsNull(k) then None
         else
           val (ok, want) = defaults.getValue(k).valueType match
@@ -278,7 +291,9 @@ object PluginHost:
             case LIST   => (v.valueType == LIST, "a list [ … ]")
             case STRING => (v.valueType != LIST && v.valueType != OBJECT, "a string")
             case _      => (true, "")
-          Option.unless(ok)(Problem(s"$path.$k must be $want, not ${v.render(ConfigRenderOptions.concise)}"))
+          Option.unless(ok)(
+            Problem.Unclassified(Legacy.Text(s"$path.$k must be $want, not ${v.render(ConfigRenderOptions.concise)}"))
+          )
       }
 
   /** Every leaf of a HOCON object (lists and nulls are leaves), with its path. */
@@ -291,8 +306,9 @@ object PluginHost:
 
   /** Pure: a decoding error as `histmersion.plugins.<id>[.<key>]: what`. */
   def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problem = err match
-    case ConfigDecodingError.Multiple(errs) => Problem(errs.toList.map(describe(id, _)).mkString("; "))
-    case e                                  => Problem((s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}")
+    case ConfigDecodingError.Multiple(errs) =>
+      Problem.Unclassified(Legacy.Text(errs.toList.map(describe(id, _)).mkString("; ")))
+    case e => Problem.Unclassified(Legacy.Text((s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"))
 
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
@@ -300,8 +316,8 @@ object PluginHost:
   def decode(p: Plugin, conf: Config): Either[Problem, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
     catch
-      case e: LinkageError => Left(Problem(s"$Root.${p.info.id}: ${failure(e)}"))
-      case NonFatal(e)     => Left(Problem(s"$Root.${p.info.id}: ${e.getMessage}"))
+      case e: LinkageError => Left(Problem.Unclassified(Legacy.Text(s"$Root.${p.info.id}: ${failure(e).sentence}")))
+      case NonFatal(e)     => Left(Problem.Unclassified(Legacy.Text(s"$Root.${p.info.id}: ${e.getMessage}")))
 
   /** Pure: every [[Secret]] inside a decoded config — case classes, options, collections and maps are walked through
     * `productIterator` (generated code, no reflection), in order, without repeats.
@@ -349,7 +365,9 @@ object PluginHost:
           ConfigParseOptions.defaults.setAllowMissing(true)
         )
       )
-    catch case e: ConfigException => Left(Problem(s"${p.info.id}: its defaults ${p.defaultsResource}: ${e.getMessage}"))
+    catch
+      case e: ConfigException =>
+        Left(Problem.Unclassified(Legacy.Text(s"${p.info.id}: its defaults ${p.defaultsResource}: ${e.getMessage}")))
 
   // ── secrets ─────────────────────────────────────────────────────────────────────────────────
 
@@ -367,24 +385,30 @@ object PluginHost:
         Option(env.root.get(n.value))
           .flatMap(v => Option(v.unwrapped))
           .map(v => SecretValue(v.toString))
-          .toRight(Problem(s"secret ${ref.shown}: environment variable $n is not set"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"secret ${ref.shown}: environment variable $n is not set")))
       case Secret.Ref.Vault(name, r) =>
         vaults.get(name) match
           case None =>
             Left(
-              Problem(
-                s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)"
+                )
               )
             )
           case Some(v) =>
             try
               v.resolve(Secret.Vault.ResolveRef(r.value))
                 .left
-                .map(e => Problem(s"secret ${ref.shown}: $e"))
+                .map(e => Problem.Unclassified(Legacy.Text(s"secret ${ref.shown}: ${e.sentence}")))
                 .map(x => SecretValue(x.value))
             catch
               case NonFatal(e) =>
-                Left(Problem(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}"))
+                Left(
+                  Problem.Unclassified(
+                    Legacy.Text(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}")
+                  )
+                )
 
   /** Resolve several references of ONE vault in one call ([[Secret.Vault.resolveAll]]): each answer as [[resolve]]
     * words it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll`
@@ -403,9 +427,9 @@ object PluginHost:
       asked.map { r =>
         val answer: Either[String, SecretValue] = answers.get(Secret.Vault.ResolveRef(r.value)).flatMap(Option(_)) match
           case Some(Right(v)) => Right(SecretValue(v.value))
-          case Some(Left(e))  => Left(e.value)
+          case Some(Left(e))  => Left(e.sentence)
           case None           => Left(s"vault '$name' gave no answer for it")
-        r -> answer.left.map(e => Problem(s"secret ${Secret.Ref.Vault(name, r).shown}: $e"))
+        r -> answer.left.map(e => Problem.Unclassified(Legacy.Text(s"secret ${Secret.Ref.Vault(name, r).shown}: $e")))
       }.toMap
     catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
 
@@ -457,13 +481,14 @@ object PluginHost:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[Registry.AddId, A] = ListMap.empty
     private var open = true
-    def add(id: Registry.AddId, a: A): Either[plugin.Problem, Unit] =
-      if !open then Left(plugin.Problem(s"$kind '$id': registration is over (add from inside register)"))
+    def add(id: Registry.AddId, a: A): Either[Problem, Unit] =
+      if !open then
+        Left(Problem.Unclassified(Legacy.Text(s"$kind '$id': registration is over (add from inside register)")))
       else if committed.contains(id) || added.contains(id) then
-        Left(plugin.Problem(s"$kind '$id' is already registered"))
+        Left(Problem.Unclassified(Legacy.Text(s"$kind '$id' is already registered")))
       else
         valid(id, a) match
-          case Some(err) => Left(plugin.Problem(err.value))
+          case Some(err) => Left(err)
           case None      => added = added.updated(id, a); Right(())
     def close(): ListMap[Registry.AddId, A] =
       open = false
@@ -497,8 +522,7 @@ object PluginHost:
         .flatMap(v => Option(v.unwrapped))
         .map(v => EnvVar.Value(v.toString))
     def secret(s: Secret) =
-      resolved(s).left
-        .map(e => plugin.Problem(e.value))
+      resolved(s)
         .map(v => Secret.Resolved(v.value))
     def secretVaults = vaults
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.Upstream(upstream.value))
@@ -511,8 +535,9 @@ object PluginHost:
     override def sourceCollections = collections
 
   private def validFetcher(id: Registry.AddId, f: SourceFetcher): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a source fetcher id is $IdPattern"))
-    else if f == null then Some(Problem(s"source fetcher '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': a source fetcher id is $IdPattern")))
+    else if f == null then Some(Problem.Unclassified(Legacy.Text(s"source fetcher '$id' is null")))
     else None
 
   /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers (an import's name
@@ -520,15 +545,18 @@ object PluginHost:
     * is one a collection's pictures may play. A first-party plugin's is the one the name is reserved for.
     */
   private def validCollection(firstParty: Boolean)(id: Registry.AddId, c: MediaCollection): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a media collection id is $IdPattern"))
-    else if c == null then Some(Problem(s"media collection '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': a media collection id is $IdPattern")))
+    else if c == null then Some(Problem.Unclassified(Legacy.Text(s"media collection '$id' is null")))
     else if firstParty then None
     else if ReservedNames.mediaCollections(ReservedNames.Name(id.value)) then
-      Some(Problem(s"'$id' is the name of one of Histmersion's own media providers"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is the name of one of Histmersion's own media providers")))
     else
       (c.role :: c.roles.toList.sorted).find(r => !MediaCollection.Roles(r)).map { r =>
-        Problem(
-          s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+          )
         )
       }
 
@@ -536,22 +564,24 @@ object PluginHost:
     * first-party plugin the name is reserved for.
     */
   private def validCatalogue(firstParty: Boolean)(id: Registry.AddId, c: EventCatalogue): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': an event catalogue id is $IdPattern"))
-    else if c == null then Some(Problem(s"event catalogue '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': an event catalogue id is $IdPattern")))
+    else if c == null then Some(Problem.Unclassified(Legacy.Text(s"event catalogue '$id' is null")))
     else if firstParty || c.isInstanceOf[HostOwned] then None
     else if ReservedNames.eventCatalogues(ReservedNames.Name(id.value)) then
-      Some(Problem(s"'$id' is the name of one of Histmersion's own event catalogues"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is the name of one of Histmersion's own event catalogues")))
     else None
 
   /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
     * of one of the host's own providers (its models would be mistaken for theirs).
     */
   private def validAiProvider(firstParty: Boolean)(id: Registry.AddId, a: AiProvider): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': an AI provider name is $IdPattern"))
-    else if a == null then Some(Problem(s"AI provider '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': an AI provider name is $IdPattern")))
+    else if a == null then Some(Problem.Unclassified(Legacy.Text(s"AI provider '$id' is null")))
     else if firstParty || a.isInstanceOf[HostOwned] then None
     else if ReservedNames.aiProviders(ReservedNames.Name(id.value)) then
-      Some(Problem(s"'$id' is the name of one of Histmersion's own AI providers"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is the name of one of Histmersion's own AI providers")))
     else None
 
   /** A gazetteer source: a kebab-case id; a plugin's may not take the name of one of the host's own sources (the
@@ -559,29 +589,33 @@ object PluginHost:
     * for.
     */
   private def validGazetteer(firstParty: Boolean)(id: Registry.AddId, g: GazetteerSource): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a gazetteer source id is $IdPattern"))
-    else if g == null then Some(Problem(s"gazetteer source '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': a gazetteer source id is $IdPattern")))
+    else if g == null then Some(Problem.Unclassified(Legacy.Text(s"gazetteer source '$id' is null")))
     else if firstParty then None
     else if ReservedNames.gazetteerSources(ReservedNames.Name(id.value)) then
-      Some(Problem(s"'$id' is the name of one of Histmersion's own gazetteers"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is the name of one of Histmersion's own gazetteers")))
     else None
 
   /** A source collection: a kebab-case id; a plugin's may not take the name of one of Histmersion's own collections
     * (its items would be taken for theirs), unless it is the first-party plugin the name is reserved for.
     */
   private def validSourceCollection(firstParty: Boolean)(id: Registry.AddId, c: SourceCollection): Option[Problem] =
-    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a source collection id is $IdPattern"))
-    else if c == null then Some(Problem(s"source collection '$id' is null"))
+    if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': a source collection id is $IdPattern")))
+    else if c == null then Some(Problem.Unclassified(Legacy.Text(s"source collection '$id' is null")))
     else if firstParty then None
     else if ReservedNames.sourceCollections(ReservedNames.Name(id.value)) then
-      Some(Problem(s"'$id' is the name of one of Histmersion's own source collections"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is the name of one of Histmersion's own source collections")))
     else None
 
   private def validVault(id: Registry.AddId, v: Secret.Vault): Option[Problem] =
     if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id.value) then
-      Some(Problem(s"'$id' is a reserved secret scheme, not a vault name"))
-    else if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a vault name is $IdPattern"))
-    else if v.name.value != id.value then Some(Problem(s"vault '${v.name}' registered under another name, '$id'"))
+      Some(Problem.Unclassified(Legacy.Text(s"'$id' is a reserved secret scheme, not a vault name")))
+    else if !id.value.matches(IdPattern) then
+      Some(Problem.Unclassified(Legacy.Text(s"'$id': a vault name is $IdPattern")))
+    else if v.name.value != id.value then
+      Some(Problem.Unclassified(Legacy.Text(s"vault '${v.name}' registered under another name, '$id'")))
     else None
 
   /** A plugin's status in the report. */
@@ -603,7 +637,7 @@ object PluginHost:
       provides,
       block.map(settings).getOrElse(Nil),
       warns.map(w => PluginStatus.Warnings(w.value)),
-      error.map(e => api.Problem(e.value))
+      error
     )
 
   private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state == state.wire
@@ -642,9 +676,9 @@ object PluginHost:
       case Left(e)  => (Nil, List(e))
     val (ordered, orderWarn) = order(accepted.map(_.info.id), configured)
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
-      .map(id => Problem(s"$Root.$id configures no plugin in this binary — ignored"))
+      .map(id => Problem.Unclassified(Legacy.Text(s"$Root.$id configures no plugin in this binary — ignored")))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
-    warnings.foreach(w => services.log(HostServices.PluginId(""), true, HostServices.Line(w.value)))
+    warnings.foreach(w => services.log(HostServices.PluginId(""), true, HostServices.Line(w.sentence)))
 
     val byId = accepted.map(p => p.info.id -> p).toMap
 
@@ -667,7 +701,7 @@ object PluginHost:
                     p,
                     Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
                     PluginState.Failed,
-                    error = Some(Problem(errs.mkString("; ")))
+                    error = Some(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
                   )
                 )
             conf <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
@@ -680,7 +714,7 @@ object PluginHost:
             p,
             conf,
             secretsIn(typed),
-            ctx => p.register(typed, ctx).left.map(e => Problem(e.value))
+            ctx => p.register(typed, ctx)
           )
       id -> r
     }
@@ -729,9 +763,11 @@ object PluginHost:
               PluginState.Failed,
               Some(pr.block),
               Some(
-                Problem(
-                  s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
-                    "(enable the plugin that provides it)"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
+                      "(enable the plugin that provides it)"
+                  )
                 )
               )
             ),
@@ -754,7 +790,7 @@ object PluginHost:
         services.log(
           HostServices.PluginId(s.id.value),
           true,
-          HostServices.Line(s.error.fold("failed")(_.value))
+          HostServices.Line(s.error.fold("failed")(_.sentence))
         )
       )
     val live = registered.collect { case (id, (st, regs)) if hasState(st, PluginState.Registered) => id -> regs }
@@ -764,7 +800,7 @@ object PluginHost:
       PluginsReport(
         PluginsReport.SpiVersion(Spi.Version),
         statuses,
-        warnings.map(w => PluginsReport.Warnings(w.value))
+        warnings.map(w => PluginsReport.Warnings(w.sentence))
       ),
       live,
       plugins.map(_.info.id).filterNot(carried.contains),
@@ -803,7 +839,15 @@ object PluginHost:
     warns.foreach(w => services.log(HostServices.PluginId(id.value), true, HostServices.Line(w.value)))
     def fail(e: Problem) =
       (
-        status(p, true, PluginState.Failed, Some(pr.block), Some(Problem(s"$Root.$id: $e")), Nil, warns),
+        status(
+          p,
+          true,
+          PluginState.Failed,
+          Some(pr.block),
+          Some(Problem.Unclassified(Legacy.Text(s"$Root.$id: ${e.sentence}"))),
+          Nil,
+          warns
+        ),
         Registries.empty
       )
     pr.secrets.iterator.map(resolved).collectFirst { case Left(e) => e } match
@@ -843,8 +887,8 @@ object PluginHost:
         val outcome =
           try pr.call(ctx)
           catch
-            case e: LinkageError => Left(Problem(s"register threw ${failure(e)}"))
-            case NonFatal(e)     => Left(Problem(s"register threw ${failure(e)}"))
+            case e: LinkageError => Left(Problem.Unclassified(Legacy.Text(s"register threw ${failure(e).sentence}")))
+            case NonFatal(e)     => Left(Problem.Unclassified(Legacy.Text(s"register threw ${failure(e).sentence}")))
         val added = Registries(
           staged.close().map((k, v) => Registries.SecretVaultsKey(k.value) -> v),
           fetchers.close().map((k, v) => Registries.SourceFetchersKey(k.value) -> v),

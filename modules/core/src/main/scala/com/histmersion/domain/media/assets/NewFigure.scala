@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.assets
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
@@ -42,11 +42,15 @@ object NewFigure:
       .Try(java.util.Base64.getDecoder.decode(in.base64.value.trim))
       .toEither
       .left
-      .map(e => Problem(s"asset '$name': not valid base64 (${e.getMessage})"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"asset '$name': not valid base64 (${e.getMessage})")))
       .flatMap { raw =>
-        if raw.isEmpty then Left(Problem(s"asset '$name': empty"))
+        if raw.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"asset '$name': empty")))
         else if raw.length > maxBytes.value then
-          Left(Problem(s"asset '$name': ${raw.length} bytes exceeds the $maxBytes-byte limit (limits.asset-bytes)"))
+          Left(
+            Problem.Unclassified(
+              Legacy.Text(s"asset '$name': ${raw.length} bytes exceeds the $maxBytes-byte limit (limits.asset-bytes)")
+            )
+          )
         else
           // a client may omit the dimensions (the seed path does); read them off the header
           val size = ImageSize.of(ImageSize.Bytes(raw))

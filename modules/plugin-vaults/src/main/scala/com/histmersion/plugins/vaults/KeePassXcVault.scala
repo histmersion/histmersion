@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -73,12 +73,8 @@ final class KeePassXcVault(
     for
       _ <- Subprocess
         .plain(Vaults.Operation("the entry"), Subprocess.Text(entry.value))
-        .left
-        .map(e => Problem(e.value))
       _ <- Subprocess
         .plain(Vaults.Operation("the attribute"), Subprocess.Text(attr.value))
-        .left
-        .map(e => Problem(e.value))
     yield (entry, attr)
 
   private def stdin = password.map(p => Processes.RunStdin(p.value + "\n"))
@@ -112,7 +108,7 @@ final class KeePassXcVault(
         Map.empty
       )
       .left
-      .map(e => YubiKey.NoAnswer.Unusable(Problem(e.toString)))
+      .map(e => YubiKey.NoAnswer.Unusable(e))
       .flatMap { s =>
         password.foreach(pw => s.send(Processes.Session.SendLine(pw.value)))
         val up = s
@@ -147,14 +143,17 @@ final class KeePassXcVault(
         )(yk => open(Some(yk), yubikeyTimeout))
       else
         open(None, timeout) match
-          case Left(why)      => Left(Problem(s"$name: could not $what (${why.problem})"))
+          case Left(why) =>
+            Left(Problem.Unclassified(Legacy.Text(s"$name: could not $what (${why.problem.legacyText})")))
           case Right(Left(r)) =>
             Left(
-              Problem(
-                classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
-                  .getOrElse(
-                    s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(Problem(r.err.value))})"
-                  )
+              Problem.Unclassified(
+                Legacy.Text(
+                  classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
+                    .getOrElse(
+                      s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(Problem.Unclassified(Legacy.Text(r.err.value))).legacyText})"
+                    )
+                )
               )
             )
           case Right(Right(o)) => Right(o)
@@ -187,14 +186,14 @@ final class KeePassXcVault(
         case ((ref, _) :: tail, Some(b)) =>
           read(
             tail,
-            acc.updated(ref, Left(Problem(s"$name: could not read '$ref' ($b)"))),
+            acc.updated(ref, Left(Problem.Unclassified(Legacy.Text(s"$name: could not read '$ref' ($b)")))),
             KeePassXcSession.Segment.From(0),
             broken
           )
         case ((ref, (entry, attr)) :: tail, None) =>
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.value.length
-          val answered = s.send(Processes.Session.SendLine(cmd.value)).left.map(e => e.value).flatMap { _ =>
+          val answered = s.send(Processes.Session.SendLine(cmd.value)).left.map(e => e.legacyText).flatMap { _ =>
             val _ = s.awaitOut(timeout)(out =>
               KeePassXcSession.segment(Processes.Result.Out(out.value), mark, o.prompt).isDefined
             )
@@ -203,13 +202,14 @@ final class KeePassXcVault(
               .segment(out, mark, o.prompt)
               .map(seg => (seg, KeePassXcSession.Segment.From(out.value.length)))
               .toRight(if s.alive then s"keepassxc-cli did not answer within ${timeout.toSeconds} s"
-              else s"keepassxc-cli stopped: ${YubiKey.problem(Problem(s.err.value.drop(errMark)))}")
+              else
+                s"keepassxc-cli stopped: ${YubiKey.problem(Problem.Unclassified(Legacy.Text(s.err.value.drop(errMark)))).legacyText}")
           }
           answered match
             case Left(broken) =>
               read(
                 tail,
-                acc.updated(ref, Left(Problem(s"$name: could not read '$ref' ($broken)"))),
+                acc.updated(ref, Left(Problem.Unclassified(Legacy.Text(s"$name: could not read '$ref' ($broken)")))),
                 mark,
                 Some(broken)
               )
@@ -220,12 +220,16 @@ final class KeePassXcVault(
                 else
                   s.awaitErr(Processes.Session.AwaitErrLength(errMark), 500.millis)
                   val err = s.err.value.drop(errMark)
-                  if err.trim.isEmpty then Left(Problem(s"$name: '$ref' has an empty value"))
+                  if err.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$name: '$ref' has an empty value")))
                   else
                     Left(
-                      Problem(
-                        classify(entry)(err.toLowerCase(java.util.Locale.ROOT))
-                          .getOrElse(s"$name: could not read '$ref' (${Subprocess.problem(Problem(err))})")
+                      Problem.Unclassified(
+                        Legacy.Text(
+                          classify(entry)(err.toLowerCase(java.util.Locale.ROOT))
+                            .getOrElse(
+                              s"$name: could not read '$ref' (${Subprocess.problem(Problem.Unclassified(Legacy.Text(err))).legacyText})"
+                            )
+                        )
                       )
                     )
               read(tail, acc.updated(ref, result), next, None)
@@ -239,11 +243,11 @@ final class KeePassXcVault(
         case Right(r)                      =>
           log.info(
             Plugin.Log.Line(
-              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Problem(r.err.value))}): trying the YubiKeys in order"
+              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Problem.Unclassified(Legacy.Text(r.err.value))).legacyText}): trying the YubiKeys in order"
             )
           );
           None
-        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem}: trying the YubiKeys in order")); None
+        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem.legacyText}: trying the YubiKeys in order")); None
     }
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:
@@ -259,15 +263,17 @@ final class KeePassXcVault(
     val notConnected = absent.map(s => s"${s.shown}: not connected")
     def report(tried: List[String], tail: String) =
       val parts = (tried ++ notConnected).mkString("; ")
-      Left(Problem(s"$name: could not $what with a YubiKey — $parts$tail"))
+      Left(Problem.Unclassified(Legacy.Text(s"$name: could not $what with a YubiKey — $parts$tail")))
     if planned.isEmpty then
       val seen = found.fold("")(s =>
         if s.isEmpty then " (ykman sees no YubiKey)"
         else s" (ykman sees ${s.toList.sortBy(x => x.value: Long).mkString(", ")})"
       )
       Left(
-        Problem(
-          s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in"
+          )
         )
       )
     else
@@ -284,22 +290,24 @@ final class KeePassXcVault(
           attempt(yk) match
             case Left(why) =>
               val what = why match
-                case YubiKey.NoAnswer.TimedOut(_)  => s"not touched in time (${why.problem})"
-                case YubiKey.NoAnswer.Unusable(of) => of.value
+                case YubiKey.NoAnswer.TimedOut(_)  => s"not touched in time (${why.problem.legacyText})"
+                case YubiKey.NoAnswer.Unusable(of) => of.legacyText
               report(tried :+ s"${yk.shown}: $what", "; not trying further keys")
             case Right(Right(a)) =>
               lastOpened.set(Some(yk))
               Right(a)
             case Right(Left(r)) =>
-              val msg = YubiKey.problem(Problem(r.err.value))
+              val msg = YubiKey.problem(Problem.Unclassified(Legacy.Text(r.err.value)))
               YubiKey.failure(
                 KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
                 YubiKey.Setting.Entries(entry.value)
               ) match
-                case YubiKey.Failure.Next(why)        => go(more, tried :+ s"${yk.shown}: $why ($msg)")
-                case YubiKey.Failure.NoEntry(missing) => Left(Problem(s"$name: no entry '$missing'"))
-                case YubiKey.Failure.Stop(why)        =>
-                  report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
+                case YubiKey.Failure.Next(why) =>
+                  go(more, tried :+ s"${yk.shown}: ${why.legacyText} (${msg.legacyText})")
+                case YubiKey.Failure.NoEntry(missing) =>
+                  Left(Problem.Unclassified(Legacy.Text(s"$name: no entry '$missing'")))
+                case YubiKey.Failure.Stop(why) =>
+                  report(tried :+ s"${yk.shown}: ${why.legacyText} (${msg.legacyText})", "; not trying further keys")
       go(planned, Nil)
 
   private def classify(entry: KeePassXcSession.Entry)(err: String): Option[String] =

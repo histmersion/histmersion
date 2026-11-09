@@ -1,7 +1,8 @@
 package com.histmersion
 package web.settings
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
 import com.raquo.laminar.api.L.*
@@ -71,7 +72,7 @@ object DataSection:
         Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("download or remove data")))
       ),
       child.maybe <-- starter.said.signal.map(_.map {
-        case Left(why) => ErrorLine.text(Problem(why))
+        case Left(why) => ErrorLine.text(Problem.Unclassified(Legacy.Text(why)))
         case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
       }),
       card("Downloading now", DownloadJobs.panel),
@@ -203,7 +204,7 @@ object DataSection:
     private def start(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo]): Unit =
       job.onComplete { r =>
         r.toEither.left.map(SettingsStore.message) match
-          case Left(why) => said.set(Some(Left(why.value)))
+          case Left(why) => said.set(Some(Left(why.sentence)))
           case Right(j)
               if j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run")) || what.value.endsWith(
                 "-check"
@@ -222,7 +223,7 @@ object DataSection:
           if !j.isTerminal && n < 120 then follow(text, id, n + 1)
           else
             said.set(Some(if j.succeeded then Right(s"$text: ${j.progress.getOrElse("done")}")
-            else Left(s"$text: ${j.error.getOrElse(j.status)}")))
+            else Left(s"$text: ${j.error.map(_.sentence).getOrElse(j.status)}")))
         }
       }
 

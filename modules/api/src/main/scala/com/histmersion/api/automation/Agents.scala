@@ -1,6 +1,8 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -48,12 +50,20 @@ object Agents:
     ): Either[Problem, ModelRef] =
       val t = (s).value.trim
       t.indexOf(':') match
-        case -1 => Left(Problem(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})"))
-        case i  =>
+        case -1 =>
+          Left(
+            Problem.Unclassified(Legacy.Text(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})"))
+          )
+        case i =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(com.histmersion.api.automation.ProviderKind.Wire(p), known) match
-            case None => Left(Problem(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
-            case Some(_) if m.isEmpty => Left(Problem(s"'$t' names no model"))
+            case None =>
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
+                )
+              )
+            case Some(_) if m.isEmpty => Left(Problem.Unclassified(Legacy.Text(s"'$t' names no model")))
             case Some(k)              => Right(ModelRef(k, Model(m)))
 
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
@@ -157,13 +167,18 @@ object Agents:
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap)
-        case errs => Left(Problem(errs.mkString("; ")))
+        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
 
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
       */
     def cost(prices: Map[ModelRef.Model, Price], model: Prices.CostModel, u: Usage): Either[Problem, BigDecimal] =
-      (prices.get(model).toRight(unpriced(model)).map(_.cost(u))).left.map(refactorError => Problem(refactorError))
+      (prices
+        .get(model)
+        .toRight(unpriced(model))
+        .map(_.cost(u)))
+        .left
+        .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))
 
     def billing(
         prices: Map[ModelRef.Model, Price],
@@ -172,7 +187,11 @@ object Agents:
     ): Either[Problem, Billing] =
       pool match
         case Some(p) => Right(Billing.Plan(p))
-        case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(Problem(unpriced(m.model) + metered(m)))
+        case None    =>
+          prices
+            .get(m.model)
+            .map(Billing.Metered(_))
+            .toRight(Problem.Unclassified(Legacy.Text(unpriced(m.model) + metered(m))))
 
     private def unpriced(model: ModelRef.Model): String =
       (s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model")
@@ -252,13 +271,13 @@ object Agents:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
       Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
-        Problem("the citekey is empty — give the source's citekey")
+        Problem.Unclassified(Legacy.Text("the citekey is empty — give the source's citekey"))
       ),
       Option.when(Option(title).forall(_.value.trim.isEmpty))(
-        Problem("the title is empty — copy the source's exact title from get_source")
+        Problem.Unclassified(Legacy.Text("the title is empty — copy the source's exact title from get_source"))
       ),
       Option.when(year.isEmpty && recordYear.isDefined)(
-        Problem("the year is missing — give the source's publication year from get_source")
+        Problem.Unclassified(Legacy.Text("the year is missing — give the source's publication year from get_source"))
       )
     ).flatten
 
@@ -372,12 +391,12 @@ object Agents:
 
     def parse(s: Wire): Either[Problem, ModelOverride] =
       (s).value.indexOf('=') match
-        case -1 => Left(Problem(s"'${(s).value.trim}' is not <role>=<provider:model>"))
+        case -1 => Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' is not <role>=<provider:model>")))
         case i  =>
           val (r, m) =
             ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
-          if r.isEmpty then Left(Problem(s"'${(s).value.trim}' names no role"))
-          else if m.isEmpty then Left(Problem(s"'${(s).value.trim}' names no model"))
+          if r.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' names no role")))
+          else if m.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' names no model")))
           else Right(ModelOverride(AgentRole.Wire(r), Model(m)))
 
   final case class RunParams(

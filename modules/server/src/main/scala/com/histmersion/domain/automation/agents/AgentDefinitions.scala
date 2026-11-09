@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.server.agents.Codex
 
 import scala.annotation.tailrec
@@ -287,7 +288,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
     prompts
       .load(SafePath.Candidate(s"$name.md"))
       .left
-      .map(_.value)
+      .map(_.sentence)
       .flatMap(text => AgentDefinitions.parse(name, AgentDefinitions.Markdown(text), tools))
       .flatMap(d =>
         Either.cond(
@@ -306,7 +307,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
     prompts
       .load(SafePath.Candidate(s"skills/$name/SKILL.md"))
       .left
-      .map(_.value)
+      .map(_.sentence)
       .flatMap(text => AgentDefinitions.parseSkill(name, AgentDefinitions.Markdown(text)))
 
   def fragments: Either[String, Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody]] =
@@ -314,7 +315,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
       prompts
         .load(SafePath.Candidate(s"_shared/$n.md"))
         .left
-        .map(_.value)
+        .map(_.sentence)
         .map(text => n -> AgentDefinitions.FragmentBody(text))
     ).map(_.toMap)
   def skills: Either[String, Map[SkillDef.Name, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)

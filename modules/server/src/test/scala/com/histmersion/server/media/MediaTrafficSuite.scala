@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.server.MediaWiring
@@ -37,7 +38,7 @@ class MediaTrafficSuite extends DbSuite:
 
   private val Transcript = "traffic/media.txt"
 
-  private def load(more: String): LoadedConfig = MediaWire.load(more).fold(e => fail(e.value), identity)
+  private def load(more: String): LoadedConfig = MediaWire.load(more).fold(e => fail(e.sentence), identity)
 
   private lazy val scratch = ScratchDatabases("mediatraffic", load("").config.db.copy(url = DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("media")
@@ -60,7 +61,7 @@ class MediaTrafficSuite extends DbSuite:
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
     def report(r: Either[Api.Error, MediaImportReport]): String =
-      r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.noSpaces}\n")
+      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.noSpaces}\n")
 
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)
@@ -73,7 +74,7 @@ class MediaTrafficSuite extends DbSuite:
 
     def job(name: MediaItem.Provider, req: MediaImportRequest): Unit =
       handlers.imports.importJob(req) match
-        case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.message}\n"
+        case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.message.sentence}\n"
         case Right(j) =>
           val end = until(j.id, 600)
           sb ++= s"## job $name\n" + wire.take() +

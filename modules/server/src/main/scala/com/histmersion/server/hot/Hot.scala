@@ -1,7 +1,8 @@
 package com.histmersion
 package server.hot
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 import ox.{supervised, Ox}
 
@@ -198,8 +199,8 @@ object Hot:
           v => onPublish(v.asInstanceOf[A])
         )
         for
-          _ <- if closed.get() then Left(Problem("hot graph: closed")) else Right(())
-          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList).left.map(p => Problem(p.value))
+          _ <- if closed.get() then Left(Problem.Unclassified(Legacy.Text("hot graph: closed"))) else Right(())
+          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList)
           s = current.get()
           i <- instantiate(d, BuildCtx[C, Any](s.config, None, None, Nil, n => s.nodes(n).value), s.generation)
         yield
@@ -239,14 +240,12 @@ object Hot:
         drain: FiniteDuration = 10.seconds
     ): Either[Problem, Outcome] =
       locked {
-        if closed.get() then Left(Problem("hot graph: closed"))
+        if closed.get() then Left(Problem.Unclassified(Legacy.Text("hot graph: closed")))
         else
           val s = current.get()
           val specs = defs.get()
           HotPlan
             .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.Key(n.value)), forced)
-            .left
-            .map(p => Problem(p.value))
             .flatMap { plan =>
               val byName = specs.map(d => d.name -> d).toMap
               val gen = Generation(s.generation.value + 1)
@@ -266,14 +265,17 @@ object Hot:
                         .map(_.value)
                         .getOrElse(throw IllegalStateException(s"hot graph: $name depends on $n, which has no value"))
                   )
-                  instantiate(d, ctx, gen).map(i => built.update(name, i)).left.map(e => Problem(s"$name: $e"))
+                  instantiate(d, ctx, gen)
+                    .map(i => built.update(name, i))
+                    .left
+                    .map(e => Problem.Unclassified(Legacy.Text(s"$name: ${e.sentence}")))
                 }
                 .collectFirst { case Left(e) => e }
               failure match
                 case Some(e) =>
                   // nobody has seen these: close them now, dependents first
                   built.values.toList.reverse.foreach(_.close(log))
-                  log.warn(Problem(s"config reload: nothing changed — $e"))
+                  log.warn(Problem.Unclassified(Legacy.Text(s"config reload: nothing changed — ${e.sentence}")))
                   Left(e)
                 case None =>
                   val published = Snap(gen, next, s.nodes ++ built)
@@ -289,7 +291,7 @@ object Hot:
                         catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
                       })
                     finally onNew.release()
-                  notes.foreach(w => log.warn(Problem(w.value)))
+                  notes.foreach(w => log.warn(Problem.Unclassified(Legacy.Text(w.value))))
                   Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
             }
       }
@@ -322,9 +324,11 @@ object Hot:
           old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
-            Problem(
-              s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
-                "it closes when its last user lets go"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
+                  "it closes when its last user lets go"
+              )
             )
           )
         )
@@ -349,7 +353,8 @@ object Hot:
             draining.keySet.asScala.toList
           }).distinct.foreach { i =>
             while !i.free && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-            if !i.free then log.warn(Problem(s"shutdown: closing ${i.describe} while still in use"))
+            if !i.free then
+              log.warn(Problem.Unclassified(Legacy.Text(s"shutdown: closing ${i.describe} while still in use")))
             i.close(log)
           }
       }
@@ -371,15 +376,20 @@ object Hot:
           supervised {
             val r =
               try d.build(ctx)
-              catch case NonFatal(e) => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+              catch
+                case NonFatal(e) =>
+                  Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
             built.complete(r)
             // a failed build ends its scope now, releasing whatever it had acquired
             if r.isRight then release.await()
           }
         catch
           case NonFatal(e) =>
-            if !built.complete(Left(Problem(s"its scope failed: ${e.getMessage}"))) then
-              log.warn(Problem(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
+            if !built.complete(Left(Problem.Unclassified(Legacy.Text(s"its scope failed: ${e.getMessage}")))) then
+              log.warn(
+                Problem
+                  .Unclassified(Legacy.Text(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
+              )
         finally ended.countDown()
       }
       built.get() match
@@ -402,8 +412,8 @@ object Hot:
     object Log:
 
       val scribe: Log = new Log:
-        def info(m: Problem) = _root_.scribe.info(m.value)
-        def warn(m: Problem) = _root_.scribe.warn(m.value)
+        def info(m: Problem) = _root_.scribe.info(m.sentence)
+        def warn(m: Problem) = _root_.scribe.warn(m.sentence)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
@@ -460,7 +470,11 @@ object Hot:
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
           if !ended.await(CloseWaitSeconds, TimeUnit.SECONDS) then
-            log.warn(Problem(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s"))
+            log.warn(
+              Problem.Unclassified(
+                Legacy.Text(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s")
+              )
+            )
 
     object Instance:
       type Description = Description.T

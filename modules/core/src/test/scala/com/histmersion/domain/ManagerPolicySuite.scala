@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -181,7 +183,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(released(Hold(until = Some(Managers.Hold.Until("2026-10-15"))), now, _ => false))
     assert(!released(Hold(until = Some(Managers.Hold.Until("2026-10-16T00:00:00Z"))), now, _ => false))
     assert(released(Hold(untilSource = Some(Managers.Hold.UntilSource("10.1/x"))), now, _.value == "10.1/x"))
-    assert(!released(Hold(reason = api.Problem("person")), now, _ => true))
+    assert(!released(Hold(reason = Problem.Unclassified(Legacy.Text("person"))), now, _ => true))
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
     val e = HintEffect(HintEffect.Action(HintEffect.Prioritise), tag = Some(HintEffect.Tag("Tin Trade")))
@@ -344,7 +346,7 @@ class ManagerPolicySuite extends munit.FunSuite:
         ItemState(),
         Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
         st,
-        Some(Problem("boom")),
+        Some(Problem.Unclassified(Legacy.Text("boom"))),
         f,
         now
       )
@@ -502,7 +504,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       ManagerConfig
         .parse(List(Managers.ManagerConfig.Spec("sweeps=weekly")))
         .left
-        .exists(_.value.contains("not a sweep"))
+        .exists(_.sentence.contains("not a sweep"))
     )
     assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 
@@ -565,11 +567,11 @@ class ManagerPolicySuite extends munit.FunSuite:
   test("checkCron: it parses and fires no more often than the minimum interval"):
     assert(
       checkCron(Cron.Text("not cron"), now, ManagerPolicy.MinIntervalMinutes(60)).left
-        .exists(_.value.contains("five fields"))
+        .exists(_.sentence.contains("five fields"))
     )
     assert(
       checkCron(Cron.Text("*/5 * * * *"), now, ManagerPolicy.MinIntervalMinutes(60)).left
-        .exists(_.value.contains("min-interval"))
+        .exists(_.sentence.contains("min-interval"))
     )
     assertEquals(checkCron(Cron.Text("@daily"), now, ManagerPolicy.MinIntervalMinutes(60)).map(_.text), Right("@daily"))
 

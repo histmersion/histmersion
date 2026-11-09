@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -81,7 +82,7 @@ class CodexHomeSuite extends munit.FunSuite:
       }
       assert(inRun.await(10, TimeUnit.SECONDS))
       val busy = Codex.Home.retain(h, cfg, now, _ => fail("no vacuum under a run"))
-      assert(busy.skipped.exists(_.value.contains("using the home")), busy.toString)
+      assert(busy.skipped.exists(_.sentence.contains("using the home")), busy.toString)
       assert(Files.exists(h.resolve("sessions/2026/08/01/rollout-old.jsonl")))
       done.countDown(); t.join()
       assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(Codex.Home.ExitCode(0))).deleted, 2)
@@ -105,8 +106,8 @@ class CodexHomeSuite extends munit.FunSuite:
         h,
         cfg.modify(_.keepSessionsDays).setTo(CodexConfig.KeepSessionsDays(0)),
         now,
-        _ => Left(Problem("sqlite3: not found"))
+        _ => Left(Problem.Unclassified(Legacy.Text("sqlite3: not found")))
       )
       assertEquals(bad.problems.size, 2, bad.toString)
-      assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.value.contains("no Codex home")))
+      assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.sentence.contains("no Codex home")))
     finally cleanup(h)

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.{Api, SpatialHierarchyResult}
@@ -88,7 +89,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     val (c, _) = controllers()
     val r = c
       .importPlaces(Caller.Local, Some(Place.Kind.Wire("site")), Some(Dataset.Wire("seed")), doc)
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.places, r.relations), (2, 1))
     assertEquals(
       c.search(Some(PlaceService.SearchQ("zzcl")), None, None).map(_.id).toSet,
@@ -101,16 +102,16 @@ class PlacesControllersSuite extends munit.FunSuite:
       Right(("zzcl_hill", "zzcl_mound"))
     )
     assertEquals(c.get(Place.Id("zzcl_hill"), None).map(_.place.id), Right("zzcl_mound"), "the old id answers")
-    assertEquals(c.links(Place.Id("zzcl_none")).left.map(_.message), Left("No place 'zzcl_none'"))
+    assertEquals(c.links(Place.Id("zzcl_none")).left.map(_.message).left.map(_.sentence), Left("No place 'zzcl_none'"))
     assert(
       c.importPlaces(Caller.Local, Some(Place.Kind.Wire("nonsense")), None, doc)
         .left
-        .exists(_.message.value.contains("unknown kind"))
+        .exists(_.message.sentence.contains("unknown kind"))
     )
     assert(
       c.importPlaces(Caller.Local, None, Some(Dataset.Wire("other")), doc)
         .left
-        .exists(_.message.value.contains("seed or local"))
+        .exists(_.message.sentence.contains("seed or local"))
     )
     assert(c.importPlaces(Caller.Local, None, None, PlacesControllers.DatasetBody("not json")).isLeft)
 
@@ -142,7 +143,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       Place.Id("zzcl_hill"),
       com.histmersion.api.catalogue.Place.OverrideSet(
         kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
-        reason = Some(Problem("dug"))
+        reason = Some(Problem.Unclassified(Legacy.Text("dug")))
       )
     )
     assertEquals(set.map(_.kindAfter), Right("region"))
@@ -150,7 +151,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.shapes(Api.PlacesGeoQuery(pick = Some(GeoPick.Wire("nonsense"))))
         .left
-        .exists(_.message.value.contains("unknown pick"))
+        .exists(_.message.sentence.contains("unknown pick"))
     )
     assert(c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region")))).isRight)
     assertEquals(

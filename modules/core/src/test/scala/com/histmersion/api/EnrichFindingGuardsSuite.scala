@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -95,13 +96,15 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     val ps = check(fs).left.toOption.get
     assertEquals(ps.size, 1, ps)
     val p = ps.head
-    assert(p.value.startsWith("only 1 of 4 places resolve to a gazetteer place (at least 50% must)"), p)
+    assert(p.sentence.startsWith("only 1 of 4 places resolve to a gazetteer place (at least 50% must)"), p)
     assert(
-      p.value.contains("'eastern shipping lanes' (finding 2)") && p.value.contains("'the hinterland' (finding 4)"),
+      p.sentence.contains("'eastern shipping lanes' (finding 2)") && p.sentence.contains(
+        "'the hinterland' (finding 4)"
+      ),
       p
     )
     assert(
-      p.value.contains(
+      p.sentence.contains(
         "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
       ),
       p
@@ -167,9 +170,9 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     )
     val ps = check(List(claim)).left.toOption.get
     assertEquals(ps.size, 1, ps)
-    assert(ps.head.value.startsWith("finding 1 (The town was walled"), ps)
+    assert(ps.head.sentence.startsWith("finding 1 (The town was walled"), ps)
     assert(
-      ps.head.value.contains(
+      ps.head.sentence.contains(
         "the year 11 looks like a century stored as a year: '11th century' is the years 1001–1100 (BCE negative)"
       ),
       ps
@@ -182,7 +185,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       periodName = Some("15th c.")
     )
     assert(
-      check(List(named)).left.exists(_.head.value.contains("'15th century' is the years 1401–1500")),
+      check(List(named)).left.exists(_.head.sentence.contains("'15th century' is the years 1401–1500")),
       check(List(named))
     )
     // a BCE century stored as -5
@@ -191,7 +194,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       copper,
       start = Some(StatedYear(AgentVerify.ToSignedYearValue(5), AgentVerify.YearUnit.Wire("BCE")))
     )
-    assert(check(List(bce)).left.exists(_.head.value.contains("the year -5 looks like a century")), check(List(bce)))
+    assert(check(List(bce)).left.exists(_.head.sentence.contains("the year -5 looks like a century")), check(List(bce)))
 
   test("century: any year below 100 in a source whose own period is far later is sent back"):
     val f = finding(
@@ -201,7 +204,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     )
     assert(
       check(List(f), within = Some(Period(Year(1000), Year(1500)))).left
-        .exists(_.head.value.contains("'12th century' is the years 1101–1200"))
+        .exists(_.head.sentence.contains("'12th century' is the years 1101–1200"))
     )
     // not far enough: a source on 300–600 CE may well cite a year 79
     assert(check(List(f), within = Some(Period(Year(300), Year(600)))).isRight)
@@ -247,7 +250,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     val f = finding("Rainfall rose around this date.", rain)
     val ps = check(List(f)).left.toOption.get
     assertEquals(
-      ps,
+      ps.map(_.sentence),
       List(
         "finding 1 (Rainfall rose around this date.): 'this date' only makes sense next to the table: " +
           "a finding must stand alone on the map: name the date/event instead of pointing at the table"

@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.time.{Instant, ZoneOffset}
@@ -37,10 +37,10 @@ class TimeZoneCheckSuite extends munit.FunSuite:
     assertEquals(wrong, "time zones: BROKEN — Europe/Warsaw at 2026-01-15T12:00:00Z: Z, expected +01:00")
     val (ok2, unknown) = TimeZoneCheck.report(
       List(probe),
-      (_, _) => Left(Problem("ZoneRulesException: Unknown time-zone ID")),
+      (_, _) => Left(Problem.Unclassified(Legacy.Text("ZoneRulesException: Unknown time-zone ID"))),
       TimeZoneCheck.ZoneCount(0),
       None,
-      Left(Problem("no default"))
+      Left(Problem.Unclassified(Legacy.Text("no default")))
     )
     assert(!ok2)
     assertEquals(

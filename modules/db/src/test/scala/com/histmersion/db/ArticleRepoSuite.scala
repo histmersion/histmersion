@@ -1,7 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -412,28 +413,36 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(f))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_cov2001_egypt") -> Problem("about Egypt")))
+        .setTo(Map(Citekey("zz_cov2001_egypt") -> Problem.Unclassified(Legacy.Text("about Egypt"))))
     )
     val a = ArticleFixtures.load(ds, slug).get
-    assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
+    assertEquals(
+      (a.filter, a.reasons.view.mapValues(_.sentence).toMap),
+      (Some(f), Map("zz_cov2001_egypt" -> "about Egypt"))
+    )
     val _ = ArticleFixtures.patch(
       ds,
       slug,
       Article.Patch(reasons =
         List(
-          Coverage.Reason(Citekey("zz_cov2002_hatti"), Problem("about Hatti")),
-          Coverage.Reason(Citekey("zz_cov2001_egypt"), Problem(""))
+          Coverage.Reason(Citekey("zz_cov2002_hatti"), Problem.Unclassified(Legacy.Text("about Hatti"))),
+          Coverage.Reason(Citekey("zz_cov2001_egypt"), Problem.Unclassified(Legacy.Text("")))
         )
       )
     )
-    assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_cov2002_hatti" -> "about Hatti"))
+    assertEquals(
+      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(_.sentence).toMap,
+      Map("zz_cov2002_hatti" -> "about Hatti")
+    )
     assertEquals(ArticleFixtures.load(ds, slug).get.filter, Some(f), "a patch that does not name the filter keeps it")
     val _ = ArticleFixtures.patch(ds, slug, Article.Patch(filter = Some(Article.Filter())))
     assertEquals(ArticleFixtures.load(ds, slug).get.filter, None)
     // an article written before V066 (no filter, no reasons) reads as such
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody"), Article.Slug("zz_article_other")))
     assertEquals(
-      ArticleFixtures.load(ds, Slug("zz_article_other")).map(x => (x.filter, x.reasons)),
+      ArticleFixtures
+        .load(ds, Slug("zz_article_other"))
+        .map(x => (x.filter, x.reasons.view.mapValues(_.sentence).toMap)),
       Some((None, Map.empty[String, String]))
     )
 
@@ -451,7 +460,7 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x")))))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_covren2001_old") -> Problem("about Egypt")))
+        .setTo(Map(Citekey("zz_covren2001_old") -> Problem.Unclassified(Legacy.Text("about Egypt"))))
     )
     assert(
       SourceFixtures
@@ -462,5 +471,8 @@ class ArticleRepoSuite extends DbSuite:
         )
         .isRight
     )
-    assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
+    assertEquals(
+      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(_.sentence).toMap,
+      Map("zz_covren2001_new" -> "about Egypt")
+    )
     wipe()

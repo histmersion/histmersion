@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
 import io.github.iltotore.iron.constraint.any.Pure
@@ -63,7 +63,11 @@ object ImportTarget:
     Citekey
       .either(generated)
       .left
-      .map(_ => Problem(s"the generated citekey '$generated' is not a valid citekey — pass --citekey <key>"))
+      .map(_ =>
+        Problem.Unclassified(
+          Legacy.Text(s"the generated citekey '$generated' is not a valid citekey — pass --citekey <key>")
+        )
+      )
 
   /** Whether importing entry `id` under `ck` may go ahead: two volumes once generated the same citekey and were merged
     * into one record.
@@ -81,10 +85,12 @@ object ImportTarget:
       case Some(linked)                                   =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(
-          Problem(
-            s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
-              s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
-              "to import into that record on purpose"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
+                s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
+                "to import into that record on purpose"
+            )
           )
         )
 

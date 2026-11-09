@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -44,7 +44,7 @@ object ManagerCmd:
     ManagerConfig
       .parse(kvs.map(ManagerConfig.Spec(_)))
       .left
-      .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
+      .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   private val SettingKeys =
@@ -145,14 +145,14 @@ object ManagerCmd:
             case _ =>
               Left(
                 Cli.Error(
-                  Problem("autopilot mode takes one of: working, finish, pause"),
+                  Problem.Unclassified(Legacy.Text("autopilot mode takes one of: working, finish, pause")),
                   exitCode = ExitCode.Usage
                 )
               )
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
             Cli.Error(
-              Problem(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"),
+              Problem.Unclassified(Legacy.Text(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})")),
               exitCode = ExitCode.Usage
             )
           )
@@ -195,8 +195,10 @@ object ManagerCmd:
         case other =>
           Left(
             Cli.Error(
-              Problem(
-                s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"
+                )
               ),
               exitCode = ExitCode.Usage
             )
@@ -221,7 +223,7 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: String) = Left(Cli.Error(Problem(m), exitCode = ExitCode.Usage))
+      def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m)), exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
           c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_)))
@@ -311,9 +313,11 @@ object ManagerCmd:
     * it); a malformed one is a usage error before anything is sent.
     */
   def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: String) = Left(Cli.Error(Problem(m), exitCode = ExitCode.Usage))
+    def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m)), exitCode = ExitCode.Usage))
     def num(s: String) =
-      s.trim.toIntOption.toRight(Cli.Error(Problem(s"'$s' is not a whole number"), exitCode = ExitCode.Usage))
+      s.trim.toIntOption.toRight(
+        Cli.Error(Problem.Unclassified(Legacy.Text(s"'$s' is not a whole number")), exitCode = ExitCode.Usage)
+      )
     def by = Some(Autopilot.FocusSet.By("cli"))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
@@ -467,7 +471,7 @@ object ManagerCmd:
               ItemPatch.Action("hold"),
               until = u.map(ItemPatch.Until(_)),
               untilSource = s.map(ItemPatch.UntilSource(_)),
-              reason = r.map(api.Problem(_))
+              reason = r.map((text => Problem.Unclassified(Legacy.Text(text))))
             )
           )
         }
@@ -485,7 +489,7 @@ object ManagerCmd:
                 c,
                 ManagerInfo.Id(id),
                 ManagerItem.Ref(t),
-                ItemPatch(ItemPatch.Action("skip"), reason = r.map(api.Problem(_)))
+                ItemPatch(ItemPatch.Action("skip"), reason = r.map((text => Problem.Unclassified(Legacy.Text(text)))))
               )
           )
       ) orElse

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Event catalogues, the third part of the app that plugins extend: a catalogue of events — eruptions, earthquakes,

@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.files.*
@@ -348,7 +348,9 @@ final class HttpApi(
       .in("api" / paths)
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[Api.Error])
-      .serverLogic[Identity](p => Left(Api.Error(Problem(s"no such endpoint: /api/${p.mkString("/")}"))))
+      .serverLogic[Identity](p =>
+        Left(Api.Error(Problem.Unclassified(Legacy.Text(s"no such endpoint: /api/${p.mkString("/")}"))))
+      )
 
   /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
     * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page.
@@ -401,7 +403,9 @@ final class HttpApi(
 object HttpApi:
   /** A request value the domain refuses is the caller's mistake: a 400 that says which value and why. */
   private def refused[A](what: String, checked: Either[String, A]): Either[Api.Error, A] =
-    checked.left.map(why => Api.Error(Problem(s"invalid $what: $why"), Some(Api.Error.Code(Write.CodeInvalid))))
+    checked.left.map(why =>
+      Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what: $why")), Some(Api.Error.Code(Write.CodeInvalid)))
+    )
 
   private def citekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     refused("citekey", Citekey.either(ck.value))
@@ -410,7 +414,7 @@ object HttpApi:
     Job.Id
       .either(id)
       .left
-      .map(_ => Api.Error(Problem(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ => Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
 
   private def goalSlug(slug: String): Either[Api.Error, Goal.Slug] =
     refused("goal", Goal.Slug.either(slug))

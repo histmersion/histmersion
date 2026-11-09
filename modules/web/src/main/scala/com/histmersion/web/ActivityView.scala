@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Activity.{Entry, EntryKind}
 import com.histmersion.api.automation.Run
@@ -179,7 +179,7 @@ object ActivityView:
       div(
         cls := "activity-main",
         div(cls := "activity-what", headline(e)),
-        e.error.filter(_.value.nonEmpty).map(err => div(cls := "activity-error", err.value.take(300))),
+        e.error.filter(_.sentence.nonEmpty).map(err => div(cls := "activity-error", err.sentence.take(300))),
         div(cls := "activity-refs muted", refs(e)),
         child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m)))
       ),

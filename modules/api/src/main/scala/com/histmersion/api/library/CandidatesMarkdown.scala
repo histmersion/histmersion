@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.given
 object CandidatesMarkdown:
 
@@ -23,7 +24,9 @@ object CandidatesMarkdown:
 
   def sweep(s: CandidateSweep): String =
     val w = s.watches.map { w =>
-      s"- ${w.index} ${w.kind} `${w.subject}`: ${w.lastError.fold(s"${w.lastFound} found")(e => s"not read — $e")}" +
+      s"- ${w.index} ${w.kind} `${w.subject}`: ${w.lastError.fold(s"${w.lastFound} found")(e =>
+          s"not read — ${e.sentence}"
+        )}" +
         w.watermark.fold("")(d => s" (reads from $d next)")
     }
     val left = if s.skipped.isEmpty then ""

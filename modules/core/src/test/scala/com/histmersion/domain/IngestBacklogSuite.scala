@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -183,21 +185,21 @@ class IngestBacklogSuite extends munit.FunSuite:
   test(
     "a failed ingest: no legal copy → the acquisition list at once; another failure → again after the backoff, the list after max-failures"
   ):
-    assert(isNoLegalCopy(Problem("no legal open-access copy of 10.1/x: nothing found")))
-    assert(!isNoLegalCopy(Problem("HTTP 503 from the converter")))
+    assert(isNoLegalCopy(Problem.Unclassified(Legacy.Text("no legal open-access copy of 10.1/x: nothing found"))))
+    assert(!isNoLegalCopy(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))))
     onFailure(
-      Problem("no legal open-access copy of 10.1/x"),
+      Problem.Unclassified(Legacy.Text("no legal open-access copy of 10.1/x")),
       IngestBacklog.Failure.Retry.Failures(0),
       ManagerPolicy.ReviewSettings.MaxFailures(3),
       ManagerPolicy.ReviewSettings.BackoffMinutes(15),
       ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
-      case Failure.ToAcquire(why) => assert(why.value.startsWith(NoLegalCopy), why)
+      case Failure.ToAcquire(why) => assert(why.sentence.startsWith(NoLegalCopy), why)
       case other                  => fail(s"expected the acquisition list, got $other")
     assertEquals(
       onFailure(
-        Problem("timeout"),
+        Problem.Unclassified(Legacy.Text("timeout")),
         IngestBacklog.Failure.Retry.Failures(0),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -207,12 +209,12 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(15 * 60),
         IngestBacklog.Failure.Retry.Failures(1),
-        Problem("timeout")
+        Problem.Unclassified(Legacy.Text("timeout"))
       )
     )
     assertEquals(
       onFailure(
-        Problem("timeout"),
+        Problem.Unclassified(Legacy.Text("timeout")),
         IngestBacklog.Failure.Retry.Failures(1),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -222,22 +224,22 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(30 * 60),
         IngestBacklog.Failure.Retry.Failures(2),
-        Problem("timeout")
+        Problem.Unclassified(Legacy.Text("timeout"))
       )
     )
     onFailure(
-      Problem("timeout"),
+      Problem.Unclassified(Legacy.Text("timeout")),
       IngestBacklog.Failure.Retry.Failures(2),
       ManagerPolicy.ReviewSettings.MaxFailures(3),
       ManagerPolicy.ReviewSettings.BackoffMinutes(15),
       ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
-      case Failure.ToAcquire(why) => assertEquals(why, "timeout (3 tries)")
+      case Failure.ToAcquire(why) => assertEquals((why).sentence, "timeout (3 tries)")
       case other                  => fail(s"expected the acquisition list, got $other")
     assert(
       onFailure(
-        Problem(""),
+        Problem.Unclassified(Legacy.Text("")),
         IngestBacklog.Failure.Retry.Failures(0),
         ManagerPolicy.ReviewSettings.MaxFailures(3),
         ManagerPolicy.ReviewSettings.BackoffMinutes(15),
@@ -331,7 +333,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       "closed: never touched"
     )
     assert(repairAction(f.modify(_.watcherAutoIngest).setTo(IngestBacklog.RepairFacts.WatcherAutoIngest(false))) match
-      case RepairAction.Keep(why) => why.value.contains("does not auto-ingest")
+      case RepairAction.Keep(why) => why.sentence.contains("does not auto-ingest")
       case _                      => false)
     assert(
       repairAction(f.modify(_.watcherExists).setTo(IngestBacklog.RepairFacts.WatcherExists(false)))
@@ -349,7 +351,7 @@ class IngestBacklogSuite extends munit.FunSuite:
             List(com.histmersion.api.library.AuthorName("A")),
             None,
             List(Goal.Slug("g1"), Goal.Slug("g2")),
-            api.Problem("fits"),
+            Problem.Unclassified(Legacy.Text("fits")),
             Some(Managers.OaWork.FoundBy("run"))
           )
         )

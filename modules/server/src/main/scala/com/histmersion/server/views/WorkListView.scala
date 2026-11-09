@@ -1,7 +1,6 @@
 package com.histmersion
 package server.views
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Queue
@@ -66,7 +65,7 @@ final class WorkListView(
                 Queue.QueueItem.Id(r.item.value),
                 Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
                 Acquire.Checks.AcquireCheck.Outcome(r.outcome.value),
-                Problem(r.reason.value),
+                r.reason,
                 Acquire.Checks.AcquireCheck.Checks(r.checks.value)
               )
             )

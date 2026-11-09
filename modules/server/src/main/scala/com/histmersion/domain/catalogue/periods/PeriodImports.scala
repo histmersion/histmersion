@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.periods
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Dataset, PeriodODataset}
@@ -24,7 +24,7 @@ final class PeriodImports(
   private def bundled: Either[Problem, PeriodODataset] = seed().flatMap(parsed)
 
   private def parsed(document: PeriodImports.Document): Either[Problem, PeriodODataset] =
-    PeriodO.parse(document.value).left.map(why => Problem(why.value))
+    PeriodO.parse(document.value)
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
   def applySeed(replace: PeriodImports.Replace): Either[Problem, Period.ImportResult] =
@@ -59,7 +59,8 @@ final class PeriodImports(
       all <- parsed(raw)
       d = all.only(wanted.map(HistoricalPeriod.Id(_)).toSet)
       _ <-
-        if d.authorities.isEmpty then Left(Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
+        if d.authorities.isEmpty then
+          Left(Problem.Unclassified(Legacy.Text(s"no PeriodO collection ${wanted.mkString(", ")} in the dump")))
         else Right(())
     yield write(d, Dataset.Seed)
 

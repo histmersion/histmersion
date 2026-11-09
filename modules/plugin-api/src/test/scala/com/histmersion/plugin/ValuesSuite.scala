@@ -24,7 +24,7 @@ class ValuesSuite extends munit.FunSuite:
       ((Period
         .from(Year(-1600), Year(-1700)))
         .left
-        .map(refactorError => (refactorError).value): Either[String, Period]),
+        .map(refactorError => (refactorError).legacyText): Either[String, Period]),
       Left("the period ends (-1700) before it starts (-1600)")
     )
 

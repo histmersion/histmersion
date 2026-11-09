@@ -1,8 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -75,7 +76,11 @@ final class PlanPools(
     saved.map(f => Floors.parse(Floors.Wire(f.value))) match
       case Some(Right(f)) => (f, PoolStatus.FloorsSource("saved"), None)
       case Some(Left(m))  =>
-        (Floors.Empty, PoolStatus.FloorsSource("saved"), Some(Problem(s"saved floors do not parse: $m")))
+        (
+          Floors.Empty,
+          PoolStatus.FloorsSource("saved"),
+          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m.sentence}")))
+        )
       case None =>
         Floors.parse(poolCfg(p)._1) match
           case Right(f) => (f, PoolStatus.FloorsSource("config"), None)
@@ -83,7 +88,7 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(Problem(s"agents.quota.${p.wire}.floors: $m"))
+              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m.sentence}")))
             )
 
   def rules(p: PoolId): Rules =
@@ -104,7 +109,7 @@ final class PlanPools(
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r => r -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -116,7 +121,7 @@ final class PlanPools(
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r => r -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -156,7 +161,7 @@ final class PlanPools(
   ): Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] =
     verdict(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
-        Some((Problem(why.value), until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
+        Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
 
   def refresh(now: PlanQuotaRepo.EpochMillis): Unit = { val _ = poll(PlanQuota.Now(now.value)) }
@@ -191,7 +196,8 @@ final class PlanPools(
       PlanPools.claudeEnv(cc),
       AgentsConfig.DoctorTimeoutSeconds(math.max(1, cfg.doctorTimeoutSeconds.value))
     ) match
-      case Left(why)       => Login.Unknown(api.Problem(s"'claude auth status' failed: $why"))
+      case Left(why) =>
+        Login.Unknown(Problem.Unclassified(Legacy.Text(s"'claude auth status' failed: ${why.sentence}")))
       case Right((_, out)) => PlanPools.claudeLogin(out, cc.useApiKey)
 
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
@@ -200,7 +206,7 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem(s"unavailable: no login — $why"))
+        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — ${why.sentence}")))
         case _                  => None
     }
 
@@ -210,8 +216,8 @@ final class PlanPools(
     RefreshMode
       .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
       .toRight(
-        Problem(
-          s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off"
+        Problem.Unclassified(
+          Legacy.Text(s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off")
         )
       )
 
@@ -257,7 +263,7 @@ final class PlanPools(
         last.map(l => java.time.Instant.ofEpochMilli(l.value)),
         now
       ) match
-        case ScheduledRead.NotDue(why) => Left(api.Problem(s"$why"))
+        case ScheduledRead.NotDue(why) => Left(Problem.Unclassified(Legacy.Text(s"${why.sentence}")))
         case ScheduledRead.Due         =>
           PlanQuota
             .refreshDecision(
@@ -269,13 +275,11 @@ final class PlanPools(
               PlanQuota.Now(at),
               force = true
             )
-            .left
-            .map(e => Problem(e.value))
             .map(_ =>
               takeAndLog(
                 p,
                 RefreshTrigger.Schedule,
-                Problem(RefreshTrigger.Schedule.wire.value),
+                Problem.Unclassified(Legacy.Text(RefreshTrigger.Schedule.wire.value)),
                 PlanQuota.Now(at)
               )
             )
@@ -305,15 +309,20 @@ final class PlanPools(
           now,
           force.value
         )
-        .left
-        .map(e => Problem(e.value))
-        .map(n => takeAndLog(p, trigger, Problem(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now))
+        .map(n =>
+          takeAndLog(
+            p,
+            trigger,
+            Problem.Unclassified(Legacy.Text(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}"))),
+            now
+          )
+        )
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
   private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: Problem, now: PlanQuota.Now): Refreshed =
     val r = take(p, now)
-    val line = s"plan refresh ${p.wire} ($why) ${r.text}"
+    val line = s"plan refresh ${p.wire} (${why.sentence}) ${r.text}"
     if r.ok.value then scribe.info(line) else scribe.warn(line)
     Transactor(ds).transact(
       PlanQuotaRepo.logRefresh(
@@ -347,10 +356,11 @@ final class PlanPools(
         CliProcess.RunStdin(ClaudeCode.ProbePrompt),
         CliProcess.RunTimeoutSeconds(math.max(5, qc.probeTimeoutSeconds.value))
       ) match
-        case Left(why)  => Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.value))
+        case Left(why)  => Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.sentence))
         case Right(run) =>
           PlanPools.probeReadings(run, now, cc.limitCooldownMinutes) match
-            case Left(why) => Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.value))
+            case Left(why) =>
+              Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.sentence))
             case Right(rs) =>
               record(PoolId.ClaudePlan, rs)
               Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(true), PlanPools.summary(rs, now))
@@ -376,15 +386,15 @@ final class PlanPools(
             )
           ) match
             case Left(why) =>
-              scribe.info(s"codex app-server rate-limit read failed: $why")
-              Some(Refreshed.Detail(why.value))
+              scribe.info(s"codex app-server rate-limit read failed: ${why.sentence}")
+              Some(Refreshed.Detail(why.sentence))
             case Right(json) =>
               val (rs, refusal, plan) = PlanPools.codexReadings(json, now)
               record(PoolId.ChatgptPlan, rs)
               Transactor(ds).transact(
                 PlanQuotaRepo.setRefusal(
                   PoolId.ChatgptPlan,
-                  refusal.map(r => r._1.transformInto[domain.Problem]),
+                  refusal.map(r => r._1),
                   refusal.flatMap(_._2),
                   plan
                 )
@@ -403,7 +413,7 @@ final class PlanPools(
       case Verdict.Blocked(why, until) =>
         GuardAnswer(
           allow = GuardAnswer.Allow(false),
-          Some(api.Problem(why.value)),
+          Some(why),
           until.map(u => GuardAnswer.ResetsAt(java.time.Instant.ofEpochMilli(u.value).toString))
         )
 
@@ -434,7 +444,7 @@ final class PlanPools(
           WindowStatus.ObservedAt(iso(s.reading.observedAt.value)),
           WindowStatus.AgeSeconds(math.max(0L, (now.value - s.reading.observedAt.value) / 1000)),
           WindowStatus.Source(s.reading.source.wire.value),
-          s.why.map(w => api.Problem(w.value))
+          s.why
         )
       }
       val lg = login(p, now)
@@ -442,9 +452,9 @@ final class PlanPools(
         case Login.Missing(why) => Some(why)
         case _                  => None
       val (ok, why, until) = (v, missing) match
-        case (_, Some(m))                  => (false, Some(s"unavailable: no login — $m"), None)
+        case (_, Some(m))                  => (false, Some(s"unavailable: no login — ${m.sentence}"), None)
         case (Verdict.Usable(n), None)     => (true, n.map(_.value), None)
-        case (Verdict.Blocked(w, u), None) => (false, Some(w.value), u.map(x => iso(x.value)))
+        case (Verdict.Blocked(w, u), None) => (false, Some(w.sentence), u.map(x => iso(x.value)))
       val modeProblem = Option.when(p == PoolId.ClaudePlan)(claudeMode.left.toOption).flatten
       val (n, last) = Transactor(ds).read(PlanQuotaRepo.refreshes(p, PlanQuotaRepo.EpochMillis(today)))
       PoolStatus(
@@ -456,19 +466,19 @@ final class PlanPools(
         src,
         PoolStatus.Held(pool.held.value),
         PoolStatus.Usable(ok),
-        why.map(api.Problem(_)),
+        why.map((text => Problem.Unclassified(Legacy.Text(text)))),
         until.map(PoolStatus.Until(_)),
         PoolStatus.MaxCallsInFlight(math.max(1, poolCfg(p)._2)),
         ws,
         pool.planType.map(t => PoolStatus.PlanType(t.value)),
-        (problem.toList ++ modeProblem).map(_.value).reduceOption[String](_ + "; " + _).map(PoolStatus.Note(_)),
+        (problem.toList ++ modeProblem).map(_.sentence).reduceOption[String](_ + "; " + _).map(PoolStatus.Note(_)),
         available = PoolStatus.Available(missing.isEmpty),
         login = Some(
           PoolStatus.Login(
             lg match
               case Login.Present(d) => d.value
-              case Login.Missing(w) => s"no login: $w"
-              case Login.Unknown(w) => s"not known: $w"
+              case Login.Missing(w) => s"no login: ${w.sentence}"
+              case Login.Unknown(w) => s"not known: ${w.sentence}"
           )
         ),
         refresh = refreshMode(p).map(m => PoolStatus.Refresh(m.value)),
@@ -517,9 +527,9 @@ object PlanPools:
     /** Nothing is started: no read, no fresh reading taken, logins not known (so nothing is made unavailable).
       */
     val Offline: Seams = Seams(
-      (_, _, _) => Left(Problem("no app-server read in this context")),
-      (_, _, _, _) => Left(Problem("no probe in this context")),
-      (_, _, _) => Left(Problem("not checked in this context")),
+      (_, _, _) => Left(Problem.Unclassified(Legacy.Text("no app-server read in this context"))),
+      (_, _, _, _) => Left(Problem.Unclassified(Legacy.Text("no probe in this context"))),
+      (_, _, _) => Left(Problem.Unclassified(Legacy.Text("not checked in this context"))),
       refreshes = Refreshes(false)
     )
 
@@ -548,7 +558,11 @@ object PlanPools:
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+          )
+        )
 
   /** The model whose OWN runtime spends the pool needs that runtime's login: claude-code on the Claude plan, codex on
     * the ChatGPT plan (opencode on a ChatGPT login signs in by itself).
@@ -584,22 +598,25 @@ object PlanPools:
     */
   def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
     if parser.parse(out.value.trim).isLeft then
-      Login.Unknown(api.Problem(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
+      Login.Unknown(
+        Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
+      )
     else
       AgentDoctor
         .login(out, useApiKey)
-        .fold(p => Login.Missing(api.Problem(p.value)), d => Login.Present(Login.Present.Detail(d.value)))
+        .fold(p => Login.Missing(p), d => Login.Present(Login.Present.Detail(d.value)))
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
     case None =>
       Login.Missing(
-        api.Problem("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
+        Problem.Unclassified(Legacy.Text("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
       )
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
         Login.Present(Login.Present.Detail(s"$h has a login"))
-      else Login.Missing(api.Problem(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
+      else
+        Login.Missing(Problem.Unclassified(Legacy.Text(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once")))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about
@@ -641,9 +658,11 @@ object PlanPools:
             .map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; "))
             .filter(_.nonEmpty)
           Left(
-            Problem(
-              s"the probe printed no rate_limit_event (exit ${run.exit}" +
-                said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).fold("")(m => s": ${m.take(300)}") + ")"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"the probe printed no rate_limit_event (exit ${run.exit}" +
+                  said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).fold("")(m => s": ${m.take(300)}") + ")"
+              )
             )
           )
 
@@ -791,7 +810,9 @@ object PlanPools:
       .filter(!_)
       .map(_ =>
         (
-          Problem("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
+          Problem.Unclassified(
+            Legacy.Text("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)")
+          ),
           Option.empty[PlanQuotaRepo.Pool.RefusalUntil]
         )
       )
@@ -831,14 +852,17 @@ object PlanPools:
             .find(j => j.hcursor.downField("id").as[Int].toOption.contains(2))
         }
         reader.get(math.max(1, timeoutSeconds.value).toLong, TimeUnit.SECONDS) match
-          case None    => Left(Problem("codex app-server ended without answering account/rateLimits/read"))
+          case None =>
+            Left(Problem.Unclassified(Legacy.Text("codex app-server ended without answering account/rateLimits/read")))
           case Some(j) =>
             j.hcursor
               .downField("result")
               .focus
               .toRight(
-                Problem(
-                  s"account/rateLimits/read: ${j.hcursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces.take(200))}"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"account/rateLimits/read: ${j.hcursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces.take(200))}"
+                  )
                 )
               )
       finally
@@ -850,9 +874,13 @@ object PlanPools:
     catch
       case e: InterruptedException                  => throw e
       case e: java.util.concurrent.TimeoutException =>
-        Left(Problem(s"codex app-server did not answer within $timeoutSeconds s"))
+        Left(Problem.Unclassified(Legacy.Text(s"codex app-server did not answer within $timeoutSeconds s")))
       case e: Exception =>
-        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+          )
+        )
 
   /** The three messages of a read — and the only ones Histmersion ever sends the app-server. */
   val ReadRequests: List[String] = List(

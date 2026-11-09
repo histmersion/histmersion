@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -30,7 +30,7 @@ object BasemapFixtures:
     val a = p.toAbsolutePath
     store(a.getParent)
       .get(Store.Key.applyUnsafe(a.getFileName.toString))
-      .toRight(Problem(s"$p: no such file"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"$p: no such file")))
       .flatMap(PmTiles.File.open(_))
 
   private def commands(cs: Int*): Vector[Mvt.GeometryCommand] = cs.map(Mvt.GeometryCommand(_)).toVector

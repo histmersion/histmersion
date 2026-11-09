@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A reference of a Pleiades place record that names a picture: the Commons file (`Right("File:…")`) or why it is not

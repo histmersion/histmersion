@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.{ToolFiles, Upload}
 import com.histmersion.util.storage.SafePath
@@ -22,6 +22,4 @@ final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
       )
     SafePath
       .confine(root, SafePath.Candidate(path.value))
-      .left
-      .map(p => Problem(p.value))
       .map(f => Option.when(Files.isRegularFile(f))(Upload.handed(HandedFile.snapshot(f.toFile))))

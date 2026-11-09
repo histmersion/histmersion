@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.maptiles
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -46,13 +47,15 @@ final class MapTileService(
         .parse(q.layer)
         .toRight(
           Api.Error(
-            Problem(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}")
+            Problem.Unclassified(
+              Legacy.Text(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}")
+            )
           )
         )
       coord <- TileCoord
         .of(TileCoord.Z(q.z.value), TileCoord.X(q.x.value), TileCoord.Y(q.y.value), TileCoord.Z(s.maxZoom.value))
         .left
-        .map(why => Api.Error(Problem(s"$why")))
+        .map(why => Api.Error(Problem.Unclassified(Legacy.Text(s"${why.sentence}"))))
     yield
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
@@ -80,7 +81,7 @@ final class CurrencyCheckPipeline(
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
-        case Left(m)  => ctx.warn(s"assess ${t.citekey}: $m"); None
+        case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentence}"); None
         case Right(a) =>
           if a.isRetracted.value then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
           if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
@@ -96,7 +97,7 @@ final class CurrencyCheckPipeline(
         None,
         Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))
       ) match
-        case Left(m)  => ctx.warn(s"followups ${t.citekey}: $m"); (0, 0, 0)
+        case Left(m)  => ctx.warn(s"followups ${t.citekey}: ${m.sentence}"); (0, 0, 0)
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
@@ -111,7 +112,7 @@ final class CurrencyCheckPipeline(
               case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
               case SourceProposals.Outcome.Applied(_)      => true
               case SourceProposals.Outcome.NotProposed(_)  => true
-              case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w"); false
+              case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: ${w.sentence}"); false
               case _                                       => false)
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit.internal
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 
@@ -24,9 +25,7 @@ final private[testkit] class TestVaults(
               def resolve(ref: Secret.Vault.ResolveRef) =
                 refs
                   .get(Secret.Ref.Vault.Ref(ref.value))
-                  .toRight(Problem(s"the test gives no secret ${vault.value}:${ref.value}"))
+                  .toRight(Problem.Unclassified(Legacy.Text(s"the test gives no secret ${vault.value}:${ref.value}")))
           )
         )
       }
-      .left
-      .map(e => Problem(e.value))

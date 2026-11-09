@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{BBox, TimeSpan}
@@ -208,11 +210,12 @@ object PluginEvents:
     catch case NonFatal(_) => None
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[?, A]): Either[Problem, A] =
-    try Option(a).getOrElse(Left(Problem("the plugin answered nothing"))).left.map(e => Problem(s"$e"))
+  def guard[A](a: => Either[Problem, A]): Either[Problem, A] =
+    try Option(a).getOrElse(Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             => Left(Problem(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      case NonFatal(e)             =>
+        Left(Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")))
 
   /** Pure: the record a plugin's event becomes under catalogue `provider`, or why it is refused: no id or label, a
     * historicity that is none of the host's, a year a `Year` refuses or a dating that runs backwards (named with the
@@ -225,9 +228,11 @@ object PluginEvents:
     catch
       case NonFatal(x) =>
         Left(
-          Problem(
-            s"${safe(e.id.value).getOrElse("a record")}: catalogue '${provider.value}' handed over a record the host cannot read " +
-              s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${safe(e.id.value).getOrElse("a record")}: catalogue '${provider.value}' handed over a record the host cannot read " +
+                s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?"
+            )
           )
         )
 
@@ -235,19 +240,27 @@ object PluginEvents:
     val id = Option(e.id).map(_.value).getOrElse("").trim
     val label = Option(e.label).map(_.value).getOrElse("").trim
     def stated[A, B](a: Option[A])(f: A => Either[Problem, B]): Either[Problem, Option[B]] =
-      SpiValues.optional(a)(f).left.map(why => Problem(s"$id: catalogue '${provider.value}': ${why.value}"))
+      SpiValues
+        .optional(a)(f)
+        .left
+        .map(why => Problem.Unclassified(Legacy.Text(s"$id: catalogue '${provider.value}': ${why.sentence}")))
     def left(why: String) = Kept.Warnings(s"$id: catalogue '${provider.value}': $why, left out")
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
     val (lon0, lonWhy) = SpiValues.kept(e.lon)(SpiValues.longitudeOf)
     val (wikidata, wikidataWhy) = SpiValues.kept(e.wikidata)(SpiValues.wikidataOf)
     val half = Option.when(lat0.isDefined != lon0.isDefined)("a position needs both latitude and longitude")
     val (lat, lon) = if half.isDefined then (None, None) else (lat0, lon0)
-    val warnings = List(latWhy.map(_.value), lonWhy.map(_.value), half, wikidataWhy.map(_.value)).flatten.map(left)
-    if id.isEmpty then Left(Problem("a record without an id"))
-    else if label.isEmpty then Left(Problem(s"$id: no label"))
+    val warnings =
+      List(latWhy.map(_.sentence), lonWhy.map(_.sentence), half, wikidataWhy.map(_.sentence)).flatten.map(left)
+    if id.isEmpty then Left(Problem.Unclassified(Legacy.Text("a record without an id")))
+    else if label.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$id: no label")))
     else if !Historicity.all.exists(_.value == e.historicity.value) then
       Left(
-        Problem(s"$id: historicity '${e.historicity.value}' is none of ${Historicity.all.map(_.value).mkString(", ")}")
+        Problem.Unclassified(
+          Legacy.Text(
+            s"$id: historicity '${e.historicity.value}' is none of ${Historicity.all.map(_.value).mkString(", ")}"
+          )
+        )
       )
     else
       for
@@ -260,7 +273,7 @@ object PluginEvents:
         _ <- Either.cond(
           !points.zip(points.drop(1)).exists((a, b) => a > b),
           (),
-          Problem(s"$id: its dating runs backwards")
+          Problem.Unclassified(Legacy.Text(s"$id: its dating runs backwards"))
         )
       yield
         def long(y: Option[com.histmersion.Year]) = y.map(v => com.histmersion.api.catalogue.Year(v.value.toLong))

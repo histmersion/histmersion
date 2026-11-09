@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.automation.Activity.{Entry, EntryKind, Page}
 import com.histmersion.api.Wording
 import com.histmersion.api.jobs.{JobKinds, JobState}
@@ -60,7 +61,7 @@ object ActivityMarkdown:
     val refsText = refs(e)
     s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).replace('\n', ' ').take(200)}" +
       (if (state).nonEmpty then s" · $state" else "") +
-      e.error.map(_.value).filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
+      e.error.map(_.sentence).filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
       (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")
 
   def page(p: Page, olderHint: Paging.Cursor => String): String =

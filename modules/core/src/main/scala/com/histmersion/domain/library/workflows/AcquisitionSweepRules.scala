@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.Doi
 
 import scala.annotation.tailrec
@@ -85,7 +86,10 @@ object AcquisitionSweepRules:
     }
     val all = seen.values.toList
     if all.size > max.value then skipped("over the sweep limit") += all.size - max.value
-    (all.take(max.value), skipped.toMap.map((reason, count) => Problem(reason) -> SkipCount(count)))
+    (
+      all.take(max.value),
+      skipped.toMap.map((reason, count) => Problem.Unclassified(Legacy.Text(reason)) -> SkipCount(count))
+    )
 
   /** The ranking model's answer: which candidates belong to the goal. */
   final case class Pick(doi: Pick.DoiText, why: Problem) derives KindlingsCodecAsObject
@@ -117,12 +121,16 @@ object AcquisitionSweepRules:
   ): Either[List[Problem], (List[(Candidate, Problem)], List[Dropped])] =
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Doi.normalize(p.doi.value).flatMap(byDoi.get)))
-    val problems = parsed.collect { case (p, None) => Problem(s"'${p.doi}' is not one of the listed candidates") }
+    val problems = parsed.collect { case (p, None) =>
+      Problem.Unclassified(Legacy.Text(s"'${p.doi}' is not one of the listed candidates"))
+    }
     val kept = parsed
-      .collect { case (p, Some(c)) => (c, Problem(Option(p.why).map(_.value.trim).getOrElse(""))) }
+      .collect { case (p, Some(c)) =>
+        (c, Problem.Unclassified(Legacy.Text(Option(p.why).map(_.sentence.trim).getOrElse(""))))
+      }
       .distinctBy(_._1.doi)
     if problems.nonEmpty && !last.value then Left(problems)
-    else Right((kept, problems.map(p => Dropped(s"rank: dropped — $p"))))
+    else Right((kept, problems.map(p => Dropped(s"rank: dropped — ${p.sentence}"))))
 
   /** A watcher's sweep with auto-ingest on: the open-access picks (`isOa`) are offered to `ingest` in the model's order
     * until `allowed` of them were ingested (one that fails — no legal file — does not count and the next is tried);
@@ -164,7 +172,7 @@ object AcquisitionSweepRules:
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa.value then " (open access)" else ""
-    val reason = Option(why).map(_.value.trim).filter(_.nonEmpty).fold("")(w => s": $w")
+    val reason = Option(why).map(_.sentence.trim).filter(_.nonEmpty).fold("")(w => s": $w")
     AcquireText(
       s"${if head.isEmpty then "" else s"$head. "}${c.title}. https://doi.org/${c.doi}$oa — for goal $goal$reason"
     )

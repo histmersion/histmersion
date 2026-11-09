@@ -20,30 +20,54 @@ class RenderSuite extends munit.FunSuite:
 
   /** The frozen sentences and the statuses: changing a sentence breaks every row an earlier version stored. */
   private val Frozen: Map[String, (Int, String)] = Map(
-    "Malformed" -> (400, "edges / dst: 'Gimbutas 1956' is no com.histmersion.domain.library.Citekey: it fails Match[\"[a-z][a-z0-9_-]*\"] (Should match [a-z][a-z0-9_-]*)"),
-    "Unknown" -> (400, "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')"),
+    "Malformed" -> (
+      400,
+      "edges / dst: 'Gimbutas 1956' is no com.histmersion.domain.library.Citekey: it fails Match[\"[a-z][a-z0-9_-]*\"] (Should match [a-z][a-z0-9_-]*)"
+    ),
+    "Unknown" -> (
+      400,
+      "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')"
+    ),
     "Missing" -> (400, "rationale is required"),
     "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
     "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
     "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
-    "Stale" -> (412, "com.histmersion.domain.library.Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"),
+    "Stale" -> (
+      412,
+      "com.histmersion.domain.library.Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"
+    ),
     "WrongState" -> (409, "com.histmersion.util.jobs.Job.Id '412' is running; it needs paused or failed"),
     "Busy" -> (503, "Backup is still running"),
-    "Referenced" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' is referred to by 3 com.histmersion.domain.library.Finding"),
+    "Referenced" -> (
+      409,
+      "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' is referred to by 3 com.histmersion.domain.library.Finding"
+    ),
     "Policy" -> (403, "refused: RunTokenRequired"),
     "Quota" -> (429, "DailySpend is spent: 5.25 of 4.5 until 2025-11-10T00:00:00Z"),
     "Disabled" -> (403, "events-gvp is switched off by histmersion.events.gvp.enabled"),
-    "Http" -> (502, "core answered HTTP 429 at https://api.core.ac.uk/v3/search/works — {\"message\":\"rate limited\"}"),
-    "Unreachable" -> (502, "cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset"),
+    "Http" -> (
+      502,
+      "core answered HTTP 429 at https://api.core.ac.uk/v3/search/works — {\"message\":\"rate limited\"}"
+    ),
+    "Unreachable" -> (
+      502,
+      "cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset"
+    ),
     "Timeout" -> (504, "core did not answer at https://api.core.ac.uk/v3/search/works within 30000 ms"),
-    "BadReply" -> (502, "core's answer at https://api.core.ac.uk/v3/search/works is not Json — expected json value got '<html>' (line 1)"),
+    "BadReply" -> (
+      502,
+      "core's answer at https://api.core.ac.uk/v3/search/works is not Json — expected json value got '<html>' (line 1)"
+    ),
     "File" -> (500, "could not Read /tmp/bundle.hmx — java.nio.file.NoSuchFileException: /tmp/bundle.hmx"),
     "Wrong" -> (500, "/srv/seed is not Directory"),
     "Corrupt" -> (500, "the Png data at terrarium tile 3/4/2 is damaged: Length 1024/1000"),
     "Process" -> (500, "calibredb exited with 2 — calibredb: library is locked"),
-    "Database" -> (500, "the database refused to Migrate — org.postgresql.util.PSQLException: relation \"jobs\" does not exist"),
+    "Database" -> (
+      500,
+      "the database refused to Migrate — org.postgresql.util.PSQLException: relation \"jobs\" does not exist"
+    ),
     "Setting" -> (503, "histmersion.agents.providers.codex.command is wrong: Empty"),
     "Unavailable" -> (503, "this server has no Originals"),
     "Reload" -> (503, "reloading the settings failed at Close in plugins"),
@@ -60,7 +84,10 @@ class RenderSuite extends munit.FunSuite:
     "Aborted" -> (409, "step draft cannot go on: CheckpointMismatch"),
     "Finding" -> (422, "finding: UncitedParagraph"),
     "Proposal" -> (422, "claims: TooManyClaims 12/15"),
-    "Unexpected" -> (500, "backup failed unexpectedly (java.lang.IllegalStateException) — java.lang.IllegalStateException: pg_dump vanished"),
+    "Unexpected" -> (
+      500,
+      "backup failed unexpectedly (java.lang.IllegalStateException, problem 3f2a9c1e) — java.lang.IllegalStateException: pg_dump vanished"
+    ),
     "Unclassified" -> (500, "unclassified: cannot open the bundle"),
     "Unrecognised" -> (500, "merge apply crashed: NullPointerException")
   )
@@ -122,7 +149,11 @@ class RenderSuite extends munit.FunSuite:
         .map(Io.Corrupt(Io.Format.Tar, Where("entry 3"), _)) ++
         Vector(Config.Fault.Empty, Config.Fault.NoSecret, Config.Fault.Unset(SettingKey("HOME")))
           .map(Config.Setting(SettingKey("a.b"), _)) ++
-        Vector(Config.Fault.Malformed(Raw("x y")), Config.Fault.Unknown(Raw("z")), Config.Fault.Conflicts(SettingKey("c.d")))
+        Vector(
+          Config.Fault.Malformed(Raw("x y")),
+          Config.Fault.Unknown(Raw("z")),
+          Config.Fault.Conflicts(SettingKey("c.d"))
+        )
           .map(Config.Setting(SettingKey("a.b"), _)) ++
         Vector(
           Plugin.Fault.Missing,
@@ -139,7 +170,8 @@ class RenderSuite extends munit.FunSuite:
           Plugin.Retrieval.Locked,
           Plugin.Retrieval.Failed(External.Stderr("locked"))
         ).map(Plugin.Vault(Plugin.Id("v"), _)) ++
-        Vector(Run.Block.SpendCap, Run.Block.Draining, Run.Block.OutsideWindow, Run.Block.Waiting).map(Run.Blocked(_)) ++
+        Vector(Run.Block.SpendCap, Run.Block.Draining, Run.Block.OutsideWindow, Run.Block.Waiting)
+          .map(Run.Blocked(_)) ++
         Vector(
           Content.Requirement.NoYearZero,
           Content.Requirement.CitesNoSource,

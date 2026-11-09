@@ -1,6 +1,6 @@
 package com.histmersion.fixtures.hellodeps
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import com.histmersion.fixtures.hellolib.Shout
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given

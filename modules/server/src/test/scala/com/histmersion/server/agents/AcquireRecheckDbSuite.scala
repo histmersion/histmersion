@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -121,18 +122,22 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     @volatile var generation = AcquireRecheck.LastCheck.Generation("g1")
     @volatile var answer: (Doi, Option[Citekey]) => Either[Problem, Ingest.Report] = (d, _) =>
       Left(
-        Problem(
-          s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
+        Problem.Unclassified(
+          Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
         )
       )
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(Doi, Option[Citekey])]()
-    def meta(doi: Doi) = Left(Problem("not stubbed"))
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(Problem("not stubbed"))
-    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
-      Problem("not stubbed")
+    def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(
+      Problem.Unclassified(Legacy.Text("not stubbed"))
     )
-    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(Problem("not stubbed"))
+    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
+      Problem.Unclassified(Legacy.Text("not stubbed"))
+    )
+    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
+      Problem.Unclassified(Legacy.Text("not stubbed"))
+    )
     override def ingestLegalInto(doi: Doi, into: Option[Citekey]) = { asked.add(doi -> into); answer(doi, into) }
     override def fetcherGeneration = generation
 
@@ -180,7 +185,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
 
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
   private def passNow(a: AgentsControllers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
-    a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Problem("a pass is running")))
+    a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Problem.Unclassified(Legacy.Text("a pass is running"))))
   private def status(h: ServerWiring, id: Queue.QueueItem.Id): String =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
@@ -230,12 +235,14 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       if d.value == doi("meta") then found(d, into.get)
       else
         Left(
-          Problem(
-            s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none; landing: refused — bot-protection 403"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none; landing: refused — bot-protection 403"
+            )
           )
         )
     val r = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.closed, r.fetched, r.noCopy, r.failed), (1, 1, 1, 0), r.toString)
     assertEquals(
       asked(up).toSet,
@@ -252,7 +259,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .find(_.id == full)
         .get
         .reason
-        .exists(_.value.contains("[[zzrecheck_full]]"))
+        .exists(_.sentence.contains("[[zzrecheck_full]]"))
     )
     assertEquals(
       (status(h, meta), status(h, none), status(h, noDoi)),
@@ -265,7 +272,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false)).toOption.get
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
     assertEquals(
-      listing.checks.find(_.item == none).map(_.reason),
+      listing.checks.find(_.item == none).map(_.reason).map(_.sentence),
       Some(s"checked $day: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)")
     )
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
@@ -280,7 +287,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     // again at once: nothing is due (checked within every-days), nothing is asked
     val again = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((again.due, again.closed), (0, 0))
     assertEquals(asked(up).size, 2)
 
@@ -302,13 +309,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     up.generation = AcquireRecheck.LastCheck.Generation("g2") // a new fetcher, a new key
     val dry = a.acquireRecheck
       .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true)))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(dry.due, 2)
     assertEquals(asked(up).size, 2, "a dry run asks no fetcher")
     assertEquals(dry.rows.map(_.action).distinct, List(WouldTry))
     val byId = a.acquireRecheck
       .run(RecheckRequest(id = Some(RecheckRequest.Id(one.value))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(byId.rows.map(_.item.value), List(one.value))
     assertEquals(asked(up).size, 3)
     assertEquals(AcquisitionTesting.checks(ds).of(List(checkItem(one))).get(checkItem(one)).map(_.checks), Some(2))
@@ -414,9 +421,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       (CitationsClient.Backend("stub"), Nil)
     )
   private object NoWiki extends WikiClient:
-    def refs(articleUrl: WikiClient.ArticleUrl) = Left(domain.Problem("not used here"))
+    def refs(articleUrl: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used here")))
   private object NoRw extends RetractionWatchClient:
-    def csv() = Left(domain.Problem("not used here"))
+    def csv() = Left(Problem.Unclassified(Legacy.Text("not used here")))
 
   test(
     "through the real chain: the legal fetchers only, even with acquire.allow-unauthorised = true; a copy found goes into the metadata-only source"
@@ -446,7 +453,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
               FetchedFile.Extension("pdf")
             )
           )
-        else Fetch.Miss(plugin.Problem("no open-access location"))
+        else Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -482,7 +489,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     val oa = item(h, "oa"); val closed = item(h, "closed")
     val r = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
     assertEquals((r.fetched, r.noCopy), (1, 1), r.toString)
     assertEquals(
@@ -502,7 +509,12 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       "no legal copy: no metadata-only source is created"
     )
     val why =
-      AcquisitionTesting.checks(ds).of(List(checkItem(closed))).get(checkItem(closed)).map(_.reason.value).getOrElse("")
+      AcquisitionTesting
+        .checks(ds)
+        .of(List(checkItem(closed)))
+        .get(checkItem(closed))
+        .map(_.reason.sentence)
+        .getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
     assertEquals(
       AcquisitionTesting.checks(ds).of(List(checkItem(oa))).get(checkItem(oa)).map(_.generation),
@@ -512,7 +524,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
   private def jobOf(r: Either[Api.Error, RecheckResult]): JobInfo =
-    r.fold(e => fail(e.message.value), res => res.job.getOrElse(fail(s"not a job: $res")))
+    r.fold(e => fail(e.message.sentence), res => res.job.getOrElse(fail(s"not a job: $res")))
 
   /** The job once it ended (it runs on its own thread) and its slot is free. */
   private def ended(a: AgentsControllers, id: SpatialHierarchyResult.Job.Id): JobInfo =
@@ -536,8 +548,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       started.countDown()
       val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
       Left(
-        Problem(
-          s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
+        Problem.Unclassified(
+          Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
         )
       )
 
@@ -585,7 +597,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             Instant.now().minusSeconds(3600),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            domain.Problem("x")
+            Problem.Unclassified(Legacy.Text("x"))
           )
       )
     assertEquals(
@@ -610,11 +622,12 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val ingestedBefore = a.autopilot.ingestedToday(Instant.now())
     up.answer = (d, into) =>
       if d.value == doi("a3") then found(d, Citekey("zzrecheck_a3"))
-      else if d.value == doi("a4") then Left(Problem("HTTP 429 Too Many Requests from api.example.invalid"))
+      else if d.value == doi("a4") then
+        Left(Problem.Unclassified(Legacy.Text("HTTP 429 Too Many Requests from api.example.invalid")))
       else
         Left(
-          Problem(
-            s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"
+          Problem.Unclassified(
+            Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
           )
         )
     val r = a.acquireRecheck.run(
@@ -648,7 +661,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       checks.values.map(_.outcome.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
-    assert(checks(checkItem(ids(3))).reason.value.contains("no answer (HTTP 429"), checks(checkItem(ids(3))).reason)
+    assert(checks(checkItem(ids(3))).reason.sentence.contains("no answer (HTTP 429"), checks(checkItem(ids(3))).reason)
     assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
     assertEquals(
       a.autopilot.ingestedToday(Instant.now()).value - ingestedBefore.value,
@@ -692,7 +705,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     (1 to 5).foreach(i => item(h, s"l$i"))
     val one = a.acquireRecheck
       .run(RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(1))))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((one.job, one.noCopy), (None, 1), "at most one: the pass at once")
     val r = a.acquireRecheck.run(RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(3))))
     val job = jobOf(r)
@@ -718,7 +731,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val second = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
     assert(
       second.left.exists(e =>
-        e.message.value.contains(s"job ${job.id}") && e.code.exists(_.value == AgentsApi.CodeConflict)
+        e.message.sentence.contains(s"job ${job.id}") && e.code.exists(_.value == AgentsApi.CodeConflict)
       ),
       second.toString
     )
@@ -726,7 +739,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       a.acquireRecheck
         .run(RecheckRequest(id = Some(RecheckRequest.Id(ids.last.value))))
         .left
-        .exists(_.message.value.contains(job.id.value)),
+        .exists(_.message.sentence.contains(job.id.value)),
       "nor one item"
     )
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no scheduled pass while the job runs")
@@ -756,7 +769,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(a.drain.tick(Instant.now()), Nil, "not drained while the job's item is in flight")
     gate.release.countDown()
     val stopped = ended(a, job.id)
-    assertEquals((stopped.status, stopped.error), (JobState.Failed.wire, Some(Stopped.DrainingText)))
+    assertEquals((stopped.status, stopped.error.map(_.sentence)), (JobState.Failed.wire, Some(Stopped.DrainingText)))
     assertEquals(asked(up).size, 1, "the item in flight finished, nothing after it")
     assertEquals(a.drain.tick(Instant.now()), List("drained"))
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no resume while draining")
@@ -765,7 +778,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       "the status names it"
     )
     val _ = transact(ds)(AutopilotRepo.setDrain(on = false, AutopilotRepo.Row.ChangedBy("test")))
-    up.answer = (d, _) => Left(Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
+    up.answer = (d, _) =>
+      Left(Problem.Unclassified(Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found")))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
       resumed.exists(_.value.contains(s"job ${job.id} (${Stopped.DrainingText}) resumed as job")),
@@ -834,11 +848,14 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             since.plusSeconds(60),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            domain.Problem("x")
+            Problem.Unclassified(Legacy.Text("x"))
           )
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
-    assertEquals(Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.error), Some(JobState.Interrupted))
+    assertEquals(
+      Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.error).map(_.sentence),
+      Some(JobState.Interrupted)
+    )
     val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
     val job = jobOf(r)
     assert(r.toOption.get.note.exists(_.value.contains(s"resumes job ${j.id}")), r.toString)
@@ -876,7 +893,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         JobState.Running,
         JobState.Failed,
         None,
-        Some(Problem(JobState.Interrupted))
+        Some(Problem.Unclassified(Legacy.Text(JobState.Interrupted)))
       )
     )
     assert(a.acquireRecheck.tick(Instant.now()).exists(_.value.contains(s"job ${k.id} (interrupted) resumed")))
@@ -899,7 +916,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(plugin.Problem("no open-access location"))
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)

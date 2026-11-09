@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import scala.annotation.tailrec
 import io.circe.Decoder
 import io.circe.parser.decode
@@ -335,22 +336,30 @@ object CompareRuns:
       outputs: OutputComparison
   ): Either[Problem, Comparison] =
     for
-      _ <- Either.cond(runs.size >= 2, (), Problem("give at least two runs to compare"))
-      _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), Problem("a run is given twice"))
+      _ <- Either.cond(runs.size >= 2, (), Problem.Unclassified(Legacy.Text("give at least two runs to compare")))
+      _ <- Either.cond(
+        runs.map(_.run.id).distinct.size == runs.size,
+        (),
+        Problem.Unclassified(Legacy.Text("a run is given twice"))
+      )
       first = runs.head.run
       _ <- runs
         .find(_.run.pipeline != first.pipeline)
         .map(o =>
-          Problem(
-            s"run ${o.run.id.short} is ${o.run.pipeline}, run ${first.id.short} ${first.pipeline}: compare runs of one pipeline"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"run ${o.run.id.short} is ${o.run.pipeline}, run ${first.id.short} ${first.pipeline}: compare runs of one pipeline"
+            )
           )
         )
         .toLeft(())
       _ <- runs
         .find(_.run.target != first.target)
         .map(o =>
-          Problem(
-            s"run ${o.run.id.short} is on ${o.run.target}, run ${first.id.short} on ${first.target}: compare runs on one target"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"run ${o.run.id.short} is on ${o.run.target}, run ${first.id.short} on ${first.target}: compare runs on one target"
+            )
           )
         )
         .toLeft(())

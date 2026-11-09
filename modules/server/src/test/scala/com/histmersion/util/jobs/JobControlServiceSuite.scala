@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.database.Transactor
@@ -72,14 +73,14 @@ class JobControlServiceSuite extends DbSuite:
     val mem = JobControlService.InMemory(AtomicReference(Map.empty), stops)
     mem.put(job(P1, BasemapJobKinds.BasemapFetch.kind, JobInfo.Status("paused")))
     assertEquals(
-      mem.control(P1, JobAction.Cancel).map(j => (j.status, j.error)),
+      mem.control(P1, JobAction.Cancel).map(j => (j.status, j.error.map(_.sentence))),
       Right(("cancelled", Some("cancelled by a person")))
     )
     mem.put(job(R1, AcquisitionJobKinds.AcquireRecheck.kind, JobInfo.Status("running")))
     assertEquals(mem.control(R1, JobAction.Cancel).map(_.status), Right("running"))
     mem.stopped(R1, Some(JobInfo.Progress("5 of 9 items")), () => Right(()))
     assertEquals(mem.get(R1).map(_.status), Some("cancelled"))
-    assert(mem.control(R1, JobAction.Pause).left.exists(_.message.value.contains("ended")))
+    assert(mem.control(R1, JobAction.Pause).left.exists(_.message.sentence.contains("ended")))
     assertEquals(
       mem.control(Nope, JobAction.Pause).left.map(_.code),
       Left(Some(Write.CodeNotFound))
@@ -98,7 +99,7 @@ class JobControlServiceSuite extends DbSuite:
 
   test("the controller: an unknown action is a 400 naming the three"):
     val c = JobControlControllers(JobControlService.InMemory(AtomicReference(Map.empty), JobStops()))
-    assert(c.control(X, JobAction.Wire("stop")).left.exists(_.message.value.contains("pause, resume, cancel")))
+    assert(c.control(X, JobAction.Wire("stop")).left.exists(_.message.sentence.contains("pause, resume, cancel")))
 
   // ── a real job on a test database ────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
@@ -134,7 +135,7 @@ class JobControlServiceSuite extends DbSuite:
       BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary("6/6 parts"))
 
   private def service(stops: JobStops) =
-    JobControlService(ds, stops, (_, _) => Left(Api.Error(Problem("no agent runs here"))))
+    JobControlService(ds, stops, (_, _) => Left(Api.Error(Problem.Unclassified(Legacy.Text("no agent runs here")))))
 
   dbTest("a paused job stops at a part boundary, keeps its progress, and resumed does only the parts it had not done"):
     val stops = JobStops()
@@ -148,7 +149,7 @@ class JobControlServiceSuite extends DbSuite:
         BackgroundJob.Work("a test job"),
         stops = Some(stops)
       )((_, progress) => parts.body(progress))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assert(parts.holding.await(10, TimeUnit.SECONDS), "part 3 started")
     assertEquals(service(stops).control(jobId(j), JobAction.Pause).map(_.status), Right("running"))
     parts.release.countDown()
@@ -173,13 +174,13 @@ class JobControlServiceSuite extends DbSuite:
         BackgroundJob.Work("a test job"),
         stops = Some(stops)
       )((_, progress) => parts.body(progress))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assert(parts.holding.await(10, TimeUnit.SECONDS))
     assert(service(stops).control(jobId(j), JobAction.Cancel).isRight)
     parts.release.countDown()
     val cancelled = until(jobId(j), JobInfo.Status("cancelled"))
     assertEquals(
-      (cancelled.error, cancelled.progress),
+      (cancelled.error.map(_.sentence), cancelled.progress),
       (Some("cancelled by a person"), Some("cancelled after: 2/6 parts"))
     )
     assertEquals(parts.ran.get, Vector(1, 2))
@@ -187,7 +188,9 @@ class JobControlServiceSuite extends DbSuite:
 
   dbTest("a job that runs as one piece is refused; a paused job is failed as interrupted by a restart"):
     val vac = Transactor(ds).transact(JobRepo.create(Job.Kind("vacuum"), None, None))
-    assert(service(JobStops()).control(jobId(vac), JobAction.Pause).left.exists(_.message.value.contains("one piece")))
+    assert(
+      service(JobStops()).control(jobId(vac), JobAction.Pause).left.exists(_.message.sentence.contains("one piece"))
+    )
     val p = Transactor(ds).transact(
       JobRepo.create(Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value), None, None)
     )
@@ -202,9 +205,11 @@ class JobControlServiceSuite extends DbSuite:
         Some(JobRow.Progress("paused after: 1/6"))
       )
     )
-    assert(service(JobStops()).control(jobId(p), JobAction.Resume).left.exists(_.message.value.contains("restarted")))
+    assert(
+      service(JobStops()).control(jobId(p), JobAction.Resume).left.exists(_.message.sentence.contains("restarted"))
+    )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error)),
+      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error.map(_.sentence))),
       Some(("failed", Some("interrupted")))
     )

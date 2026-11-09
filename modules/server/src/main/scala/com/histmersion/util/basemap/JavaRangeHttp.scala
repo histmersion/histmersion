@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.storage.Reservation
 
 import java.io.InputStream
@@ -44,7 +45,8 @@ final class JavaRangeHttp(
         case scala.util.Failure(e: InterruptedException) => throw e
         case scala.util.Failure(e)                       =>
           if n < retries.value then { sleep(policy.backoffMs(n)); attempt(n + 1) }
-          else Left(Problem(s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          else
+            Left(Problem.Unclassified(Legacy.Text(s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")))
         case scala.util.Success(resp) =>
           policy.slowDown(
             RangeHttp.StatusCode(resp.statusCode),
@@ -56,7 +58,7 @@ final class JavaRangeHttp(
           ) match
             case Some(RetryWait(ms, why)) =>
               resp.body.close()
-              scribe.warn(s"basemap: $why — asking $url again in ${ms}ms")
+              scribe.warn(s"basemap: ${why.sentence} — asking $url again in ${ms}ms")
               sleep(ms)
               attempt(n + 1)
             case None => Right(resp)
@@ -94,14 +96,14 @@ final class JavaRangeHttp(
         r.statusCode match
           case 200       => Right(Some(RangeHttp.ResponseBytes(r.body.readNBytes(16 * 1024 * 1024))))
           case 403 | 404 => Right(None)
-          case c         => Left(Problem(s"$url: HTTP $c"))
+          case c         => Left(Problem.Unclassified(Legacy.Text(s"$url: HTTP $c")))
       }
     )
 
   def text(url: RangeHttp.Url): Either[Problem, RangeHttp.ResponseText] =
     send(url, request(url, None)).flatMap(r =>
       reading(r) { r =>
-        if r.statusCode != 200 then Left(Problem(s"$url: HTTP ${r.statusCode}"))
+        if r.statusCode != 200 then Left(Problem.Unclassified(Legacy.Text(s"$url: HTTP ${r.statusCode}")))
         else Right(RangeHttp.ResponseText(String(r.body.readNBytes(16 * 1024 * 1024), "UTF-8")))
       }
     )
@@ -116,7 +118,7 @@ final class JavaRangeHttp(
         val want = math.min(offset.value + length.value, total.value) - offset.value
         val b = r.body.readNBytes(want.toInt)
         if b.length == want then Right((RangeHttp.ResponseBytes(b), meta(r, total)))
-        else Left(Problem(s"$url sent ${b.length} bytes for a range of $want"))
+        else Left(Problem.Unclassified(Legacy.Text(s"$url sent ${b.length} bytes for a range of $want")))
       }
     )
 
@@ -131,7 +133,7 @@ final class JavaRangeHttp(
         val got = Using.resource(to.output())(out => r.body.transferTo(out))
         if got != length.value then
           to.discard()
-          Left(Problem(s"$url sent $got bytes for a range of $length"))
+          Left(Problem.Unclassified(Legacy.Text(s"$url sent $got bytes for a range of $length")))
         else Right(meta(r, total))
       }
     )

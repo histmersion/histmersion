@@ -1,7 +1,7 @@
 package com.histmersion
 package upstreams.core
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 enum CoreFailure derives CanEqual:
   /** Not asked, or refused for its rate: the budget or CORE itself said to wait. */
@@ -11,5 +11,5 @@ enum CoreFailure derives CanEqual:
   case Failed(why: Problem)
 
   def message: Problem = this match
-    case Skipped(why) => Problem(s"CORE not asked: $why")
+    case Skipped(why) => Problem.Unclassified(Legacy.Text(s"CORE not asked: ${why.legacyText}"))
     case Failed(why)  => why

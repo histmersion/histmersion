@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.jobs.{JobInfo, JobState}
@@ -58,10 +59,15 @@ abstract class JobRecordsContract extends DbSuite:
     val j = jobs.create(Job.Kind("reocr"), None, None, None)
     val _ = jobs.transition(jobId(j), JobState.Queued, JobState.Running)
     assertEquals(
-      jobs.transition(jobId(j), JobState.Running, JobState.Failed, error = Some(Problem("offline"))),
+      jobs.transition(
+        jobId(j),
+        JobState.Running,
+        JobState.Failed,
+        error = Some(Problem.Unclassified(Legacy.Text("offline")))
+      ),
       Some(JobState.Failed)
     )
-    assertEquals(jobs.get(jobId(j)).map(j => (j.status, j.error)), Some(("failed", Some("offline"))))
+    assertEquals(jobs.get(jobId(j)).map(j => (j.status, j.error.map(_.sentence))), Some(("failed", Some("offline"))))
   }
 
 class JobRecordsInMemorySuite extends JobRecordsContract:

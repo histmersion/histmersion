@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.SourcesMarkdown
@@ -37,8 +38,8 @@ class RenameSuite extends munit.FunSuite:
     def refused(to: Citekeys.RenameToNewRaw, says: String) =
       Citekeys.renameTo(Citekey("page2024_history"), to) match
         case Left(e) =>
-          assert(e.value.nonEmpty)
-          assert(e.value.contains(says), e)
+          assert(e.sentence.nonEmpty)
+          assert(e.sentence.contains(says), e)
         case Right(k) => fail(s"$to should be refused, got $k")
     refused(Citekeys.RenameToNewRaw("page2024_history"), "already the citekey")
     refused(Citekeys.RenameToNewRaw("Page 1959"), "invalid citekey")

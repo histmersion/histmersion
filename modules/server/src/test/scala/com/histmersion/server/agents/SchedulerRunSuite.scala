@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -145,7 +146,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, CkRef, None)))
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.value), identity)
+    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -301,14 +302,16 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     // `var`: the stored candidates, changed by the marks
     @volatile var stored: List[Source.Candidate] = Nil
     val sweeps = java.util.concurrent.atomic.AtomicInteger(0)
-    def meta(doi: Doi) = Left(Problem("not stubbed"))
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem("not stubbed"))
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(Problem("not stubbed"))
+    def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(
+      Problem.Unclassified(Legacy.Text("not stubbed"))
+    )
     def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
-      Problem("not stubbed")
+      Problem.Unclassified(Legacy.Text("not stubbed"))
     )
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
-      Problem("the live search must not run when the candidate search is connected")
+      Problem.Unclassified(Legacy.Text("the live search must not run when the candidate search is connected"))
     )
     override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun) =
       sweeps.incrementAndGet()
@@ -411,7 +414,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")),
         Now
       ).left
-        .exists(_.message.value.contains("five fields"))
+        .exists(_.message.sentence.contains("five fields"))
     )
     assert(
       a.setSchedule(
@@ -420,7 +423,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")),
         Now
       ).left
-        .exists(_.message.value.contains("min-interval"))
+        .exists(_.message.sentence.contains("min-interval"))
     )
     assert(
       a.setSchedule(
@@ -587,7 +590,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     up.found = Map("zzagent q" -> List(work(ApiDoi("10.5555/zzagent.z"), ApiTitle("Z"))))
     val id =
       a.startRunAs(RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None)
-        .fold(e => fail(e.message.value), _.id)
+        .fold(e => fail(e.message.sentence), _.id)
     a.engine.execute(ApiIds.run(id))
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
     def tasks = h.workListView

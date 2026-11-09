@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeDecision
@@ -78,7 +79,7 @@ object BundleImporter:
       applied = Bundle.ImportResult.Applied(false),
       Nil,
       Bundle.ImportResult.Blobs(0),
-      problems.map(p => Bundle.ImportResult.Problems(p.value)),
+      problems.map(p => Bundle.ImportResult.Problems(p.sentence)),
       Nil,
       Nil
     )
@@ -234,7 +235,7 @@ object BundleImporter:
     @annotation.tailrec
     def loop(): Unit =
       tar.next() match
-        case Left(e)        => failures += Problem(e.value)
+        case Left(e)        => failures += e
         case Right(None)    => ()
         case Right(Some(e)) =>
           Bundle
@@ -251,7 +252,9 @@ object BundleImporter:
                 val bytes = tar.readAll()
                 val actual = BundleFormat.sha256Hex(bytes)
                 if actual.value != sha.value then
-                  failures += Problem(s"blob ${sha.value}: its content hashes to ${actual.value}")
+                  failures += Problem.Unclassified(
+                    Legacy.Text(s"blob ${sha.value}: its content hashes to ${actual.value}")
+                  )
                 else
                   held.foreach(_(bytes))
                   streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(f => failures += f))
@@ -319,7 +322,7 @@ object BundleImporter:
                 m.instance,
                 applied = MergeApplyResult.Applied(false),
                 MergeApplyResult.PlanHash(planHash.value),
-                problems = a.problems.map(p => MergeApplyResult.Problems(p.value))
+                problems = a.problems.map(p => MergeApplyResult.Problems(p.sentence))
               )
             )
 
@@ -412,7 +415,7 @@ object BundleImporter:
                 )
               )
             )
-            .getOrElse(throw ImportAbort(List(Problem("the merge wrote nothing"))))
+            .getOrElse(throw ImportAbort(List(Problem.Unclassified(Legacy.Text("the merge wrote nothing")))))
           MergeRepo.redirect(ap.folds, mergeId)
           MergeRepo.remember(ap.remember.map((id, d) => MergeRepo.DecisionKey(id.value) -> d), mergeId)
           val (reviews, logEntry) = followUps.recordIn(

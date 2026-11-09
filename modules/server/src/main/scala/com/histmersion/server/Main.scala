@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.settings.{info, ConfigSource}
 
 import com.histmersion.api.plugins.PluginsMarkdown
@@ -24,7 +24,7 @@ import com.histmersion.util.console.Console
       sys.exit(0)
     case Right(m)  => m
     case Left(err) =>
-      console.err.println(s"histmersion-server: $err\n\n${ServerArgs.Usage}")
+      console.err.println(s"histmersion-server: ${err.sentence}\n\n${ServerArgs.Usage}")
       sys.exit(1)
   // netty's pooled allocator mishandles ByteBuf refCnt under native-image → use unpooled buffers.
   // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
@@ -43,13 +43,13 @@ import com.histmersion.util.console.Console
         if l.file.loaded.value then scribe.info(s"config file $p read")
         else scribe.info(s"no config file at $p (defaults and environment only)")
       )
-      l.file.warnings.foreach(w => scribe.warn(w.value))
+      l.file.warnings.foreach(w => scribe.warn(w.sentence))
       // the plugins, also on the main thread and before anything is opened: each block layered over
       // the plugin's defaults, type-checked, decoded, its secrets resolved, registered (staged). A
       // plugin that fails contributes nothing and the server still starts; --self-check says so.
       (l, ServerPlugins.load(l, core = core))
     case Left(err) =>
-      scribe.error(s"$err")
+      scribe.error(s"${err.sentence}")
       sys.exit(3)
   val loaded = loadedConfig.config
   // the environment the settings were read with, and the paths and the clock: the only reads of them
@@ -68,8 +68,7 @@ import com.histmersion.util.console.Console
       )
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
-  val reread = () =>
-    AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path).left.map(p => Problem(p.value))
+  val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)
   // the native bundle: run the bundled Postgres + converter as children and point the config at them;
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)
   val explicit = environment.nonBlank(Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)

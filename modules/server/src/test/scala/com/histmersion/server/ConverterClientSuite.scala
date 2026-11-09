@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -154,7 +155,7 @@ class ConverterClientSuite extends munit.FunSuite:
     withSidecar(pages = None, convertMs = 2000) { url =>
       val r = convert(url)
       assert(
-        r.left.exists(e => e.value.contains("did not finish within 1 s") && !e.value.contains("unreachable")),
+        r.left.exists(e => e.sentence.contains("did not finish within 1 s") && !e.sentence.contains("unreachable")),
         r.toString
       )
     }

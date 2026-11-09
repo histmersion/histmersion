@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that

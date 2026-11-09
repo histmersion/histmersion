@@ -1,7 +1,7 @@
 package com.histmersion
 package upstreams.core
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.Header
 import com.histmersion.plugin.UpstreamQuota
 import io.circe.Json
@@ -29,7 +29,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
     val url =
       Url(Candidate.Url(core.url.value), Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
     quota.take(purpose) match
-      case Left(why) => Left(CoreFailure.Skipped(Problem(why.value)))
+      case Left(why) => Left(CoreFailure.Skipped(why))
       case Right(_)  =>
         http.fetch(
           Plugin.Http.Url(url.value),
@@ -44,9 +44,11 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             if a.status == Plugin.HttpResponse.Status(429) then
               Left(
                 CoreFailure.Skipped(
-                  Problem(
-                    quota.waitingUntil.fold("CORE answered HTTP 429")(u =>
-                      s"CORE answered HTTP 429; not asked until $u"
+                  Problem.Unclassified(
+                    Legacy.Text(
+                      quota.waitingUntil.fold("CORE answered HTTP 429")(u =>
+                        s"CORE answered HTTP 429; not asked until $u"
+                      )
                     )
                   )
                 )
@@ -54,14 +56,18 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             else if (a.status).value >= 400 then
               Left(
                 CoreFailure.Failed(
-                  Problem(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}")
+                  Problem.Unclassified(Legacy.Text(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}"))
                 )
               )
             else
               io.circe.parser
                 .parse(String(a.body.value, UTF_8))
                 .left
-                .map(e => CoreFailure.Failed(Problem(s"$url returned unparseable JSON: ${e.getMessage}")))
+                .map(e =>
+                  CoreFailure.Failed(
+                    Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: ${e.getMessage}"))
+                  )
+                )
 
 object CoreApi:
   type SearchWorksKey = SearchWorksKey.T

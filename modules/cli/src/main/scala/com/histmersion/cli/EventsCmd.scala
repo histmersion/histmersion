@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.catalogue.EventsMarkdown
@@ -122,12 +122,15 @@ object EventsCmd:
               lon.map(Longitude(_))
             )
             .left
-            .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
+            .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
           _ <- scale
             .filter(v => EventScale.parse(EventSummary.Scale(v)).isEmpty)
             .fold(Right(()))(v =>
               Left(
-                Cli.Error(Problem(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage)
+                Cli.Error(
+                  Problem.Unclassified(Legacy.Text(s"--scale: '$v' is not local, regional or auto")),
+                  exitCode = ExitCode.Usage
+                )
               )
             )
           p = EventPatch(
@@ -145,7 +148,10 @@ object EventsCmd:
           _ <- Either.cond(
             p != EventPatch(),
             (),
-            Cli.Error(Problem("nothing to change: give at least one field"), exitCode = ExitCode.Usage)
+            Cli.Error(
+              Problem.Unclassified(Legacy.Text("nothing to change: give at least one field")),
+              exitCode = ExitCode.Usage
+            )
           )
         yield p
         (id, patch)

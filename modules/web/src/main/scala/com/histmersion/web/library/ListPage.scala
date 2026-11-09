@@ -1,7 +1,7 @@
 package com.histmersion
 package web.library
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Offset
 import com.histmersion.api.RowCount
 import com.histmersion.web.ErrorLine

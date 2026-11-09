@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.server.agents.{BuiltinAi, ClaudeCode, CliRuntime, Codex, HostAiProvider, Opencode}
 
 import com.histmersion.pluginhost.HostAiHttp
@@ -56,26 +57,31 @@ object LlmClient:
       http: AiHttp = HostAiHttp()
   ): Factory =
     (cfg, ref) =>
-      BuiltinAi.lookup(ref.provider, providers()).left.map(why => Problem(s"${ref.wire}: $why")).flatMap {
-        case _: HostAiProvider => host(rt)(cfg, ref)
-        case p                 =>
-          PluginAiClient
-            .client(ref, p, http, PluginAiClient.Loopback(rt.loopback))
-            .left
-            .map(e => Problem(e.value))
-      }
+      BuiltinAi
+        .lookup(ref.provider, providers())
+        .left
+        .map(why => Problem.Unclassified(Legacy.Text(s"${ref.wire}: ${why.sentence}")))
+        .flatMap {
+          case _: HostAiProvider => host(rt)(cfg, ref)
+          case p                 =>
+            PluginAiClient
+              .client(ref, p, http, PluginAiClient.Loopback(rt.loopback))
+        }
 
   /** The host's own providers: the command-line runtimes on `rt`. */
   def host(rt: CliRuntime): Factory =
     (cfg, ref) =>
       ref.provider match
         case ProviderKind.ClaudeCode =>
-          ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => Problem(p.value))
+          ClaudeCode.client(cfg.providers.claudeCode, rt, ref)
         case ProviderKind.Codex =>
-          Codex.client(cfg.providers.codex, rt, ref).left.map(p => Problem(p.value))
+          Codex.client(cfg.providers.codex, rt, ref)
         case ProviderKind.Opencode =>
-          Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => Problem(p.value))
-        case k => Left(Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
+          Opencode.client(cfg.providers.opencode, rt, ref)
+        case k =>
+          Left(
+            Problem.Unclassified(Legacy.Text(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
+          )
 
   /** sttp-ai's usage → ours. */
   def usage(u: TokenUsage): Agents.Usage =

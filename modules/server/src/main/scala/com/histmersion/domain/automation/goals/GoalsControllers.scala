@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.Api
@@ -25,7 +25,7 @@ final class GoalsControllers(
     maintenance: WriteGate
 ):
   private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) =
-    Api.Error(Problem(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '${slug.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def list(q: Api.GoalQuery): Goal.List = goals.page(
     q.status.map(s => com.histmersion.domain.automation.Goal.Status.Wire(s.value)),
@@ -68,8 +68,10 @@ final class GoalsControllers(
           .left
           .map(_ =>
             Api.Error(
-              Problem(
-                s"'${valid.value}' is not a goal slug (lower-case letters, digits, '_', '.' and '-', at most 121 characters)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"'${valid.value}' is not a goal slug (lower-case letters, digits, '_', '.' and '-', at most 121 characters)"
+                )
               ),
               Some(Api.Error.Code(Write.CodeInvalid))
             )

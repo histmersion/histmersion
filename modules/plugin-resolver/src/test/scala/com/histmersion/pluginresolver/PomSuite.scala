@@ -35,7 +35,7 @@ class PomSuite extends munit.FunSuite:
   test("no DOCTYPE: a POM never makes the parser read another file"):
     val text =
       """<?xml version="1.0"?><!DOCTYPE p [<!ENTITY e SYSTEM "file:///etc/passwd">]><project><groupId>&e;</groupId></project>"""
-    assert(Pom.coordinates(PluginArtifact.Pom(text)).left.exists((_).value.startsWith("not a POM")))
+    assert(Pom.coordinates(PluginArtifact.Pom(text)).left.exists((_).legacyText.startsWith("not a POM")))
 
   test("the POM beside the jar first, else the one inside it, unless it holds several"):
     val dir = Files.createTempDirectory("pom-suite")

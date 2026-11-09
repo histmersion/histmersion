@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.exchange.EditionsPolicy
 
 import com.histmersion.api.aliases.AliasKinds
@@ -77,13 +78,13 @@ final class McpTools(
   import McpTools.*
 
   private def refusedValue(what: String, raw: String, code: String): Api.Error =
-    Api.Error(Problem(s"invalid $what '$raw'"), Some(Api.Error.Code(code)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what '$raw'")), Some(Api.Error.Code(code)))
 
   private def invalidValue(what: String, raw: String): Api.Error =
     refusedValue(what, raw, Write.CodeInvalid)
 
   private def noSuchJob(raw: String): Api.Error =
-    Api.Error(Problem(s"No job '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private val ping =
     tool("ping")
@@ -113,7 +114,7 @@ final class McpTools(
         Citekey
           .parse(in.citekey)
           .left
-          .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+          .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
           .flatMap(ck =>
             h.ingest.controllers.fromTool(
               ck,
@@ -273,7 +274,7 @@ final class McpTools(
               case None => page(ConfigEditMarkdown.page, in.prefix)
           case "set" | "unset" =>
             in.key.map(_.trim).filter(_.nonEmpty) match
-              case None    => McpOut.error(Api.Error(Problem(s"`${in.action}` needs a `key`")))
+              case None => McpOut.error(Api.Error(Problem.Unclassified(Legacy.Text(s"`${in.action}` needs a `key`"))))
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
@@ -292,7 +293,9 @@ final class McpTools(
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
           case other     =>
             McpOut.error(
-              Api.Error(Problem(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+              Api.Error(
+                Problem.Unclassified(Legacy.Text(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+              )
             )
       }
 
@@ -548,7 +551,7 @@ final class McpTools(
           Right(parsed.left.map(_ => invalidValue(what, in.from)).flatMap(rename))
         val r = in.kind.trim.toLowerCase(java.util.Locale.ROOT) match
           case "article" =>
-            renamed(Slug.parse(in.from).left.map(_.value), "slug")(
+            renamed(Slug.parse(in.from).left.map(_.sentence), "slug")(
               h.research.articles.rename(_, req)
             )
           case "event" =>

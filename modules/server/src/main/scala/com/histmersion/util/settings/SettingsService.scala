@@ -1,6 +1,8 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.{AppConfig, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
@@ -39,9 +41,11 @@ object SettingsService:
     Implementation(loaded, file, ConfigSchema.reference)
 
   private def noFile = SettingError.NoFile(
-    Problem(
-      "This server was started without a settings file, so Settings cannot change anything. " +
-        "Set HISTMERSION_CONFIG to the file to use and start it again."
+    Problem.Unclassified(
+      Legacy.Text(
+        "This server was started without a settings file, so Settings cannot change anything. " +
+          "Set HISTMERSION_CONFIG to the file to use and start it again."
+      )
     )
   )
 
@@ -58,7 +62,8 @@ object SettingsService:
   ): SettingsSnapshot =
     val merged =
       loaded.fold(_ => AppConfig.loadWithUserText(env, "").fold(_ => ConfigFactory.empty, _.merged), _.merged)
-    val problems = loaded.fold(p => List(p.value), l => l.file.warnings.map(_.value)).map(SettingsSnapshot.Problems(_))
+    val problems =
+      loaded.fold(p => List(p.sentence), l => l.file.warnings.map(_.sentence)).map(SettingsSnapshot.Problems(_))
     SettingsSnapshot(
       file,
       SettingsSnapshot.Exists(state.text.isDefined),
@@ -129,7 +134,7 @@ object SettingsService:
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
           catch
             case e: org.ekrich.config.ConfigException =>
-              Left(SettingError.Unreadable(Problem(e.getMessage)))
+              Left(SettingError.Unreadable(Problem.Unclassified(Legacy.Text(e.getMessage))))
 
     private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
@@ -173,13 +178,13 @@ object SettingsService:
                   (try Right(parse(edited.text))
                   catch
                     case e: org.ekrich.config.ConfigException =>
-                      Left(SettingError.Invalid(Problem(e.getMessage)))
+                      Left(SettingError.Invalid(Problem.Unclassified(Legacy.Text(e.getMessage))))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
                 _ <- AppConfig
                   .loadWithUserText(env, edited.text.value)
                   .left
-                  .map(e => SettingError.Invalid(Problem(e.value)))
+                  .map(e => SettingError.Invalid(e))
               yield text.set(Some(edited.text))
         yield
           if edited.changed.isEmpty then

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 
 import com.histmersion.api.library.Query.*
@@ -45,8 +45,7 @@ private[search] object QueryRepo:
       con: DbCon,
       timer: Timer
   ): Either[Problem, QueryResult] =
-    check(Query.Statement(statement.value)).left
-      .map(p => Problem(p.value))
+    check(Query.Statement(statement.value))
       .flatMap(text => exec(Statement(text.value), maxRows, maxCellChars))
 
   private def exec(text: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using
@@ -73,11 +72,13 @@ private[search] object QueryRepo:
 
   /** Postgres's own words, with the driver's stack noise stripped. */
   def message(e: SQLException): Problem =
-    Problem(
-      Option(e.getMessage)
-        .map(_.linesIterator.take(3).mkString(" ").trim)
-        .filter(_.nonEmpty)
-        .getOrElse(e.getClass.getSimpleName)
+    Problem.Unclassified(
+      Legacy.Text(
+        Option(e.getMessage)
+          .map(_.linesIterator.take(3).mkString(" ").trim)
+          .filter(_.nonEmpty)
+          .getOrElse(e.getClass.getSimpleName)
+      )
     )
 
   private def read(

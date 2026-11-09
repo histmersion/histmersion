@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.library.SeedResult
 import com.histmersion.domain.Caller
@@ -35,7 +36,7 @@ final class SeedImport(
           case None    => Left(s"$name: no frontmatter")
           case Some(n) =>
             Citekey.parse(n.source.citekey.value) match
-              case Left(problem)                                                 => Left(s"$name: ${problem.value}")
+              case Left(problem)                                                 => Left(s"$name: ${problem.sentence}")
               case Right(ck) if SeedImport.isStale(stored, ck, n.modifiedMillis) =>
                 Right(Some(n.source.citekey))
               case Right(ck) =>

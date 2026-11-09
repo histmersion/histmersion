@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.activity
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -36,7 +37,7 @@ class ActivityRulesSuite extends munit.FunSuite:
       state = Entry.State("failed"),
       what = Entry.What("media-import"),
       job = Some(SpatialHierarchyResult.Job.Id("j1")),
-      error = Some(api.Problem("HTTP 500"))
+      error = Some(Problem.Unclassified(Legacy.Text("HTTP 500")))
     ),
     Entry(
       Entry.Key("log:10"),
@@ -88,7 +89,7 @@ class ActivityRulesSuite extends munit.FunSuite:
         case Some(c) =>
           walk(
             q.modify(_.before)
-              .setTo(Some(ActivityCursor.parse(ActivityCursor.Wire(c.value)).fold(p => fail(p.value), identity))),
+              .setTo(Some(ActivityCursor.parse(ActivityCursor.Wire(c.value)).fold(p => fail(p.sentence), identity))),
             acc ++ keys(p)
           )
         case None => acc ++ keys(p)
@@ -160,7 +161,7 @@ class ActivityRulesSuite extends munit.FunSuite:
       ActivityRules
         .query(Some(Show.Wire("everything else")), None, None, None, None, now)
         .left
-        .exists(_.message.value.contains("running"))
+        .exists(_.message.sentence.contains("running"))
     )
     assert(ActivityRules.query(None, Some(ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
     assert(ActivityRules.query(None, None, None, None, Some(ActivityCursor.Wire("nope")), now).isLeft)

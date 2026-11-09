@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.*
@@ -53,7 +54,7 @@ final class EnrichSourcePipeline(
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     for
-      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem(m)))
+      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem.Unclassified(Legacy.Text(m))))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
       _ <- ctx.code[MetaChecked](AgentRepo.StepRecord.Name("metadata"))(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified](
@@ -70,8 +71,7 @@ final class EnrichSourcePipeline(
         Prompt.UserText(notesInput(loaded, classified, verified)),
         LibraryAnswers.notes
       )((n, _) =>
-        checkNotes(n, isCitekey, site.articleExists).left
-          .map(_.map(p => Problem(p.value)))
+        checkNotes(n, isCitekey, site.articleExists)
           .map(d => Checked(d.value))
       )
       patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(
@@ -88,12 +88,12 @@ final class EnrichSourcePipeline(
   private def accepted[A](
       r: Either[List[Problem], (A, List[EnrichSource.Description])]
   ): Either[List[Problem], Checked[A]] =
-    r.left.map(_.map(p => Problem(p.value))).map((v, w) => Checked(v, w.map(d => Checked.Warnings(d.value))))
+    r.map((v, w) => Checked(v, w.map(d => Checked.Warnings(d.value))))
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(ck: Citekey): Either[String, Loaded] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(_.message.value).flatMap { sw =>
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(_.message.sentence).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
@@ -255,7 +255,7 @@ final class EnrichSourcePipeline(
           site.sources
             .patch(ck, p2)
             .left
-            .map(_.message.value)
+            .map(_.message.sentence)
             .map(_ =>
               Patched(
                 Patched.FindingsAdded(p2.findings.fold(0)(_.add.size)),
@@ -264,7 +264,7 @@ final class EnrichSourcePipeline(
               )
             )
         }
-      case Left(e) => Left(e.message.value)
+      case Left(e) => Left(e.message.sentence)
 
   // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
 
@@ -283,8 +283,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().meta(l.doi.get) match
           case Left(m) =>
-            ctx.warn(s"metadata: not checked — $m")
-            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.value))
+            ctx.warn(s"metadata: not checked — ${m.sentence}")
+            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.sentence))
           case Right(w) =>
             val diffs = compareMetadata(l.citekey, Title(l.title.value), l.authors, l.year, w)
             diffs.foreach(d => ctx.warn(s"metadata: $d"))
@@ -299,8 +299,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().refs(l.citekey, apply = AgentUpstream.RefsApply(!ctx.dryRun)) match
           case Left(m) =>
-            ctx.warn(s"refs: $m")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.value))
+            ctx.warn(s"refs: ${m.sentence}")
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentence))
           case Right(r) =>
             if ctx.dryRun then
               ctx.write(
@@ -319,8 +319,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().assess(l.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
           case Left(m) =>
-            ctx.warn(s"assess: $m")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.value))
+            ctx.warn(s"assess: ${m.sentence}")
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentence))
           case Right(a) =>
             if a.isRetracted.value then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
@@ -391,7 +391,7 @@ final class EnrichSourcePipeline(
     Pipelines
       .log(site.workLists, ctx, Pipelines.LogLine(line))
       .left
-      .map(_.value)
+      .map(_.sentence)
       .map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
@@ -399,11 +399,11 @@ final class EnrichSourcePipeline(
     */
   private def tickOff(id: Queue.QueueItem.Id, ck: Citekey, runId: Agents.RunInfo.Id): String =
     Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
-      case Left(m)     => s"acquisition item $id NOT ticked off: $m"
+      case Left(m)     => s"acquisition item $id NOT ticked off: ${m.sentence}"
       case Right(item) =>
         site.workLists.patch(
           QueueItemId(id.value),
           Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))
         ) match
           case Right(_) => s"ticked off acquisition item $id"
-          case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"
+          case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message.sentence}"

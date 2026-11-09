@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.library.Tree
 

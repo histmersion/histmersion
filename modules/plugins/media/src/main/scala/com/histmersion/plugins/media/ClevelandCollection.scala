@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 
@@ -67,7 +67,7 @@ object ClevelandCollection:
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
+          Problem.Unclassified(Legacy.Text(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer")))
         )
       case Some(rows) => Right(rows.toList.map(record))
 
@@ -75,7 +75,7 @@ object ClevelandCollection:
     val c = json.hcursor
     c.str("accession_number")
       .orElse(c.str("id"))
-      .toRight(Problem("no accession number"))
+      .toRight(Problem.Unclassified(Legacy.Text("no accession number")))
       .map { acc =>
         val title = c.str("title").getOrElse(acc)
         val creator = c
@@ -94,8 +94,9 @@ object ClevelandCollection:
             Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           else
             Left(
-              Problem(
-                s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"
+              Problem.Unclassified(
+                Legacy
+                  .Text(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})")
               )
             )
         val img = c.downField("images")

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.backup.{Backup, RestoreResult}
 import com.histmersion.api.library.Label
 import io.github.iltotore.iron.constraint.any.Pure
@@ -58,7 +59,7 @@ object Markdown:
     s.stateOf match
       case Some(Backup.State.Done)   => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
       case Some(Backup.State.Failed) =>
-        (s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}")
+        (s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.map(_.sentence).getOrElse("unknown")}")
       case _ =>
         (s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${(s.durationMs).value / 1000} s — " +
           "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written")

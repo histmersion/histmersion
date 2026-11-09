@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -35,29 +35,29 @@ object Cliopatria extends DownloadedGazetteer:
   private val Polity = GazetteerPlace.Kind("polity")
   private val PartOf = GazetteerRelation.Kind(GazetteerRelation.PartOf)
 
-  override def fetch(http: Plugin.Http): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+  override def fetch(http: Plugin.Http): Either[Problem, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
-  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+  def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     io.circe.parser
       .parse(text.value)
       .left
-      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))
           .flatMap(_.asArray)
           .map(_.toList)
           .orElse(doc.asArray.map(_.toList))
-          .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
+          .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
-  def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
-    j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
+  def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
+    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val rawName = str(props, "Name").fold("")(_.value)
-      if rawName.isEmpty then Left(DownloadedGazetteer.Problem(s"feature #$ordinal has no Name"))
+      if rawName.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no Name")))
       else
         val from = numYear(props, "FromYear")
         val to = numYear(props, "ToYear")

@@ -1,6 +1,8 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.plugins.{PluginState, PluginStatus}
@@ -136,14 +138,12 @@ final class PluginHarness private (
         io.circe.parser
           .parse(new String(b.value, UTF_8))
           .left
-          .map(e => Problem(s"${url.value} returned unparseable JSON: ${e.getMessage}"))
+          .map(e => Problem.Unclassified(Legacy.Text(s"${url.value} returned unparseable JSON: ${e.getMessage}")))
       )
     run(
       WorkLookup
         .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(Doi(clean))
         .map(w => WorkLookup.key(Some(Doi(clean)), None, Some(w)))
-        .left
-        .map(e => Problem(e.value))
     )._1
 
   /** One fetch of `work` through the plugin's source fetchers, as the server's acquisition chain runs it. With
@@ -169,7 +169,7 @@ final class PluginHarness private (
         hostLog,
         Set(com.histmersion.util.plugins.Plugin.Id.assume(id.value))
       )
-      notes.foreach(n => hostLog.info(HostLog.Line(n.value)))
+      notes.foreach(n => hostLog.info(HostLog.Line(n.sentence)))
       chain.fetchWorkExplained(work, legalOnly)
     }
     val answers = outcome.answers.map(a => FetcherAnswer(a.fetcher, a.kind == FetchChain.Answer.Kind.Refused, a.why))
@@ -180,14 +180,18 @@ final class PluginHarness private (
       case Left(noCopy) =>
         val refused = answers.filter(_.refused)
         if refused.nonEmpty then
-          FetchOutcome.Refused(Problem(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+          FetchOutcome.Refused(
+            Problem.Unclassified(Legacy.Text(refused.map(a => s"${a.fetcher}: ${a.why.sentence}").mkString("; ")))
+          )
         else if answers.nonEmpty then
-          FetchOutcome.Miss(Problem(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+          FetchOutcome.Miss(
+            Problem.Unclassified(Legacy.Text(answers.map(a => s"${a.fetcher}: ${a.why.sentence}").mkString("; ")))
+          )
         else
           FetchOutcome.Miss(
-            Problem(
-              if registries.sourceFetchers.isEmpty then "the plugin registered no source fetcher"
-              else noCopy.value
+            Problem.Unclassified(
+              Legacy.Text(if registries.sourceFetchers.isEmpty then "the plugin registered no source fetcher"
+              else noCopy.sentence)
             )
           )
     FetchReport(result, answers, logged, asked)
@@ -203,7 +207,7 @@ final class PluginHarness private (
       case None =>
         MediaReport(
           Nil,
-          Some(Problem(s"the plugin registered no media collection '$collection'")),
+          Some(Problem.Unclassified(Legacy.Text(s"the plugin registered no media collection '$collection'"))),
           Nil,
           Nil
         )
@@ -228,7 +232,7 @@ final class PluginHarness private (
       answered: Either[Plugin.Http.Failure, MediaItem]
   ): MediaVerdict =
     answered match
-      case Left(why)   => MediaVerdict(MediaRecord.Key(s"${why.problem}"), None, None, Some(why.problem))
+      case Left(why)   => MediaVerdict(MediaRecord.Key(s"${why.problem.sentence}"), None, None, Some(why.problem))
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match
@@ -240,7 +244,7 @@ final class PluginHarness private (
                   rec.key,
                   Some(item),
                   rec.rights.toOption.map(_.licence.id),
-                  Some(Problem(why.value))
+                  Some(why)
                 )
               case Right(full) =>
                 val completed = PluginMedia.record(full)
@@ -248,7 +252,7 @@ final class PluginHarness private (
                   .refusal(completed, allow, name)
                   .map {
                     case PluginMedia.Refusal.LicenceNotAllowed(_, _) =>
-                      Problem("licence not allowed on the full record")
+                      Problem.Unclassified(Legacy.Text("licence not allowed on the full record"))
                     case other => other.problem
                   }
                 MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
@@ -266,7 +270,7 @@ final class PluginHarness private (
           Nil,
           Nil,
           Nil,
-          Some(Problem(s"the plugin registered no event catalogue '$catalogue'")),
+          Some(Problem.Unclassified(Legacy.Text(s"the plugin registered no event catalogue '$catalogue'"))),
           Nil,
           Nil
         )
@@ -292,7 +296,7 @@ final class PluginHarness private (
           // the parts read in this run: a page naming one again is not followed
           val read = scala.collection.mutable.Set.empty[PluginEvents.PartName]
           PluginEvents.guard(Right(cat.parts(query).map(p => PluginEvents.PartName(p.value)))) match
-            case Left(why)    => (Nil, Some(Problem(why.value)))
+            case Left(why)    => (Nil, Some(why))
             case Right(parts) =>
               parts.distinct.foreach { first =>
                 PluginEvents.readPart(cat, first, query, http, read.contains, false) { (part, got) =>
@@ -302,7 +306,7 @@ final class PluginHarness private (
                     .flatMap(_.events)
                     .foreach(e =>
                       PluginEvents.record(CatalogRecord.Provider(catalogue.value), e) match
-                        case Left(why)                => refused += CatalogueReport.Refused(s"$part: $why")
+                        case Left(why)                => refused += CatalogueReport.Refused(s"$part: ${why.sentence}")
                         case Right(Kept(r, warnings)) =>
                           leftOut ++= warnings.map(w => CatalogueReport.LeftOut(s"$part: $w"))
                           val d = PluginEvents.derive(r, limits)
@@ -343,7 +347,7 @@ final class PluginHarness private (
         GazetteerReport(
           Nil,
           Nil,
-          Some(Problem(s"the plugin registered no gazetteer source '$name'")),
+          Some(Problem.Unclassified(Legacy.Text(s"the plugin registered no gazetteer source '$name'"))),
           Nil,
           Nil
         )
@@ -358,11 +362,11 @@ final class PluginHarness private (
           }
         }
         got match
-          case Left(why)   => GazetteerReport(Nil, Nil, Some(Problem(why.value)), logged, asked)
+          case Left(why)   => GazetteerReport(Nil, Nil, Some(why), logged, asked)
           case Right(read) =>
             GazetteerReport(
               read.collect { case Right(a) => a },
-              read.collect { case Left(w) => GazetteerReport.Refused(w.value) },
+              read.collect { case Left(w) => GazetteerReport.Refused(w.sentence) },
               None,
               logged,
               asked
@@ -375,7 +379,12 @@ final class PluginHarness private (
     */
   def aiTurn(provider: Registries.AiProvidersKey, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
-      case None    => AiReport(Left(Problem(s"the plugin registered no AI provider '$provider'")), None, Nil)
+      case None =>
+        AiReport(
+          Left(Problem.Unclassified(Legacy.Text(s"the plugin registered no AI provider '$provider'"))),
+          None,
+          Nil
+        )
       case Some(p) =>
         val ((check, turn), logged, _) = run {
           val check = PluginAi.check(p, PluginAi.ModelName(request.model.value))
@@ -465,7 +474,8 @@ object PluginHarness:
 
   private def configText(config: String | Path): Either[Problem, String] = config match
     case p: Path =>
-      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(Problem(s"no config file $p"))
+      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8))
+      else Left(Problem.Unclassified(Legacy.Text(s"no config file $p")))
     case s: String => Right(s)
 
   /** The plugin with this id among the providers ServiceLoader finds, or what is missing. */
@@ -473,8 +483,10 @@ object PluginHarness:
     val services = s"META-INF/services/${classOf[Plugin].getName}"
     if !loader.getResources(services).hasMoreElements then
       Left(
-        Problem(
-          s"no $services on the test class path: the server would find no plugin (the file names the plugin class, one per line)"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"no $services on the test class path: the server would find no plugin (the file names the plugin class, one per line)"
+          )
         )
       )
     else
@@ -483,15 +495,19 @@ object PluginHarness:
         case List(p) => Right(p)
         case Nil     =>
           Left(
-            Problem(
-              s"no plugin with the id '$id' on the test class path (found: ${found.map(_.info.id).mkString(", ")})" +
-                errors.map("; " + _.value).mkString
+            Problem.Unclassified(
+              Legacy.Text(
+                s"no plugin with the id '$id' on the test class path (found: ${found.map(_.info.id).mkString(", ")})" +
+                  errors.map("; " + _.sentence).mkString
+              )
             )
           )
         case many =>
           Left(
-            Problem(
-              s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}"
+              )
             )
           )
 
@@ -501,22 +517,22 @@ object PluginHarness:
     Option(loader.getResource(p.defaultsResource.value)) match
       case None =>
         Left(
-          Problem(
-            s"${p.info.id}: no ${p.defaultsResource} beside the plugin class — the server would know none of " +
-              "its settings and leave it disabled"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${p.info.id}: no ${p.defaultsResource} beside the plugin class — the server would know none of " +
+                "its settings and leave it disabled"
+            )
           )
         )
       case Some(url) =>
         PluginHost
           .defaults(p)
-          .left
-          .map(e => Problem(e.value))
           .flatMap(_ =>
             scala.util
               .Using(url.openStream)(in => new String(in.readAllBytes, UTF_8))
               .toEither
               .left
-              .map(e => Problem(s"${p.defaultsResource}: ${e.getMessage}"))
+              .map(e => Problem.Unclassified(Legacy.Text(s"${p.defaultsResource}: ${e.getMessage}")))
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
@@ -527,7 +543,7 @@ object PluginHarness:
       .filterNot(_._1.value.startsWith(s"${Secret.Ref.EnvScheme}:"))
       .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
     refs.collectFirst { case Left(e) => e } match
-      case Some(e) => Left(Problem(s"secrets: ${e.value}"))
+      case Some(e) => Left(Problem.Unclassified(Legacy.Text(s"secrets: ${e.sentence}")))
       case None    =>
         val byVault = refs
           .collect { case Right((Secret.Ref.Vault(vault, ref), v)) => (vault, ref, v) }
@@ -543,7 +559,7 @@ object PluginHarness:
       .Try(ConfigFactory.parseString(text))
       .toEither
       .left
-      .map(e => Problem(s"the config does not parse: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"the config does not parse: ${e.getMessage}")))
       .map { parsed =>
         val block = if parsed.hasPath(path) then parsed.getConfig(path) else parsed
         val on = if block.hasPath("enabled") then block
@@ -568,8 +584,6 @@ object PluginHarness:
   private def hostConfig(env: Config, file: Option[Path]): Either[Problem, LoadedConfig] =
     AppConfig
       .loadWithUserFile(env, file)
-      .left
-      .map(e => Problem(e.value))
       .map(l =>
         l.copy(
           config = l.config.modify(_.acquire.contactEmail).setTo(AcquireConfig.ContactEmail("")),
@@ -626,7 +640,7 @@ object PluginHarness:
     val failedVaults =
       statuses.find(s => s.id.value == TestVaultsId.value && s.state != PluginState.Registered.wire)
     statuses.find(_.id.value == id.value) match
-      case None => Left(Problem(s"$id: the server did not consider the plugin"))
+      case None => Left(Problem.Unclassified(Legacy.Text(s"$id: the server did not consider the plugin")))
       case Some(st) if st.state == PluginState.Registered.wire =>
         Right(
           PluginHarness(
@@ -643,13 +657,19 @@ object PluginHarness:
           )
         )
       case Some(st) if st.state == PluginState.Disabled.wire =>
-        Left(Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
+        Left(
+          Problem.Unclassified(Legacy.Text(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
+        )
       case Some(st) =>
         Left(
-          Problem(
-            st.error
-              .map(_.value)
-              .getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")
+          Problem.Unclassified(
+            Legacy.Text(
+              st.error
+                .map(_.sentence)
+                .getOrElse(st.state.value) + failedVaults
+                .flatMap(_.error)
+                .fold("")(e => s" (the test's secrets: ${e.sentence})")
+            )
           )
         )
 

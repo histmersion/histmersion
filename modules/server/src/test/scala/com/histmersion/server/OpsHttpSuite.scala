@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -341,8 +342,8 @@ class OpsHttpSuite extends DbSuite:
         val check = io.circe.parser.decode[Article.Edits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
-          check.problems.exists(_.value.contains("zzhttp_ghost")) && check.problems.exists(
-            _.value.startsWith("edit 2 (delete")
+          check.problems.exists(_.sentence.contains("zzhttp_ghost")) && check.problems.exists(
+            _.sentence.startsWith("edit 2 (delete")
           ),
           check.problems
         )

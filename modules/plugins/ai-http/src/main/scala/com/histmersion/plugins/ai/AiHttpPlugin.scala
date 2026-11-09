@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.ai
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.{AiProvider, Plugin, Spi}
 import com.histmersion.plugin.Registry
@@ -23,7 +22,7 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
 
   def register(c: HostAi, ctx: Plugin.Context): Either[Problem, Unit] =
     settings(c.agents.providers)
-      .toRight(Problem(s"no agents.providers.$name settings were supplied"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"no agents.providers.$name settings were supplied")))
       .flatMap(s => ctx.aiProviders.add(Registry.AddId(name), provider(s)))
 
 object AiHttpPlugin:

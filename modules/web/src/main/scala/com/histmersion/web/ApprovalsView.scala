@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L.*
@@ -213,7 +214,7 @@ object ApprovalsView:
               a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi.value),
               if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
-              Option(w.why.value).filter(_.nonEmpty).map(y => div(cls := "muted", y))
+              Option(w.why.sentence).filter(_.nonEmpty).map(y => div(cls := "muted", y))
             )
           })
         )
@@ -285,7 +286,7 @@ object ApprovalsView:
       .decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_)))
       .onComplete { r =>
         busy.update(_ - a.id)
-        r.failed.foreach(e => list.failure.set(Some(Problem(e.getMessage))))
+        r.failed.foreach(e => list.failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage)))))
         refresh()
         // decided here or in a goal's window: the count drops, and the decision is not news to its maker
         Notices.ownWrite(UiNotices.Board.Approvals)
@@ -311,8 +312,10 @@ object ApprovalsView:
       selected.set(Set.empty)
       list.failure.set(
         Option.when(errs.nonEmpty)(
-          Problem(
-            s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
+            )
           )
         )
       )
@@ -483,7 +486,7 @@ object ApprovalsView:
         "Changes agent runs proposed. Approving applies the change; " +
           "rejecting keeps it on record and changes nothing."
       ),
-      ErrorLine(list.failure.signal.map(_.map(m => Problem(m.value)))),
+      ErrorLine(list.failure.signal),
       bulkBar,
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         val st = shownState(f.normalized.state)

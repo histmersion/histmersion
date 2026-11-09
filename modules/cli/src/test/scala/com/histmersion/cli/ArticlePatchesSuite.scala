@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.api.research.CritiqueReason
@@ -155,8 +156,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.reasons,
       List(
-        Coverage.Reason(Citekey("graves2017_greek"), Problem("retells the myths")),
-        Coverage.Reason(Citekey("nilsson1927_minoan"), Problem(""))
+        Coverage.Reason(Citekey("graves2017_greek"), Problem.Unclassified(Legacy.Text("retells the myths"))),
+        Coverage.Reason(Citekey("nilsson1927_minoan"), Problem.Unclassified(Legacy.Text("")))
       )
     )
     // no flag: the --json filter stands
@@ -205,8 +206,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
       .withCritiques(
         base,
         List(
-          Problem("smith1987_dying>frazer1922_golden=cited for the calendar only"),
-          Problem("[[jones2001_myth]] -> lee1990_ritual=")
+          Problem.Unclassified(Legacy.Text("smith1987_dying>frazer1922_golden=cited for the calendar only")),
+          Problem.Unclassified(Legacy.Text("[[jones2001_myth]] -> lee1990_ritual="))
         )
       )
       .toOption
@@ -214,15 +215,19 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.critiqueReasons,
       List(
-        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem("from json")),
+        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem.Unclassified(Legacy.Text("from json"))),
         CritiqueReason(
           Citekey("smith1987_dying"),
           Citekey("frazer1922_golden"),
-          Problem("cited for the calendar only")
+          Problem.Unclassified(Legacy.Text("cited for the calendar only"))
         ),
-        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Problem(""))
+        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Problem.Unclassified(Legacy.Text("")))
       )
     )
     assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
-    val bad = ArticlePatches.withCritiques(Article.Patch(), List(Problem("smith1987_dying=no pair")))
-    assert(bad.left.exists(e => e.message.value.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage), bad)
+    val bad =
+      ArticlePatches.withCritiques(Article.Patch(), List(Problem.Unclassified(Legacy.Text("smith1987_dying=no pair"))))
+    assert(
+      bad.left.exists(e => e.message.sentence.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage),
+      bad
+    )

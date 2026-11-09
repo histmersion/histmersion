@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.api.ocr.ConvertedDoc
@@ -35,7 +35,7 @@ final class OfflineConverter extends ConverterClient:
       quality: ConverterClient.HighQuality
   ): Either[Problem, ConvertedDoc] =
     seen.add(filename)
-    Left(Problem("offline: no converter in tests"))
+    Left(Problem.Unclassified(Legacy.Text("offline: no converter in tests")))
 
 object OfflineConverter:
   /** The file `p` as a converter is handed it. */

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Agents.ApprovalState
@@ -81,10 +82,10 @@ final class SourceProposals(
       cfg.approvals.statusMode.transformInto[Approval.Mode],
       cfg.approvals.edgeMode.transformInto[Approval.Mode]
     ) match
-      case Route.Skip(why) => Outcome.Skipped(Problem(s"${p.describe} ($why)"))
+      case Route.Skip(why) => Outcome.Skipped(Problem.Unclassified(Legacy.Text(s"${p.describe} (${why.sentence})")))
       case Route.Apply     =>
         apply(p) match
-          case Left(m)  => Outcome.Failed(Problem(s"${p.describe}: $m"))
+          case Left(m)  => Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentence}")))
           case Right(w) =>
             val _ = record(
               runId,
@@ -120,8 +121,8 @@ object SourceProposals:
       case Applied(w)     => s"applied: $w"
       case Recorded(i, w) => s"approval $i waits for a person: $w"
       case AlreadyOpen(w) => s"already waiting for a person: $w"
-      case Skipped(w)     => s"nothing to do: $w"
-      case Failed(w)      => s"not applied: $w"
+      case Skipped(w)     => s"nothing to do: ${w.sentence}"
+      case Failed(w)      => s"not applied: ${w.sentence}"
       case NotProposed(w) => s"${AgentsMarkdown.DryRunNote}: $w"
 
   object Outcome:

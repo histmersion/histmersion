@@ -1,6 +1,9 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -137,7 +140,7 @@ object Acquire:
         .map(_.value.trim)
         .filter(u => u.nonEmpty && !u.toLowerCase.contains((doi).value.toLowerCase))
         .fold("")(u => s" at $u")
-      val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
+      val said = refusals.map((_).sentence.trim).filter(_.nonEmpty).distinct.mkString("; ")
       Outcome(
         s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
           s"it: download it in the browser${
@@ -315,7 +318,7 @@ object Acquire:
           col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
             RetractionRow(
               Doi(doi),
-              col(r, "Reason").map(x => Problem(x)),
+              col(r, "Reason").map(x => Problem.Unclassified(Legacy.Text(x))),
               col(r, "RetractionDate").map(x => RetractionRow.Date(x)),
               col(r, "RetractionNature").map(x => RetractionRow.Nature(x))
             )

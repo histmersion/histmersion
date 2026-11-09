@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 
@@ -30,8 +30,10 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
     case Plugin.Http.Failure.Status(code, why) if code == Plugin.HttpResponse.Status.Forbidden =>
       Plugin.Http.Failure.Status(
         code,
-        plugin.Problem(
-          s"$why — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"${why.legacyText} — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
+          )
         )
       )
     case other => other
@@ -85,7 +87,7 @@ object LocCollection:
   def results(json: Json): Either[Problem, List[MediaItem.Key]] =
     val c = json.hcursor
     c.downField("results").focus.flatMap(_.asArray) match
-      case None     => Left(Problem("no results in the answer"))
+      case None     => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
           val h = r.hcursor
@@ -110,7 +112,7 @@ object LocCollection:
       thumbPx: MediaSettings.ThumbPx
   ): Either[Problem, MediaItem] =
     val item = json.hcursor.downField("item")
-    if item.focus.isEmpty then Left(Problem("no item in the answer"))
+    if item.focus.isEmpty then Left(Problem.Unclassified(Legacy.Text("no item in the answer")))
     else
       val c = item
       val id = c
@@ -118,7 +120,7 @@ object LocCollection:
         .flatMap(u => itemId(Plugin.Http.Url(u)))
         .orElse(c.str("url").flatMap(u => itemId(Plugin.Http.Url(u))))
         .orElse(c.str("library_of_congress_control_number").map(MediaItem.Key(_)))
-      id.toRight(Problem("no item id")).map { key =>
+      id.toRight(Problem.Unclassified(Legacy.Text("no item id"))).map { key =>
         val title = c.str("title").getOrElse(key.value)
         val advisory = (c.strs("rights_advisory") ++ c.strs("rights")).mkString(" ")
         val date = c.str("date").orElse(c.strs("dates").headOption)
@@ -149,13 +151,13 @@ object LocCollection:
           files.filter(_._2 <= displayPx.value).sortBy(-_._2).headOption.orElse(files.sortBy(_._2).headOption).map(_._1)
         val thumb = files.filter(_._2 >= thumbPx.value).sortBy(_._2).headOption.map(_._1)
         val original = files.sortBy(-_._2).headOption.map(_._1)
-        val rights: Either[plugin.Problem, MediaRights] =
+        val rights: Either[Problem, MediaRights] =
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
-            Left(plugin.Problem(if advisory.isEmpty then "no rights statement"
-            else "rights not \"No known restrictions\""))
-          else if period.isEmpty then Left(plugin.Problem("no date on the map"))
+            Left(Problem.Unclassified(Legacy.Text(if advisory.isEmpty then "no rights statement"
+            else "rights not \"No known restrictions\"")))
+          else if period.isEmpty then Left(Problem.Unclassified(Legacy.Text("no date on the map")))
           else if period.exists(_.end.value > maxYear.value) then
-            Left(plugin.Problem(s"made after ${maxYear.value} (may be in copyright)"))
+            Left(Problem.Unclassified(Legacy.Text(s"made after ${maxYear.value} (may be in copyright)")))
           else
             Right(
               MediaRights.publicDomain(

@@ -1,7 +1,8 @@
 package com.histmersion
 package web.setup
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Api, Wording}
 import com.histmersion.web.{ApiClient, Auth, Route, RouteLink, Router, SettingsSection}
@@ -95,7 +96,7 @@ object SetupPage:
     def finish(download: Boolean): Unit =
       val c = choices.now()
       SetupPlan.email(c.email) match
-        case Left(why) => problem.set(Some(why.value)); step.set(SetupStep.Papers)
+        case Left(why) => problem.set(Some(why.sentence)); step.set(SetupStep.Papers)
         case Right(_)  =>
           problem.set(None)
           working.set(true)
@@ -109,7 +110,7 @@ object SetupPage:
             )
             .onComplete { r =>
               r.toEither.left.map(SettingsStore.message) match
-                case Left(why) => working.set(false); problem.set(Some(why.value))
+                case Left(why) => working.set(false); problem.set(Some(why.sentence))
                 case Right(_)  =>
                   val wanted = if download then SetupPlan.downloads(c) else Nil
                   Future
@@ -118,7 +119,7 @@ object SetupPage:
                         startDownload(d)
                           .transform(t =>
                             scala.util
-                              .Success(d.label.value -> t.toEither.left.map(e => SettingsStore.message(e).value))
+                              .Success(d.label.value -> t.toEither.left.map(e => SettingsStore.message(e).sentence))
                           )
                       )
                     )
@@ -177,8 +178,9 @@ object SetupPage:
             Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("save the setup")))
           ),
           child <-- page.signal.combineWith(step.signal, finished.signal).map {
-            case (None, _, _)              => p(cls := "muted", "Loading…")
-            case (Some(Left(m)), _, _)     => ErrorLine.text(Problem(s"Could not read the settings: $m"))
+            case (None, _, _)          => p(cls := "muted", "Loading…")
+            case (Some(Left(m)), _, _) =>
+              ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read the settings: ${m.sentence}")))
             case (Some(Right(p)), s, done) =>
               div(
                 cls := "setup-body",
@@ -187,7 +189,7 @@ object SetupPage:
                 body(s, p, choices, start, free.signal, done, ui)
               )
           },
-          child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem(m)))),
+          child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(Problem.Unclassified(Legacy.Text(m))))),
           div(
             cls := "setup-bar",
             button(
@@ -235,7 +237,7 @@ object SetupPage:
                       SetupPlan
                         .email(choices.now().email)
                         .fold(
-                          why => problem.set(Some(why.value)),
+                          why => problem.set(Some(why.sentence)),
                           _ => { problem.set(None); step.set(s.next.getOrElse(s)) }
                         )
                     else step.set(s.next.getOrElse(s))

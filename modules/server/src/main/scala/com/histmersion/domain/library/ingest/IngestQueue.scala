@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.ingest
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.jobs.JobInfo
 
 import io.scalaland.chimney.dsl.*
@@ -137,7 +140,7 @@ final class IngestQueue(
       if last == "unknown" then timedOut else last
     else
       val probe = CompletableFuture.supplyAsync[String] { () =>
-        try converter.health.fold(p => p.value, h => h.value)
+        try converter.health.fold(p => p.sentence, h => h.value)
         finally probing.set(false)
       }
       val _ = probe.thenAccept(r => convHealth.set((clock.millis(), r)))
@@ -150,11 +153,15 @@ final class IngestQueue(
 
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
   private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
-    ByteCount.either(cfg().limits.assetBytes.value).left.map(why => Api.Error(Problem(why))).flatMap { max =>
-      in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
-        acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(Problem(p.value))).map(xs :+ _))
+    ByteCount
+      .either(cfg().limits.assetBytes.value)
+      .left
+      .map(why => Api.Error(Problem.Unclassified(Legacy.Text(why))))
+      .flatMap { max =>
+        in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
+          acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(p)).map(xs :+ _))
+        }
       }
-    }
 
   private def runJob(id: Job.Id): Unit =
     Option(pending.remove(id)) match
@@ -165,7 +172,10 @@ final class IngestQueue(
           JobState.Failed,
           error = Some(
             Stopped.write(
-              Stopped.Cause.Paused(PauseReason.Interrupted, Problem("the upload is no longer held by this process"))
+              Stopped.Cause.Paused(
+                PauseReason.Interrupted,
+                Problem.Unclassified(Legacy.Text("the upload is no longer held by this process"))
+              )
             )
           )
         )
@@ -190,14 +200,19 @@ final class IngestQueue(
                         ConverterClient.HighQuality(job.params.quality.value)
                       )
                       .left
-                      .map(_.value)
+                      .map(_.sentence)
                   )
               finally inConverter.remove(id): Unit
             val outcome = converted.flatMap(doc => store(id, job, doc).map(n => (doc, n)))
             outcome match
               case Left(msg) =>
                 scribe.warn(s"job $id failed: $msg")
-                val _ = jobs.transition(id, JobState.Running, JobState.Failed, error = Some(Problem(msg)))
+                val _ = jobs.transition(
+                  id,
+                  JobState.Running,
+                  JobState.Failed,
+                  error = Some(Problem.Unclassified(Legacy.Text(msg)))
+                )
               case Right((doc, n)) =>
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused
@@ -243,7 +258,7 @@ final class IngestQueue(
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = Source.OcrMarkdown(doc.markdown.value.filterNot(_.toInt == 0))
     val assets = doc.images.map(i => AssetInput(i.name, i.mime, i.base64, i.width, i.height, i.sha256))
-    decode(assets).left.map(_.message.value).flatMap { stored =>
+    decode(assets).left.map(_.message.sentence).flatMap { stored =>
       jobs.progress(jobId, JobRow.Progress(s"storing ${stored.size} asset(s)"))
       val written =
         if sources.load(citekey).isDefined then
@@ -251,12 +266,12 @@ final class IngestQueue(
             .patch(citekey, Source.Patch(body = Some(body)), Caller.Local)
             .map(_ => ())
             .left
-            .map(_.message.value)
+            .map(_.message.sentence)
         else
           Source.Write
             .applyPut(job.params.citekey, skeleton(job.params, body))
             .left
-            .map(_.value)
+            .map(_.sentence)
             .map(s =>
               val _ = sources.put(s, Caller.Local)
             )
@@ -319,7 +334,7 @@ final class IngestQueue(
                   queues
                     .get(QueueItemId(id.value))
                     .filter(_.status == Queue.QueueItem.Status(Queue.Open))
-                    .toRight(domain.Problem("it was no longer open"))
+                    .toRight(Problem.Unclassified(Legacy.Text("it was no longer open")))
                     .flatMap(item =>
                       queues
                         .patch(
@@ -331,7 +346,7 @@ final class IngestQueue(
                           )
                         )
                         .left
-                        .map(e => domain.Problem(e.message))
+                        .map(e => Problem.Unclassified(Legacy.Text(e.message)))
                     )
                     .map(_ => ())
               )

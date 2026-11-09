@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Api, YearFmt}
@@ -351,7 +352,7 @@ object Preview:
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
   def card(d: EventDetail): Card =
     val e = d.event
-    val years = YearFmt.span(e.timeSpan) + EventGeo.missingEnd(e.timeSpan).fold("")(m => s" ($m)")
+    val years = YearFmt.span(e.timeSpan) + EventGeo.missingEnd(e.timeSpan).fold("")(m => s" (${m.sentence})")
     Card(
       title = Card.Title(e.label.value),
       byline = Card.Byline(

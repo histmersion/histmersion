@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.util.UUID
@@ -47,18 +49,24 @@ class MergeApplyJobSuite extends munit.FunSuite:
     val j = of(JobState.Failed, error = Some(MergeApplyJob.Failure.Interrupted))
     assertEquals(j.state, MergeJobState.Interrupted)
     assert(
-      j.error.exists(e => e.value.contains("never half applied") && e.value.contains("merge list")),
+      j.error.exists(e => e.sentence.contains("never half applied") && e.sentence.contains("merge list")),
       j.error.toString
     )
     assert(MergeMarkdown.applyJob(j).startsWith("**The merge apply was interrupted**"), MergeMarkdown.applyJob(j))
 
   test("a crash is failed with its reason; done without a recorded report is failed, not done"):
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Problem("merge apply crashed: boom")))).error,
+      of(
+        JobState.Failed,
+        error = Some(MergeApplyJob.Failure.Other(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
+      ).error.map(_.sentence),
       Some("merge apply crashed: boom")
     )
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Problem("merge apply crashed: boom")))).state,
+      of(
+        JobState.Failed,
+        error = Some(MergeApplyJob.Failure.Other(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
+      ).state,
       MergeJobState.Failed
     )
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)

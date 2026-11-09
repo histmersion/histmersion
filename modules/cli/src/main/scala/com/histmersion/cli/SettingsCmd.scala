@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import cats.syntax.all.*
@@ -40,7 +41,7 @@ object SettingsCmd:
   ): Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
-        Cli.err.println(s"(${e.message.value.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
+        Cli.err.println(s"(${e.message.sentence.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
 
@@ -63,7 +64,7 @@ object SettingsCmd:
         key match
           case Some(k) =>
             p.field(ConfigEdit.Field.Key(k))
-              .toRight(Cli.Error(Problem(s"There is no setting called $k."), ExitCode.Usage))
+              .toRight(Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage))
               .map { f =>
                 Output.emit(json, f)(ConfigEditMarkdown.field)
               }
@@ -129,7 +130,7 @@ object SettingsCmd:
         .configFile(k => AppConfig.lookup(env)(k.value).map(Environment.VariablesValue(_)))
         .toRight(
           Cli.Error(
-            Problem(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})"),
+            Problem.Unclassified(Legacy.Text(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})")),
             ExitCode.Usage
           )
         )
@@ -138,7 +139,7 @@ object SettingsCmd:
     private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(Problem(e.message.value), ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
@@ -146,7 +147,7 @@ object SettingsCmd:
         p <- prefix
           .fold(Right(None))(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).map(Some(_)))
           .left
-          .map(p => Cli.Error(Problem(p.value), ExitCode.Usage))
+          .map(p => Cli.Error(p, ExitCode.Usage))
         state <- f.read().left.map(failed)
       yield
         val loaded = AppConfig.loadWithUserFile(env, Some(f.path))
@@ -171,7 +172,7 @@ object SettingsCmd:
                 s.credentialShown.map(v => ConfigEdit.Credential.Shown(v.value))
               )
             ),
-            s.locked.map(v => ConfigEdit.Field.Locked(v.value))
+            s.locked.map(v => ConfigEdit.Field.Locked(v.sentence))
           )
         )
         ConfigEdit.Page(
@@ -180,8 +181,8 @@ object SettingsCmd:
           ConfigEdit.Page.Version(state.version.value),
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
           loaded.fold(
-            l => List(ConfigEdit.Page.Problems(l.value)),
-            _.file.warnings.map(w => ConfigEdit.Page.Problems(w.value))
+            l => List(ConfigEdit.Page.Problems(l.sentence)),
+            _.file.warnings.map(w => ConfigEdit.Page.Problems(w.sentence))
           )
         )
 
@@ -204,7 +205,7 @@ object SettingsCmd:
         ConfigEdit.Written.Version(out.version.value),
         ConfigEdit.Written.Created(out.created.value),
         out.restart.map((k, why) =>
-          ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), api.Problem(why.value))
+          ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem.Unclassified(Legacy.Text(why.value)))
         ),
         out.warnings.map(n => ConfigEdit.Written.Warnings(n.value))
       )

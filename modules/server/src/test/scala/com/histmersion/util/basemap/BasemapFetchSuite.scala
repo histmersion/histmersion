@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -32,7 +33,7 @@ class BasemapFetchSuite extends munit.FunSuite:
   private val aegean = BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41))
   private val dropRules = Basemap
     .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
-    .fold(e => fail(e.value), identity)
+    .fold(e => fail(e.sentence), identity)
   private val keep = BasemapService.mvtRules(dropRules)
 
   private val Kind = Mvt.PropKey("kind")
@@ -157,8 +158,8 @@ class BasemapFetchSuite extends munit.FunSuite:
   ):
     val raw = BasemapFixtures.vectorTile(PmTiles.Zoom(3), PmTiles.TileColumn(4), PmTiles.TileRow(3))
     val stored = PmTiles.TileBytes(PmTiles.gzip(raw).value)
-    val thin = BasemapService.thin(stored, PmTiles.Compression.Gzip, keep).fold(e => fail(e.value), identity).get
-    val t = PmTiles.gunzip(PmTiles.CompressedBytes(thin.value)).fold(e => fail(e.value), identity)
+    val thin = BasemapService.thin(stored, PmTiles.Compression.Gzip, keep).fold(e => fail(e.sentence), identity).get
+    val t = PmTiles.gunzip(PmTiles.CompressedBytes(thin.value)).fold(e => fail(e.sentence), identity)
     assertEquals(Mvt.layerNames(t), Right(List("earth", "water", "landcover", "landuse", "pois", "physical_point")))
     assertEquals(Mvt.kinds(t, Mvt.LayerName("water")), Right(List("ocean", "river", "canal", "sea")))
     assertEquals(Mvt.kinds(t, Mvt.LayerName("landcover")), Right(List("forest", "farmland")))
@@ -231,7 +232,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     )
     val stored = PmTiles.TileBytes(PmTiles.gzip(tile).value)
     val rules =
-      Basemap.parseSubset(Basemap.Subset.Spec("places:p,roads:l~highway|rail")).fold(e => fail(e.value), identity)
+      Basemap.parseSubset(Basemap.Subset.Spec("places:p,roads:l~highway|rail")).fold(e => fail(e.sentence), identity)
     val cut = BasemapService
       .subset(
         stored,
@@ -248,10 +249,10 @@ class BasemapFetchSuite extends munit.FunSuite:
           )
         )
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     val got = Mvt
-      .features(PmTiles.gunzip(PmTiles.CompressedBytes(cut.value)).fold(e => fail(e.value), identity))
-      .fold(e => fail(e.value), identity)
+      .features(PmTiles.gunzip(PmTiles.CompressedBytes(cut.value)).fold(e => fail(e.sentence), identity))
+      .fold(e => fail(e.sentence), identity)
     assertEquals(got.map(_._1), List("places", "places", "roads", "roads"), "no land use; the minor road gone")
     assertEquals(
       got.head._3,
@@ -269,7 +270,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(got.drop(2).map(_._3), List(Map("kind" -> "highway"), Map("kind" -> "rail")))
     assertEquals(got.map(_._2), List(1, 1, 2, 2))
     // the geometry is untouched: the same bytes as a cut that keeps every property
-    val whole = BasemapService.subset(stored, PmTiles.Compression.Gzip, rules).fold(e => fail(e.value), identity)
+    val whole = BasemapService.subset(stored, PmTiles.Compression.Gzip, rules).fold(e => fail(e.sentence), identity)
     assert(cut.value.length < whole.value.length, s"${cut.value.length} < ${whole.value.length}")
     val wholeFeatures = Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(whole.value)).toOption.get).toOption.get
     assertEquals(wholeFeatures.map(_._2), got.map(_._2))
@@ -282,7 +283,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     )
     assertEquals(check(206, Some("bytes 10-19/1000"), 10, 10), Right(1000L))
     assertEquals(check(206, Some("bytes 0-49/50"), 0, 16384), Right(50L))
-    assert(check(200, None, 0, 10).left.exists(_.value.contains("ignores range requests")))
+    assert(check(200, None, 0, 10).left.exists(_.sentence.contains("ignores range requests")))
     assert(check(206, Some("bytes 0-9/1000"), 10, 10).isLeft)
     assert(check(404, None, 0, 10).isLeft)
 
@@ -311,13 +312,13 @@ class BasemapFetchSuite extends munit.FunSuite:
         noPause,
         _ => ()
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(plan.maxZoom, 5)
     assertEquals(plan.tiles.size.toLong, Basemap.tileCount(aegean, Basemap.Zoom(0), Basemap.Zoom(5)))
     assert(plan.requests.size <= 3, plan.requests.toString)
     val work = BasemapFixtures.store(dir.resolve("work"))
     BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, BasemapFetch.Note("x")))
-    BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(())).fold(e => fail(e.value), identity)
+    BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(())).fold(e => fail(e.sentence), identity)
     val out = dir.resolve("vector.pmtiles")
     val (_, n) = BasemapFetch
       .assemble(
@@ -337,16 +338,16 @@ class BasemapFetchSuite extends munit.FunSuite:
         ),
         _ => ()
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals(n, plan.tiles.size.toLong)
-    val f = BasemapFixtures.open(out).fold(e => fail(e.value), identity)
+    val f = BasemapFixtures.open(out).fold(e => fail(e.sentence), identity)
     try
       assertEquals(f.header.maxZoom, 5)
       assertEquals((f.header.minLon, f.header.maxLat), (22.0, 41.0))
       val t = f
         .tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12))
-        .fold(e => fail(e.value), identity)
-        .map(b => PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).fold(e => fail(e.value), identity))
+        .fold(e => fail(e.sentence), identity)
+        .map(b => PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).fold(e => fail(e.sentence), identity))
         .get
       assert(!Mvt.layerNames(t).toOption.get.contains(Mvt.LayerName("roads")))
       assertEquals(
@@ -378,7 +379,7 @@ class BasemapFetchSuite extends munit.FunSuite:
           tiny,
           _ => ()
         )
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
     assert(plan.requests.size > 3, plan.requests.toString)
     val work = BasemapFixtures.store(dir.resolve("work"))
     assertEquals(BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, BasemapFetch.Note(""))), 0)
@@ -392,13 +393,13 @@ class BasemapFetchSuite extends munit.FunSuite:
       _ => (),
       _ =>
         if allowed > 0 then { allowed -= 1; Right(()) }
-        else Left(Problem("full"))
+        else Left(Problem.Unclassified(Legacy.Text("full")))
     )
-    assertEquals(stopped, Left("full"))
+    assertEquals(stopped.left.map(_.sentence), Left("full"))
     assertEquals(http.downloads.get, 2)
     // again, with the same plan: the two parts are kept, the rest fetched
     assertEquals(BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, BasemapFetch.Note(""))), 2)
-    BasemapFetch.download(http, plan, work, tiny, _ => (), _ => Right(())).fold(e => fail(e.value), identity)
+    BasemapFetch.download(http, plan, work, tiny, _ => (), _ => Right(())).fold(e => fail(e.sentence), identity)
     assertEquals(http.downloads.get, plan.requests.size)
     // another plan (a deeper zoom) empties the work directory first
     val deeper = plan.modify(_.maxZoom).setTo(BasemapFetch.Plan.MaxZoom(7))
@@ -418,12 +419,12 @@ class BasemapFetchSuite extends munit.FunSuite:
           noPause,
           _ => ()
         )
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
     http.etag = RemoteFile.Etag("\"v2\"")
     val work = BasemapFixtures.store(dir.resolve("work"))
     BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, BasemapFetch.Note("")))
     val r = BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(()))
-    assert(r.left.exists(_.value.contains("changed during the download")), r.toString)
+    assert(r.left.exists(_.sentence.contains("changed during the download")), r.toString)
     assertEquals(BasemapFetch.pending(plan, work).size, plan.requests.size)
 
   test("a provider size that differs from the listed one is refused"):
@@ -442,7 +443,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       noPause,
       _ => ()
     )
-    assert(r.left.exists(_.value.contains("the provider lists 1")), r.toString)
+    assert(r.left.exists(_.sentence.contains("the provider lists 1")), r.toString)
 
   test("the extracts live in the XDG cache unless basemap.dir moves them"):
     val cfg = AppConfig.load()

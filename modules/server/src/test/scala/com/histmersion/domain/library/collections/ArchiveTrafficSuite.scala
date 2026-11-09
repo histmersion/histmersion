@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
@@ -9,7 +10,6 @@ import com.histmersion.server.ServerPlugins
 import com.histmersion.config.{AcquireConfig, AppConfig, DbConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin as SpiPlugin
-import com.histmersion.plugin.Problem
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.acquisition.*
@@ -82,7 +82,7 @@ class ArchiveTrafficSuite extends DbSuite:
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
-      out ++= s"  -> ${answer.fold(e => s"error ${e.problem}", a => a.code.toString)}\n"
+      out ++= s"  -> ${answer.fold(e => s"error ${e.problem.sentence}", a => a.code.toString)}\n"
       answer
 
   private def routes(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
@@ -133,7 +133,7 @@ class ArchiveTrafficSuite extends DbSuite:
     val loaded: LoadedConfig =
       AppConfig
         .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text)
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.sentence), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
     val app = loaded.config
@@ -154,7 +154,7 @@ class ArchiveTrafficSuite extends DbSuite:
       val a = answer
       sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
     def show[A: io.circe.Encoder](r: Either[Api.Error, A]): String =
-      r.fold(e => s"refused: ${e.message}", _.asJson.spaces2)
+      r.fold(e => s"refused: ${e.message.sentence}", _.asJson.spaces2)
     step("archive search bronze")(show(surface.search(Search.Query("bronze"), None)))
     step("archive search bronze --rows 2")(
       show(surface.search(Search.Query("bronze"), Some(CollectionsService.Limit(2))))
@@ -216,21 +216,21 @@ object ArchiveTrafficSuite:
           since: Option[Year],
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
-      ) = Left(domain.Problem("not used"))
-      def meta(doi: Doi) = Left(domain.Problem("not used"))
-      def references(doi: Doi) = Left(domain.Problem("not used"))
-      def updates(doi: Doi) = Left(domain.Problem("not used"))
+      ) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      def references(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      def updates(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
     val deps = Deps(app, ds)
     val h = AcquisitionTesting.controllers(
       deps,
       none,
       new CitationsClient {
         def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) =
-          Left(domain.Problem("not used"))
+          Left(Problem.Unclassified(Legacy.Text("not used")))
       },
       chain,
-      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(domain.Problem("not used")) },
-      new RetractionWatchClient { def csv() = Left(domain.Problem("not used")) },
+      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used"))) },
+      new RetractionWatchClient { def csv() = Left(Problem.Unclassified(Legacy.Text("not used"))) },
       AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:

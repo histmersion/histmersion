@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -199,7 +200,7 @@ class CliClientsSuite extends munit.FunSuite:
       Opencode
         .client(OcCfg, rt, ModelRef(ProviderKind.Opencode, ModelRef.Model("gpt-5")))
         .left
-        .exists(_.value.contains("<provider>/<model>"))
+        .exists(_.sentence.contains("<provider>/<model>"))
     )
 
   test("the fence around a JSON answer is tolerated; plan limit wording is recognised"):

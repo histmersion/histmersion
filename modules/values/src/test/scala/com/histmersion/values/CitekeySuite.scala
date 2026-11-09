@@ -36,11 +36,11 @@ class CitekeySuite extends munit.FunSuite:
 
   test("the message says what a citekey looks like"):
     val e = Citekey.parse("Bad Key!").swap.toOption.get
-    assert(e.value.contains("invalid citekey"), e)
-    assert(e.value.contains("anthony2007_horse"), e)
+    assert(e.legacyText.contains("invalid citekey"), e)
+    assert(e.legacyText.contains("anthony2007_horse"), e)
 
   test("the traversal guard has its own message"):
-    assert(Citekey.parse("../x").swap.toOption.get.value.contains("'..'"))
+    assert(Citekey.parse("../x").swap.toOption.get.legacyText.contains("'..'"))
 
   test("valid classifies without a message; a literal is checked by the compiler"):
     assert(Citekey.valid("anthony2007_horse") && !Citekey.valid("x/../y"))

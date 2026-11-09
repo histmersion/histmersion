@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.CalibreCliConfig
@@ -188,7 +189,7 @@ class CalibrePushSuite extends munit.FunSuite:
     withStub { s =>
       val shell = Recording()
       val got = CalibreCmd.pushOne(new Client(s.url), Citekey("zz_none"), None, calibre(shell), originals = None)
-      val msg = got.left.map(_.message.value).swap.getOrElse(fail(s"pushed: $got"))
+      val msg = got.left.map(_.message.sentence).swap.getOrElse(fail(s"pushed: $got"))
       assert(msg.contains("no original stored") && msg.contains("--file") && msg.contains("originals-dir"), msg)
       assertEquals(shell.commands, Nil, "calibredb never ran")
       assert(s.pushed.isEmpty)
@@ -258,8 +259,8 @@ class CalibrePushSuite extends munit.FunSuite:
       )
       val err = r.swap.getOrElse(fail(s"no reminder: $r"))
       assertEquals(err.exitCode, ExitCode.Usage)
-      assert(err.message.value.startsWith("2 source(s) are not in Calibre yet (zz_stored, zz_local)"), err.message)
-      assert(!err.message.value.contains("zz_none"), err.message)
+      assert(err.message.sentence.startsWith("2 source(s) are not in Calibre yet (zz_stored, zz_local)"), err.message)
+      assert(!err.message.sentence.contains("zz_none"), err.message)
       assertEquals(out, "")
     }
 

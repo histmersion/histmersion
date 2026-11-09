@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Write
@@ -35,7 +36,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Some(Period(Year(-1600), Year(-1400))),
       None,
       Some(Article.Filter(tags = List(Filter.Tags("zr-oracle")))),
-      Map(Citekey("zrdelta2010_survey") -> Problem("Region-wide."))
+      Map(Citekey("zrdelta2010_survey") -> Problem.Unclassified(Legacy.Text("Region-wide.")))
     )
 
   private val Walls = Slug("zr_walls")
@@ -55,7 +56,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val loaded = s.articles.load(Walls).get
     assertEquals(loaded.updatedAt, Some(token))
     assertEquals(loaded.filter, Some(Article.Filter(tags = List(Filter.Tags("zr-oracle")))))
-    assertEquals(loaded.reasons, Map("zrdelta2010_survey" -> "Region-wide."))
+    assertEquals(loaded.reasons.view.mapValues(_.sentence).toMap, Map("zrdelta2010_survey" -> "Region-wide."))
     assertEquals(loaded.period, Some(Period(Year(-1600), Year(-1400))))
     val view = s.articles.view(Walls).get
     assertEquals(view.article.updatedAt, Some(token))
@@ -135,14 +136,21 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Walls,
       Article.Patch(
         title = Some(Article.Title("x")),
-        critiqueReasons = List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("Not about the walls.")))
+        critiqueReasons = List(
+          CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem.Unclassified(Legacy.Text("Not about the walls.")))
+        )
       ),
       Me
     )
-    assertEquals(refused.left.map(_.message), Left("critique reason zra>zrb: 'zra' is not a citekey"))
+    assertEquals(
+      refused.left.map(_.message).left.map(_.sentence),
+      Left("critique reason zra>zrb: 'zra' is not a citekey")
+    )
     val long = s.articles.patch(
       Walls,
-      Article.Patch(critiqueReasons = List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("w" * 501)))),
+      Article.Patch(critiqueReasons =
+        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem.Unclassified(Legacy.Text("w" * 501))))
+      ),
       Me
     )
     assertEquals(long.left.map(_.code), Left(Some(Write.CodeInvalid)))

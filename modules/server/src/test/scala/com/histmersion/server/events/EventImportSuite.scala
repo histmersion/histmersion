@@ -1,6 +1,7 @@
 package com.histmersion
 package server.events
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -108,7 +109,7 @@ class EventImportSuite extends DbSuite:
       |""".stripMargin
 
   private lazy val loaded: LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
   private lazy val cfg = loaded.config
   private lazy val plugins =
     ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))

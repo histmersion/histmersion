@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReader}
@@ -41,5 +42,5 @@ object SourcePassages:
           PassageFinder.TimeoutMs(timeoutMs.value)
         )
         .left
-        .map(p => Passage.Text(p.value))
+        .map(p => Passage.Text(p.sentence))
         .map(_.passages.map(h => Passage(Passage.Offset(h.offset.value), Passage.Text(h.text.value), h.matches)))

@@ -11,7 +11,7 @@ class AttestationTargetSuite extends munit.FunSuite:
     assertEquals(AttestationTarget.check(AttestationTarget.Wire(" Event ")), Right("event"))
     assertEquals(AttestationTarget.check(AttestationTarget.Wire("event_dating")), Right("event_dating"))
     assertEquals(
-      AttestationTarget.check(AttestationTarget.Wire("bogus")),
+      AttestationTarget.check(AttestationTarget.Wire("bogus")).left.map(_.legacyText),
       Left("unknown target type 'bogus' (finding, event, event_dating, place, edge)")
     )
     assert(AttestationTarget.check(AttestationTarget.Wire("")).isLeft)

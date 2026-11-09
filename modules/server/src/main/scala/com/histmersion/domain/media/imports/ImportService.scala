@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.domain.media.MediaState
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.util.database.Transactor
@@ -125,8 +126,6 @@ object ImportService:
           since.map(s => ImportRepo.Since(s.value))
         )
       )
-      .left
-      .map(_.transformInto[Problem])
     def pending(provider: Provider, since: Option[Since]): PendingCount =
       db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
     def collectionTargets(
@@ -150,8 +149,7 @@ object ImportService:
           since.map(s => ImportRepo.Since(s.value)),
           ImportRepo.PleiadesOnly(pleiadesOnly.value)
         )
-      ).left
-        .map(_.transformInto[Problem])
+      )
     def collectionPending(
         check: CheckName,
         places: Places,
@@ -197,8 +195,10 @@ object ImportService:
       place
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .map(p => Problem(s"No place '$p'"))
-        .orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => Problem(s"No event '$e'")))
+        .map(p => Problem.Unclassified(Legacy.Text(s"No place '$p'")))
+        .orElse(
+          event.map(_.value.trim).filter(_.nonEmpty).map(e => Problem.Unclassified(Legacy.Text(s"No event '$e'")))
+        )
 
     def targets(
         provider: Provider,
@@ -220,9 +220,11 @@ object ImportService:
         pleiadesOnly: PleiadesOnly
     ): Either[Problem, List[Target]] =
       (place.map(_.value.trim).filter(_.nonEmpty), event.map(_.value.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places.value   => Left(Problem("this import is about events: name one with --event"))
-        case (None, Some(_)) if places.value => Left(Problem("this import is about places: name one with --place"))
-        case _                               => one(place, event).toLeft(Nil)
+        case (Some(_), _) if !places.value =>
+          Left(Problem.Unclassified(Legacy.Text("this import is about events: name one with --event")))
+        case (None, Some(_)) if places.value =>
+          Left(Problem.Unclassified(Legacy.Text("this import is about places: name one with --place")))
+        case _ => one(place, event).toLeft(Nil)
     def collectionPending(
         check: CheckName,
         places: Places,

@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Paging
@@ -94,7 +95,7 @@ class PolledListSuite extends munit.FunSuite:
     val f = Fixture(liveRows = true)
     f.list.open()
     f.fail(0, "HTTP 502")
-    assertEquals(f.list.failure.now(), Some("HTTP 502"))
+    assertEquals(f.list.failure.now().map(_.sentence), Some("HTTP 502"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
 
   test("a closed window drops a late answer; an older answer never overwrites a newer one"):
@@ -146,7 +147,7 @@ class PolledListSuite extends munit.FunSuite:
     assert(f.one.listing.now().rows.isEmpty && f.timers.isEmpty)
     f.one.open()
     f.asked(1).failure(RuntimeException("HTTP 404"))
-    assertEquals(f.one.failure.now(), Some("HTTP 404"))
+    assertEquals(f.one.failure.now().map(_.sentence), Some("HTTP 404"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
     f.one.refresh(changed = Poll.DataChanged(true)) // a control button was pressed
     f.asked(2).success(job(jobId("r"), JobState.Running))

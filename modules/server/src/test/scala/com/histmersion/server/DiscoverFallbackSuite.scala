@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -45,9 +46,13 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       urls = urls :+ url
       if url.value.startsWith(cfg.crossref.url.value) then Right(crossrefPage)
-      else Left(Http.Failure.Status(HttpAnswer.Code(503), Problem(s"$url failed after 4 attempts: HTTP 503")))
+      else
+        Left(
+          Http.Failure
+            .Status(HttpAnswer.Code(503), Problem.Unclassified(Legacy.Text(s"$url failed after 4 attempts: HTTP 503")))
+        )
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
-      Http.Failure.Transport(domain.Problem("unused"))
+      Http.Failure.Transport(Problem.Unclassified(Legacy.Text("unused")))
     )
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
@@ -69,13 +74,13 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("both down: the error names both upstreams"):
     val dead = new Http:
       def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
-        Left(Http.Failure.Status(HttpAnswer.Code(503), domain.Problem(s"$url: HTTP 503")))
+        Left(Http.Failure.Status(HttpAnswer.Code(503), Problem.Unclassified(Legacy.Text(s"$url: HTTP 503"))))
       def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
-        Left(Http.Failure.Transport(domain.Problem("unused")))
+        Left(Http.Failure.Transport(Problem.Unclassified(Legacy.Text("unused"))))
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
-    assert(r.left.exists(e => e.value.contains("openalex") && e.value.contains("Crossref")), r.toString)
+    assert(r.left.exists(e => e.sentence.contains("openalex") && e.sentence.contains("Crossref")), r.toString)
 
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
   // failed and the record came from Crossref, which carries no access information at all ──
@@ -102,9 +107,13 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       urls = urls :+ url
       if url.value.startsWith(c.crossref.url.value) then Right(crossrefWork)
       else if url.value.startsWith(c.unpaywall.url.value) then Right(unpaywallGold)
-      else Left(Http.Failure.Status(HttpAnswer.Code(503), Problem(s"$url failed after 4 attempts: HTTP 503")))
+      else
+        Left(
+          Http.Failure
+            .Status(HttpAnswer.Code(503), Problem.Unclassified(Legacy.Text(s"$url failed after 4 attempts: HTTP 503")))
+        )
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
-      Http.Failure.Transport(domain.Problem("unused"))
+      Http.Failure.Transport(Problem.Unclassified(Legacy.Text("unused")))
     )
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
@@ -112,7 +121,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("meta through the Crossref fallback still knows a gold-OA work is open access"):
     val withContact = cfg.modify(_.contactEmail).setTo(AcquireConfig.ContactEmail("librarian@example.org"))
     val http = OpenAlexBusy(withContact)
-    val w = discovery(withContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
+    val w = discovery(withContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.sentence), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
     assert(w.isOa.value, w.toString)
     assertEquals(w.oaStatus, Some("gold"))
@@ -122,7 +131,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("meta through the Crossref fallback without a contact leaves the access UNKNOWN, not closed"):
     val noContact = cfg.modify(_.contactEmail).setTo(AcquireConfig.ContactEmail(""))
     val http = OpenAlexBusy(noContact)
-    val w = discovery(noContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
+    val w = discovery(noContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.sentence), identity)
     assert(!w.isOa.value)
     assertEquals(w.oaStatus, None) // rendered as "OA status unknown", never "no OA copy known"
     assert(

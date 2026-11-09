@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.config.*
 
@@ -100,12 +101,12 @@ object MediaCovers:
                 Api.FileBytes(bytes)
               ) match
                 case Right(_) => Outcome.Uploaded(line)
-                case Left(e)  => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.message}"))
+                case Left(e)  => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.message.sentence}"))
       case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
         Outcome.AskOpenLibrary(ck, MediaCoversRequest.Isbn(isbn.value))
       case Some(CoverChoice.Pick.OpenLibrary(_, _)) =>
-        Outcome.Skipped(Problem("no cover file in Calibre"))
-      case None => Outcome.Skipped(Problem("no cover file in Calibre, no ISBN"))
+        Outcome.Skipped(Problem.Unclassified(Legacy.Text("no cover file in Calibre")))
+      case None => Outcome.Skipped(Problem.Unclassified(Legacy.Text("no cover file in Calibre, no ISBN")))
 
   /** The Calibre step over the linked sources: what was uploaded, what Open Library is to be asked for (by the server),
     * and the counts.
@@ -133,14 +134,14 @@ object MediaCovers:
         links <- linked(c, only, refresh)
         books <-
           if links.isEmpty then Right(Nil)
-          else cal.all().left.map(e => Cli.Error(Problem(e.value), exitCode = ExitCode.Refused))
+          else cal.all().left.map(e => Cli.Error(e, exitCode = ExitCode.Refused))
       yield
         val byId = books.map(b => b.id -> b).toMap
         val cap = limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
         val outcomes = links.take(cap).map { (ck, id) =>
           byId
             .get(id)
-            .fold[Outcome](Outcome.Skipped(Problem("Calibre id not in the library")))(
+            .fold[Outcome](Outcome.Skipped(Problem.Unclassified(Legacy.Text("Calibre id not in the library"))))(
               one(c, ck, _, dryRun)
             )
         }
@@ -151,7 +152,8 @@ object MediaCovers:
           MediaCoversReport.Sources(links.size min cap),
           covers = MediaCoversReport.Covers(lines.size),
           lines = lines,
-          skipped = MediaCount.of(outcomes.collect { case Outcome.Skipped(r) => MediaCount.Key(s"cover: $r") }),
+          skipped =
+            MediaCount.of(outcomes.collect { case Outcome.Skipped(r) => MediaCount.Key(s"cover: ${r.sentence}") }),
           failed = outcomes.collect { case Outcome.Failed(m) => m }
         )
         (report, asks)

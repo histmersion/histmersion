@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Api
@@ -40,7 +41,7 @@ class CalibreSuite extends munit.FunSuite:
 
   // ── the two readers agree ───────────────────────────────────────────────────────────────────
   test("calibredb --for-machine JSON → CalibreBook"):
-    val b = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(p => fail(p.value), _.head)
+    val b = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(p => fail(p.sentence), _.head)
     assertEquals(b.id, Calibre.Book.Id(1691))
     assertEquals(b.title.value.take(22), "Likelihood calculation")
     assertEquals(
@@ -60,8 +61,8 @@ class CalibreSuite extends munit.FunSuite:
     assert(b.formats.head.value.startsWith(lib.value), b.formats.head)
 
   test("the sqlite3 fallback yields the SAME book (it is the path used while the GUI is open)"):
-    val viaDb = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(p => fail(p.value), _.head)
-    val viaFile = Calibre.parseSqliteJson(fixture("calibre_sqlite.json"), lib).fold(p => fail(p.value), _.head)
+    val viaDb = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(p => fail(p.sentence), _.head)
+    val viaFile = Calibre.parseSqliteJson(fixture("calibre_sqlite.json"), lib).fold(p => fail(p.sentence), _.head)
     assertEquals(viaFile.id, viaDb.id)
     assertEquals(viaFile.title, viaDb.title)
     assertEquals(viaFile.authors, viaDb.authors)
@@ -80,7 +81,7 @@ class CalibreSuite extends munit.FunSuite:
   test("format choice: requested, else pdf, else epub"):
     val b = Calibre
       .parseMachineJson(fixture("calibredb_machine.json"))
-      .fold(p => fail(p.value), _.head)
+      .fold(p => fail(p.sentence), _.head)
       .copy(formats = List(CollectionEntry.Formats("/lib/x.epub"), CollectionEntry.Formats("/lib/x.pdf")))
     assertEquals(b.pick(None).map(_.value.takeRight(4)), Some(".pdf"))
     assertEquals(b.pick(Some(Calibre.Book.Format("epub"))).map(_.value.takeRight(5)), Some(".epub"))
@@ -93,7 +94,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre.guard(Title("Untitled"), List(AuthorName("Author"))).isLeft)
     assert(Calibre.guard(Title("Title"), Nil).isLeft)
     assert(Calibre.guard(Title("Title"), List(AuthorName("Unknown Author"))).isLeft)
-    val both = Calibre.guard(Title("unknown"), List(AuthorName("  "))).left.map(_.value).left.getOrElse("")
+    val both = Calibre.guard(Title("unknown"), List(AuthorName("  "))).left.map(_.sentence).left.getOrElse("")
     assert(both.contains("title") && both.contains("author"), both)
 
   test("blankness is case- and whitespace-insensitive"):
@@ -128,7 +129,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = RecordingShell(running = true)
     val r = Calibre(cfg(), shell)
       .add(Path.of("/tmp/x.pdf"), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("A"))))
-    assert(r.left.exists(_.value.contains("GUI is running")), r)
+    assert(r.left.exists(_.sentence.contains("GUI is running")), r)
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
   private class LibraryShell(onShelf: String) extends RecordingShell():
@@ -365,7 +366,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = libraryOf(shelfAll*)
     val out = Calibre(cfg(), shell)
       .updateAll(linked, apply = CollectionSync.Request.Apply(false))
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     assertEquals(
       out.map(e => e.calibreId -> e.outcome),
       List(
@@ -387,7 +388,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = libraryOf(shelfAll*)
     val out = Calibre(cfg(), shell)
       .updateAll(linked, apply = CollectionSync.Request.Apply(true))
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
     assertEquals(
       out.find(_.calibreId == Calibre.Book.Id(11)).map(_.outcome),
       Some(
@@ -405,7 +406,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), gui)
         .updateAll(linked, apply = CollectionSync.Request.Apply(true))
         .left
-        .exists(_.value.contains("GUI is running"))
+        .exists(_.sentence.contains("GUI is running"))
     )
     assertEquals(gui.commands, Nil)
 
@@ -435,7 +436,7 @@ class CalibreSuite extends munit.FunSuite:
           List(CollectionFieldValue(CollectionFieldValue.Name("formats"), CollectionFieldValue.Value("x")))
         )
         .left
-        .exists(_.value.contains("cannot set formats"))
+        .exists(_.sentence.contains("cannot set formats"))
     )
     assert(
       Calibre(cfg(), quiet)
@@ -472,7 +473,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), gui)
         .update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("A"))))
         .left
-        .exists(_.value.contains("GUI is running"))
+        .exists(_.sentence.contains("GUI is running"))
     )
     assertEquals(gui.commands, Nil)
 
@@ -480,7 +481,8 @@ class CalibreSuite extends munit.FunSuite:
     val shell = new RecordingShell():
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left(Problem("Another calibre program is running"))
+        if cmd.head.endsWith("calibredb") then
+          Left(Problem.Unclassified(Legacy.Text("Another calibre program is running")))
         else Right(scala.io.Source.fromResource("acquire/calibre_sqlite.json").mkString)
     val books = Calibre(cfg(), shell).search(Api.Search.Text("likelihood"))
     assertEquals(books.map(_.map(_.id)), Right(List(Calibre.Book.Id(1691))))
@@ -615,7 +617,7 @@ class CalibreSuite extends munit.FunSuite:
       .swap
       .toOption
       .get
-    assert(e.value.contains("Calibre id 1805") && e.value.contains("--citekey"), e)
+    assert(e.sentence.contains("Calibre id 1805") && e.sentence.contains("--citekey"), e)
     assert(
       Calibre
         .importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(None))
@@ -653,14 +655,14 @@ class CalibreSuite extends munit.FunSuite:
   test("replace refuses a running GUI, a missing entry, and a non-pdf/epub file before writing"):
     val f = tmpFile("pdf")
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).replaceFormat(Calibre.Book.Id(1), f).left.exists(_.value.contains("GUI is running")))
+    assert(Calibre(cfg(), gui).replaceFormat(Calibre.Book.Id(1), f).left.exists(_.sentence.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
     val none = LibraryShell("[]")
     assert(
       Calibre(cfg(), none)
         .replaceFormat(Calibre.Book.Id(1567), f)
         .left
-        .exists(_.value.contains("no Calibre entry 1567"))
+        .exists(_.sentence.contains("no Calibre entry 1567"))
     )
     assert(!none.commands.exists(_.contains("add_format")))
     val quiet = RecordingShell()
@@ -692,7 +694,9 @@ class CalibreSuite extends munit.FunSuite:
     val shell = new RecordingShell():
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left(Problem("Another calibre program is running")) else Right("")
+        if cmd.head.endsWith("calibredb") then
+          Left(Problem.Unclassified(Legacy.Text("Another calibre program is running")))
+        else Right("")
     assertEquals(Calibre(cfg(), shell).search(Api.Search.Text("no such book")), Right(Nil))
     assertEquals(Calibre.markdownSearch(Nil), "_No matching books in the Calibre library._")
 
@@ -766,19 +770,19 @@ class CalibreSuite extends munit.FunSuite:
   test("#1446: a book's cover file — calibredb's `cover` field, the sqlite fallback's `has_cover`"):
     val b = Calibre
       .parseMachineJson("""[{"id":7,"title":"T","authors":"A","cover":"/lib/A/T (7)/cover.jpg"}]""")
-      .fold(p => fail(p.value), _.head)
+      .fold(p => fail(p.sentence), _.head)
     assertEquals(b.cover, Some(Calibre.Book.Cover("/lib/A/T (7)/cover.jpg")))
     val s = Calibre
       .parseSqliteJson(
         """[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""",
         CalibreCliConfig.LibraryDir("/lib")
       )
-      .fold(p => fail(p.value), _.head)
+      .fold(p => fail(p.sentence), _.head)
     assertEquals(s.cover, Some(Calibre.Book.Cover("/lib/A/T (7)/cover.jpg")))
     assertEquals(
       Calibre
         .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":null}]""", CalibreCliConfig.LibraryDir("/lib"))
-        .fold(p => fail(p.value), _.head)
+        .fold(p => fail(p.sentence), _.head)
         .cover,
       None
     )

@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
@@ -31,7 +32,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   private lazy val cfg = AppConfig.load().acquire
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
 
   private lazy val http = SttpHttp(cfg, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
   private lazy val openalex =
@@ -46,7 +47,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   private val doi = Doi("10.1038/nature14317") // Haak et al. 2015, the corpus's own `haak2015_massive`
 
   test("OpenAlex resolves a known DOI to the metadata the corpus expects"):
-    val w = openalex.meta(doi).fold(e => fail(e.value), identity)
+    val w = openalex.meta(doi).fold(e => fail(e.sentence), identity)
     assertEquals(w.doi.map(_.value: String), Some(doi))
     assertEquals(w.year, Some(2015L))
     assertEquals(w.authors.headOption, Some("Wolfgang Haak"))
@@ -54,7 +55,7 @@ class AcquireLiveSuite extends munit.FunSuite:
     assert(w.citedByCount.exists(_.value > 500), s"cited_by_count = ${w.citedByCount}")
 
   test("Crossref still deposits this paper's reference list"):
-    val (backend, refs) = openalex.references(doi).fold(e => fail(e.value), identity)
+    val (backend, refs) = openalex.references(doi).fold(e => fail(e.sentence), identity)
     assertEquals(backend, "crossref")
     assert(refs.size > 10, s"only ${refs.size} references")
     assert(refs.exists(_.doi.isDefined))
@@ -65,7 +66,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   test("a legal open-access PDF is still resolvable for it"):
     val f = OaFetch(loaded(""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
       .fetch(Some(doi), None)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assert(f.bytes.value.length > 10000, s"${f.bytes.value.length} bytes from ${f.source}")
     assert(new String(f.bytes.value.take(8), "ISO-8859-1").contains("%PDF"))
     assert(Set("unpaywall", "core", "openalex", "europepmc", "pmc", "arxiv").contains(f.source), f.source)
@@ -74,7 +75,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   test("PMC: the dataset PDF of an open-access author manuscript (Mathieson 2018)"):
     val f = OaFetch(loaded(""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
       .fetch(Some(Doi("10.1038/nature25778")), None)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assertEquals((f.source, f.extension), ("pmc", "pdf"))
     assert(f.url.exists(_.value.contains("PMC6091220")), f.url.toString)
 
@@ -83,7 +84,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   test("PMC: Europe PMC's rendered PDF, or the JATS full text, of a manuscript with no dataset PDF (Damgaard 2018)"):
     val f = OaFetch(loaded(""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
       .fetch(Some(Doi("10.1126/science.aar7711")), None)
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     (f.source.value, f.extension.value) match
       case ("europepmc", "pdf") => assert(new String(f.bytes.value.take(8), "ISO-8859-1").contains("%PDF"))
       case ("pmc", "xml")       =>
@@ -92,10 +93,10 @@ class AcquireLiveSuite extends munit.FunSuite:
       case other => fail(s"unexpected copy $other")
 
   test("Semantic Scholar returns citing papers with intents"):
-    val work = openalex.meta(doi).fold(e => fail(e.value), identity)
+    val work = openalex.meta(doi).fold(e => fail(e.sentence), identity)
     val (backend, rows) = SemanticScholar(cfg, http)
       .citing(work, None, CitationsClient.CitingLimit(10))
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
     assert(rows.nonEmpty, s"no citations from $backend")
     assert(
       rows.forall(r =>
@@ -112,7 +113,7 @@ class AcquireLiveSuite extends munit.FunSuite:
     )
 
   test("the Retraction Watch CSV downloads and parses"):
-    val csv = RetractionWatch(cfg, http).csv().fold(e => fail(e.value), identity)
+    val csv = RetractionWatch(cfg, http).csv().fold(e => fail(e.sentence), identity)
     val rows = Acquire.parseRetractionWatch(csv.value)
     assert(rows.size > 10000, s"only ${rows.size} rows — has the export moved?")
     assert(rows.forall(_.doi.value.startsWith("10.")))

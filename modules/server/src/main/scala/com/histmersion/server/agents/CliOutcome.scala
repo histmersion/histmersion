@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

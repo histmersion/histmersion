@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.catalogue.{Correction, EventsApi}
 import com.histmersion.domain.Caller
@@ -24,11 +24,19 @@ object EventImportsRoutes:
         for
           ev <- event match
             case Some(e) =>
-              Event.Id.either(e.value).left.map(why => Write.invalid(Problem(s"event '${e.value}': $why"))).map(Some(_))
+              Event.Id
+                .either(e.value)
+                .left
+                .map(why => Write.invalid(Problem.Unclassified(Legacy.Text(s"event '${e.value}': $why"))))
+                .map(Some(_))
             case None => Right(None)
           off <- offset match
             case Some(o) =>
-              Offset.either(o.value).left.map(why => Write.invalid(Problem(s"offset '${o.value}': $why"))).map(Some(_))
+              Offset
+                .either(o.value)
+                .left
+                .map(why => Write.invalid(Problem.Unclassified(Legacy.Text(s"offset '${o.value}': $why"))))
+                .map(Some(_))
             case None => Right(None)
           list <- imports.corrections(
             status.map(s => Correction.StatusValue(s.value)),

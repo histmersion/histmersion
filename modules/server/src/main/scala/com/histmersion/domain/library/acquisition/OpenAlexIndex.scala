@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.wire
 
 import com.histmersion.upstreams.parse.AcquireParse
@@ -35,12 +36,12 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(_.problem.value)
+      .map(_.problem.sentence)
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left
-      .map(domain.Problem(_))
+      .map((text => Problem.Unclassified(Legacy.Text(text))))
 
   private def work(doi: Doi): Either[String, io.circe.Json] =
     http
@@ -53,7 +54,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .left
-      .map(_.problem.value)
+      .map(_.problem.sentence)
 
   def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
     work(doi)
@@ -61,14 +62,14 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .map(_.split("/").last)
       .flatMap(id => works(s"cites:$id,from_publication_date:$since", limit.value, None))
       .left
-      .map(domain.Problem(_))
+      .map((text => Problem.Unclassified(Legacy.Text(text))))
 
   def authors(doi: Doi) =
     work(doi)
       .map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value)))
       .left
-      .map(domain.Problem(_))
+      .map((text => Problem.Unclassified(Legacy.Text(text))))
 
   def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) =
     works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None).left
-      .map(domain.Problem(_))
+      .map((text => Problem.Unclassified(Legacy.Text(text))))

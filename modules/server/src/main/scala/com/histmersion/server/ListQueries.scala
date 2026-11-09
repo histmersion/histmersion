@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
@@ -18,13 +19,13 @@ import com.histmersion.domain.automation.agents.RunQuery
   */
 object ListQueries:
 
-  private def bad(m: String): Api.Error = Api.Error(Problem(m))
+  private def bad(m: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(m)))
 
   private def known(what: String, vs: List[String], allowed: Seq[String]): Either[Api.Error, List[String]] =
     ListFilters
       .known(ListFilters.FacetName(what), vs.map(ListFilters.Term(_)), allowed.map(ListFilters.Term(_)))
       .left
-      .map(p => bad(p.value))
+      .map(p => bad(p.sentence))
       .map(_.map(_.value))
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
@@ -61,7 +62,7 @@ object ListQueries:
       tr <- ListFilters
         .range(n.since.map(v => ListFilters.TimeBound(v.value)), n.until.map(v => ListFilters.TimeBound(v.value)), now)
         .left
-        .map(p => bad(p.value))
+        .map(p => bad(p.sentence))
     yield RunQuery(
       st.map(RunQuery.Status(_)),
       ps.map(RunQuery.Pipelines(_)),

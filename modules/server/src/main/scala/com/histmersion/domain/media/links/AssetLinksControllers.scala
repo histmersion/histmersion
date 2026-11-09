@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.links
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.Write
@@ -67,4 +67,7 @@ final class AssetLinksControllers(
   def delete(id: AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_asset_link")):
       if links.delete(id) then Right(AssetLink.Deleted(AssetLink.Id(id.value), AssetLink.Deleted.Value(true)))
-      else Left(Api.Error(Problem(s"No asset link #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
+      else
+        Left(
+          Api.Error(Problem.Unclassified(Legacy.Text(s"No asset link #$id")), Some(Api.Error.Code(Write.CodeNotFound)))
+        )

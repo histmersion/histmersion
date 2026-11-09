@@ -1,6 +1,8 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -62,8 +64,8 @@ object EventGeo:
   def missingEnd(ts: TimeSpan): Option[Problem] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
-    if hasStart && !hasEnd then Some(Problem("end not recorded"))
-    else if hasEnd && !hasStart then Some(Problem("start not recorded"))
+    if hasStart && !hasEnd then Some(Problem.Unclassified(Legacy.Text("end not recorded")))
+    else if hasEnd && !hasStart then Some(Problem.Unclassified(Legacy.Text("start not recorded")))
     else None
 
   final case class List(

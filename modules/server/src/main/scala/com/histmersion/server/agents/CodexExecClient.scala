@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.{
@@ -100,13 +101,17 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
         }
         val o = out.get().getOrElse(throw IllegalStateException("codex: no outcome"))
         rt.pools.foreach(_.refresh(PlanQuotaRepo.EpochMillis(System.currentTimeMillis())))
-        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.value))) match
+        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.sentence))) match
           case Some(m) =>
             val until = rt.pools
               .flatMap(_.blocked(PlanQuota.PoolId.ChatgptPlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(ms => java.time.Instant.ofEpochMilli(ms.value))
-            throw new ModelLimitReached(model, until, domain.Problem(s"codex exec: $m".take(300)))
+            throw new ModelLimitReached(
+              model,
+              until,
+              Problem.Unclassified(Legacy.Text(s"codex exec: ${m.sentence}".take(300)))
+            )
           case None =>
             CliOutcomes.result(
               o,

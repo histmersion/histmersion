@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport
@@ -31,7 +30,7 @@ private[worklists] object QueueBundleRepo:
           Bundle.QueueItem.Text(r.text.value),
           r.topic.map(t => Bundle.QueueItem.Topic(t.value)),
           Bundle.QueueItem.Status(r.status.value),
-          r.reason.map(x => api.Problem(x.value)),
+          r.reason,
           Bundle.QueueItem.CreatedAt(r.createdAt.value),
           r.doneAt.map(d => Bundle.QueueItem.DoneAt(d.value)),
           Bundle.QueueItem.UpdatedAt(r.updatedAt.value)

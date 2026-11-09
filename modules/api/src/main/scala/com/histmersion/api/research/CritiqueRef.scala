@@ -1,6 +1,8 @@
 package com.histmersion
 package api.research
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -31,7 +33,9 @@ object CritiqueRef:
         Right(CritiqueRef(Citekey(key((a))), Citekey(key((b)))))
       case _ =>
         Left(
-          Problem(
-            s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"
+            )
           )
         )

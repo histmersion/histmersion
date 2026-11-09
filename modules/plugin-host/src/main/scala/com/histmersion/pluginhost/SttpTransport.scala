@@ -1,8 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Plugin
-import com.histmersion.plugin.Problem
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.model.Uri
@@ -49,7 +49,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       .left
       .map(e =>
         Plugin.Http.Failure.Transport(
-          Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+          Problem.Unclassified(Legacy.Text(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
         )
       )
       .map(resp =>

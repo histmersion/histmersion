@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -23,8 +23,6 @@ final class OnePasswordVault(
     for
       _ <- Subprocess
         .plain(Vaults.Operation("the reference"), Subprocess.Text(r))
-        .left
-        .map(e => Problem(e.value))
       uri = if r.startsWith("op://") then r else s"op://$r"
       argv = (List(exe.value, "read", uri) ++ account.toList.flatMap(a => List("--account", a.value))).map(a =>
         Processes.RunArgv(a)

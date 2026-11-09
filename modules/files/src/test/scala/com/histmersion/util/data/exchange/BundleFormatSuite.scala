@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -49,14 +50,14 @@ class BundleFormatSuite extends munit.FunSuite:
   private def tar(entries: (BundleTar.Entry.Name, Array[Byte])*): Array[Byte] =
     val out = ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
-    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e.value), identity))
+    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e.sentence), identity))
     w.finish()
     out.toByteArray
 
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator
-      .continually(r.next().fold(e => fail(e.value), identity))
+      .continually(r.next().fold(e => fail(e.sentence), identity))
       .takeWhile(_.isDefined)
       .flatten
       .map(e => e.name.value -> String(r.readAll(), UTF_8))
@@ -74,7 +75,7 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(java.util.Arrays.equals(tar(es*), tar(es*)))
 
   test("tar: a header is ustar, 512 bytes, checksummed; a bad checksum or name is refused"):
-    val h = BundleTar.header(BundleTar.Entry.Name("manifest.json"), ByteCount(10)).fold(e => fail(e.value), identity)
+    val h = BundleTar.header(BundleTar.Entry.Name("manifest.json"), ByteCount(10)).fold(e => fail(e.sentence), identity)
     assertEquals(h.length, 512)
     assertEquals(String(h.slice(257, 262), UTF_8), "ustar")
     assertEquals(
@@ -135,7 +136,7 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
     val tampered = line.replace("\"Title\"", "\"Other\"")
     assert(
-      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.value.contains("does not match"))
+      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.sentence.contains("does not match"))
     )
     assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
 

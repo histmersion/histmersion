@@ -1,6 +1,8 @@
 package com.histmersion
 package util.database
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -177,4 +179,6 @@ object Db:
       val c = ds.getConnection
       try Right(())
       finally c.close()
-    catch case e: Throwable => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+    catch
+      case e: Throwable =>
+        Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))

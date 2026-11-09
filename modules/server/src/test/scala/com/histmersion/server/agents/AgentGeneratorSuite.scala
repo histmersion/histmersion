@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -374,14 +375,14 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("the whole tree generates under a server's runtimes dir"):
     val dir = Files.createTempDirectory("hm-gen-all-")
     val rt = CliRuntime(FakeCli.app(dir), EngineContributions.roster)
-    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m.value), identity)
+    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m.sentence), identity)
     assertEquals(r.runtimes, List("claude-code", "codex", "opencode"))
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))
     assertEquals(rt.trees.codexHome, Some(dir.resolve("codex/home")))
     val unknown = rt.trees.generate(Set(ToolName("get_source")))
     assert(
-      unknown.left.exists(_.value.contains("which is not an MCP tool")),
+      unknown.left.exists(_.sentence.contains("which is not an MCP tool")),
       "a placeholder naming nothing fails generation"
     )
 
@@ -402,7 +403,7 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.value), identity)
+    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.sentence), identity)
     val stale = tree.toList.sortBy(_._1.value).collect {
       case (rel, text)
           if !Files.isRegularFile(root.resolve(rel.value)) || Files.readString(root.resolve(rel.value)) != text =>

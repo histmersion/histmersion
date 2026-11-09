@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
@@ -74,7 +75,7 @@ object IconSelect:
       field: Field[Option[String]],
       options: Signal[List[Opt]],
       disabled: Signal[Boolean] = Val(false),
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ): HtmlElement =
     seq += 1
     val id = s"isel-$seq"
@@ -175,7 +176,9 @@ object IconSelect:
         typ := "button",
         cls := "btn icon-select-button",
         aria.label := name.value,
-        title <-- disabled.map(d => if d && why.value.nonEmpty then s"${name.value} — ${why.value}" else name.value),
+        title <-- disabled.map(d =>
+          if d && why.sentence.nonEmpty then s"${name.value} — ${why.sentence}" else name.value
+        ),
         htmlAttr("disabled", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) <-- disabled,
         htmlAttr("aria-haspopup", com.raquo.laminar.codecs.StringAsIsCodec) := "listbox",
         aria.expanded <-- isOpen.signal,

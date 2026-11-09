@@ -26,3 +26,10 @@ class ProblemLinesSuite extends munit.FunSuite:
       "Upstream.Unreachable upstream=core url=https://core.ac.uk reported=\"java.io.IOException: reset \\\"by peer\\\"\": " +
         "cannot reach core at https://core.ac.uk — java.io.IOException: reset \"by peer\""
     )
+
+  test("an unexpected exception gets a problem id, which its log line and its sentence both name"):
+    ProblemLog.unexpected(IllegalStateException("pg_dump vanished"), Problem.Where("backup")) match
+      case p @ Problem.Internal.Unexpected(id, _, _, _) =>
+        assert(p.line.contains(s" id=$id "), p.line)
+        assert(p.sentence.contains(s"problem $id"), p.sentence)
+      case other => fail(s"not an unexpected problem: ${other.sentence}")

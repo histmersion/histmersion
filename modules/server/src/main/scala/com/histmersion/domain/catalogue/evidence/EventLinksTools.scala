@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.Api
@@ -68,7 +68,12 @@ object EventLinksTools:
               val r =
                 Event.Id
                   .option(raw)
-                  .toRight(Api.Error(Problem(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                  .toRight(
+                    Api.Error(
+                      Problem.Unclassified(Legacy.Text(s"No event '$raw'")),
+                      Some(Api.Error.Code(Write.CodeNotFound))
+                    )
+                  )
                   .flatMap { id =>
                     if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
                       links

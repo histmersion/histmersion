@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.ToolResultCap
 
 import com.histmersion.api.research.{Article, ArticleMarkdown}
@@ -41,7 +42,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
           .map(_ => Articles.notFound(in.slug))
           .flatMap(articles.get(_))
           .fold(
-            e => s"No article '${in.slug}': ${e.message}",
+            e => s"No article '${in.slug}': ${e.message.sentence}",
             v =>
               cap(
                 ArticleMarkdown.article(

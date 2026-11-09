@@ -1,9 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.EnvVar
-
-import com.histmersion.plugin.Problem
 
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Processes.Result
@@ -26,7 +25,9 @@ final class SystemProcesses extends Processes:
     val pb = new ProcessBuilder(argv.map(_.value).asJava)
     env.foreach((k, v) => pb.environment().put(k.value, v.value))
     Try(pb.start()).toEither.left
-      .map(e => Processes.Failure.NotStarted(Problem(s"$tool could not be started: ${e.getMessage}")))
+      .map(e =>
+        Processes.Failure.NotStarted(Problem.Unclassified(Legacy.Text(s"$tool could not be started: ${e.getMessage}")))
+      )
       .flatMap { proc =>
         val out = drain(proc.getInputStream)
         val err = drain(proc.getErrorStream)
@@ -75,7 +76,7 @@ final class SystemProcesses extends Processes:
     /** Write one line to the tool's stdin. */
     def send(line: Processes.Session.SendLine): Either[Problem, Unit] =
       try { in.write((line.value + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
-      catch case e: IOException => Left(Problem(s"$tool stopped reading its input"))
+      catch case e: IOException => Left(Problem.Unclassified(Legacy.Text(s"$tool stopped reading its input")))
 
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
     def awaitOut(timeout: FiniteDuration)(
@@ -124,7 +125,7 @@ final class SystemProcesses extends Processes:
       val pb = new ProcessBuilder(argv.map(_.value).asJava)
       env.foreach((k, v) => pb.environment().put(k.value, v.value))
       Try(pb.start()).toEither.left
-        .map(e => Problem(s"$tool could not be started: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"$tool could not be started: ${e.getMessage}")))
         .map { proc =>
           val s = new Session(proc, tool)
           s.startReaders()
@@ -153,4 +154,4 @@ final class SystemProcesses extends Processes:
       proc.getOutputStream.close()
       val exit = proc.waitFor()
       Result(Result.Exit(exit), Result.Out(out()), Result.Err(err()))
-    }.toEither.left.map(e => Problem(s"$tool could not be run: ${e.getMessage}"))
+    }.toEither.left.map(e => Problem.Unclassified(Legacy.Text(s"$tool could not be run: ${e.getMessage}")))

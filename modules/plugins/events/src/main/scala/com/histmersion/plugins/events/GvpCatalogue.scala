@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.Json
@@ -44,25 +44,26 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
       http: Plugin.Http
-  ): Either[plugin.Problem, CataloguePage] =
+  ): Either[Problem, CataloguePage] =
     part.value match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(
           GvpCatalogue.url(cfg.gvp.url, GvpCatalogue.Year(a.toLong), GvpCatalogue.Year(b.toLong), cfg.gvp.pageSize)
-        ).left
-          .map(e => plugin.Problem(e.value))
-          .flatMap(j => GvpCatalogue.parse(j).left.map(e => plugin.Problem(e.value)))
+        )
+          .flatMap(j => GvpCatalogue.parse(j))
           .flatMap((rs, total) =>
             Either.cond(
               total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              plugin.Problem(
-                s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
+                )
               )
             )
           )
       case other =>
-        Left(plugin.Problem(s"'$other' is no window of years of the GVP's"))
+        Left(Problem.Unclassified(Legacy.Text(s"'$other' is no window of years of the GVP's")))
 
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
@@ -111,7 +112,13 @@ object GvpCatalogue:
     val c = json.hcursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
-        Left(Problem(c.downField("exceptions").focus.map(_.noSpaces.take(200)).getOrElse("no features in the answer")))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(
+              c.downField("exceptions").focus.map(_.noSpaces.take(200)).getOrElse("no features in the answer")
+            )
+          )
+        )
       case Some(fs) =>
         val total = c.get[Int]("numberMatched").toOption.orElse(c.get[Int]("totalFeatures").toOption)
         Right((fs.toList.flatMap(record), total.map(Count(_))))

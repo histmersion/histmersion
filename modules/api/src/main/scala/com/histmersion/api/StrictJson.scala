@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import io.circe.{Codec, CursorOp, Decoder, DecodingFailure, Json}
 import sttp.tapir.{Schema, SchemaType}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -32,7 +34,7 @@ object StrictJson:
         case Some(o) =>
           problems((o.keys.toList).map(refactorValue => FieldName(refactorValue)), s) match
             case None      => d(c)
-            case Some(msg) => Left(DecodingFailure(s"${at(c.history)}$msg", c.history))
+            case Some(msg) => Left(DecodingFailure(s"${at(c.history)}${msg.sentence}", c.history))
     }
 
   def problems(keys: List[FieldName], s: Schema[?]): Option[Problem] =
@@ -47,10 +49,12 @@ object StrictJson:
         }
       )
       val noun = s"unknown ${Plural.noun(Plural.Count((unknown.size).toLong), Plural.Noun.Singular("key"))}"
-      Problem(
-        s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
-          (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
-          s"; expected only: ${known.mkString(", ")}"
+      Problem.Unclassified(
+        Legacy.Text(
+          s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
+            (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
+            s"; expected only: ${known.mkString(", ")}"
+        )
       )
     }
 

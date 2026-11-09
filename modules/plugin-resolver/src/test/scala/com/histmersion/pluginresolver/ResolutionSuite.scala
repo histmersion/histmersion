@@ -6,8 +6,8 @@ import java.nio.file.Path
 class ResolutionSuite extends munit.FunSuite:
 
   private def c(s: String): ModuleCoordinates =
-    ModuleCoordinates.parse(ModuleCoordinates.Text(s)).fold(e => fail((e).value), identity)
-  private def k(s: String): ModuleKey = ModuleKey.parse(ModuleKey.Text(s)).fold(e => fail((e).value), identity)
+    ModuleCoordinates.parse(ModuleCoordinates.Text(s)).fold(e => fail((e).legacyText), identity)
+  private def k(s: String): ModuleKey = ModuleKey.parse(ModuleKey.Text(s)).fold(e => fail((e).legacyText), identity)
 
   private val server = ServerModules
     .parse(
@@ -19,14 +19,14 @@ class ResolutionSuite extends munit.FunSuite:
       ),
       List(Resolver.ManifestLine("io.github.cquiroz:scala-java-time-tzdb_3"))
     )
-    .fold(e => fail((e).value), identity)
+    .fold(e => fail((e).legacyText), identity)
 
   test("the kit's module list parses; a malformed line is named"):
     assertEquals(server.shipped.get(k("io.circe:circe-core_3")).map(_.value: String), Some("0.14.17"))
     assert(server.provides(k("io.github.cquiroz:scala-java-time-tzdb_3")))
     assert(!server.provides(k("org.scala-lang.modules:scala-xml_3")))
     val bad = ServerModules.parse(List(Resolver.ManifestLine("io.circe:circe-core_3")), Nil)
-    assert(bad.left.exists((_).value.contains("io.circe:circe-core_3")), bad.toString)
+    assert(bad.left.exists((_).legacyText.contains("io.circe:circe-core_3")), bad.toString)
 
   test("a plugin that needs a NEWER version of a shipped module conflicts, naming the module and both versions"):
     val got = Resolution.conflicts(
@@ -43,8 +43,8 @@ class ResolutionSuite extends munit.FunSuite:
       }: List[(String, String, String, String)]),
       List(("p-1.0.jar", "io.circe:circe-core_3", "0.14.20", "0.14.17"))
     )
-    assert((got.head.message).value.contains("p-1.0.jar needs io.circe:circe-core_3 0.14.20"), got.head.message)
-    assert((got.head.message).value.contains("ships 0.14.17"), got.head.message)
+    assert((got.head.message).legacyText.contains("p-1.0.jar needs io.circe:circe-core_3 0.14.20"), got.head.message)
+    assert((got.head.message).legacyText.contains("ships 0.14.17"), got.head.message)
 
   test("an older or the same version of a shipped module is no conflict: the server's is chosen"):
     assertEquals(

@@ -1,8 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Plugin
-import com.histmersion.plugin.Problem
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Duration
@@ -52,7 +52,7 @@ final class JavaHttpTransport(
       .left
       .map(e =>
         Plugin.Http.Failure.Transport(
-          Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+          Problem.Unclassified(Legacy.Text(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
         )
       )
 

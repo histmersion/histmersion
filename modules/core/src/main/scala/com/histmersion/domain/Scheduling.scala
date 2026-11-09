@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
@@ -51,23 +52,27 @@ object Scheduling:
       maxConcurrent: MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
-      case Some(s) => Decision.Skip(Problem(s"its previous run is still ${s.wire}"))
+      case Some(s) => Decision.Skip(Problem.Unclassified(Legacy.Text(s"its previous run is still ${s.wire}")))
       case None    =>
         if spentDay >= BigDecimal(dailyUsd.value) then
           Decision.Skip(
-            Problem(
-              s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
+              )
             )
           )
         else if spentMonth >= BigDecimal(monthlyUsd.value) then
           Decision.Skip(
-            Problem(
-              s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
+              )
             )
           )
         else if active.value >= math.max(1, maxConcurrent.value) then
           Decision.Defer(
-            Problem(s"$active run(s) already queued or running (agents.max-concurrent-runs)")
+            Problem.Unclassified(Legacy.Text(s"$active run(s) already queued or running (agents.max-concurrent-runs)"))
           )
         else Decision.Start
 

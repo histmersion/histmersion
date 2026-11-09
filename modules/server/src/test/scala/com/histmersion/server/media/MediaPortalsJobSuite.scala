@@ -1,6 +1,7 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -284,7 +285,7 @@ class MediaPortalsJobSuite extends DbSuite:
         refresh = ImportFixtures.Refresh(false),
         pleiadesOnly = ImportFixtures.PleiadesOnly(true)
       )
-      .fold(p => fail(p.value), identity)
+      .fold(p => fail(p.sentence), identity)
       .map(_.id)
       .toSet
     assert(Set(Target.Id("zqmp_site"), Target.Id("pleiades_99900002")).subsetOf(ts), ts.toString)
@@ -299,7 +300,7 @@ class MediaPortalsJobSuite extends DbSuite:
       ImportFixtures.Refresh(false),
       pleiadesOnly = ImportFixtures.PleiadesOnly(true)
     )
-    assert(none.left.exists(_.value.contains("no Pleiades id")), none.toString)
+    assert(none.left.exists(_.sentence.contains("no Pleiades id")), none.toString)
     assert(
       ImportFixtures
         .collectionPending(

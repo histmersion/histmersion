@@ -1,9 +1,8 @@
 package com.histmersion
 package util.settings
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.Problem as ValuesProblem
-import com.histmersion.api.Problem
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
@@ -24,11 +23,11 @@ final class SettingsControllers(
       p <- prefix
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold[Either[ValuesProblem, Option[SettingKey]]](Right(None))(raw =>
+        .fold[Either[Problem, Option[SettingKey]]](Right(None))(raw =>
           SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
         )
         .left
-        .map(why => Api.Error(why.transformInto[Problem]))
+        .map(why => Api.Error(why))
       snap <- settings
         .read(p, knownKeys().flatMap(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).toOption))
         .left
@@ -53,7 +52,7 @@ final class SettingsControllers(
             .either(v)
             .map(Some(_))
             .left
-            .map(_ => Api.Error(Problem(s"'$v' is not a settings file's version")))
+            .map(_ => Api.Error(Problem.Unclassified(Legacy.Text(s"'$v' is not a settings file's version"))))
         )
       outcome <- settings
         .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.value))
@@ -67,7 +66,7 @@ final class SettingsControllers(
     restarts
       .restart()
       .fold(
-        why => Left(Api.Error(why.transformInto[Problem], Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
+        why => Left(Api.Error(why, Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
         msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), msg))
       )
 

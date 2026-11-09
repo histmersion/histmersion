@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.plugin.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One import of a gazetteer source, read as the server reads it: the download through the server's gazetteer client,

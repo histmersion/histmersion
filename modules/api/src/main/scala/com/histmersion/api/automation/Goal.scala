@@ -1,6 +1,8 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import com.histmersion.api.WireEnumValues
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -169,7 +171,7 @@ object Goal:
         citekey: Option[Citekey] = None,
         inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus(false),
         isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
-        why: Problem = Problem("")
+        why: Problem = Problem.Unclassified(Legacy.Text(""))
     ) derives KindlingsCodecAsObject,
           KindlingsSchema,
           com.histmersion.api.json.Schema

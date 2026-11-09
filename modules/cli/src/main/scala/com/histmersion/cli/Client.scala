@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
@@ -131,12 +131,14 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[Cli.Error, O] =
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) if WorkingDir.denied(e) =>
-        Left(Cli.Error(Problem(s"${WorkingDir.message}"), workingDirDenied = true))
+        Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"${WorkingDir.message}")), workingDirDenied = true))
       case scala.util.Failure(e) =>
         Left(
           Cli.Error(
-            Problem(
-              s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"
+              )
             )
           )
         )
@@ -148,15 +150,12 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
             val code =
               if e.code.contains(CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
-            Left(Cli.Error(Problem(e.message.value), exitCode = code, notFound = e.isNotFound))
+            Left(Cli.Error(e.message, exitCode = code, notFound = e.isNotFound))
           case _ =>
             Left(
               Cli.Error(
-                Problem(
-                  Client
-                    .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method)))
-                    .value
-                ),
+                Client
+                  .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method))),
                 exitCode = ExitCode.Refused
               )
             )
@@ -503,6 +502,11 @@ object Client:
   def unexpected(status: HttpStatus, serverUrl: ServerUrl, write: Write): Problem = status.value match
     case 401 | 403 =>
       val what = if write.value then "this write" else "this request"
-      Problem(s"$serverUrl refused $what: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN")
-    case 404 => Problem(s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?")
-    case c   => Problem(s"unexpected answer from $serverUrl: HTTP $c")
+      Problem.Unclassified(
+        Legacy.Text(s"$serverUrl refused $what: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN")
+      )
+    case 404 =>
+      Problem.Unclassified(
+        Legacy.Text(s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?")
+      )
+    case c => Problem.Unclassified(Legacy.Text(s"unexpected answer from $serverUrl: HTTP $c"))

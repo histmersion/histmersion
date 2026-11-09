@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
-import com.histmersion.api.Problem as ApiProblem
 import com.histmersion.api.automation.Stopped
 import io.scalaland.chimney.dsl.*
 
@@ -111,12 +111,12 @@ final class ModelPicker(
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
           .map(_ -> SettingSource.Saved)
           .left
-          .map(m => Problem(s"the saved chain of ${role.wire}: $m"))
+          .map(m => Problem.Unclassified(Legacy.Text(s"the saved chain of ${role.wire}: ${m.sentence}")))
       case None =>
         parseChain(Chain.Spec(cfg.role(role.transformInto[AgentRole])), known())
           .map(_ -> SettingSource.Config)
           .left
-          .map(m => Problem(s"agents.roles.${role.wire}: $m"))
+          .map(m => Problem.Unclassified(Legacy.Text(s"agents.roles.${role.wire}: ${m.sentence}")))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
   def chainFor(
@@ -124,16 +124,18 @@ final class ModelPicker(
       overrideRef: Option[AgentsControllers.ModelName]
   ): Either[Problem, List[ModelRef]] =
     overrideRef.map(_.value.trim).filter(_.nonEmpty) match
-      case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(p => Problem(p.value))
+      case Some(ref) => parseChain(Chain.Spec(ref), known())
       case None      =>
         chain(role).map(_._1).flatMap { ms =>
           Either.cond(
             ms.nonEmpty,
             ms,
-            Problem(
-              s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
-                s"(HISTMERSION_AGENTS_ROLE_${role.wire.value.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
-                s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
+                  s"(HISTMERSION_AGENTS_ROLE_${role.wire.value.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
+                  s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one"
+              )
             )
           )
         }
@@ -164,15 +166,15 @@ final class ModelPicker(
   def allowances: (List[Effective], List[String]) =
     val (fromConfig, problem) = parseAllowances(Allowance.Spec(cfg.allowances.value), known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
-      case Left(m)   => (Nil, List(s"agents.allowances: $m"))
+      case Left(m)   => (Nil, List(s"agents.allowances: ${m.sentence}"))
     val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
       val a = for
-        t <- Target.parse(Target.Spec(s.target.value), known()).left.map(e => Problem(e.value))
-        ss <- s.limits.left.map(e => Problem(e.value))
+        t <- Target.parse(Target.Spec(s.target.value), known())
+        ss <- s.limits
         ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
-          case (errs, _) => Left(Problem(errs.mkString("; ")))
-        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value)).left.map(_.transformInto[Problem])
+          case (errs, _) => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
+        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value))
       yield a
       Effective(Target.Wire(s.target.value), a, SettingSource.Saved)
     }
@@ -244,13 +246,13 @@ final class ModelPicker(
       refresh: Option[PlanQuota.RefreshTrigger] = None
   ): ModelState =
     val cov = covering(m, effective, now)
-    val broken = cov.collect { case (e, Left(why)) => s"${e.target}: $why" }
+    val broken = cov.collect { case (e, Left(why)) => s"${e.target}: ${why.sentence}" }
     val ss = cov.collect { case (_, Right(s)) => s }.flatten
     val (ok, frees) = verdict(ss)
     val cool = cooling(m, now)
     val (headroomTokens, hu) = headroom(ss)
     val ht = headroomTokens.map(h => Picked.HeadroomTokens(h.value))
-    val noLogin = pools.unavailable(m, poolInstant(now)).map(r => Problem(r.value))
+    val noLogin = pools.unavailable(m, poolInstant(now))
     // a fresh reading only for a model that could otherwise be used: not one cooling down or capped
     val wanted = refresh.filter(_ => noLogin.isEmpty && broken.isEmpty && cool.isEmpty && ok)
     val plan = pools.poolOf(m).map { p =>
@@ -266,7 +268,7 @@ final class ModelPicker(
     else if broken.nonEmpty then
       ModelState(
         ModelState.Usable(false),
-        Some(Problem(s"its allowance cannot be read (${broken.mkString("; ")})")),
+        Some(Problem.Unclassified(Legacy.Text(s"its allowance cannot be read (${broken.mkString("; ")})"))),
         None,
         ht,
         hu
@@ -274,7 +276,11 @@ final class ModelPicker(
     else if cool.isDefined then
       ModelState(
         ModelState.Usable(false),
-        Some(Problem(s"${ModelPicker.CoolingWhy}; skipped until ${Instant.ofEpochMilli(cool.get.value)}")),
+        Some(
+          Problem.Unclassified(
+            Legacy.Text(s"${ModelPicker.CoolingWhy}; skipped until ${Instant.ofEpochMilli(cool.get.value)}")
+          )
+        ),
         cool,
         ht,
         hu,
@@ -285,10 +291,10 @@ final class ModelPicker(
       val (p, v, _) = plan.get
       val (why, until) = v match
         case PlanQuota.Verdict.Blocked(w, u) => (w, u)
-        case _                               => (Problem(""), None)
+        case _                               => (Problem.Unclassified(Legacy.Text("")), None)
       ModelState(
         ModelState.Usable(false),
-        Some(Problem(s"the ${p.title} is below its floor: $why")),
+        Some(Problem.Unclassified(Legacy.Text(s"the ${p.title} is below its floor: ${why.sentence}"))),
         until.map(u => PlanQuotaRepo.EpochMillis(u.value)),
         ht,
         hu,
@@ -302,7 +308,7 @@ final class ModelPicker(
         .map(s => s"${s.limit.text} (${fmt(s.used, s.limit.measure)} used, reserve ${fmt(s.reserve, s.limit.measure)})")
       ModelState(
         ModelState.Usable(false),
-        Some(Problem(s"below its allowance: ${which.mkString(", ")}")),
+        Some(Problem.Unclassified(Legacy.Text(s"below its allowance: ${which.mkString(", ")}"))),
         frees.map(f => PlanQuotaRepo.EpochMillis(f.value)),
         ht,
         hu,
@@ -341,7 +347,9 @@ final class ModelPicker(
             if exhausted.isEmpty then
               Left(
                 PickFailure.Unavailable(
-                  Problem(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
+                  Problem.Unclassified(
+                    Legacy.Text(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
+                  )
                 )
               )
             else
@@ -349,8 +357,10 @@ final class ModelPicker(
               val what = if planHit then "below their plan floor or allowance" else "below their allowance"
               Left(
                 PickFailure.Exhausted(
-                  Problem(
-                    s"${Stopped.AllModelsFor}${role.wire}${Stopped.Are}$what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})"
+                  Problem.Unclassified(
+                    Legacy.Text(
+                      s"${Stopped.AllModelsFor}${role.wire}${Stopped.Are}$what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})"
+                    )
                   ),
                   frees.map(f => Instant.ofEpochMilli(f.value)),
                   if planHit then PauseReason.PlanQuota else PauseReason.Allowance
@@ -368,14 +378,14 @@ final class ModelPicker(
             )
           case m :: tail =>
             resolve(m) match
-              case Left(why) => go(tail, notReady :+ Picked.Skipped(s"${m.wire}: $why"), exhausted, planHit)
+              case Left(why) => go(tail, notReady :+ Picked.Skipped(s"${m.wire}: ${why.sentence}"), exhausted, planHit)
               case Right((client, billing)) =>
                 val st = state(m, effective, now, refresh)
                 st.refreshed.foreach(onRefresh)
                 if st.unavailable.value then
                   go(
                     tail,
-                    notReady :+ Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("unavailable")}"),
+                    notReady :+ Picked.Skipped(s"${m.wire}: ${st.why.map(_.sentence).getOrElse("unavailable")}"),
                     exhausted,
                     planHit
                   )
@@ -387,7 +397,7 @@ final class ModelPicker(
                     notReady,
                     exhausted :+ Exhaust(
                       m,
-                      Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("not usable")}"),
+                      Picked.Skipped(s"${m.wire}: ${st.why.map(_.sentence).getOrElse("not usable")}"),
                       st.freesAt,
                       st.held
                     ),
@@ -420,7 +430,7 @@ final class ModelPicker(
             SettingSource.Config.wire,
             Nil,
             None,
-            Some(api.Problem(m.value))
+            Some(m)
           )
         case Right((ms, src)) =>
           val entries = ms.map { m =>
@@ -430,7 +440,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(false),
                   usable = ModelChains.ChainEntry.Usable(false),
-                  Some(api.Problem(why.value))
+                  Some(why)
                 )
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
@@ -438,7 +448,7 @@ final class ModelPicker(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(true),
                   ChainEntry.Usable(st.usable.value),
-                  st.why.map(w => api.Problem(w.value)),
+                  st.why,
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
                   Some(ChainEntry.Billing(billing.describe)),
                   cooling = ChainEntry.Cooling(st.cooling.value)
@@ -450,7 +460,9 @@ final class ModelPicker(
             entries,
             entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
             Option.when(ms.isEmpty)(
-              api.Problem(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
+              Problem.Unclassified(
+                Legacy.Text(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`")
+              )
             )
           )
     }
@@ -465,7 +477,7 @@ final class ModelPicker(
           Nil,
           usable = ModelChains.AllowanceStatus.Usable(false),
           None,
-          Some(AllowanceStatus.Note(s"cannot be read, so it blocks what it covers: $why"))
+          Some(AllowanceStatus.Note(s"cannot be read, so it blocks what it covers: ${why.sentence}"))
         )
       case Effective(t, Right(a), src) =>
         val ss = states(a, spendsOf(a), LimitState.Now(now.value))
@@ -540,6 +552,6 @@ object ModelPicker:
     (earliest.map(_._2), when)
 
   /** The role a `plan-quota`/`allowance` pause names, so a paused run can be asked about just that role again. */
-  def pausedRole(error: ApiProblem): Option[Role] = Stopped.from(error).cause match
+  def pausedRole(error: Problem): Option[Role] = Stopped.from(error).cause match
     case Stopped.Cause.Exhausted(_, _, role, _) => Some(role)
     case _                                      => None

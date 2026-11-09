@@ -40,13 +40,13 @@ class SecretSuite extends munit.FunSuite:
 
   test("a bare value, an empty part or a bad name is refused, and the error never echoes a value"):
     val bare = Secret.Ref.parse(Secret.Ref.ParseText("hunter2"))
-    assert(bare.left.exists((_).value.contains("not a bare value")), bare)
-    assert(!bare.left.exists((_).value.contains("hunter2")))
+    assert(bare.left.exists((_).legacyText.contains("not a bare value")), bare)
+    assert(!bare.left.exists((_).legacyText.contains("hunter2")))
     assert(Secret.Ref.parse(Secret.Ref.ParseText("value:")).isLeft)
     assert(Secret.Ref.parse(Secret.Ref.ParseText("env:")).isLeft)
     assert(Secret.Ref.parse(Secret.Ref.ParseText("env:NOT-A-NAME")).isLeft)
     assert(Secret.Ref.parse(Secret.Ref.ParseText("keepassxc:")).isLeft)
-    assert(Secret.Ref.parse(Secret.Ref.ParseText("Vault:x")).left.exists((_).value.contains("not a vault name")))
+    assert(Secret.Ref.parse(Secret.Ref.ParseText("Vault:x")).left.exists((_).legacyText.contains("not a vault name")))
     assert(Secret.Ref.parse(Secret.Ref.ParseText(":x")).isLeft)
     assert(Secret.Ref.parse(Secret.Ref.ParseText(null)).isLeft)
 

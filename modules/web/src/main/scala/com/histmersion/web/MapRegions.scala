@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -91,7 +91,7 @@ object MapRegions:
           t.toIntOption
             .filter(z => z >= 0 && z <= Basemap.MaxZoomCap)
             .map(Some(_))
-            .toRight(Problem(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}"))
+            .toRight(Problem.Unclassified(Legacy.Text(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}")))
     yield content match
       case Content.Map =>
         Basemap.FetchQuery(

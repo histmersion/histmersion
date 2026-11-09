@@ -1,6 +1,8 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.{Legacy, Problem}
+
 /** The source-fetching part of the SPI (docs/research-plugins.md §5.1). */
 class SourceFetcherSuite extends munit.FunSuite:
 
@@ -19,12 +21,15 @@ class SourceFetcherSuite extends munit.FunSuite:
     assert(!(WorkKey(pmcid = Some(WorkKey.Pmcid("PMC6091220"))).isEmpty))
 
   test("a refusing registry takes nothing and says why, naming the id"):
-    val r = Registry.refusing[SourceFetcher](Problem("no chain here"))
+    val r = Registry.refusing[SourceFetcher](Problem.Unclassified(Legacy.Text("no chain here")))
     val f = new SourceFetcher:
       val access = Access.Open
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem("nothing"))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing")))
     assertEquals(
-      ((r.add(Registry.AddId("portal"), f)).left.map(refactorError => (refactorError).value): Either[String, Unit]),
+      ((r
+        .add(Registry.AddId("portal"), f))
+        .left
+        .map(refactorError => (refactorError).legacyText): Either[String, Unit]),
       Left("'portal': no chain here")
     )
 
@@ -35,19 +40,21 @@ class SourceFetcherSuite extends munit.FunSuite:
             url: Plugin.Http.Url,
             headers: Map[Header.Name, Header.Value]
         ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-          Left(Plugin.Http.Failure.Transport(Problem("offline")))
+          Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
-        Left(Problem("none"))
-      def secretVaults = Registry.refusing(Problem("no vaults"))
+        Left(Problem.Unclassified(Legacy.Text("none")))
+      def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
     val f = new SourceFetcher:
       val access = Access.Subscription
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(Problem("no entitlement"))
-    assert(ctx.sourceFetchers.add(Registry.AddId("portal"), f).left.exists((_).value.contains("no acquisition chain")))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(Problem.Unclassified(Legacy.Text("no entitlement")))
+    assert(
+      ctx.sourceFetchers.add(Registry.AddId("portal"), f).left.exists((_).legacyText.contains("no acquisition chain"))
+    )
 
   test("a FetchedFile's licence is optional"):
     val pdf = "%PDF-1.7".getBytes("US-ASCII")

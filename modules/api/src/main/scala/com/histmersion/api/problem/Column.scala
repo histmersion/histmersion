@@ -22,15 +22,16 @@ object Column:
   extension (problem: Problem)
     /** The frozen sentence of the problem, as a column keeps it. */
     def stored: String = problem match
-      case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is no $t: it fails ${c.name} (${c.description})"
-      case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
-      case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
-      case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
-      case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
-      case NotFound.Entity(t, key)             => s"no $t '$key'"
-      case Conflict.AlreadyExists(t, key)      => s"$t '$key' already exists"
-      case Conflict.Renamed(t, asked, now)     => s"$t '$asked' was renamed to '$now'"
-      case Conflict.Stale(t, key, sent, now)   => s"$t '$key' has moved on: sent $sent, stored $now"
+      case Invalid.Malformed(t, c, raw, at)   => s"${path(at)}'$raw' is no $t: it fails ${c.name} (${c.description})"
+      case Invalid.Unknown(t, raw, known, at) => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
+      case Invalid.Missing(field, at)         => s"${path(at)}$field is required"
+      case Invalid.OutOfRange(t, raw, b, at)  =>
+        s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
+      case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
+      case NotFound.Entity(t, key)            => s"no $t '$key'"
+      case Conflict.AlreadyExists(t, key)     => s"$t '$key' already exists"
+      case Conflict.Renamed(t, asked, now)    => s"$t '$asked' was renamed to '$now'"
+      case Conflict.Stale(t, key, sent, now)  => s"$t '$key' has moved on: sent $sent, stored $now"
       case Conflict.WrongState(t, key, is, ws) => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)             => s"${activity.productPrefix} is still running"
       case Conflict.Referenced(t, key, by, n)  => s"$t '$key' is referred to by $n $by"
@@ -43,28 +44,28 @@ object Column:
       case Upstream.BadReply(name, url, s, r)  => s"$name's answer at $url is not ${s.productPrefix} — $r"
       case Io.File(op, path, reported)         => s"could not ${op.productPrefix} $path — $reported"
       case Io.Wrong(path, expected)            => s"$path is not ${expected.productPrefix}"
-      case Io.Corrupt(format, at, damage)      => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
-      case Io.Process(tool, ending)            => s"$tool ${ending.stored}"
-      case Io.Database(op, reported)           => s"the database refused to ${op.productPrefix} — $reported"
-      case Config.Setting(key, fault)          => s"$key is wrong: ${fault.stored}"
-      case Config.Unavailable(capability)      => s"this server has no ${capability.productPrefix}"
-      case Config.Reload(stage, scope)         => s"reloading the settings failed at ${stage.productPrefix} in $scope"
-      case Plugin.Load(plugin, fault)          => s"plugin $plugin did not load: ${fault.stored}"
-      case Plugin.Rejected(plugin, item, why)  => s"$plugin did not take '$item': ${why.productPrefix}"
-      case Plugin.Vault(vault, failure)        => s"secret vault $vault failed: ${failure.stored}"
-      case Plugin.Said(plugin, claim, text)    => s"$plugin says (${claim.productPrefix}): $text"
-      case Problem.Run.Paused(reason, at)              => s"paused for ${reason.productPrefix}${until(at)}"
-      case Problem.Run.NoModel(role, tried)            => s"no model of the $role chain can run${passedOver(tried)}"
-      case Problem.Run.Blocked(block)                  => s"held back: ${block.stored}"
-      case Problem.Run.Interrupted                     => "interrupted"
-      case Problem.Run.Cancelled(by)                   => s"cancelled by ${by.productPrefix}"
-      case Problem.Run.Draining(since)                 => s"draining since ${since.iso}"
-      case Problem.Run.Aborted(step, cause)            => s"step $step cannot go on: ${cause.productPrefix}"
-      case Content.Finding(cause)              => s"finding: ${cause.productPrefix}"
-      case Content.Proposal(rule, at)          => s"$at: ${rule.stored}"
-      case Internal.Unexpected(where, e, r)    => s"$where failed unexpectedly ($e) — $r"
-      case Unclassified(text)                  => s"unclassified: $text"
-      case Stored.Unrecognised(text)           => s"$text"
+      case Io.Corrupt(format, at, damage)     => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
+      case Io.Process(tool, ending)           => s"$tool ${ending.stored}"
+      case Io.Database(op, reported)          => s"the database refused to ${op.productPrefix} — $reported"
+      case Config.Setting(key, fault)         => s"$key is wrong: ${fault.stored}"
+      case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
+      case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
+      case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
+      case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.productPrefix}"
+      case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.stored}"
+      case Plugin.Said(plugin, claim, text)   => s"$plugin says (${claim.productPrefix}): $text"
+      case Problem.Run.Paused(reason, at)     => s"paused for ${reason.productPrefix}${until(at)}"
+      case Problem.Run.NoModel(role, tried)   => s"no model of the $role chain can run${passedOver(tried)}"
+      case Problem.Run.Blocked(block)         => s"held back: ${block.stored}"
+      case Problem.Run.Interrupted            => "interrupted"
+      case Problem.Run.Cancelled(by)          => s"cancelled by ${by.productPrefix}"
+      case Problem.Run.Draining(since)        => s"draining since ${since.iso}"
+      case Problem.Run.Aborted(step, cause)   => s"step $step cannot go on: ${cause.productPrefix}"
+      case Content.Finding(cause)             => s"finding: ${cause.productPrefix}"
+      case Content.Proposal(rule, at)         => s"$at: ${rule.stored}"
+      case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
+      case Unclassified(text)                   => s"unclassified: $text"
+      case Stored.Unrecognised(text)            => s"$text"
 
   /** The problem a column's text stands for: the case whose frozen sentence it is, or the text as it was. */
   def read(stored: String): Problem =
@@ -115,7 +116,12 @@ object Column:
   )
   private val VaultFailures =
     Vector(Plugin.Retrieval.NoVault, Plugin.Retrieval.NoEntry, Plugin.Retrieval.EmptyValue, Plugin.Retrieval.Locked)
-  private val Blocks = Vector(Problem.Run.Block.SpendCap, Problem.Run.Block.Draining, Problem.Run.Block.OutsideWindow, Problem.Run.Block.Waiting)
+  private val Blocks = Vector(
+    Problem.Run.Block.SpendCap,
+    Problem.Run.Block.Draining,
+    Problem.Run.Block.OutsideWindow,
+    Problem.Run.Block.Waiting
+  )
   private val ProposalRules = Vector(
     Content.Requirement.NoYearZero,
     Content.Requirement.CitesNoSource,
@@ -151,17 +157,17 @@ object Column:
     private def stored: String = failure match
       case Plugin.Retrieval.TimedOut(after) => s"TimedOut $after ms"
       case Plugin.Retrieval.Failed(stderr)  => s"Failed — $stderr"
-      case other                               => other.productPrefix
+      case other                            => other.productPrefix
 
   extension (block: Problem.Run.Block)
     private def stored: String = block match
       case Problem.Run.Block.PoolFull(pool) => s"PoolFull $pool"
-      case other                    => other.productPrefix
+      case other                            => other.productPrefix
 
   extension (rule: Content.Requirement)
     private def stored: String = rule match
       case Content.Requirement.TooManyClaims(cap, gave) => s"TooManyClaims $cap/$gave"
-      case other                                         => other.productPrefix
+      case other                                        => other.productPrefix
 
   // ---- the readers: one per frozen sentence; a reader's case counts only if it writes the text back -------------
 
@@ -208,7 +214,7 @@ object Column:
   private val CannotGoOn = "(?s)^step (.+) cannot go on: (\\w+)$".r
   private val FindingOf = "^finding: (\\w+)$".r
   private val ProposalAt = "(?s)^(.+): (\\w+)(?: (\\d+)/(\\d+))?$".r
-  private val Crashed = "(?s)^(.+) failed unexpectedly \\((\\S+)\\) — (.*)$".r
+  private val Crashed = "(?s)^(.+) failed unexpectedly \\((\\S+), problem (\\S+)\\) — (.*)$".r
   private val UnclassifiedText = "(?s)^unclassified: (.*)$".r
 
   private val Readers: List[String => Option[Problem]] = List(
@@ -225,8 +231,9 @@ object Column:
       case _ => None
     },
     {
-      case UnknownAt(at, t, raw, known) => Some(Invalid.Unknown(TypeName(s"$t"), Raw(s"$raw"), quotedListOf(known), pathOf(at)))
-      case _                            => None
+      case UnknownAt(at, t, raw, known) =>
+        Some(Invalid.Unknown(TypeName(s"$t"), Raw(s"$raw"), quotedListOf(known), pathOf(at)))
+      case _ => None
     },
     {
       case MissingAt(at, field) => Some(Invalid.Missing(Field(s"$field"), pathOf(at)))
@@ -235,7 +242,9 @@ object Column:
     {
       case OutOfRangeAt(at, t, raw, least, greatest) =>
         val bound = (b: String) => Option(b).filter(_.nonEmpty).map(v => Raw(s"$v"))
-        Some(Invalid.OutOfRange(TypeName(s"$t"), Raw(s"$raw"), Invalid.Bounds(bound(least), bound(greatest)), pathOf(at)))
+        Some(
+          Invalid.OutOfRange(TypeName(s"$t"), Raw(s"$raw"), Invalid.Bounds(bound(least), bound(greatest)), pathOf(at))
+        )
       case _ => None
     },
     {
@@ -265,7 +274,8 @@ object Column:
     },
     {
       case InState(t, key, is, wanted) =>
-        val states = if wanted.isEmpty then Vector.empty else wanted.split(" or ", -1).toVector.map(w => Conflict.State(s"$w"))
+        val states =
+          if wanted.isEmpty then Vector.empty else wanted.split(" or ", -1).toVector.map(w => Conflict.State(s"$w"))
         Some(Conflict.WrongState(TypeName(s"$t"), Raw(s"$key"), Conflict.State(s"$is"), states))
       case _ => None
     },
@@ -293,8 +303,9 @@ object Column:
       case _ => None
     },
     {
-      case SwitchedOff(feature, setting) => Some(Refused.Disabled(Refused.Feature(s"$feature"), SettingKey(s"$setting")))
-      case _                             => None
+      case SwitchedOff(feature, setting) =>
+        Some(Refused.Disabled(Refused.Feature(s"$feature"), SettingKey(s"$setting")))
+      case _ => None
     },
     {
       case Answered(name, status, url, body) =>
@@ -359,13 +370,16 @@ object Column:
       case _ => None
     },
     {
-      case DatabaseRefused(op, reported) => word(Io.DbOp.values.toSeq, op).map(Io.Database(_, External.Reported(s"$reported")))
-      case _                             => None
+      case DatabaseRefused(op, reported) =>
+        word(Io.DbOp.values.toSeq, op).map(Io.Database(_, External.Reported(s"$reported")))
+      case _ => None
     },
     {
       case WrongSetting(key, fault, argument) =>
         val arg = Option(argument)
-        val quoted = arg.filter(a => a.length >= 2 && a.startsWith("'") && a.endsWith("'")).map(a => Raw(s"${a.drop(1).dropRight(1)}"))
+        val quoted = arg
+          .filter(a => a.length >= 2 && a.startsWith("'") && a.endsWith("'"))
+          .map(a => Raw(s"${a.drop(1).dropRight(1)}"))
         val read: Option[Config.Fault] = (fault, arg) match
           case ("Unset", Some(v))     => Some(Config.Fault.Unset(SettingKey(s"$v")))
           case ("Malformed", Some(_)) => quoted.map(Config.Fault.Malformed(_))
@@ -381,8 +395,9 @@ object Column:
       case _                        => None
     },
     {
-      case ReloadFailed(stage, scope) => word(Config.Stage.values.toSeq, stage).map(Config.Reload(_, Config.Scope(s"$scope")))
-      case _                          => None
+      case ReloadFailed(stage, scope) =>
+        word(Config.Stage.values.toSeq, stage).map(Config.Reload(_, Config.Scope(s"$scope")))
+      case _ => None
     },
     {
       case NotLoaded(plugin, fault, reported) =>
@@ -400,7 +415,8 @@ object Column:
     {
       case VaultFailed(vault, failure, argument) =>
         val read: Option[Plugin.Retrieval] = (failure, Option(argument)) match
-          case ("TimedOut", Some(a)) if a.endsWith(" ms") => Millis.read(a.stripSuffix(" ms")).map(Plugin.Retrieval.TimedOut(_))
+          case ("TimedOut", Some(a)) if a.endsWith(" ms") =>
+            Millis.read(a.stripSuffix(" ms")).map(Plugin.Retrieval.TimedOut(_))
           case ("Failed", Some(a)) if a.startsWith("— ") =>
             Some(Plugin.Retrieval.Failed(External.Stderr(s"${a.stripPrefix("— ")}")))
           case (_, None) => word(VaultFailures, failure)
@@ -448,8 +464,9 @@ object Column:
       case _                    => None
     },
     {
-      case CannotGoOn(step, cause) => word(Problem.Run.AbortCause.values.toSeq, cause).map(Problem.Run.Aborted(Problem.Run.Step(s"$step"), _))
-      case _                       => None
+      case CannotGoOn(step, cause) =>
+        word(Problem.Run.AbortCause.values.toSeq, cause).map(Problem.Run.Aborted(Problem.Run.Step(s"$step"), _))
+      case _ => None
     },
     {
       case FindingOf(cause) => word(Content.Flaw.values.toSeq, cause).map(Content.Finding(_))
@@ -469,8 +486,15 @@ object Column:
       case _ => None
     },
     {
-      case Crashed(where, exception, reported) =>
-        Some(Internal.Unexpected(Where(s"$where"), Internal.ExceptionName(s"$exception"), External.Reported(s"$reported")))
+      case Crashed(where, exception, id, reported) =>
+        Some(
+          Internal.Unexpected(
+            Internal.Id(s"$id"),
+            Where(s"$where"),
+            Internal.ExceptionName(s"$exception"),
+            External.Reported(s"$reported")
+          )
+        )
       case _ => None
     },
     {

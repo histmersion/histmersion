@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 
 import com.histmersion.util.database.Transactor
@@ -38,7 +38,5 @@ object QueryService:
       try
         queries
           .readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
-          .left
-          .map(p => Problem(p.value))
-      catch case error: java.sql.SQLException => Left(Problem(QueryRepo.message(error).value))
+      catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
     def tables: List[SchemaTable] = schema.read(QueryRepo.tables)

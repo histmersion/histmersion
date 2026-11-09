@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.jobs.JobState
@@ -42,7 +42,7 @@ object MergeApplyRuns:
     def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id =
       Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
     def finish(id: Job.Id, outcome: Either[Problem, MergeApplyResult]): Unit =
-      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome.left.map(f => Problem(f.value))))
+      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome))
     def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
@@ -80,7 +80,7 @@ object MergeApplyRuns:
               bundle,
               plan,
               MergeApplyJob.ElapsedMs(0L),
-              Some(MergeApplyJob.Failure.Other(Problem(e.value))),
+              Some(MergeApplyJob.Failure.Other(e)),
               None
             )
       }

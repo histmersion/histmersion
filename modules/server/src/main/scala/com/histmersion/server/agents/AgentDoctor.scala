@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.*
@@ -83,7 +84,7 @@ final class AgentDoctor(
       val priced = models.map { m =>
         resolve(m) match
           case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
-          case Left(why)     => fail(s"model ${m.wire}", why.value)
+          case Left(why)     => fail(s"model ${m.wire}", why.sentence)
       }
       val off = registry
         .filterNot(_.contains(AgentDoctor.RegistryKey(k.wire.value)))
@@ -92,7 +93,7 @@ final class AgentDoctor(
             .lookup(k, scala.collection.immutable.ListMap.empty)
             .left
             .toOption
-            .map(_.value)
+            .map(_.sentence)
             .getOrElse("switched off")
         )
         .map(why => (if models.nonEmpty then fail else warn) ("plugin", why))
@@ -106,7 +107,7 @@ final class AgentDoctor(
       )
     } ++ plugins(chained, online.value)
     val roleChecks = chains.flatMap {
-      case (r, Left(m))                        => List(fail(s"role ${r.wire}", m.value))
+      case (r, Left(m))                        => List(fail(s"role ${r.wire}", m.sentence))
       case (r, Right((Nil, _))) if neededBy(r) =>
         List(warn(s"role ${r.wire}", s"no model — ${r.wire} steps are refused"))
       case _ => Nil
@@ -116,11 +117,11 @@ final class AgentDoctor(
        else warn("agents", "off (agents.enabled = false): nothing runs, settings can still be made")) ::
         Agents.Prices
           .parse(Agents.Prices.Wire(cfg.prices.value))
-          .fold(m => List(fail("prices", s"agents.prices: $m")), _ => Nil) ++
+          .fold(m => List(fail("prices", s"agents.prices: ${m.sentence}")), _ => Nil) ++
         allowanceProblems.map(fail("allowances", _)) ++
         allowances.collect {
           case e if e.allowance.isLeft =>
-            fail(s"allowance ${e.target}", e.allowance.left.toOption.map(_.value).getOrElse(""))
+            fail(s"allowance ${e.target}", e.allowance.left.toOption.map(_.sentence).getOrElse(""))
         } ++
         roleChecks
     DoctorReport(DoctorReport.Enabled(cfg.enabled.value), online, providers, global)
@@ -153,7 +154,7 @@ final class AgentDoctor(
           else
             safe[Either[String, List[String]]](
               "its model listing",
-              p.models(aiHttp).left.map(_.value).map(_.map(_.value)),
+              p.models(aiHttp).left.map(_.sentence).map(_.map(_.value)),
               why => Left(why)
             ) match
               case Left(why)  => (List((if models.nonEmpty then fail else warn) ("models listing", why)), Nil)
@@ -173,7 +174,7 @@ final class AgentDoctor(
         val priced = models.map { m =>
           resolve(m) match
             case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
-            case Left(why)     => fail(s"model ${m.wire}", why.value)
+            case Left(why)     => fail(s"model ${m.wire}", why.sentence)
         }
         ProviderDoctor(
           ProviderDoctor.Provider(name.value),
@@ -240,7 +241,10 @@ final class AgentDoctor(
             )
         listModels(HttpDownload.Url(endpoint), headers, cfg.doctorTimeoutSeconds) match
           case Left(why) =>
-            (List(key, urlCheck, (if used then fail else warn) ("models listing", s"GET $endpoint: ${why.value}")), Nil)
+            (
+              List(key, urlCheck, (if used then fail else warn) ("models listing", s"GET $endpoint: ${why.sentence}")),
+              Nil
+            )
           case Right(ids) =>
             val present = models.map { m =>
               if ids.contains(m.model) then ok(s"upstream ${m.wire}", "listed by the provider")
@@ -285,25 +289,26 @@ final class AgentDoctor(
     val version =
       runCommand(List(cmd(cc.command.value), cmd("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
         case (code, out) if code.value == 0 => Right(out.value)
-        case (code, out)                    => Left(Problem(s"exit ${code.value}: ${out.value.take(300)}"))
+        case (code, out) => Left(Problem.Unclassified(Legacy.Text(s"exit ${code.value}: ${out.value.take(300)}")))
       }
     val versionCheck = version.fold(
       why =>
         level(
           "executable",
-          s"'${cc.command} --version' failed: ${why.value} — install Claude Code or set " +
+          s"'${cc.command} --version' failed: ${why.sentence} — install Claude Code or set " +
             "agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path"
         ),
       v => ok("executable", s"${cc.command}: ${v.trim.linesIterator.nextOption().getOrElse("")}")
     )
     val auth = version.toOption.map { _ =>
       runCommand(List(cmd(cc.command.value), cmd("auth"), cmd("status")), childEnv, cfg.doctorTimeoutSeconds) match
-        case Left(why) => level("login", s"'claude auth status' failed: ${why.value} — log in with `claude` → /login")
+        case Left(why) =>
+          level("login", s"'claude auth status' failed: ${why.sentence} — log in with `claude` → /login")
         // exit 1 = not logged in; the JSON says so either way
         case Right((_, out)) =>
           AgentDoctor.login(out, cc.useApiKey) match
             case Right(d) => ok("login", d.value)
-            case Left(d)  => level("login", d.value)
+            case Left(d)  => level("login", d.sentence)
     }.toList
     val keyInEnv = Option
       .when(
@@ -367,7 +372,7 @@ final class AgentDoctor(
         ok("executable", s"${command.value}: ${out.value.trim.linesIterator.nextOption().getOrElse("")}")
       case Right((c, out)) =>
         level("executable", s"'${command.value} --version' exit ${c.value}: ${out.value.take(200)} — $hint")
-      case Left(why) => level("executable", s"'${command.value} --version' failed: ${why.value} — $hint")
+      case Left(why) => level("executable", s"'${command.value} --version' failed: ${why.sentence} — $hint")
 
   // ── codex, opencode ────────────────────────────────────────────────────────────────────────────
 
@@ -423,17 +428,24 @@ object AgentDoctor:
     */
   def login(json: Output, useApiKey: ClaudeCodeConfig.UseApiKey): Either[Problem, DoctorCheck.Detail] =
     parser.parse(json.value.trim).toOption.map(_.hcursor) match
-      case None    => Left(Problem(s"'claude auth status' did not answer JSON: ${json.value.take(200)}"))
+      case None =>
+        Left(Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${json.value.take(200)}")))
       case Some(c) =>
         val in = c.downField("loggedIn").as[Boolean].getOrElse(false)
         val method = c.downField("authMethod").as[String].getOrElse("unknown")
         val plan = c.downField("subscriptionType").as[String].toOption.filter(_.nonEmpty)
         if !in then
-          Left(Problem("not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)"))
+          Left(
+            Problem.Unclassified(
+              Legacy.Text("not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)")
+            )
+          )
         else if !useApiKey.value && (method == "api_key" || method == "api_key_helper") then
           Left(
-            Problem(
-              s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
+              )
             )
           )
         else Right(DoctorCheck.Detail(s"logged in ($method${plan.fold("")(p => s", plan $p")})"))
@@ -459,21 +471,26 @@ object AgentDoctor:
         }
         .build()
       val res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-      if res.statusCode() / 100 != 2 then Left(Problem(s"HTTP ${res.statusCode()}: ${res.body().take(200)}"))
+      if res.statusCode() / 100 != 2 then
+        Left(Problem.Unclassified(Legacy.Text(s"HTTP ${res.statusCode()}: ${res.body().take(200)}")))
       else modelIds(Output(res.body()))
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+          )
+        )
 
   /** `{"data":[{"id":…},…]}` → the ids. */
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
-    parser.parse(body.value).left.map(e => Problem(s"not JSON: ${e.getMessage}")).flatMap { j =>
+    parser.parse(body.value).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.getMessage}"))).flatMap { j =>
       j.hcursor
         .downField("data")
         .as[List[io.circe.Json]]
         .left
-        .map(_ => Problem("no data[] in the answer"))
+        .map(_ => Problem.Unclassified(Legacy.Text("no data[] in the answer")))
         .map(_.flatMap(_.hcursor.downField("id").as[String].toOption).map(ModelRef.Model(_)))
     }
 
@@ -498,9 +515,13 @@ object AgentDoctor:
       )
       if !p.waitFor(math.max(1, timeoutSeconds.value).toLong, TimeUnit.SECONDS) then
         p.destroyForcibly()
-        Left(Problem(s"no answer within ${timeoutSeconds.value} s"))
+        Left(Problem.Unclassified(Legacy.Text(s"no answer within ${timeoutSeconds.value} s")))
       else Right((ProcessResult.ExitCode(p.exitValue()), Output(out.get(5, TimeUnit.SECONDS))))
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+          )
+        )

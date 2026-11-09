@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
 
@@ -154,12 +155,16 @@ object AgentVerify:
   def status(s: com.histmersion.domain.library.Source.Status.Wire): Either[Problem, Source.Status] =
     Source.Status.values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
-      .toRight(Problem(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})"))
+      .toRight(
+        Problem.Unclassified(
+          Legacy.Text(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})")
+        )
+      )
 
   def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[Problem, Confidence] =
     Confidence
       .fromString(Confidence.Wire(s.value.trim))
-      .toRight(Problem(s"'$s' is not a confidence (one of: high, medium, low, contested)"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not a confidence (one of: high, medium, low, contested)")))
 
   /** `[[x]]` targets in a text. */
   def wikilinks(text: Text): List[Wikilink] =
@@ -174,13 +179,15 @@ object AgentVerify:
     */
   def linkProblems(text: LinkProblemsText, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): List[Problem] =
     val escaped =
-      Option.when(text.value.contains("\\[\\["))(Problem("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
+      Option.when(text.value.contains("\\[\\["))(
+        Problem.Unclassified(Legacy.Text("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
+      )
     val dangling = wikilinks(text)
       .filterNot(t =>
         Citekey.option(t.value).exists(isCitekey) ||
           Slug.option(t.value).exists(isSlug)
       )
-      .map(t => Problem(s"[[$t]] is neither a citekey nor an article"))
+      .map(t => Problem.Unclassified(Legacy.Text(s"[[$t]] is neither a citekey nor an article")))
     escaped.toList ++ dangling
 
   // ── years and periods ────────────────────────────────────────────────────────────────────────
@@ -211,15 +218,20 @@ object AgentVerify:
     * and a guess would sit on the map as if it were a date.
     */
   def toSignedYear(value: ToSignedYearValue, unit: YearUnit): Either[Problem, SignedYear] = unit match
-    case YearUnit.BCE if value.value <= 0 => Left(Problem(s"$value BCE: a BCE year is a positive number"))
-    case YearUnit.CE if value.value <= 0  =>
-      Left(Problem(s"$value CE: there is no year 0 (or a negative CE year); use BCE"))
+    case YearUnit.BCE if value.value <= 0 =>
+      Left(Problem.Unclassified(Legacy.Text(s"$value BCE: a BCE year is a positive number")))
+    case YearUnit.CE if value.value <= 0 =>
+      Left(Problem.Unclassified(Legacy.Text(s"$value CE: there is no year 0 (or a negative CE year); use BCE")))
     case YearUnit.BCE   => Right(SignedYear(-value.value))
     case YearUnit.CE    => Right(SignedYear(value.value))
     case YearUnit.CalBP =>
       Right(SignedYear(Years.fromAstronomical(Years.Astronomical(1950L - value.value)).value))
     case YearUnit.BP =>
-      Left(Problem(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year")
+        )
+      )
 
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond `maxAbsYear`, and — when the
     * source has a period of its own — a finding outside it.
@@ -231,14 +243,16 @@ object AgentVerify:
       within: Option[Period] = None
   ): List[Problem] =
     List(
-      Option.when(start.value > end.value)(Problem(s"starts ($start) after it ends ($end)")),
-      Option.when(start.value == 0 || end.value == 0)(Problem("year 0 does not exist (1 BCE is -1, 1 CE is 1)")),
+      Option.when(start.value > end.value)(Problem.Unclassified(Legacy.Text(s"starts ($start) after it ends ($end)"))),
+      Option.when(start.value == 0 || end.value == 0)(
+        Problem.Unclassified(Legacy.Text("year 0 does not exist (1 BCE is -1, 1 CE is 1)"))
+      ),
       Option.when(math.abs(start.value) > maxAbsYear.value || math.abs(end.value) > maxAbsYear.value)(
-        Problem(s"a year beyond ±$maxAbsYear")
+        Problem.Unclassified(Legacy.Text(s"a year beyond ±$maxAbsYear"))
       ),
       within.flatMap(p =>
         Option.when(start.value < p.start.value || end.value > p.end.value)(
-          Problem(s"$start..$end lies outside the source's own period ${p.start}..${p.end}")
+          Problem.Unclassified(Legacy.Text(s"$start..$end lies outside the source's own period ${p.start}..${p.end}"))
         )
       )
     ).flatten

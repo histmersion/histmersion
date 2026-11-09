@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.BBox
 import com.histmersion.config.*
@@ -255,7 +255,7 @@ object BasemapLabels:
       .downField("features")
       .focus
       .flatMap(_.asArray)
-      .toRight(Problem(s"$file is not a GeoJSON FeatureCollection"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"$file is not a GeoJSON FeatureCollection")))
       .map(_.toList.flatMap(label))
 
   /** Does the label touch `b` (grown by `margin` degrees)? Pure. */

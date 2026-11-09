@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.{Palette, Wording}
 import com.histmersion.web.ui.{GraphLayout as GL, ThemeTokens}
@@ -72,13 +73,13 @@ object GraphPanel:
               UiLabels.Text(s"Citation graph · ${t.value}")
             )
           )
-      case scala.util.Failure(e) => state.set(Load.Failed(Problem(e.getMessage)))
+      case scala.util.Failure(e) => state.set(Load.Failed(Problem.Unclassified(Legacy.Text(e.getMessage))))
     }
     div(
       cls := "graph-panel",
       child <-- state.signal.map {
         case Load.Loading                      => div(cls := "graph-loading", "loading graph…")
-        case Load.Failed(m)                    => div(cls := "graph-empty", s"could not load the graph: $m")
+        case Load.Failed(m)                    => div(cls := "graph-empty", s"could not load the graph: ${m.sentence}")
         case Load.Loaded(g) if g.links.isEmpty =>
           div(cls := "graph-empty", "no citation edges between stored sources for this source")
         case Load.Loaded(g) =>

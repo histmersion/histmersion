@@ -58,7 +58,10 @@ class AccumulationSuite extends munit.FunSuite:
 
   test("traverseAll gives all values, or every failure and not just the first"):
     assertEquals(List(1, 2, 3).traverseAll(check), Right(Vector(1, 2, 3)))
-    assertEquals(List(1, 0, 3, -1).traverseAll(check).left.map(_.toVector), Left(Vector(Invalid.Missing(Field("n0")), Invalid.Missing(Field("n-1")))))
+    assertEquals(
+      List(1, 0, 3, -1).traverseAll(check).left.map(_.toVector),
+      Left(Vector(Invalid.Missing(Field("n0")), Invalid.Missing(Field("n-1"))))
+    )
     assertEquals(List(1, 0).traverseAll(check), Left(Invalid.Missing(Field("n0"))), "one failure stays one problem")
     assertEquals(List.empty[Int].traverseAll(check), Right(Vector.empty))
 

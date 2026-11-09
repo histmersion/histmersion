@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Period, Year}
 import com.histmersion.api.catalogue.RegionNode
@@ -185,7 +185,7 @@ object PlaceService:
       db.transact(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), toleranceKm))
     def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
       db.transact(
-        PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason.map(r => Problem(r.value)))
+        PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason)
       )
 
   /** The places as a database holding only the catalogue's rows answers: no finding is stored, so none is matched to a
@@ -201,9 +201,9 @@ object PlaceService:
     private def parentIs(r: Place.Relation, id: Place.Id): Boolean = r.parentId.value == id.value
     private def parentOf(r: Place.Relation): Place.Id = Place.Id(r.parentId.value)
     private def notFound(id: String): Api.Error =
-      Api.Error(Problem(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
     private def invalid(message: String): Api.Error =
-      Api.Error(Problem(message), Some(Api.Error.Code(Write.CodeInvalid)))
+      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def count(): RowCount = RowCount(places.size)
 
@@ -526,8 +526,10 @@ object PlaceService:
           val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
           Left(
             Api.Error(
-              Problem(
-                s"'${p.place.label}' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"'${p.place.label}' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
+                )
               ),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
@@ -588,7 +590,7 @@ object PlaceService:
         )
       else
         val _ = importPlaces(List(in), Dataset.Local)
-        find(id).map(_.summary).toRight(Api.Error(Problem(s"place '$id' was not stored")))
+        find(id).map(_.summary).toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"place '$id' was not stored"))))
 
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       state.get.placeOverrides
@@ -605,7 +607,7 @@ object PlaceService:
               period.map(_.start),
               period.map(_.end),
               Place.Override.PeriodSet(o.period.isDefined),
-              o.reason.map(r => Problem(r.value)),
+              o.reason,
               Place.Override.SourceKind(o.sourceKind.value),
               o.sourcePeriod.map(_.start),
               o.sourcePeriod.map(_.end),
@@ -628,7 +630,9 @@ object PlaceService:
             had
               .toRight(
                 Api.Error(
-                  Problem(s"'${before.place.label}' [$id] has no kind, period or point set by hand"),
+                  Problem.Unclassified(
+                    Legacy.Text(s"'${before.place.label}' [$id] has no kind, period or point set by hand")
+                  ),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
@@ -667,7 +671,7 @@ object PlaceService:
                   .modify(_.period)
                   .using(p => merged.orElse(p))
                   .modify(_.reason)
-                  .using(r => reason.map(x => domain.Problem(x.value)).orElse(r))
+                  .using(r => reason.orElse(r))
                   .modify(_.updatedAt)
                   .setTo(now)
               )

@@ -1,6 +1,7 @@
 package com.histmersion
 package web.marks
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.personal.{Bookmark, Target}
 import com.histmersion.api.ItemKind
@@ -43,7 +44,7 @@ object PeriodMarks:
         .onComplete(r =>
           Flash.say(
             r.fold(
-              e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e)}"),
+              e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e).sentence}"),
               _ => Flash.Text(s"The timeline opens on ${Fmt.periodStr(from, to)} from the next visit on.")
             )
           )

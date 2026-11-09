@@ -1,7 +1,6 @@
 package com.histmersion
 package api.maintenance
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.Write
 import com.histmersion.api.backup.Backup
@@ -26,7 +25,8 @@ object Vacuum:
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
-  private def invalid(msg: String) = Api.Error(Problem(msg), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(msg: String) =
+    Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
 
   def plan(in: Request, defaults: List[Table], existing: Set[Table]): Either[Api.Error, VacuumPlan] =
     val asked =

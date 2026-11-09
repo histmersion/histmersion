@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -304,7 +305,7 @@ object JobsView:
           )
         ),
         j.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
-        j.error.filter(_.value.nonEmpty).map(e => div(cls := "job-error", e.value)),
+        j.error.filter(_.sentence.nonEmpty).map(e => div(cls := "job-error", e.sentence)),
         skippedLine(j).map(l =>
           div(
             cls := "job-skipped muted",

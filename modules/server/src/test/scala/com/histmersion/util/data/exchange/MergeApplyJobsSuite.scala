@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.Sha256
@@ -32,7 +33,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("done within the wait: the answer is its report"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start(sha('b'), plan('a'))(() => Right(result)).fold(e => fail(e.message.value), identity)
+    val j = jobs.start(sha('b'), plan('a'))(() => Right(result)).fold(e => fail(e.message.sentence), identity)
     assertEquals(j.state, MergeJobState.Done)
     assertEquals(j.result, Some(result))
     assertEquals(status(jobs, j.job).map(_.state), Some(MergeJobState.Done))
@@ -43,23 +44,25 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     val j = jobs
       .start(sha('b'), plan('a')) { () =>
         release.await()
-        Left(Problem("nothing to apply"))
+        Left(Problem.Unclassified(Legacy.Text("nothing to apply")))
       }
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(j.state, MergeJobState.Running)
-    assert(jobs.start(sha('c'), plan('d'))(() => Right(result)).left.exists(_.message.value.contains("still running")))
+    assert(
+      jobs.start(sha('c'), plan('d'))(() => Right(result)).left.exists(_.message.sentence.contains("still running"))
+    )
     release.countDown()
     val ended = Iterator
       .continually { Thread.sleep(10); status(jobs, j.job) }
       .take(500)
       .find(_.exists(_.state != MergeJobState.Running))
-    assertEquals(ended.flatten.flatMap(_.error), Some("nothing to apply"))
+    assertEquals(ended.flatten.flatMap(_.error).map(_.sentence), Some("nothing to apply"))
 
   test("a run that throws ends failed, with why"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
     val j = jobs
       .start(sha('b'), plan('a'))(() => throw IllegalStateException("boom"))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(j.state, MergeJobState.Failed)
-    assert(j.error.exists(_.value.contains("boom")), j.toString)
+    assert(j.error.exists(_.sentence.contains("boom")), j.toString)
     assertEquals(jobs.status(Job.Id.applyUnsafe(UUID.randomUUID().toString)), None)

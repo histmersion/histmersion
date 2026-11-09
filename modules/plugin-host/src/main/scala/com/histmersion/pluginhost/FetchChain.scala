@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
 import scala.collection.immutable.ListMap
@@ -57,23 +58,24 @@ final class FetchChain(
     tried.collectFirst { case (id, Fetch.Found(f)) => id -> f } match
       case Some((id, f)) => FetchChain.Outcome(Right(f), Nil, Some(FetchChain.Outcome.FoundBy(id.value)))
       case None          =>
-        val refused = tried.collect { case (id, Fetch.Refused(why)) => s"${id.value}: ${why.value}" }.toList
+        val refused = tried.collect { case (id, Fetch.Refused(why)) => s"${id.value}: ${why.sentence}" }.toList
         FetchChain.Outcome(
           Left(
-            Problem(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))
+            Problem.Unclassified(Legacy.Text(FetchChain.NoCopy + (if refused.isEmpty then ""
+                                                                  else refused.mkString(" (", "; ", ")"))))
           ),
           tried.toList.collect {
             case (id, Fetch.Miss(why)) =>
               FetchChain.Answer(
                 FetchChain.Answer.Fetcher(id.value),
                 FetchChain.Answer.Kind.Miss,
-                Problem(why.value)
+                why
               )
             case (id, Fetch.Refused(why)) =>
               FetchChain.Answer(
                 FetchChain.Answer.Fetcher(id.value),
                 FetchChain.Answer.Kind.Refused,
-                Problem(why.value)
+                why
               )
           }
         )
@@ -101,7 +103,9 @@ final class FetchChain(
       try s.fetcher.fetch(work, ctx)
       catch
         case NonFatal(e) =>
-          Fetch.Miss(plugin.Problem(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          Fetch.Miss(
+            Problem.Unclassified(Legacy.Text(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          )
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -109,12 +113,12 @@ final class FetchChain(
             s"acquire: ${s.id.value}: ${f.url.map(_.value).getOrElse("its copy")} is ${f.bytes.value.length} bytes that are not a PDF — no copy"
           )
         )
-        Fetch.Miss(plugin.Problem("not a PDF"))
+        Fetch.Miss(Problem.Unclassified(Legacy.Text("not a PDF")))
       case Fetch.Refused(why) =>
-        log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.value}"))
+        log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.sentence}"))
         answer
       case Fetch.Miss(why) =>
-        log.info(HostLog.Line(s"acquire: ${s.id.value}: no copy — ${why.value}"))
+        log.info(HostLog.Line(s"acquire: ${s.id.value}: no copy — ${why.sentence}"))
         answer
       case other => other
 
@@ -140,7 +144,7 @@ object FetchChain:
   /** What one fetcher that ran answered, when it had no copy. */
   final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Problem):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
-    def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.value}")
+    def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.sentence}")
   object Answer:
     type Line = Line.T
     object Line extends Newtype[String, Pure]
@@ -195,9 +199,11 @@ object FetchChain:
     val off = ids
       .filter(id => registered(id).access == Access.Unauthorised && !allowUnauthorised.value)
       .map(id =>
-        Problem(
-          s"acquire: ${id.value} obtains copies without the rights holder's authorisation and stays off " +
-            "(acquire.allow-unauthorised = false)"
+        Problem.Unclassified(
+          Legacy.Text(
+            s"acquire: ${id.value} obtains copies without the rights holder's authorisation and stays off " +
+              "(acquire.allow-unauthorised = false)"
+          )
         )
       )
     val known: Set[String] = plugins.map(_.value)
@@ -223,9 +229,11 @@ object FetchChain:
       case Nil     => Nil
       case missing =>
         List(
-          Problem(
-            s"acquire.chain names ${missing.map(id => s"'${id.value}'").mkString(", ")}, which no " +
-              "enabled plugin registered — skipped"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"acquire.chain names ${missing.map(id => s"'${id.value}'").mkString(", ")}, which no " +
+                "enabled plugin registered — skipped"
+            )
           )
         )
     (listed.filter(registered.contains) ++ registered.filterNot(listed.contains), notes)

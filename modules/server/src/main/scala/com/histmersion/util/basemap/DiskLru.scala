@@ -1,6 +1,7 @@
 package com.histmersion
 package util.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.ByteCount
 import com.histmersion.util.storage.{ByteSource, Store}
 
@@ -29,7 +30,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
     Store.Key.applyUnsafe(key + (if absent then ".none" else s".$ext"))
 
   private def done(written: Either[Store.Error, ?]): Unit =
-    written.left.foreach(e => throw IOException(e.message.value))
+    written.left.foreach(e => throw IOException(e.message.sentence))
 
   private def load(): Unit = if !loaded then
     loaded = true

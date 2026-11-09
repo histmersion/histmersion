@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.media
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `media-aic`: `histmersion media import aic` — The Art Institute of Chicago's public-domain works. */
 import com.histmersion.plugin.Plugin

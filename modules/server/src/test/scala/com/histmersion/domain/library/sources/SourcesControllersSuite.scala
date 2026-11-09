@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -59,7 +60,7 @@ class SourcesControllersSuite extends munit.FunSuite:
         )
       else (text, Nil)
     def refusal(issues: List[FormatIssue]): Option[Problem] =
-      Option.when(issues.nonEmpty)(Problem("refused (strict)"))
+      Option.when(issues.nonEmpty)(Problem.Unclassified(Legacy.Text("refused (strict)")))
 
   private val removed = AtomicReference(List.empty[SourceOriginals.RemoveFiles])
   private val originals = new SourceOriginals:
@@ -117,7 +118,11 @@ class SourcesControllersSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true)).left.map(_.message),
+      c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true))
+        .left
+        .map(_.message)
+        .left
+        .map(_.sentence),
       Left("refused (strict)")
     )
     val written = c.put(Walls90, put.modify(_.notes).setTo(Div)).toOption.get
@@ -150,7 +155,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
         .left
-        .exists(_.message.value.startsWith("unknown section"))
+        .exists(_.message.sentence.startsWith("unknown section"))
     )
     assertEquals(
       c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))
@@ -177,7 +182,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assertEquals(c.get(Walls90).isRight, true)
     val gone = c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).toOption.get
     assertEquals((gone.applied, gone.filesFailed, removed.get), (true, Nil, List("/spool/zqa1990_walls.pdf")))
-    assertEquals(c.get(Walls90).left.map(_.message), Left("No source 'zqa1990_walls'"))
+    assertEquals(c.get(Walls90).left.map(_.message).left.map(_.sentence), Left("No source 'zqa1990_walls'"))
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
@@ -195,4 +200,4 @@ class SourcesControllersSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(held.fold(e => fail(e.message.value), identity), List.fill(6)(true))
+    assertEquals(held.fold(e => fail(e.message.sentence), identity), List.fill(6)(true))

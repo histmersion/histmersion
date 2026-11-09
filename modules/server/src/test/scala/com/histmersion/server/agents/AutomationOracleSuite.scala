@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentRuntime, AgentTrees, Prompts}
@@ -53,7 +54,7 @@ class AutomationOracleSuite extends munit.FunSuite:
     val out = Files.createTempDirectory("histmersion-agent-trees")
     val trees = AgentTrees(loaded.config, defs)
     val known = Generated.known(defs)
-    val res = trees.generate(known, AgentRuntime.Generated, Some(out)).fold(m => fail(m.value), identity)
+    val res = trees.generate(known, AgentRuntime.Generated, Some(out)).fold(m => fail(m.sentence), identity)
     val walk = Files.walk(out)
     val paths =
       try walk.iterator.asScala.toList.filter(p => p != out).sortBy(p => out.relativize(p).toString)

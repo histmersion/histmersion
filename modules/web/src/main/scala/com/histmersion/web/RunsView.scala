@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
@@ -261,7 +262,7 @@ object RunsView:
         s.modelText,
         s"${s.usage.input}/${s.usage.output}",
         AgentsMarkdown.usd(s.costUsd.value),
-        (s.error.toList.map(_.value) ++ s.wouldWrite.map(w => s"${AgentsMarkdown.DryRunNote}: ${w.what}"))
+        (s.error.toList.map(_.sentence) ++ s.wouldWrite.map(w => s"${AgentsMarkdown.DryRunNote}: ${w.what}"))
           .mkString("; ")
       ).map(Text(_))
     )
@@ -493,7 +494,7 @@ object RunsView:
           Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" · $o"))
         ),
         r.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
-        r.error.filter(_.value.nonEmpty).map(e => div(cls := "job-error", e.value)),
+        r.error.filter(_.sentence.nonEmpty).map(e => div(cls := "job-error", e.sentence)),
         Option.when(r.warnings.nonEmpty)(
           div(
             cls := "run-warn-count muted",
@@ -543,7 +544,7 @@ object RunsView:
         )
         .onComplete { r =>
           busy.set(false)
-          r.failed.foreach(e => run.failure.set(Some(Problem(e.getMessage))))
+          r.failed.foreach(e => run.failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage)))))
           if r.isSuccess then raise.set("")
           refresh(changed = Poll.DataChanged(true))
         }
@@ -551,7 +552,7 @@ object RunsView:
     div(
       cls := "tool-pane run-pane",
       run.lifecycle,
-      ErrorLine(run.failure.signal.map(_.map(m => Problem(m.value)))),
+      ErrorLine(run.failure.signal),
       child <-- run.item.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
@@ -600,8 +601,8 @@ object RunsView:
         )
       ),
       r.error
-        .filter(e => e.value.nonEmpty && pausedFor(r).isEmpty)
-        .map(e => p(cls := "job-error", e.value)),
+        .filter(e => e.sentence.nonEmpty && pausedFor(r).isEmpty)
+        .map(e => p(cls := "job-error", e.sentence)),
       r.progress.filter(_.value.nonEmpty).map(pr => p(cls := "job-progress", pr.value)),
       dl(
         cls := "run-facts",

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -124,11 +125,11 @@ class PlacesSuite extends munit.FunSuite:
         |  "geometry":null}]}""".stripMargin
     )
     all.foreach { doc =>
-      val parsed = Lpf.parse(doc).fold(e => fail(e.value), identity)
+      val parsed = Lpf.parse(doc).fold(e => fail(e.sentence), identity)
       assertEquals(Lpf.parse(Lpf.render(parsed).value), Right(parsed))
       // and idempotent: rendering the reparse gives byte-identical text
       assertEquals(
-        Lpf.render(Lpf.parse(Lpf.render(parsed).value).fold(e => fail(e.value), identity)),
+        Lpf.render(Lpf.parse(Lpf.render(parsed).value).fold(e => fail(e.sentence), identity)),
         Lpf.render(parsed)
       )
     }
@@ -189,7 +190,7 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(p.names.map(_.name), List("Anatolia", "Asia Minor"))
 
   test("the traced polygons round-trip through LPF too"):
-    val parsed = Lpf.parse(tracedPolity).fold(e => fail(e.value), identity)
+    val parsed = Lpf.parse(tracedPolity).fold(e => fail(e.sentence), identity)
     assertEquals(Lpf.parse(Lpf.render(parsed).value), Right(parsed))
 
   test("PlaceKind.parse maps foreign vocabularies onto the four kinds"):

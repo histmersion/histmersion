@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{CheckLevel, DoctorReport, ModelsInfo}
 import com.histmersion.api.automation.ModelChains.*
@@ -29,7 +30,7 @@ object ModelsView:
   def limitsInput(s: String): Either[String, List[LimitSpec]] =
     s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(t => Limit.parse(Limit.Spec(t))).partitionMap(identity) match
       case (Nil, ls) => Right(ls.map(_.spec))
-      case (errs, _) => Left(errs.map(_.value).mkString("; "))
+      case (errs, _) => Left(errs.map(_.sentence).mkString("; "))
 
   /** A reserve as typed: 0..99, blank = 0. */
   def reserveInput(s: String): Either[String, AllowanceSet.ReservePct] =
@@ -196,13 +197,15 @@ object ModelsView:
                   pl.planType.fold("")(t => s" · plan $t")
               ),
               if !pl.available.value then
-                span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
+                span(cls := "run-paused", s" · ${pl.reason.map(_.sentence).getOrElse("unavailable: no login")}")
               else if pl.held.value then span(cls := "run-paused", " · held")
-              else if pl.usable.value then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
+              else if pl.usable.value then
+                span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable (${r.sentence})"))
               else
                 span(
                   cls := "run-paused",
-                  s" · paused: ${pl.reason.getOrElse("below its floor")}${pl.until.fold("")(u => s" until $u")}"
+                  s" · paused: ${pl.reason.map(_.sentence).getOrElse("below its floor")}${pl.until
+                      .fold("")(u => s" until $u")}"
                 )
               ,
               child <-- Auth.writable.map(w =>
@@ -291,7 +294,7 @@ object ModelsView:
     tr(
       td(c.role.value),
       td(
-        if c.models.isEmpty then span(cls := "muted", c.problem.map(_.value).getOrElse("no model"))
+        if c.models.isEmpty then span(cls := "muted", c.problem.map(_.sentence).getOrElse("no model"))
         else
           span(
             cls := "chain",

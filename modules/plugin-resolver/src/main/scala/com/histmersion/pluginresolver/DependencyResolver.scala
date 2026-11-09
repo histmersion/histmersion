@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -54,7 +55,7 @@ object DependencyResolver:
   def run(args: List[DependencyResolver.RunArgs])(using console: Console): DependencyResolver.RunResult = args match
     case refactorPattern :: rest if (refactorPattern.value == "resolve") =>
       parse(rest) match
-        case Left(e)  => console.errorLine(s"$e\n$Usage"); DependencyResolver.RunResult(1)
+        case Left(e)  => console.errorLine(s"${e.legacyText}\n$Usage"); DependencyResolver.RunResult(1)
         case Right(r) => resolve(r)(using console)
     case _ => console.errorLine(Usage); DependencyResolver.RunResult(1)
 
@@ -74,25 +75,32 @@ object DependencyResolver:
       case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo") =>
         RepositoryUrl.fromArgument(Resolver.Argument((r).value)) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
-          case Left(e)    => Left(Problem(s"--repo '$r': $e"))
+          case Left(e)    => Left(Problem.Unclassified(Legacy.Text(s"--repo '$r': ${e.legacyText}")))
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
         loop(t, acc.copy(check = ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") =>
-        Left(Problem.unknownOption(flag))
+        Left(Problem.Unclassified(Legacy.Text(s"unknown option $flag")))
       case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil))
-      .filterOrElse(r => r.kit != empty && r.lib != empty, Problem("--kit and --lib are required"))
+      .filterOrElse(
+        r => r.kit != empty && r.lib != empty,
+        Problem.Unclassified(Legacy.Text("--kit and --lib are required"))
+      )
 
   def resolve(r: ResolveRequest)(using console: Console): DependencyResolver.ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
       missing = r.jars.filterNot(Files.isRegularFile(_))
-      _ <- Either.cond(missing.isEmpty, (), Problem(s"no such plugin jar: ${missing.mkString(", ")}"))
+      _ <- Either.cond(
+        missing.isEmpty,
+        (),
+        Problem.Unclassified(Legacy.Text(s"no such plugin jar: ${missing.mkString(", ")}"))
+      )
     yield (server, stored)
     outcome match
-      case Left(e)                 => console.errorLine((e).value); DependencyResolver.ResolveResult(3)
+      case Left(e)                 => console.errorLine((e).legacyText); DependencyResolver.ResolveResult(3)
       case Right((server, stored)) =>
         val named = (r.repositories ++ stored).distinct
         val remote = if named.nonEmpty then named else List(Coursier.central)
@@ -100,7 +108,7 @@ object DependencyResolver:
         val scratch = Files.createTempDirectory("histmersion-plugin-resolve")
         try
           Coursier.pluginRepository(scratch, plugins) match
-            case Left(e)      => console.errorLine(s"refused: $e"); DependencyResolver.ResolveResult(2)
+            case Left(e)      => console.errorLine(s"refused: ${e.legacyText}"); DependencyResolver.ResolveResult(2)
             case Right(roots) =>
               val local =
                 (Some(scratch) ++ r.histmersionRepo).map(d => RepositoryUrl.applyUnsafe(d.toUri.toString)).toList
@@ -130,22 +138,22 @@ object DependencyResolver:
       coursier
         .resolve(List(c), server.excluded)
         .left
-        .map(e => Problem(s"${plugin.fileName}: $e"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"${plugin.fileName}: ${e.legacyText}")))
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
       case Left(e) =>
-        console.errorLine(s"could not resolve the plugins' dependencies: $e");
+        console.errorLine(s"could not resolve the plugins' dependencies: ${e.legacyText}");
         Left(Resolver.ExitCode(3))
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
-            conflicts.foreach(c => console.errorLine(s"refused: ${c.message}"))
+            conflicts.foreach(c => console.errorLine(s"refused: ${c.message.legacyText}"))
             Left(Resolver.ExitCode(2))
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match
               case Left(e) =>
-                console.errorLine(s"could not resolve the plugins' dependencies: $e");
+                console.errorLine(s"could not resolve the plugins' dependencies: ${e.legacyText}");
                 Left(Resolver.ExitCode(3))
               case Right(joint) =>
                 val deps = Resolution.dependencies(joint, pluginKeys, server, Resolution.neededBy(perPlugin))
@@ -156,7 +164,12 @@ object DependencyResolver:
   private def serverModules(kit: Path): Either[Problem, ServerModules] =
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
-    if !Files.isRegularFile(modules) then Left(Problem.noModuleList(modules))
+    if !Files.isRegularFile(modules) then
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"no module list in the kit ($modules): this kit predates plugin dependencies")
+        )
+      )
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
       ServerModules
@@ -165,7 +178,7 @@ object DependencyResolver:
           (lines(excludes)).map(refactorValue2 => Resolver.ManifestLine(refactorValue2))
         )
         .left
-        .map(e => Problem(s"$modules: $e"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"$modules: ${e.legacyText}")))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
   private def inputs(

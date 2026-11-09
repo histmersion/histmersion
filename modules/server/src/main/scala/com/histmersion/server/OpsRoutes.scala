@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 import com.histmersion.api.{Api, OpsApi, Write}
@@ -20,7 +20,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 object OpsRoutes:
 
   private def refused(what: String, raw: String): Api.Error =
-    Api.Error(Problem(s"invalid $what '$raw'"), Some(Api.Error.Code(Write.CodeInvalid)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what '$raw'")), Some(Api.Error.Code(Write.CodeInvalid)))
 
   private def scoped[A](raw: Option[Queue.Wire], what: String)(
       either: String => Either[String, A]

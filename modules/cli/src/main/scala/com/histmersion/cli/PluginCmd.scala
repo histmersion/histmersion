@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -36,9 +36,11 @@ object PluginCmd:
     if !PluginKit.isLoopback(c.serverUrl.value) then
       Left(
         Cli.Error(
-          Problem(
-            s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
-              "run the command on the machine the server runs on"
+          Problem.Unclassified(
+            Legacy.Text(
+              s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
+                "run the command on the machine the server runs on"
+            )
           ),
           exitCode = ExitCode.Usage
         )
@@ -70,7 +72,7 @@ object PluginCmd:
       val repos = repoArgs
         .traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
         .left
-        .map(e => Cli.Error(Problem(e), exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage))
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops
           .add(
@@ -202,7 +204,7 @@ object PluginCmd:
           Either.cond(
             Files.isRegularFile(src),
             Cli.out.println(src),
-            Cli.Error(Problem(s"no sources jar beside $jar"), exitCode = ExitCode.Refused)
+            Cli.Error(Problem.Unclassified(Legacy.Text(s"no sources jar beside $jar")), exitCode = ExitCode.Refused)
           )
       }
     }
@@ -232,25 +234,26 @@ object PluginCmd:
         kind <- PluginKind.parse(rawKind)
         pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName.value))
       yield (id, kind, pkg)
-      result.left.map(e => Cli.Error(Problem(e), exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
-        val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
-        for
-          (repo, copied) <- PluginAuthoring.repository(
-            repoArg,
-            install,
-            PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
-          )
-          written <- PluginAuthoring.write(
-            target,
-            PluginTemplate
-              .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
-          )
-        yield
-          if copied.nonEmpty then
-            Cli.out.println(
-              s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
+      result.left.map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage)).flatMap {
+        (id, kind, pkg) =>
+          val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
+          for
+            (repo, copied) <- PluginAuthoring.repository(
+              repoArg,
+              install,
+              PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
             )
-          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(value => Cli.out.println(value))
+            written <- PluginAuthoring.write(
+              target,
+              PluginTemplate
+                .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
+            )
+          yield
+            if copied.nonEmpty then
+              Cli.out.println(
+                s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
+              )
+            PluginAuthoring.nextSteps(target, id, pkg, written).foreach(value => Cli.out.println(value))
       }
     }
   }

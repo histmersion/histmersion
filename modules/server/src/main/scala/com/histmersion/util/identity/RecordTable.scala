@@ -1,7 +1,7 @@
 package com.histmersion
 package util.identity
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid, RecordState}
 import com.histmersion.util.database.NewtypeColumns.given
@@ -118,7 +118,7 @@ final case class RecordTable(
     byKeys(List(k)).headOption
       .map((_, u, _) => ItemRef(kind, k, u))
       .orElse(byAliases(List(k)).get(k).map((_, u, _) => ItemRef(kind, k, u)))
-      .toRight(Problem(s"no ${kind.value} '${k.value}'"))
+      .toRight(Problem.Unclassified(Legacy.Text(s"no ${kind.value} '${k.value}'")))
 
   def describe(refs: Set[ItemRef])(using DbCon): Map[ItemRef, Described] =
     val (withUid, withoutUid) = refs.filter(_.kind == kind).partition(_.uid.isDefined)

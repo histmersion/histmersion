@@ -1,7 +1,8 @@
 package com.histmersion
 package web.library
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.YearFmt
 import com.histmersion.web.*
 import com.histmersion.web.map.{GeoBounds, TheMap}
@@ -201,8 +202,9 @@ object ReadingPane:
           case _              => row.fold(p(cls := "muted", "Loading…"))(h => head(ReadingHead.of(h)))
         },
         child <-- reading.signal.map {
-          case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(Problem(s"Could not read this source: $m"))
+          case None          => emptyNode
+          case Some(Left(m)) =>
+            ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read this source: ${m.sentence}")))
           case Some(Right(r)) =>
             div(findings(ck, r.source.findings), NoteList.on(ref0), sourceLinks(ck, r.counts))
         }
@@ -302,8 +304,9 @@ object ReadingPane:
           case _              => row.fold(p(cls := "muted", "Loading…"))(a => head(ReadingHead.of(a)))
         },
         child <-- reading.signal.map {
-          case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(Problem(s"Could not read this article: $m"))
+          case None          => emptyNode
+          case Some(Left(m)) =>
+            ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not read this article: ${m.sentence}")))
           case Some(Right(v)) =>
             div(
               NoteList.on(ref0),
@@ -331,4 +334,4 @@ object ReadingPane:
       )
 
   private def message(e: Throwable): Problem =
-    Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))
+    Problem.Unclassified(Legacy.Text(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)))

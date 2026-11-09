@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.UpstreamQuota
 
@@ -281,7 +282,7 @@ object CoreQuota:
       UpstreamQuota.SearchDailyTokens(limits.searchDailyTokens.value),
       UpstreamQuota.PerMinute(limits.perMinute.value),
       b.map(x => UpstreamQuota.BlockedUntil(x.until.toString)),
-      b.map(x => api.Problem(x.why.value)),
+      b.map(x => Problem.Unclassified(Legacy.Text(x.why.value))),
       s.window.flatMap(_.limit).map(l => UpstreamQuota.RateLimit(l.value)),
       s.window.flatMap(_.remaining).map(m => UpstreamQuota.RateRemaining(m.value)),
       s.window.map(w => UpstreamQuota.ObservedAt(w.at.toString))

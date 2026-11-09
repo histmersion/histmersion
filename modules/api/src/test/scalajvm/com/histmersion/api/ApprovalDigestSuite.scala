@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.ApprovalDigest.*
@@ -94,7 +95,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
             BulkResult.DryRun(false),
             BulkResult.Matched(3),
             List(BulkResult.Decided(1), BulkResult.Decided(2)),
-            List(BulkFailed(BulkFailed.Id(3), Problem("decided already"))),
+            List(BulkFailed(BulkFailed.Id(3), Problem.Unclassified(Legacy.Text("decided already")))),
             BulkResult.Left(2)
           )
         )

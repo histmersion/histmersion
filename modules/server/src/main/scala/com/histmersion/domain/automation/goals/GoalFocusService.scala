@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -155,13 +156,13 @@ final class GoalFocusService(
       agents.workflows.linked(),
       agents.workflows.finished(),
       Transactor(ds).read(FocusRepo.compileOpen).map((g, n) => g -> Facts.CompileOpen(n.value)),
-      agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(why.value))
+      agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(why.sentence))
     )
     Read(
       facts,
       rows,
       goals.map(g => Goal.Slug.assume(g.slug.value) -> g.title).toMap,
-      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy.map(_.transformInto[api.Problem]))).toMap,
+      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy)).toMap,
       Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
@@ -183,11 +184,12 @@ final class GoalFocusService(
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
-      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce.transformInto[domain.Problem], now))
+      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
       if released.value + cleared.value == 0 then Nil
       else
-        val line = s"autopilot focus: not in force (${notInForce.value}): ${count(released.value, "item")} released, " +
-          s"${count(cleared.value, "goal")} no longer active"
+        val line =
+          s"autopilot focus: not in force (${notInForce.sentence}): ${count(released.value, "item")} released, " +
+            s"${count(cleared.value, "goal")} no longer active"
         log(line)
         List(line)
     else
@@ -200,7 +202,7 @@ final class GoalFocusService(
       changes
 
   private def notInForce: Problem =
-    Problem("the central scheduler admits the work (agents.scheduler.strategy)")
+    Problem.Unclassified(Legacy.Text("the central scheduler admits the work (agents.scheduler.strategy)"))
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
@@ -215,14 +217,14 @@ final class GoalFocusService(
   /** The goals that joined and left, recorded with why. */
   private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
-      agents.focusStore.joined(p.slug, domain.Problem(p.why.value), now)
-      event(p.slug, s"focus: active — ${p.why.value}")
+      agents.focusStore.joined(p.slug, p.why, now)
+      event(p.slug, s"focus: active — ${p.why.sentence}")
       s"+${p.slug.value} (${p.stage.wire.value})"
     }
     val left = plan.left.map { (g, why) =>
-      agents.focusStore.left(g, domain.Problem(why.value), now)
-      event(g, s"focus: no longer active — ${why.value}")
-      s"-${g.value} (${why.value})"
+      agents.focusStore.left(g, why, now)
+      event(g, s"focus: no longer active — ${why.sentence}")
+      s"-${g.value} (${why.sentence})"
     }
     joined ++ left
 
@@ -244,7 +246,7 @@ final class GoalFocusService(
       hs.hold.filter((id, goal, why) =>
         agents.managerStore.focusHold(
           ManagerItem.Id(id.value),
-          Hold(reason = Problem(why.value), focus = Some(Hold.Focus(goal.value)))
+          Hold(reason = why, focus = Some(Hold.Focus(goal.value)))
         )
       )
     val released =
@@ -252,7 +254,7 @@ final class GoalFocusService(
       else agents.managerStore.focusRelease(hs.release.map(id => ManagerItem.Id(id.value))).value
     val heldBy = held.groupBy((id, _, _) => mgr.getOrElse(id, ""))
     heldBy.toList.sortBy(_._1).foreach { (m, xs) =>
-      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} held — ${xs.head._3.value}")
+      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} held — ${xs.head._3.sentence}")
     }
     hs.release.groupBy(id => mgr.getOrElse(id, "")).toList.sortBy(_._1).foreach { (m, xs) =>
       emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} released — its goal is active")
@@ -361,7 +363,7 @@ final class GoalFocusService(
         FocusGoal.Title(r.titles.get(p.slug).fold("")(_.value)),
         FocusGoal.Status(f.fold("")(_.status.value)),
         FocusGoal.Stage(p.stage.wire.value),
-        Problem(p.why.value),
+        p.why,
         FocusGoal.Pinned(p.pinned.value),
         FocusGoal.Priority(f.fold(0)(_.priority.value)),
         p.since.map(s => FocusGoal.Since(s.value)),
@@ -397,7 +399,7 @@ final class GoalFocusService(
         FocusWaiting(
           FocusWaiting.Slug(s.value),
           FocusWaiting.Code(c.value),
-          Problem(w.value),
+          w,
           FocusWaiting.Pinned(byGoal.get(s).exists(_.pinned.value))
         )
       ),
@@ -412,12 +414,12 @@ final class GoalFocusService(
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
-    def error(message: String): Api.Error = Api.Error(Problem(message))
+    def error(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     def goal: Either[Api.Error, String] =
       in.goal.map(_.value.trim).filter(_.nonEmpty).toRight(error(s"`${in.action.value}` needs `goal`"))
     def missing(g: String) =
-      Api.Error(Problem(s"no goal '$g'"), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(Problem.Unclassified(Legacy.Text(s"no goal '$g'")), Some(Api.Error.Code(Write.CodeNotFound)))
     def known(g: String): Either[Api.Error, Goal.Slug] = Goal.Slug.either(g).left.map(_ => missing(g))
     val done: Either[Api.Error, String] = in.action.value.trim.toLowerCase match
       case "pin" | "unpin" =>

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 
@@ -13,7 +13,9 @@ final class JobControlControllers(jobs: JobControlService):
       .parse(action)
       .toRight(
         Api.Error(
-          Problem(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}")
+          Problem.Unclassified(
+            Legacy.Text(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}")
+          )
         )
       )
       .flatMap(jobs.control(id, _))

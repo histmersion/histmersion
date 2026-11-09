@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.BBox
 import com.histmersion.{ByteCount, ByteOffset}
 import io.github.iltotore.iron.*
@@ -127,8 +128,8 @@ object GeoTiffGrid:
     parseBytes(
       head.value,
       (offset, length) =>
-        read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value).left.map(_.value)
-    ).left.map(Problem(_))
+        read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value).left.map(_.sentence)
+    ).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   private def parseBytes(
       head: Array[Byte],

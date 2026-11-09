@@ -1,6 +1,9 @@
 package com.histmersion
 package api.research
-import com.histmersion.api.Problem
+
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -83,12 +86,12 @@ object Coverage:
         acc.flatMap { m =>
           val ck =
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
-          val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
+          val text = Option(r.reason).map((_).sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
           if !((Article.Links.isCitekeyShaped((ck))) == (true)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
           else if text.isEmpty then Right(m - Citekey(ck))
-          else Right(m.updated(Citekey(ck), Problem(text)))
+          else Right(m.updated(Citekey(ck), Problem.Unclassified(Legacy.Text(text))))
         }
       }
 

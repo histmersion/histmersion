@@ -1,7 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -166,7 +167,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("hattusa")
         )
       )
-      .fold(e => fail(e.message.value), _ => ())
+      .fold(e => fail(e.message.sentence), _ => ())
     AssetLinkFixtures
       .create(
         ds,
@@ -178,7 +179,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("troy")
         )
       )
-      .fold(e => fail(e.message.value), _ => ())
+      .fold(e => fail(e.message.sentence), _ => ())
     AssetLinkFixtures
       .create(
         ds,
@@ -190,7 +191,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("mycenae")
         )
       )
-      .fold(e => fail(e.message.value), _ => ())
+      .fold(e => fail(e.message.sentence), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
       ds,
@@ -293,11 +294,16 @@ class AssetsJobsSuite extends DbSuite:
     val id = Job.Id.assume(j.id.value)
     Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running))
     Transactor(ds).transact(
-      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(Problem("converter unreachable")))
+      JobRepo.transition(
+        id,
+        JobState.Running,
+        JobState.Failed,
+        error = Some(Problem.Unclassified(Legacy.Text("converter unreachable")))
+      )
     )
     val f = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
     assertEquals(f.status, JobState.Failed.wire)
-    assertEquals(f.error, Some("converter unreachable"))
+    assertEquals(f.error.map(_.sentence), Some("converter unreachable"))
     assert(!f.succeeded)
 
   test("a restart fails whatever was unfinished, and leaves terminal rows alone"):
@@ -310,7 +316,7 @@ class AssetsJobsSuite extends DbSuite:
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
     assertEquals(
-      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error),
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error.map(_.sentence)),
       Some(Some(JobState.Interrupted))
     )
     assertEquals(

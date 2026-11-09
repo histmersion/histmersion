@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.goals.GoalReferable
 import com.histmersion.domain.catalogue.CatalogueReferable
@@ -78,7 +79,7 @@ class ReferableSuite extends DbSuite:
     }
 
   private def ref(w: World, ck: String): ItemRef =
-    w.referable.resolve(source, key(ck)).fold(e => fail(e.value), identity)
+    w.referable.resolve(source, key(ck)).fold(e => fail(e.sentence), identity)
 
   both("a reference follows its record through a rename, a merge and a deletion") { w =>
     List("zz_a", "zz_b", "zz_c", "zz_d").foreach(w.add)

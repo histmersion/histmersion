@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.catalogue.EventsMarkdown
 
 import com.histmersion.api.automation.AgentStateMarkdown
@@ -101,7 +102,7 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val result = SearchResult(
     RowCount(3),
     List(
-      Hit(hit, Nil, List(Problem("tag zq"))),
+      Hit(hit, Nil, List(Problem.Unclassified(Legacy.Text("tag zq")))),
       Hit(hit.modify(_.citekey).setTo(Citekey("zq_beta_1999")).modify(_.year).setTo(None), Nil, Nil)
     ),
     offset = Offset(0),
@@ -448,7 +449,7 @@ class WireSnapshotSuite extends munit.FunSuite:
           Backup.Status.File("zq.dump"),
           Backup.State.Wire("failed"),
           Backup.Status.DurationMs(10),
-          error = Some(Problem("zq error"))
+          error = Some(Problem.Unclassified(Legacy.Text("zq error")))
         )
       ),
       "event" -> event.markdown.value,

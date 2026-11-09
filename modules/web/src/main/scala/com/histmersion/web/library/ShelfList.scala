@@ -1,7 +1,7 @@
 package com.histmersion
 package web.library
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.personal.{ItemKey, Target, UnreadPage}
 import com.histmersion.api.ItemKind
 import com.histmersion.web.*
@@ -118,7 +118,9 @@ object ShelfList:
         )
       ),
       child.maybe <-- unread.signal.map(
-        _.flatMap(_.left.toOption).map(m => ErrorLine.text(Problem(s"Could not list what is not read yet: $m")))
+        _.flatMap(_.left.toOption).map(m =>
+          ErrorLine.text(Problem.Unclassified(Legacy.Text(s"Could not list what is not read yet: $m")))
+        )
       ),
       ul(
         cls := "shelf-rows",

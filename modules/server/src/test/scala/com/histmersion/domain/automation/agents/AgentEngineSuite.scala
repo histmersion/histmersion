@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -200,7 +201,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       a: AgentsControllers,
       req: RunRequest = RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)
   ): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.value), identity)
+    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -252,7 +253,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // no DOI: the upstream steps say why they did not run, and warn about nothing
     assert(steps.find(_.name.value == "metadata").flatMap(_.output).exists(_.value.contains("no DOI")), steps)
     assert(
-      steps.exists(s => s.name.value == "findings-1" && s.error.exists(_.value.contains("quote is not in the text")))
+      steps.exists(s => s.name.value == "findings-1" && s.error.exists(_.sentence.contains("quote is not in the text")))
     )
     // 5 LLM calls of 1000 in / 100 out at 1 and 2 USD per Mtok
     assertEquals(
@@ -328,7 +329,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(flaky); seed(h)
     val paused = startAndRun(a)
     assertEquals(paused.status, "paused")
-    assert(paused.error.exists(_.value.startsWith("provider:")), paused.error)
+    assert(paused.error.exists(_.sentence.startsWith("provider:")), paused.error)
 
     // a fresh engine (a restarted server) whose model can answer ONLY the notes step
     val second = ScriptedClient(Model)
@@ -389,7 +390,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, budgetUsd = Some(RunRequest.BudgetUsd(0.001)))
     )
     assertEquals(run.status, "paused")
-    assert(run.error.exists(_.value.startsWith("budget:")), run.error)
+    assert(run.error.exists(_.sentence.startsWith("budget:")), run.error)
     // resuming WITHOUT raising it pauses again before any call — and says so in a locale-free
     // number even where the default locale writes a decimal comma (en_PL, pl_PL)
     c.scripts.clear()
@@ -400,7 +401,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     finally java.util.Locale.setDefault(locale)
     val again = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(again.status, "paused")
-    assert(again.error.exists(_.value.contains("spent 0.0024 of its 0.0010 USD")), again.error)
+    assert(again.error.exists(_.sentence.contains("spent 0.0024 of its 0.0010 USD")), again.error)
     assertEquals(c.steps.size, 1)
     // raised, it runs to the end
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
@@ -417,7 +418,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       off
         .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
         .left
-        .exists(_.message.value.contains("off"))
+        .exists(_.message.sentence.contains("off"))
     )
     val (a, _) = handlers(c)
     assert(
@@ -428,12 +429,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           model = Some(Agents.RunRequest.Model("local:unpriced"))
         )
       ).left
-        .exists(_.message.value.contains("has no price"))
+        .exists(_.message.sentence.contains("has no price"))
     )
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("summarise"), ApiTarget))
         .left
-        .exists(_.message.value.contains("unknown pipeline"))
+        .exists(_.message.sentence.contains("unknown pipeline"))
     )
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), Agents.RunRequest.Target("zzagent_nope")))
@@ -483,7 +484,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(paused.nonEmpty)
     val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused")
-    assertEquals(r.error, Some("interrupted"))
+    assertEquals(r.error.map(_.sentence), Some("interrupted"))
 
   // ── P2: upstream checks, the acquisition item, approvals, trace pruning ─────────────────────────
 
@@ -532,8 +533,10 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         id: AgentUpstream.FollowupsId,
         since: Option[com.histmersion.Year],
         limit: Option[FollowupsInput.Limit]
-    ) = Left(Problem("not in this test"))
-    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(Problem("not in this test"))
+    ) = Left(Problem.Unclassified(Legacy.Text("not in this test")))
+    def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
+      Problem.Unclassified(Legacy.Text("not in this test"))
+    )
 
   test("enrich-source P2: metadata compared upstream, refs and assess run, the acquisition item ticked off"):
     val c = ScriptedClient(Model); happyScripts(c)
@@ -570,7 +573,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(run.warnings.exists(_.value.contains("year 2019 differs from the upstream record's 2020")), run.warnings)
     val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
-    assert(done.reason.exists(_.value.contains(Ck.value)), done)
+    assert(done.reason.exists(_.sentence.contains(Ck.value)), done)
     val log = h.workListView
       .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
       .toOption
@@ -613,19 +616,19 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix(true))))
         .left
-        .exists(_.message.value.contains("review-article"))
+        .exists(_.message.sentence.contains("review-article"))
     )
     assert(
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, rounds = Some(RunRequest.Rounds(2)))
       ).left
-        .exists(_.message.value.contains("review-article"))
+        .exists(_.message.sentence.contains("review-article"))
     )
     assert(
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(Queue.QueueItem.Id(-7)))
       ).left
-        .exists(_.message.value.contains("no acquisition item"))
+        .exists(_.message.sentence.contains("no acquisition item"))
     )
 
   test("approvals: approving applies the change once, a second decision is a conflict, rejecting changes nothing"):
@@ -778,7 +781,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -818,7 +821,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -854,7 +857,8 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
-    (_, ref) => cs.find(_.model == ref).toRight(domain.Problem(s"no scripted client for ${ref.wire}"))
+    (_, ref) =>
+      cs.find(_.model == ref).toRight(Problem.Unclassified(Legacy.Text(s"no scripted client for ${ref.wire}")))
 
   private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
@@ -974,7 +978,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     def refused(o: ModelOverride*) =
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, modelFor = o.toList))
         .left
-        .map(_.message.value)
+        .map(_.message.sentence)
     assert(
       refused(ModelOverride(ModelOverride.Role("editor"), overrideModel(Haiku))).left
         .exists(_.contains("unknown role 'editor'")),
@@ -1000,7 +1004,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .exists(_.contains("given twice"))
     )
     assertEquals(
-      ModelOverride.parse(Agents.ModelOverride.Wire("fixer")),
+      ModelOverride.parse(Agents.ModelOverride.Wire("fixer")).left.map(_.sentence),
       Left("'fixer' is not <role>=<provider:model>")
     )
     val ok = a
@@ -1011,7 +1015,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           modelFor = List(ModelOverride(ModelOverride.Role("Extractor"), ModelOverride.Model(s" ${Haiku.wire} ")))
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(ok.params.overrides, List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku))))
     assertEquals(
       (ok.modelFor(Role.Extractor).map(_.value: String), ok.modelFor(Role.Writer).map(_.value: String)),
@@ -1041,7 +1045,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -1102,7 +1106,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
@@ -1161,7 +1165,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
-    val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.message.value), identity)
+    val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.message.sentence), identity)
     assertEquals(
       (cmp.pipeline, cmp.target.value: String, cmp.runs.map(_.id.value: String)),
       ("enrich-source", Ck, List(r1.id.value: String, r2.id.value: String))
@@ -1246,7 +1250,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       md
     )
     // what cannot be compared is refused
-    assert(a.compare(List(runId(r1.id))).left.exists(_.message.value.contains("at least two")))
+    assert(a.compare(List(runId(r1.id))).left.exists(_.message.sentence.contains("at least two")))
     assert(
       a.compare(List(runId(r1.id), Run.Id("00000000-0000-0000-0000-000000000000")))
         .left
@@ -1295,7 +1299,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(pipeline, a.definitions)))
       .execute(runId(run.id))
     (a, run.id)
@@ -1326,12 +1330,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "paused")
     val steps = a.run(runId(id)).toOption.get.steps.filter(_.name.value == "notes")
     assertEquals(steps.size, 1, "one attempt: the same cap would fail the same way")
-    val err = steps.head.error.map(_.value).getOrElse("")
+    val err = steps.head.error.map(_.sentence).getOrElse("")
     assert(
       err.contains("4096 output-token cap") && err.contains("agents.step.max-tokens") && err.contains("resume"),
       err
     )
-    assert(run.error.exists(_.value.contains("agents.step.max-tokens")), run.error)
+    assert(run.error.exists(_.sentence.contains("agents.step.max-tokens")), run.error)
 
   test("#941 an answer that does not decode records the decoder's path and message, and the retry is told them"):
     val c = ScriptedClient(Model)
@@ -1339,12 +1343,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly(), a.definitions)))
       .execute(runId(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
     val first = a.run(runId(run.id)).toOption.get.steps.find(s => s.name.value == "notes" && s.attempt.value == 1).get
-    val err = first.error.map(_.value).getOrElse("")
+    val err = first.error.map(_.sentence).getOrElse("")
     assert(err.contains("at .notes") && err.contains("expecting string"), err)
     assert(err.contains("""{"notes": 5}"""), s"the start of the answer too: $err")
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
@@ -1382,7 +1386,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(400000L))
         )
-      ).fold(e => fail(e.message.value), identity)
+      ).fold(e => fail(e.message.sentence), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a.definitions)))
       .execute(runId(run.id))
     assertEquals(
@@ -1409,7 +1413,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(300000L))
         )
-      ).fold(e => fail(e.message.value), identity)
+      ).fold(e => fail(e.message.sentence), identity)
     Engine(ds, a2.engine.cfg, a2, a2.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a2.definitions)))
       .execute(runId(run2.id))
     assertEquals(connect(ds)(AgentRepo.get(run2.id)).map(_.status), Some("paused"))
@@ -1418,7 +1422,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
     val enrich = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(enrich.budgetTokens, 400000L)
     assertEquals(
       evalCfg.agents.budgets.runTokensFor(com.histmersion.domain.automation.Pipeline.Wire("review-article")),
@@ -1454,7 +1458,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (n, _) = a.engine.reconcile()
     assert(n.value >= 3, n)
     val after = List(mine, sched, mgr).map(r => connect(ds)(AgentRepo.get(r.id)).get)
-    assert(after.forall(r => r.status.value == "paused" && r.error.contains("interrupted")), after)
+    assert(after.forall(r => r.status.value == "paused" && r.error.map(_.sentence).contains("interrupted")), after)
     assertEquals(after.map(_.resumeAt.isDefined), List(false, true, true))
     val due = a.engine.resumeDue(java.time.Instant.now().plusSeconds(120))
     assert(due.contains(sched.id) && due.contains(mgr.id) && !due.contains(mine.id), due)
@@ -1532,7 +1536,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       connect(ds)(AgentRepo.get(run.id)).get
     val first = once()
     assertEquals(first.status, "paused")
-    assert(first.error.exists(_.value.startsWith("stalled:")), first.error)
+    assert(first.error.exists(_.sentence.startsWith("stalled:")), first.error)
     assert(first.resumeAt.isDefined)
     assert(first.heartbeatAt.isDefined, "the heartbeat was never written")
     assert(TestRuns.transition(ds, runId(run.id), RunState.Paused, RunState.Queued).isDefined)
@@ -1540,4 +1544,4 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(TestRuns.transition(ds, runId(run.id), RunState.Paused, RunState.Queued).isDefined)
     val third = once()
     assertEquals(third.status, "failed")
-    assert(third.error.exists(_.value.contains("stalled 3 times")), third.error)
+    assert(third.error.exists(_.sentence.contains("stalled 3 times")), third.error)

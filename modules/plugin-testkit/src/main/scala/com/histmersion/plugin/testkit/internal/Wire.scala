@@ -1,8 +1,9 @@
 package com.histmersion
 package plugin.testkit.internal
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Plugin
-import com.histmersion.plugin.Problem
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, UnrecordedRequest}
 
@@ -194,7 +195,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     val base = f"$written%03d-${RecordedExchange.hostOf(url)}"
     val exchange = answer match
       case Left(error) =>
-        RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.problem.value)))
+        RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.problem.sentence)))
       case Right(a) =>
         val kept =
           RecordedExchange.KeptHeaders.flatMap(h => a.header(h).map(v => h -> CoreQuota.HeaderValue(scrub(v.value))))
@@ -215,7 +216,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     recorded.get(key) match
       case None =>
         missing += HttpTransport.Url(url)
-        Left(Plugin.Http.Failure.Transport(Problem(s"$url: no recording in $dir")))
+        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url: no recording in $dir"))))
       case Some(answers) =>
         val n = served.getOrElse(key, 0)
         served(key) = n + 1
@@ -227,7 +228,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
           case (None, error) =>
             Left(
               Plugin.Http.Failure.Transport(
-                Problem(error.getOrElse(s"$url: recorded with neither a status nor an error"))
+                Problem.Unclassified(Legacy.Text(error.getOrElse(s"$url: recorded with neither a status nor an error")))
               )
             )
   }

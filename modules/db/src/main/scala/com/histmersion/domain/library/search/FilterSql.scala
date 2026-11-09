@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.given
@@ -618,7 +618,7 @@ object FilterSql:
       if overlaps(r.periodStart, r.periodEnd, p) then
         b += s"period: ${Markdown.periodLabel(r.periodStart, r.periodEnd)}"
     )
-    b.result().map(Problem(_))
+    b.result().map((text => Problem.Unclassified(Legacy.Text(text))))
 
   /** Which of the filter's finding-level criteria this finding satisfies. Empty ⇒ it is NOT part of the evidence and is
     * dropped from `Hit.matched`.
@@ -643,4 +643,4 @@ object FilterSql:
         b += s"place: ${scope.labelFor(PlaceScope.LabelForValue(p.value))}"
     }
     f.tags.foreach(t => if m.tags.exists(x => ci(x.value, t.value)) then b += s"tag: ${t.value}")
-    b.result().map(Problem(_))
+    b.result().map((text => Problem.Unclassified(Legacy.Text(text))))

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
 import com.histmersion.api.library.{RefRow, WorkRef}
@@ -12,7 +12,7 @@ import com.histmersion.domain.library.Doi
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */
 final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
-  private def problem(p: plugin.Problem) = Problem(p.value)
+  private def problem(p: Problem) = p
 
   def search(
       query: Search.Query,

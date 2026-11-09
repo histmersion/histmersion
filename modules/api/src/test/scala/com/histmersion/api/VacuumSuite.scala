@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import io.circe.parser.parse
@@ -57,7 +58,10 @@ class VacuumSuite extends munit.FunSuite:
       refused(List(Vacuum.Request.Tables("pg_catalog.pg_class"))).left.map(_._1),
       Left(Some(Write.CodeInvalid))
     )
-    assertEquals(refused(List(Vacuum.Request.Tables("nope"))), Left((Some(Write.CodeInvalid), "no such table: nope")))
+    assertEquals(
+      refused(List(Vacuum.Request.Tables("nope"))).left.map((code, why) => (code, why.sentence)),
+      Left((Some(Write.CodeInvalid), "no such table: nope"))
+    )
     assertEquals(refused(Nil, Nil).left.map(_._1), Left(Some(Write.CodeInvalid)))
 
   test("the statement quotes the table; ANALYZE only when asked"):

@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -52,7 +52,7 @@ object MediaFilters:
       counts: Signal[List[MediaCount]],
       label: MediaCount.Key => ChoiceLabel,
       disabled: Signal[Boolean] = Val(false),
-      why: Problem = Problem("")
+      why: Problem = Problem.Unclassified(Legacy.Text(""))
   ): HtmlElement =
     IconSelect(
       IconSelect.Name(s"media $name"),

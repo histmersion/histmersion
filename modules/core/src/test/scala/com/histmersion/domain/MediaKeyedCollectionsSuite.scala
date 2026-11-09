@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -35,26 +37,32 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
         None,
         None,
         None,
-        Left(Problem("unused")),
+        Left(Problem.Unclassified(Legacy.Text("unused"))),
         List(MediaRecord.Geography.Field("x") -> MediaRecord.Geography.Value("Orkney")),
         period
       )
     assertEquals(
-      MediaMatch.dated(
-        MediaMatch.Basis("x = Orkney"),
-        rec(DeepTime.span(DeepTime.SignedYear(1896L), DeepTime.SignedYear(1896L))),
-        orkney,
-        Some(Year(1500))
-      ),
+      MediaMatch
+        .dated(
+          MediaMatch.Basis("x = Orkney"),
+          rec(DeepTime.span(DeepTime.SignedYear(1896L), DeepTime.SignedYear(1896L))),
+          orkney,
+          Some(Year(1500))
+        )
+        .left
+        .map(_.sentence),
       Left("made after 1500 CE")
     )
     assertEquals(
-      MediaMatch.dated(
-        MediaMatch.Basis("x = Orkney"),
-        rec(DeepTime.span(DeepTime.SignedYear(1400L), DeepTime.SignedYear(1600L))),
-        orkney,
-        Some(Year(1500))
-      ),
+      MediaMatch
+        .dated(
+          MediaMatch.Basis("x = Orkney"),
+          rec(DeepTime.span(DeepTime.SignedYear(1400L), DeepTime.SignedYear(1600L))),
+          orkney,
+          Some(Year(1500))
+        )
+        .left
+        .map(_.sentence),
       Left("made after 1500 CE"),
       "made by the latest year: its end, not its start"
     )
@@ -78,17 +86,20 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
       "no latest year: the place's period alone"
     )
     assertEquals(
-      MediaMatch.dated(MediaMatch.Basis("x = Orkney"), rec(None), orkney, Some(Year(1500))),
+      MediaMatch.dated(MediaMatch.Basis("x = Orkney"), rec(None), orkney, Some(Year(1500))).left.map(_.sentence),
       Left("no dates on the record")
     )
     val late = orkney.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1600L), DeepTime.SignedYear(1900L)))
     assertEquals(
-      MediaMatch.dated(
-        MediaMatch.Basis("x = Orkney"),
-        rec(DeepTime.span(DeepTime.SignedYear(1200L), DeepTime.SignedYear(1300L))),
-        late,
-        Some(Year(1500))
-      ),
+      MediaMatch
+        .dated(
+          MediaMatch.Basis("x = Orkney"),
+          rec(DeepTime.span(DeepTime.SignedYear(1200L), DeepTime.SignedYear(1300L))),
+          late,
+          Some(Year(1500))
+        )
+        .left
+        .map(_.sentence),
       Left("its dates do not overlap the place's"),
       "a place that begins after the latest year is never widened back"
     )

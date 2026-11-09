@@ -37,6 +37,7 @@ private[cli] object KindSources:
   private val Imports =
     """import com.histmersion.Newtype
       |import com.histmersion.plugin.*
+      |import com.histmersion.util.problem.{Legacy, Problem}
       |import com.histmersion.plugin.Plugin.Config.given
       |import hearth.kindlings.sconfigderivation.ConfigReader
       |import io.github.iltotore.iron.constraint.any.Pure
@@ -60,8 +61,8 @@ private[cli] object KindSources:
   private val LiveStart =
     """    val mode = HttpMode.fromEnv(Path.of("recordings", "@case@"))
       |    mode.left.foreach(why => println(s"SKIPPED ${getClass.getSimpleName}: $why"))
-      |    assume(mode.isRight, mode.left.map(_.value).getOrElse(""))
-      |    val harness = PluginHarness.load(Plugin.Info.Id("@id@"), config, http = mode.toOption.get).fold(e => fail(e.value), identity)
+      |    assume(mode.isRight, mode.left.map(_.legacyText).getOrElse(""))
+      |    val harness = PluginHarness.load(Plugin.Info.Id("@id@"), config, http = mode.toOption.get).fold(e => fail(e.legacyText), identity)
       |""".stripMargin
 
   // ── source-fetcher ────────────────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ private[cli] object KindSources:
       |
       |  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       |    work.doi match
-      |      case None => Fetch.Miss(Problem("no DOI"))
+      |      case None => Fetch.Miss(Problem.Unclassified(Legacy.Text("no DOI")))
       |      case Some(doi) =>
       |        val url = Plugin.Http.Url(s"${baseUrl.value.stripSuffix("/")}/${doi.value}.pdf")
       |        http.get(url).fold(e => Fetch.Miss(e.problem), body => Fetch.Found(file(url, body)))
@@ -109,7 +110,7 @@ private[cli] object KindSources:
       |
       |  private def harness(pages: (HttpTransport.Url, StubAnswer)*): PluginHarness =
       |    PluginHarness.load(id, "base-url = \"https://mirror.example/\"", http = HttpMode.Stub(pages.toMap))
-      |      .fold(e => fail(e.value), identity)
+      |      .fold(e => fail(e.legacyText), identity)
       |
       |  test("the server registers the fetcher under the plugin's id"):
       |    assertEquals(harness().contributions.sourceFetchers, List(Registries.SourceFetchersKey("@id@")))
@@ -210,7 +211,7 @@ private[cli] object KindSources:
       |      s"image-url = \"https://pictures.example/troy-1.jpg\", licence = \"$licence\", credit = \"A. Photographer\" }]"
       |
       |  private def harness(licence: String = "CC-BY-4.0"): PluginHarness =
-      |    PluginHarness.load(id, picture(licence)).fold(e => fail(e.value), identity)
+      |    PluginHarness.load(id, picture(licence)).fold(e => fail(e.legacyText), identity)
       |
       |  test("the server registers the collection under the plugin's id"):
       |    assertEquals(harness().contributions.mediaCollections, List(key))
@@ -299,7 +300,7 @@ private[cli] object KindSources:
       |  private val thera =
       |    "source = \"my notes\", events = [{ id = thera, label = \"Eruption of Thera\", kind = eruption, year = -1600, lat = 36.4, lon = 25.4 }]"
       |
-      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), thera).fold(e => fail(e.value), identity)
+      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), thera).fold(e => fail(e.legacyText), identity)
       |
       |  test("the server registers the catalogue under the plugin's id"):
       |    assertEquals(harness.contributions.eventCatalogues, List(Registries.EventCataloguesKey("@id@")))
@@ -379,7 +380,7 @@ private[cli] object KindSources:
       |  private val request = new AiTurn.Request("fixed", "You are a test.", List(AiMessage.User(AiMessage.User.Text("Hello"))),
       |    Nil, None, 100, 1, 1)
       |
-      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), "reply = \"{}\"").fold(e => fail(e.value), identity)
+      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), "reply = \"{}\"").fold(e => fail(e.legacyText), identity)
       |
       |  test("the server registers the provider under the plugin's id"):
       |    assertEquals(harness.contributions.aiProviders, List(Registries.AiProvidersKey("@id@")))
@@ -423,8 +424,8 @@ private[cli] object KindSources:
       |  def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
       |    val file = directory.resolve(ref.value).normalize
       |    if ref.value.isEmpty || ref.value.contains('/') || !file.startsWith(directory.normalize) then
-      |      Left(Problem(s"'${ref.value}' is not a name in the directory"))
-      |    else if !java.nio.file.Files.isRegularFile(file) then Left(Problem(s"no secret '${ref.value}'"))
+      |      Left(Problem.Unclassified(Legacy.Text(s"'${ref.value}' is not a name in the directory")))
+      |    else if !java.nio.file.Files.isRegularFile(file) then Left(Problem.Unclassified(Legacy.Text(s"no secret '${ref.value}'")))
       |    else Right(Secret.Resolved(java.nio.file.Files.readString(file).trim))
       |""".stripMargin
 
@@ -442,7 +443,7 @@ private[cli] object KindSources:
       |  )
       |
       |  private def harness(d: Path): PluginHarness =
-      |    PluginHarness.load(Plugin.Info.Id("@id@"), s"directory = \"$d\"").fold(e => fail(e.value), identity)
+      |    PluginHarness.load(Plugin.Info.Id("@id@"), s"directory = \"$d\"").fold(e => fail(e.legacyText), identity)
       |
       |  private def resolved(d: Path, name: String) =
       |    harness(d).resolveSecret(Secret.Ref.Vault.Value("@id@"), Secret.Ref.Vault.Ref(name))

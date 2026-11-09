@@ -1,7 +1,7 @@
 package com.histmersion
 package util.storage
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import java.io.InputStream
 import java.nio.file.{Files, Path, StandardCopyOption}
 
@@ -37,7 +37,7 @@ final class ContentDirectory(dir: Path) extends ContentStore:
             try { val _ = in.transferTo(out) }
             finally out.close()
             val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
-            if actual != sha256 then Left(Problem(s"its content hashes to $actual"))
+            if actual != sha256 then Left(Problem.Unclassified(Legacy.Text(s"its content hashes to $actual")))
             else
               val _ =
                 Files.move(tmp, dir.resolve(s"$sha256.${ContentStore.safeExt(ext)}"), StandardCopyOption.ATOMIC_MOVE)
@@ -47,5 +47,5 @@ final class ContentDirectory(dir: Path) extends ContentStore:
         }
         .toEither
         .left
-        .map(e => Problem(s"cannot store it in $dir: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"cannot store it in $dir: ${e.getMessage}")))
         .flatten

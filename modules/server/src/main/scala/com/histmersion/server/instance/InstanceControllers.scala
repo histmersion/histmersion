@@ -1,7 +1,8 @@
 package com.histmersion
 package server.instance
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}
@@ -67,7 +68,7 @@ final class InstanceControllers(
           StorageLocations.install,
           c,
           Some(diagnostics),
-          backups.list.left.map(_.message.value),
+          backups.list.left.map(_.message.sentence),
           MeasureBudget.of(
             MeasureBudget.MaxEntries(c.storage.maxEntries.value.toLong),
             MeasureBudget.MaxMillis(c.storage.maxMillis.value.toLong)
@@ -119,7 +120,7 @@ final class InstanceControllers(
       )
     )
     val counts = attempt("store counts")(corpusCounts)
-    val listed = backups.list.left.map(e => s"backups: ${e.message}")
+    val listed = backups.list.left.map(e => s"backups: ${e.message.sentence}")
     val last = listed.toOption.flatMap(_.headOption)
     val age = last
       .flatMap(b => Try(Instant.parse(b.createdAt.value)).toOption)
@@ -202,7 +203,8 @@ final class InstanceControllers(
           .parse(board)
           .toRight(
             Api.Error(
-              Problem(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}")
+              Problem
+                .Unclassified(Legacy.Text(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}"))
             )
           )
         at <- mark.at.map(_.value.trim).filter(_.nonEmpty) match
@@ -210,7 +212,7 @@ final class InstanceControllers(
           case Some(s) =>
             Try(Instant.parse(s)).toOption
               .map(Some(_))
-              .toRight(Api.Error(Problem(s"'at' is not an ISO-8601 instant: $s")))
+              .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"'at' is not an ISO-8601 instant: $s"))))
       yield
         val _ = seen.mark(UserId.Local, SeenBoard(b.wire.value), at)
         uiCounters

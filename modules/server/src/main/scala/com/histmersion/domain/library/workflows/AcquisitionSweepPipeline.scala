@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
 import com.histmersion.domain.automation.agents.Halt
@@ -88,8 +89,6 @@ final class AcquisitionSweepPipeline(
             )((r, last) =>
               AcquisitionSweepRules
                 .checkRanking(r, found.candidates, AcquisitionSweepRules.LastAttempt(last.value))
-                .left
-                .map(_.map(p => Problem(p.value)))
                 .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws.map(d => Checked.Warnings(d.value))))
             )
             // the stored candidates the ranking saw are SEEN, its picks QUEUED: a later sweep shows neither again
@@ -172,7 +171,8 @@ final class AcquisitionSweepPipeline(
     yield line
 
   private def skippedText(m: Map[Problem, AcquisitionSweepRules.SkipCount]): String =
-    if m.isEmpty then "none left out" else m.toList.sortBy(_._1.value).map((k, n) => s"$n $k").mkString(", ")
+    if m.isEmpty then "none left out"
+    else m.toList.sortBy(_._1.sentence).map((k, n) => s"$n ${k.sentence}").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
@@ -196,14 +196,14 @@ final class AcquisitionSweepPipeline(
         sw.watches
           .filter(_.lastError.isDefined)
           .foreach(w =>
-            ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.fold("")(_.value)}")
+            ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.fold("")(_.sentence)}")
           )
         for
-          g <- agents.host.goal(goal).left.map(_.message.value)
+          g <- agents.host.goal(goal).left.map(_.message.sentence)
           rows <- upstream()
             .candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(cfg.scheduler.sweepCandidates.value))
             .left
-            .map(_.value)
+            .map(_.sentence)
         yield
           val queued = queuedDois().keySet ++ backlogged(goal)
           val (gone, open) = rows.partition(c => queued.contains(Doi.assume(c.doi.value)))
@@ -228,10 +228,12 @@ final class AcquisitionSweepPipeline(
             g.notes,
             queries,
             cands,
-            sw.skipped.map((k, n) => Problem(k.value) -> AcquisitionSweepRules.SkipCount(n.value)) ++
+            sw.skipped.map((k, n) =>
+              Problem.Unclassified(Legacy.Text(k.value)) -> AcquisitionSweepRules.SkipCount(n.value)
+            ) ++
               Option
                 .when(gone.nonEmpty)(
-                  Problem("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
+                  Problem.Unclassified(Legacy.Text("already queued")) -> AcquisitionSweepRules.SkipCount(gone.size)
                 )
                 .toMap,
             stored = open.map(c => Doi.assume(c.doi.value) -> c.id).toMap
@@ -251,12 +253,12 @@ final class AcquisitionSweepPipeline(
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
   private def liveDiscover(ctx: RunCtx, goal: Goal.Slug): Either[String, Found] =
-    agents.host.goal(goal).left.map(_.message.value).map { g =>
+    agents.host.goal(goal).left.map(_.message.sentence).map { g =>
       val linked = goals.refs(goal, Goal.LinkKind.Query).map(r => Search.Query(r.value))
       val queries = Some(linked).filter(_.nonEmpty).getOrElse(List(Search.Query(g.title.value)))
       val found = queries.flatMap { q =>
         upstream().discover(q, AgentUpstream.Limit(cfg.scheduler.discoverPerQuery.value)) match
-          case Left(m)  => ctx.warn(s"discover '$q': $m"); Nil
+          case Left(m)  => ctx.warn(s"discover '$q': ${m.sentence}"); Nil
           case Right(r) => r.works.map(w => Candidate.Query(q.value) -> w)
       }
       val (cands, skipped) =
@@ -294,7 +296,7 @@ final class AcquisitionSweepPipeline(
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
         ingestOne(ctx, goal, p) match
           case Left(m) =>
-            ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — $m")
+            ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — ${m.sentence}")
             None
           case Right(i) => Some(i)
       }
@@ -312,13 +314,13 @@ final class AcquisitionSweepPipeline(
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
-    )(upstream().ingestLegal(doi).left.map(e => Problem(e.value)).map { r =>
+    )(upstream().ingestLegal(doi).map { r =>
       val _ =
         goals.link(
           goal,
           Goal.LinkKind.Source,
           GoalLink.Ref(r.citekey.value),
-          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
+          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why.sentence}".take(500)))
         )
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
@@ -345,14 +347,14 @@ final class AcquisitionSweepPipeline(
   ): Tried =
     val (ok, ko) =
       AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
-    ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
+    ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — ${why.sentence}"))
     Tried(
       ok.map(_._2),
       ko.map((p, why) =>
         Failed(
           p.candidate.doi,
-          Problem(why.value.take(500)),
-          IngestBacklog.isNoLegalCopy(domain.Problem(why.value))
+          Problem.Unclassified(Legacy.Text(why.sentence.take(500))),
+          IngestBacklog.isNoLegalCopy(why)
         )
       )
     )
@@ -371,7 +373,7 @@ final class AcquisitionSweepPipeline(
         c.authors,
         c.venue,
         List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-        api.Problem(p.why.value),
+        p.why,
         Some(Managers.OaWork.FoundBy(ctx.run.id.value))
       )
       ctx.write(
@@ -401,9 +403,9 @@ final class AcquisitionSweepPipeline(
 
 object AcquisitionSweepPipeline:
   given io.circe.KeyEncoder[Problem] =
-    io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
+    io.circe.KeyEncoder.encodeKeyString.contramap(_.sentence)
   given io.circe.KeyDecoder[Problem] =
-    io.circe.KeyDecoder.decodeKeyString.map(Problem(_))
+    io.circe.KeyDecoder.decodeKeyString.map((text => Problem.Unclassified(Legacy.Text(text))))
   given io.circe.KeyEncoder[Doi] = io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
   given io.circe.KeyDecoder[Doi] = io.circe.KeyDecoder.decodeKeyString.map(Doi.assume(_))
 

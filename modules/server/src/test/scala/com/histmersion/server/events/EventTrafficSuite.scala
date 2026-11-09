@@ -1,6 +1,7 @@
 package com.histmersion
 package server.events
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.server.CatalogueWiring
@@ -77,7 +78,7 @@ class EventTrafficSuite extends DbSuite:
       |""".stripMargin
 
   private lazy val loaded: LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
   private def cfg = loaded.config
 
   private lazy val ds =

@@ -1,8 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.Problem as ValuesProblem
-import com.histmersion.api.Problem
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.augustnagro.magnum.*
@@ -115,7 +114,7 @@ object MediaWire:
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
       out ++= s"  -> ${a.fold(e => s"error $e", a => s"${a.code} ${a.body.value.length} bytes")}\n"
-      a.left.map(m => Plugin.Http.Failure.Transport(plugin.Problem(m)))
+      a.left.map(m => Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(m))))
     }
     def take(): String = synchronized {
       val s = out.result()
@@ -130,7 +129,7 @@ object MediaWire:
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] =
-      Left(Problem("not used"))
+      Left(Problem.Unclassified(Legacy.Text("not used")))
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
@@ -168,7 +167,7 @@ object MediaWire:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
 
-  def load(more: String): Either[ValuesProblem, LoadedConfig] =
+  def load(more: String): Either[Problem, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
   private def place(

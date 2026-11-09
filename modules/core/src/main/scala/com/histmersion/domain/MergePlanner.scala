@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -611,7 +613,11 @@ object MergePlanner:
                 ),
                 sourcesByUid.get(o).map(MergeIssue.Detail.side),
                 src.map(MergeIssue.Detail.side),
-                List(api.Problem("keep-left drops the bundle's old citekey; this collection's meaning stays")),
+                List(
+                  Problem.Unclassified(
+                    Legacy.Text("keep-left drops the bundle's old citekey; this collection's meaning stays")
+                  )
+                ),
                 if asCitekey then List(km.KeepLeft) else lr,
                 Some(MergeDecision.of(km.KeepLeft)),
                 cond,
@@ -849,12 +855,17 @@ object MergePlanner:
                     MergeIssue.Title(s"here that $what belongs to a different record"),
                     Some(IssueSide(IssueSide.Label(l), o)),
                     Some(IssueSide(IssueSide.Label(l), f)),
-                    List(api.Problem("keep-left leaves the bundle's record out (and whatever needs it)")) ++
+                    List(
+                      Problem
+                        .Unclassified(Legacy.Text("keep-left leaves the bundle's record out (and whatever needs it)"))
+                    ) ++
                       Option
                         .when(options.contains(km.RenameRight))(
-                          api.Problem(
-                            "keep-right makes them one, the bundle's fields winning; " +
-                              "rename-right keeps both, the bundle's under a new id"
+                          Problem.Unclassified(
+                            Legacy.Text(
+                              "keep-right makes them one, the bundle's fields winning; " +
+                                "rename-right keeps both, the bundle's under a new id"
+                            )
                           )
                         )
                         .toList,
@@ -990,7 +1001,7 @@ object MergePlanner:
                 List(IssueSide.Lines(s"\"${a.title}\" · ${a.body.value.length} characters"))
               )
             ),
-            List(api.Problem(s"both: the bundle's becomes ${bothSlug(f, a.slug)}")),
+            List(Problem.Unclassified(Legacy.Text(s"both: the bundle's becomes ${bothSlug(f, a.slug)}"))),
             List(km.KeepLeft, km.KeepRight, km.Both, km.File),
             detail = mine.map(m => IssueDetail(text = Some(articleText(base, m.body, rawArticle(f).body))))
           )
@@ -1081,7 +1092,9 @@ object MergePlanner:
                   r.planApprovedAt.map(a => IssueSide.Lines(s"approved $a")).toList
                 )
               ),
-              List(api.Problem("the plan approved later wins when both say when; here they do not")),
+              List(
+                Problem.Unclassified(Legacy.Text("the plan approved later wins when both say when; here they do not"))
+              ),
               lr,
               detail = Some(
                 IssueDetail(fields =
@@ -1143,7 +1156,7 @@ object MergePlanner:
           case (None, _) =>
             errors += s"$id: not an issue of this plan — stale (the records changed since it was decided) or never one"
             None
-          case (_, Left(e))          => errors += s"$id: $e"; None
+          case (_, Left(e))          => errors += s"$id: ${e.sentence}"; None
           case (Some(d), Right(dec)) =>
             val i = d.issue
             val argOk: Either[MergePlan.ResolutionErrors, Unit] = dec.kind match

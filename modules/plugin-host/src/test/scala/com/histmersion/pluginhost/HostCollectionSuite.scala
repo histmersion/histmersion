@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -30,7 +32,7 @@ class HostCollectionSuite extends munit.FunSuite:
       FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     )
     override def add(metadata: CollectionMetadata, file: FetchedFile) = Right(CollectionId("written"))
-    override def readOnlyReason = Problem("the shelf is full")
+    override def readOnlyReason = Problem.Unclassified(Legacy.Text("the shelf is full"))
 
   final private case class NoSettings() derives ConfigReader
 
@@ -49,7 +51,7 @@ class HostCollectionSuite extends munit.FunSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem("offline")))
+              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
           },
         ConfigFactory.empty,
         (_, _, _) => ()
@@ -65,7 +67,7 @@ class HostCollectionSuite extends munit.FunSuite:
   test("Histmersion's own collection names are kept for the first-party plugins"):
     val third = build(ShelfPlugin(Plugin.Info.Id("zq-shelf"), Registry.AddId("calibre")))
     assert(
-      third.report.plugins.head.error.exists(_.value.contains("Histmersion's own source collections")),
+      third.report.plugins.head.error.exists(_.sentence.contains("Histmersion's own source collections")),
       third.report
     )
     val first = build(
@@ -84,10 +86,11 @@ class HostCollectionSuite extends munit.FunSuite:
           List(CollectionMetadata.Authors("A"))
         ),
         FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
-      ),
+      ).left
+        .map(_.sentence),
       Left("Shelf is read-only here: the shelf is full")
     )
-    assert(c.item(CollectionId("boom")).left.exists(_.value.contains("source collection 'shelf' failed")))
+    assert(c.item(CollectionId("boom")).left.exists(_.sentence.contains("source collection 'shelf' failed")))
     assertEquals(c.search(CollectionQuery(None)).map(_.size), Right(1))
     assert(
       c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(false)).isLeft,

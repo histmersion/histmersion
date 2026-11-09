@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -308,8 +310,8 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(Queue.statusOf(None), Right(None))
     assertEquals(Queue.statusOf(Some(QueueItem.Status(""))), Right(None))
     val e = Queue.statusOf(Some(QueueItem.Status("pending"))).swap.toOption.get
-    assert(e.value.contains("unknown status 'pending'"), e)
-    assert(e.value.contains("open, done, note"), e)
+    assert(e.sentence.contains("unknown status 'pending'"), e)
+    assert(e.sentence.contains("open, done, note"), e)
 
   test("created_at must be an ISO instant — it is cast to timestamptz in SQL"):
     assertEquals(
@@ -318,7 +320,7 @@ class QueueSuite extends munit.FunSuite:
     )
     assertEquals(Queue.createdAtOf(None), Right(None))
     val e = Queue.createdAtOf(Some(QueueItem.CreatedAt("yesterday"))).swap.toOption.get
-    assert(e.value.contains("not an ISO-8601 instant"), e)
+    assert(e.sentence.contains("not an ISO-8601 instant"), e)
     assert(Queue.createdAtOf(Some(QueueItem.CreatedAt("2026-08-25"))).isLeft, "a bare date is not an instant")
     assert(Queue.createdAtOf(Some(QueueItem.CreatedAt("'); drop table queue_items --"))).isLeft)
 
@@ -329,7 +331,7 @@ class QueueSuite extends munit.FunSuite:
       QueueItem.Text("a book"),
       Some(QueueItem.Topic("Books")),
       QueueItem.Status(Open),
-      Some(Problem("for the review")),
+      Some(Problem.Unclassified(Legacy.Text("for the review"))),
       None,
       None
     )
@@ -340,16 +342,16 @@ class QueueSuite extends munit.FunSuite:
     )
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  Papers ")))).topic, Some("Papers"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  ")))).topic, None)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(Problem("")))).reason, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(Problem.Unclassified(Legacy.Text(""))))).reason, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(QueueItem.Status(" DONE ")))).status, Done)
     // an item edited in the web UI keeps its other fields
     val edited = Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("x")), topic = Some(QueueItem.Topic(""))))
-    assertEquals((edited.status, edited.reason, edited.id), (Open, Some("for the review"), 7))
+    assertEquals((edited.status, edited.reason.map(_.sentence), edited.id), (Open, Some("for the review"), 7))
 
   test("a patched text may be absent but never blank"):
     assertEquals(Queue.textOf(None), Right(None))
     assertEquals(Queue.textOf(Some(QueueItem.Text("a thing"))), Right(Some("a thing")))
-    assertEquals(Queue.textOf(Some(QueueItem.Text(" \n "))), Left("queue item text is empty"))
+    assertEquals(Queue.textOf(Some(QueueItem.Text(" \n "))).left.map(_.sentence), Left("queue item text is empty"))
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
@@ -363,36 +365,52 @@ class QueueSuite extends munit.FunSuite:
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
     assertEquals(
-      Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")),
+      (Queue.fulfilledReason(None, Citekey("lambert2013_babylonian"))).sentence,
       "ingested as [[lambert2013_babylonian]]"
     )
-    assertEquals(Queue.fulfilledReason(Some(Problem("  ")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfilledReason(Some(Problem("Nagy 2001 argues against it")), Citekey("finkelberg2000_cypria")),
+      (Queue.fulfilledReason(Some(Problem.Unclassified(Legacy.Text("  "))), Citekey("a2020_b"))).sentence,
+      "ingested as [[a2020_b]]"
+    )
+    assertEquals(
+      (Queue
+        .fulfilledReason(
+          Some(Problem.Unclassified(Legacy.Text("Nagy 2001 argues against it"))),
+          Citekey("finkelberg2000_cypria")
+        ))
+        .sentence,
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
     assertEquals(
-      Queue.fulfilledReason(Some(Problem("ingested as [[a2020_b]]")), Citekey("a2020_b")),
+      (Queue
+        .fulfilledReason(Some(Problem.Unclassified(Legacy.Text("ingested as [[a2020_b]]"))), Citekey("a2020_b")))
+        .sentence,
       "ingested as [[a2020_b]]"
     )
     assertEquals(
       Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),
       QueuePatch(
         status = Some(QueueItem.Status(Done)),
-        reason = Some(Problem("ingested as [[lambert2013_babylonian]]"))
+        reason = Some(Problem.Unclassified(Legacy.Text("ingested as [[lambert2013_babylonian]]")))
       )
     )
 
   test("an upload may name only an existing, open acquisition item"):
     assertEquals(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7)))), Right(item(QueueItem.Id(7))))
-    assertEquals(Queue.fulfillable(QueueItem.Id(7), None), Left("no acquisition item 7"))
+    assertEquals(Queue.fulfillable(QueueItem.Id(7), None).left.map(_.sentence), Left("no acquisition item 7"))
     assertEquals(
-      Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), list = QueueItem.List("tasks")))),
+      Queue
+        .fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), list = QueueItem.List("tasks"))))
+        .left
+        .map(_.sentence),
       Left("item 7 is on the tasks list, not the acquisition list")
     )
     assertEquals(
-      Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done)))),
+      Queue
+        .fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done))))
+        .left
+        .map(_.sentence),
       Left("acquisition item 7 is already done")
     )
     assert(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Note)))).isLeft)

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -597,7 +599,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       isCk,
       isTarget,
       t =>
-        if t.value.contains("| a | b |") then List(Problem("table-not-rendered — a table"))
+        if t.value.contains("| a | b |") then List(Problem.Unclassified(Legacy.Text("table-not-rendered — a table")))
         else Nil
     )
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
@@ -621,7 +623,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem("the record says so"),
+          Problem.Unclassified(Legacy.Text("the record says so")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -649,13 +651,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem("no"),
+          Problem.Unclassified(Legacy.Text("no")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("the ship sank in a storm off Lycia in 1320 BCE")
         ),
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("C1"),
-          Problem("it is clear"),
+          Problem.Unclassified(Legacy.Text("it is clear")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("ten tons of copper")
         )
@@ -733,7 +735,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem("no"),
+          Problem.Unclassified(Legacy.Text("no")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("nothing like this is in it")
         )
@@ -795,7 +797,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     assert(c.fatal.value)
     assert(
-      c.problems.exists(_.value.contains("ghost2020_x")) && c.problems.exists(_.value.contains("Sources cited")),
+      c.problems.exists(_.sentence.contains("ghost2020_x")) && c.problems.exists(_.sentence.contains("Sources cited")),
       c.problems
     )
     val ok = checkBody(
@@ -849,8 +851,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     Set(com.histmersion.api.library.Citekey("knapp2016_tin")),
     List(ApiCitekey("knapp2016_tin")),
     Map(
-      com.histmersion.api.library.Citekey("egypt2001_old") -> api.Problem("about Egypt"),
-      com.histmersion.api.library.Citekey("knapp2016_tin") -> api.Problem("stale")
+      com.histmersion.api.library.Citekey("egypt2001_old") -> Problem.Unclassified(Legacy.Text("about Egypt")),
+      com.histmersion.api.library.Citekey("knapp2016_tin") -> Problem.Unclassified(Legacy.Text("stale"))
     ),
     Nil,
     Nil
@@ -915,7 +917,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ),
       corpus.modify(_.generated).setTo(BodyCorpus.Generated(true))
     )
-    assert(c.problems.exists(_.value.startsWith("a hand-written Not used section")), c.problems)
+    assert(c.problems.exists(_.sentence.startsWith("a hand-written Not used section")), c.problems)
 
   private val unplaced = Merged(
     ReviewArticle.Merged.Round(1),
@@ -950,9 +952,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("[[iso2024_new]]"),
-          api.Problem("Its isotopes date a later trade.")
+          Problem.Unclassified(Legacy.Text("Its isotopes date a later trade."))
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), api.Problem(""))
+        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text("")))
       )
     )
     val (f, ws) = fixCov(ok).fold(ps => fail(ps.mkString("; ")), identity)
@@ -961,9 +963,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("iso2024_new"),
-          api.Problem("Its isotopes date a later trade.")
+          Problem.Unclassified(Legacy.Text("Its isotopes date a later trade."))
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), api.Problem(""))
+        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text("")))
       )
     )
     assertEquals((f.body, ws), (Generated, Nil))
@@ -975,9 +977,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
       List(
-        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), api.Problem("not needed")),
-        Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_gone"), api.Problem("never read")),
-        Coverage.Reason(com.histmersion.api.library.Citekey("egypt2001_old"), api.Problem(""))
+        Coverage.Reason(
+          com.histmersion.api.library.Citekey("knapp2016_tin"),
+          Problem.Unclassified(Legacy.Text("not needed"))
+        ),
+        Coverage
+          .Reason(com.histmersion.api.library.Citekey("zz1999_gone"), Problem.Unclassified(Legacy.Text("never read"))),
+        Coverage.Reason(com.histmersion.api.library.Citekey("egypt2001_old"), Problem.Unclassified(Legacy.Text("")))
       )
     )
     val ps = fixCov(bad).left.toOption.get
@@ -1005,7 +1011,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
-      List(Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), api.Problem("")))
+      List(Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text(""))))
     )
     assert(fixCov(cite).isRight, fixCov(cite))
     // an article without a filter takes no reasons
@@ -1516,7 +1522,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem("the record says so"),
+          Problem.Unclassified(Legacy.Text("the record says so")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -1524,20 +1530,20 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
       wontFix = List(
-        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem("wordy, but exact"))
+        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text("wordy, but exact")))
       )
     )
     assertEquals(
       fix(ok, last = LastRound(false)).map(_._1.wontFix),
-      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), Problem("wordy, but exact"))))
+      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), Problem.Unclassified(Legacy.Text("wordy, but exact")))))
     )
     val bad = ok
       .modify(_.wontFix)
       .setTo(
         List(
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), Problem("no")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), Problem("x")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem(" "))
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), Problem.Unclassified(Legacy.Text("no"))),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), Problem.Unclassified(Legacy.Text("x"))),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text(" ")))
         )
       )
     val ps = fix(bad, last = LastRound(false)).left.toOption.get
@@ -1578,7 +1584,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem("the record says so"),
+          Problem.Unclassified(Legacy.Text("the record says so")),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -1600,7 +1606,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(
           WontFixAnswer(
             ReviewArticle.WontFixAnswer.Id("R8"),
-            Problem("recording the filter is not an edit")
+            Problem.Unclassified(Legacy.Text("recording the filter is not an edit"))
           )
         )
       )

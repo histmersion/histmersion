@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.JsonObject
 
@@ -18,16 +18,16 @@ trait DownloadedGazetteer extends GazetteerSource:
   def url: Plugin.Http.Url
 
   /** Pure: the dataset's places from its text, in the order they are stored. */
-  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]]
+  def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]]
 
-  def fetch(http: Plugin.Http): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] = download(http).flatMap(read)
+  def fetch(http: Plugin.Http): Either[Problem, List[GazetteerPlace]] = download(http).flatMap(read)
 
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
-  def download(http: Plugin.Http): Either[DownloadedGazetteer.Problem, DownloadedGazetteer.Text] =
+  def download(http: Plugin.Http): Either[Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
-      case Left(e)                           => Left(DownloadedGazetteer.Problem(s"download failed: ${e.problem}"))
+      case Left(e) => Left(Problem.Unclassified(Legacy.Text(s"download failed: ${e.problem.legacyText}")))
       case Right(r) if r.status.value != 200 =>
-        Left(DownloadedGazetteer.Problem(s"HTTP ${r.status.value} from ${url.value}"))
+        Left(Problem.Unclassified(Legacy.Text(s"HTTP ${r.status.value} from ${url.value}")))
       case Right(r) =>
         if url.value.endsWith(".zip") then DownloadedGazetteer.unzip(r.body)
         else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
@@ -50,8 +50,6 @@ trait DownloadedGazetteer extends GazetteerSource:
       .flatMap(_ => Period.from(Year(a.value.min(b.value).toInt), Year(a.value.max(b.value).toInt)).toOption)
 
 object DownloadedGazetteer:
-  type Problem = plugin.Problem
-  val Problem: plugin.Problem.type = plugin.Problem
   type Slug = Slug.T
   object Slug extends Newtype[String, Pure]
   type Text = Text.T
@@ -70,6 +68,6 @@ object DownloadedGazetteer:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(Problem("zip contains no usable file"))
+        case None    => Left(Problem.Unclassified(Legacy.Text("zip contains no usable file")))
         case Some(_) => Right(Text(String(zis.readAllBytes(), UTF_8)))
-    catch case e: Exception => Left(Problem(s"unzip failed: ${e.getMessage}"))
+    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"unzip failed: ${e.getMessage}")))

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.given
 
 import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
@@ -31,8 +31,10 @@ object BundleTar:
   /** One ustar header for a regular file. Pure. */
   def header(name: Entry.Name, size: ByteCount): Either[Problem, Array[Byte]] =
     val nameBytes = name.value.getBytes(UTF_8)
-    if nameBytes.length > MaxName then Left(Problem(s"$name: name longer than $MaxName bytes"))
-    else if size.value < 0 || size > MaxSize then Left(Problem(s"$name: size $size is outside 0..$MaxSize"))
+    if nameBytes.length > MaxName then
+      Left(Problem.Unclassified(Legacy.Text(s"$name: name longer than $MaxName bytes")))
+    else if size.value < 0 || size > MaxSize then
+      Left(Problem.Unclassified(Legacy.Text(s"$name: size $size is outside 0..$MaxSize")))
     else
       val h = new Array[Byte](Block)
       def put(off: Int, s: String): Unit =
@@ -62,7 +64,7 @@ object BundleTar:
 
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
   def parseHeader(h: Array[Byte]): Either[Problem, Option[Entry]] =
-    if h.length != Block then Left(Problem(s"short header (${h.length} bytes)"))
+    if h.length != Block then Left(Problem.Unclassified(Legacy.Text(s"short header (${h.length} bytes)")))
     else if h.forall(_ == 0) then Right(None)
     else
       def field(off: Int, len: Int): String =
@@ -77,13 +79,13 @@ object BundleTar:
       val typeflag = h(156).toChar
       val prefix = field(345, 155)
       val name = if prefix.isEmpty then field(0, 100) else s"$prefix/${field(0, 100)}"
-      if !stored.contains(actual) then Left(Problem(s"$name: header checksum mismatch"))
+      if !stored.contains(actual) then Left(Problem.Unclassified(Legacy.Text(s"$name: header checksum mismatch")))
       else if typeflag != '0' && typeflag != '\u0000' then
-        Left(Problem(s"$name: not a regular file (type '$typeflag')"))
+        Left(Problem.Unclassified(Legacy.Text(s"$name: not a regular file (type '$typeflag')")))
       else
         octal(124, 12)
           .flatMap(ByteCount.option(_))
-          .toRight(Problem(s"$name: unreadable size"))
+          .toRight(Problem.Unclassified(Legacy.Text(s"$name: unreadable size")))
           .map(size => Some(Entry(Entry.Name(name), size)))
 
   def padding(size: ByteCount): Int = ((Block - (size.value % Block)) % Block).toInt
@@ -99,7 +101,8 @@ object BundleTar:
         gz.write(h)
         val counted = Counting(gz)
         body(counted)
-        if counted.count != size.value then Left(Problem(s"$name: wrote ${counted.count} bytes, declared $size"))
+        if counted.count != size.value then
+          Left(Problem.Unclassified(Legacy.Text(s"$name: wrote ${counted.count} bytes, declared $size")))
         else
           gz.write(new Array[Byte](padding(size)))
           Right(())
@@ -142,7 +145,7 @@ object BundleTar:
         }
         .toEither
         .left
-        .map(e => Problem(s"truncated bundle: ${e.getMessage}"))
+        .map(e => Problem.Unclassified(Legacy.Text(s"truncated bundle: ${e.getMessage}")))
         .flatMap {
           case None    => Right(None) // the stream ended without the end blocks — tolerated as EOF
           case Some(h) =>

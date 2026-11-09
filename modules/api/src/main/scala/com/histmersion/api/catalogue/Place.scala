@@ -1,6 +1,9 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import com.histmersion.api.{Ascii, WireEnumValues}
 
 import com.histmersion.api.OpenSide
@@ -312,7 +315,8 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-    private def invalid(msg: String) = Api.Error(Problem(msg), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(msg: String) =
+      Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
@@ -800,11 +804,12 @@ object Place:
 
     val MaxReason = 500
 
-    private def invalid(msg: String) = Api.Error(Problem(msg), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(msg: String) =
+      Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
-      val reason = in.reason.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+      val reason = in.reason.map(_.sentence.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
       if (in.reset) == OverrideSet.Reset(true) then
@@ -853,15 +858,15 @@ object Place:
         yield OverrideEdit.Put(
           kind.map(OverrideEdit.Put.Kind(_)),
           period,
-          reason.map(Problem(_)),
+          reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
           point
         )
 
     def reason(raw: Option[Problem]): Either[Api.Error, Option[Problem]] =
-      val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+      val r = raw.map((_).sentence.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       Either.cond(
         r.forall(_.length <= MaxReason),
-        (r).map(refactorValue10 => Problem(refactorValue10)),
+        (r).map(refactorValue10 => Problem.Unclassified(Legacy.Text(refactorValue10))),
         invalid(s"a reason is at most $MaxReason characters")
       )
 
@@ -873,9 +878,18 @@ object Place:
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
               Right((Latitude(lat), Longitude(lon)))
             case (Some(_), Some(_)) =>
-              Left(Problem(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)"))
-            case _ => Left(Problem(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21"))
-        case _ => Left(Problem(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)")
+                )
+              )
+            case _ =>
+              Left(
+                Problem.Unclassified(
+                  Legacy.Text(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21")
+                )
+              )
+        case _ => Left(Problem.Unclassified(Legacy.Text(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21")))
 
     def pointText(lat: Latitude, lon: Longitude): PointText =
       PointText(

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -435,7 +436,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
   test("user file: deny-hosts-extra adds to the shipped deny-hosts instead of replacing them"):
     val f = landingConf("histmersion.acquire.landing.deny-hosts-extra = \"blocked.example, .Other.Example\"")
     val rules =
-      AppConfig.loadWithUserFile(env(), Some(f)).fold(m => fail(m.value), identity).config.acquire.landing.rules
+      AppConfig.loadWithUserFile(env(), Some(f)).fold(m => fail(m.sentence), identity).config.acquire.landing.rules
     assert(
       rules.denied(Host("blocked.example")) && rules.denied(Host("www.other.example")),
       "the added hosts are denied"

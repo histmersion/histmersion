@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
@@ -69,7 +69,7 @@ object MetCollection:
     val c = json.hcursor
     c.str("message")
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
-      .map(m => Left(Problem(m)))
+      .map(m => Left(Problem.Unclassified(Legacy.Text(m))))
       .getOrElse(
         Right(
           c.downField("objectIDs")
@@ -94,15 +94,15 @@ object MetCollection:
   /** Pure: one object. Not public domain → its rights are a `Left`. */
   def record(json: Json): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.long("objectID").toRight(Problem(c.str("message").getOrElse("no objectID"))).map { id =>
+    c.long("objectID").toRight(Problem.Unclassified(Legacy.Text(c.str("message").getOrElse("no objectID")))).map { id =>
       val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")
       val artist = c.str("artistDisplayName")
       val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
       val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
-      val rights: Either[plugin.Problem, MediaRights] =
+      val rights: Either[Problem, MediaRights] =
         if c.bool("isPublicDomain").contains(true) then
           Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-        else Left(plugin.Problem("not Open Access (isPublicDomain is false)"))
+        else Left(Problem.Unclassified(Legacy.Text("not Open Access (isPublicDomain is false)")))
       val period = Period
         .range(
           c.long("objectBeginDate").map(d => year(Year(d)).value),

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What [[SourceCollection.updateAll]] does, or did, to one item. */

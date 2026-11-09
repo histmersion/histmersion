@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 

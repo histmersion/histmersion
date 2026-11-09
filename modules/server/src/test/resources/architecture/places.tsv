@@ -325,4 +325,3 @@ server:server/hot/BuildCtx.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/Pin.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins
-api:api/Problem.scala	kernel

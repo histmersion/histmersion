@@ -1,7 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -54,7 +54,11 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginState.Wire(PluginState.Failed.wire.value),
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
-    error = Some(api.Problem("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
+    error = Some(
+      Problem.Unclassified(
+        Legacy.Text("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set")
+      )
+    )
   )
   private val alien = PluginStatus(
     PluginStatus.Id("old"),
@@ -62,7 +66,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.SpiVersion(0),
     enabled = PluginStatus.Enabled(false),
     PluginState.Wire(PluginState.Refused.wire.value),
-    error = Some(api.Problem("old: built for SPI 0, this host speaks 1"))
+    error = Some(Problem.Unclassified(Legacy.Text("old: built for SPI 0, this host speaks 1")))
   )
 
   test("states have wire names and parse back"):

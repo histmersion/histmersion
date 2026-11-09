@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -106,25 +108,25 @@ class PluginGazetteersSuite extends munit.FunSuite:
 
   test("what the store could not keep is refused, naming the place"):
     def refusal(p: GazetteerPlace) = PluginGazetteers.input(p, Attribution.Credit("c")).left.toOption
-    assertEquals(refusal(slice.modify(_.id).setTo(GazetteerPlace.Id(" "))), Some("a place with no id"))
+    assertEquals(refusal(slice.modify(_.id).setTo(GazetteerPlace.Id(" "))).map(_.sentence), Some("a place with no id"))
     assertEquals(
-      refusal(slice.modify(_.kind).setTo(GazetteerPlace.Kind(""))),
+      refusal(slice.modify(_.kind).setTo(GazetteerPlace.Kind(""))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': no kind")
     )
     assertEquals(
-      refusal(slice.modify(_.label).setTo(GazetteerPlace.Label.assume(null))),
+      refusal(slice.modify(_.label).setTo(GazetteerPlace.Label.assume(null))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': no label")
     )
     assertEquals(
-      refusal(slice.modify(_.geometry).setTo(Some(GazetteerPlace.Geometry("POINT(1 2)")))),
+      refusal(slice.modify(_.geometry).setTo(Some(GazetteerPlace.Geometry("POINT(1 2)")))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': its geometry is not a JSON object")
     )
     assertEquals(
-      refusal(slice.modify(_.properties).setTo(Some(GazetteerPlace.Properties("[1]")))),
+      refusal(slice.modify(_.properties).setTo(Some(GazetteerPlace.Properties("[1]")))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': its properties is not a JSON object")
     )
     assertEquals(
-      refusal(slice.modify(_.period).setTo(None).modify(_.open).setTo(Some(GazetteerOpenSide.End))),
+      refusal(slice.modify(_.period).setTo(None).modify(_.open).setTo(Some(GazetteerOpenSide.End))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': an open side without a period")
     )
     assertEquals(
@@ -134,7 +136,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
           .setTo(
             List(GazetteerRelation(GazetteerRelation.ChildId("zz_slice_-1650_-1401"), GazetteerRelation.ParentId("")))
           )
-      ),
+      ).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': a relation without both its places")
     )
     assertEquals(
@@ -150,14 +152,14 @@ class PluginGazetteersSuite extends munit.FunSuite:
               )
             )
           )
-      ),
+      ).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': the relation to 'b' has no kind")
     )
     assertEquals(
-      refusal(slice.modify(_.names).setTo(List(GazetteerName(GazetteerName.Name.assume(null))))),
+      refusal(slice.modify(_.names).setTo(List(GazetteerName(GazetteerName.Name.assume(null))))).map(_.sentence),
       Some("place 'zz_slice_-1650_-1401': a name that is null")
     )
-    assertEquals(refusal(null), Some("a place that is null"))
+    assertEquals(refusal(null).map(_.sentence), Some("a place that is null"))
 
   private def source(answer: => Either[Problem, List[GazetteerPlace]]): GazetteerSource =
     new GazetteerSource:
@@ -169,7 +171,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ) = Left(Plugin.Http.Failure.Transport(Problem("offline")))
+    ) = Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
   }
 
   test("a source's places in its order, the refused ones apart; its failure and what it throws are the import's"):
@@ -186,14 +188,20 @@ class PluginGazetteersSuite extends munit.FunSuite:
       Right((List("zz_slice_-1650_-1401", "zz_other"), List("place 'zz_bad': no kind")))
     )
     assertEquals(
-      PluginGazetteers.places(source(Left(Problem("HTTP 503 from x"))), offline),
+      PluginGazetteers
+        .places(source(Left(Problem.Unclassified(Legacy.Text("HTTP 503 from x")))), offline)
+        .left
+        .map(_.sentence),
       Left("HTTP 503 from x")
     )
     assertEquals(
-      PluginGazetteers.places(source(throw IllegalStateException("boom")), offline),
+      PluginGazetteers.places(source(throw IllegalStateException("boom")), offline).left.map(_.sentence),
       Left("the plugin failed: IllegalStateException: boom")
     )
-    assertEquals(PluginGazetteers.places(source(null), offline), Left("the plugin answered nothing"))
+    assertEquals(
+      PluginGazetteers.places(source(null), offline).left.map(_.sentence),
+      Left("the plugin answered nothing")
+    )
 
   test("the download client: the gazetteer import's User-Agent, asked once, the answer as it came"):
     val sent = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]

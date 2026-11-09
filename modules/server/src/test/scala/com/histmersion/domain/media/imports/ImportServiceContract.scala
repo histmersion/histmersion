@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
@@ -24,7 +25,8 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.TargetsLimit(10),
         refresh = ImportService.Refresh(false),
         None
-      ),
+      ).left
+        .map(_.sentence),
       Left("No place 'zq_p'")
     )
     assertEquals(
@@ -35,7 +37,8 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.TargetsLimit(10),
         refresh = ImportService.Refresh(false),
         None
-      ),
+      ).left
+        .map(_.sentence),
       Left("No event 'zq_e'")
     )
     assertEquals(
@@ -60,7 +63,8 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.Refresh(false),
         None,
         ImportService.PleiadesOnly(false)
-      ),
+      ).left
+        .map(_.sentence),
       Left("this import is about events: name one with --event")
     )
     assertEquals(
@@ -73,7 +77,8 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.Refresh(false),
         None,
         ImportService.PleiadesOnly(false)
-      ),
+      ).left
+        .map(_.sentence),
       Left("this import is about places: name one with --place")
     )
     assertEquals(
@@ -86,7 +91,8 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.Refresh(false),
         None,
         ImportService.PleiadesOnly(true)
-      ),
+      ).left
+        .map(_.sentence),
       Left("No place 'zq_p'")
     )
     assertEquals(

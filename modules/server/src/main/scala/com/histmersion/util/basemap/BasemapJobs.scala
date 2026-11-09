@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job

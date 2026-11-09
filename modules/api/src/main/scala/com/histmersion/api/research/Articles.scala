@@ -1,7 +1,6 @@
 package com.histmersion
 package api.research
-
-import com.histmersion.api.Problem
+import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -53,9 +52,11 @@ object Articles:
         val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
         if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
           Left(
-            Problem(
-              s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
-                "and the article's opening paragraph (or its `## Summary` section) is used"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
+                  "and the article's opening paragraph (or its `## Summary` section) is used"
+              )
             )
           )
         else Right(Some(Article.SummaryText(s)))
@@ -65,12 +66,17 @@ object Articles:
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: Article.Slug): Api.Error =
-    Api.Error(Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.Unclassified(Legacy.Text(s"No article '$slug'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
     if Kind.matches(k) then Right(Article.Kind.Wire(k))
-    else Left(Problem(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
+    else
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)")
+        )
+      )
 
   def kindOfDir(dirName: String): Article.Kind.Wire =
     val d = (dirName).trim.toLowerCase
@@ -85,20 +91,26 @@ object Articles:
     val s = (raw).value.trim.toLowerCase
     if SlugPattern.matches(s) then Right(Article.Slug(s))
     else
-      Left(Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(
+            s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
+          )
+        )
+      )
 
   /** The article a put makes, or why it is refused. */
   def applyPut(slug: Article.Slug, p: Article.Put): Either[Problem, Article] =
     for
       s <- slugOf(slug)
       k <- kindOf(p.kind)
-      _ <- if p.title.value.trim.nonEmpty then Right(()) else Left(Problem("title must not be empty"))
+      _ <-
+        if p.title.value.trim.nonEmpty then Right(())
+        else Left(Problem.Unclassified(Legacy.Text("title must not be empty")))
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
-      filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f =>
-        Article.Filter.normalise(f).left.map(e => Problem(e.value))
-      )
-      reasons <- Coverage.Reason.merge(Map.empty, p.reasons).left.map(e => Problem(e))
+      filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f => Article.Filter.normalise(f))
+      reasons <- Coverage.Reason.merge(Map.empty, p.reasons).left.map(e => Problem.Unclassified(Legacy.Text(e)))
     yield Article(
       slug = s,
       title = Article.Title(p.title.value.trim),
@@ -120,9 +132,11 @@ object Articles:
         if want == actual then Right(())
         else
           Left(
-            Problem(
-              s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
-                s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
+            Problem.Unclassified(
+              Legacy.Text(
+                s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
+                  s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
+              )
             )
           )
 
@@ -136,9 +150,12 @@ object Articles:
       body <- bodyOf(existing.body, patch)
       summary <- summaryOf(patch.summary)
       filter <- patch.filter.fold[Either[Problem, Option[Article.Filter]]](Right(existing.filter))(f =>
-        Article.Filter.normalise(f).left.map(e => Problem(e.value))
+        Article.Filter.normalise(f)
       )
-      reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons).left.map(e => Problem(e))
+      reasons <- Coverage.Reason
+        .merge(existing.reasons, patch.reasons)
+        .left
+        .map(e => Problem.Unclassified(Legacy.Text(e)))
     yield existing
       .modify(_.title)
       .setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title))
@@ -189,7 +206,7 @@ object Articles:
       val t = line.trim
       t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
     }
-    if idx < 0 then Left(Problem(s"no heading matching '$section' in the article body"))
+    if idx < 0 then Left(Problem.Unclassified(Legacy.Text(s"no heading matching '$section' in the article body")))
     else
       val level = lines(idx).trim.takeWhile(_ == '#').length
       val rest = lines.drop(idx + 1)
@@ -207,6 +224,7 @@ object Articles:
   private def periodOf(start: Option[Year], end: Option[Year]): Either[Problem, Option[Period]] =
     (start, end) match
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
-      case (Some(a), Some(b))           => Left(Problem(s"period_start ($a) must not be after period_end ($b)"))
-      case (None, None)                 => Right(None)
-      case _                            => Left(Problem("give both periodStart and periodEnd, or neither"))
+      case (Some(a), Some(b))           =>
+        Left(Problem.Unclassified(Legacy.Text(s"period_start ($a) must not be after period_end ($b)")))
+      case (None, None) => Right(None)
+      case _            => Left(Problem.Unclassified(Legacy.Text("give both periodStart and periodEnd, or neither")))

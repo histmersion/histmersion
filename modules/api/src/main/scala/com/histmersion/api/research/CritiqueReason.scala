@@ -1,6 +1,9 @@
 package com.histmersion
 package api.research
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
+
 import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -43,19 +46,26 @@ object CritiqueReason:
   val MaxChars: Int = Coverage.Reason.MaxChars
 
   def parse(s: Problem): Either[Problem, CritiqueReason] =
-    val i = (s).value.indexOf('=')
-    if i < 0 then Left(Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
+    val i = (s).sentence.indexOf('=')
+    if i < 0 then
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"'${s.sentence}': write it as <src>><dst>=<why> (an empty why removes the reason)")
+        )
+      )
     else
       CritiqueRef
-        .parse(CritiqueRef.Wire((s).value.take(i)))
-        .left
-        .map(p => Problem(p.value))
-        .map(r => CritiqueReason(r.src, r.dst, Problem((s).value.drop(i + 1).trim)))
+        .parse(CritiqueRef.Wire((s).sentence.take(i)))
+        .map(r => CritiqueReason(r.src, r.dst, Problem.Unclassified(Legacy.Text((s).sentence.drop(i + 1).trim))))
 
   def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
-    val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
+    val text = Option(r.reason).map((_).sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then
-      Left(Problem(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
+      Left(
+        Problem.Unclassified(
+          Legacy.Text(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)")
+        )
+      )
     else
       Right(
         r.modify(_.src)
@@ -63,5 +73,5 @@ object CritiqueReason:
           .modify(_.dst)
           .setTo(Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT)))
           .modify(_.reason)
-          .setTo(Problem(text))
+          .setTo(Problem.Unclassified(Legacy.Text(text)))
       )

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -79,7 +79,12 @@ object OpenContext:
       case Some(rows) => Right(rows.toList.map(record(_, licences)))
       // no results: Open Context leaves the list out
       case None if c.long("totalResults").isDefined => Right(Nil)
-      case None => Left(Problem(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer")))
+      case None                                     =>
+        Left(
+          Problem.Unclassified(
+            Legacy.Text(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer"))
+          )
+        )
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
   def record(json: Json, licences: LicenceReader): Either[Problem, MediaItem] =
@@ -87,7 +92,7 @@ object OpenContext:
     c.str("uri")
       .flatMap(u => uuidOf(Plugin.Http.Url(u)))
       .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.Url(u))))
-      .toRight(Problem("no media uri"))
+      .toRight(Problem.Unclassified(Legacy.Text("no media uri")))
       .map { uuid =>
         val title = c.str("label").getOrElse(uuid.value)
         val context = c.str("context label").getOrElse("")
@@ -98,11 +103,12 @@ object OpenContext:
         val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
         val licUrl = c.strs("License [URI]").headOption
         val licLabel = c.strs("License").headOption.getOrElse("")
-        val rights: Either[plugin.Problem, MediaRights] = licUrl match
-          case None    => Left(plugin.Problem("no licence on the record"))
+        val rights: Either[Problem, MediaRights] = licUrl match
+          case None    => Left(Problem.Unclassified(Legacy.Text("no licence on the record")))
           case Some(u) =>
             val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
-            if lic.family.value == Licence.Read.Unknown then Left(plugin.Problem(s"licence not readable ($u)"))
+            if lic.family.value == Licence.Read.Unknown then
+              Left(Problem.Unclassified(Legacy.Text(s"licence not readable ($u)")))
             else
               Right(
                 MediaRights(
@@ -251,19 +257,24 @@ object OpenContext:
       .toList
       .flatten
       .flatMap(l => l.hcursor.str("label"))
-    if !c.str("category").forall(_ == "oc-gen:image") then Left(Problem("not an image"))
-    else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then Left(Problem(Withheld))
+    if !c.str("category").forall(_ == "oc-gen:image") then Left(Problem.Unclassified(Legacy.Text("not an image")))
+    else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then
+      Left(Problem.Unclassified(Legacy.Text(Withheld)))
     else
-      rec.rights.left.map(e => Problem(e.value)).flatMap { r =>
+      rec.rights.flatMap { r =>
         val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
         stated.headOption.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match
-          case None                           => Left(Problem("no licence on the media item"))
+          case None                           => Left(Problem.Unclassified(Legacy.Text("no licence on the media item")))
           case Some(l) if l.id != searched.id =>
-            Left(Problem(s"the media item's licence (${l.id}) differs from the search's (${searched.id})"))
+            Left(
+              Problem.Unclassified(
+                Legacy.Text(s"the media item's licence (${l.id}) differs from the search's (${searched.id})")
+              )
+            )
           case Some(_) =>
             file("oc-gen:preview")
               .orElse(file("oc-gen:thumbnail"))
-              .toRight(Problem("no preview file on the media item"))
+              .toRight(Problem.Unclassified(Legacy.Text("no preview file on the media item")))
               .map { preview =>
                 rec.copy(
                   imageUrl = Some(MediaItem.ImageUrl(preview)),

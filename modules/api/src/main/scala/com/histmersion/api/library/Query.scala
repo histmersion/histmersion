@@ -1,6 +1,8 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -180,25 +182,29 @@ object Query:
 
   def check(sql: Statement): Either[Problem, Statement] =
     val text = (sql).value.trim
-    if text.isEmpty then Left(Problem("empty statement"))
+    if text.isEmpty then Left(Problem.Unclassified(Legacy.Text("empty statement")))
     else
       statements(text) match
-        case Nil        => Left(Problem("empty statement"))
+        case Nil        => Left(Problem.Unclassified(Legacy.Text("empty statement")))
         case one :: Nil =>
           val kw = leadingKeyword(one)
           if Forbidden.contains((kw)) then
             Left(
-              Problem(
-                s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
-                  "WITH that only reads); transaction and session control are refused"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
+                    "WITH that only reads); transaction and session control are refused"
+                )
               )
             )
           else Right(one)
         case many =>
           Left(
-            Problem(
-              s"${many.size} statements were given — `query` runs exactly ONE; " +
-                "drop the ';'-separated batch and ask again"
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${many.size} statements were given — `query` runs exactly ONE; " +
+                  "drop the ';'-separated batch and ask again"
+              )
             )
           )
 

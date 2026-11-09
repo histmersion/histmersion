@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -47,7 +48,7 @@ class PlaceOpenSideSuite extends DbSuite:
   private type Bounds = (Option[Long], Option[Long], Boolean, Boolean)
 
   test("a place, a name and a relation with one side open keep it open in the store"):
-    val in = Lpf.parse(doc).fold(e => fail(e.value), identity)
+    val in = Lpf.parse(doc).fold(e => fail(e.sentence), identity)
     val _ = PlaceFixtures.upsertPlaces(ds, in)
     def read(q: Frag): Bounds = connect(ds)(q.query[Bounds].run().head)
     assertEquals(

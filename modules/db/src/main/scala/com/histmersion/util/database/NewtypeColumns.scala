@@ -6,9 +6,15 @@ import io.github.iltotore.iron.RefinedType
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 
+import api.problem.Text.sentence
+import util.problem.{Legacy, Problem}
+
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
   * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes
   * through, for `Option`'s codec to read as `None`.
+  *
+  * Until the stored columns go through the frozen wording (G60), a [[Problem]] column holds the sentence the String
+  * `Problem` newtypes held, and reads back as that unclassified text.
   */
 object NewtypeColumns:
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
@@ -42,3 +48,8 @@ object NewtypeColumns:
         }
       def writeSingle(entity: List[T], ps: PreparedStatement, pos: Int): Unit =
         base.writeSingle(entity.map(_.asInstanceOf[m.BaseType]), ps, pos)
+
+  given problemColumn: DbCodec[Problem] = DbCodec.StringCodec.biMap(
+    text => Option(text).map(t => Problem.Unclassified(Legacy.Text(t))).orNull,
+    problem => Option(problem).map(_.sentence).orNull
+  )

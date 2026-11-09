@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -97,7 +98,7 @@ final class OaBacklog(
               .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why}".take(500)))
+            Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why.sentence}".take(500)))
           )
 
         p
@@ -320,7 +321,7 @@ final class OaBacklog(
               .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found by a watcher sweep: ${w.why}".take(500)))
+            Some(GoalLink.Note(s"found by a watcher sweep: ${w.why.sentence}".take(500)))
           )
         )
         settle(
@@ -340,7 +341,7 @@ final class OaBacklog(
                   .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
                   .transform(LinkKind.Source),
                 GoalLink.Ref(r.citekey.value),
-                Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why}".take(500)))
+                Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why.sentence}".take(500)))
               )
             )
             settle(
@@ -354,7 +355,7 @@ final class OaBacklog(
           case Left(m) =>
             val s = settingsOf(i.managerId)
             IngestBacklog.onFailure(
-              domain.Problem(m.value),
+              m,
               Failure.Retry.Failures(i.failures.value),
               s.maxFailures,
               s.backoffMinutes,
@@ -366,7 +367,9 @@ final class OaBacklog(
                     i.id,
                     ManagerItem.Failures(n.value),
                     nb,
-                    ManagerItem.Outcome(s"not ingested (${n.value} of ${s.maxFailures}): $why; again after $nb")
+                    ManagerItem.Outcome(
+                      s"not ingested (${n.value} of ${s.maxFailures}): ${why.sentence}; again after $nb"
+                    )
                   )
                 then
                   agents.managerStore.event(
@@ -375,7 +378,7 @@ final class OaBacklog(
                     None,
                     ManagerEvent.Kind(Feed.Evaluated),
                     ManagerEvent.Text(
-                      s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): $why; again after $nb"
+                      s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): ${why.sentence}; again after $nb"
                     )
                   )
 
@@ -386,9 +389,9 @@ final class OaBacklog(
                   case Some(id) =>
                     settle(
                       ItemStatus.Stopped,
-                      s"to the acquisition list (#$id): $why",
+                      s"to the acquisition list (#$id): ${why.sentence}",
                       Feed.Evaluated,
-                      s"$doi (ingest backlog): to the acquisition list (#$id): $why",
+                      s"$doi (ingest backlog): to the acquisition list (#$id): ${why.sentence}",
                       Drained.Queued(id)
                     )
                   case None => Drained.Lost
@@ -422,7 +425,7 @@ final class OaBacklog(
                     None
                   ),
                   g,
-                  domain.Problem(w.why.value)
+                  w.why
                 )
                 .value
             )
@@ -501,7 +504,7 @@ final class OaBacklog(
           backlogItem.map(i => RepairRow.BacklogItem(i.value))
         )
       IngestBacklog.repairAction(facts) match
-        case RepairAction.Keep(why)  => row(Keep, why.value)
+        case RepairAction.Keep(why)  => row(Keep, why.sentence)
         case RepairAction.Remove(ck) =>
           if !dryRun then
             goals.foreach(g =>
@@ -524,7 +527,7 @@ final class OaBacklog(
             first.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
             first.venue.map(v => Source.Venue(v.value)),
             apiGoals,
-            first.why.fold(api.Problem(""))(w => api.Problem(w.value)),
+            first.why.fold(Problem.Unclassified(Legacy.Text("")))(w => w),
             Some(OaWork.FoundBy(first.job.value)),
             Some(OaWork.AcquireText(first.text.value))
           )

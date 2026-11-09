@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.AcquireRecheck
 
 import java.time.Instant

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
@@ -227,14 +228,18 @@ object BasemapFetch:
       _ <- source.expectedSize
         .filter(s => s.value != remote.size.value)
         .map(s =>
-          Left(Problem(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}"))
+          Left(
+            Problem.Unclassified(
+              Legacy.Text(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}")
+            )
+          )
         )
         .getOrElse(Right(()))
       h <- PmTiles.parseHeader(PmTiles.HeaderBytes(head.value))
       _ <- Either.cond(
         h.rootOffset.value + h.rootLength.value <= head.value.length,
         (),
-        Problem("root directory outside the first 16 KiB")
+        Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
       )
       root <- PmTiles
         .decompress(
@@ -253,7 +258,7 @@ object BasemapFetch:
               io.circe.parser
                 .parse(String(b.value, "UTF-8"))
                 .left
-                .map(e => Problem(s"metadata is not JSON: ${e.getMessage}"))
+                .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: ${e.getMessage}")))
             )
       region = clip(bbox, h)
       top = math.min(maxZoom.value, h.maxZoom.value)
@@ -301,7 +306,7 @@ object BasemapFetch:
       }
     }
     if leaves.isEmpty then Right(found.result())
-    else if depth >= 3 then Left(Problem("PMTiles directories nested too deep"))
+    else if depth >= 3 then Left(Problem.Unclassified(Legacy.Text("PMTiles directories nested too deep")))
     else
       val byOffset = leaves.keys.toVector.sortBy[Long](_.offset.value)
       val ranges = coalesce(
@@ -359,19 +364,21 @@ object BasemapFetch:
           room(r._2).flatMap { _ =>
             if i > 0 || p.directoryRequests.value > 0 then pace.sleep(pace.gapMs)
             if Thread.interrupted() then throw InterruptedException()
-            Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message.value), identity)) { part =>
+            Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message.sentence), identity)) { part =>
               http
                 .download(p.source.url, ByteOffset.applyUnsafe(p.header.dataOffset.value + r._1.value), r._2, part)
                 .flatMap { got =>
                   if got.size != p.remote.size || got.etag != p.remote.etag then
                     part.discard()
                     Left(
-                      Problem(
-                        s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
+                      Problem.Unclassified(
+                        Legacy.Text(
+                          s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
+                        )
                       )
                     )
                   else
-                    part.commit().left.map(e => Problem(e.message.value)).map { _ =>
+                    part.commit().left.map(e => e.message).map { _ =>
                       done += r._2.value
                       note(
                         Note(
@@ -547,9 +554,9 @@ object BasemapFetch:
         .flatMap(f => io.circe.parser.parse(f.text().value).toOption)
         .contains(state)
     then work.list().foreach(f => work.delete(f.key))
-    work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
+    work.makeDirectory().left.foreach(e => throw IOException(e.message.sentence))
     work
       .write(file, ByteSource.Content(state.noSpaces.getBytes(UTF_8)))
       .left
-      .foreach(e => throw IOException(e.message.value))
+      .foreach(e => throw IOException(e.message.sentence))
     ChunkCount(work.list().count(_.key.name.value.endsWith(".bin")))

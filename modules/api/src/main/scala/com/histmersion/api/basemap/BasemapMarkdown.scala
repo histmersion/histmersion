@@ -1,6 +1,7 @@
 package com.histmersion
 package api.basemap
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 import com.histmersion.api.ByteCount
@@ -17,7 +18,7 @@ object BasemapMarkdown:
         val zoom = (l.minZoom, l.maxZoom) match
           case (Some(a), Some(b)) => s"$a–$b"
           case _                  => ""
-        val state = l.error.fold(Backup.humanBytes(l.bytes))(e => s"unreadable: $e")
+        val state = l.error.fold(Backup.humanBytes(l.bytes))(e => s"unreadable: ${e.sentence}")
         s"| ${l.layer} | $what | $state | $zoom | ${l.bbox.getOrElse("")} | ${l.source.getOrElse(
             ""
           )}${l.fetchedAt.fold("")(t => s", $t")} |"

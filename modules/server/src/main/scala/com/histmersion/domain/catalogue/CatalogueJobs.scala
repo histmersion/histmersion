@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, JobStops, WorkCarrier}

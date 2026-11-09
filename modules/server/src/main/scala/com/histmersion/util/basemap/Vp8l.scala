@@ -1,7 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's terrarium tiles
@@ -38,8 +39,9 @@ object Vp8l:
     vp8lChunk(raw).flatMap { (off, len) =>
       try Right(Decoder(raw, off, off + len).image())
       catch
-        case e: Vp8lError                      => Left(Problem(e.getMessage))
-        case e: ArrayIndexOutOfBoundsException => Left(Problem(s"corrupt VP8L stream (${e.getMessage})"))
+        case e: Vp8lError                      => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
+        case e: ArrayIndexOutOfBoundsException =>
+          Left(Problem.Unclassified(Legacy.Text(s"corrupt VP8L stream (${e.getMessage})")))
     }
 
   final private class Vp8lError(msg: String) extends Exception(msg)
@@ -53,19 +55,23 @@ object Vp8l:
     def le32(i: Int) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
     def tag(i: Int) = new String(b, i, 4, "US-ASCII")
     if b.length >= 5 && (b(0) & 0xff) == 0x2f then Right((0, b.length))
-    else if b.length < 20 || tag(0) != "RIFF" || tag(8) != "WEBP" then Left(Problem("not a WebP file"))
+    else if b.length < 20 || tag(0) != "RIFF" || tag(8) != "WEBP" then
+      Left(Problem.Unclassified(Legacy.Text("not a WebP file")))
     else
       // the chunks after the header: the first VP8L one is the image
       var i = 12
-      var found: Either[Problem, (Int, Int)] = Left(Problem("no VP8L chunk: only lossless WebP is read"))
+      var found: Either[Problem, (Int, Int)] = Left(
+        Problem.Unclassified(Legacy.Text("no VP8L chunk: only lossless WebP is read"))
+      )
       var done = false
       while !done && i + 8 <= b.length do
         val t = tag(i)
         val n = le32(i + 4)
-        if n < 0 || i + 8 + n > b.length then { found = Left(Problem("truncated WebP chunk")); done = true }
-        else if t == "VP8L" then { found = Right((i + 8, n)); done = true }
+        if n < 0 || i + 8 + n > b.length then {
+          found = Left(Problem.Unclassified(Legacy.Text("truncated WebP chunk"))); done = true
+        } else if t == "VP8L" then { found = Right((i + 8, n)); done = true }
         else if t == "VP8 " then {
-          found = Left(Problem("a lossy (VP8) WebP: only lossless WebP is read")); done = true
+          found = Left(Problem.Unclassified(Legacy.Text("a lossy (VP8) WebP: only lossless WebP is read"))); done = true
         } else i += 8 + n + (n & 1)
       found
 
@@ -146,7 +152,7 @@ object Vp8l:
     else if used.size == 1 then Right(Code(Array.empty, Array.empty, Array.empty, single = used.head))
     else
       val maxLen = used.map(lengths(_)).max
-      if maxLen > 15 then Left(Problem("a prefix code longer than 15 bits"))
+      if maxLen > 15 then Left(Problem.Unclassified(Legacy.Text("a prefix code longer than 15 bits")))
       else
         // canonical codes: by length, then by symbol
         val count = new Array[Int](16)
@@ -160,7 +166,8 @@ object Vp8l:
           l += 1
         // the Kraft sum must be exactly 1 for a complete code
         val kraft = used.map(s => 1L << (15 - lengths(s))).sum
-        if kraft != (1L << 15) then Left(Problem("an incomplete or over-subscribed prefix code"))
+        if kraft != (1L << 15) then
+          Left(Problem.Unclassified(Legacy.Text("an incomplete or over-subscribed prefix code")))
         else
           val root = Array.fill(1 << Root)(Int.MinValue)
           val subLen = scala.collection.mutable.HashMap.empty[Int, Int] // root prefix → deepest code under it
@@ -292,7 +299,7 @@ object Vp8l:
           if second >= size then fail("a symbol outside its alphabet")
           lengths(second) = 1
         else lengths(first) = 0
-        if two then build(lengths).fold(p => fail(p.value), identity)
+        if two then build(lengths).fold(p => fail(p.sentence), identity)
         else Code(Array.empty, Array.empty, Array.empty, single = first)
       else
         val clLengths = new Array[Int](19)
@@ -301,7 +308,7 @@ object Vp8l:
         while i < n do
           clLengths(CodeLengthOrder(i)) = r.read(3)
           i += 1
-        val cl = build(clLengths).fold(p => fail(p.value), identity)
+        val cl = build(clLengths).fold(p => fail(p.sentence), identity)
         var max =
           if r.read(1) == 1 then
             val nbits = 2 + 2 * r.read(3)
@@ -329,7 +336,7 @@ object Vp8l:
               lengths(s) = value
               s += 1
               k += 1
-        build(lengths).fold(p => fail(p.value), identity)
+        build(lengths).fold(p => fail(p.sentence), identity)
 
     /** A length or distance from its prefix symbol and its extra bits. */
     private def prefixValue(symbol: Int): Int =

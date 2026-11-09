@@ -1,7 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.api.ServiceState
 import com.raquo.laminar.api.L.*
 
@@ -67,7 +68,7 @@ object MapRegionsView:
 
   private def start(dryRun: Basemap.FetchQuery.DryRun): Unit =
     current(dryRun) match
-      case Left(m)  => error.set(Some(m.value))
+      case Left(m)  => error.set(Some(m.sentence))
       case Right(q) =>
         error.set(None)
         follow(ApiClient.basemapFetch(q), Option.when(dryRun.value)(q))
@@ -219,7 +220,7 @@ object MapRegionsView:
         ),
         j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a.value))
       ),
-      j.error.map(e => p(cls := "form-error", role := "alert", e.value)),
+      j.error.map(e => p(cls := "form-error", role := "alert", e.sentence)),
       j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t.value)),
       Option
         .when(j.isTerminal)(j.progress)

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.given
 
 import io.circe.{Decoder, Encoder, Json, JsonObject, Printer}
@@ -66,18 +66,22 @@ object BundleFormat:
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
   def decodeLine[A](line: String, stamped: Boolean)(using dec: Decoder[A]): Either[Problem, A] =
-    parser.parse(line).left.map(e => Problem(s"not JSON: ${e.message}")).flatMap { json =>
+    parser.parse(line).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.message}"))).flatMap { json =>
       val revOk =
         if !stamped then Right(())
         else
-          json.asObject.toRight(Problem("not a JSON object")).flatMap { obj =>
+          json.asObject.toRight(Problem.Unclassified(Legacy.Text("not a JSON object"))).flatMap { obj =>
             obj("rev").flatMap(_.asString) match
-              case None                       => Left(Problem("no rev"))
+              case None                       => Left(Problem.Unclassified(Legacy.Text("no rev")))
               case Some(r) if r == revOf(obj) => Right(())
-              case Some(r)                    => Left(Problem(s"rev $r does not match its content (${revOf(obj)})"))
+              case Some(r)                    =>
+                Left(Problem.Unclassified(Legacy.Text(s"rev $r does not match its content (${revOf(obj)})")))
           }
       revOk.flatMap(_ =>
-        dec.decodeJson(json).left.map(e => Problem(s"${e.message} at ${e.pathToRootString.getOrElse("")}"))
+        dec
+          .decodeJson(json)
+          .left
+          .map(e => Problem.Unclassified(Legacy.Text(s"${e.message} at ${e.pathToRootString.getOrElse("")}")))
       )
     }
 
@@ -113,7 +117,7 @@ object BundleFormat:
     parser
       .decode[Bundle.Manifest](String(bytes, UTF_8))
       .left
-      .map(e => Problem(s"manifest.json: ${e.getMessage}"))
+      .map(e => Problem.Unclassified(Legacy.Text(s"manifest.json: ${e.getMessage}")))
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.

@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.{AcquireConfig, AppConfig}
@@ -22,7 +23,9 @@ class OaFetchSuite extends munit.FunSuite:
   /** Answers nothing, records every URL asked for. */
   final private class RecordingHttp extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
-    private def miss(url: Http.Url) = { urls = urls :+ url; Left(Http.Failure.Transport(Problem(s"$url: offline"))) }
+    private def miss(url: Http.Url) = {
+      urls = urls :+ url; Left(Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url: offline"))))
+    }
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       miss(url)
     def text(
@@ -37,7 +40,7 @@ class OaFetchSuite extends munit.FunSuite:
   private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
 
   private def asked(email: AcquireConfig.ContactEmail): List[Http.Url] =
     val cfg = acquire(email)

@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** The critique checklist (docs/research-review-convergence.md §6.8), pure: the paragraphs "the same paragraph" is
@@ -113,7 +115,7 @@ class CritiquesSuite extends munit.FunSuite:
       CritiqueReason(
         Citekey("frazer1922_golden"),
         Citekey("brown1999_rites"),
-        Problem("The article cites it for the calendar only."),
+        Problem.Unclassified(Legacy.Text("The article cites it for the calendar only.")),
         Some(Activity.Actor("person"))
       )
     )
@@ -127,7 +129,7 @@ class CritiquesSuite extends munit.FunSuite:
         ("smith1987_dying>frazer1922_golden", List("refutes"), CritiqueState.Addressed, true, true)
       )
     )
-    assertEquals(pairs.head.reason, Some("The article cites it for the calendar only."))
+    assertEquals(pairs.head.reason.map(_.sentence), Some("The article cites it for the calendar only."))
     assertEquals(
       pairs.last.dst,
       CritiqueSide(
@@ -143,14 +145,22 @@ class CritiquesSuite extends munit.FunSuite:
       body,
       resolve,
       edges.take(1),
-      List(CritiqueReason(Citekey("smith1987_dying"), Citekey("frazer1922_golden"), Problem("x"))),
+      List(
+        CritiqueReason(Citekey("smith1987_dying"), Citekey("frazer1922_golden"), Problem.Unclassified(Legacy.Text("x")))
+      ),
       refs
     )
     assertEquals(both.map(_.state), List(CritiqueState.Addressed))
     // an empty stored reason is no reason
     assertEquals(
       Critiques
-        .build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = Problem(" "))), refs)
+        .build(
+          body,
+          resolve,
+          edges.slice(1, 2),
+          List(reasons.head.copy(reason = Problem.Unclassified(Legacy.Text(" ")))),
+          refs
+        )
         .map(_.state),
       List(CritiqueState.Open)
     )
@@ -269,7 +279,7 @@ class CritiquesSuite extends munit.FunSuite:
       CritiqueSide.Cited(false),
       CritiqueSide.Cited(true),
       state = CritiqueState.Reasoned,
-      reason = Some(Problem("off the point"))
+      reason = Some(Problem.Unclassified(Legacy.Text("off the point")))
     )
     val (text, shown) =
       Critiques.promptText(open :+ why, maxOpen = Critiques.OpenLimit(2), maxReasoned = Critiques.ReasonedLimit(10))
@@ -321,7 +331,7 @@ class CritiquesSuite extends munit.FunSuite:
         CritiqueSide.Cited(false),
         CritiqueSide.Cited(true),
         state = CritiqueState.Reasoned,
-        reason = Some(Problem("not the point"))
+        reason = Some(Problem.Unclassified(Legacy.Text("not the point")))
       ),
       pair(
         Citekey("d"),
@@ -376,22 +386,29 @@ class CritiquesSuite extends munit.FunSuite:
         .isLeft && CritiqueRef.parse(CritiqueRef.Wire(">b")).isLeft
     )
     assertEquals(
-      CritiqueReason.parse(Problem("a2000_x>b2001_y=Not the point.  ")),
-      Right(CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem("Not the point.")))
+      CritiqueReason.parse(Problem.Unclassified(Legacy.Text("a2000_x>b2001_y=Not the point.  "))),
+      Right(CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem.Unclassified(Legacy.Text("Not the point."))))
     )
-    assertEquals(CritiqueReason.parse(Problem("a2000_x>b2001_y=")).map(_.reason), Right(""))
-    assert(CritiqueReason.parse(Problem("a2000_x>b2001_y")).isLeft)
-    assert(CritiqueReason.tidy(CritiqueReason(Citekey("a"), Citekey("b"), Problem("x" * 501))).isLeft)
+    assertEquals(
+      CritiqueReason.parse(Problem.Unclassified(Legacy.Text("a2000_x>b2001_y="))).map(_.reason.sentence),
+      Right("")
+    )
+    assert(CritiqueReason.parse(Problem.Unclassified(Legacy.Text("a2000_x>b2001_y"))).isLeft)
+    assert(
+      CritiqueReason
+        .tidy(CritiqueReason(Citekey("a"), Citekey("b"), Problem.Unclassified(Legacy.Text("x" * 501))))
+        .isLeft
+    )
     assertEquals(
       CritiqueReason
-        .tidy(CritiqueReason(Citekey(" A "), Citekey("b"), Problem(" one\n line ")))
-        .map(r => (r.src, r.reason)),
+        .tidy(CritiqueReason(Citekey(" A "), Citekey("b"), Problem.Unclassified(Legacy.Text(" one\n line "))))
+        .map(r => (r.src, r.reason.sentence)),
       Right(("a", "one line"))
     )
     assert(
       Article
         .Patch(
-          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), Problem("x"))),
+          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), Problem.Unclassified(Legacy.Text("x")))),
           ifUpdatedAt = Some(Article.UpdatedAt("t"))
         )
         .onlyCritiques
@@ -400,7 +417,7 @@ class CritiquesSuite extends munit.FunSuite:
       !Article
         .Patch(
           body = Some(Article.Body("b")),
-          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), Problem("x")))
+          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), Problem.Unclassified(Legacy.Text("x"))))
         )
         .onlyCritiques
     )

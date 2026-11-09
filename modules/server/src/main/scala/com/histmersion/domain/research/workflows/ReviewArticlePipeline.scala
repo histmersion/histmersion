@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
@@ -129,7 +130,7 @@ final class ReviewArticlePipeline(
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Problem(p.value))).flatMap(runFor(ctx, _))
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes
@@ -156,7 +157,9 @@ final class ReviewArticlePipeline(
   private def apiBody(b: ReviewArticle.Fix.Body): Article.Body = Article.Body(b.value)
 
   private def checked[O](r: Either[List[String], (O, List[String])]): Either[List[Problem], Checked[O]] =
-    r.left.map(_.map(Problem(_))).map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
+    r.left
+      .map(_.map((text => Problem.Unclassified(Legacy.Text(text)))))
+      .map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
 
   /** After pass `r`: fix and verify while a MAJOR is open and passes remain, then (maybe) confirm. `start`: the run's
     * first snapshot — what the confirming panel's regressions are measured from.
@@ -412,7 +415,7 @@ final class ReviewArticlePipeline(
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
-    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, api.Problem(a.reason.value))) ++ f.pairsAside)
+    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason)) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
       .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
 
@@ -423,7 +426,7 @@ final class ReviewArticlePipeline(
     if rs.nonEmpty then
       val p = Article.Patch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
-        site.articles.patch(slug, p).left.map(_.message.value).map(_ => ())
+        site.articles.patch(slug, p).left.map(_.message.sentence).map(_ => ())
       )(Right(())) match
         case Left(m)  => ctx.warn(s"critique reasons not stored: $m")
         case Right(_) => ()
@@ -461,7 +464,7 @@ final class ReviewArticlePipeline(
         "reason against the records like a Not used reason):\n\n" +
         Prompt.data(
           "critique-reasons",
-          reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(_.value)}").mkString("\n")
+          reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(_.sentence)}").mkString("\n")
         )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -472,7 +475,7 @@ final class ReviewArticlePipeline(
       unwritten: Option[ReviewArticle.Fix.Body],
       reasons: List[CritiqueReason]
   ): Either[String, Snapshot] =
-    site.articles.get(slug).left.map(_.message.value).flatMap { v =>
+    site.articles.get(slug).left.map(_.message.sentence).flatMap { v =>
       val a = v.article
       val body = unwritten.getOrElse(a.body)
       if body.value.trim.isEmpty then Left(s"article '$slug' has no body to review")
@@ -539,7 +542,7 @@ final class ReviewArticlePipeline(
           Finding.Kind("formatting"),
           Finding.Where("body"),
           Finding.Quote(""),
-          Finding.Problem(s"a formatting error the last edits introduced: $e"),
+          Finding.Problem(s"a formatting error the last edits introduced: ${e.sentence}"),
           Finding.Fix("repair the markup")
         )
       }
@@ -773,7 +776,7 @@ final class ReviewArticlePipeline(
       val o = approvals.propose(ctx, p)
       o match
         case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w")
-        case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w")
+        case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: ${w.sentence}")
         case _                                       => ()
       o.line
     }
@@ -970,7 +973,7 @@ final class ReviewArticlePipeline(
         case Left(e) if e.code.contains(Api.Error.Code(Write.CodePrecondition)) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
           Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(true)))
-        case Left(e) => Left(e.message.value)
+        case Left(e) => Left(e.message.sentence)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) — created, rewritten,
     * or closed when none is left — and the ledger, which keeps the item's id. An open item of the article the ledger
@@ -1011,7 +1014,7 @@ final class ReviewArticlePipeline(
          s"; ${Plural.count(Plural.CountN(end.deferred.size.toLong), Plural.CountSingular("new MAJOR"))} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
 
   private def backlog(ctx: RunCtx, slug: Slug, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label
@@ -1048,7 +1051,8 @@ final class ReviewArticlePipeline(
           val p =
             QueuePatch(
               status = Some(Queue.QueueItem.Status(Queue.Done)),
-              reason = Some(api.Problem(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
+              reason =
+                Some(Problem.Unclassified(Legacy.Text(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}")))
             )
           val _ =
             ctx.write(s"tasks item #${item.id} done", p.asJson)(
@@ -1071,7 +1075,10 @@ final class ReviewArticlePipeline(
           s"superseded by #$id (one item per article)"
         )
         val p =
-          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(api.Problem(why)))
+          QueuePatch(
+            status = Some(Queue.QueueItem.Status(Queue.Done)),
+            reason = Some(Problem.Unclassified(Legacy.Text(why)))
+          )
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(
             site.workLists.patch(QueueItemId(item.id.value), p).map(_ => ())

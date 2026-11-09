@@ -1,7 +1,8 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -119,7 +120,7 @@ class MediaSourcesSuite extends DbSuite:
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] = Left(
-      Problem("not used")
+      Problem.Unclassified(Legacy.Text("not used"))
     )
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
@@ -209,7 +210,7 @@ class MediaSourcesSuite extends DbSuite:
     val dry =
       h.covers
         .covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false)))
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals(
       dry.lines,
       List(
@@ -230,7 +231,7 @@ class MediaSourcesSuite extends DbSuite:
           covers = MediaCoversRequest.Covers(false)
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(done.illustrations, 1)
     assertEquals(
       conv.calls.toList.map((file, px) => file -> px.value),
@@ -259,7 +260,7 @@ class MediaSourcesSuite extends DbSuite:
           illustrations = MediaCoversRequest.Illustrations(false)
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals(
       r.lines,
       List(
@@ -296,7 +297,7 @@ class MediaSourcesSuite extends DbSuite:
           isbn = Some(MediaCoversRequest.Isbn("9780000000019"))
         )
       )
-      .fold(e => fail(e.message.value), identity)
+      .fold(e => fail(e.message.sentence), identity)
     assertEquals((none.covers, none.skipped.map(_.key)), (0, List("cover: Open Library has no cover")))
 
   test("the server: a Calibre cover uploaded is the source's card picture, before its illustration"):
@@ -402,7 +403,7 @@ class MediaSourcesSuite extends DbSuite:
         .importJob(
           MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), limit = Some(MediaImportRequest.Limit(3)))
         )
-        .fold(e => fail(e.message.value), identity)
+        .fold(e => fail(e.message.sentence), identity)
     assertEquals(j.kind.value: String, ImportsControllers.ImportJobKind.value: String)
     assert(
       j.detail.flatMap(ImportJobKinds.Media.of).exists(_.value.contains("up to 3")),

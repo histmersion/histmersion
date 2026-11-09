@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.places.PlaceReview
@@ -27,7 +28,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
         Files.readString(root.resolve("db/places/03-pleiades.json")),
         com.histmersion.api.catalogue.Place.KindValue(Place.Kind.Region)
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentence), identity)
 
   private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties

@@ -1,6 +1,7 @@
 package com.histmersion
 package server.plugins
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.plugins.PluginSetResource
@@ -96,12 +97,12 @@ class PluginToolSuite extends munit.FunSuite:
     val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
     val f = RelinkPlugins.describe(foreign, loader)
     assertEquals(f.plugins.map(p => (p.id, p.spiVersion)), List(("foreign-spi", Spi.Version + 98)))
-    assert(f.plugins.head.error.exists(_.value.contains("SPI")), f.plugins.head.error)
+    assert(f.plugins.head.error.exists(_.sentence.contains("SPI")), f.plugins.head.error)
     val none = variant(hello, d.resolve("none.jar"), None)
     assertEquals(RelinkPlugins.describe(none, loader).plugins, Nil)
     val broken = variant(hello, d.resolve("broken.jar"), Some("com.histmersion.fixtures.hello.NoSuchPlugin\n"))
     val b = RelinkPlugins.describe(broken, loader)
-    assert(b.plugins.headOption.flatMap(_.error).exists(_.value.contains("NoSuchPlugin")), b)
+    assert(b.plugins.headOption.flatMap(_.error).exists(_.sentence.contains("NoSuchPlugin")), b)
 
   test("duplicates: a class the kit or an earlier plugin already has, named with its owner"):
     def classes(names: String*) = names.map(RelinkPlugins.ClassName(_)).toSet
@@ -117,10 +118,10 @@ class PluginToolSuite extends munit.FunSuite:
       )
     assertEquals(dups.size, 2)
     assert(
-      dups.head.value.startsWith("p.jar duplicates") && dups.head.value.contains("1 with the kit (a.A)"),
+      dups.head.sentence.startsWith("p.jar duplicates") && dups.head.sentence.contains("1 with the kit (a.A)"),
       dups.head
     )
-    assert(dups(1).value.startsWith("q.jar duplicates") && dups(1).value.contains("1 with p.jar (p.P)"), dups(1))
+    assert(dups(1).sentence.startsWith("q.jar duplicates") && dups(1).sentence.contains("1 with p.jar (p.P)"), dups(1))
 
   private def kitWith(d: Path, jars: Map[String, Map[String, Array[Byte]]]): Path =
     val kit = Files.createDirectories(d.resolve("kit").resolve("lib")).getParent
@@ -149,19 +150,19 @@ class PluginToolSuite extends munit.FunSuite:
     val (_, dup) = RelinkPlugins.check(kit, List(hello), Nil, loader)
     assert(
       dup.exists(p =>
-        p.value.contains("duplicates classes") && p.value.contains("the kit") &&
-          p.value.contains("com.histmersion.fixtures.hello.HelloFetcher")
+        p.sentence.contains("duplicates classes") && p.sentence.contains("the kit") &&
+          p.sentence.contains("com.histmersion.fixtures.hello.HelloFetcher")
       ),
       dup
     )
     val clean = kitWith(Files.createDirectories(d.resolve("k2")), Map.empty)
     val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
     val (_, spi) = RelinkPlugins.check(clean, List(foreign), Nil, loader)
-    assert(spi.exists(_.value.contains(s"built for plugin SPI ${Spi.Version + 98}")), spi)
+    assert(spi.exists(_.sentence.contains(s"built for plugin SPI ${Spi.Version + 98}")), spi)
     val twin = variant(hello, d.resolve("hello-copy.jar"), Some("com.histmersion.fixtures.hello.HelloPlugin\n"))
     val (_, twice) = RelinkPlugins.check(clean, List(hello, twin), Nil, loader)
-    assert(twice.exists(_.value.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
-    assert(twice.exists(_.value.startsWith("hello-copy.jar duplicates classes")), twice)
+    assert(twice.exists(_.sentence.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
+    assert(twice.exists(_.sentence.startsWith("hello-copy.jar duplicates classes")), twice)
     assertEquals(
       RelinkPlugins.hostIds(loader).get(PluginDescription.Id("archive-org")),
       Some("this Histmersion (a first-party plugin)")
@@ -201,8 +202,8 @@ class PluginToolSuite extends munit.FunSuite:
       val without = RelinkPlugins.describe(helloDeps, loader).plugins.head
       assert(
         without.error.exists(e =>
-          e.value.contains("class com.histmersion.fixtures.hellolib.Shout") && e.value.contains("is missing") &&
-            e.value.contains("histmersion plugin add")
+          e.sentence.contains("class com.histmersion.fixtures.hellolib.Shout") && e.sentence.contains("is missing") &&
+            e.sentence.contains("histmersion plugin add")
         ),
         without.error
       )
@@ -223,8 +224,8 @@ class PluginToolSuite extends munit.FunSuite:
     val (_, problems) = RelinkPlugins.check(kit, List(helloDeps), List(helloLib), loader)
     assert(
       problems.exists(p =>
-        p.value.startsWith(helloLib.getFileName.toString + " duplicates classes") &&
-          p.value.contains("com.histmersion.fixtures.hellolib.Shout") && p.value.contains("depend on the library")
+        p.sentence.startsWith(helloLib.getFileName.toString + " duplicates classes") &&
+          p.sentence.contains("com.histmersion.fixtures.hellolib.Shout") && p.sentence.contains("depend on the library")
       ),
       problems
     )

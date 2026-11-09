@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.domain.media.assets.PictureTarget
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
@@ -111,22 +111,24 @@ private[imports] object ImportRepo:
     ) match
       case (Some(pid), _) =>
         sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
-          case None        => Left(Problem(s"No place '${pid.value}'"))
+          case None        => Left(Problem.Unclassified(Legacy.Text(s"No place '${pid.value}'")))
           case Some(label) =>
             placeQid(pid)
               .map(q => List(Target(Place, Target.Id(pid.value), q, label)))
-              .toRight(Problem(s"place '${pid.value}' (${label.value}) has no Wikidata link"))
+              .toRight(Problem.Unclassified(Legacy.Text(s"place '${pid.value}' (${label.value}) has no Wikidata link")))
       case (None, Some(eid)) =>
         sql"SELECT label, wikidata FROM events WHERE id = $eid"
           .query[(Target.Label, Option[Target.Qid])]
           .run()
           .headOption match
-          case None                   => Left(Problem(s"No event '${eid.value}'"))
+          case None                   => Left(Problem.Unclassified(Legacy.Text(s"No event '${eid.value}'")))
           case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
           case Some((label, None))    =>
             Left(
-              Problem(
-                s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+                )
               )
             )
       case (None, None) =>
@@ -218,28 +220,36 @@ private[imports] object ImportRepo:
       event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))
     ) match
       case (Some(pid), _) =>
-        if !places.value then Left(Problem("this import is about events: name one with --event"))
+        if !places.value then
+          Left(Problem.Unclassified(Legacy.Text("this import is about events: name one with --event")))
         else
           sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
-            case None => Left(Problem(s"No place '${pid.value}'"))
+            case None => Left(Problem.Unclassified(Legacy.Text(s"No place '${pid.value}'")))
             case Some(l) if pleiadesOnly.value && pleiadesIdsIn(List(pid)).isEmpty =>
               Left(
-                Problem(s"place '${pid.value}' (${l.value}) has no Pleiades id (its own, or an exact Pleiades link)")
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"place '${pid.value}' (${l.value}) has no Pleiades id (its own, or an exact Pleiades link)"
+                  )
+                )
               )
             case Some(l) => Right(List(Target(Place, Target.Id(pid.value), Target.Qid(""), l)))
       case (None, Some(eid)) =>
-        if places.value then Left(Problem("this import is about places: name one with --place"))
+        if places.value then
+          Left(Problem.Unclassified(Legacy.Text("this import is about places: name one with --place")))
         else
           sql"SELECT label, wikidata FROM events WHERE id = $eid"
             .query[(Target.Label, Option[Target.Qid])]
             .run()
             .headOption match
-            case None                   => Left(Problem(s"No event '${eid.value}'"))
+            case None                   => Left(Problem.Unclassified(Legacy.Text(s"No event '${eid.value}'")))
             case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
             case Some((label, None))    =>
               Left(
-                Problem(
-                  s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+                Problem.Unclassified(
+                  Legacy.Text(
+                    s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+                  )
                 )
               )
       case (None, None) =>

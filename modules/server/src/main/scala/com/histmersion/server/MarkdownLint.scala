@@ -1,7 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -130,10 +130,12 @@ object MarkdownLint:
   def refusal(issues: List[FormatIssue]): Option[Problem] =
     val errs = issues.filter(_.severity == FormatSeverity.Error)
     Option.when(errs.nonEmpty)(
-      Problem(
-        s"refused (strict): ${Plural.count(Plural.CountN(errs.size.toLong), Plural.CountSingular("formatting error"))} — " +
-          errs.take(5).map(FormatMarkdown.line).mkString("; ") +
-          (if errs.sizeIs > 5 then s"; … and ${errs.size - 5} more" else "")
+      Problem.Unclassified(
+        Legacy.Text(
+          s"refused (strict): ${Plural.count(Plural.CountN(errs.size.toLong), Plural.CountSingular("formatting error"))} — " +
+            errs.take(5).map(FormatMarkdown.line).mkString("; ") +
+            (if errs.sizeIs > 5 then s"; … and ${errs.size - 5} more" else "")
+        )
       )
     )
 

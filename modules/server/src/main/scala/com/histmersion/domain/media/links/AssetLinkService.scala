@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.links
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.api.Write
 import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.MediaState
@@ -47,7 +47,7 @@ object AssetLinkService:
 
   private def noFigure(in: AssetLink.Put): Api.Error =
     Api.Error(
-      Problem(s"No asset '${in.citekey}/${in.assetName}'"),
+      Problem.Unclassified(Legacy.Text(s"No asset '${in.citekey}/${in.assetName}'")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 

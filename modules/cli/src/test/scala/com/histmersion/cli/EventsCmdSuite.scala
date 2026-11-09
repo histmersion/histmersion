@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.catalogue.EventPatch
 import com.monovore.decline.Command
 import com.histmersion.api.catalogue.EventSummary
@@ -40,7 +41,7 @@ class EventsCmdSuite extends munit.FunSuite:
 
   test("nothing to change, a scale that is none, or half a point is refused before any request"):
     def refused(args: String*) = parse(args*) match
-      case Right((_, Left(e))) => e.message.value
+      case Right((_, Left(e))) => e.message.sentence
       case other               => fail(s"not refused: $other")
     assert(refused("x").contains("nothing to change"))
     assert(refused("x", "--scale", "global").contains("local, regional or auto"))

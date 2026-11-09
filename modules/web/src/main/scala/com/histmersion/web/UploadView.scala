@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -222,8 +223,8 @@ object UploadView:
             progress.set(None)
             r.fold(
               {
-                case af: ApiFailure if af.unauthorized => errors.set(List(Field.Form -> af.error.message.value))
-                case af: ApiFailure                    => errors.set(List(fieldOf(af) -> af.error.message.value))
+                case af: ApiFailure if af.unauthorized => errors.set(List(Field.Form -> af.error.message.sentence))
+                case af: ApiFailure                    => errors.set(List(fieldOf(af) -> af.error.message.sentence))
                 case e                                 => errors.set(List(Field.Form -> e.getMessage))
               },
               ok =>

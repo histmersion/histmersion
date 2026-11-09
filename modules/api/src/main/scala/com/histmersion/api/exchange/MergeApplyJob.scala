@@ -1,6 +1,8 @@
 package com.histmersion
 package api.exchange
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.{Legacy, Problem}
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -48,10 +50,12 @@ object MergeApplyJob:
     case Other(problem: Problem)
 
   val InterruptedText: Problem =
-    Problem(
-      "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
-        "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
-        "shows what is left"
+    Problem.Unclassified(
+      Legacy.Text(
+        "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
+          "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
+          "shows what is left"
+      )
     )
 
   def of(
@@ -75,8 +79,10 @@ object MergeApplyJob:
             planHash,
             elapsedMs,
             error = Some(
-              Problem(
-                "the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied"
+              Problem.Unclassified(
+                Legacy.Text(
+                  "the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied"
+                )
               )
             )
           )
@@ -97,7 +103,7 @@ object MergeApplyJob:
           bundle,
           planHash,
           elapsedMs,
-          error = Some(Problem((InterruptedText).value))
+          error = Some(InterruptedText)
         )
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
         MergeApplyJob(

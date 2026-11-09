@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.ListPatch
@@ -309,10 +310,14 @@ object CheckpointGolden:
         CritiqueReason(
           Citekey("doe2001_tin"),
           Citekey("smith1987_tin"),
-          api.Problem("Not about the route."),
+          Problem.Unclassified(Legacy.Text("Not about the route.")),
           Some(Activity.Actor("skeptic (agent run 1234abcd)"))
         ),
-        CritiqueReason(Citekey("roe1990_tin"), Citekey("smith1987_tin"), api.Problem("Not material."))
+        CritiqueReason(
+          Citekey("roe1990_tin"),
+          Citekey("smith1987_tin"),
+          Problem.Unclassified(Legacy.Text("Not material."))
+        )
       )
     ) ::
       Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))

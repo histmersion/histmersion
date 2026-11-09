@@ -1,6 +1,7 @@
 package com.histmersion
 package api.settings
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ConfigEditMarkdown:
@@ -54,7 +55,7 @@ object ConfigEditMarkdown:
       list(("Already so"), w.unchanged.map(_.value.stripPrefix("histmersion."))) ++
       list(
         ("Takes effect after a restart"),
-        w.restart.map(r => s"${r.key.value.stripPrefix("histmersion.")} — ${r.why}")
+        w.restart.map(r => s"${r.key.value.stripPrefix("histmersion.")} — ${r.why.sentence}")
       ) ++
       list(("Warnings"), w.warnings.map(_.value)) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")

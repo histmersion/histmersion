@@ -1,7 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -38,7 +38,7 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(
       Politeness
         .decide(answer(404), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.GiveUp(domain.Problem("HTTP 404"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 404")))
     )
 
   test("429 and 503 wait for Retry-After (seconds or a date), else back off 1, 2, 4 … s"):
@@ -50,7 +50,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(7000), domain.Problem("HTTP 429"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(7000), Problem.Unclassified(Legacy.Text("HTTP 429")))
     )
     assertEquals(
       Politeness.decide(
@@ -60,12 +60,12 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(3000), domain.Problem("HTTP 503"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(3000), Problem.Unclassified(Legacy.Text("HTTP 503")))
     )
     assertEquals(
       Politeness
         .decide(answer(503), HttpPolicy.Attempt(2), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(4000), domain.Problem("HTTP 503"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(4000), Problem.Unclassified(Legacy.Text("HTTP 503")))
     )
 
   test("maxlag: the MediaWiki-API-Error header (HTTP 200) or the error code in the body"):
@@ -78,7 +78,7 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(
       Politeness
         .decide(lagged, HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
-      Step.Wait(HttpPolicy.Step.Wait.Ms(5000), domain.Problem("maxlag"))
+      Step.Wait(HttpPolicy.Step.Wait.Ms(5000), Problem.Unclassified(Legacy.Text("maxlag")))
     )
     assert(Politeness.isMaxlag(answer(200, body = """{"error":{"code":"maxlag"}}""")))
     assert(!Politeness.isMaxlag(answer(200, body = """{"entities":{}}""")))
@@ -92,7 +92,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(domain.Problem("HTTP 429 after 5 retries"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 429 after 5 retries")))
     )
     assertEquals(
       Politeness.decide(
@@ -102,7 +102,7 @@ class PolitenessSuite extends munit.FunSuite:
         HttpPolicy.MaxRetryAfterSeconds(60),
         now
       ),
-      Step.GiveUp(domain.Problem("HTTP 429: asked to wait 3600 s"))
+      Step.GiveUp(Problem.Unclassified(Legacy.Text("HTTP 429: asked to wait 3600 s")))
     )
 
   test("Retry-After parsing: seconds, a date in the past is now, junk is none"):
@@ -154,7 +154,7 @@ class PolitenessSuite extends munit.FunSuite:
     val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(2)))
     assertEquals(
       p.get(HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption.map(_.problem),
-      Some(plugin.Problem("commons.wikimedia.org: HTTP 429 after 2 retries"))
+      Some(Problem.Unclassified(Legacy.Text("commons.wikimedia.org: HTTP 429 after 2 retries")))
     )
     assertEquals(http.requests.size, 3)
     assertEquals(slept.toList, List(1000L, 1000L))
@@ -209,12 +209,15 @@ class PolitenessSuite extends munit.FunSuite:
     )
     assertEquals(
       p.get(metUrl(1)).left.toOption.map(_.problem),
-      Some(plugin.Problem(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
+      Some(Problem.Unclassified(Legacy.Text(s"$metHost: HTTP 403 (still, after waiting 360 s)")))
     )
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
     val (q, none) = FakeMediaHttp.polite(once)
-    assertEquals(q.get(metUrl(1)).left.toOption.map(_.problem), Some(plugin.Problem(s"$metHost: HTTP 403")))
+    assertEquals(
+      q.get(metUrl(1)).left.toOption.map(_.problem),
+      Some(Problem.Unclassified(Legacy.Text(s"$metHost: HTTP 403")))
+    )
     assertEquals((once.requests.size, none.toList), (1, Nil))
 
   test("the slow-down stops at 16 times the pace; another host keeps its own"):

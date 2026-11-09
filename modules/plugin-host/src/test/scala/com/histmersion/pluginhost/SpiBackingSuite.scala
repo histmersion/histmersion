@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -22,7 +24,7 @@ class SpiBackingSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(Plugin.Http.Failure.Transport(Problem("offline")))
+            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
         },
       ConfigFactory.empty,
       (_, _, _) => (),
@@ -68,7 +70,7 @@ class SpiBackingSuite extends munit.FunSuite:
           Plugin.Http.Url("https://core.example/v3/search"),
           Map(Header.Name("Authorization") -> Header.Value("Bearer k"))
         )
-        .fold(e => fail(e.problem.value), identity)
+        .fold(e => fail(e.problem.sentence), identity)
     assertEquals(
       (r.status, r.header(Header.Name("X-RateLimit-Remaining")), String(r.body.value, "UTF-8")),
       (429, Some("0"), "slow down")
@@ -104,7 +106,7 @@ class SpiBackingSuite extends munit.FunSuite:
     val core = new UpstreamQuota:
       def take(purpose: UpstreamQuota.TakePurpose) = {
         taken += purpose.value
-        if taken.size > 1 then Left(Problem("spent")) else Right(())
+        if taken.size > 1 then Left(Problem.Unclassified(Legacy.Text("spent"))) else Right(())
       }
       def observe(
           status: UpstreamQuota.ObserveStatus,
@@ -118,7 +120,7 @@ class SpiBackingSuite extends munit.FunSuite:
     )
     assert(g.report.ok, g.report.toString)
     assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Right(())))
-    assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Left("spent")))
+    assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup")).left.map(_.sentence)), Some(Left("spent")))
     assertEquals(taken.toList, List("lookup", "lookup"))
     val other = Metered(Plugin.Context.QuotaUpstream("elsewhere"))
     build(
@@ -138,7 +140,7 @@ class SpiBackingSuite extends munit.FunSuite:
         List("oa-unpaywall", "oa-openalex").foreach(id =>
           asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id))
         )
-        Fetch.Miss(Problem("nothing"))
+        Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing")))
     val (chain, _) =
       FetchChain.of(
         scala.collection.immutable.ListMap(com.histmersion.util.plugins.Plugin.Id("peer") -> peerAware),
@@ -220,7 +222,7 @@ class SpiBackingSuite extends munit.FunSuite:
       fallback = supplied
     )
     assertEquals(g.report.plugins.head.state, "failed")
-    assert(g.report.plugins.head.error.exists(_.value.contains("unknown setting")), g.report.toString)
+    assert(g.report.plugins.head.error.exists(_.sentence.contains("unknown setting")), g.report.toString)
 
   // ── first-party status ──────────────────────────────────────────────────────────────────────
 
@@ -243,7 +245,7 @@ class SpiBackingSuite extends munit.FunSuite:
       build(List(Volcanoes(Plugin.Info.Id("zq-volcanoes"))), "histmersion.plugins.zq-volcanoes.enabled = true")
     assertEquals(third.report.plugins.head.state, "failed")
     assert(
-      third.report.plugins.head.error.exists(_.value.contains("Histmersion's own event catalogues")),
+      third.report.plugins.head.error.exists(_.sentence.contains("Histmersion's own event catalogues")),
       third.report.toString
     )
     val first = build(

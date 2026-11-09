@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.AcquisitionControllers
@@ -68,7 +68,7 @@ trait AgentUpstream:
     * default: a fixture that does not answer it ingests nothing.
     */
   def ingestLegal(doi: Doi): Either[Problem, Ingest.Report] = Left(
-    Problem("the acquisition toolset is not connected")
+    Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected"))
   )
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
@@ -90,7 +90,7 @@ trait AgentUpstream:
       goal: Goal.Slug,
       dryRun: AgentUpstream.SweepCandidatesDryRun
   ): Either[Problem, CandidateSweep] = Left(
-    Problem("the candidate search is not connected")
+    Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
@@ -99,7 +99,7 @@ trait AgentUpstream:
       state: Candidates.State.Wire,
       limit: AgentUpstream.Limit
   ): Either[Problem, List[Source.Candidate]] = Left(
-    Problem("the candidate search is not connected")
+    Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
   /** Record a decision on candidates by id. */
@@ -107,7 +107,7 @@ trait AgentUpstream:
       ids: List[Source.Candidate.Id],
       state: Candidates.State.Wire
   ): Either[Problem, RowCount] = Left(
-    Problem("the candidate search is not connected")
+    Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
 object AgentUpstream:
@@ -123,13 +123,13 @@ object AgentUpstream:
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
   object SweepCandidatesDryRun extends Newtype[Boolean, Pure]
 
-  private def problem(e: Api.Error): Problem = Problem(e.message.value)
+  private def problem(e: Api.Error): Problem = e.message
 
   /** Not connected (a test, or a server built without the acquisition toolset): every call says so, and the steps that
     * need it record that they were skipped.
     */
   object Offline extends AgentUpstream:
-    private val off = Left(Problem("the acquisition toolset is not connected"))
+    private val off = Left(Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected")))
     def meta(doi: Doi) = off
     def refs(citekey: Citekey, apply: RefsApply) = off
     def assess(citekey: Citekey, apply: AssessApply) = off

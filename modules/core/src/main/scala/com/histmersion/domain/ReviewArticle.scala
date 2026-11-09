@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
@@ -1646,7 +1648,7 @@ object ReviewArticle:
     settle(Reviewer.Skeptic, verdict, fs, ps ++ cps ++ kps ++ nps, ds ++ cws ++ kws ++ nws, last)(v =>
       Report(Reviewer.Skeptic, v, fs, proposals = verified, checks = cs, notMaterial = nm)
     )
-      .map((r, ws) => (r, ws ++ props.collect { case Left(m) => s"skeptic: dropped $m" }))
+      .map((r, ws) => (r, ws ++ props.collect { case Left(m) => s"skeptic: dropped ${m.sentence}" }))
 
   // ── the critique checklist (docs/research-review-convergence.md §6.8) ──────────────────────────
 
@@ -1858,7 +1860,7 @@ object ReviewArticle:
               if p.state == CritiqueState.Addressed then
                 s"${p.ref.wire} is addressed — both sources are cited in one paragraph"
               else
-                s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(_.value).getOrElse("").take(160)}\""
+                s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(_.sentence).getOrElse("").take(160)}\""
             minor(f.modify(_.pair).setTo(Some(p.ref)), why)
           case None if f.pair.isEmpty && rule.full.value && !last.value =>
             Left(
@@ -1926,8 +1928,8 @@ object ReviewArticle:
   ): (List[CritiqueReason], List[String], List[String]) =
     val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
     val results = as.map { a =>
-      val reason = Option(a.reason).map(_.value.trim.replaceAll("\\s+", " ")).getOrElse("")
-      CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).left.map(_.value).flatMap { ref =>
+      val reason = Option(a.reason).map(_.sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
+      CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).left.map(_.sentence).flatMap { ref =>
         Critiques.find(rule.pairs, ref) match
           case None               => Left(s"not material ${ref.wire}: not a pair of the critique checklist")
           case Some(p) if !p.open => Left(s"not material ${p.ref.wire}: the pair is already ${p.state.wire}")
@@ -1938,7 +1940,7 @@ object ReviewArticle:
             Left(
               s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
             )
-          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, api.Problem(reason)))
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Problem.Unclassified(Legacy.Text(reason))))
       }
     }
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
@@ -2275,7 +2277,7 @@ object ReviewArticle:
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
     def links(t: String): List[String] =
-      AgentVerify.linkProblems(AgentVerify.LinkProblemsText(t), corpus.isCitekey, corpus.isTarget).map(_.value)
+      AgentVerify.linkProblems(AgentVerify.LinkProblemsText(t), corpus.isCitekey, corpus.isTarget).map(_.sentence)
     val applied = draft match
       case Article.Edits.Draft.Edits(es) =>
         Article.Edits.applyAll(
@@ -2284,7 +2286,7 @@ object ReviewArticle:
           a =>
             a.text
               .flatMap(t => links(t.value).headOption)
-              .map(p => api.Problem(s"its text is refused: $p"))
+              .map(p => Problem.Unclassified(Legacy.Text(s"its text is refused: $p")))
         )
       case Article.Edits.Draft.Body(t) => Article.Edits.Applied(Fix.Body(t.value.trim), Nil)
     val body = applied.body
@@ -2303,14 +2305,14 @@ object ReviewArticle:
             .take(3)
             .map(f => s"still ${f.problem}: \"${f.quote.value.take(80)}\"") ++
           again.filter(_.kind.value == "language").map(_.problem.value) ++
-          corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: $e")
+          corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: ${e.sentence}")
     val fatal = body.value.trim.isEmpty || links(body.value).toSet.diff(links(before.value).toSet).nonEmpty
     Article.Edits.ArticleCheck(
       Article.Slug(slug.value),
       kind,
       applied.results,
-      applied.problems.map(p => api.Problem(p.value)) ++ bodyProblems.map(
-        api.Problem(_)
+      applied.problems.map(p => Problem.Unclassified(Legacy.Text(p.value))) ++ bodyProblems.map(
+        (text => Problem.Unclassified(Legacy.Text(text)))
       ),
       Article.Edits.ArticleCheck.Fatal(fatal),
       Article.Edits.ArticleCheck.WordsBefore(words(before.value)),
@@ -2386,7 +2388,7 @@ object ReviewArticle:
           Left(id -> s"$id is a mechanical check; it cannot be rejected, only fixed")
         case Some(f) if f.reviewer == Reviewer.ColdReader =>
           Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
-        case Some(_) if Option(r.reason).forall(_.value.trim.isEmpty) =>
+        case Some(_) if Option(r.reason).forall(_.sentence.trim.isEmpty) =>
           Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
         case Some(_) =>
           com.histmersion.domain.library.Citekey.option(ckText).filter(isCitekey) match
@@ -2396,7 +2398,15 @@ object ReviewArticle:
               val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
               hit.filter(_.accepted) match
                 case Some(qm) =>
-                  Right(Rejection(id, Problem(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
+                  Right(
+                    Rejection(
+                      id,
+                      Problem.Unclassified(Legacy.Text(r.reason.sentence.trim)),
+                      ck,
+                      Rejection.Quote(q),
+                      qm.ratio
+                    )
+                  )
                 case None =>
                   Left(
                     id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
@@ -2412,8 +2422,8 @@ object ReviewArticle:
         case None                   => Left(s"won't fix '$id': there is no such finding")
         case Some(f) if f.major && !needsFilter(f, coverage) =>
           Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
-        case Some(_) if Option(w.reason).forall(_.value.trim.isEmpty) => Left(s"won't fix $id: give the reason")
-        case Some(_) => Right(WontFix(id, Problem(w.reason.value.trim)))
+        case Some(_) if Option(w.reason).forall(_.sentence.trim.isEmpty) => Left(s"won't fix $id: give the reason")
+        case Some(_) => Right(WontFix(id, Problem.Unclassified(Legacy.Text(w.reason.sentence.trim))))
     }
     val edits = Option(a.edits).getOrElse(Nil)
 
@@ -2498,7 +2508,9 @@ object ReviewArticle:
         rev.hits.isEmpty
     )(s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
     val problems =
-      check.problems.map(_.value) ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
+      check.problems.map(_.sentence) ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(
+        _._2
+      ) ++
         wont.collect { case Left(p) =>
           p
         } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++ regressionProblems
@@ -2513,7 +2525,7 @@ object ReviewArticle:
           .map((_, r) => s"listed as applied, but ${unansweredText(r)}")
           .orElse(rejectedBad.find(_._1 == f.id).map(_ => "its rejection's quote is not in the record it names"))
           .getOrElse(if f.major then "the fixer neither applied nor rejected it" else "the fixer did not answer it")
-        WontFix(f.id, Problem(why))
+        WontFix(f.id, Problem.Unclassified(Legacy.Text(why)))
       }
       val fix = Fix(
         rev.body,
@@ -2546,7 +2558,7 @@ object ReviewArticle:
       byId: Map[SetAside.Id, Finding],
       critiques: List[CritiquePair]
   ): (List[SetAside], List[CritiqueReason], List[String]) =
-    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.value.trim.replaceAll("\\s+", " ")).getOrElse("")
+    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
     def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
       Critiques.find(critiques, r) match
         case None => Left(s"$label: ${r.wire} is not a pair of the article's critique checklist (no recorded edge)")
@@ -2561,14 +2573,14 @@ object ReviewArticle:
       val named = Option(a.pair).flatten
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .map(t => CritiqueRef.parse(CritiqueRef.Wire(t)).left.map(_.value))
+        .map(t => CritiqueRef.parse(CritiqueRef.Wire(t)).left.map(_.sentence))
       if idText.isEmpty then
         named match
           case None => Left("a set-aside with neither an id nor a pair — give the finding's id, or the pair (src>dst)")
           case Some(Left(e))  => Left(s"set aside: $e")
           case Some(Right(r)) =>
             held(s"set aside ${r.wire}", r, reason).map(p =>
-              Right(CritiqueReason(p.ref.src, p.ref.dst, api.Problem(reason)))
+              Right(CritiqueReason(p.ref.src, p.ref.dst, Problem.Unclassified(Legacy.Text(reason))))
             )
       else
         byId.get(id) match
@@ -2584,7 +2596,7 @@ object ReviewArticle:
                 held(s"set aside $id", r, reason).left
                   .map(m => if m.contains("no recorded edge") then s"$m — apply or reject the finding" else m)
               )
-              .map(p => Left(SetAside(id, p.ref, Problem(reason))))
+              .map(p => Left(SetAside(id, p.ref, Problem.Unclassified(Legacy.Text(reason)))))
     }
     val ok = results.collect { case Right(v) => v }
     (
@@ -2636,7 +2648,7 @@ object ReviewArticle:
           val ck = com.histmersion.api.library.Citekey(
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           )
-          val removes = Option(r.reason).forall(_.value.trim.isEmpty)
+          val removes = Option(r.reason).forall(_.sentence.trim.isEmpty)
           if removes && stored.contains(ck) then Right(r.modify(_.citekey).setTo(ck))
           else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
           else if !inFilter(ck) then

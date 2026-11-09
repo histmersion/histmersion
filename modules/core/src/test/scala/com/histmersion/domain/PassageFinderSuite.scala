@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.ocr.{Chunk, Chunker}
@@ -47,7 +48,7 @@ class PassageFinderSuite extends munit.FunSuite:
       max: PassageFinder.MaxMatches = PassageFinder.MaxMatches(10000),
       timeoutMs: PassageFinder.TimeoutMs = PassageFinder.TimeoutMs(2000)
   ): PassageResult =
-    PassageFinder.find(Ck, segs, q, regex, limit, context, max, timeoutMs).fold(m => fail(m.value), identity)
+    PassageFinder.find(Ck, segs, q, regex, limit, context, max, timeoutMs).fold(m => fail(m.sentence), identity)
 
   private def err(q: PassageFinder.Query, regex: PassageFinder.Regex): String =
     PassageFinder
@@ -61,7 +62,7 @@ class PassageFinderSuite extends munit.FunSuite:
         PassageFinder.MaxMatches(10000),
         PassageFinder.TimeoutMs(2000)
       )
-      .fold(_.value, r => fail(s"expected an error, got $r"))
+      .fold(_.sentence, r => fail(s"expected an error, got $r"))
 
   /** The body slice `get_source {offset, chars}` would return. */
   private def slice(segs: List[Chunk], offset: PassageHit.Offset, chars: Int): String =
@@ -170,7 +171,7 @@ class PassageFinderSuite extends munit.FunSuite:
         }
       }
     )
-    assert(r.left.exists(_.value.contains("ran longer than 50 ms")), r)
+    assert(r.left.exists(_.sentence.contains("ran longer than 50 ms")), r)
 
   test("context bounds: whole lines when a line break is in reach, else whole words, never past the budget"):
     val long = (1 to 400).map(i => s"w$i").mkString(" ") // one long line, no breaks

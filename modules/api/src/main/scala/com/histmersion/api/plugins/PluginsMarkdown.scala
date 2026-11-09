@@ -1,6 +1,7 @@
 package com.histmersion
 package api.plugins
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
@@ -10,8 +11,8 @@ object PluginsMarkdown:
     val what = PluginState.parse(PluginState.Wire(p.state.value)) match
       case Some(PluginState.Registered) =>
         "registered" + (if p.provides.isEmpty then "" else p.provides.mkString(" (", ", ", ")"))
-      case Some(PluginState.Failed)  => s"FAILED: ${p.error.getOrElse("no reason given")}"
-      case Some(PluginState.Refused) => s"REFUSED: ${p.error.getOrElse("no reason given")}"
+      case Some(PluginState.Failed)  => s"FAILED: ${p.error.map(_.sentence).getOrElse("no reason given")}"
+      case Some(PluginState.Refused) => s"REFUSED: ${p.error.map(_.sentence).getOrElse("no reason given")}"
       case _                         => p.state.value
     (s"${p.id} ${p.version} — $what")
 

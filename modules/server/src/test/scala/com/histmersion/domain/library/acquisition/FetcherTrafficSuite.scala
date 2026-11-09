@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.{Plugin, Plugins}
 
@@ -82,7 +82,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
-      out ++= s"  -> ${answer.fold(e => s"error ${e.problem}", a => a.code.toString)}\n"
+      out ++= s"  -> ${answer.fold(e => s"error ${e.problem.sentence}", a => a.code.toString)}\n"
       answer
 
   private val baseText =
@@ -91,7 +91,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       |""".stripMargin
 
   private def loaded(text: String, env: Map[String, String]): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text).fold(e => fail(e.value), identity)
+    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text).fold(e => fail(e.sentence), identity)
 
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
 
@@ -129,7 +129,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
         case Right(f) =>
           s"found by ${outcome.foundBy.fold("?")(_.value)}: ${f.source} ${f.extension} ${f.url.fold("-")(_.value)} " +
             s"${f.bytes.value.length} bytes${f.licence.fold("")(l => s" licence ${l.value}")}\n"
-        case Left(why) => s"no copy: $why\n" + outcome.answers.map(a => s"  ${a.line}\n").mkString)
+        case Left(why) => s"no copy: ${why.sentence}\n" + outcome.answers.map(a => s"  ${a.line}\n").mkString)
     }
     if search then
       wire.out.clear()
@@ -141,7 +141,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
         .map(_.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(5)))
       sb ++= "### core index search\n"
       sb ++= wire.out.result()
-      sb ++= s"core index: ${got.fold("none")(_.fold(e => s"failed $e", hits => s"${hits.size} hit(s)"))}\n"
+      sb ++= s"core index: ${got.fold("none")(_.fold(e => s"failed ${e.sentence}", hits => s"${hits.size} hit(s)"))}\n"
     sb ++= s"budget: lookups ${core.state.lookupTokens} searches ${core.state.searchTokens}\n"
     sb.result()
 

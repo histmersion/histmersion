@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-
-import com.histmersion.plugin.Problem
+import com.histmersion.util.problem.Problem
 
 /** `oa-openalex`: OpenAlex's open-access locations of a work, by DOI. */
 import com.histmersion.plugin.Plugin

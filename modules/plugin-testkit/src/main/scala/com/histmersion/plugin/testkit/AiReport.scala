@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
 

@@ -1,6 +1,8 @@
 package com.histmersion
 package api.research
-import com.histmersion.api.Problem
+
+import com.histmersion.util.problem.Problem
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema

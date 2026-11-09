@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import cats.syntax.all.*
@@ -31,7 +32,7 @@ final class PluginOps(using console: Console)(
 ):
 
   private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) =
-    Cli.Error(Problem(msg), exitCode = code)
+    Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,7 +93,7 @@ final class PluginOps(using console: Console)(
 
   def spiVersion: Either[Cli.Error, PluginSet.SpiVersion] =
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
-    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(p => err(p.value))
+    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(p => err(p.sentence))
 
   // ── describe (the kit's pluginTool on a JVM, through histmersion-relink) ───────────────────────
 
@@ -105,7 +106,7 @@ final class PluginOps(using console: Console)(
         PluginKit
           .parseJars(json)
           .left
-          .map(p => err(p.value))
+          .map(p => err(p.sentence))
           .flatMap(_.headOption.toRight(err(s"${jar.getFileName}: nothing described")))
 
   // ── fetching ──────────────────────────────────────────────────────────────────────────────────
@@ -224,7 +225,7 @@ final class PluginOps(using console: Console)(
     PluginKit
       .origin(arg, a => Files.isRegularFile(Path.of(a)))
       .left
-      .map(p => err(p.value, ExitCode.Usage))
+      .map(p => err(p.sentence, ExitCode.Usage))
       .flatMap(addFrom(_, o))
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
@@ -272,9 +273,9 @@ final class PluginOps(using console: Console)(
           .toMap
         _ <- PluginKit.refusals(jar.modify(_.file).setTo(name), spi, taken) match
           case Nil      => Right(())
-          case problems => Left(err(s"refused:\n${problems.map("  - " + _).mkString("\n")}"))
+          case problems => Left(err(s"refused:\n${problems.map(p => s"  - ${p.sentence}").mkString("\n")}"))
         _ <- signer.fold(Right(()))(fpr =>
-          PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.value))
+          PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.sentence))
         )
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
@@ -363,7 +364,7 @@ final class PluginOps(using console: Console)(
       )
       p.error.foreach(e =>
         Cli.out.println(
-          s"  with its defaults alone it does not register: $e (it may need settings under histmersion.plugins.${p.id})"
+          s"  with its defaults alone it does not register: ${e.sentence} (it may need settings under histmersion.plugins.${p.id})"
         )
       )
       if p.access.contains("unauthorised") then
@@ -464,8 +465,8 @@ final class PluginOps(using console: Console)(
       case rc                  =>
         Left(
           Cli.Error(
-            Problem(
-              s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})"
+            Problem.Unclassified(
+              Legacy.Text(s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})")
             ),
             exitCode = if rc.value == 1 then ExitCode.Usage else ExitCode.Refused
           )

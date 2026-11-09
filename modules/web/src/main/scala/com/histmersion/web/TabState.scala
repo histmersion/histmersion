@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import com.histmersion.api.RowCount
@@ -72,7 +72,7 @@ object TabState:
 
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   def failed[Row](s: TabState[Row], message: Problem): TabState[Row] =
-    s.copy(loading = Loading(false), error = Some(Problem(message.value)), loaded = Loaded(true))
+    s.copy(loading = Loading(false), error = Some(message), loaded = Loaded(true))
 
   /** "show more": reveal the next `page` loaded rows, or — when the loaded rows run out before the total —
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).

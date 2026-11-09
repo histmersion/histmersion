@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.domain.Problem
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ProposalEffect
@@ -20,6 +20,6 @@ final class SourceProposalEffect(sources: => SourcesControllers) extends Proposa
           sources
             .patch(p.citekey, p.patch)
             .left
-            .map(e => Problem(e.message.value))
+            .map(e => e.message)
             .map(_ => p.describe.value)
       )

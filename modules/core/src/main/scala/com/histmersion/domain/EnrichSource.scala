@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import scala.annotation.tailrec
@@ -432,15 +434,15 @@ object EnrichSource:
     for
       su <- YearUnit
         .parse(p.start.unit)
-        .toRight(Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)")))
       eu <- YearUnit
         .parse(p.end.unit)
-        .toRight(Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
+        .toRight(Problem.Unclassified(Legacy.Text(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)")))
       s <- toSignedYear(p.start.value, su)
       e <- toSignedYear(p.end.value, eu)
       _ <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, within) match
         case Nil => Right(())
-        case ps  => Left(Problem(ps.mkString("; ")))
+        case ps  => Left(Problem.Unclassified(Legacy.Text(ps.map(_.sentence).mkString("; "))))
     yield Period(Year(s.value), Year(e.value))
 
   /** `classify`: status in the vocabulary, a summary, a convertible and sane period, and the status's evidence unless
@@ -461,9 +463,12 @@ object EnrichSource:
       "the status evidence is empty — say, from the text, why that status"
     )
     val problems = status.left.toOption.toList ++
-      summary.fold(List(Problem("the summary is empty")))(_ => Nil) ++
-      period.flatMap(_.left.toOption).map(m => Problem(s"period: $m")).toList ++ noEvidence
-        .map(Problem(_))
+      summary.fold(List(Problem.Unclassified(Legacy.Text("the summary is empty"))))(_ => Nil) ++
+      period
+        .flatMap(_.left.toOption)
+        .map(m => Problem.Unclassified(Legacy.Text(s"period: ${m.sentence}")))
+        .toList ++ noEvidence
+        .map((text => Problem.Unclassified(Legacy.Text(text))))
         .toList
     val fatal = status.isLeft || summary.isEmpty
     if problems.isEmpty || (last.value && !fatal) then
@@ -480,7 +485,7 @@ object EnrichSource:
             status.toOption.get,
             Classified.StatusEvidence(evidence)
           ),
-          (period.flatMap(_.left.toOption).map(m => s"period dropped: $m").toList ++ noEvidence.toList)
+          (period.flatMap(_.left.toOption).map(m => s"period dropped: ${m.sentence}").toList ++ noEvidence.toList)
             .map(Description(_))
         )
       )
@@ -633,9 +638,11 @@ object EnrichSource:
     Option.when(total > 0 && minShare.value > 0 && resolved.toDouble < minShare.value * total) {
       val missing = named.filterNot(_._3).map((i, p, _) => s"'$p' (finding $i)").mkString(", ")
       val pct = BigDecimal(minShare.value * 100).setScale(0, BigDecimal.RoundingMode.HALF_UP)
-      Problem(
-        s"only $resolved of $total places resolve to a gazetteer place (at least $pct% must); not found: $missing — " +
-          "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
+      Problem.Unclassified(
+        Legacy.Text(
+          s"only $resolved of $total places resolve to a gazetteer place (at least $pct% must); not found: $missing — " +
+            "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
+        )
       )
     }
 
@@ -672,8 +679,8 @@ object EnrichSource:
         Option.when(!quote.accepted)(
           s"the quote is not in the text (best match ${BigDecimal(quote.ratio.value).setScale(2, BigDecimal.RoundingMode.HALF_UP)}) — copy it exactly"
         ),
-        conf.left.toOption.map(_.value),
-        per.left.toOption.map(m => s"period: $m")
+        conf.left.toOption.map(_.sentence),
+        per.left.toOption.map(m => s"period: ${m.sentence}")
       ).flatten
       // the guards' problems: sent back like the others, but never a reason to drop the finding
       val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
@@ -712,8 +719,9 @@ object EnrichSource:
         (Count(i + 1), name, guards.resolves(name, kind, per))
       }
     }
-    val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).map(_.value).toList
-    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then Left((rejected ++ soft).map(Problem(_)))
+    val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).map(_.sentence).toList
+    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then
+      Left((rejected ++ soft).map((text => Problem.Unclassified(Legacy.Text(text)))))
     else
       val norm = existingClaims.map(c => normalised(c.value))
       val kept = results
@@ -724,7 +732,7 @@ object EnrichSource:
       val outside = for
         v <- kept; s <- v.start; e <- v.end; p <- within
         problem <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, Some(p)).lastOption
-      yield s"check '${v.claim.value.take(60)}': $problem"
+      yield s"check '${v.claim.value.take(60)}': ${problem.sentence}"
       Right(
         (
           VerifiedFindings(
@@ -739,7 +747,7 @@ object EnrichSource:
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
   def checkNotes(n: Notes, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): Either[List[Problem], Description] =
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
-    if text.isEmpty then Left(List(Problem("the notes are empty")))
+    if text.isEmpty then Left(List(Problem.Unclassified(Legacy.Text("the notes are empty"))))
     else
       linkProblems(LinkProblemsText(text), isCitekey, isSlug) match
         case Nil => Right(Description(text))

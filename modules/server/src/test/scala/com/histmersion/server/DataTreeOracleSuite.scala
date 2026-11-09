@@ -1,7 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -115,7 +116,7 @@ class DataTreeOracleSuite extends DbSuite:
   private def serverRun(): Unit =
     Files.createDirectories(configFile.getParent)
     Files.writeString(configFile, settingsText("limits.search = 5"))
-    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity)
+    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity)
     supervised {
       val b = Composition
         .server(
@@ -126,7 +127,7 @@ class DataTreeOracleSuite extends DbSuite:
           source = Some(
             (
               l,
-              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => Problem(p.value)))
+              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)))
             )
           )
         )
@@ -159,7 +160,7 @@ class DataTreeOracleSuite extends DbSuite:
       builds = RangeHttp.ResponseText("""[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
     )
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), PmTiles.Zoom(5)))
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
+    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity).config
     val cfg = base
       .modify(_.basemap)
       .setTo(
@@ -247,7 +248,7 @@ class DataTreeOracleSuite extends DbSuite:
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
         url.value match
           case Sea(z, x, y) => Right(Option.when(x != "0")(RangeHttp.ResponseBytes(s"PNG$z/$x/$y".getBytes)))
-          case _            => Left(Problem(s"${url.value}: unexpected"))
+          case _            => Left(Problem.Unclassified(Legacy.Text(s"${url.value}: unexpected")))
     val ds =
       val d = testPool(cfg.db)
       Migrate.run(d); d
@@ -256,7 +257,7 @@ class DataTreeOracleSuite extends DbSuite:
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
     val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => ByteCount.applyUnsafe(Long.MaxValue / 4))
     def fetched(q: Basemap.FetchQuery): Unit =
-      val j = await(svc.fetch(q).fold(e => fail(e.message.value), _.id))
+      val j = await(svc.fetch(q).fold(e => fail(e.message.sentence), _.id))
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
     fetched(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete"))))
@@ -284,7 +285,7 @@ class DataTreeOracleSuite extends DbSuite:
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
+    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity).config
     assert(
       Spool(
         Storage

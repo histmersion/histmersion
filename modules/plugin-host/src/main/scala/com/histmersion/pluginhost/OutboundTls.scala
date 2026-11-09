@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.plugin.Problem
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.TlsConfig
 
@@ -69,22 +70,24 @@ object OutboundTls:
     case HttpPolicy.Trust.Jdk              => Right(Nil)
     case HttpPolicy.Trust.Keychains(paths) =>
       val found = paths.filter(p => Files.exists(Path.of(p.value)))
-      if found.isEmpty then Left(Problem(s"none of the keychains ${paths.map(_.value).mkString(", ")} exists"))
+      if found.isEmpty then
+        Left(Problem.Unclassified(Legacy.Text(s"none of the keychains ${paths.map(_.value).mkString(", ")} exists")))
       else
         run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found.map(_.value)).left
-          .map(Problem(_))
+          .map((text => Problem.Unclassified(Legacy.Text(text))))
           .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.Bundle(paths) =>
       paths
         .map(p => Path.of(p.value))
         .find(Files.isRegularFile(_))
-        .toRight(Problem(s"no CA bundle at ${paths.map(_.value).mkString(", ")}"))
-        .flatMap(read(_).left.map(Problem(_)))
+        .toRight(Problem.Unclassified(Legacy.Text(s"no CA bundle at ${paths.map(_.value).mkString(", ")}")))
+        .flatMap(read(_).left.map((text => Problem.Unclassified(Legacy.Text(text)))))
         .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.PemFile(path) =>
-      read(Path.of(path.value)).left.map(Problem(_)).flatMap { text =>
+      read(Path.of(path.value)).left.map((text => Problem.Unclassified(Legacy.Text(text)))).flatMap { text =>
         val cs = certificates(HttpPolicy.PemText(text))
-        if cs.isEmpty then Left(Problem(s"${path.value} holds no PEM certificate")) else Right(cs)
+        if cs.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"${path.value} holds no PEM certificate")))
+        else Right(cs)
       }
 
   /** The JDK's default trust manager. */
@@ -137,7 +140,7 @@ object OutboundTls:
       val extra = got.flatMap(_._2.toOption).flatten
       val notes = got.map {
         case (s, Right(cs)) => s"${describe(s)}: ${cs.size} root(s)"
-        case (s, Left(e))   => s"${describe(s)}: NOT used ($e)"
+        case (s, Left(e))   => s"${describe(s)}: NOT used (${e.sentence})"
       }
       context(extra) -> Summary(s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}")
     }

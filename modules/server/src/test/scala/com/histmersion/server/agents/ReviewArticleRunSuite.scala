@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.problem.Text.sentence
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -330,7 +330,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.value), identity)
+    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -733,13 +733,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val reported =
       toolOut.split("### Result").last.linesIterator.filter(_.startsWith("- ")).map(_.stripPrefix("- ")).toList
     val raised = retryPoints(userPrompt(c.requests.get("fixer").asScala.toList(1).head))
-    assertEquals(reported, direct.problems)
-    assertEquals(raised, direct.problems, "the tool and the validation are one function")
+    assertEquals(reported, direct.problems.map(_.sentence))
+    assertEquals(raised, direct.problems.map(_.sentence), "the tool and the validation are one function")
     assert(
-      direct.problems.exists(_.value.contains("no [[citekey]]")) && direct.problems.exists(
-        _.value.startsWith("edit 3 (delete")
+      direct.problems.exists(_.sentence.contains("no [[citekey]]")) && direct.problems.exists(
+        _.sentence.startsWith("edit 3 (delete")
       ) &&
-        direct.problems.exists(p => p.value.startsWith("edit 4 (insertAfter") && p.value.contains("zzagent_ghost")),
+        direct.problems.exists(p =>
+          p.sentence.startsWith("edit 4 (insertAfter") && p.sentence.contains("zzagent_ghost")
+        ),
       direct.problems
     )
     assert(toolOut.contains("- edit 1 (replace \"Tin reached the Aegean by sea\"): applies"), toolOut)
@@ -755,8 +757,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .toOption
       .get
     assert(
-      draft.fatal.value && draft.problems.exists(_.value.contains("zzagent_ghost")) && draft.problems.exists(
-        _.value.contains("no [[citekey]]")
+      draft.fatal.value && draft.problems.exists(_.sentence.contains("zzagent_ghost")) && draft.problems.exists(
+        _.sentence.contains("no [[citekey]]")
       ),
       draft.problems
     )
@@ -852,7 +854,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(!after.article.body.value.contains("## Not used"), after.article.body)
     assertEquals(after.coverage.map(_.drift), Some(Nil))
     assertEquals(
-      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey.value: String, e.reason)),
+      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey.value: String, e.reason.map(_.sentence))),
       List((Ck2, Some("Its isotopes speak to the cargo's origin, not its route.")))
     )
     val fixStep = steps
@@ -948,7 +950,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(first); seed(h)
     val paused = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
     assertEquals(paused.status, "paused", paused.error)
-    assert(paused.error.exists(_.value.startsWith("provider:")), paused.error)
+    assert(paused.error.exists(_.sentence.startsWith("provider:")), paused.error)
     val second = PanelClient(Model)
     second.add("skeptic", Seq(text(skeptic("PASS", Nil))))
     val (a2, _) = handlers(second)
@@ -973,7 +975,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           rounds = Some(Agents.RunRequest.Rounds(99))
         )
       ).left
-        .exists(_.message.value.contains("rounds"))
+        .exists(_.message.sentence.contains("rounds"))
     )
     val noSkeptic = baseCfg
       .modify(_.agents)
@@ -984,7 +986,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(
       b.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
         .left
-        .exists(_.message.value.contains("skeptic"))
+        .exists(_.message.sentence.contains("skeptic"))
     )
 
   // ── the review ledger (docs/research-review-convergence.md §6) ───────────────────────────────────
@@ -1269,7 +1271,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(item.status, "open")
     val old = items.find(_.id == legacy.id).get
-    assertEquals((old.status, old.reason), ("done", Some(s"superseded by #${item.id} (one item per article)")))
+    assertEquals(
+      (old.status, old.reason.map(_.sentence)),
+      ("done", Some(s"superseded by #${item.id} (one item per article)"))
+    )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(item.id.value))
 
     // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
@@ -1298,7 +1303,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(steps2.size, 2, "the answer without checks was sent back")
     assert(
       steps2.head.error.exists(e =>
-        e.value.contains("R1: no check") && e.value.contains("R2: no check") && !e.value.contains("spot-check")
+        e.sentence.contains("R1: no check") && e.sentence.contains("R2: no check") && !e.sentence.contains("spot-check")
       ),
       steps2.head.error
     )
@@ -1336,7 +1341,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val closed = items.find(_.id == item.id).get
     assertEquals(
-      (closed.status, closed.reason),
+      (closed.status, closed.reason.map(_.sentence)),
       ("done", Some(s"no MAJOR open after agent run ${r3.id.value.take(8)}"))
     )
     val led = ledgerOf(h).get
@@ -1391,7 +1396,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .exists(_.text.value.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
     )
     assertEquals(
-      items.find(_.id == twice.id).map(i => (i.status, i.reason)),
+      items.find(_.id == twice.id).map(i => (i.status, i.reason.map(_.sentence))),
       Some(("done", Some(s"superseded by #${mine.id} (one item per article)")))
     )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(mine.id.value))
@@ -1689,7 +1694,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           modelFor = List(ModelOverride(Agents.ModelOverride.Role("writer"), HaikuOverride))
         )
       ).left
-        .exists(_.message.value.contains("review-article uses no writer role"))
+        .exists(_.message.sentence.contains("review-article uses no writer role"))
     )
 
   test("compare: two review-article runs — verdicts, findings per reviewer and kind, the major findings they share"):
@@ -1724,7 +1729,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals((r1.status, r2.status), ("done", "done"))
-    val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.value), identity)
+    val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.sentence), identity)
     assertEquals(
       cmp.steps.find(_.name.value == "rules-1").get.runs.map(_.map(_.models.map(_.value: String))),
       List(Some(List(Model.wire.value: String)), Some(List(Haiku.wire.value: String)))
@@ -1809,9 +1814,12 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val steps =
       connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000))).filter(_.name.value == "rules-1")
     assertEquals(steps.map(_.status), List("failed", "done"))
-    assert(steps.head.error.exists(_.value.contains("spot-checks: 0 of the 1 required are verified")), steps.head.error)
     assert(
-      steps.head.error.exists(_.value.contains("no get_source or passages call for it in this step")),
+      steps.head.error.exists(_.sentence.contains("spot-checks: 0 of the 1 required are verified")),
+      steps.head.error
+    )
+    assert(
+      steps.head.error.exists(_.sentence.contains("no get_source or passages call for it in this step")),
       steps.head.error
     )
     // the retry is told what was missing

@@ -1,7 +1,7 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -385,7 +385,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(true),
           PluginState.Wire("failed"),
-          error = Some(Problem("histmersion.plugins.broken.x: bad"))
+          error = Some(Problem.Unclassified(Legacy.Text("histmersion.plugins.broken.x: bad")))
         )
       ),
       List(PluginsReport.Warnings("histmersion.plugins.helo configures no plugin in this binary — ignored"))

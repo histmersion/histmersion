@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Access, FetchedFile, WorkKey}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
@@ -27,7 +27,7 @@ trait OaFetcher:
   def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problem, FetchedFile] =
     val doi = work.doi.map(d => Doi.assume(d.value))
     val arxiv = work.arxiv.map(a => ArxivId(a.value))
-    if work.doi.isEmpty && work.arxiv.isEmpty then Left(Problem(FetchChain.NoCopy))
+    if work.doi.isEmpty && work.arxiv.isEmpty then Left(Problem.Unclassified(Legacy.Text(FetchChain.NoCopy)))
     else if legalOnly.value then fetchLegal(doi, arxiv)
     else fetch(doi, arxiv)
 

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.domain.Problem
 import com.histmersion.config.{DbConfig, QueryConfig}
 import com.histmersion.util.database.Db
 import com.zaxxer.hikari.HikariDataSource
@@ -86,7 +86,9 @@ object QueryAccess:
           finally st.close()
       }
       Right(())
-    catch case e: SQLException => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+    catch
+      case e: SQLException =>
+        Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
     finally
       try c.close()
       catch case _: SQLException => ()

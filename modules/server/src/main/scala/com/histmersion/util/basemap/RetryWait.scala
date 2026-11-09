@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How long to wait before asking a provider again, and why (for the log). */

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
@@ -86,7 +87,7 @@ class AgentVerifySuite extends munit.FunSuite:
     assertEquals(toSignedYear(ToSignedYearValue(0), YearUnit.CalBP), Right(1950L))
 
   test("uncalibrated BP is refused, never guessed into a calendar year"):
-    assert(toSignedYear(ToSignedYearValue(3270), YearUnit.BP).left.exists(_.value.contains("uncalibrated")))
+    assert(toSignedYear(ToSignedYearValue(3270), YearUnit.BP).left.exists(_.sentence.contains("uncalibrated")))
 
   test("YearUnit: the spellings sources use"):
     assertEquals(YearUnit.parse(YearUnit.Wire("cal BP")), Some(YearUnit.CalBP))
@@ -99,14 +100,16 @@ class AgentVerifySuite extends munit.FunSuite:
     assertEquals(periodProblems(PeriodStart(-1600), PeriodEnd(-1500), MaxAbsYear(3000000)), Nil)
     assert(
       periodProblems(PeriodStart(-1500), PeriodEnd(-1600), MaxAbsYear(3000000)).exists(
-        _.value.contains("after it ends")
+        _.sentence.contains("after it ends")
       )
     )
-    assert(periodProblems(PeriodStart(0), PeriodEnd(10), MaxAbsYear(3000000)).exists(_.value.contains("year 0")))
-    assert(periodProblems(PeriodStart(-4000000), PeriodEnd(-1), MaxAbsYear(3000000)).exists(_.value.contains("beyond")))
+    assert(periodProblems(PeriodStart(0), PeriodEnd(10), MaxAbsYear(3000000)).exists(_.sentence.contains("year 0")))
+    assert(
+      periodProblems(PeriodStart(-4000000), PeriodEnd(-1), MaxAbsYear(3000000)).exists(_.sentence.contains("beyond"))
+    )
     assert(
       periodProblems(PeriodStart(-3000), PeriodEnd(-2900), MaxAbsYear(3000000), Some(Period(Year(-1700), Year(-1200))))
-        .exists(_.value.contains("outside"))
+        .exists(_.sentence.contains("outside"))
     )
 
   test("status vocabulary: a typo is rejected, not turned into unassessed"):
@@ -119,8 +122,8 @@ class AgentVerifySuite extends munit.FunSuite:
     )
     val ps = linkProblems(text, _.value == "haak2015_massive", _.value == "ie-migrations")
     assertEquals(ps.size, 2, ps)
-    assert(ps.exists(_.value.contains("[[nope2020_x]]")))
-    assert(ps.exists(_.value.contains("escaped")))
+    assert(ps.exists(_.sentence.contains("[[nope2020_x]]")))
+    assert(ps.exists(_.sentence.contains("escaped")))
     assertEquals(wikilinks(Text("[[a]] [[b|B]] [[a]]")), List("a", "b"))
 
   test("titles compare without case or punctuation"):
