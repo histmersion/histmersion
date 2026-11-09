@@ -1,0 +1,12 @@
+{"resolve":[{"issue":"6e938359-96f0-4a96-aa35-4c8027556fc5","decision":"c9","text":"9f92429e5d91f84b97a085d01a335d4a0d2f3576a5a7e0f0b416c4db59c975fb"}],"policy":{"editions":"merge"},"bundle":null}
+{"resolve":[{"issue":"z-","decision":"v-","text":"f1ea1598e5979dd62239c9495b21e19c551cf8470b1ec23a4a3e2c42843e391c"}],"policy":{"editions":"merge"},"bundle":"2bf6f0a0-a5ff-42c1-804a-cf369fa676e9"}
+{"resolve":[{"issue":"w9","decision":"ul","text":"bcf9add56a8b092c940ff32180f2823a8e3ffc645c1cac8100291cb9f7205cd0"},{"issue":"21844b8b-f4d9-450b-ad1a-817474a24ba7","decision":"m","text":"j4"}],"policy":{"editions":"merge"},"bundle":"e000cc02-7084-4e0a-af54-f98914c44bf7"}
+{"resolve":[{"issue":"7ce863a91f88fdd30dd657a950bae98dffe18c5f0c4404f0f821f087ece51525","decision":"e22f7885fb8e6adf183904846368b13ae453ed9678d580318285c0ec65918a6e","text":"8170f980-1ba4-4b93-a075-935fe02e0510"},{"issue":"a5d7da5d6552f6faee6da320b1f55b15cdda49f6139590f011f229f7d57bb763","decision":"f5t","text":"8a94eafbe8a72bd9d7666b42208d3422faa9b430f573eccbeddbc4ee621dc111"}],"policy":{"editions":"merge"},"bundle":"70e27386-839d-4842-a162-625a25eea42d"}
+{"resolve":[],"policy":{"editions":"merge"},"bundle":null}
+{"resolve":[],"policy":{"editions":"merge"},"bundle":"29b99172-34a7-4dca-8351-66127123d8d1"}
+{"resolve":[{"issue":"","decision":"7cbfcbfef832b07d465c59073beee89b58a4b4f27e15260bf6dcb6b5c7fd33af","text":"af30103b-2d4f-451b-907b-fd11fa6b7600"}],"policy":{"editions":null},"bundle":"d2b25622-52c2-49c7-906a-0d79d74e5486"}
+{"resolve":[],"policy":{"editions":"separate"},"bundle":"32da03c5-0cd0-467a-8e11-141adb725aea"}
+{"resolve":[{"issue":"039bfff78c0964e1dcd91680ff20fabc00d910238903bd690e8040443b1ca330","decision":"ng","text":"84d2d805-ea63-433a-bbf9-0759e5b45a55"},{"issue":"f1183610baa9f90331636c2b52b1a9ce087bfdffcce20328f98ff1086abad711","decision":"380e75aefc6e353d06d64de599ee342315b4d3c68b42c7874dd0dbb496622f83","text":"abda0b36-8929-425e-88ed-0225c9f48e81"}],"policy":{"editions":"merge"},"bundle":"c32bf4ec-4d3e-4012-901c-a0625c2ff684"}
+{"resolve":[],"policy":{"editions":"separate"},"bundle":"538200e2-3096-487d-81e9-a47b5127fa24"}
+{"resolve":[],"policy":{"editions":"separate"},"bundle":"b58e0760-db2b-4a36-9b30-33b0f8c1ce5d"}
+{"resolve":[],"policy":{"editions":"merge"},"bundle":"af1821a3-3623-4d27-99ec-7851d23ae9de"}

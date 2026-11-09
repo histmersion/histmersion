@@ -645,7 +645,9 @@ lazy val db = project
       "com.outr" %% "scribe" % V.scribe,
       "com.outr" %% "scribe-slf4j2" % V.scribe,
       // the merge suites convert reference.conf's merge settings into the domain's, as the server does
-      "io.scalaland" %% "chimney" % V.chimney % Test
+      "io.scalaland" %% "chimney" % V.chimney % Test,
+      // the stored JSON shapes' samples (StoredShapesSuite): random values of the stored records
+      "com.kubuszok" %% "kindlings-scalacheck-derivation" % V.kindlings % Test
     )
   )
 
