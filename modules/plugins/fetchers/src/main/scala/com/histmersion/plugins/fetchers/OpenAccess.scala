@@ -243,7 +243,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
         http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
-            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed ($e)")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.problem})")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
             Some(
               FetchedFile(

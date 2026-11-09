@@ -41,14 +41,34 @@ object PluginMedia:
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.
     */
-  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Problem] =
+  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Refusal] =
     rec.rights match
-      case _ if rec.withheld.isDefined          => rec.withheld.map(w => Problem(w.value))
-      case Left(why)                            => Some(Problem(why.value))
-      case Right(r) if !allow.allows(r.licence) =>
-        Some(Problem(s"licence ${r.licence.family.wire} not allowed for $provider"))
-      case Right(_) if rec.imageUrl.isEmpty => Some(Problem("no image"))
-      case Right(_)                         => None
+      case _ if rec.withheld.isDefined          => rec.withheld.map(w => Refusal.Withheld(Problem(w.value)))
+      case Left(why)                            => Some(Refusal.Unreadable(Problem(why.value)))
+      case Right(r) if !allow.allows(r.licence) => Some(Refusal.LicenceNotAllowed(r.licence.family, provider))
+      case Right(_) if rec.imageUrl.isEmpty     => Some(Refusal.NoImage)
+      case Right(_)                             => None
+
+  /** Why a record may not be kept. */
+  enum Refusal derives CanEqual:
+    /** The plugin withheld it, with its reason. */
+    case Withheld(why: Problem)
+
+    /** The host cannot read its rights statement. */
+    case Unreadable(why: Problem)
+
+    /** Its licence family is not in the collection's allowlist. */
+    case LicenceNotAllowed(family: Licence.Family, provider: Provider)
+
+    /** It has no image to keep. */
+    case NoImage
+
+    /** The sentence for a person. */
+    def problem: Problem = this match
+      case Withheld(why)                     => why
+      case Unreadable(why)                   => why
+      case LicenceNotAllowed(family, source) => Problem(s"licence ${family.wire} not allowed for $source")
+      case NoImage                           => Problem("no image")
 
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
     * of the request.
@@ -60,9 +80,19 @@ object PluginMedia:
           HttpTransport.Url(url.value),
           headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
         )
-        .left
-        .map(e => plugin.Problem(e.value))
         .map(a => Plugin.HttpResponse.Body(a.body.value))
+
+  /** A plugin's answer to a request, or what it threw as a failure of that call (one that needed no answer). */
+  def guardHttp[A](a: => Either[Plugin.Http.Failure, A]): Either[Plugin.Http.Failure, A] =
+    try Option(a).getOrElse(Left(Plugin.Http.Failure.Transport(plugin.Problem("the plugin answered nothing"))))
+    catch
+      case e: InterruptedException => throw e
+      case NonFatal(e)             =>
+        Left(
+          Plugin.Http.Failure.Transport(
+            plugin.Problem(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+          )
+        )
 
   /** A plugin's answer, or what it threw as a failure of that call. */
   def guard[A](a: => Either[?, A]): Either[Problem, A] =

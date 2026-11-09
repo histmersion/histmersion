@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Problem
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.MediaConfig
@@ -61,13 +62,13 @@ final class Polite(
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[HttpTransport.Problem, HttpAnswer] =
+  ): Either[Plugin.Http.Failure, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.value.equalsIgnoreCase("User-Agent")) +
         (CoreQuota.HeaderName("User-Agent") ->
           CoreQuota.HeaderValue(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
-    def attempt(n: HttpPolicy.Attempt, refusals: Int): Either[HttpTransport.Problem, HttpAnswer] =
+    def attempt(n: HttpPolicy.Attempt, refusals: Int): Either[Plugin.Http.Failure, HttpAnswer] =
       pace(h)
       count += 1
       http.get(url, sent).flatMap { a =>
@@ -98,7 +99,12 @@ final class Polite(
             val waited = if a.code.value == 403 && refusals > 0 then
               s" (still, after waiting ${refusalBackoffMs.take(refusals).map(_.value).sum / 1000} s)"
             else ""
-            Left(HttpTransport.Problem(s"${h.value}: ${why.value}$waited"))
+            Left(
+              Plugin.Http.Failure.Status(
+                a.code.status,
+                Problem(s"${h.value}: ${why.value}$waited")
+              )
+            )
       }
     attempt(HttpPolicy.Attempt(0), 0)
 
@@ -108,19 +114,19 @@ final class Polite(
   def json(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[HttpTransport.Problem, Json] =
+  ): Either[Plugin.Http.Failure, Json] =
     get(url, headers).flatMap(a =>
       io.circe.parser
         .parse(a.text.value)
         .left
-        .map(e => HttpTransport.Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})"))
+        .map(e => Plugin.Http.Failure.Transport(Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})")))
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
   def file(
       url: HttpTransport.Url,
       fallbackMime: Polite.Mime
-  ): Either[HttpTransport.Problem, (HttpAnswer.Body, Polite.Mime)] =
+  ): Either[Plugin.Http.Failure, (HttpAnswer.Body, Polite.Mime)] =
     get(url).map(a =>
       (
         a.body,

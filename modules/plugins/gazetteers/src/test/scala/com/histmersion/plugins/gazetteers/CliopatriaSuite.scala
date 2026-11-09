@@ -145,7 +145,7 @@ class CliopatriaSuite extends munit.FunSuite:
     val asked = scala.collection.mutable.ListBuffer.empty[Plugin.Http.Url]
     val http = new Plugin.Http:
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Problem("get is not used"))
+        Left(Plugin.Http.Failure.Transport(Problem("get is not used")))
       override def fetch(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]
@@ -167,7 +167,7 @@ class CliopatriaSuite extends munit.FunSuite:
   test("an error answer, a zip without a usable file: the download says which"):
     def answering(status: Plugin.HttpResponse.Status, body: Plugin.HttpResponse.Body) = new Plugin.Http:
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Problem("get is not used"))
+        Left(Plugin.Http.Failure.Transport(Problem("get is not used")))
       override def fetch(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]

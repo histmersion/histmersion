@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Problem
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -28,7 +29,7 @@ final class JavaHttpTransport(
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[HttpTransport.Problem, HttpAnswer] =
+  ): Either[Plugin.Http.Failure, HttpAnswer] =
     scala.util
       .Try {
         val b = HttpRequest
@@ -49,7 +50,11 @@ final class JavaHttpTransport(
       }
       .toEither
       .left
-      .map(e => HttpTransport.Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      .map(e =>
+        Plugin.Http.Failure.Transport(
+          Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        )
+      )
 
 object JavaHttpTransport:
   type ConnectSeconds = ConnectSeconds.T

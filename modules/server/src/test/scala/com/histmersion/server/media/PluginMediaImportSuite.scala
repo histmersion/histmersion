@@ -97,8 +97,6 @@ class PluginMediaImportSuite extends DbSuite:
             Header.Name("Accept") -> Header.Value("application/json")
           )
         )
-        .left
-        .map(e => Problem(e.value))
         .map { _ =>
           def item(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.Geography.Value) =
             Right(
@@ -131,7 +129,7 @@ class PluginMediaImportSuite extends DbSuite:
               spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"),
               spi.MediaItem.Geography.Value("Zqpl Nowhere")
             ),
-            Left(Problem("a record the API could not describe"))
+            Left(Plugin.Http.Failure.Transport(Problem("a record the API could not describe")))
           )
         }
 

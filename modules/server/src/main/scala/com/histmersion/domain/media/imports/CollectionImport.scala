@@ -24,6 +24,7 @@ import com.histmersion.api.media.{
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.api.library.RepairAcquire
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.WorkKey
 import com.histmersion.util.ocr.Pixels
 import io.github.iltotore.iron.constraint.any.Pure
@@ -73,16 +74,16 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         case Some(f)            =>
           col.search(fetch, f) match
             case Left(e) =>
-              failed += s"$providerTitle search for ${t.id} (${t.label}): $e"
-              if e.value.contains("HTTP 401") || e.value.contains("HTTP 403") then
+              failed += s"$providerTitle search for ${t.id} (${t.label}): ${e.problem}"
+              if e.refused then
                 refused = true
                 failed += s"$providerTitle refused the request; the rest of this batch was not asked"
               None
             case Right(rs) =>
               val errors = rs.collect { case Left(e) => e }
-              errors.foreach(e => failed += s"${t.id}: $e")
+              errors.foreach(e => failed += s"${t.id}: ${e.problem}")
               // a refusal of one of its records ends the batch too (#2561): the rest would be refused alike
-              if errors.exists(e => e.value.contains("HTTP 401") || e.value.contains("HTTP 403")) then
+              if errors.exists(_.refused) then
                 refused = true
                 failed += s"$providerTitle refused the request; the rest of this batch was not asked"
                 None
@@ -120,7 +121,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       recs.distinctBy(_.key).map { rec =>
         val d = PluginMedia
           .refusal(rec, allow, PluginMedia.Provider(col.provider.value))
-          .map(r => Problem(r.value))
+          .map(r => Problem(r.problem.value))
           .toLeft(())
           .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)
@@ -315,7 +316,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   ] =
     rec.imageUrl
       .toRight("no image")
-      .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(_.value))
+      .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(f => s"${f.problem}"))
       .flatMap { (bytes, mime) =>
         if bytes.value.length.toLong > cfg.maxBytes.value then
           Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -334,7 +335,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
                   )
                 )
               case Right(_)  => None
-              case Left(why) => scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: $why"); None
+              case Left(why) => scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem}"); None
           }
           val made = own.orElse(
             converter.thumbnail(

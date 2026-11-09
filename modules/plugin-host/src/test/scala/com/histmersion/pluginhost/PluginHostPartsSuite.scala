@@ -37,14 +37,12 @@ class PluginHostPartsSuite extends munit.FunSuite:
   test("a media record is kept only with a readable, allowed licence and an image"):
     val allow = LicencePolicy.of(com.histmersion.domain.Licence.AllowList("cc0,cc-by"))
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC-BY-4.0")), allow, PluginMedia.Provider("mine")), None)
-    assert(
-      PluginMedia
-        .refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine"))
-        .exists(_.value.contains("not allowed"))
-    )
+    PluginMedia.refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine")) match
+      case Some(PluginMedia.Refusal.LicenceNotAllowed(_, provider)) => assertEquals(provider, PluginMedia.Provider("mine"))
+      case other                                                    => fail("licence not refused")
     assertEquals(
       PluginMedia.refusal(PluginMedia.record(item("CC0-1.0", image = None)), allow, PluginMedia.Provider("mine")),
-      Some("no image")
+      Some(PluginMedia.Refusal.NoImage)
     )
     assertEquals(
       PluginMedia.refusal(
@@ -52,7 +50,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
         allow,
         PluginMedia.Provider("mine")
       ),
-      Some("human remains")
+      Some(PluginMedia.Refusal.Withheld(Problem("human remains")))
     )
     assertEquals(
       PluginMedia.refusal(
@@ -60,7 +58,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
         allow,
         PluginMedia.Provider("mine")
       ),
-      Some("no credit line")
+      Some(PluginMedia.Refusal.Unreadable(Problem("no credit line")))
     )
 
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
@@ -72,7 +70,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      Problem("offline")
+     Plugin.Http.Failure.Transport( Problem("offline"))
     )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
@@ -130,7 +128,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
 
   /** Answers in turn, recording each request's headers. */
-  final private class Scripted(answers: Either[HttpTransport.Problem, HttpAnswer]*) extends HttpTransport:
+  final private class Scripted(answers: Either[Plugin.Http.Failure, HttpAnswer]*) extends HttpTransport:
     private val left = scala.collection.mutable.Queue(answers*)
     val sent = List.newBuilder[Map[String, String]]
     def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
@@ -175,17 +173,32 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val got =
       PolicyHttp(HttpPolicy.UserAgent("ua"), challenged, sleep = _ => fail("a challenge is never retried"), log = quiet)
         .bytes(HttpTransport.Url("https://x.example/b"))
-    assert(got.left.exists(_.value.contains("bot-protection challenge")), got.toString)
-    val down = Scripted(Left(HttpTransport.Problem("x unreachable")), Left(HttpTransport.Problem("x unreachable")))
+    assert(
+      got.left.exists {
+        case Plugin.Http.Failure.Status(code, why) =>
+          code == Plugin.HttpResponse.Status.Forbidden && why.value.contains("bot-protection challenge")
+        case _ => false
+      },
+      got.toString
+    )
+    val down = Scripted(
+      Left(Plugin.Http.Failure.Transport(Problem("x unreachable"))),
+      Left(Plugin.Http.Failure.Transport(Problem("x unreachable")))
+    )
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), down, tries = PolicyHttp.Tries(2), sleep = _ => (), log = quiet)
         .bytes(HttpTransport.Url("https://x.example/c")),
-      Left("x unreachable")
+      Left(Plugin.Http.Failure.Transport(Problem("x unreachable")))
     )
     val missing = Scripted(answer(HttpAnswer.Code(404), "no such work"))
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), missing, log = quiet).bytes(HttpTransport.Url("https://x.example/d")),
-      Left("https://x.example/d: HTTP 404 no such work")
+      Left(
+        Plugin.Http.Failure.Status(
+          Plugin.HttpResponse.Status.NotFound,
+          Problem("https://x.example/d: HTTP 404 no such work")
+        )
+      )
     )
 
   // ── a plugin built against another SPI generation ─────────────────────────────────────────────

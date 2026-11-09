@@ -127,7 +127,7 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val http = FakeMediaHttp { url =>
       if url.contains("list=search") then
         Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
-      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
+      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.problem.value)
     }
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)

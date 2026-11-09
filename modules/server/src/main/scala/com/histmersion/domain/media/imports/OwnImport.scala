@@ -349,7 +349,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       case None       =>
         item.imageUrl
           .toRight("no image")
-          .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(_.value))
+          .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(f => s"${f.problem}"))
           .flatMap { (bytes, got) =>
             if bytes.value.length.toLong > cfg.maxBytes.value then
               Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -365,7 +365,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                         i.rendition.flatMap(_.thumbHeight).map(_.value)
                       )
                     )
-                  case Left(why) => scribe.warn(s"media: thumbnail of ${item.key} not fetched: $why"); None
+                  case Left(why) => scribe.warn(s"media: thumbnail of ${item.key} not fetched: ${why.problem}"); None
               }
               Right((bytes.value, got.value, t))
           }

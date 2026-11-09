@@ -29,7 +29,7 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ): Either[Problem, Plugin.HttpResponse.Body] =
+    ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
       asked += url.value
       if url.value.contains("/advancedsearch.php") then
         Right(
@@ -43,7 +43,7 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
         answers
           .get(url.value)
           .map(a => Plugin.HttpResponse.Body(a.getBytes(UTF_8)))
-          .toRight(Problem(s"${url.value}: HTTP 404 not found"))
+          .toRight(Plugin.Http.Failure.Transport(Problem(s"${url.value}: HTTP 404 not found")))
 
   private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(Endpoint.Url("https://archive.org")), Canned))
 

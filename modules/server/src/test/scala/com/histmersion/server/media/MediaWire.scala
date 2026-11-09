@@ -8,6 +8,7 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.augustnagro.magnum.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
+import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient
 import io.circe.syntax.*
@@ -109,12 +110,12 @@ object MediaWire:
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[HttpTransport.Problem, HttpAnswer] = synchronized {
+    ): Either[Plugin.Http.Failure, HttpAnswer] = synchronized {
       val a = answer(url.value)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
       out ++= s"  -> ${a.fold(e => s"error $e", a => s"${a.code} ${a.body.value.length} bytes")}\n"
-      a.left.map(HttpTransport.Problem(_))
+      a.left.map(m => Plugin.Http.Failure.Transport(plugin.Problem(m)))
     }
     def take(): String = synchronized {
       val s = out.result()

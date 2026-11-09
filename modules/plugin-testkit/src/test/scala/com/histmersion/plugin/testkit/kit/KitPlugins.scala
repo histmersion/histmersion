@@ -36,9 +36,9 @@ final class KitFetcherPlugin extends Plugin:
                   case Some(doi) =>
                     val url = s"${c.baseUrl.stripSuffix("/")}/$doi.pdf" + key.fold("")(k => s"?key=$k")
                     ctx.http.get(Plugin.Http.Url(url)) match
-                      case Left(why) if why.value.contains("challenge") => Fetch.Refused(Problem(why.value))
-                      case Left(why)                                    => Fetch.Miss(Problem(why.value))
-                      case Right(bytes)                                 =>
+                      case Left(Plugin.Http.Failure.Status(code, why)) if code.refusesAccess => Fetch.Refused(why)
+                      case Left(why)                                                         => Fetch.Miss(why.problem)
+                      case Right(bytes)                                                      =>
                         fc.log.info(Plugin.Log.Line(s"$doi: licence CC-BY-4.0"))
                         Fetch.Found(
                           FetchedFile(
@@ -71,8 +71,6 @@ final class KitMediaPlugin extends Plugin:
           def search(place: MediaPlace, http: Plugin.Http) =
             http
               .get(Plugin.Http.Url(s"${c.baseUrl}/search?q=${place.label}"))
-              .left
-              .map(e => Problem(e.value))
               .map(b =>
                 new String(b.value, UTF_8).linesIterator.toList.map { line =>
                   line.split("\\|", -1) match
@@ -86,7 +84,7 @@ final class KitMediaPlugin extends Plugin:
                           Right(MediaRights(Licence(licence), credit = MediaRights.Credit("A. Photographer")))
                         )
                       )
-                    case _ => Left(Problem(s"unreadable record '$line'"))
+                    case _ => Left(Plugin.Http.Failure.Transport(Problem(s"unreadable record '$line'")))
                 }
               )
       )
@@ -111,7 +109,7 @@ final class KitEventsPlugin extends Plugin:
             http
               .get(Plugin.Http.Url(s"${c.baseUrl}/$part"))
               .left
-              .map(e => Problem(e.value))
+              .map(_.problem)
               .map { b =>
                 val events =
                   new String(b.value, UTF_8).linesIterator.toList.map(_.split('|')).collect {

@@ -8,6 +8,7 @@ import com.histmersion.util.plugins.{Plugin, Plugins}
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, WorkKey}
+import com.histmersion.plugin.Plugin as SpiPlugin
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import org.ekrich.config.ConfigFactory
 
@@ -43,7 +44,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def md5(b: HttpAnswer.Body): String =
     OaFetch.md5(OaFetch.Bytes(b.value)).getOrElse(fail("no MD5 in this runtime")).value
 
-  private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+  private def json(s: String): Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(200),
@@ -51,7 +52,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
-  private def html(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+  private def html(s: String): Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(200),
@@ -59,9 +60,9 @@ class FetcherTrafficSuite extends munit.FunSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
-  private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[HttpTransport.Problem, HttpAnswer] =
+  private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> mime), b))
-  private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
+  private val notFound: Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(404),
@@ -71,17 +72,17 @@ class FetcherTrafficSuite extends munit.FunSuite:
     )
 
   /** Answers from `routes` (matched on the URL's text), 404 otherwise; every request written to `out`. */
-  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]])
+  final private class Wire(routes: PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]])
       extends HttpTransport:
     val out = StringBuilder()
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[HttpTransport.Problem, HttpAnswer] =
+    ): Either[SpiPlugin.Http.Failure, HttpAnswer] =
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
-      out ++= s"  -> ${answer.fold(e => s"error $e", a => a.code.toString)}\n"
+      out ++= s"  -> ${answer.fold(e => s"error ${e.problem}", a => a.code.toString)}\n"
       answer
 
   private val baseText =
@@ -100,7 +101,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def scenario(
       name: String,
       works: List[WorkKey],
-      routes: AcquireConfig => PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]],
+      routes: AcquireConfig => PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]],
       text: String = baseText,
       env: Map[String, String] = Map.empty,
       search: Boolean = false
@@ -150,7 +151,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   private val PmcDoi = "10.1038/nature25778"
 
-  private def pmc(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def pmc(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     val record = fixture("pmc_dataset_oa.json").replaceAll("(\\.pdf\\?md5=)[0-9a-f]{32}", "$1" + md5(Pdf))
     {
       case u if u.startsWith(c.europepmc.url.value + "/search") => json(fixture("europepmc_oa.json"))
@@ -176,7 +177,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   private val ManuscriptDoi = "10.1126/science.aar7711"
 
-  private def manuscript(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def manuscript(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     val record = fixture("pmc_dataset_manuscript.json").replaceAll("(\\.xml\\?md5=)[0-9a-f]{32}", "$1" + md5(Xml))
     {
       case u if u.startsWith(c.europepmc.url.value + "/search") => json(fixture("europepmc_free.json"))
@@ -197,7 +198,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private val OaPage = "https://repo-o.example.org/item/1"
   private val DcPage = "https://repo-d.example.org/item/1"
 
-  private def indexes(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def indexes(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/$IndexDoi") =>
       json(s"""{"doi":"$IndexDoi","oa_locations":[{"host_type":"repository","url_for_landing_page":"$UpPage"}]}""")
     case u if u.startsWith(s"${c.openalex.url}/") && u.contains(IndexDoi) =>
@@ -206,7 +207,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       )
     case u if u == s"${c.datacite.url}/dois/$IndexDoi" => json(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
 
-  private def direct(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def direct(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/10.1/up") =>
       json("""{"doi":"10.1/up","best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"},
              |"oa_locations":[{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"}]}""".stripMargin)
@@ -255,7 +256,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     case u if u.startsWith(s"${c.archiveOrg.url}/download/zqbook/zqbook.pdf")  =>
       file(HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes("ISO-8859-1")), PdfType)
 
-  private def zenodo(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def zenodo(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     val record = landing("zenodo_record_3695551.json").replaceAll("md5:[0-9a-f]{32}", s"md5:${md5(Pdf)}")
     val pdf = "https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"
     {
@@ -266,7 +267,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       case `pdf`                                            => file(Pdf, PdfType)
     }
 
-  private def repositories(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def repositories(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     val apollo = "https://www.repository.cam.ac.uk/handle/1810/265228"
     val apolloPdf = "https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download"
     val tobias = "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561"

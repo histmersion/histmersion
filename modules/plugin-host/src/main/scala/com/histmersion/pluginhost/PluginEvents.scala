@@ -201,8 +201,6 @@ object PluginEvents:
           HttpTransport.Url(url.value),
           headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
         )
-        .left
-        .map(e => plugin.Problem(e.value))
         .map(a => Plugin.HttpResponse.Body(a.body.value))
 
   def safe[A](a: => A): Option[A] =

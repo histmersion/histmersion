@@ -2,6 +2,7 @@ package com.histmersion
 package domain.media.imports
 
 import com.histmersion.domain.Problem
+import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
@@ -25,7 +26,7 @@ trait SearchedCollection:
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[Problem, List[Either[Problem, MediaRecord]]]
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaRecord]]]
 
   /** Why a record is tied to the place, or why not. */
   def matches(

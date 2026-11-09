@@ -12,7 +12,8 @@ class GazetteerSpiSuite extends munit.FunSuite:
       def get(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]
-      ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
+      ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
+      Left(Plugin.Http.Failure.Transport(Problem("offline")))
     }
     def log = new Plugin.Log {
       def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()

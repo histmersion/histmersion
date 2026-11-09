@@ -39,17 +39,16 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Problem, List[Either[Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
-      .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).left.map(_.value))
+      .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).unreadableEach)
       .left
-      .map(e => Problem(explain(Problem(e)).value))
-      .map(_.map(_.left.map(e => Problem(e.value))))
+      .map(explain)
 
   override def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] =
     http
       .askJson(Europeana.recordUrl(conf.apiUrl, item.key), headers)
-      .flatMap(j => Europeana.item(j, item, licences, exclusions).left.map(_.value))
+      .flatMap(j => Europeana.item(j, item, licences, exclusions).unreadable)
       .left
-      .map(e => Problem(explain(Problem(e)).value))
+      .map(e => explain(e).problem)

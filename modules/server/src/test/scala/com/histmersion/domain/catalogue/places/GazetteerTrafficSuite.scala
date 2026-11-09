@@ -50,7 +50,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val probe = new HttpTransport:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = {
-        asked.add(url.value); Left(HttpTransport.Problem("probe"))
+        asked.add(url.value); Left(Plugin.Http.Failure.Transport(plugin.Problem("probe")))
       }
     val _ = ImportRunner.places(sources(name), PluginGazetteers.http(probe))
     asked.peek()

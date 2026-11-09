@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.plugin.Problem
+import com.histmersion.plugin.Plugin
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,11 +14,9 @@ trait HttpTransport:
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[HttpTransport.Problem, HttpAnswer]
+  ): Either[Plugin.Http.Failure, HttpAnswer]
 
 object HttpTransport:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends Newtype[Int, Pure]
   type Url = Url.T

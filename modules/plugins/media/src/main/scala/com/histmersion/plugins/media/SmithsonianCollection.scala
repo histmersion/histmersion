@@ -29,13 +29,12 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Problem, List[Either[Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),
         Map(Header.Name(Smithsonian.KeyHeader) -> Header.Value(apiKey.value))
       )
-      .flatMap(j => Smithsonian.records(j, units).left.map(_.value))
+      .flatMap(j => Smithsonian.records(j, units).unreadableEach)
       .left
-      .map(e => Problem(explain(Problem(e)).value))
-      .map(_.map(_.left.map(e => Problem(e.value))))
+      .map(explain)

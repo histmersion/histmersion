@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
+import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One HTTP answer: the status, the headers (names in lower case, first value) and the body. */
@@ -25,4 +26,7 @@ object HttpAnswer:
   object Body extends Newtype[Array[Byte], Pure]
 
   type Code = Code.T
-  object Code extends Newtype[Int, Pure]
+  object Code extends Newtype[Int, Pure]:
+    extension (c: Code)
+      /** The status as the plugin SPI states it. */
+      def status: Plugin.HttpResponse.Status = Plugin.HttpResponse.Status(c.value)

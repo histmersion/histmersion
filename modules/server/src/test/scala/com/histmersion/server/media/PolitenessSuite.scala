@@ -153,8 +153,8 @@ class PolitenessSuite extends munit.FunSuite:
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}", Map("retry-after" -> "1"), code = 429))
     val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(2)))
     assertEquals(
-      p.get(HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption,
-      Some("commons.wikimedia.org: HTTP 429 after 2 retries")
+      p.get(HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption.map(_.problem),
+      Some(plugin.Problem("commons.wikimedia.org: HTTP 429 after 2 retries"))
     )
     assertEquals(http.requests.size, 3)
     assertEquals(slept.toList, List(1000L, 1000L))
@@ -207,11 +207,11 @@ class PolitenessSuite extends munit.FunSuite:
       FakeMediaHttp.cfg,
       List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L))
     )
-    assertEquals(p.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
+    assertEquals(p.get(metUrl(1)).left.toOption.map(_.problem), Some(plugin.Problem(s"$metHost: HTTP 403 (still, after waiting 360 s)")))
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
     val (q, none) = FakeMediaHttp.polite(once)
-    assertEquals(q.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403"))
+    assertEquals(q.get(metUrl(1)).left.toOption.map(_.problem), Some(plugin.Problem(s"$metHost: HTTP 403")))
     assertEquals((once.requests.size, none.toList), (1, Nil))
 
   test("the slow-down stops at 16 times the pace; another host keeps its own"):

@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Problem
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -36,7 +37,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[HttpTransport.Problem, HttpAnswer] =
+  ): Either[Plugin.Http.Failure, HttpAnswer] =
     val req = basicRequest
       .get(Uri.unsafeParse(url.value))
       .headers(headers.map((k, v) => k.value -> v.value))
@@ -46,7 +47,11 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       .Try(req.send(backend))
       .toEither
       .left
-      .map(e => HttpTransport.Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      .map(e =>
+        Plugin.Http.Failure.Transport(
+          Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        )
+      )
       .map(resp =>
         HttpAnswer(
           HttpAnswer.Code(resp.code.code),

@@ -58,6 +58,7 @@ trait Plugin:
   def register(config: Config, ctx: Plugin.Context): Either[Problem, Unit]
 
 object Plugin:
+  import Http.Failure
 
   /** The readers a plugin's config derivation must see: an `${?ENV}` override always arrives as a HOCON STRING, so a
     * number or boolean setting has to accept a numeric or boolean string too — the same givens `core/Config.scala`
@@ -194,7 +195,7 @@ object Plugin:
     def get(
         url: Http.Url,
         headers: Map[Header.Name, Header.Value] = Map.empty
-    ): Either[Problem, HttpResponse.Body]
+    ): Either[Failure, HttpResponse.Body]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -206,12 +207,36 @@ object Plugin:
     def fetch(
         url: Http.Url,
         headers: Map[Header.Name, Header.Value] = Map.empty
-    ): Either[Problem, HttpResponse] =
+    ): Either[Failure, HttpResponse] =
       get(url, headers).map(HttpResponse(HttpResponse.Status(200), Map.empty, _))
 
   object Http:
     type Url = Url.T
     object Url extends Newtype[String, Pure]
+
+    /** Why a request gave no answer to use, whichever of the host's calls it was. */
+    enum Failure derives CanEqual:
+      /** The upstream answered and the host gave up on the answer: a refusal (401, 403: a key wanted, a bot
+        * challenge), a missing page (404), a slow-down it left alone, any other error status. `problem` names the
+        * host and what it said.
+        */
+      case Status(code: HttpResponse.Status, problem: Problem)
+
+      /** No usable answer: the host could not reach the upstream, or the answer was not what was asked for. */
+      case Transport(problem: Problem)
+
+      /** The sentence for a person. */
+      def problem: Problem
+
+      /** Did the upstream refuse the request (401, 403: a key wanted, a bot challenge)? Asking again is refused alike. */
+      def refused: Boolean = this match
+        case Status(code, _) => code.refusesAccess
+        case Transport(_)    => false
+
+      /** The same failure with `context` before its sentence ("item 7: …"). */
+      def within(context: String): Failure = this match
+        case Status(code, why) => Status(code, Problem(s"$context: $why"))
+        case Transport(why)    => Transport(Problem(s"$context: $why"))
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *
@@ -236,7 +261,16 @@ object Plugin:
     object Body extends Newtype[Array[Byte], Pure]
 
     type Status = Status.T
-    object Status extends Newtype[Int, Pure]
+    object Status extends Newtype[Int, Pure]:
+      val NotFound: Status = Status(404)
+      val Unauthorized: Status = Status(401)
+      val Forbidden: Status = Status(403)
+
+      extension (s: Status)
+        /** 401 or 403: the upstream wants a key or does not take the client. */
+        def refusesAccess: Boolean = s == Unauthorized || s == Forbidden
+
+        def isNotFound: Boolean = s == NotFound
 
   /** @param id
     *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`

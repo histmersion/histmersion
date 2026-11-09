@@ -14,7 +14,7 @@ final class CatalogueJson(http: Plugin.Http):
     http
       .get(url)
       .left
-      .map(e => Problem(e.value))
+      .map(_.problem)
       .flatMap(b =>
         io.circe.parser
           .parse(String(b.value, "UTF-8"))

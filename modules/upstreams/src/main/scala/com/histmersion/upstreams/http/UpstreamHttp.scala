@@ -19,7 +19,7 @@ extension (http: Plugin.Http)
       )
       .map(body => String(body.value, UTF_8))
       .left
-      .map(_.value)
+      .map(e => s"${e.problem}")
 
   /** One GET answered as JSON; an answer that is none says so, with the URL. */
   def json(url: String, headers: Map[String, String] = Map.empty): Either[String, Json] =

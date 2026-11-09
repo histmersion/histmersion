@@ -26,21 +26,19 @@ final class MetCollection(conf: CollectionSettings)
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[plugin.Problem, List[Either[plugin.Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
-      .flatMap(j => MetCollection.ids(j).left.map(_.value))
+      .flatMap(j => MetCollection.ids(j).unreadable)
       .map(
         _.take(conf.candidates.value.max(0)).map(id =>
           http
             .askJson(MetCollection.objectUrl(conf.apiUrl, id))
-            .flatMap(j => MetCollection.record(j).left.map(_.value))
+            .flatMap(j => MetCollection.record(j).unreadable)
             .left
-            .map(e => plugin.Problem(s"object $id: $e"))
+            .map(_.within(s"object $id"))
         )
       )
-      .left
-      .map(plugin.Problem(_))
 
 object MetCollection:
   type ObjectId = ObjectId.T

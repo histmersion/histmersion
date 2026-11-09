@@ -58,7 +58,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
           .replace("+", "%20")
       )
     )
-    http.get(Plugin.Http.Url(url.value)).left.map(e => Problem(e.value)).flatMap { b =>
+    http.get(Plugin.Http.Url(url.value)).left.map(_.problem).flatMap { b =>
       if b.value.length < 10240 then
         Left(Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
       else

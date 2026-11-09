@@ -105,7 +105,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(Plugin.Http.Url(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
         case Left(e) =>
-          ctx.log.info(Plugin.Log.Line(s"pmc fetch failed ($e)")); None
+          ctx.log.info(Plugin.Log.Line(s"pmc fetch failed (${e.problem})")); None
         case Right(b) if !ok(b) =>
           ctx.log.info(
             Plugin.Log.Line(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")

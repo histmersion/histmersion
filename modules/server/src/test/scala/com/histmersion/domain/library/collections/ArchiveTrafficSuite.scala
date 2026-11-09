@@ -8,6 +8,8 @@ import com.histmersion.server.ServerPlugins
 
 import com.histmersion.config.{AcquireConfig, AppConfig, DbConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
+import com.histmersion.plugin.Plugin as SpiPlugin
+import com.histmersion.plugin.Problem
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.acquisition.*
@@ -53,7 +55,7 @@ class ArchiveTrafficSuite extends DbSuite:
 
   private val ContentType = CoreQuota.HeaderName("content-type")
 
-  private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+  private def json(s: String): Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(200),
@@ -61,7 +63,7 @@ class ArchiveTrafficSuite extends DbSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
-  private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
+  private val notFound: Either[SpiPlugin.Http.Failure, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(404),
@@ -70,20 +72,20 @@ class ArchiveTrafficSuite extends DbSuite:
       )
     )
 
-  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]])
+  final private class Wire(routes: PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]])
       extends HttpTransport:
     val out = StringBuilder()
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[HttpTransport.Problem, HttpAnswer] =
+    ): Either[SpiPlugin.Http.Failure, HttpAnswer] =
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
-      out ++= s"  -> ${answer.fold(e => s"error $e", a => a.code.toString)}\n"
+      out ++= s"  -> ${answer.fold(e => s"error ${e.problem}", a => a.code.toString)}\n"
       answer
 
-  private def routes(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
+  private def routes(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
     val base = c.archiveOrg.url
     {
       case u if u.startsWith(s"$base/advancedsearch.php") =>

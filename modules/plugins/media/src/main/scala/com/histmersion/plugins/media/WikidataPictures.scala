@@ -27,7 +27,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
   override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
   def search(place: MediaPlace, http: Plugin.Http) =
-    Left(Problem("the Wikidata pictures are found for a batch of targets at once"))
+    Left(Plugin.Http.Failure.Transport(Problem("the Wikidata pictures are found for a batch of targets at once")))
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
   final private case class Asked(
@@ -64,7 +64,9 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
               .value
           )
         )
-        .flatMap(j => WikidataEntities.items(j, props).left.map(e => e.value))
+        .left
+        .map(_.problem)
+        .flatMap(j => WikidataEntities.items(j, props))
     }
     val items = answers.flatMap(_._2.toOption).flatMap(_.toList).toMap
     val unanswered = answers.collect { case (ids, Left(_)) => ids }.flatten.toSet

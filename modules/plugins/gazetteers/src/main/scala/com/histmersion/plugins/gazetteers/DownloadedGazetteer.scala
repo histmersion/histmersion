@@ -25,7 +25,7 @@ trait DownloadedGazetteer extends GazetteerSource:
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
   def download(http: Plugin.Http): Either[DownloadedGazetteer.Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
-      case Left(e)                           => Left(DownloadedGazetteer.Problem(s"download failed: $e"))
+      case Left(e)                           => Left(DownloadedGazetteer.Problem(s"download failed: ${e.problem}"))
       case Right(r) if r.status.value != 200 =>
         Left(DownloadedGazetteer.Problem(s"HTTP ${r.status.value} from ${url.value}"))
       case Right(r) =>
