@@ -23,7 +23,6 @@ final case class NewFigure(
 
 object NewFigure:
 
-
   type Bytes = Bytes.T
   object Bytes extends Newtype[Array[Byte], Pure]
 

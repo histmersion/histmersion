@@ -13,5 +13,3 @@ enum CoreFailure derives CanEqual:
   def message: Problem = this match
     case Skipped(why) => Problem(s"CORE not asked: $why")
     case Failed(why)  => why
-
-

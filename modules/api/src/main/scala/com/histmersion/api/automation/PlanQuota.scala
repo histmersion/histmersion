@@ -244,8 +244,7 @@ object PlanQuota:
     val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if (held).value then
-        Verdict.Blocked(Problem("held: a person paused all agent use of this plan"), None)
+      if (held).value then Verdict.Blocked(Problem("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))        => Verdict.Blocked(why, until)

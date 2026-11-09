@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.api.Problem
+
 /** What the CLI says when the server answers outside an endpoint's contract. */
 class ClientSuite extends munit.FunSuite:
 

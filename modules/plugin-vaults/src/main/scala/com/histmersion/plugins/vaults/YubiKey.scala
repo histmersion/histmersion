@@ -39,14 +39,12 @@ object YubiKey:
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s) => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(Problem(bad))
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(Problem(bad))
       case List(s, n) =>
         (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
-        yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).left.map(refactorError2 =>
-          Problem(refactorError2)
-        )
+        yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).left.map(refactorError2 => Problem(refactorError2))
       case _ => Left(Problem(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
@@ -113,7 +111,6 @@ object YubiKey:
       case TimedOut(waited) => Problem(s"keepassxc-cli did not answer within ${waited.toSeconds} s")
       case Unusable(why)    => why
 
-
   /** Pure: what one failed attempt means (KeePassXC's message, [[KeePassXcMessage.parse]]) → next or stop. Wrong
     * credentials stop at once: another key cannot fix a wrong password, and with the same secret programmed into every
     * listed key a wrong key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
@@ -121,11 +118,11 @@ object YubiKey:
   def failure(message: KeePassXcMessage, entry: Setting.Entries): Failure = message match
     case KeePassXcMessage.InvalidCredentials =>
       Failure.Stop(Problem("invalid credentials (the password, key file or YubiKey is wrong)"))
-    case KeePassXcMessage.NoEntry                => Failure.NoEntry(entry)
-    case KeePassXcMessage.NotTouched             => Failure.Stop(Problem("the YubiKey was not touched in time"))
-    case KeePassXcMessage.KeyAbsent              => Failure.Next(Problem("not connected"))
+    case KeePassXcMessage.NoEntry                 => Failure.NoEntry(entry)
+    case KeePassXcMessage.NotTouched              => Failure.Stop(Problem("the YubiKey was not touched in time"))
+    case KeePassXcMessage.KeyAbsent               => Failure.Next(Problem("not connected"))
     case KeePassXcMessage.ChallengeResponseFailed => Failure.Next(Problem("challenge-response failed"))
-    case KeePassXcMessage.Other                  => Failure.Stop(Problem("an error KeePassXC gave"))
+    case KeePassXcMessage.Other                   => Failure.Stop(Problem("an error KeePassXC gave"))
 
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").

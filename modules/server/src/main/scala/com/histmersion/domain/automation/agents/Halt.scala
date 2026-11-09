@@ -48,7 +48,8 @@ object Halt:
 
     enum Cause derives CanEqual:
 
-      /** A run that stopped for `reason` and waits for a person, an allowance or a clock: stored `<reason>: <detail>`. */
+      /** A run that stopped for `reason` and waits for a person, an allowance or a clock: stored `<reason>: <detail>`.
+        */
       case Paused(reason: PauseReason, detail: ApiProblem)
 
       /** A job a restart cut short: stored `interrupted`. */
@@ -79,7 +80,7 @@ object Halt:
     def of(c: Cause): Stopped = c match
       case Cause.Paused(reason, detail) => Stopped(s"${prefix(reason)}$detail")
       case Cause.Interrupted            => Stopped(s"${JobState.Interrupted}")
-      case Cause.Draining               => Stopped(s"${DrainingText}")
+      case Cause.Draining               => Stopped(s"$DrainingText")
       case Cause.Failed(text)           => Stopped(s"$text")
 
     /** The stored sentence of a column read as a problem. */
@@ -97,10 +98,12 @@ object Halt:
       def cause: Cause =
         val text: String = s.value
         val read: Cause = text match
-          case JobState.Interrupted           => Cause.Interrupted
-          case DrainingText => Cause.Draining
-          case _                              =>
+          case JobState.Interrupted => Cause.Interrupted
+          case DrainingText         => Cause.Draining
+          case _                    =>
             PauseReason.values
               .find(r => text.startsWith(prefix(r)))
-              .fold[Cause](Cause.Failed(ApiProblem(s"$s")))(r => Cause.Paused(r, ApiProblem(s"${text.drop(prefix(r).length)}")))
+              .fold[Cause](Cause.Failed(ApiProblem(s"$s")))(r =>
+                Cause.Paused(r, ApiProblem(s"${text.drop(prefix(r).length)}"))
+              )
         if of(read).value == text then read else Cause.Failed(ApiProblem(s"$s"))

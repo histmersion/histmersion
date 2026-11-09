@@ -12,4 +12,3 @@ final case class Hit(source: SearchHit, matched: List[Finding.Match], why: List[
     derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
-

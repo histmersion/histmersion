@@ -84,7 +84,8 @@ object Manager:
       /** This line with `suffix` added, read back as a line (the kind may change with the text). */
       def appended(suffix: String): Status = parse(s.render + suffix)
 
-    /** Reads a stored line: the first kind whose prefix it starts with, [[Kind.Other]] for any text no writer produces. */
+    /** Reads a stored line: the first kind whose prefix it starts with, [[Kind.Other]] for any text no writer produces.
+      */
     def parse(text: String): Status =
       val kind = Kind.values.find(k => k != Kind.Other && k.matches(text)).getOrElse(Kind.Other)
       Status(kind.wire, Detail.read(text.drop(kind.prefix.length)))

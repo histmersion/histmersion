@@ -238,7 +238,6 @@ object ReviewManagerPolicy:
       why: Problem
   )
 
-
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
     */

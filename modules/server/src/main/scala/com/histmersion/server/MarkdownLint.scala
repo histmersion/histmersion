@@ -71,7 +71,6 @@ object MarkdownLint:
     type Article = Article.T
     object Article extends Newtype[Boolean, Pure]
 
-
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T
   object Repair extends Newtype[String, Pure]

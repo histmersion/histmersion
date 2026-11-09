@@ -71,8 +71,7 @@ object AgentCmd:
     )
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then
-            Left(Cli.Error(Problem("--remove takes no --limit"), exitCode = ExitCode.Usage))
+          if limits.nonEmpty then Left(Cli.Error(Problem("--remove takes no --limit"), exitCode = ExitCode.Usage))
           else
             c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
               .map(r =>

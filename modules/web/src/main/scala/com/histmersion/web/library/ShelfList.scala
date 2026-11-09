@@ -118,9 +118,7 @@ object ShelfList:
         )
       ),
       child.maybe <-- unread.signal.map(
-        _.flatMap(_.left.toOption).map(m =>
-          ErrorLine.text(Problem(s"Could not list what is not read yet: $m"))
-        )
+        _.flatMap(_.left.toOption).map(m => ErrorLine.text(Problem(s"Could not list what is not read yet: $m")))
       ),
       ul(
         cls := "shelf-rows",

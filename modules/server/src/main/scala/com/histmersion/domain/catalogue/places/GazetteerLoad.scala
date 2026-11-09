@@ -444,7 +444,9 @@ object GazetteerLoad:
                     n,
                     meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
                   )
-                  .left.map(_.transformInto[Problem]).map(Gazetteer.inDataset(_, meta))
+                  .left
+                  .map(_.transformInto[Problem])
+                  .map(Gazetteer.inDataset(_, meta))
               )
           }
         })
@@ -481,7 +483,9 @@ object GazetteerLoad:
                   b.add(
                     Gazetteer
                       .fromFeature(j, slug, i, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
-                      .left.map(_.transformInto[Problem]).map(Gazetteer.inDataset(_, meta))
+                      .left
+                      .map(_.transformInto[Problem])
+                      .map(Gazetteer.inDataset(_, meta))
                   )
                 )
               )

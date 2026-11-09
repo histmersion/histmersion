@@ -37,4 +37,3 @@ object PlanMatchKind:
   object LineLimit extends Newtype[Int, Pure]
   type MatchLine = MatchLine.T
   object MatchLine extends Newtype[String, Pure]
-

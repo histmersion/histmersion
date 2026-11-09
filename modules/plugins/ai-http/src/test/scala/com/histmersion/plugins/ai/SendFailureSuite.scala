@@ -10,7 +10,6 @@ import com.histmersion.plugin.AiHttp
 class SendFailureSuite extends munit.FunSuite:
 
   private val url = Plugin.Http.Url("http://127.0.0.1:1/v1/messages")
-  
 
   test("connection, timeout and read failures name their kind, the method and the URL"):
     assertEquals(

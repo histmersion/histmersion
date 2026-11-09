@@ -36,7 +36,9 @@ object ConfigReload:
     Key("histmersion.server.request-timeout-seconds") -> Problem(
       "the listener's request timeout is set when it is bound"
     ),
-    Key("histmersion.server.shutdown-grace-seconds") -> Problem("the listener's shutdown grace is set when it is bound"),
+    Key("histmersion.server.shutdown-grace-seconds") -> Problem(
+      "the listener's shutdown grace is set when it is bound"
+    ),
     Key("histmersion.runtime") -> Problem("the bundled PostgreSQL and converter are started once"),
     Key("histmersion.agents.enabled") -> Problem("the agent pool is started (or not) at startup"),
     Key("histmersion.agents.max-concurrent-runs") -> Problem("the size of the agent pool, started once"),

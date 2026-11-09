@@ -21,4 +21,3 @@ enum UpdateOutcome derives CanEqual:
 
   /** The record itself fails the metadata guard. */
   case Refused(reason: Problem)
-

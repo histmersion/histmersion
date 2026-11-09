@@ -644,9 +644,7 @@ object PluginHost:
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
       .map(id => Problem(s"$Root.$id configures no plugin in this binary — ignored"))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
-    warnings.foreach(w =>
-      services.log(HostServices.PluginId(""), true, HostServices.Line(w.value))
-    )
+    warnings.foreach(w => services.log(HostServices.PluginId(""), true, HostServices.Line(w.value)))
 
     val byId = accepted.map(p => p.info.id -> p).toMap
 
@@ -802,9 +800,7 @@ object PluginHost:
             "use env:<NAME> or a vault reference"
         )
       )
-    warns.foreach(w =>
-      services.log(HostServices.PluginId(id.value), true, HostServices.Line(w.value))
-    )
+    warns.foreach(w => services.log(HostServices.PluginId(id.value), true, HostServices.Line(w.value)))
     def fail(e: Problem) =
       (
         status(p, true, PluginState.Failed, Some(pr.block), Some(Problem(s"$Root.$id: $e")), Nil, warns),

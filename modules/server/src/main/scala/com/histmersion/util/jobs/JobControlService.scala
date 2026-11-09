@@ -94,8 +94,7 @@ object JobControlService:
             m + (key -> j.copy(
               status = to.wire,
               progress = progress.orElse(j.progress),
-              error =
-                Option.when(to == JobState.Cancelled)(Problem(JobControlRules.CancelledByPerson)).orElse(j.error)
+              error = Option.when(to == JobState.Cancelled)(Problem(JobControlRules.CancelledByPerson)).orElse(j.error)
             ))
           )
       ): Unit

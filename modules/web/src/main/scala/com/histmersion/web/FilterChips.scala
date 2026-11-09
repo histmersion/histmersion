@@ -35,7 +35,7 @@ object FilterChips:
   /** The label a chip's field reads as. */
   private def labelOf(c: UiState.ActiveChip): String = c.key match
     case k if k == UiState.q.key => "Words"
-    case _                                   => Wording.capitalize(c.label.value)
+    case _                       => Wording.capitalize(c.label.value)
 
   /** One active filter's chip; a chosen place is named by its label, never by its id. */
   def chip(c: UiState.ActiveChip): HtmlElement =

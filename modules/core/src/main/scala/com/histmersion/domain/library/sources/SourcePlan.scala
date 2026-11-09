@@ -316,8 +316,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(o)),
         Some(MergeIssue.Detail.side(s)),
-        if asAlias then
-          List(api.Problem("rename-left cannot free an old citekey: the bundle's source takes a new one"))
+        if asAlias then List(api.Problem("rename-left cannot free an old citekey: the bundle's source takes a new one"))
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
         Some(MergeDecision.withArg(km.RenameRight, MergeDecision.Argument(suggestion.value))),

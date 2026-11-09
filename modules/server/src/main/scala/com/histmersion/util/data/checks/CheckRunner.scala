@@ -60,4 +60,3 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
       pointAreasRemoved = LintFixResult.PointAreasRemoved(results.map(_.pointAreasRemoved.value: Int).sum),
       pointAreasRemaining = LintFixResult.PointAreasRemaining(results.map(_.pointAreasRemaining.value: Int).sum)
     )
-

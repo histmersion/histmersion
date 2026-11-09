@@ -26,4 +26,3 @@ object MediaSources:
   enum Error derives CanEqual:
     case Invalid(message: Problem)
     case NotFound
-

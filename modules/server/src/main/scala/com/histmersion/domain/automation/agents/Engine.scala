@@ -173,7 +173,8 @@ final class Engine(
         )
         c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
           Halt.Fail(
-            domain.Problem(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
+            domain
+              .Problem(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
           )
         else
           Halt.Pause(
@@ -586,7 +587,8 @@ final class Engine(
             id,
             RunState.Queued,
             RunState.Paused,
-            error = Some(Stopped.write(Stopped.Cause.Paused(PauseReason.Requested, Problem("paused before it started"))))
+            error =
+              Some(Stopped.write(Stopped.Cause.Paused(PauseReason.Requested, Problem("paused before it started"))))
           )
             .toRight(conflict(Problem(s"run $id moved on; look again")))
             .flatMap(_ => get(id))

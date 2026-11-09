@@ -40,7 +40,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 private[config] object ConfigLayers:
   private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
 
-
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of `reference` whose `${?VAR}`

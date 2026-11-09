@@ -210,13 +210,9 @@ object JobRuns:
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
       mine(kind)
-        .filter((_, r) =>
-          r.row.status == paused && r.resumeAt.forall(_.isAfter(now))
-        )
+        .filter((_, r) => r.row.status == paused && r.resumeAt.forall(_.isAfter(now)))
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
-        .map((id, r) =>
-          (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, Problem(r.error.fold("")(_.value)))
-        )
+        .map((id, r) => (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, Problem(r.error.fold("")(_.value))))
         .toVector
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.progress).setTo(Some(JobRunState.Progress(text.value)))))

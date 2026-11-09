@@ -41,10 +41,16 @@ final class EventImportsControllers(
 
   def importJob(caller: Caller, req: EventImportRequest): Either[Api.Error, JobInfo] =
     for
-      provider <- imports.resolve(CatalogRecord.Provider(req.provider.value)).left.map(p => invalid(p.transformInto[Problem]))
+      provider <- imports
+        .resolve(CatalogRecord.Provider(req.provider.value))
+        .left
+        .map(p => invalid(p.transformInto[Problem]))
       area <- req.bbox.map(_.value.trim).filter(_.nonEmpty) match
         case Some(b) =>
-          BBox.parse(BBox.Text(b)).toRight(invalid(Problem(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat"))).map(Some(_))
+          BBox
+            .parse(BBox.Text(b))
+            .toRight(invalid(Problem(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")))
+            .map(Some(_))
         case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.ImportJobKind,
@@ -66,7 +72,11 @@ final class EventImportsControllers(
       provider <- req.provider.map(_.value.trim).filter(_.nonEmpty) match
         // no network: a built-in catalogue switched off since still has its records to re-derive
         case Some(p) =>
-          imports.resolveStored(CatalogRecord.Provider(p)).left.map(why => invalid(why.transformInto[Problem])).map(Some(_))
+          imports
+            .resolveStored(CatalogRecord.Provider(p))
+            .left
+            .map(why => invalid(why.transformInto[Problem]))
+            .map(Some(_))
         case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.RederiveJobKind,

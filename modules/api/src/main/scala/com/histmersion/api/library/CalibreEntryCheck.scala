@@ -9,4 +9,3 @@ enum CalibreEntryCheck derives CanEqual:
   case Missing
 
   case Unchecked(reason: Problem)
-

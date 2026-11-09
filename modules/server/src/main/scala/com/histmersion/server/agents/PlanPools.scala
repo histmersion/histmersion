@@ -104,9 +104,7 @@ final class PlanPools(
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r =>
-        api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
-      ),
+      pool.refusal.map(r => api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -118,9 +116,7 @@ final class PlanPools(
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r =>
-        api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
-      ),
+      pool.refusal.map(r => api.Problem(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -311,9 +307,7 @@ final class PlanPools(
         )
         .left
         .map(e => Problem(e.value))
-        .map(n =>
-          takeAndLog(p, trigger, Problem(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now)
-        )
+        .map(n => takeAndLog(p, trigger, Problem(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}")), now))
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
@@ -388,7 +382,12 @@ final class PlanPools(
               val (rs, refusal, plan) = PlanPools.codexReadings(json, now)
               record(PoolId.ChatgptPlan, rs)
               Transactor(ds).transact(
-                PlanQuotaRepo.setRefusal(PoolId.ChatgptPlan, refusal.map(r => r._1.transformInto[domain.Problem]), refusal.flatMap(_._2), plan)
+                PlanQuotaRepo.setRefusal(
+                  PoolId.ChatgptPlan,
+                  refusal.map(r => r._1.transformInto[domain.Problem]),
+                  refusal.flatMap(_._2),
+                  plan
+                )
               )
               None
 
@@ -792,7 +791,7 @@ object PlanPools:
       .filter(!_)
       .map(_ =>
         (
-            Problem("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
+          Problem("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
           Option.empty[PlanQuotaRepo.Pool.RefusalUntil]
         )
       )

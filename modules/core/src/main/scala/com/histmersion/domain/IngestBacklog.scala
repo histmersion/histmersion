@@ -251,7 +251,6 @@ object IngestBacklog:
     /** It stays on the list, with why. */
     case Keep(why: Problem)
 
-
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa.value then
       RepairAction.Keep(Problem("no legal open-access copy known: it stays on the acquisition list"))

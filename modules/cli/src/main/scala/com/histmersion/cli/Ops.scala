@@ -132,8 +132,7 @@ object Ops:
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
-    if !Files.isDirectory(dir) then
-      Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+    if !Files.isDirectory(dir) then Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>

@@ -285,7 +285,7 @@ object CalibreCmd:
         )
       ck = citekey.getOrElse(Calibre.citekeyFor(book))
       existing <- AcquireClient(c).calibreMeta(ck) match
-        case Right(m) => Right(Some(m.calibreId))
+        case Right(m)              => Right(Some(m.calibreId))
         case Left(e) if e.notFound => Right(None)
         case Left(e)               => Left(e)
       target <- Calibre

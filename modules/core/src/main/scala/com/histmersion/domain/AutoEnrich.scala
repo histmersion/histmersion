@@ -35,7 +35,6 @@ object AutoEnrich:
     case Off
     case Enriched(why: Problem)
 
-
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
 
@@ -59,7 +58,9 @@ object AutoEnrich:
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings.value > 0 then
       Some(
-        Problem(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}")
+        Problem(
+          s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"
+        )
       )
     else if notes.exists(_.value.trim.nonEmpty) then Some(Problem("it already has notes"))
     else live.map(r => Problem(s"enrich-source run ${r.id} is ${r.state.wire}"))

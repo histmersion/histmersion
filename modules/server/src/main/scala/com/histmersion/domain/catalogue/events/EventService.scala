@@ -86,7 +86,6 @@ trait EventService:
 object EventService:
   private given CanEqual[io.circe.Json, io.circe.Json] = CanEqual.derived
 
-
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
   private def missing(id: Event.Id) =

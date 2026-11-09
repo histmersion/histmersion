@@ -13,8 +13,7 @@ object RepositoryUrl extends Newtype[String, Match["(https?|file):.+"]]:
 
   def fromArgument(raw: Resolver.Argument): Either[Problem, RepositoryUrl] =
     val trimmed = (raw).value.trim
-    if trimmed.matches("(https?|file):.+") then
-      (either(trimmed)).left.map(refactorError2 => Problem(refactorError2))
+    if trimmed.matches("(https?|file):.+") then (either(trimmed)).left.map(refactorError2 => Problem(refactorError2))
     else
       (either(Path.of(trimmed).toAbsolutePath.normalize.toUri.toString)).left.map(refactorError3 =>
         Problem(refactorError3)

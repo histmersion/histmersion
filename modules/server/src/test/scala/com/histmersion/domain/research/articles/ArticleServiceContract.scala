@@ -135,17 +135,14 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Walls,
       Article.Patch(
         title = Some(Article.Title("x")),
-        critiqueReasons =
-          List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("Not about the walls.")))
+        critiqueReasons = List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("Not about the walls.")))
       ),
       Me
     )
     assertEquals(refused.left.map(_.message), Left("critique reason zra>zrb: 'zra' is not a citekey"))
     val long = s.articles.patch(
       Walls,
-      Article.Patch(critiqueReasons =
-        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("w" * 501)))
-      ),
+      Article.Patch(critiqueReasons = List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("w" * 501)))),
       Me
     )
     assertEquals(long.left.map(_.code), Left(Some(Write.CodeInvalid)))

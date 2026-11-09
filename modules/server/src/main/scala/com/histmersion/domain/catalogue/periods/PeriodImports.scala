@@ -59,8 +59,7 @@ final class PeriodImports(
       all <- parsed(raw)
       d = all.only(wanted.map(HistoricalPeriod.Id(_)).toSet)
       _ <-
-        if d.authorities.isEmpty then
-          Left(Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
+        if d.authorities.isEmpty then Left(Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
         else Right(())
     yield write(d, Dataset.Seed)
 

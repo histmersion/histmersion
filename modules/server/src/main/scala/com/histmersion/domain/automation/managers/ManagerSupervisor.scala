@@ -696,7 +696,8 @@ final class ManagerSupervisor(
   ): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then Left(SchedulerPolicy.Block.Refusal.TargetWritten)
+      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then
+        Left(SchedulerPolicy.Block.Refusal.TargetWritten)
       else
         guardedOpt(m.id.transformInto[ManagerLight.Id], out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())

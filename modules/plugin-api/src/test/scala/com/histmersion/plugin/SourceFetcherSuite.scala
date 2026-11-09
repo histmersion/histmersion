@@ -35,7 +35,7 @@ class SourceFetcherSuite extends munit.FunSuite:
             url: Plugin.Http.Url,
             headers: Map[Header.Name, Header.Value]
         ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-      Left(Plugin.Http.Failure.Transport(Problem("offline")))
+          Left(Plugin.Http.Failure.Transport(Problem("offline")))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()

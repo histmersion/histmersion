@@ -86,8 +86,7 @@ object PeriodsCmd:
     )
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
-        if !Files.isRegularFile(f) then
-          Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(f) then Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
         else
           c.importPeriods(cols.map(PeriodsApi.Source(_)), PeriodsApi.Name(Files.readString(f)), dataset)
             .map(x => Cli.out.println(PeriodsMarkdown.imported(x)))

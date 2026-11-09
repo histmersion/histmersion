@@ -68,8 +68,7 @@ final class SettingsControllers(
       .restart()
       .fold(
         why => Left(Api.Error(why.transformInto[Problem], Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
-        msg =>
-          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), msg))
+        msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), msg))
       )
 
   def setupDue: Boolean = settings.setupDue

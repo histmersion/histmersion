@@ -163,7 +163,11 @@ final class IngestQueue(
           id,
           JobState.Queued,
           JobState.Failed,
-          error = Some(Stopped.write(Stopped.Cause.Paused(PauseReason.Interrupted, Problem("the upload is no longer held by this process"))))
+          error = Some(
+            Stopped.write(
+              Stopped.Cause.Paused(PauseReason.Interrupted, Problem("the upload is no longer held by this process"))
+            )
+          )
         )
       case Some(job) =>
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match

@@ -38,8 +38,9 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val allow = LicencePolicy.of(com.histmersion.domain.Licence.AllowList("cc0,cc-by"))
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC-BY-4.0")), allow, PluginMedia.Provider("mine")), None)
     PluginMedia.refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine")) match
-      case Some(PluginMedia.Refusal.LicenceNotAllowed(_, provider)) => assertEquals(provider, PluginMedia.Provider("mine"))
-      case other                                                    => fail("licence not refused")
+      case Some(PluginMedia.Refusal.LicenceNotAllowed(_, provider)) =>
+        assertEquals(provider, PluginMedia.Provider("mine"))
+      case other => fail("licence not refused")
     assertEquals(
       PluginMedia.refusal(PluginMedia.record(item("CC0-1.0", image = None)), allow, PluginMedia.Provider("mine")),
       Some(PluginMedia.Refusal.NoImage)
@@ -70,7 +71,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-     Plugin.Http.Failure.Transport( Problem("offline"))
+      Plugin.Http.Failure.Transport(Problem("offline"))
     )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):

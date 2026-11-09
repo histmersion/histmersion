@@ -483,7 +483,8 @@ object ManagerPolicy:
           else if pending.value > 0 then
             Status(
               Kind.Other,
-              s"$pending pending" + (if inFlight.value > 0 then s", ${counted(inFlight.value, "run")} in flight" else "")
+              s"$pending pending" + (if inFlight.value > 0 then s", ${counted(inFlight.value, "run")} in flight"
+                                     else "")
             )
           else Status(Kind.Other, s"${counted(inFlight.value, "run")} in flight")
 

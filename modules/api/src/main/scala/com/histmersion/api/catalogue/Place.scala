@@ -1013,11 +1013,8 @@ object Place:
       )
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
-  final case class RemoveIn(reason: Option[Problem] = None)
-      derives KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class RemoveIn(reason: Option[Problem] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object RemoveIn:
-
 
     given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
 

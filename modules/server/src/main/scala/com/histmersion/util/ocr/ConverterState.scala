@@ -39,6 +39,5 @@ object ConverterState:
     type JobId = Job.Id
     val JobId: Job.Id.type = Job.Id
 
-
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
     if probe.value == "ok" then Ok else busyJob.fold(Down(Problem(probe.value)))(Busy(_))

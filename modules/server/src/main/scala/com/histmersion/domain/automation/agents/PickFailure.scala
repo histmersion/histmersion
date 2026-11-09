@@ -21,4 +21,3 @@ enum PickFailure derives CanEqual:
       freesAt: Option[Instant],
       reason: PauseReason = PauseReason.Allowance
   )
-

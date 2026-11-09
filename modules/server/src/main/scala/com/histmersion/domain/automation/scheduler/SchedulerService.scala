@@ -197,7 +197,8 @@ final class SchedulerService(
             .map((k, t) => (ManagerPolicy.ItemKind(k.value), t.transformInto[ManagerPolicy.Candidate.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
-      val memo = collection.mutable.Map.empty[Pipeline, Either[Block.Chain, List[PlanQuota.PoolId]]] // per manager and pass
+      val memo =
+        collection.mutable.Map.empty[Pipeline, Either[Block.Chain, List[PlanQuota.PoolId]]] // per manager and pass
       items.map { i =>
         val itemKind = ManagerContext.ItemKind(i.kind.value)
         val pipeline = agents.managers.pipelineOf(itemKind)

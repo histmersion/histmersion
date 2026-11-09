@@ -63,7 +63,6 @@ object Coverage:
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-
   final case class Reason(citekey: Citekey, reason: Problem) derives KindlingsCodecAsObject
   object Reason:
     given Schema[Reason] = KindlingsSchema

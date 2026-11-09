@@ -131,7 +131,9 @@ object Managers:
     object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[Sweep] =
-      values.find(x => x.wire == Wire((s).value.trim.toLowerCase) || x.itemKind == ManagerItem.Kind((s).value.trim.toLowerCase))
+      values.find(x =>
+        x.wire == Wire((s).value.trim.toLowerCase) || x.itemKind == ManagerItem.Kind((s).value.trim.toLowerCase)
+      )
     def ofItem(kind: ManagerItem.Kind): Option[Sweep] = values.find(_.itemKind == kind)
 
     def of(c: ManagerConfig): List[Sweep] =
@@ -162,7 +164,6 @@ object Managers:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
-
 
   final case class ManagerConfig(
       maxRuns: Option[ManagerConfig.MaxRuns] = None,

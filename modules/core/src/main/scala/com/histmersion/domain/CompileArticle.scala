@@ -334,8 +334,9 @@ object CompileArticle:
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
         section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
-          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(_.apiAsDomain)
-          case None    =>
+          case Some(s) =>
+            Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(_.apiAsDomain)
+          case None =>
             Right(Article.Body(if current.value.trim.isEmpty then text.value.trim
             else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
 
@@ -430,9 +431,7 @@ object CompileArticle:
     }
     val writerReasons = stated
       .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty)
-      .map(r =>
-        r.citekey -> Problem(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
-      )
+      .map(r => r.citekey -> Problem(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)))
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
@@ -455,8 +454,7 @@ object CompileArticle:
         .filter(_.problem.isUncitedParagraph)
         .take(3)
         .map(f => s"a paragraph with no [[citekey]]: \"${f.quote.value.take(80)}\"") ++
-        (if mode == DraftMode.Create then
-           mech.filter(_.problem.isMissingSection).map(_.problem.value)
+        (if mode == DraftMode.Create then mech.filter(_.problem.isMissingSection).map(_.problem.value)
          else Nil) ++
         mech.filter(_.kind.value == "language").map(_.problem.value) ++
         citesHere.filterNot(allowed).map(ck => s"[[$ck]] is cited but no claim of it is in the claim table") ++

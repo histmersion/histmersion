@@ -31,8 +31,7 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
       )
 
 object ChatAnswer:
-  /** Why the provider stopped the first choice: the `finish_reason` values its API documents, and any other as it
-    * came.
+  /** Why the provider stopped the first choice: the `finish_reason` values its API documents, and any other as it came.
     */
   type FinishText = FinishText.T
   object FinishText extends Newtype[String, Pure]
@@ -43,21 +42,21 @@ object ChatAnswer:
 
     /** The SPI's reading of it. */
     def stop: AiStop = this match
-      case Stop                     => AiStop.EndTurn
-      case ToolCalls                => AiStop.ToolUse
-      case Length                   => AiStop.MaxTokens
+      case Stop                                    => AiStop.EndTurn
+      case ToolCalls                               => AiStop.ToolUse
+      case Length                                  => AiStop.MaxTokens
       case ContentFilter | FunctionCall | Other(_) => AiStop.Other
 
   object FinishReason:
 
     /** The reason a provider's answer states (`function_calls` is read as `tool_calls`, as it always has been). */
     def parse(raw: FinishText): FinishReason = raw.value match
-      case "stop"                           => Stop
-      case "length"                         => Length
-      case "tool_calls" | "function_calls"  => ToolCalls
-      case "content_filter"                 => ContentFilter
-      case "function_call"                  => FunctionCall
-      case _                                => Other(raw)
+      case "stop"                          => Stop
+      case "length"                        => Length
+      case "tool_calls" | "function_calls" => ToolCalls
+      case "content_filter"                => ContentFilter
+      case "function_call"                 => FunctionCall
+      case _                               => Other(raw)
 
   /** The most of an unreadable error answer's body its description keeps. */
 

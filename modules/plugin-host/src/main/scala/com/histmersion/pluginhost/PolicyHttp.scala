@@ -66,7 +66,8 @@ final class PolicyHttp(
     def attempt(n: HttpPolicy.Attempt): Either[Plugin.Http.Failure, HttpAnswer.Body] =
       transport.get(url, sent) match
         case Left(unreachable) =>
-          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.value) else Left(unreachable)
+          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.value)
+          else Left(unreachable)
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
           if Challenge.isChallenge(code, answer.headers, Challenge.Body(answer.body.value)) then

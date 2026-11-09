@@ -6,15 +6,15 @@ import Halt.Stopped
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.testsupport.ComparedByValue.given
 
-/** The stored `jobs.error` sentence: every sentence a writer produced, now or in the history, reads as a cause and writes
-  * back as the same sentence.
+/** The stored `jobs.error` sentence: every sentence a writer produced, now or in the history, reads as a cause and
+  * writes back as the same sentence.
   */
 class HowJobsStopSuite extends munit.FunSuite:
 
   private def cause(p: Problem) = Stopped.from(p).cause
 
-  /** What the engine wrote as `<reason>: <detail>` (the first engine's budget sentences too), a queued run paused before
-    * it started, an upload no longer held, the drain's stop, a restart's `interrupted`.
+  /** What the engine wrote as `<reason>: <detail>` (the first engine's budget sentences too), a queued run paused
+    * before it started, an upload no longer held, the drain's stop, a restart's `interrupted`.
     */
   private val written: List[Problem] = List(
     Problem("requested: paused on request"),
@@ -84,7 +84,11 @@ class HowJobsStopSuite extends munit.FunSuite:
     assert(cause(Problem("interrupted")).resumable)
     assert(cause(Problem("stopped while the autopilot drains: it resumes once the drain is lifted")).resumable)
     (written ++ others)
-      .filterNot(p => p == Problem("interrupted") || p == Problem("stopped while the autopilot drains: it resumes once the drain is lifted"))
+      .filterNot(p =>
+        p == Problem("interrupted") || p == Problem(
+          "stopped while the autopilot drains: it resumes once the drain is lifted"
+        )
+      )
       .foreach(p => assert(!cause(p).resumable, p.toString))
 
   test("a sentence no writer produced is a failure, as written"):

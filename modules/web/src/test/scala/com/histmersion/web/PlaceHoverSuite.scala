@@ -11,7 +11,7 @@ import com.histmersion.api.{ServiceState, Wording}
 import scala.collection.mutable
 import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.api.plugins.{PluginSetting, PluginState, PluginsReport, PluginStatus}
+import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginState, PluginStatus}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.backup.Backup

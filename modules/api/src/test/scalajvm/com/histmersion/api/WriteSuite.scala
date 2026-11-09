@@ -162,7 +162,9 @@ class WriteSuite extends munit.FunSuite:
       FindingsPatch(add = List(Finding.Input(Finding.Claim("x"), confidence = Some(Confidence.Wire("certain")))))
     val r = Source.Write.applyPatch(existing, Source.Patch(findings = Some(bad)))
     assert(
-      r.left.exists(m => m.message.value.contains("confidence 'certain'") && m.message.value.contains("high|medium|low|contested")),
+      r.left.exists(m =>
+        m.message.value.contains("confidence 'certain'") && m.message.value.contains("high|medium|low|contested")
+      ),
       r.toString
     )
     val ok = Source.Write.applyPatch(

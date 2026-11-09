@@ -85,7 +85,6 @@ object SourceMatcher:
     type Score = Score.T
     object Score extends Newtype[Double, Pure]
 
-
     /** The name of a strong key (`DOI`, `ISBN`). */
     type Strong = Strong.T
     object Strong extends Newtype[String, Pure]
@@ -95,7 +94,6 @@ object SourceMatcher:
     object YearGap extends Newtype[Boolean, Pure]
     type TitleDiffers = TitleDiffers.T
     object TitleDiffers extends Newtype[Boolean, Pure]
-
 
     /** What a comparison adds to the score. */
     type Weight = Weight.T

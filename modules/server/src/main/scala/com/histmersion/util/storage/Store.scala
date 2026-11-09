@@ -192,11 +192,9 @@ object Store:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location
 
-
     object NotOnDisk:
       type Where = Blob.Location
       val Where: Blob.Location.type = Blob.Location
-
 
   /** A name inside a store: `/`-separated segments, relative, never `.` or `..`, no empty segment, no backslash or NUL.
     * The empty key is the store itself.

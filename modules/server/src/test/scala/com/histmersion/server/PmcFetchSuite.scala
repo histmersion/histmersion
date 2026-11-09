@@ -42,7 +42,10 @@ class PmcFetchSuite extends munit.FunSuite:
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Http.Failure, Array[Byte]] =
       asked = asked :+ (url -> headers)
-      routes.applyOrElse(url.value, (u: String) => Left(s"$u: offline")).left.map(why => Http.Failure.Transport(Problem(why)))
+      routes
+        .applyOrElse(url.value, (u: String) => Left(s"$u: offline"))
+        .left
+        .map(why => Http.Failure.Transport(Problem(why)))
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -54,7 +57,9 @@ class PmcFetchSuite extends munit.FunSuite:
     ): Either[Http.Failure, Http.Text] =
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
-      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage))))
+      text(url, headers).flatMap(s =>
+        io.circe.parser.parse(s.value).left.map(e => Http.Failure.Transport(Problem(e.getMessage)))
+      )
 
   private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))
 

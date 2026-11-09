@@ -55,8 +55,7 @@ final class GazetteerImports(
     * over every file that reported a dangling parent, then `finding_places`.
     */
   def seed(seed: Store, note: JobInfo.Progress => Unit): Either[Problem, GazetteerImports.Summary] =
-    if !seed.isDirectory(Store.Key.Root) then
-      Left(Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
+    if !seed.isDirectory(Store.Key.Root) then Left(Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
     else
       def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed

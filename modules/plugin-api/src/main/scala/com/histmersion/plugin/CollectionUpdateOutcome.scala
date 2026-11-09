@@ -25,4 +25,3 @@ enum CollectionUpdateOutcome derives CanEqual:
 
   /** The source's own metadata is refused (a blank or placeholder title or author), for `reason`. */
   case Refused(reason: Problem)
-

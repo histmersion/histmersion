@@ -9,8 +9,8 @@ import com.histmersion.plugin.{AiHttp, Plugin, WorkKey}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
-/** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
-  * a refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.
+/** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with a
+  * refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.
   */
 final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) extends AiHttp:
   // the answers not yet given and the requests seen; guarded by `this` (a provider may call from several threads)

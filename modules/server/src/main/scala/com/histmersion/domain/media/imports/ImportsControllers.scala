@@ -62,11 +62,19 @@ final class ImportsControllers(
     for
       place <- req.place.map(_.value.trim).filter(_.nonEmpty) match
         case Some(p) =>
-          Place.Id.either(p).left.map(_ => ImportsControllers.error(Problem(s"No place '$p'"), Write.CodeNotFound)).map(Some(_))
+          Place.Id
+            .either(p)
+            .left
+            .map(_ => ImportsControllers.error(Problem(s"No place '$p'"), Write.CodeNotFound))
+            .map(Some(_))
         case None => Right(None)
       event <- req.event.map(_.value.trim).filter(_.nonEmpty) match
         case Some(e) if place.isEmpty =>
-          Event.Id.either(e).left.map(_ => ImportsControllers.error(Problem(s"No event '$e'"), Write.CodeNotFound)).map(Some(_))
+          Event.Id
+            .either(e)
+            .left
+            .map(_ => ImportsControllers.error(Problem(s"No event '$e'"), Write.CodeNotFound))
+            .map(Some(_))
         case _ => Right(None)
     yield (place, event)
 

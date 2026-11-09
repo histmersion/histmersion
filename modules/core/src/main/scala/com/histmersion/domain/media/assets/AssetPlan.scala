@@ -66,7 +66,8 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     // the links of a folded figure that this collection's figure already has are one
     in.foreign.assetLinks.foreach { k =>
       folds.foldedTo(k.assetUid).foreach { here =>
-        val target = Bundle.AssetLink.Target.of(k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u))), k.targetId)
+        val target =
+          Bundle.AssetLink.Target.of(k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u))), k.targetId)
         in.local.assetLinks
           .find(x =>
             x.assetUid == here && x.relation == k.relation &&

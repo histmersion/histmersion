@@ -103,7 +103,7 @@ object ManagersView:
         case Some(Manager.Status.Kind.AtCapacity) => Badge("at capacity")
         case Some(Manager.Status.Kind.Idle)       => Badge("idle")
         case Some(Manager.Status.Kind.Queued)     => Badge("queued")
-        case _                                   => Badge("active")
+        case _                                    => Badge("active")
 
   /** What a manager does, from its id (`review`, `enrich`, `seed:<goal>`, `watch:<goal>`); a tooltip on the runs
     * window's manager menu.
@@ -889,8 +889,8 @@ object ManagersView:
   def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
     SchedulerHead(
       s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
-                                                                                            then " (set by a person)"
-                                                                                            else "") +
+                                                    then " (set by a person)"
+                                                    else "") +
         s" · ${s.occupied} of ${s.maxRuns} runs at once" +
         (if s.pools.isEmpty then ""
          else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +

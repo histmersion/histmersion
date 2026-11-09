@@ -26,8 +26,7 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
 
   def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard(WriteGate.OperationName("seed")):
     val asked = Option(req.dir).map(_.value.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir.value)
-    if asked.isEmpty then
-      Left(Api.Error(Problem("no directory given and histmersion.corpus.dir is not configured")))
+    if asked.isEmpty then Left(Api.Error(Problem("no directory given and histmersion.corpus.dir is not configured")))
     else
       if !SafePath.configured(corpusRoot) then
         scribe.warn(

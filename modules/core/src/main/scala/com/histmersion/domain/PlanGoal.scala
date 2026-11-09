@@ -101,7 +101,6 @@ object PlanGoal:
 
   final case class ProposedWork(doi: Doi, why: Problem) derives KindlingsCodecAsObject
 
-
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
       rationale: Proposed.Rationale,

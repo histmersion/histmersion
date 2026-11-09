@@ -340,7 +340,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
           )
         else if url == s"${c.datacite.url}/dois/$LandingDoi" then Some(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
         else None
-      body.map(b => HttpAnswer.Body(b.getBytes("UTF-8"))).toRight(Http.Failure.Status(HttpAnswer.Code(404), Problem(s"$url: HTTP 404")))
+      body
+        .map(b => HttpAnswer.Body(b.getBytes("UTF-8")))
+        .toRight(Http.Failure.Status(HttpAnswer.Code(404), Problem(s"$url: HTTP 404")))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url)
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))

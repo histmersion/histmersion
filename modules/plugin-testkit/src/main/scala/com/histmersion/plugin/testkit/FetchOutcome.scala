@@ -19,4 +19,3 @@ enum FetchOutcome derives CanEqual:
 
   /** A fetcher knows of a copy it may not take (a lending-only item, a bot challenge, no open licence). */
   case Refused(why: Problem)
-

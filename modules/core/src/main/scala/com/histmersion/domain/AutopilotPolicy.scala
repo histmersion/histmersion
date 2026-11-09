@@ -89,7 +89,6 @@ object AutopilotPolicy:
     case Reject(reason: Problem)
     case Leave(why: Problem)
 
-
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
   final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
 
@@ -218,8 +217,7 @@ object AutopilotPolicy:
     * within `cap` plans a day.
     */
   def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if p.subGoals.value + p.queries.value + p.works.value == 0 then
-      Verdict.Reject(Problem("the plan proposes nothing"))
+    if p.subGoals.value + p.queries.value + p.works.value == 0 then Verdict.Reject(Problem("the plan proposes nothing"))
     else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
       Verdict.Reject(
         Problem(

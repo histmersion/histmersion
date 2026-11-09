@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 
 import com.histmersion.domain.Problem
+
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *
   * Source: https://www.naturalearthdata.com (public domain), via the nvkelso/natural-earth-vector GeoJSON mirror. 1:10
@@ -21,22 +22,21 @@ object NaturalEarthLand:
 
   /** The polygon geometries of a GeoJSON FeatureCollection, each as its own GeoJSON text. Pure. */
   def geometries(rawJson: String): Either[Problem, List[PlaceDetailRow.Geometry]] =
-    io.circe.parser.parse(rawJson).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap {
-      doc =>
-        doc.hcursor
-          .downField("features")
-          .focus
-          .flatMap(_.asArray)
-          .toRight(Problem("not a GeoJSON FeatureCollection"))
-          .map(_.toList.flatMap { f =>
-            f.hcursor
-              .downField("geometry")
-              .focus
-              .filter { g =>
-                g.hcursor.downField("type").as[String].toOption.exists(t => t == "Polygon" || t == "MultiPolygon")
-              }
-              .map(g => PlaceDetailRow.Geometry(g.noSpaces))
-          })
+    io.circe.parser.parse(rawJson).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
+      doc.hcursor
+        .downField("features")
+        .focus
+        .flatMap(_.asArray)
+        .toRight(Problem("not a GeoJSON FeatureCollection"))
+        .map(_.toList.flatMap { f =>
+          f.hcursor
+            .downField("geometry")
+            .focus
+            .filter { g =>
+              g.hcursor.downField("type").as[String].toOption.exists(t => t == "Polygon" || t == "MultiPolygon")
+            }
+            .map(g => PlaceDetailRow.Geometry(g.noSpaces))
+        })
     }
 
   /** Download both layers (`download`: a url's text), replace the land, re-clip every polity. The result's `places` is
@@ -49,9 +49,7 @@ object NaturalEarthLand:
   ): Either[Problem, Place.ImportResult] =
     for
       raws <- urls.foldLeft[Either[Problem, List[String]]](Right(Nil))((acc, u) =>
-        acc.flatMap(l =>
-          download(HttpDownload.Url(u)).left.map(p => Problem(p.value)).map(l :+ _.value)
-        )
+        acc.flatMap(l => download(HttpDownload.Url(u)).left.map(p => Problem(p.value)).map(l :+ _.value))
       )
       geoms <- raws.foldLeft[Either[Problem, List[PlaceDetailRow.Geometry]]](Right(Nil))((acc, r) =>
         acc.flatMap(l => geometries(r).map(l ++ _))

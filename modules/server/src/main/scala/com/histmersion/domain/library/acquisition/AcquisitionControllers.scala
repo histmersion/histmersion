@@ -254,7 +254,8 @@ final class AcquisitionControllers(
 
   def meta(id: AcquireApi.Identifier): Either[Api.Error, WorkRef] =
     Ident.parse(Ident.Written(id.value)).left.map(e => err(e.transformInto[Problem])).flatMap {
-      case Ident.Doi(doi) => discovery.meta(doi).left.map(e => err(e.transformInto[Problem])).map(mark(_, sources.doiIndex))
+      case Ident.Doi(doi) =>
+        discovery.meta(doi).left.map(e => err(e.transformInto[Problem])).map(mark(_, sources.doiIndex))
       case Ident.Arxiv(a) =>
         discovery.meta(arxivDoi(a)).left.map(e => err(e.transformInto[Problem])).map(mark(_, sources.doiIndex))
       case Ident.Citekey(k) =>
@@ -601,8 +602,10 @@ final class AcquisitionControllers(
       if work.flatMap(_.title).isEmpty && citekey.isEmpty then
         Left(
           err(
-            Problem(s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
-              "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand")
+            Problem(
+              s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
+                "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+            )
           )
         )
       else
@@ -719,7 +722,9 @@ final class AcquisitionControllers(
     if path.needsFile.value && fetched.isLeft then
       val answers =
         Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
-      Left(err(Problem(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers")))
+      Left(
+        err(Problem(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers"))
+      )
     else
       val spooled: Option[FetchedCopy] = fetched.toOption.flatMap(f => spoolCopy(citekey, f, steps))
 
