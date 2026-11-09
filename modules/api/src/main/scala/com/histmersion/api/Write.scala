@@ -23,8 +23,11 @@ object Write:
   val CodePrecondition = "precondition_failed"
   val CodeInvalid = "invalid"
 
-  /** A request the server refuses for a value it does not accept, with the reason. */
-  def invalid(message: Problem): Api.Error = Api.Error(message, Some(Api.Error.Code(CodeInvalid)))
+  /** A request the server refuses for a value it does not accept, with the reason (and the code when the value is one
+    * a client places: the citekey).
+    */
+  def invalid(message: Problem, code: Api.Error.Code = Api.Error.Code(CodeInvalid)): Api.Error =
+    Api.Error(message, Some(code))
 
   def notFound(citekey: Citekey): Api.Error =
     Api.Error(Problem(s"No source '$citekey'"), Some(Api.Error.Code(CodeNotFound)))

@@ -38,11 +38,18 @@ final class KeePassXcVault(
             .run(argv(attr, entry, Some(yk)), Map.empty, stdin, yubikeyTimeout)
             .map(r => if r.exit.value == 0 then Right(r) else Left(r))
             .left
-            .map(e => Problem(e.toString))
+            .map(timedOut(yubikeyTimeout))
         )
           .flatMap(r => Vaults.answer(name, ref, Right(r), _ => None))
       else Vaults.answer(name, ref, Subprocess.run(argv(attr, entry, None), Map.empty, stdin, timeout), classify(entry))
     }
+
+  /** The host's process runner says only in words that the tool did not answer in time (`Processes.run` fails with a
+    * `Problem`): the one place that reads those words into the case.
+    */
+  private def timedOut(waited: FiniteDuration)(failure: Problem): YubiKey.NoAnswer =
+    if failure.value.contains("did not answer") then YubiKey.NoAnswer.TimedOut(waited)
+    else YubiKey.NoAnswer.Unusable(failure)
 
   /** Every reference through ONE `keepassxc-cli open` session ([[KeePassXcSession]]): one unlock, one YubiKey touch. A
     * single reference (or one whose entry holds a line break) is read as [[resolve]] reads it; a failed unlock is every
@@ -100,14 +107,14 @@ final class KeePassXcVault(
   private def open(
       yk: Option[YubiKey.Slot],
       wait: FiniteDuration
-  ): Either[Problem, Either[Subprocess.Result, Opened]] =
+  ): Either[YubiKey.NoAnswer, Either[Subprocess.Result, Opened]] =
     Subprocess.Session
       .start(
         (List(exe.value, "open", "-q") ++ unlocking(yk) ++ List(db.value)).map(a => Processes.StartArgv(a)),
         Map.empty
       )
       .left
-      .map(e => Problem(e.toString))
+      .map(e => YubiKey.NoAnswer.Unusable(Problem(e.toString)))
       .flatMap { s =>
         password.foreach(pw => s.send(Processes.Session.SendLine(pw.value)))
         val up = s
@@ -126,7 +133,7 @@ final class KeePassXcVault(
             )
           case _ =>
             val _ = s.close(1.second)
-            Left(Problem(s"keepassxc-cli did not answer within ${wait.toSeconds} s"))
+            Left(YubiKey.NoAnswer.TimedOut(wait))
       }
 
   private def session(
@@ -142,7 +149,7 @@ final class KeePassXcVault(
         )(yk => open(Some(yk), yubikeyTimeout))
       else
         open(None, timeout) match
-          case Left(why)      => Left(Problem(s"$name: could not $what (${why.value})"))
+          case Left(why)      => Left(Problem(s"$name: could not $what (${why.problem})"))
           case Right(Left(r)) =>
             Left(
               Problem(
@@ -247,7 +254,7 @@ final class KeePassXcVault(
     * what the log line asks the touch for.
     */
   private def withYubiKey[A](what: String, purpose: String, entry: KeePassXcSession.Entry)(
-      attempt: YubiKey.Slot => Either[Problem, Either[Subprocess.Result, A]]
+      attempt: YubiKey.Slot => Either[YubiKey.NoAnswer, Either[Subprocess.Result, A]]
   ): Either[Problem, A] =
     val found = connected()
     val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
@@ -278,7 +285,9 @@ final class KeePassXcVault(
           )
           attempt(yk) match
             case Left(why) =>
-              val what = if why.value.contains("did not answer") then s"not touched in time ($why)" else why.value
+              val what = why match
+                case YubiKey.NoAnswer.TimedOut(_)  => s"not touched in time (${why.problem})"
+                case YubiKey.NoAnswer.Unusable(of) => of.value
               report(tried :+ s"${yk.shown}: $what", "; not trying further keys")
             case Right(Right(a)) =>
               lastOpened.set(Some(yk))
@@ -290,9 +299,9 @@ final class KeePassXcVault(
                 YubiKey.Setting.Entries(entry.value)
               ) match
                 case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")
-                case YubiKey.Failure.Stop(why) =>
-                  if why.value.startsWith("no entry") then Left(Problem(s"$name: $why"))
-                  else report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
+                case YubiKey.Failure.NoEntry(missing) => Left(Problem(s"$name: no entry '$missing'"))
+                case YubiKey.Failure.Stop(why)        =>
+                  report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
       go(planned, Nil)
 
   private def classify(entry: KeePassXcSession.Entry)(err: String): Option[String] =

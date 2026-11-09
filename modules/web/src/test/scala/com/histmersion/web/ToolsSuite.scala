@@ -384,7 +384,12 @@ class ToolsSuite extends munit.FunSuite:
       UploadView.Field.File
     )
     assertEquals(
-      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Problem("invalid citekey 'X'")))),
+      UploadView.fieldOf(
+        ApiFailure(
+          ApiFailure.Status(400),
+          Api.Error(Problem("invalid citekey 'X'"), Some(Api.Error.InvalidCitekey))
+        )
+      ),
       UploadView.Field.Citekey
     )
     assertEquals(

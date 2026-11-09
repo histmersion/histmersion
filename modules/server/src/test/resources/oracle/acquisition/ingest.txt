@@ -864,7 +864,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
 }
 == upload (bad citekey)
 400 {
-  "code" : "invalid",
+  "code" : "invalid_citekey",
   "message" : "invalid citekey 'Bad Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
 }
 == acquire add (an item an upload fulfils)

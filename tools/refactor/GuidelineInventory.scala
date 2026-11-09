@@ -87,6 +87,7 @@ object GuidelineInventory {
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
     "G5problem" -> "a newtype over String (project Newtype or Iron RefinedType) named, or ending in, Problem, Error, Reason, Refusal, Failure, Why or Message, other than the layer's one top-level `Problem` (a failure message is the layer's one Problem; an enum where a caller branches on it). The layer Problem by module: values and config com.histmersion.Problem; api, files, db, server, cli, web com.histmersion.api.Problem; core com.histmersion.domain.Problem; plugin-api, upstreams, plugin-vaults, plugin-host, plugin-testkit and each plugin com.histmersion.plugin.Problem; plugin-resolver com.histmersion.pluginresolver.Problem. A module may use the Problem of a layer below it (db and server use the wire contract's because they build Api.Error; plugin-host the SPI's because it implements it); a second top-level Problem in one module and scope is a finding, and so is every nested one",
+    "G5textBranch" -> "main code only: `contains`, `startsWith`, `endsWith`, `matches`, `==` or `!=` on the `.value` of a layer `Problem` (outside its own companion): a caller that branches on a failure needs a closed enum on the owning type, rendered to text only at the boundary",
     "G55positional" -> "a newtype object or type alias named `<X>Result`, `<X>Result<n>`, `<X>Arg<n>` or `<X>Part<n>`: a mechanical name, not a concept",
     "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText)")
   val ironValue = "io/github/iltotore/iron/"
@@ -342,6 +343,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case _ => None
     }
 
+    val textBranchOps = Set("contains", "startsWith", "endsWith", "matches")
     def allowedInCompanion(t: Tree, nt: Option[Symbol]): Boolean = {
       val enclosing = enclosingNewtypes(t)
       enclosing.nonEmpty && nt.forall(enclosing.contains)
@@ -390,6 +392,13 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           case _ => None
         }
         (compared.map("compare:" + _) orElse lambdaOp.map("lambda:" + _) orElse direct).foreach(d => if (!allowedInCompanion(s, nt)) report("G49", s, s"$d;$ntName"))
+        // G5textBranch: a text operation on the .value of a layer Problem in main code (an enum where a caller branches)
+        val textBranch = s.parent match {
+          case Some(Term.Select(_, m)) if textBranchOps(m.value) => Some(m.value)
+          case Some(i: Term.ApplyInfix) if (i.lhs eq s) && (textBranchOps(i.op.value) || Set("==", "!=")(i.op.value)) => Some(i.op.value)
+          case _ => None
+        }
+        if (scope == "main" && !boundary && ntName == "Problem" && !allowedInCompanion(s, nt)) textBranch.foreach(op => report("G5textBranch", s, s"$op:Problem"))
       // G44/G45: construction from a raw value
       case a: Term.Apply if constructionOf(a.fun).nonEmpty && !inImport(a) =>
         val (obj, how) = constructionOf(a.fun).get
