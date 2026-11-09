@@ -1,0 +1,68 @@
+package com.histmersion
+package util.problem
+
+import scala.compiletime.constValueTuple
+import scala.deriving.Mirror
+
+class CasesSuite extends munit.FunSuite:
+  import Problem.*
+
+  private inline def cases[T](using m: Mirror.SumOf[T]): Set[String] =
+    constValueTuple[m.MirroredElemLabels].toList.map(label => s"$label").toSet
+
+  private def caseOf(problem: Problem): String = problem.productPrefix
+
+  test("the examples hold exactly one value of every case"):
+    val all = Map(
+      Group.Invalid -> cases[Invalid],
+      Group.NotFound -> cases[NotFound],
+      Group.Conflict -> cases[Conflict],
+      Group.Refused -> cases[Refused],
+      Group.Upstream -> cases[Upstream],
+      Group.Io -> cases[Io],
+      Group.Config -> cases[Config],
+      Group.Plugin -> cases[Plugin],
+      Group.Run -> cases[Run],
+      Group.Content -> cases[Content],
+      Group.Internal -> cases[Internal],
+      Group.Unclassified -> Set("Unclassified"),
+      Group.Stored -> cases[Stored]
+    )
+    val shown = examples.map(p => p.group -> caseOf(p))
+    assertEquals(shown.distinct.size, shown.size, "one value per case")
+    assertEquals(shown.toSet, all.toList.flatMap((g, cs) => cs.map(g -> _)).toSet)
+    assertEquals(cases[Problem], Group.values.map(_.productPrefix).toSet)
+
+  test("there are eleven groups and two cases outside them"):
+    assertEquals(Group.values.length, 13)
+    assertEquals(examples.size, 43)
+
+  test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
+    val long = "x" * 400
+    Problem.from(IllegalStateException(s"first line\nsecond line"), Where("backup")) match
+      case Internal.Unexpected(where, exception, reported) =>
+        assertEquals(where, Where("backup"))
+        assertEquals(exception, Internal.ExceptionName("java.lang.IllegalStateException"))
+        assertEquals(reported, External.Reported("java.lang.IllegalStateException: first line"))
+      case other => fail(s"not unexpected: $other")
+    Problem.from(RuntimeException(long), Where("x")) match
+      case Internal.Unexpected(_, _, reported) => assertEquals(s"$reported".length, External.Reported.Limit)
+      case other                               => fail(s"not unexpected: $other")
+    Problem.from(RuntimeException(), Where("x")) match
+      case Internal.Unexpected(_, _, reported) => assertEquals(reported, External.Reported("java.lang.RuntimeException"))
+      case other                               => fail(s"not unexpected: $other")
+
+  test("outside text is cut where it is captured"):
+    assertEquals(s"${External.Stderr.tail("a" * 600 + "end\n")}".length, External.Stderr.Limit)
+    assert(s"${External.Stderr.tail("a" * 600 + "end\n")}".endsWith("end"))
+    assertEquals(s"${External.ReplyExcerpt.head("b" * 300)}".length, External.ReplyExcerpt.Limit)
+    assertEquals(s"${External.ModelSaid.of("c" * 300)}".length, External.ModelSaid.Limit)
+
+  test("a problem found in a field of the request gets the field in front of its path"):
+    val missing: Problem = Invalid.Missing(Field("dst"))
+    assertEquals(missing.within(Field("edges")).within(Field("patch")), Invalid.Missing(Field("dst"), Vector(Field("patch"), Field("edges"))))
+    val other: Problem = NotFound.Entity(TypeName("x.Y"), Raw("k"))
+    assertEquals(other.within(Field("edges")), other)
+
+  test("only a missing entity is not found"):
+    assertEquals(examples.filter(_.isNotFound).map(_.group), Vector(Group.NotFound))
