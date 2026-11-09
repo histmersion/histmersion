@@ -30,6 +30,7 @@ import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.research.Article
+import com.histmersion.api.library.Citekey as ApiCitekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.automation.Run
@@ -672,7 +673,109 @@ object ReviewArticle:
     type Quote = Evidence.Quote
     val Quote: Evidence.Quote.type = Evidence.Quote
     type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
+
+    /** What is wrong, as the sentence the ledgers store it. The sentences code writes for the mechanical findings the
+      * pipeline acts on are [[Problem.Cause]]s; [[Problem.cause]] reads any stored sentence back (what no writer of
+      * code produces is [[Problem.Cause.Other]]) and [[Problem.of]] writes a cause as the same sentence, so a ledger
+      * written by an earlier version reads as it was and one written now reads in an earlier version.
+      */
+    object Problem extends Newtype[String, Pure]:
+      type Section = Section.T
+      object Section extends Newtype[String, Pure]:
+        def read(text: String): Section = Section(text)
+      type Count = Count.T
+      object Count extends Newtype[Int, Pure]:
+        def read(n: Int): Count = Count(n)
+        extension (c: Count) def toInt: Int = c.value
+      type Rest = Rest.T
+      object Rest extends Newtype[String, Pure]:
+        def read(text: String): Rest = Rest(text)
+
+      /** A mechanical finding's problem by what it says. */
+      enum Cause derives CanEqual:
+        /** A paragraph with no citation. */
+        case UncitedParagraph
+
+        /** A Sources cited section written by hand (the page generates it). */
+        case HandWrittenSourcesCited
+
+        /** A compulsory section is missing; any of `alternatives` would do. */
+        case MissingSection(alternatives: List[Section])
+
+        /** `count` sources of the article's filter are neither cited nor given a reason; `listed` are the first of
+          * them.
+          */
+        case UnplacedSources(count: Count, listed: List[ApiCitekey])
+
+        /** The cold reader's count of undefined terms; `rest` is what follows "N terms " in the sentence. */
+        case TermCount(count: Count, rest: Rest)
+
+        /** Any other sentence, as written. */
+        case Other(text: Problem)
+
+      private val MissingRe = """^no ('[^']*'(?: or '[^']*')*) section \(writing guide rule 4\)$""".r
+      private val UnplacedRe =
+        """^\d+ sources? the filter returns (?:is|are) neither cited nor given a reason: (.+?)(?: \(\+(\d+) more\))?$""".r
+      private val KeyRe = """\[\[([^\[\]]+)\]\]""".r
+      private val TermsRe = """^(\d+) terms ((?:are )?undefined\b.*)$""".r
+
+      /** The listed citekeys of a sentence, when it is only a comma-separated list of them. */
+      private def keys(listed: String): List[String] =
+        val parts = listed.split(", ").toList
+        if parts.nonEmpty && parts.forall(KeyRe.matches) then parts.map(p => KeyRe.findFirstMatchIn(p).get.group(1))
+        else Nil
+
+      /** The sentence a cause is stored as. */
+      def of(c: Cause): Problem = c match
+        case Cause.UncitedParagraph          => Problem("a paragraph with no [[citekey]]")
+        case Cause.HandWrittenSourcesCited   => Problem("a hand-written Sources cited section (the page generates it)")
+        case Cause.MissingSection(alts)      =>
+          Problem(s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)")
+        case Cause.UnplacedSources(n, listed) =>
+          val more = n.toInt - listed.size
+          Problem(
+            s"${Plural.count(Plural.CountN(n.toInt.toLong), Plural.CountSingular("source"))} the filter returns ${
+                if n.toInt == 1 then "is" else "are"
+              } neither cited nor given a reason: ${listed.map(ck => s"[[$ck]]").mkString(", ")}${
+                if more > 0 then s" (+$more more)" else ""
+              }"
+          )
+        case Cause.TermCount(n, rest) => Problem(s"$n terms $rest")
+        case Cause.Other(text)        => text
+
+      extension (p: Problem)
+        /** What the sentence says. A sentence is only read as a cause when writing that cause gives the sentence back
+          * exactly, so [[of]] of [[cause]] is always the stored sentence.
+          */
+        def cause: Cause =
+          val text: String = p.value
+          val read: Cause = text match
+            case "a paragraph with no [[citekey]]" => Cause.UncitedParagraph
+            case "a hand-written Sources cited section (the page generates it)" => Cause.HandWrittenSourcesCited
+            case MissingRe(alts) =>
+              Cause.MissingSection(alts.split(" or ").toList.map(a => Section.read(a.stripPrefix("'").stripSuffix("'"))))
+            case UnplacedRe(listed, more) =>
+              val cks = keys(listed)
+              Cause.UnplacedSources(
+                Count.read(cks.size + Option(more).fold(0)(_.toInt)),
+                cks.map(ck => ApiCitekey(ck))
+              )
+            case TermsRe(n, rest) => Cause.TermCount(Count.read(n.toInt), Rest.read(rest))
+            case _                => Cause.Other(p)
+          if of(read).value == text then read else Cause.Other(p)
+
+        def isUncitedParagraph: Boolean = p.cause == Cause.UncitedParagraph
+        def isHandWrittenSourcesCited: Boolean = p.cause == Cause.HandWrittenSourcesCited
+        def isMissingSection: Boolean = p.cause match
+          case Cause.MissingSection(_) => true
+          case _                       => false
+        def isUnplacedSources: Boolean = p.cause match
+          case Cause.UnplacedSources(_, _) => true
+          case _                           => false
+
+        /** The cold reader's count sentence, as an earlier version wrote it too, whatever blank surrounds it. */
+        def isTermCount: Boolean = TermsRe.matches(p.value.trim)
+
     type Fix = Fix.T
     object Fix extends Newtype[String, Pure]
     type Escalated = Escalated.T
@@ -1044,7 +1147,7 @@ object ReviewArticle:
           Finding.Kind("citation"),
           Finding.Where(p.value.split("\\s+").take(8).mkString(" ")),
           Finding.Quote(p.value.take(200)),
-          Finding.Problem("a paragraph with no [[citekey]]"),
+          Finding.Problem.of(Finding.Problem.Cause.UncitedParagraph),
           Finding.Fix("cite the source the paragraph rests on, or move it to the unresolved section")
         )
       )
@@ -1067,7 +1170,7 @@ object ReviewArticle:
           Finding.Kind("section"),
           Finding.Where(h),
           Finding.Quote(s"## $h"),
-          Finding.Problem("a hand-written Sources cited section (the page generates it)"),
+          Finding.Problem.of(Finding.Problem.Cause.HandWrittenSourcesCited),
           Finding.Fix("delete the section")
         )
       )
@@ -1112,7 +1215,7 @@ object ReviewArticle:
           Finding.Kind("section"),
           Finding.Where("headings"),
           Finding.Quote(""),
-          Finding.Problem(s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)"),
+          Finding.Problem.of(Finding.Problem.Cause.MissingSection(alts.map(Finding.Problem.Section.read))),
           Finding.Fix("add the section")
         )
       )
@@ -1153,7 +1256,7 @@ object ReviewArticle:
     * returns, is minor (it is not shown).
     */
   def coverageDrift(c: Coverage, from: Merged.Round): List[Finding] =
-    def keys(cks: List[com.histmersion.api.library.Citekey]) =
+    def keys(cks: List[ApiCitekey]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
       if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
     c.drift.zipWithIndex.map { (d, i) =>
@@ -1161,21 +1264,25 @@ object ReviewArticle:
         case DriftKind.Unplaced =>
           (
             Severity.Major,
-            s"${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the filter returns ${
-                if d.citekeys.size == 1 then "is" else "are"
-              } neither cited nor given a reason: ${keys(d.citekeys)}",
+            Finding.Problem.of(
+              Finding.Problem.Cause.UnplacedSources(Finding.Problem.Count.read(d.citekeys.size), d.citekeys.take(40))
+            ),
             "cite each one where its record bears on the question, or give its reason in `reasons` (read the record first)"
           )
         case DriftKind.ReasonForCited =>
           (
             Severity.Minor,
-            s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the article cites: ${keys(d.citekeys)}",
+            Finding.Problem(
+              s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the article cites: ${keys(d.citekeys)}"
+            ),
             "remove the reason (an empty one in `reasons`)"
           )
         case DriftKind.ReasonOutside =>
           (
             Severity.Minor,
-            s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the filter no longer returns: ${keys(d.citekeys)}",
+            Finding.Problem(
+              s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the filter no longer returns: ${keys(d.citekeys)}"
+            ),
             "remove the reason (an empty one in `reasons`)"
           )
       Finding(
@@ -1185,7 +1292,7 @@ object ReviewArticle:
         CoverageKind,
         Finding.Where(Article.Coverage.NotUsedHeading),
         Finding.Quote(""),
-        Finding.Problem(problem),
+        problem,
         Finding.Fix(fix)
       )
     }
@@ -1429,13 +1536,10 @@ object ReviewArticle:
     val Fix: Finding.Fix = Finding.Fix("define each on first use, and add a Glossary")
 
     /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
-    private val Problem = """^\d+ terms (are )?undefined\b.*""".r
     def is(f: Finding): Boolean =
       f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.value.trim.isEmpty) &&
         normalise(Option(f.where).map(_.value).getOrElse("")) == normalise(Where.value) &&
-        (f.kind == Kind || (f.kind.value == "term" && Problem.matches(
-          Option(f.problem).map(_.value).getOrElse("").trim
-        )))
+        (f.kind == Kind || (f.kind.value == "term" && Option(f.problem).exists(_.isTermCount)))
 
   private val NoSlot = "^(none|no\\b|nothing|n/?a\\b|all\\b|-+$|—).*".r
 
@@ -2185,11 +2289,11 @@ object ReviewArticle:
         val formatBefore = corpus.formatErrors(before).toSet
         links(body.value) ++
           again
-            .filter(f => f.kind.value == "section" && f.problem.value.contains("Sources cited"))
+            .filter(_.problem.isHandWrittenSourcesCited)
             .map(_.problem.value) ++
           again.filter(_.kind == CoverageKind).map(_.problem.value) ++
           again
-            .filter(f => f.kind.value == "citation" && f.problem.value.contains("no [[citekey]]"))
+            .filter(_.problem.isUncitedParagraph)
             .take(3)
             .map(f => s"still ${f.problem}: \"${f.quote.value.take(80)}\"") ++
           again.filter(_.kind.value == "language").map(_.problem.value) ++
@@ -2543,7 +2647,7 @@ object ReviewArticle:
         val unplacedIds = m.findings
           .filter(f =>
             f.reviewer == Reviewer.Mechanical && f.kind == CoverageKind &&
-              f.major && f.problem.value.contains("neither cited nor given a reason")
+              f.major && f.problem.isUnplacedSources
           )
           .map(_.id)
         val left = Article.Coverage.unplacedAfter(c, citedAfter, merged)

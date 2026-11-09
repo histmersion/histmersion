@@ -14,6 +14,7 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.research.{CitedSource, Coverage}
 import com.histmersion.api.library.Source
+import com.histmersion.api.library.Citekey as ApiCitekey
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
@@ -846,7 +847,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     ),
     Set(com.histmersion.api.library.Citekey("knapp2016_tin")),
-    List(com.histmersion.api.library.Citekey("knapp2016_tin")),
+    List(ApiCitekey("knapp2016_tin")),
     Map(
       com.histmersion.api.library.Citekey("egypt2001_old") -> api.Problem("about Egypt"),
       com.histmersion.api.library.Citekey("knapp2016_tin") -> api.Problem("stale")
@@ -1818,3 +1819,81 @@ class ReviewArticleSuite extends munit.FunSuite:
     val old =
       """{"reviewer":"rules","verdict":"PASS","findings":[],"explainBack":null,"emptySlots":[],"proposals":[],"checks":[]}"""
     assertEquals(io.circe.parser.decode[Report](old).map(_.spotChecks), Right(Nil))
+
+  // ── a finding's problem is stored as a sentence (review_ledgers.ledger, agent_steps.output) ──────────────────
+
+  private val manyKeys = (1 to 40).map(i => s"[[k${i}2000_x]]").mkString(", ")
+
+  /** The sentences the code of every version wrote (the mechanical lint, the coverage drift, the cold reader's count,
+    * the model's free text), as stored: the first come from `mechanical` itself.
+    */
+  private val storedSentences: List[Finding.Problem] =
+    mechanical(
+      Slug("a"),
+      ReviewArticle.Snapshot.Kind("concept"),
+      Article.Body("Tin moved.\n\nSee [[nobody2020_x]].\n\n## Sources cited\n\n- a\n"),
+      isTarget
+    ).map(_.problem) ++ List(
+      Finding.Problem("a paragraph with no [[citekey]]"),
+      Finding.Problem("a hand-written Sources cited section (the page generates it)"),
+      Finding.Problem("no 'disagreements' section (writing guide rule 4)"),
+      Finding.Problem("no 'unresolved' or 'open questions' section (writing guide rule 4)"),
+      Finding.Problem("1 source the filter returns is neither cited nor given a reason: [[knapp2016_tin]]"),
+      Finding.Problem(
+        "3 sources the filter returns are neither cited nor given a reason: [[knapp2016_tin]], [[sea2000_x]], [[a2001_b]]"
+      ),
+      Finding.Problem(s"45 sources the filter returns are neither cited nor given a reason: $manyKeys (+5 more)"),
+      Finding.Problem("a reason is stored for 2 sources the article cites: [[knapp2016_tin]], [[sea2000_x]]"),
+      Finding.Problem("27 terms are undefined (more than 8)"),
+      Finding.Problem("12 terms are undefined (more than 8)"),
+      Finding.Problem("9 terms undefined (count only; the individual findings carry the severity)"),
+      Finding.Problem("banned filler — it is important to note"),
+      Finding.Problem("escaped link brackets render as text and link nothing"),
+      Finding.Problem("The critique is not cited."),
+      Finding.Problem(""),
+      Finding.Problem("  a paragraph with no [[citekey]]"),
+      Finding.Problem("007 terms undefined (count only)"),
+      Finding.Problem("2 sources the filter returns are neither cited nor given a reason: [[a2000_x]], not a key"),
+      Finding.Problem("no 'x' section (writing guide rule 4) and more")
+    )
+
+  test("a stored problem sentence reads as a cause and writes back as the same sentence"):
+    storedSentences.foreach(p => assertEquals(Finding.Problem.of(p.cause), p, p))
+
+  test("the sentences the pipeline acts on read as their causes; any other sentence is Other"):
+    import Finding.Problem.Cause
+    assertEquals(Finding.Problem("a paragraph with no [[citekey]]").cause, Cause.UncitedParagraph)
+    assertEquals(
+      Finding.Problem("a hand-written Sources cited section (the page generates it)").cause,
+      Cause.HandWrittenSourcesCited
+    )
+    assertEquals(
+      Finding.Problem("no 'unresolved' or 'open questions' section (writing guide rule 4)").cause,
+      Cause.MissingSection(List(Finding.Problem.Section("unresolved"), Finding.Problem.Section("open questions")))
+    )
+    assertEquals(
+      Finding.Problem("1 source the filter returns is neither cited nor given a reason: [[knapp2016_tin]]").cause,
+      Cause.UnplacedSources(Finding.Problem.Count(1), List(ApiCitekey("knapp2016_tin")))
+    )
+    Finding.Problem(s"45 sources the filter returns are neither cited nor given a reason: $manyKeys (+5 more)").cause match
+      case Cause.UnplacedSources(n, listed) => assertEquals((n.toInt, listed.size), (45, 40))
+      case _                                 => fail("not read as UnplacedSources")
+    assert(Finding.Problem("27 terms are undefined (more than 8)").isTermCount)
+    assert(Finding.Problem("  9 terms undefined (count only; the individual findings carry the severity)  ").isTermCount)
+    assert(!Finding.Problem("27 terms are fine").isTermCount)
+    List(
+      Finding.Problem("The critique is not cited."),
+      Finding.Problem(""),
+      Finding.Problem("007 terms undefined (count only)"),
+      Finding.Problem("no 'x' section (writing guide rule 4) and more")
+    ).foreach(p => assertEquals(p.cause, Cause.Other(p), p))
+
+  test("a ledger finding keeps its stored problem sentence through the JSON codec"):
+    storedSentences.foreach { p =>
+      val json = s"""{"id":"M1","reviewer":"mechanical","severity":"major","kind":"citation","where":"body","quote":"","problem":${io.circe.Json
+          .fromString(s"$p")
+          .noSpaces},"fix":"f","evidence":[],"escalated":false,"pair":null}"""
+      val f = io.circe.parser.decode[Finding](json).fold(e => fail(e.getMessage), identity)
+      assertEquals(f.problem, p)
+      assertEquals(io.circe.parser.decode[Finding](io.circe.syntax.EncoderOps(f).asJson.noSpaces).map(_.problem), Right(p))
+    }
