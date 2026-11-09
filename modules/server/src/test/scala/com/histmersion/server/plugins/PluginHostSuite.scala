@@ -142,7 +142,7 @@ class PluginHostSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(plugin.Problem("offline"))
+            Left(Plugin.Http.Failure.Transport(plugin.Problem("offline")))
         },
       ConfigFactory.empty,
       (id, warn, m) => lines += s"${if warn then "W" else "I"} $id: $m",

@@ -172,7 +172,7 @@ object Commons:
       )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(
-      plugin.Problem("the depictions are about events")
+      Plugin.Http.Failure.Transport(plugin.Problem("the depictions are about events"))
     )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
@@ -185,8 +185,8 @@ object Commons:
         if !media.depicts.depictedBy.value || asked.isEmpty then Nil
         else
           qids.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
-            ids -> http.askJson(entitiesUrl(ids, wikidata)).flatMap { j =>
-              j.hcursor.downField("error").focus.fold(Right(j))(_ => Left("Wikidata error"))
+            ids -> http.askJson(entitiesUrl(ids, wikidata)).left.map(_.problem).flatMap { j =>
+              j.hcursor.downField("error").focus.fold(Right(j))(_ => Left(plugin.Problem("Wikidata error")))
             }
           }
       val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
@@ -194,6 +194,8 @@ object Commons:
       val workAnswers = works.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
         ids -> http
           .askJson(entitiesUrl(ids, wikidata))
+          .left
+          .map(_.problem)
           .flatMap(WikidataEntities.items(_, Set(WikidataStatement.Property("P18"))))
       }
       val workImage: Map[WikidataId, File.Title] = workAnswers
@@ -214,6 +216,8 @@ object Commons:
           q,
           http
             .askJson(Depicts.searchUrl(media.commons.apiUrl, q, media.depicts.searchLimit, media.commons.maxlag))
+            .left
+            .map(_.problem)
             .flatMap(Depicts.titles)
         )
       }
@@ -393,6 +397,8 @@ object Commons:
         .map { batch =>
           http
             .askJson(imageInfoUrl(media.commons.apiUrl, batch, width, media.commons.maxlag, meta))
+            .left
+            .map(_.problem)
             .flatMap(Commons.imageInfo)
             .left
             .map(e => Problem(s"Commons ${batch.head.value}…: $e"))

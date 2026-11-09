@@ -31,6 +31,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.ocr.Pixels
 import com.histmersion.domain.library.Isbn
+import com.histmersion.plugin.Plugin
+import com.histmersion.domain.media.covers.SourcePictures.CoverRefusal
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -120,15 +122,15 @@ final class SourcePictures(
       keys: CoverKeys,
       dryRun: SourcePictures.DryRun,
       fetch: Polite
-  ): Either[SourcePictures.OpenLibraryText, MediaSourceLine] =
+  ): Either[CoverRefusal, MediaSourceLine] =
     fetch.synchronized(openLibraryNow(keys, dryRun, fetch))
 
   private def openLibraryNow(
       keys: CoverKeys,
       dryRun: SourcePictures.DryRun,
       fetch: Polite
-  ): Either[SourcePictures.OpenLibraryText, MediaSourceLine] =
-    def refused(why: String) = Left(SourcePictures.OpenLibraryText(why))
+  ): Either[CoverRefusal, MediaSourceLine] =
+    def refused(why: String) = Left(CoverRefusal.Skipped(SourcePictures.OpenLibraryText(why)))
     OpenLibrary.key(keys.isbn.map(i => Isbn(i.value)), keys.oclc.map(o => OpenLibrary.Oclc(o.value))) match
       case None             => refused("no usable ISBN or OCLC number")
       case Some((kind, id)) =>
@@ -148,8 +150,9 @@ final class SourcePictures(
             OpenLibrary.CoverSize(c.size.value)
           )
           val got = fetch.file(HttpTransport.Url(url.value), Polite.Mime("image/jpeg")) match
-            case Left(why) if why.value.contains("HTTP 404")                  => refused("Open Library has no cover")
-            case Left(why)                                                    => refused(s"Open Library: ${why.value}")
+            case Left(Plugin.Http.Failure.Status(code, _)) if code.isNotFound => refused("Open Library has no cover")
+            case Left(why)                                                    =>
+              Left(CoverRefusal.Failed(SourcePictures.OpenLibraryText(s"Open Library: ${why.problem}")))
             case Right((bytes, _)) if bytes.value.length > cfg.maxBytes.value =>
               refused(s"cover of ${bytes.value.length} bytes is larger than media.max-bytes")
             case Right((bytes, mime)) if !mime.value.startsWith("image/") =>
@@ -325,8 +328,8 @@ final class SourcePictures(
         progress(JobInfo.Progress(s"Open Library covers: ${i + 1}/${cands.size} (${k.citekey})"))
         openLibrary(k, dryRun, fetch) match
           case Right(l)                                           => lines += l
-          case Left(why) if why.value.startsWith("Open Library:") => failed += s"${k.citekey}: ${why.value}"
-          case Left(why)                                          => skipped += s"cover: ${why.value}"
+          case Left(CoverRefusal.Failed(why))  => failed += s"${k.citekey}: $why"
+          case Left(CoverRefusal.Skipped(why)) => skipped += s"cover: $why"
       }
 
     if req.illustrations.value then
@@ -382,6 +385,13 @@ object SourcePictures:
   object IllustrateText extends Newtype[String, Pure]
   type OpenLibraryText = OpenLibraryText.T
   object OpenLibraryText extends Newtype[String, Pure]
+
+  /** Why no Open Library cover was kept: nothing to ask or to keep (`Skipped`), or Open Library could not be asked
+    * (`Failed`, reported as an error).
+    */
+  enum CoverRefusal derives CanEqual:
+    case Skipped(why: OpenLibraryText)
+    case Failed(why: OpenLibraryText)
 
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
 

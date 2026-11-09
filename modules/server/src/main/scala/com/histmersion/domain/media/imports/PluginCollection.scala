@@ -45,12 +45,10 @@ final class PluginCollection(
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[Problem, List[Either[Problem, MediaRecord]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaRecord]]] =
     PluginMedia
-      .guard(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
-      .left
-      .map(why => Problem(why.value))
-      .map(_.map(_.left.map(why => Problem(why.value)).map { it =>
+      .guardHttp(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
+      .map(_.map(_.map { it =>
         items.update(it.key, it)
         PluginMedia.record(it)
       }))

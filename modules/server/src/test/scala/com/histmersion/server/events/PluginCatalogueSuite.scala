@@ -94,7 +94,7 @@ class PluginCatalogueSuite extends DbSuite:
       http
         .get(Plugin.Http.Url(s"https://zq.example/api/$part"), Map.empty)
         .left
-        .map(e => Problem(e.value))
+        .map(_.problem)
         .flatMap { _ =>
           part.value match
             case "p1" =>
@@ -242,7 +242,7 @@ class PluginCatalogueSuite extends DbSuite:
       http
         .get(Plugin.Http.Url("https://zq.example/api/floods"), Map.empty)
         .left
-        .map(e => Problem(e.value))
+        .map(_.problem)
         .map(_ =>
           CataloguePage(
             List(
@@ -277,7 +277,7 @@ class PluginCatalogueSuite extends DbSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Problem("no"))
+              Left(Plugin.Http.Failure.Transport(Problem("no")))
           },
         ConfigFactory.empty
       )

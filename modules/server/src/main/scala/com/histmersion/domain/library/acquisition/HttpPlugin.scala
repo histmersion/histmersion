@@ -18,7 +18,7 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
     http
       .bytes(Http.Url(url.value), sent(headers))
       .left
-      .map(e => Problem(e.value))
+      .map(e => Plugin.Http.Failure.Transport(Problem(e.value)))
       .map(b => Plugin.HttpResponse.Body(b.value))
   override def fetch(
       url: Plugin.Http.Url,
@@ -27,7 +27,7 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
     http
       .once(Http.Url(url.value), sent(headers))
       .left
-      .map(e => Problem(e.value))
+      .map(e => Plugin.Http.Failure.Transport(Problem(e.value)))
       .map(a =>
         Plugin.HttpResponse(
           Plugin.HttpResponse.Status(a.code.value),

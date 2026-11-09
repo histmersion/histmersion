@@ -53,24 +53,29 @@ final class PolicyHttp(
   def bytes(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[HttpTransport.Problem, HttpAnswer.Body] =
+  ): Either[Plugin.Http.Failure, HttpAnswer.Body] =
     val sent = identified(headers)
     def again(
         n: HttpPolicy.Attempt,
         ms: HttpPolicy.Step.Wait.Ms,
         why: String
-    ): Either[HttpTransport.Problem, HttpAnswer.Body] =
+    ): Either[Plugin.Http.Failure, HttpAnswer.Body] =
       log.warn(HostLog.Line(s"acquire: $why — retrying $url in ${ms}ms"))
       sleep(ms)
       attempt(HttpPolicy.Attempt(n.value + 1))
-    def attempt(n: HttpPolicy.Attempt): Either[HttpTransport.Problem, HttpAnswer.Body] =
+    def attempt(n: HttpPolicy.Attempt): Either[Plugin.Http.Failure, HttpAnswer.Body] =
       transport.get(url, sent) match
         case Left(unreachable) =>
-          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.value) else Left(unreachable)
+          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.value) else Left(unreachable)
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
           if Challenge.isChallenge(code, answer.headers, Challenge.Body(answer.body.value)) then
-            Left(HttpTransport.Problem(s"$url: HTTP $code bot-protection challenge — treated as no copy"))
+            Left(
+              Plugin.Http.Failure.Status(
+                answer.code.status,
+                Problem(s"$url: HTTP $code bot-protection challenge — treated as no copy")
+              )
+            )
           else
             HttpPolicy.decide(
               code,
@@ -83,9 +88,16 @@ final class PolicyHttp(
               case HttpPolicy.Step.Accept                                    => Right(answer.body)
               case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why.value)
               case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) =>
-                Left(HttpTransport.Problem(s"$url failed: $why"))
+                Left(
+                  Plugin.Http.Failure.Status(answer.code.status, Problem(s"$url failed: $why"))
+                )
               case HttpPolicy.Step.GiveUp(_) =>
-                Left(HttpTransport.Problem(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}"))
+                Left(
+                  Plugin.Http.Failure.Status(
+                    answer.code.status,
+                    Problem(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}")
+                  )
+                )
     attempt(HttpPolicy.Attempt(0))
 
   /** One GET with the policy's identity and NO retry: the answer as it came, a slow-down or an error included, with its
@@ -95,7 +107,7 @@ final class PolicyHttp(
   def once(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[HttpTransport.Problem, HttpAnswer] =
+  ): Either[Plugin.Http.Failure, HttpAnswer] =
     transport.get(url, identified(headers))
 
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's
@@ -105,18 +117,15 @@ final class PolicyHttp(
     private def sent(headers: Map[Header.Name, Header.Value]) =
       headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-      bytes(HttpTransport.Url(url.value), sent(headers)).left
-        .map(e => Problem(e.value))
-        .map(b => Plugin.HttpResponse.Body(b.value))
+      bytes(HttpTransport.Url(url.value), sent(headers)).map(b => Plugin.HttpResponse.Body(b.value))
     override def fetch(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
     ) =
-      once(HttpTransport.Url(url.value), sent(headers)).left
-        .map(e => Problem(e.value))
+      once(HttpTransport.Url(url.value), sent(headers))
         .map(a =>
           Plugin.HttpResponse(
-            Plugin.HttpResponse.Status(a.code.value),
+            a.code.status,
             a.headers
               .map((k, v) => Header.Name(k.value) -> Header.Value(v.value)),
             Plugin.HttpResponse.Body(a.body.value)

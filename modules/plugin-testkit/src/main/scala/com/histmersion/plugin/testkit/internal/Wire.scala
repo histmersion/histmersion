@@ -1,6 +1,7 @@
 package com.histmersion
 package plugin.testkit.internal
 
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Problem
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, UnrecordedRequest}
@@ -156,7 +157,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[HttpTransport.Problem, HttpAnswer] =
+    ): Either[Plugin.Http.Failure, HttpAnswer] =
       val shown = scrub(url.value)
       synchronized(asked += PluginHarness.Request(s"GET $shown"))
       mode match
@@ -185,14 +186,14 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
               )
           )
 
-  private def record(dir: Path, url: String, answer: Either[HttpTransport.Problem, HttpAnswer]): Unit = synchronized {
+  private def record(dir: Path, url: String, answer: Either[Plugin.Http.Failure, HttpAnswer]): Unit = synchronized {
     if !cleared then
       Wire.clear(dir)
       cleared = true
     written += 1
     val base = f"$written%03d-${RecordedExchange.hostOf(url)}"
     val exchange = answer match
-      case Left(error) => RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.value)))
+      case Left(error) => RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.problem.value)))
       case Right(a)    =>
         val kept =
           RecordedExchange.KeptHeaders.flatMap(h => a.header(h).map(v => h -> CoreQuota.HeaderValue(scrub(v.value))))
@@ -208,12 +209,12 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     Files.writeString(dir.resolve(base + RecordedExchange.Suffix), RecordedExchange.render(exchange), UTF_8)
   }
 
-  private def replay(dir: Path, url: String): Either[HttpTransport.Problem, HttpAnswer] = synchronized {
+  private def replay(dir: Path, url: String): Either[Plugin.Http.Failure, HttpAnswer] = synchronized {
     val key = ("GET", HttpTransport.Url(url))
     recorded.get(key) match
       case None =>
         missing += HttpTransport.Url(url)
-        Left(HttpTransport.Problem(s"$url: no recording in $dir"))
+        Left(Plugin.Http.Failure.Transport(Problem(s"$url: no recording in $dir")))
       case Some(answers) =>
         val n = served.getOrElse(key, 0)
         served(key) = n + 1
@@ -223,7 +224,11 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
             val body = e.body.map(f => Files.readAllBytes(dir.resolve(f))).getOrElse(Array.emptyByteArray)
             Right(HttpAnswer(code, e.headers.toMap, HttpAnswer.Body(body)))
           case (None, error) =>
-            Left(HttpTransport.Problem(error.getOrElse(s"$url: recorded with neither a status nor an error")))
+            Left(
+              Plugin.Http.Failure.Transport(
+                Problem(error.getOrElse(s"$url: recorded with neither a status nor an error"))
+              )
+            )
   }
 
 private[testkit] object Wire:

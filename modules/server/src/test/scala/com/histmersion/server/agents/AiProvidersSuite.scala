@@ -61,7 +61,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-      Left(plugin.Problem("offline"))
+      Left(Plugin.Http.Failure.Transport(plugin.Problem("offline")))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(

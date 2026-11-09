@@ -1017,8 +1017,6 @@ class MediaOracleSuite extends DbSuite:
     def search(place: MediaPlace, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url(s"https://zq-search.example/q?label=${place.label}"), Map.empty)
-        .left
-        .map(e => Problem(e.value))
         .map { _ =>
           def it(key: MediaItem.Key, licence: spi.Licence, where: MediaItem.Geography.Value) =
             Right(
@@ -1042,7 +1040,7 @@ class MediaOracleSuite extends DbSuite:
             it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.Geography.Value("Nowhere at all")),
-            Left(Problem("an unreadable record"))
+            Left(Plugin.Http.Failure.Transport(Problem("an unreadable record")))
           )
         }
 

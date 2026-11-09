@@ -26,15 +26,15 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Problem, List[Either[Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(
         ArtInstituteCollection
           .searchUrl(Plugin.Http.Url(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
       )
-      .left
-      .map(e => Problem(e))
-      .flatMap(ArtInstituteCollection.records(_, Plugin.Http.Url(conf.imageUrl.value), conf.displayPx, thumbPx))
+      .flatMap(
+        ArtInstituteCollection.records(_, Plugin.Http.Url(conf.imageUrl.value), conf.displayPx, thumbPx).unreadableEach
+      )
 
 object ArtInstituteCollection:
   type ImageId = ImageId.T

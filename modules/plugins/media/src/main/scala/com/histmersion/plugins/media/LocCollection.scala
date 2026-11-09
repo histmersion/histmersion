@@ -26,31 +26,34 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
   val role = MediaCollection.Map
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
-  private def explain(e: String): String =
-    if e.contains("HTTP 403") then
-      s"$e — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
-    else e
+  private def explain(e: Plugin.Http.Failure): Plugin.Http.Failure = e match
+    case Plugin.Http.Failure.Status(code, why) if code == Plugin.HttpResponse.Status.Forbidden =>
+      Plugin.Http.Failure.Status(
+        code,
+        plugin.Problem(
+          s"$why — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
+        )
+      )
+    case other => other
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[plugin.Problem, List[Either[plugin.Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
-      .flatMap(j => LocCollection.results(j).left.map(_.value))
+      .flatMap(j => LocCollection.results(j).unreadable)
       .left
       .map(explain)
       .map(
         _.take(conf.candidates.value.max(0)).map(id =>
           http
             .askJson(LocCollection.itemUrl(conf.apiUrl, id))
-            .flatMap(j => LocCollection.record(j, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx).left.map(_.value))
+            .flatMap(j => LocCollection.record(j, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx).unreadable)
             .left
-            .map(e => plugin.Problem(s"item $id: ${explain(e)}"))
+            .map(e => explain(e).within(s"item $id"))
         )
       )
-      .left
-      .map(plugin.Problem(_))
 
 object LocCollection:
   type Date = Date.T

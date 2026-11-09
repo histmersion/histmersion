@@ -131,7 +131,7 @@ final class PluginHarness private (
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))
       .left
-      .map(e => Problem(e.value))
+      .map(_.problem)
       .flatMap(b =>
         io.circe.parser
           .parse(new String(b.value, UTF_8))
@@ -218,21 +218,21 @@ final class PluginHarness private (
           )
           val http = PluginMedia.http(polite)
           val allow = host.media.collections.allowed(MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
-          PluginMedia.guard(col.search(place, http)) match
-            case Left(why)    => (Nil, Some(Problem(why.value)))
+          PluginMedia.guardHttp(col.search(place, http)) match
+            case Left(why)    => (Nil, Some(why.problem))
             case Right(items) => (items.map(judge(PluginMedia.Provider(collection.value), col, http, allow)), None)
         }
         MediaReport(verdicts, failure, logged, asked)
 
   private def judge(name: PluginMedia.Provider, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
-      answered: Either[?, MediaItem]
+      answered: Either[Plugin.Http.Failure, MediaItem]
   ): MediaVerdict =
     answered match
-      case Left(why)   => MediaVerdict(MediaRecord.Key(s"$why"), None, None, Some(Problem(s"$why")))
+      case Left(why)   => MediaVerdict(MediaRecord.Key(s"${why.problem}"), None, None, Some(why.problem))
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match
-          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(why))
+          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(why.problem))
           case None      =>
             PluginMedia.guard(col.complete(item, http)) match
               case Left(why) =>
@@ -246,11 +246,11 @@ final class PluginHarness private (
                 val completed = PluginMedia.record(full)
                 val again = PluginMedia
                   .refusal(completed, allow, name)
-                  .map(why =>
-                    if why.value.startsWith("licence") then
+                  .map {
+                    case PluginMedia.Refusal.LicenceNotAllowed(_, _) =>
                       Problem("licence not allowed on the full record")
-                    else why
-                  )
+                    case other => other.problem
+                  }
                 MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
 
   /** One import of the plugin's event catalogue `catalogue`: its parts for `query`, each read page by page through the

@@ -92,7 +92,7 @@ private[cli] object KindSources:
       |      case None => Fetch.Miss(Problem("no DOI"))
       |      case Some(doi) =>
       |        val url = Plugin.Http.Url(s"${baseUrl.value.stripSuffix("/")}/${doi.value}.pdf")
-      |        http.get(url).fold(Fetch.Miss(_), body => Fetch.Found(file(url, body)))
+      |        http.get(url).fold(e => Fetch.Miss(e.problem), body => Fetch.Found(file(url, body)))
       |
       |  private def file(url: Plugin.Http.Url, body: Plugin.HttpResponse.Body): FetchedFile =
       |    FetchedFile(FetchedFile.Source("@id@"), Some(FetchedFile.Url(url.value)), FetchedFile.Bytes(body.value), FetchedFile.Extension("pdf"))
@@ -190,7 +190,7 @@ private[cli] object KindSources:
       |  override val description = MediaCollection.Description("pictures listed in the @id@ plugin's settings")
       |  val role = MediaCollection.Image
       |
-      |  def search(place: MediaPlace, http: Plugin.Http): Either[Problem, List[Either[Problem, MediaItem]]] =
+      |  def search(place: MediaPlace, http: Plugin.Http): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
       |    Right(pictures.filter(_.place.value.equalsIgnoreCase(place.label.value)).map(p => Right(item(p))))
       |
       |  private def item(p: ListedPicture): MediaItem =

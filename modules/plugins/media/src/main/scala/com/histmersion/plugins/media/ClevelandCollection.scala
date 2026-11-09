@@ -25,15 +25,13 @@ final class ClevelandCollection(conf: CollectionSettings)
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Problem, List[Either[Problem, MediaItem]]] =
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
     http
       .askJson(
         ClevelandCollection
           .searchUrl(Plugin.Http.Url(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
       )
-      .left
-      .map(e => Problem(e))
-      .flatMap(ClevelandCollection.records)
+      .flatMap(j => ClevelandCollection.records(j).unreadableEach)
 
 object ClevelandCollection:
   val Fields: String = List(

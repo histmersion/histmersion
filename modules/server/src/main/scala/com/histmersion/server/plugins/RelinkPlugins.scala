@@ -213,7 +213,7 @@ object RelinkPlugins:
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      plugin.Problem("no HTTP while a plugin is being described")
+      Plugin.Http.Failure.Transport(plugin.Problem("no HTTP while a plugin is being described"))
     )
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its

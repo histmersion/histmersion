@@ -41,12 +41,13 @@ trait MediaCollection:
 
   /** The records a search for `place` answers; one record may be unreadable on its own (`Left` inside). `http` is the
     * host's polite client of this import (its pace, the User-Agent, Retry-After; a bot challenge stops the request) —
-    * never open a socket of your own.
+    * never open a socket of your own. A failure keeps what the upstream said ([[Plugin.Http.Failure.Status]]): the host
+    * stops a batch the upstream refuses (401, 403) rather than ask it again for every place.
     */
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Problem, List[Either[Problem, MediaItem]]]
+  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]]
 
   /** An item about to be stored, completed by what a search does not answer (its files, the licence read again from the
     * full record). Only items the host decided to store pay for it; the host judges the completed item's licence again.
@@ -64,8 +65,8 @@ trait MediaCollection:
   def asks: Set[MediaTarget] = Set(MediaTarget.Places)
 
   /** The records a search for `event` answers ([[asks]] must name events); none by default. */
-  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[Problem, List[
-    Either[Problem, MediaItem]
+  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[Plugin.Http.Failure, List[
+    Either[Plugin.Http.Failure, MediaItem]
   ]] = Right(Nil)
 
   /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
@@ -104,8 +105,8 @@ trait MediaCollection:
       read = MediaFound.Read(asked.map(_._2.fold(_ => 0, _.size)).sum),
       failed = asked.flatMap((t, r) =>
         r.fold(
-          e => List(MediaFound.Failed(s"$title search for ${t.id}: $e")),
-          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: $e") }
+          e => List(MediaFound.Failed(s"$title search for ${t.id}: ${e.problem}")),
+          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: ${e.problem}") }
         )
       )
     )

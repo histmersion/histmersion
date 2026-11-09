@@ -178,7 +178,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(items(Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
     val down = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Problem("HTTP 503"))
+        Left(Plugin.Http.Failure.Transport(Problem("HTTP 503")))
     }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
     assertEquals(none(Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))

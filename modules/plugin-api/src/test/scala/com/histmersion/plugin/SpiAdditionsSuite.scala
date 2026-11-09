@@ -11,12 +11,13 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ): Either[Problem, Plugin.HttpResponse.Body] =
-      if (url).value.endsWith("/missing") then Left(Problem(s"$url: HTTP 404"))
+    ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
+      if (url).value.endsWith("/missing") then
+        Left(Plugin.Http.Failure.Status(Plugin.HttpResponse.Status.NotFound, Problem(s"$url: HTTP 404")))
       else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
-    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e).value), identity)
+    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e.problem).value), identity)
     assertEquals(
       ({
         val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8"));
@@ -35,7 +36,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
         .fetch(Plugin.Http.Url("https://x.example/missing"))
         .map(_.status))
         .left
-        .map(refactorError => (refactorError).value))
+        .map(refactorError => (refactorError.problem).value))
         .map(refactorValue => (refactorValue).value): Either[String, Int]),
       Left("https://x.example/missing: HTTP 404")
     )
@@ -208,7 +209,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val title = MediaCollection.Title("Portal objects")
     val role = MediaCollection.Object
     def search(place: MediaPlace, http: Plugin.Http) =
-      if place.label == MediaPlace.Label("Nowhere") then Left(Problem("offline"))
+      if place.label == MediaPlace.Label("Nowhere") then Left(Plugin.Http.Failure.Transport(Problem("offline")))
       else
         Right(
           List(
@@ -221,7 +222,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
                 Left(Problem("closed"))
               )
             ),
-            Left(Problem("one record unreadable"))
+            Left(Plugin.Http.Failure.Transport(Problem("one record unreadable")))
           )
         )
 

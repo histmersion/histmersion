@@ -59,7 +59,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http {
     def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-      Left(plugin.Problem("offline"))
+      Left(Plugin.Http.Failure.Transport(plugin.Problem("offline")))
   }
 
   /** The class path's plugins (the first-party media collections among them, supplied the host's settings) and `extra`,

@@ -243,7 +243,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val withoutPreferred = wbgetentities.replace("\"rank\":\"preferred\"", "\"rank\":\"normal\"")
     val http = FakeMediaHttp { url =>
       if url.contains("action=wbgetentities") then FakeMediaHttp.json(withoutPreferred)
-      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
+      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.problem.value)
     }
     val store2 = MemStore()
     run(http, dryRun = DryOff, store2, ts = targets.take(1), settings = "histmersion.media.per-property = 2")
@@ -255,7 +255,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
   test("a failed batch is reported and the run goes on; NC is stored when the allowlist names it"):
     val down = FakeMediaHttp(url =>
       if url.contains("action=wbgetentities") then FakeMediaHttp.json("{}", code = 404)
-      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
+      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.problem.value)
     )
     val r = run(down, dryRun = DryOn)
     assertEquals(r.items, 0)

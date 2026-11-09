@@ -38,7 +38,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             (Header.Name(refactorTuple._1), Header.Value(refactorTuple._2))
           }
         ) match
-          case Left(e)  => Left(CoreFailure.Failed(Problem(e.value)))
+          case Left(e)  => Left(CoreFailure.Failed(e.problem))
           case Right(a) =>
             quota.observe(a.status, a.headers)
             if a.status == Plugin.HttpResponse.Status(429) then

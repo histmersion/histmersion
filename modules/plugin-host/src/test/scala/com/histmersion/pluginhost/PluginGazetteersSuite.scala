@@ -169,7 +169,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ) = Left(Problem("offline"))
+    ) = Left(Plugin.Http.Failure.Transport(Problem("offline")))
   }
 
   test("a source's places in its order, the refused ones apart; its failure and what it throws are the import's"):

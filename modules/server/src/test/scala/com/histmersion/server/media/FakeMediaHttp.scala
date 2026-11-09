@@ -7,6 +7,7 @@ import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.domain.CoreQuota
+import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Registries}
 
 import com.histmersion.config.{AppConfig, MediaConfig}
@@ -23,9 +24,9 @@ final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends H
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[HttpTransport.Problem, HttpAnswer] =
+  ): Either[Plugin.Http.Failure, HttpAnswer] =
     requests += url.value -> headers.map((k, v) => k.value -> v.value)
-    route(url.value).left.map(HttpTransport.Problem(_))
+    route(url.value).left.map(m => Plugin.Http.Failure.Transport(plugin.Problem(m)))
 
 object FakeMediaHttp:
   /** The answer a fake server gives: its status, its headers and body as they go over the wire. */
