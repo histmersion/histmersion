@@ -4,6 +4,7 @@ package domain
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.ManagersMarkdown
 
 import java.time.{Duration, Instant}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -146,23 +147,131 @@ object SchedulerPolicy:
     type Person = Person.T
     object Person extends Newtype[Boolean, Pure]
 
-  /** What stands in the way of an item, as the managers' notes and the stall report tell it: a spend cap, plan pools
-    * below their floors, or anything else.
-    */
-  enum Blocker derives CanEqual:
-    case Budget, Starved, Other
-
-  /** Why an item cannot start now whatever the order: a code and a sentence. */
-  final case class Block(code: Block.Code, why: Block.Why, blocker: Blocker = Blocker.Other)
+  /** Why an item cannot start now whatever the order. */
+  final case class Block(why: Block.Why):
+    def code: Block.Code = why.code
 
   object Block:
     type Code = Code.T
     object Code extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
+    type Usd = Usd.T
+    object Usd extends Newtype[BigDecimal, Pure]:
+      extension (u: Usd) def money: String = ManagersMarkdown.usd(u.value.toDouble)
+    type Chain = Chain.T
+    object Chain extends Newtype[String, Pure]
+    type Detail = Detail.T
+    object Detail extends Newtype[String, Pure]
+    type Since = Since.T
+    object Since extends Newtype[String, Pure]
+    type By = By.T
+    object By extends Newtype[String, Pure]
+    type Because = Because.T
+    object Because extends Newtype[String, Pure]
 
-  /** The [[Block]] code of an item whose role chains are all below their plans' floors. */
-  val QuotaBlock: Block.Code = Block.Code("quota")
+    /** Which spend cap was reached. */
+    enum SpendCap derives CanEqual:
+      /** `agents.budgets.daily-usd`: all agents' spend today. */
+      case Daily(limit: Usd)
+
+      /** `agents.budgets.monthly-usd`: all agents' spend this month. */
+      case Monthly(limit: Usd)
+
+      /** A manager's own daily cap, against its metered spend today. */
+      case Manager(spent: Usd, cap: Usd)
+
+      def render: String = this match
+        case Daily(l)      => s"today's agent spend reached agents.budgets.daily-usd ($l)"
+        case Monthly(l)    => s"this month's agent spend reached agents.budgets.monthly-usd ($l)"
+        case Manager(s, c) =>
+          s"its spend today (${s.money} USD, metered calls only) reached its daily-usd (${c.money}); " +
+            "it starts again tomorrow (UTC)"
+
+    /** What another item must finish first. */
+    enum Precondition derives CanEqual:
+      case Plan, Filter
+
+    /** Why `start` did not start an item. */
+    enum Refusal derives CanEqual:
+      case TargetWritten, NotStartable, Settled, Gone
+
+      def render: String = this match
+        case TargetWritten => "another run is writing its target"
+        case NotStartable  => "it could not start now (its manager's events say why)"
+        case Settled       => "settled without a run"
+        case Gone          => "the item is gone"
+
+    /** The one account of why an item waits or nothing starts, closed: each case holds what its sentence is made of.
+      * The sentence ([[render]]) and the [[code]] it is filed under come from the case alone.
+      */
+    enum Why derives CanEqual:
+      /** A spend cap is reached. */
+      case Budget(cap: SpendCap)
+
+      /** The plan pools the item's role chains draw on are below their floors (`chain` says which and when it frees). */
+      case Starved(chain: Chain)
+
+      /** The agents are draining: nothing new starts until a person lifts it. */
+      case Draining(since: Since, by: Option[By])
+
+      /** An item of the same goal must finish first. */
+      case WaitsFor(first: Precondition)
+
+      /** The goal's articles are in progress; `detail` counts them. */
+      case ArticlesInProgress(detail: Detail)
+
+      /** Too many planned goals are unfinished; `detail` counts them. */
+      case UnfinishedGoals(detail: Detail)
+
+      /** `runs` runs draw on the plan pool already. */
+      case PoolFull(pool: Candidate.Pools, runs: Resources.PoolCapValue)
+
+      /** The item's manager has its own `maxRuns` in flight. */
+      case ManagerFull(manager: Candidate.ManagerId, maxRuns: Resources.ManagerCapValue)
+
+      /** All places are taken; `because` says which items are ahead. */
+      case NoPlaceFree(maxRuns: Resources.MaxRuns, occupied: Resources.Occupied, because: Option[Because])
+
+      /** The dispatch refused to start it. */
+      case Busy(refusal: Refusal)
+
+      /** The code this reason is filed under. */
+      def code: Code = this match
+        case Budget(_)             => Code("budget")
+        case Starved(_)            => Code("quota")
+        case Draining(_, _)        => Code("drain")
+        case WaitsFor(_)           => Code("waits-for")
+        case ArticlesInProgress(_) => Code("articles-in-progress")
+        case UnfinishedGoals(_)    => Code("unfinished-goals")
+        case PoolFull(_, _)        => Code("pool")
+        case ManagerFull(_, _)     => Code("manager-cap")
+        case NoPlaceFree(_, _, _)  => Code("capacity")
+        case Busy(_)               => Code("busy")
+
+      /** The sentence. */
+      def render: String = this match
+        case Budget(c)      => s"budget: ${c.render}"
+        case Starved(c)     => s"starved: $c"
+        case Draining(s, b) =>
+          s"draining since $s${b.fold("")(x => s" (by $x)")}: nothing new starts until it is lifted " +
+            "(histmersion agent autopilot undrain)"
+        case WaitsFor(Precondition.Plan)   => "its goal's plan comes first (the plan-goal item is open)"
+        case WaitsFor(Precondition.Filter) => "its article's coverage filter is inferred first (the infer-filter item is open)"
+        case ArticlesInProgress(d)         => s"$d"
+        case UnfinishedGoals(d)            => s"$d"
+        case PoolFull(p, n)                =>
+          s"plan pool $p has $n run(s) drawing on it already (its max-calls-in-flight × agents.scheduler.pool-overcommit)"
+        case ManagerFull(m, n)       => s"its manager $m has its own maxRuns $n in flight"
+        case NoPlaceFree(m, o, why)  =>
+          s"no place free: $m run(s) at once (agents.max-concurrent-runs), $o occupied${why.fold("")(w => s"; $w")}"
+        case Busy(r)                 => r.render
+
+      def isStarved: Boolean = this match
+        case Starved(_) => true
+        case _          => false
+
+      def isBudget: Boolean = this match
+        case Budget(_) => true
+        case _         => false
 
   /** The plan pools waiting work wants a current reading of: a waiting candidate's own pools, and for one starved below
     * its plans' floors, the pools its role chains draw on (`chainPools`), since a fresh reading may show the window has
@@ -172,7 +281,7 @@ object SchedulerPolicy:
     waiting.flatMap { c =>
       c.block match
         case None                            => c.pools
-        case Some(b) if b.code == QuotaBlock => chainPools(c)
+        case Some(b) if b.why.isStarved => chainPools(c)
         case Some(_)                         => Nil
     }.toSet
 
@@ -386,8 +495,7 @@ object SchedulerPolicy:
       code: Wait.Code,
       why: Wait.Why,
       behind: List[Wait.Behind] = Nil,
-      position: Wait.Position = Wait.Position(0),
-      blocker: Blocker = Blocker.Other
+      position: Wait.Position = Wait.Position(0)
   )
 
   object Wait:
@@ -429,11 +537,11 @@ object SchedulerPolicy:
     * decision.
     */
   def run(cands: List[Candidate], res: Resources, s: Settings, now: Instant)(
-      start: Candidate => Either[String, Unit]
+      start: Candidate => Either[Block.Refusal, Unit]
   ): Decision =
     val scored = cands.map(score(_, s, now))
     val (blocked, open) = scored.partition(_.c.block.isDefined)
-    val blockedWaits = blocked.map(x => x -> Wait(Code.Blocked, x.c.block.get.why, blocker = x.c.block.get.blocker))
+    val blockedWaits = blocked.map(x => x -> Wait(Code.Blocked, x.c.block.get.why))
     res.stop match
       case Some(b) =>
         Decision(
@@ -473,10 +581,7 @@ object SchedulerPolicy:
                     pool = rest,
                     waits = a.waits :+ (x -> Wait(
                       Code.Pool,
-                      Wait.Why(
-                        s"plan pool $p has ${res.poolCap.get(p).fold(0)(_.value)} run(s) drawing on it already (its max-calls-in-flight × " +
-                          "agents.scheduler.pool-overcommit)"
-                      ),
+                      Wait.Why.PoolFull(p, res.poolCap.getOrElse(p, Resources.PoolCapValue(0))),
                       inFlightOn(p, a.started)
                     ))
                   )
@@ -487,8 +592,9 @@ object SchedulerPolicy:
                     pool = rest,
                     waits = a.waits :+ (x -> Wait(
                       Code.Manager,
-                      Wait.Why(
-                        s"its manager ${x.c.managerId} has its own maxRuns ${res.managerCap.get(x.c.managerId).fold(0)(_.value)} in flight"
+                      Wait.Why.ManagerFull(
+                        x.c.managerId,
+                        res.managerCap.getOrElse(x.c.managerId, Resources.ManagerCapValue(0))
                       )
                     ))
                   )
@@ -496,7 +602,7 @@ object SchedulerPolicy:
               case None =>
                 start(x.c) match
                   case Left(no) =>
-                    go(a.copy(pool = rest, waits = a.waits :+ (x -> Wait(Code.Busy, Wait.Why(no)))))
+                    go(a.copy(pool = rest, waits = a.waits :+ (x -> Wait(Code.Busy, Wait.Why.Busy(no)))))
                   case Right(_) =>
                     go(
                       Acc(
@@ -528,12 +634,13 @@ object SchedulerPolicy:
         val capacity = left.zipWithIndex.map { case ((x, _), i) =>
           val ahead = if i == 0 then heads.lastOption else Some(left(i - 1)._1)
           val behind = (heads.takeRight(2) ++ left.take(i).map(_._1)).takeRight(3).map(_.c.label)
-          val because = ahead.fold("")(a => "; " + s.strategy.behindWhy(x, a, s))
+          val because = ahead.map(a => Block.Because(s.strategy.behindWhy(x, a, s)))
           x -> Wait(
             Code.Capacity,
-            Wait.Why(
-              s"no place free: ${res.maxRuns} run(s) at once (agents.max-concurrent-runs), " +
-                s"${math.min(res.maxRuns.value, res.occupied.value + done.started.size)} occupied$because"
+            Wait.Why.NoPlaceFree(
+              res.maxRuns,
+              Resources.Occupied(math.min(res.maxRuns.value, res.occupied.value + done.started.size)),
+              because
             ),
             behind.map(Wait.Behind(_)),
             Wait.Position(i + 1)

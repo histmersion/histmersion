@@ -5,6 +5,7 @@ import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Plural, Wording}
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -94,14 +95,15 @@ object ManagersView:
 
   /** The badge of a manager: its person-set state, or — active — what the supervisor derived. */
   def badge(m: ManagerInfo): Badge =
-    val note = m.statusNote.fold("")(_.value)
     if m.state != State.Active.wire then Badge(m.state.value)
-    else if note.startsWith("starved") then Badge("starved")
-    else if note.startsWith("budget") then Badge("budget")
-    else if note.startsWith("at capacity") then Badge("at capacity")
-    else if note == "idle" then Badge("idle")
-    else if note.startsWith("focus:") then Badge("queued")
-    else Badge("active")
+    else
+      m.statusNote.map(_.is) match
+        case Some(Manager.Status.Kind.Starved)    => Badge("starved")
+        case Some(Manager.Status.Kind.Budget)     => Badge("budget")
+        case Some(Manager.Status.Kind.AtCapacity) => Badge("at capacity")
+        case Some(Manager.Status.Kind.Idle)       => Badge("idle")
+        case Some(Manager.Status.Kind.Queued)     => Badge("queued")
+        case _                                   => Badge("active")
 
   /** What a manager does, from its id (`review`, `enrich`, `seed:<goal>`, `watch:<goal>`); a tooltip on the runs
     * window's manager menu.
@@ -1127,7 +1129,7 @@ object ManagersView:
     val b = badge(m).value
     span(
       cls := s"job-state state-${b.replace(' ', '-')}",
-      title := m.statusNote.fold(m.state.value)(_.value),
+      title := m.statusNote.fold(m.state.value)(_.render),
       Wording.capitalize(b)
     )
 
@@ -1172,7 +1174,7 @@ object ManagersView:
                       Wording.manager(Wording.Id(m.id.value))
                     )
                   ),
-                  m.statusNote.filter(_.value.nonEmpty).map(n => div(cls := "job-progress", n.value)),
+                  m.statusNote.map(_.render).filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
                   div(
                     cls := "job-meta muted",
                     counts(m.counts).value,
@@ -1428,7 +1430,7 @@ object ManagersView:
         stateBadge(m),
         span(cls := "run-title", title := m.id.value, s" ${Wording.manager(Wording.Id(m.id.value))}")
       ),
-      m.statusNote.filter(_.value.nonEmpty).map(n => p(cls := "job-progress", n.value)),
+      m.statusNote.map(_.render).filter(_.nonEmpty).map(n => p(cls := "job-progress", n)),
       Option.when(m.state == State.Paused.wire && m.inFlight.value == 0)(
         p(cls := "muted", "Paused: it starts nothing (nothing is spent) until you resume it.")
       ),

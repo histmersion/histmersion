@@ -371,7 +371,7 @@ object ManagerService:
           ManagerInfo.PauseRuns(m.pauseRuns.value),
           m.config,
           ManagerConfig(),
-          m.statusNote.map(n => ManagerInfo.StatusNote(n.value)),
+          m.statusNote,
           m.cron.map(c => ManagerInfo.Cron(c.value)),
           m.nextTickAt.map(t => ManagerInfo.NextTickAt(text(t))),
           ManagerInfo.CreatedAt(text(m.createdAt)),
@@ -435,7 +435,7 @@ object ManagerService:
             ManagerLight.State(m.state.wire.value),
             m.cron.map(c => ManagerLight.Cron(c.value)),
             m.config,
-            m.statusNote.map(n => ManagerLight.StatusNote(n.value)),
+            m.statusNote.map(n => ManagerLight.StatusNote(n.render)),
             ManagerLight.PlanItem(items.exists(i => i.managerId.value == m.id.value && i.kind.value == PlanGoalItem))
           )
         )

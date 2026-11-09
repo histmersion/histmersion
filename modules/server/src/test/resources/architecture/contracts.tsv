@@ -964,7 +964,7 @@ unwrap	core:domain/HintProposals.scala	.value outside a boundary	14
 unwrap	core:domain/HttpPolicy.scala	.value outside a boundary	12
 unwrap	core:domain/IngestBacklog.scala	.value outside a boundary	23
 unwrap	core:domain/JsonRead.scala	.value outside a boundary	5
-unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	68
+unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	67
 unwrap	core:domain/MergeFold.scala	.value outside a boundary	30
 unwrap	core:domain/MergePlanner.scala	.value outside a boundary	120
 unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
@@ -973,7 +973,7 @@ unwrap	core:domain/PlanGoal.scala	.value outside a boundary	44
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
 unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	210
 unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	72
-unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	55
+unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	54
 unwrap	core:domain/Scheduling.scala	.value outside a boundary	5
 unwrap	core:domain/SeedPlanDefaults.scala	.value outside a boundary	5
 unwrap	core:domain/WatchManagerDefaults.scala	.value outside a boundary	7
@@ -1134,7 +1134,7 @@ unwrap	server:domain/automation/approvals/AutoApprovals.scala	.value outside a b
 unwrap	server:domain/automation/autopilot/AutopilotRowService.scala	.value outside a boundary	17
 unwrap	server:domain/automation/autopilot/AutopilotService.scala	.value outside a boundary	155
 unwrap	server:domain/automation/goals/FocusService.scala	.value outside a boundary	35
-unwrap	server:domain/automation/goals/GoalFocusService.scala	.value outside a boundary	122
+unwrap	server:domain/automation/goals/GoalFocusService.scala	.value outside a boundary	121
 unwrap	server:domain/automation/goals/GoalService.scala	.value outside a boundary	90
 unwrap	server:domain/automation/goals/GoalsControllers.scala	.value outside a boundary	16
 unwrap	server:domain/automation/goals/PlanGoalPipeline.scala	.value outside a boundary	74
@@ -1142,10 +1142,10 @@ unwrap	server:domain/automation/managers/DrainService.scala	.value outside a bou
 unwrap	server:domain/automation/managers/HintEffectPipeline.scala	.value outside a boundary	42
 unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
-unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	237
-unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	99
+unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	235
+unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	94
 unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	132
-unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	156
+unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	153
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7
 unwrap	server:domain/automation/workflows/Workflows.scala	.value outside a boundary	6
 unwrap	server:domain/automation/worklists/QueueError.scala	.value outside a boundary	1

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.Manager as ApiManager
 import com.histmersion.api.automation.Managers.ManagerConfig
 
 import java.time.Instant
@@ -15,7 +16,7 @@ final case class ManagerRecord(
     state: Manager.State,
     pauseRuns: ManagerRecord.PauseRuns,
     config: ManagerConfig,
-    statusNote: Option[ManagerRecord.StatusNote],
+    statusNote: Option[ApiManager.Status],
     cron: Option[ManagerRecord.Cron],
     nextTickAt: Option[Instant],
     createdAt: Instant,
@@ -29,7 +30,5 @@ object ManagerRecord:
   object Goal extends Newtype[String, Pure]
   type PauseRuns = PauseRuns.T
   object PauseRuns extends Newtype[Boolean, Pure]
-  type StatusNote = StatusNote.T
-  object StatusNote extends Newtype[String, Pure]
   type Cron = Cron.T
   object Cron extends Newtype[String, Pure]

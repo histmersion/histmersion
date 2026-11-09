@@ -468,7 +468,7 @@ object Managers:
       pauseRuns: ManagerInfo.PauseRuns = ManagerInfo.PauseRuns(false),
       config: ManagerConfig = ManagerConfig(),
       effective: ManagerConfig = ManagerConfig(),
-      statusNote: Option[ManagerInfo.StatusNote] = None,
+      statusNote: Option[Manager.Status] = None,
       cron: Option[ManagerInfo.Cron] = None,
       nextTickAt: Option[ManagerInfo.NextTickAt] = None,
       createdAt: ManagerInfo.CreatedAt = ManagerInfo.CreatedAt(""),
@@ -493,8 +493,6 @@ object Managers:
     val State: Manager.State.Wire.type = Manager.State.Wire
     type PauseRuns = PauseRuns.T
     object PauseRuns extends Newtype[Boolean, Pure]
-    type StatusNote = StatusNote.T
-    object StatusNote extends Newtype[String, Pure]
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
     type NextTickAt = NextTickAt.T

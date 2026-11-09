@@ -24,11 +24,20 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.{Goal as DomainGoal, Run as DomainRun}
+import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.RunRow
 import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.worklists.WorkListControllers
+
+/** The stall report tells a wait by its kind of reason only; the sentence is made from the case. */
+private given waitWhyToStall: Transformer[SchedulerPolicy.Block.Why, Stalls.SchedWait.Why] =
+  why =>
+    why match
+      case SchedulerPolicy.Block.Why.Budget(cap) => Stalls.SchedWait.Why.Budget(Stalls.SchedWait.Detail(cap.render))
+      case SchedulerPolicy.Block.Why.Starved(c)  => Stalls.SchedWait.Why.Starved(Stalls.SchedWait.Detail(s"$c"))
+      case other                                 => Stalls.SchedWait.Why.Other(Stalls.SchedWait.Detail(other.render))
 
 /** The central agent scheduler (docs/research-goal-advancement.md "As built"): the managers PRODUCE pending items; once
   * per managers' tick [[pass]] reads them all — with each goal's priority and age, the plan pools each would draw on,
@@ -105,19 +114,11 @@ final class SchedulerService(
     val (day, month) = agents.runs.spendDayMonth()
     if day >= BigDecimal(cfg.budgets.dailyUsd.value) then
       Some(
-        Block(
-          Block.Code("budget"),
-          Block.Why(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"),
-          Blocker.Budget
-        )
+        Block(Block.Why.Budget(Block.SpendCap.Daily(Block.Usd(BigDecimal(cfg.budgets.dailyUsd.value)))))
       )
     else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
       Some(
-        Block(
-          Block.Code("budget"),
-          Block.Why(s"budget: this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"),
-          Blocker.Budget
-        )
+        Block(Block.Why.Budget(Block.SpendCap.Monthly(Block.Usd(BigDecimal(cfg.budgets.monthlyUsd.value)))))
       )
     else None
 
@@ -129,7 +130,7 @@ final class SchedulerService(
       over: List[Agents.ModelOverride],
       now: Instant,
       pipelines: List[Pipeline]
-  ): Either[String, List[PlanQuota.PoolId]] =
+  ): Either[Block.Chain, List[PlanQuota.PoolId]] =
     val roles = pipelines.flatMap(_.roles).distinct
     val picks = roles.map { r =>
       r -> agents.picker.pick(r, modelOf(over, r), PlanQuotaRepo.EpochMillis(now.toEpochMilli), refresh = None)
@@ -137,10 +138,12 @@ final class SchedulerService(
     picks.collectFirst { case (r, Left(f)) => (r, f) } match
       case Some((r, PickFailure.Exhausted(_, at, why))) =>
         Left(
-          s"${r.wire} chain ${if why == PauseReason.PlanQuota then "below its plan floor" else "out of allowance"}" +
-            at.fold("")(t => s"; frees ~$t")
+          Block.Chain(
+            s"${r.wire} chain ${if why == PauseReason.PlanQuota then "below its plan floor" else "out of allowance"}" +
+              at.fold("")(t => s"; frees ~$t")
+          )
         )
-      case Some((r, PickFailure.Unavailable(msg))) => Left(s"${r.wire}: ${msg.value.take(200)}")
+      case Some((r, PickFailure.Unavailable(msg))) => Left(Block.Chain(s"${r.wire}: ${msg.value.take(200)}"))
       case _                                       =>
         val plans = picks.collect { case (_, Right(p)) => p.billing }
         val pools = plans.collect { case Billing.Plan(p) => p }.distinct
@@ -194,22 +197,20 @@ final class SchedulerService(
             .map((k, t) => (ManagerPolicy.ItemKind(k.value), t.transformInto[ManagerPolicy.Candidate.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
-      val memo = collection.mutable.Map.empty[Pipeline, Either[String, List[PlanQuota.PoolId]]] // per manager and pass
+      val memo = collection.mutable.Map.empty[Pipeline, Either[Block.Chain, List[PlanQuota.PoolId]]] // per manager and pass
       items.map { i =>
         val itemKind = ManagerContext.ItemKind(i.kind.value)
         val pipeline = agents.managers.pipelineOf(itemKind)
         val pools =
           if daily.isDefined then Right(Nil) else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline)))
         val block = daily
-          .map(d => Block(Block.Code("budget"), Block.Why(d.value), Blocker.Budget))
-          .orElse(pools.left.toOption.map(why => Block(QuotaBlock, Block.Why(s"starved: $why"), Blocker.Starved)))
+          .map(d => Block(d))
+          .orElse(pools.left.toOption.map(chain => Block(Block.Why.Starved(chain))))
           .orElse(
             Option.when(ManagerPolicy.waitsFor(itemKind, i.target.transformInto[ManagerPolicy.Candidate.Target], open))(
               Block(
-                Block.Code("waits-for"),
-                Block.Why(
-                  if i.kind.value == ProposeArticles then "its goal's plan comes first (the plan-goal item is open)"
-                  else "its article's coverage filter is inferred first (the infer-filter item is open)"
+                Block.Why.WaitsFor(
+                  if i.kind.value == ProposeArticles then Block.Precondition.Plan else Block.Precondition.Filter
                 )
               )
             )
@@ -221,14 +222,14 @@ final class SchedulerService(
                 goalOf(m, i).flatMap(gs.get).flatMap(_.inProgress)
               )
               .flatten
-              .map(d => Block(Block.Code("articles-in-progress"), Block.Why(d)))
+              .map(d => Block(Block.Why.ArticlesInProgress(Block.Detail(d))))
           )
           // no new goal plan while too many planned goals are unfinished (a person's enqueue goes all the same)
           .orElse(
             Option
               .when(i.kind.value == PlanGoalItem && i.origin != ItemOrigin.Person.wire)(plansWait)
               .flatten
-              .map(d => Block(Block.Code("unfinished-goals"), Block.Why(d.value)))
+              .map(d => Block(Block.Why.UnfinishedGoals(Block.Detail(d.value))))
           )
         val goal = goalOf(m, i)
         val info = goal.flatMap(gs.get)
@@ -298,12 +299,12 @@ final class SchedulerService(
     * when its run was created, Left why not), and keep the pass for the explanations.
     */
   def pass(ms: List[ManagerInfo], now: Instant, stop: Option[Block])(
-      start: (ManagerInfo, ManagerItem) => Either[String, Unit]
+      start: (ManagerInfo, ManagerItem) => Either[Block.Refusal, Unit]
   ): Decision =
     val in = inputs(ms, now, stop)
     val s = settings
     val d =
-      SchedulerPolicy.run(in.cands, in.res, s, now)(c => in.items.get(c.id).fold(Left("the item is gone"))(start(_, _)))
+      SchedulerPolicy.run(in.cands, in.res, s, now)(c => in.items.get(c.id).fold(Left(Block.Refusal.Gone))(start(_, _)))
     last = Some(Snapshot(now, dry = false, in, s, d))
     d
 
@@ -410,7 +411,7 @@ final class SchedulerService(
       waits.take(shown).map(wire),
       SchedulerStatus.WaitingTotal(waits.size),
       SchedulerStatus.ForPerson(agents.managerStore.forPerson().value),
-      res.stop.map(b => SchedulerStatus.Stop(b.why.value)),
+      res.stop.map(b => SchedulerStatus.Stop(b.why.render)),
       List(
         s"aging: 1 level per ${s.agingHours} h",
         s"max wait ${s.maxWaitHours} h",
@@ -438,7 +439,7 @@ final class SchedulerService(
       Waiting.Priority(sc.effective.value),
       Waiting.WaitedMinutes(sc.waitedMinutes.value),
       Waiting.Code(w.code.value),
-      Problem(w.why.value),
+      Problem(w.why.render),
       w.behind.map(b => Waiting.Behind(b.value)),
       Waiting.Position(w.position.value)
     )
@@ -478,7 +479,7 @@ final class SchedulerService(
               case None         =>
                 snap.d.waiting.find(_._1.c.id.value == i.id.value) match
                   case Some((_, w)) =>
-                    say(base, w.code.value, w.why.value)
+                    say(base, w.code.value, w.why.render)
                       .modify(_.behind)
                       .setTo(w.behind.map(b => WhyInfo.Behind(b.value)))
                       .modify(_.position)
@@ -577,12 +578,8 @@ final class SchedulerService(
     val waits = snap.d.waiting.groupMap(_._1.c.goal)(x =>
       Stalls.SchedWait(
         Stalls.SchedWait.Code(x._2.code.value),
-        Stalls.SchedWait.Why(x._2.why.value),
-        Stalls.SchedWait.Position(x._2.position.value),
-        x._2.blocker match
-          case SchedulerPolicy.Blocker.Budget  => Stalls.Blocker.Budget
-          case SchedulerPolicy.Blocker.Starved => Stalls.Blocker.Starved
-          case SchedulerPolicy.Blocker.Other   => Stalls.Blocker.Other
+        x._2.why.transformInto[Stalls.SchedWait.Why],
+        Stalls.SchedWait.Position(x._2.position.value)
       )
     )
     val stops = agents.focusStore.lastStops()

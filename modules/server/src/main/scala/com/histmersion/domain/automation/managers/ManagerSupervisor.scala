@@ -695,47 +695,42 @@ final class ManagerSupervisor(
   ): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then Left("another run is writing its target")
+      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then Left(SchedulerPolicy.Block.Refusal.TargetWritten)
       else
         guardedOpt(m.id.transformInto[ManagerLight.Id], out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
           case None    =>
             if agents.managerStore.item(item.id).exists(_.status == ItemStatus.Pending.wire) then
-              Left("it could not start now (its manager's events say why)")
-            else Left("settled without a run")
+              Left(SchedulerPolicy.Block.Refusal.NotStartable)
+            else Left(SchedulerPolicy.Block.Refusal.Settled)
     }
     ms.foreach { m =>
       val waits =
         decision.waiting
           .filter(_._1.c.managerId.value == m.id.value)
           .map(_._2)
-          .filterNot(_.why == SchedulerPolicy.Wait.Why("settled without a run"))
-      val blocked = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.blocker == SchedulerPolicy.Blocker.Budget)
-        .map(_.why.value)
-        .orElse(waits.find(_.code == SchedulerPolicy.Wait.Code("budget")).map(_.why.value))
-      val starved = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.blocker == SchedulerPolicy.Blocker.Starved)
-        .map(_.why.value.stripPrefix("starved: "))
+          .filterNot(_.why == SchedulerPolicy.Wait.Why.Busy(SchedulerPolicy.Block.Refusal.Settled))
+      val blocked = waits.map(_.why).find(_.isBudget)
+      val starved = waits.filter(_.code == SchedulerPolicy.Code.Blocked).map(_.why).find(_.isStarved)
       val full = waits.exists(w =>
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
       )
       val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending.value)
+      val held = blocked.orElse(starved)
       val base = ManagerPolicy.statusNote(
         Manager.State.Active,
-        starved.map(ManagerPolicy.StatusNote(_)),
+        held,
         if full then ManagerPolicy.Capacity(0) else ManagerPolicy.Capacity(1),
         ManagerPolicy.PendingCount(pending),
         ManagerPolicy.DueCount(waits.size),
-        ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value),
-        blocked.map(domain.Problem(_))
+        ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value)
       )
-      val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
-        case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.value.take(200)}"
-        case None    => base.value
-      Transactor(ds).transact(ManagerRepo.setStatusNote(m.id, ManagerInfo.StatusNote(note)))
+      val note = waits.headOption.filter(_ => held.isEmpty) match
+        case Some(w) => base.appended(s"; the scheduler: ${w.code} — ${w.why.render.take(200)}")
+        case None    => base
+      Transactor(ds).transact(ManagerRepo.setStatusNote(m.id, note))
       // a starved (or budget-blocked) manager says so once per change, not every tick
-      blocked.orElse(starved.map(x => s"starved: $x")).foreach { b =>
+      held.map(_.render).foreach { b =>
         if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == b) then
           recordEvent(m.id, None, None, Feed.Starved, b)
       }
@@ -756,10 +751,8 @@ final class ManagerSupervisor(
                     ManagerPolicy.Capacity(0),
                     ManagerPolicy.PendingCount(m.counts.pending.value),
                     ManagerPolicy.DueCount(0),
-                    ManagerPolicy.InFlightCount(m.inFlight.value),
-                    None
+                    ManagerPolicy.InFlightCount(m.inFlight.value)
                   )
-                  .transformInto[ManagerInfo.StatusNote]
               )
           )
         )

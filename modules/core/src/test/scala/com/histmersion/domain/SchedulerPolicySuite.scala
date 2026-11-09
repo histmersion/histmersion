@@ -66,7 +66,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
 
   private def res(maxRuns: Resources.MaxRuns, recent: List[JobType] = Nil) =
     Resources(maxRuns = maxRuns, occupied = SchedulerPolicy.Resources.Occupied(0), recent = recent)
-  private val ok: Candidate => Either[String, Unit] = _ => Right(())
+  private val ok: Candidate => Either[Block.Refusal, Unit] = _ => Right(())
   private def ids(d: Decision) = d.started.map(_._1.c.id)
 
   // ── goal-first ─────────────────────────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     val (_, w) = d.waiting.find(_._1.c.id.value == 1).get
     assertEquals(w.code, Code.Capacity)
     assertEquals(w.position, 1)
-    assert(w.why.value.contains("goal old") && w.why.value.contains("goal-first"), w.why)
+    assert(w.why.render.contains("goal old") && w.why.render.contains("goal-first"), w.why)
     assertEquals(w.behind, List("#2 article-review t2"))
 
   test("goal-first is work-conserving: what the first goal cannot use goes to the next one"):
@@ -261,9 +261,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       c(Candidate.Id(2), pools = List(Candidate.Pools("claude-plan")), goal = Some(Candidate.Goal("b"))),
       c(
         Candidate.Id(3),
-        block = Some(
-          Block(SchedulerPolicy.Block.Code("quota"), SchedulerPolicy.Block.Why("reviewer chain below its plan floor"))
-        ),
+        block = Some(Block(Block.Why.Starved(Block.Chain("reviewer chain below its plan floor")))),
         prio = Candidate.GoalPriority(99),
         goal = Some(Candidate.Goal("c"))
       )
@@ -281,10 +279,10 @@ class SchedulerPolicySuite extends munit.FunSuite:
     val d = run(cs, r, settings(GoalFirst), now)(ok)
     assertEquals(ids(d), List(2L))
     assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Pool))
-    assert(d.waitOf(SchedulerPolicy.Candidate.Id(1)).exists(_.why.value.contains("chatgpt-plan")))
+    assert(d.waitOf(SchedulerPolicy.Candidate.Id(1)).exists(_.why.render.contains("chatgpt-plan")))
     assertEquals(
       d.waitOf(SchedulerPolicy.Candidate.Id(3)).map(w => (w.code, w.why)),
-      Some((Code.Blocked, "reviewer chain below its plan floor"))
+      Some((Code.Blocked, Block.Why.Starved(Block.Chain("reviewer chain below its plan floor"))))
     )
 
   test("a pool fills within one pass: the second item on it waits"):
@@ -360,7 +358,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
         cs,
         res(Resources.MaxRuns(4))
           .modify(_.stop)
-          .setTo(Some(Block(Block.Code("drain"), Block.Why("draining: nothing new starts")))),
+          .setTo(Some(Block(Block.Why.Draining(Block.Since("2026-11-01"), None)))),
         settings(GoalFirst),
         now
       )(ok)
@@ -373,7 +371,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       c(Candidate.Id(2), goal = Some(Candidate.Goal("b")))
     )
     val d = run(cs, res(Resources.MaxRuns(1)), settings(GoalFirst), now)(x =>
-      if x.id.value == 1 then Left("another run writes its target") else Right(())
+      if x.id.value == 1 then Left(Block.Refusal.TargetWritten) else Right(())
     )
     assertEquals(ids(d), List(2L))
     assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Busy))
@@ -421,12 +419,12 @@ class SchedulerPolicySuite extends munit.FunSuite:
       c(Candidate.Id(2)),
       c(
         Candidate.Id(3),
-        block = Some(Block(QuotaBlock, SchedulerPolicy.Block.Why("starved: extractor chain below its plan floor")))
+        block = Some(Block(Block.Why.Starved(Block.Chain("extractor chain below its plan floor"))))
       ),
       c(
         Candidate.Id(4),
         pools = List(Candidate.Pools("claude-plan")),
-        block = Some(Block(SchedulerPolicy.Block.Code("budget"), Block.Why("budget: today's agent spend reached")))
+        block = Some(Block(Block.Why.Budget(Block.SpendCap.Daily(Block.Usd(BigDecimal(5))))))
       )
     )
     assertEquals(poolsWanted(waiting, chains), Set("chatgpt-plan", "claude-plan"))

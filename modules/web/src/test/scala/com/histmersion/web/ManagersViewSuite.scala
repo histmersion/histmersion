@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -29,7 +30,7 @@ class ManagersViewSuite extends munit.FunSuite:
           Managers.ManagerInfo.Id("review"),
           Managers.ManagerInfo.Kind("review"),
           state = Managers.ManagerInfo.State("paused"),
-          statusNote = Some(ManagerInfo.StatusNote("paused"))
+          statusNote = Some(Manager.Status.parse("paused"))
         )
       ),
       "paused"
@@ -39,7 +40,7 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagerInfo(
           Managers.ManagerInfo.Id("review"),
           Managers.ManagerInfo.Kind("review"),
-          statusNote = Some(Managers.ManagerInfo.StatusNote("starved: skeptic chain below its plan floor"))
+          statusNote = Some(Manager.Status.parse("starved: skeptic chain below its plan floor"))
         )
       ),
       "starved"
@@ -49,7 +50,7 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagerInfo(
           Managers.ManagerInfo.Id("review"),
           Managers.ManagerInfo.Kind("review"),
-          statusNote = Some(Managers.ManagerInfo.StatusNote("at capacity (2 runs in flight, 3 pending)"))
+          statusNote = Some(Manager.Status.parse("at capacity (2 runs in flight, 3 pending)"))
         )
       ),
       "at capacity"
@@ -59,7 +60,7 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagerInfo(
           Managers.ManagerInfo.Id("review"),
           Managers.ManagerInfo.Kind("review"),
-          statusNote = Some(Managers.ManagerInfo.StatusNote("idle"))
+          statusNote = Some(Manager.Status.parse("idle"))
         )
       ),
       "idle"
@@ -69,7 +70,7 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagerInfo(
           Managers.ManagerInfo.Id("seed:g"),
           Managers.ManagerInfo.Kind("seed"),
-          statusNote = Some(Managers.ManagerInfo.StatusNote("focus: its goal waits for a slot — idle"))
+          statusNote = Some(Manager.Status.parse("focus: its goal waits for a slot — idle"))
         )
       ),
       "queued"
@@ -79,7 +80,7 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagerInfo(
           Managers.ManagerInfo.Id("review"),
           Managers.ManagerInfo.Kind("review"),
-          statusNote = Some(Managers.ManagerInfo.StatusNote("3 pending"))
+          statusNote = Some(Manager.Status.parse("3 pending"))
         )
       ),
       "active"

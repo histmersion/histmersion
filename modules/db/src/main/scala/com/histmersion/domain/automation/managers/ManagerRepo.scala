@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.managers
 import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
+import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
 
 import com.augustnagro.magnum.*
@@ -59,6 +60,8 @@ object ManagerRepo:
   private given configCodec: DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
   private given stateCodec: DbCodec[ItemState] = Jsonb.codec(ItemState(), dropNulls = Jsonb.DropNulls(true))
   private given holdCodec: DbCodec[Option[Hold]] = Jsonb.optional[Hold](dropNulls = Jsonb.DropNulls(true))
+  private given statusCodec: DbCodec[Option[Manager.Status]] =
+    DbCodec[Option[String]].biMap(_.map(Manager.Status.parse), _.map(_.render))
   private given effectCodec: DbCodec[Option[HintEffect]] = Jsonb.optional[HintEffect](dropNulls = Jsonb.DropNulls(true))
 
   // ── managers ───────────────────────────────────────────────────────────────────────────────────
@@ -88,8 +91,7 @@ object ManagerRepo:
     val State: ManagerInfo.State.type = ManagerInfo.State
     type PauseRuns = ManagerInfo.PauseRuns
     val PauseRuns: ManagerInfo.PauseRuns.type = ManagerInfo.PauseRuns
-    type StatusNote = ManagerInfo.StatusNote
-    val StatusNote: ManagerInfo.StatusNote.type = ManagerInfo.StatusNote
+    type StatusNote = Manager.Status
     type Cron = ManagerInfo.Cron
     val Cron: ManagerInfo.Cron.type = ManagerInfo.Cron
     type NextTickAt = ManagerInfo.NextTickAt
@@ -209,8 +211,9 @@ object ManagerRepo:
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
   def setStatusNote(id: ManagerRow.Id, note: ManagerRow.StatusNote)(using DbCon): Boolean =
-    sql"""UPDATE agent_managers SET status_note = $note
-          WHERE id = $id AND status_note IS DISTINCT FROM $note""".update.run() > 0
+    val text = note.render
+    sql"""UPDATE agent_managers SET status_note = $text
+          WHERE id = $id AND status_note IS DISTINCT FROM $text""".update.run() > 0
 
   def delete(id: ManagerRow.Id)(using DbCon): Boolean =
     (sql"DELETE FROM agent_managers WHERE id = $id".update.run() > 0)

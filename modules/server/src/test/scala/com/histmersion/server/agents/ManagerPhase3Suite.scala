@@ -824,7 +824,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyKind).status, "pending")
-    val note = connect(ds)(ManagerRepo.get(m.id)).get.statusNote.map(_.value).getOrElse("")
+    val note = connect(ds)(ManagerRepo.get(m.id)).get.statusNote.map(_.render).getOrElse("")
     assert(
       note.startsWith("budget: its spend today (0.0200 USD, metered calls only) reached its daily-usd (0.0100)"),
       note
