@@ -507,18 +507,12 @@ object QueueView:
 
   /** The pane's writes, handed to the rows. */
   final private case class Ops(
-      setDone: (Queue.QueueItem, Ops.SetDoneArg2) => Unit,
+      setDone: (Queue.QueueItem, Done) => Unit,
       edit: (Queue.QueueItem, Queue.QueuePatch, () => Unit) => Unit,
       delete: Queue.QueueItem => Unit,
-      fulfil: (Queue.QueueItem, Ops.FulfilArg2) => Unit,
+      fulfil: (Queue.QueueItem, Preview.Target.Source.Citekey) => Unit,
       recheck: Queue.QueueItem => Unit
   )
-
-  object Ops:
-    type SetDoneArg2 = Done
-    val SetDoneArg2: Done.type = Done
-    type FulfilArg2 = Preview.Target.Source.Citekey
-    val FulfilArg2: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
 
   /** A topic path as the suggestion list shows it: readable, the levels joined by `›`. */
   private def topicLabel(t: Queue.QueueItem.Topic): UiLabels.Text =

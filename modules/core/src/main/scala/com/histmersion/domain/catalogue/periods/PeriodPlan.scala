@@ -41,8 +41,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
       folds.fold(f, o, Bundle.Kind.Period)
       periodLine(o) = _ => localPeriod(o)
       folds.count(_.modify(_.periodsMerged).using(n => MergeTally.PeriodsMerged(n.value + 1)))
-    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
+      PlanMerge.InfoText(
         s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
       )
 

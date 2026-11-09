@@ -97,16 +97,6 @@ object Article:
     val DisagreementKindsValue: DisagreementKind.type = DisagreementKind
     export Article.Slug as ComputeSlug
     export com.histmersion.api.research.Coverage.Total as ComputeTotal
-    type SectionsResult = Sections
-    val SectionsResult: Sections.type = Sections
-    type ExportedResult = Export
-    val ExportedResult: Export.type = Export
-    type NotUsedResult = NotUsed
-    val NotUsedResult: NotUsed.type = NotUsed
-    type MethodResult = Method
-    val MethodResult: Method.type = Method
-    type MarkdownResult = Markdown
-    val MarkdownResult: Markdown.type = Markdown
 
     val DisagreementKinds: scala.List[DisagreementKinds] = scala.List(
       DisagreementKind("challenges"),
@@ -353,8 +343,6 @@ object Article:
     object Offset extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     export Article.{Body as ApplyOneText, Body as LocateText, Body as OccurrencesText}
-    type MarkdownResult = Markdown
-    val MarkdownResult: Markdown.type = Markdown
 
     enum Op(val wire: Op.Wire) derives CanEqual:
       case Replace extends Op(Op.Wire("replace"))
@@ -458,16 +446,16 @@ object Article:
       export Edits.{Anchor, NewText as Text}
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
-      def problems: scala.List[Applied.ProblemsResult] =
-        results.flatMap(r => r.problem.map(p => Applied.ProblemsResult(s"${r.label}: $p")))
+      def problems: scala.List[Applied.Issue] =
+        results.flatMap(r => r.problem.map(p => Applied.Issue(s"${r.label}: $p")))
       def appliedCount: Applied.Count =
         Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
 
     object Applied:
       type Count = Count.T
       object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type ProblemsResult = ProblemsResult.T
-      object ProblemsResult extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Issue = Issue.T
+      object Issue extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def head(anchor: Anchor, max: HeadLimit = HeadLimit(48)): String =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
@@ -797,8 +785,6 @@ object Article:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ResolveMarkdownResult = Markdown
-    val ResolveMarkdownResult: Markdown.type = Markdown
     export Article.Body as ResolveMarkdownMd
 
     val TargetArticle = "article"
@@ -1040,10 +1026,6 @@ object Article:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type FilterBlockResult = Markdown
-    val FilterBlockResult: Markdown.type = Markdown
-    type PlanBlockResult = Markdown
-    val PlanBlockResult: Markdown.type = Markdown
 
     final case class FilterProposal(
         slug: Slug,
@@ -1191,8 +1173,6 @@ object Article:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type MarkdownResult = Markdown
-    val MarkdownResult: Markdown.type = Markdown
 
     type Outcome = Outcome.T
     object Outcome extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]

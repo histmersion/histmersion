@@ -26,9 +26,6 @@ object PluginSet:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
 
-  type DescribeResult = Description
-  val DescribeResult: Description.type = Description
-
   type Digest = Digest.T
   object Digest extends Newtype[String, Pure]
   export PluginDescription.SpiVersion

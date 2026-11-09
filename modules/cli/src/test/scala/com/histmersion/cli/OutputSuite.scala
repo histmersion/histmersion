@@ -160,12 +160,12 @@ class OutputSuite extends munit.FunSuite:
     val first = com.histmersion.util.console.Console.streams(
       new java.io.PrintStream(a, true, "UTF-8"),
       new java.io.PrintStream(errors, true, "UTF-8"),
-      () => com.histmersion.util.console.Console.StreamsInputResult("yes")
+      () => com.histmersion.util.console.Console.Line("yes")
     )
     val second = com.histmersion.util.console.Console.streams(
       new java.io.PrintStream(b, true, "UTF-8"),
       new java.io.PrintStream(errors, true, "UTF-8"),
-      () => com.histmersion.util.console.Console.StreamsInputResult("no")
+      () => com.histmersion.util.console.Console.Line("no")
     )
     def answer(text: String)(using com.histmersion.util.console.Console): Unit = {
       Cli.out.println(text)
@@ -193,11 +193,11 @@ class OutputSuite extends munit.FunSuite:
     val console = com.histmersion.util.console.Console.streams(
       new java.io.PrintStream(out),
       new java.io.PrintStream(err),
-      () => com.histmersion.util.console.Console.StreamsInputResult("yes")
+      () => com.histmersion.util.console.Console.Line("yes")
     )
     assertEquals(
       console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")),
-      Some(com.histmersion.util.console.Console.ReadTerminalLineResult("yes"))
+      Some(com.histmersion.util.console.Console.Line("yes"))
     )
     assertEquals(out.toString("UTF-8"), "")
     assertEquals(err.toString("UTF-8"), "Proceed? ")

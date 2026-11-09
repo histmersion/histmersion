@@ -63,9 +63,9 @@ class SourcesControllersSuite extends munit.FunSuite:
 
   private val removed = AtomicReference(List.empty[SourceOriginals.RemoveFiles])
   private val originals = new SourceOriginals:
-    def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult] =
-      List(SourceOriginals.FindResult(s"/spool/${plan.deletion.citekey}.pdf"))
-    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult] = {
+    def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] =
+      List(SourceOriginals.FoundFile(s"/spool/${plan.deletion.citekey}.pdf"))
+    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] = {
       removed.set(files); Nil
     }
 

@@ -4,7 +4,7 @@ package util.console
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Console:
-  def readTerminalLine(prompt: Console.Prompt): Option[Console.ReadTerminalLineResult] = None
+  def readTerminalLine(prompt: Console.Prompt): Option[Console.Line] = None
   final lazy val out: Console.Output = new Console.Output:
     def print(value: => Any): Unit = write(value)
     def println(value: => Any): Unit = writeLine(value)
@@ -30,10 +30,6 @@ object Console:
   object Line extends Newtype[String, Pure]
   type Prompt = Prompt.T
   object Prompt extends Newtype[String, Pure]
-  type ReadTerminalLineResult = Line
-  val ReadTerminalLineResult: Line.type = Line
-  type StreamsInputResult = Line
-  val StreamsInputResult: Line.type = Line
 
   trait Output:
     def print(value: => Any): Unit
@@ -49,14 +45,14 @@ object Console:
   )
   def standard: Console =
     Streams(() => scala.Console.out, () => scala.Console.err, () => Line(scala.io.StdIn.readLine()))
-  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => StreamsInputResult): Console =
+  def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => Line): Console =
     Streams(() => out, () => err, input, prompt => { err.print(prompt); err.flush(); Option(input()) })
 
   final private class Streams(
       stdout: () => java.io.PrintStream,
       stderr: () => java.io.PrintStream,
-      input: () => Streams.InputResult,
-      terminal: Streams.TerminalArg1 => Option[Streams.TerminalResult] = _ => None
+      input: () => Line,
+      terminal: Prompt => Option[Line] = _ => None
   ) extends Console:
     override def readTerminalLine(prompt: Prompt): Option[Line] =
       terminal(prompt)
@@ -73,14 +69,3 @@ object Console:
     def errorLine(): Unit = stderr().println()
     def errorFlush(): Unit = stderr().flush()
     def readLine(): Line = input()
-
-  object Streams:
-    type InputResult = Line
-    val InputResult: Line.type = Line
-    type TerminalArg1 = Prompt
-    val TerminalArg1: Prompt.type = Prompt
-    type TerminalResult = Line
-    val TerminalResult: Line.type = Line
-
-    type ReadLineResult = Line
-    val ReadLineResult: Line.type = Line

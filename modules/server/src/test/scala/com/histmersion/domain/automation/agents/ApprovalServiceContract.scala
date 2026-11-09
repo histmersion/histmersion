@@ -183,7 +183,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       ApprovalQuery.Subject("zz-g4"),
       ApprovalService.Payload("{}"),
       ApprovalState.Approved,
-      Some(ApprovalService.OpenSubjectResult("applied automatically: x"))
+      Some(ApprovalService.SubjectOutcome("applied automatically: x"))
     )
     assert(
       a(s).decide(idOf(p1), ApprovalState.Approved, Some(Approval.Note("autopilot: approved (checks pass)")), None)

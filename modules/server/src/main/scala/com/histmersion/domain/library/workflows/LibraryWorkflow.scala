@@ -34,7 +34,7 @@ final class LibraryWorkflow(
   def roles: List[AgentRole] = io.scalaland.chimney.Transformer
     .derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]]
     .transform(pipeline.roles)
-  def describe: WorkflowDefinition.DescribeResult = WorkflowDefinition.DescribeResult(pipeline.describe.value)
+  def describe: WorkflowDefinition.Description = WorkflowDefinition.Description(pipeline.describe.value)
 
   def allowedTools(role: AgentRole): Set[ToolName] =
     agents

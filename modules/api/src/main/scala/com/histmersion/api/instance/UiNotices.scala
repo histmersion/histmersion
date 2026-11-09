@@ -25,12 +25,9 @@ object UiNotices:
     type Counted = Counted.T
     object Counted extends Newtype[Boolean, Pure]
 
-    type WiresResult = Wire
-    val WiresResult: Wire.type = Wire
-
     def parse(s: Wire): Option[Board] =
       values.find(_.wire == Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
-    def wires: List[WiresResult] = values.toList.map(_.wire)
+    def wires: List[Wire] = values.toList.map(_.wire)
 
   final case class Counter(
       key: Board.Wire,

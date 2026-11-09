@@ -23,7 +23,7 @@ final class BuildCtx[C, A] private[hot] (
     val previousConfig: Option[C],
     /** The config keys this reload changed (empty for the first build). */
     val changed: List[BuildCtx.Changed],
-    dep: BuildCtx.DepArg1 => Any
+    dep: Hot.Graph.Def.Name => Any
 ):
   /** A dependency's value in the generation being built. */
   def apply[B](h: Hot[B]): B =
@@ -34,5 +34,3 @@ final class BuildCtx[C, A] private[hot] (
 object BuildCtx:
   type Changed = Hot.Graph.Def.Name
   val Changed: Hot.Graph.Def.Name.type = Hot.Graph.Def.Name
-  type DepArg1 = Hot.Graph.Def.Name
-  val DepArg1: Hot.Graph.Def.Name.type = Hot.Graph.Def.Name

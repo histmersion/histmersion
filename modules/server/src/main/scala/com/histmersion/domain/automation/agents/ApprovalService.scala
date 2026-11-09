@@ -68,7 +68,7 @@ trait ApprovalService:
       subject: ApprovalQuery.Subject,
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
-      result: Option[ApprovalService.OpenForStepResult] = None
+      result: Option[ApprovalService.StepOutcome] = None
   ): ApprovalInfo
 
   /** A proposal about a goal or an article that no run waits for. */
@@ -78,7 +78,7 @@ trait ApprovalService:
       subject: ApprovalQuery.Subject,
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
-      result: Option[ApprovalService.OpenSubjectResult] = None
+      result: Option[ApprovalService.SubjectOutcome] = None
   ): ApprovalInfo
 
   /** What run `jobId` opened (of `kind`), oldest first. */
@@ -114,10 +114,10 @@ object ApprovalService:
   object Payload extends Newtype[String, Pure]
   type StepSeq = StepSeq.T
   object StepSeq extends Newtype[Int, Pure]
-  type OpenForStepResult = OpenForStepResult.T
-  object OpenForStepResult extends Newtype[String, Pure]
-  type OpenSubjectResult = OpenSubjectResult.T
-  object OpenSubjectResult extends Newtype[String, Pure]
+  type StepOutcome = StepOutcome.T
+  object StepOutcome extends Newtype[String, Pure]
+  type SubjectOutcome = SubjectOutcome.T
+  object SubjectOutcome extends Newtype[String, Pure]
 
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 
@@ -172,7 +172,7 @@ object ApprovalService:
         subject: ApprovalQuery.Subject,
         payload: Payload,
         state: ApprovalState,
-        result: Option[OpenForStepResult]
+        result: Option[StepOutcome]
     ): ApprovalInfo =
       db.transact(
         AgentRepo.openForStep(
@@ -192,7 +192,7 @@ object ApprovalService:
         subject: ApprovalQuery.Subject,
         payload: Payload,
         state: ApprovalState,
-        result: Option[OpenSubjectResult]
+        result: Option[SubjectOutcome]
     ): ApprovalInfo =
       db.transact(
         AgentRepo.openSubject(
@@ -362,7 +362,7 @@ object ApprovalService:
         subject: ApprovalQuery.Subject,
         payload: Payload,
         state: ApprovalState,
-        result: Option[OpenForStepResult]
+        result: Option[StepOutcome]
     ): ApprovalInfo =
       val at = now
       val _ =
@@ -394,7 +394,7 @@ object ApprovalService:
         subject: ApprovalQuery.Subject,
         payload: Payload,
         state: ApprovalState,
-        result: Option[OpenSubjectResult]
+        result: Option[SubjectOutcome]
     ): ApprovalInfo =
       val at = now
       AutomationState

@@ -775,7 +775,11 @@ object Cli:
           case Left(e) => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-  final case class Error(message: Problem, exitCode: ExitCode = ExitCode.Unreachable)
+  final case class Error(
+      message: Problem,
+      exitCode: ExitCode = ExitCode.Unreachable,
+      notFound: Boolean = false
+  )
 
   object Error:
     type ExitCode = com.histmersion.cli.ExitCode

@@ -17,7 +17,7 @@ trait WorkflowDefinition:
   def version: Pipeline.Version
   def target: TargetKind
   def roles: List[AgentRole]
-  def describe: WorkflowDefinition.DescribeResult
+  def describe: WorkflowDefinition.Description
 
   /** The ONLY tools this role's agents are shown and may call. */
   def allowedTools(role: AgentRole): Set[ToolName]
@@ -29,7 +29,7 @@ trait WorkflowDefinition:
   def outputs: OutputComparison = OutputComparison.none
 
 object WorkflowDefinition:
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends Newtype[String, Pure]
+  type Description = Description.T
+  object Description extends Newtype[String, Pure]
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]

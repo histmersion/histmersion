@@ -286,8 +286,8 @@ object CalibreCmd:
       ck = citekey.getOrElse(Calibre.citekeyFor(book))
       existing <- AcquireClient(c).calibreMeta(ck) match
         case Right(m) => Right(Some(m.calibreId))
-        case Left(e) if e.exitCode == ExitCode.Refused && e.message.value.startsWith("No source") => Right(None)
-        case Left(e)                                                                              => Left(e)
+        case Left(e) if e.notFound => Right(None)
+        case Left(e)               => Left(e)
       target <- Calibre
         .importTarget(ck, id, ImportTarget.Explicit(citekey.isDefined), existing)
         .left

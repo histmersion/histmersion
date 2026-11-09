@@ -35,8 +35,6 @@ object EventImportReport:
   object Markdown extends Newtype[String, Pure]
 
   /** An events import job's report, in its detail. */
-  type MarkdownResult = Markdown
-  val MarkdownResult: Markdown.type = Markdown
 
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]

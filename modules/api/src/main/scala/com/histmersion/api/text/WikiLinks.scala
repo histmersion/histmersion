@@ -12,8 +12,6 @@ object WikiLinks:
 
   type NormalizeRaw = NormalizeRaw.T
   object NormalizeRaw extends Newtype[String, Pure]
-  type RewriteLinksRenderArg3 = Alias
-  val RewriteLinksRenderArg3: Alias.type = Alias
 
   private val Citekey =
     """^(?=.*(?:_|\d{4}))[a-z][a-z0-9_]*$""".r

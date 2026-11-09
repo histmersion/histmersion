@@ -75,8 +75,8 @@ class ApiSurfaceSuite extends munit.FunSuite:
     assertEquals(
       Api.Index.splice(
         Api.Index.Readme("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb"),
-        Api.Index.MarkdownResult("new")
+        Api.Index.Markdown("new")
       ),
       Right("a\n" + Api.Index.Begin + "\nnew\n" + Api.Index.End + "\nb")
     )
-    assert(Api.Index.splice(Api.Index.Readme("no markers"), Api.Index.MarkdownResult("x")).isLeft)
+    assert(Api.Index.splice(Api.Index.Readme("no markers"), Api.Index.Markdown("x")).isLeft)

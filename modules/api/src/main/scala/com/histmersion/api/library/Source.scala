@@ -475,7 +475,7 @@ object Source:
 
     val Matches: PlanMatchKind[Match] =
       new com.histmersion.api.exchange.PlanMatchKind(
-        m => PlanMatchKind.ListedResult(m.outcome != MatchOutcome.New),
+        m => m.outcome != MatchOutcome.New,
         line
       )
 

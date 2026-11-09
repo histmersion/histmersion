@@ -38,19 +38,19 @@ object ChipInput:
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
       onPreview: Option[Chip.Choice] => Unit = _ => (),
       /** How a value reads on its chip and in the suggestions. */
-      display: Chip.Choice => Config.DisplayResult = v =>
-        Config.DisplayResult(
+      display: Chip.Choice => Config.Display = v =>
+        Config.Display(
           com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value
         ),
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
-      mark: Chip.Choice => Option[Config.MarkResult] = _ => None
+      mark: Chip.Choice => Option[Config.Mark] = _ => None
   )
 
   object Config:
-    type DisplayResult = DisplayResult.T
-    object DisplayResult extends Newtype[String, Pure]
-    type MarkResult = MarkResult.T
-    object MarkResult extends Newtype[String, Pure]
+    type Display = Display.T
+    object Display extends Newtype[String, Pure]
+    type Mark = Mark.T
+    object Mark extends Newtype[String, Pure]
 
     type Field = Field.T
     object Field extends Newtype[String, Pure]

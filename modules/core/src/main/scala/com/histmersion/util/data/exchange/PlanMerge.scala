@@ -14,11 +14,11 @@ trait PlanMerge:
   def fold(foreign: UUID, here: UUID, folds: PlanFolds): Unit
 
   /** The plan's line about it: `label` is the record's label here, `bundleLabel` the bundle's. */
-  def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult
+  def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText
 
 object PlanMerge:
-  type InfoResult = InfoResult.T
-  object InfoResult extends Newtype[String, Pure]
+  type InfoText = InfoText.T
+  object InfoText extends Newtype[String, Pure]
   type InfoLabel = InfoLabel.T
   object InfoLabel extends Newtype[String, Pure]
   type InfoBundleLabel = InfoBundleLabel.T

@@ -169,16 +169,16 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           PlanGoal.Work.IsRetracted(w.isRetracted.value)
         )
       )
-  def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.VocabularyResult] =
+  def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.Term] =
     h.library.labels
       .facets(Facet.Field.Wire(field.value), None, Filter())
       .toOption
       .toList
       .flatten
       .sortBy(-_.count.value)
-      .map(f => AutomationHost.VocabularyResult(f.value.value))
-  def housekeepingBlock: Option[AutomationHost.HousekeepingBlockResult] =
-    h.upkeep.housekeepingBlock.map(r => AutomationHost.HousekeepingBlockResult(r.value))
+      .map(f => AutomationHost.Term(f.value.value))
+  def housekeepingBlock: Option[AutomationHost.HousekeepingBlock] =
+    h.upkeep.housekeepingBlock.map(r => AutomationHost.HousekeepingBlock(r.value))
   def backup(): Either[Api.Error, Backup.Status] = h.upkeep.backup()
   def backupStatus: Either[Api.Error, Backup.Status] = h.upkeep.backupStatus
   def lintFix(): Either[Api.Error, LintFixResult] = h.checks.guardedLintFix(Nil)

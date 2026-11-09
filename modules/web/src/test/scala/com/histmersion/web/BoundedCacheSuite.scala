@@ -30,7 +30,7 @@ class BoundedCacheSuite extends munit.FunSuite:
     val c = BoundedCache[String, String](
       BoundedCache.MaxEntries(10),
       maxWeight = BoundedCache.MaxWeight(10),
-      weigh = v => BoundedCache.WeighResult(v.length.toLong)
+      weigh = v => BoundedCache.Weighed(v.length.toLong)
     )
     c.put("a", "xxxx"); c.put("b", "xxxx"); c.put("c", "xxxx")
     assertEquals(c.keys, List("b", "c"))
@@ -41,7 +41,7 @@ class BoundedCacheSuite extends munit.FunSuite:
     val c = BoundedCache[String, String](
       BoundedCache.MaxEntries(10),
       maxWeight = BoundedCache.MaxWeight(5),
-      weigh = v => BoundedCache.WeighResult(v.length.toLong)
+      weigh = v => BoundedCache.Weighed(v.length.toLong)
     )
     c.put("a", "xx"); c.put("b", "xxxxxxxxxx")
     assertEquals(c.keys, List("b"))
@@ -63,7 +63,7 @@ class BoundedCacheSuite extends munit.FunSuite:
     val c = BoundedCache[String, String](
       BoundedCache.MaxEntries(10),
       maxWeight = BoundedCache.MaxWeight(100),
-      weigh = v => BoundedCache.WeighResult(v.length.toLong)
+      weigh = v => BoundedCache.Weighed(v.length.toLong)
     )
     c.put("a", "xxx"); c.put("a", "x")
     assertEquals((c.size.value, c.weight.value), (1, 1L))
@@ -87,7 +87,7 @@ class BoundedCacheSuite extends munit.FunSuite:
     val c = BoundedCache[String, String](
       BoundedCache.MaxEntries(4),
       maxWeight = BoundedCache.MaxWeight(9),
-      weigh = v => BoundedCache.WeighResult(v.length.toLong)
+      weigh = v => BoundedCache.Weighed(v.length.toLong)
     )
     c.put("a", "abc")
     assertEquals(

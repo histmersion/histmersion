@@ -9,10 +9,6 @@ object Corrections:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
-  type StatusResult = StatusResult.T
-  object StatusResult extends Newtype[String, Pure]
-  type MarkdownResult = Markdown
-  val MarkdownResult: Markdown.type = Markdown
 
   enum Outcome derives CanEqual:
     case Keep
@@ -28,10 +24,10 @@ object Corrections:
     else if upstreamNow == upstreamThen then Outcome.Keep
     else Outcome.Conflict
 
-  def status(o: Outcome): StatusResult = o match
-    case Outcome.Keep     => StatusResult(Correction.Status.Active)
-    case Outcome.Retire   => StatusResult(Correction.Status.Agreed)
-    case Outcome.Conflict => StatusResult(Correction.Status.Conflict)
+  def status(o: Outcome): Correction.StatusValue = o match
+    case Outcome.Keep     => Correction.StatusValue(Correction.Status.Active)
+    case Outcome.Retire   => Correction.StatusValue(Correction.Status.Agreed)
+    case Outcome.Conflict => Correction.StatusValue(Correction.Status.Conflict)
 
   def counts(os: Iterable[Outcome]): Correction.Counts =
     Correction.Counts(

@@ -279,7 +279,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                   subject,
                   ApprovalService.Payload(json),
                   ApprovalState.Approved,
-                  Some(ApprovalService.OpenForStepResult("approved automatically (agents.approvals)"))
+                  Some(ApprovalService.StepOutcome("approved automatically (agents.approvals)"))
                 )
                 done(Decided(Decided.Approved(true), Decided.Approval(a.id.value)))
               case Right(json) =>

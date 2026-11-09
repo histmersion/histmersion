@@ -33,16 +33,16 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   /** The same dating and place on both sides: one event. */
   private val SameEvent: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
+      PlanMerge.InfoText(
         s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
       )
 
   /** Under another id here, with the same label, dates and place: one event. */
   private val AcrossIds: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event")
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
+      PlanMerge.InfoText(s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event")
 
   private def merged(f: UUID, o: UUID, folds: PlanFolds): Unit =
     if f != o then folds.fold(f, o, Bundle.Kind.Event)
@@ -64,7 +64,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       Bundle.Kind.Event,
       q.localized.events,
       _.uid,
-      e => PlanQuestions.LabelTakenLabelResult(e.id.value),
+      e => PlanQuestions.LabelTakenLabel(e.id.value),
       e => in.labels.events.get(e.id),
       PlanQuestions.LabelTakenWhat("event id"),
       List(km.KeepLeft, km.KeepRight, km.RenameRight),
