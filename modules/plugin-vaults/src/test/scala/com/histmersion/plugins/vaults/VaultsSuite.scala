@@ -42,7 +42,7 @@ class VaultsSuite extends munit.FunSuite:
     var infos: List[String] = Nil // what it logged at info (test-local)
     def http = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Problem("no network in tests"))
+        Left(Plugin.Http.Failure.Transport(Problem("no network in tests")))
     }
     val log = new Plugin.Log {
       def info(m: Plugin.Log.Line) = infos = infos :+ m.value
@@ -340,7 +340,7 @@ class VaultsSuite extends munit.FunSuite:
       f("Hardware key timed out waiting for user interaction."),
       Stop(Problem("the YubiKey was not touched in time"))
     )
-    assertEquals(f("Could not find entry with path E."), Stop(Problem("no entry 'E'")))
+    assertEquals(f("Could not find entry with path E."), NoEntry(YubiKey.Setting.Entries("E")))
     assert(f("Segmentation fault").isInstanceOf[Stop])
     assertEquals(
       YubiKey.problem(Problem("Please present or touch your YubiKey to continue.\n\nError: no key\n")),

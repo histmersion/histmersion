@@ -10,6 +10,13 @@ G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.sca
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	27	Sources.same2(c: Citekey)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	SourceRows.toParam(c: Citekey)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	11	SourceRows.q(st: Status)
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	6	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	7	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	8	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	9	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	10	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	11	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	13	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	value:Wire
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey
@@ -94,3 +101,9 @@ G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.s
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	domain/Problems$package.ReviewProblem.
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	30	domain/Check.Why.
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/review/Problem.scala	9	second top-level Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	6	contains:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	7	startsWith:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	8	endsWith:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	9	matches:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	10	==:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	11	!=:Problem

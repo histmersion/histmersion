@@ -2706,9 +2706,15 @@ object Api:
     type Code = Code.T
     object Code extends Newtype[String, Pure]
 
+    /** The code of a refused citekey. */
+    val InvalidCitekey: Code = Code("invalid_citekey")
+
     extension (e: Error)
       /** The server answered "not found" (an unknown citekey, id or slug). */
       def isNotFound: Boolean = e.code.contains(Code(Write.CodeNotFound))
+
+      /** The server refused the citekey of the request. */
+      def isInvalidCitekey: Boolean = e.code.contains(InvalidCitekey)
 
     def hasCode(code: Code): PartialFunction[Any, Boolean] =
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)

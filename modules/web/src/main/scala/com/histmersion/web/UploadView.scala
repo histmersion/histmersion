@@ -159,9 +159,8 @@ object UploadView:
 
   /** The server's refusal, placed next to the field it is about. */
   def fieldOf(f: ApiFailure): Field =
-    val m = f.error.message.value.toLowerCase
     if f.duplicate then Field.File
-    else if m.contains("citekey") then Field.Citekey
+    else if f.error.isInvalidCitekey then Field.Citekey
     else Field.Form
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────

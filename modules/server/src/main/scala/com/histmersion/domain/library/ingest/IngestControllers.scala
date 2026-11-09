@@ -55,9 +55,12 @@ final class IngestControllers(
 
   private def invalid(p: ValuesProblem): Api.Error = Write.invalid(p.transformInto[Problem])
 
+  private def invalidCitekey(p: ValuesProblem): Api.Error =
+    Write.invalid(p.transformInto[Problem], Api.Error.InvalidCitekey)
+
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
-    Citekey.parse(p.citekey.value).left.map(invalid).flatMap { validated =>
+    Citekey.parse(p.citekey.value).left.map(invalidCitekey).flatMap { validated =>
       val citekey: Citekey = validated
       val size = upload.size.value
       val limits = cfg().limits
@@ -152,7 +155,7 @@ final class IngestControllers(
     */
   def reocr(citekey: Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(WriteGate.OperationName("reocr"))(
-      Citekey.parse(citekey.value).left.map(invalid).flatMap(_ => reocrValid(citekey, quality))
+      Citekey.parse(citekey.value).left.map(invalidCitekey).flatMap(_ => reocrValid(citekey, quality))
     )
 
   private def reocrValid(citekey: Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
@@ -186,7 +189,7 @@ final class IngestControllers(
     * 404 when the source or its stored file is missing.
     */
   def original(citekey: Citekey): Either[Api.Error, (Blob, Ingest.Disposition)] =
-    Citekey.parse(citekey.value).left.map(invalid).flatMap { _ =>
+    Citekey.parse(citekey.value).left.map(invalidCitekey).flatMap { _ =>
       sources.load(citekey) match
         case None    => Left(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
         case Some(s) =>

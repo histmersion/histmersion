@@ -94,8 +94,24 @@ object YubiKey:
     /** This key is not there or did not answer: the next one may. */
     case Next(why: Problem)
 
-    /** No other key would change it (wrong credentials, no such entry, nobody touched the key). */
+    /** No other key would change it (wrong credentials, nobody touched the key, an error KeePassXC gave). */
     case Stop(why: Problem)
+
+    /** The database has no such entry; no other key would change it. */
+    case NoEntry(entry: Setting.Entries)
+
+  /** Why one try with one key gave no answer at all from KeePassXC. */
+  enum NoAnswer derives CanEqual:
+    /** It did not answer within `waited`: nobody touched the key. */
+    case TimedOut(waited: scala.concurrent.duration.FiniteDuration)
+
+    /** It could not be run, or its answer could not be read. */
+    case Unusable(why: Problem)
+
+    /** The sentence for a person. */
+    def problem: Problem = this match
+      case TimedOut(waited) => Problem(s"keepassxc-cli did not answer within ${waited.toSeconds} s")
+      case Unusable(why)    => why
 
 
   /** Pure: KeePassXC's message for a failed attempt (lower-cased stderr) → next or stop. Wrong credentials stop at
@@ -106,7 +122,7 @@ object YubiKey:
     def has(s: String*) = s.exists((err).value.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
       Failure.Stop(Problem("invalid credentials (the password, key file or YubiKey is wrong)"))
-    else if has("could not find entry") then Failure.Stop(Problem(s"no entry '$entry'"))
+    else if has("could not find entry") then Failure.NoEntry(entry)
     else if has("timed out waiting", "user interaction") then
       Failure.Stop(Problem("the YubiKey was not touched in time"))
     else if has(
