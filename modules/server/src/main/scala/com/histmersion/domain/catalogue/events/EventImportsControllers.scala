@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.api.catalogue.{
@@ -34,16 +35,16 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[PageSize], PageSize) => PageSize
 ):
-  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
   def importJob(caller: Caller, req: EventImportRequest): Either[Api.Error, JobInfo] =
     for
-      provider <- imports.resolve(CatalogRecord.Provider(req.provider.value)).left.map(p => invalid(p.value))
+      provider <- imports.resolve(CatalogRecord.Provider(req.provider.value)).left.map(p => invalid(p.transformInto[Problem]))
       area <- req.bbox.map(_.value.trim).filter(_.nonEmpty) match
         case Some(b) =>
-          BBox.parse(BBox.Text(b)).toRight(invalid(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")).map(Some(_))
+          BBox.parse(BBox.Text(b)).toRight(invalid(Problem(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat"))).map(Some(_))
         case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.ImportJobKind,
@@ -65,7 +66,7 @@ final class EventImportsControllers(
       provider <- req.provider.map(_.value.trim).filter(_.nonEmpty) match
         // no network: a built-in catalogue switched off since still has its records to re-derive
         case Some(p) =>
-          imports.resolveStored(CatalogRecord.Provider(p)).left.map(why => invalid(why.value)).map(Some(_))
+          imports.resolveStored(CatalogRecord.Provider(p)).left.map(why => invalid(why.transformInto[Problem])).map(Some(_))
         case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.RederiveJobKind,
@@ -91,7 +92,7 @@ final class EventImportsControllers(
   ): Either[Api.Error, Correction.List] =
     status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) if !Correction.Status.all.exists(_.value == s) =>
-        Left(invalid(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}"))
+        Left(invalid(Problem(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}")))
       case st =>
         Right(
           corrections.list(

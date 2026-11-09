@@ -2,6 +2,7 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.api.Problem
+import com.histmersion.api.settings.ConfigEdit
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -13,15 +14,13 @@ trait RestartService:
   def available: Boolean
 
   /** Ask for the restart: it happens a moment after the answer is sent. `Left` says why it cannot. */
-  def restart(): Either[Problem, RestartService.Summary]
+  def restart(): Either[Problem, ConfigEdit.Notice]
 
 object RestartService:
   type RestartCount = RestartCount.T
   object RestartCount extends Newtype[Int, Pure]
-  type Summary = Summary.T
-  object Summary extends Newtype[String, Pure]
 
-  val Started: Summary = Summary(
+  val Started: ConfigEdit.Notice = ConfigEdit.Notice(
     "The server is restarting. It is back in a few seconds; this page reconnects by itself."
   )
   val NotHere: Problem =
@@ -35,11 +34,11 @@ object RestartService:
 
   final private class Implementation(stop: Option[() => Unit]) extends RestartService:
     def available: Boolean = stop.isDefined
-    def restart(): Either[Problem, Summary] = stop.toRight(NotHere).map { s => s(); Started }
+    def restart(): Either[Problem, ConfigEdit.Notice] = stop.toRight(NotHere).map { s => s(); Started }
 
   /** Counts the restarts asked for instead of ending anything. */
   final class InMemory(val available: Boolean) extends RestartService:
     private val asked = AtomicInteger(0)
     def restarts: RestartCount = RestartCount(asked.get)
-    def restart(): Either[Problem, Summary] =
+    def restart(): Either[Problem, ConfigEdit.Notice] =
       if !available then Left(NotHere) else { asked.incrementAndGet(); Right(Started) }

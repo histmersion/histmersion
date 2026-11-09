@@ -7,4 +7,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type Problem = Problem.T
 
-object Problem extends Newtype[String, Pure]
+object Problem extends Newtype[String, Pure]:
+  /** The failure an exception states. */
+  def of(t: Throwable): Problem = Problem(t.getMessage)
+
+  extension (p: Problem)
+    /** The failure without a leading `prefix` it may start with. */
+    def stripPrefix(prefix: String): Problem = Problem(p.value.stripPrefix(prefix))

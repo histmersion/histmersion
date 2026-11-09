@@ -1,6 +1,7 @@
 package com.histmersion
 package server.instance
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.library.{SeedRequest, SeedResult}
 import com.histmersion.domain.library.ingest.SeedImport
@@ -36,7 +37,7 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
       SafePath
         .confine(corpusRoot, SafePath.Candidate(asked))
         .left
-        .map(p => Api.Error(Problem(p.value)))
+        .map(p => Api.Error(p.transformInto[Problem]))
         .flatMap { dir =>
           if !Files.isDirectory(dir) then Left(Api.Error(Problem(s"not a directory on the server: $dir")))
           else

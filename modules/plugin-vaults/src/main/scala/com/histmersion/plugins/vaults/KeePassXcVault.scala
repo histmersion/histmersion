@@ -174,7 +174,7 @@ final class KeePassXcVault(
     @tailrec def read(
         rest: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))],
         acc: Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]],
-        mark: KeePassXcSession.SegmentFrom,
+        mark: KeePassXcSession.Segment.From,
         broken: Option[String]
     ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
       (rest, broken) match
@@ -183,7 +183,7 @@ final class KeePassXcVault(
           read(
             tail,
             acc.updated(ref, Left(Problem(s"$name: could not read '$ref' ($b)"))),
-            KeePassXcSession.SegmentFrom(0),
+            KeePassXcSession.Segment.From(0),
             broken
           )
         case ((ref, (entry, attr)) :: tail, None) =>
@@ -196,7 +196,7 @@ final class KeePassXcVault(
             val out = s.out
             KeePassXcSession
               .segment(out, mark, o.prompt)
-              .map(seg => (seg, KeePassXcSession.SegmentFrom(out.value.length)))
+              .map(seg => (seg, KeePassXcSession.Segment.From(out.value.length)))
               .toRight(if s.alive then s"keepassxc-cli did not answer within ${timeout.toSeconds} s"
               else s"keepassxc-cli stopped: ${YubiKey.problem(Problem(s.err.value.drop(errMark)))}")
           }
@@ -224,7 +224,7 @@ final class KeePassXcVault(
                       )
                     )
               read(tail, acc.updated(ref, result), next, None)
-    read(batched, Map.empty, KeePassXcSession.SegmentFrom(s.out.value.length), None)
+    read(batched, Map.empty, KeePassXcSession.Segment.From(s.out.value.length), None)
 
   /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
   private def connected(): Option[Set[YubiKey.Slot.Serial]] =

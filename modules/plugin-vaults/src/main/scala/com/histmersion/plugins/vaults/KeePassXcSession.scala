@@ -22,9 +22,9 @@ object KeePassXcSession:
   type Prompt = Prompt.T
   object Prompt extends Newtype[String, Pure]
   type Segment = Segment.T
-  object Segment extends Newtype[String, Pure]
-  type SegmentFrom = SegmentFrom.T
-  object SegmentFrom extends Newtype[Int, Pure]
+  object Segment extends Newtype[String, Pure]:
+    type From = From.T
+    object From extends Newtype[Int, Pure]
 
   /** Pure: the prompt the session prints once the database is open and after each answer (`<name>> `, the database's
     * name or file name) — the text after the last line break, once stdout ends in `> `.
@@ -51,7 +51,7 @@ object KeePassXcSession:
   /** Pure: what the session printed for the request sent when its output was `from` characters long, once it has
     * printed its prompt again: the text in between (`None` while it has not).
     */
-  def segment(out: Processes.Result.Out, from: SegmentFrom, prompt: Prompt): Option[Segment] =
+  def segment(out: Processes.Result.Out, from: Segment.From, prompt: Prompt): Option[Segment] =
     Option
       .when(out.value.length >= from.value + prompt.value.length && out.value.endsWith(prompt.value))(
         Segment(out.value.substring(from.value, out.value.length - prompt.value.length))
@@ -65,4 +65,4 @@ object KeePassXcSession:
       List(command.value + "\r\n", command.value + "\n")
         .find(segment.value.startsWith)
         .fold(segment.value)(e => segment.value.drop(e.length))
-    Secret.Resolved(Subprocess.value(Subprocess.ValueOut(body)).value)
+    Secret.Resolved(Subprocess.value(Processes.Result.Out(body)).value)

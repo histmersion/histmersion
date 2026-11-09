@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
@@ -74,8 +75,8 @@ final class ArticlesControllers(
     maintenance: WriteGate
 ):
 
-  private def error(message: String, code: String): Api.Error =
-    Api.Error(Problem(message), Some(Api.Error.Code(code)))
+  private def error(message: Problem, code: String): Api.Error =
+    Api.Error(message, Some(Api.Error.Code(code)))
 
   private def notFound(slug: Slug): Api.Error = Articles.notFound(Article.Slug(slug.value))
 
@@ -118,7 +119,7 @@ final class ArticlesControllers(
       issues: => List[FormatIssue]
   ): Either[Api.Error, Unit] =
     if !strict.value then Right(())
-    else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(error(m.value, Write.CodeInvalid)))
+    else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(error(m.transformInto[Problem], Write.CodeInvalid)))
 
   /** `GET /api/articles/{slug}/lint`. */
   def lint(slug: Slug): Either[Api.Error, FormatReport] =
@@ -206,7 +207,7 @@ final class ArticlesControllers(
     * function the review pipeline validates its fixer with.
     */
   def check(slug: Slug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
-    in.draft.left.map(m => error(m.value, Write.CodeInvalid)).flatMap { draft =>
+    in.draft.left.map(m => error(m.transformInto[Problem], Write.CodeInvalid)).flatMap { draft =>
       val stored = store.load(store.canonical(slug))
       (draft, stored) match
         case (Article.Edits.Draft.Edits(_), None) => Left(notFound(slug))
@@ -318,9 +319,9 @@ final class ArticlesControllers(
     store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
         error(
-          s"article '${a.slug}' records no filter, so it has no generated coverage — " +
+          Problem(s"article '${a.slug}' records no filter, so it has no generated coverage — " +
             s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
-            "or patch_article with `filter`",
+            "or patch_article with `filter`"),
           Write.CodeNotFound
         )
       )
@@ -352,7 +353,7 @@ final class ArticlesControllers(
           hits,
           inFilter.map(apiCitekey),
           cited.map(apiCitekey),
-          a.reasons.map((k, v) => k -> Problem(v.value)),
+          a.reasons.map((k, v) => k -> v.transformInto[Problem]),
           edges,
           searches
         )
@@ -551,7 +552,7 @@ final class ArticlesControllers(
           in.modify(_.reasons).setTo(canonicalReasons(in.reasons))
         )
         .left
-        .map(m => error(m.value, Write.CodeInvalid))
+        .map(m => error(m.transformInto[Problem], Write.CodeInvalid))
         .flatMap(a => strictGate(strict, formatting(a.body, a.summary)).map(_ => a))
         .flatMap { a =>
           val _ = store.put(a, Caller.Local); get(slugOf(a))
@@ -609,7 +610,7 @@ final class ArticlesControllers(
           LabelRenames.Label(from.value),
           LabelRenames.Label(req.to.value)
         )
-        to <- Slug.either(label.value).left.map(why => error(why, Write.CodeInvalid))
+        to <- Slug.either(label.value).left.map(why => error(Problem(why), Write.CodeInvalid))
         rewritten <- store.rename(from, to, Caller.Local)
       yield LabelRenamed(
         Bundle.Kind.Article,
@@ -646,7 +647,7 @@ final class ArticlesControllers(
     get(slug).flatMap(v =>
       store
         .version(Slug.assume(v.article.slug.value), versionId)
-        .toRight(error(s"No version $versionId for article '$slug'", Write.CodeNotFound))
+        .toRight(error(Problem(s"No version $versionId for article '$slug'"), Write.CodeNotFound))
     )
 
   def slugs: List[Slug] = store.slugs
@@ -667,7 +668,7 @@ final class ArticlesControllers(
         Slug
           .parse(parsed.slug.value)
           .left
-          .map(m => error(m.value, Write.CodeInvalid))
+          .map(m => error(m.transformInto[Problem], Write.CodeInvalid))
           .flatMap { s =>
             // as for a source note: a note filed under an OLD slug is a stale mirror file — it would
             // otherwise create a second article that shadows the alias
@@ -676,7 +677,7 @@ final class ArticlesControllers(
               .fold(Right(s))(now =>
                 Left(
                   error(
-                    s"'$s' was renamed to '$now' — import the note under '$now' instead",
+                    Problem(s"'$s' was renamed to '$now' — import the note under '$now' instead"),
                     Write.CodeInvalid
                   )
                 )
@@ -691,7 +692,7 @@ final class ArticlesControllers(
               Articles
                 .kindOf(parsed.kind)
                 .left
-                .map(m => error(m.value, Write.CodeInvalid))
+                .map(m => error(m.transformInto[Problem], Write.CodeInvalid))
                 .flatMap(k =>
                   strictGate(
                     com.histmersion.domain.research.Article.StrictMode(req.strict.value),

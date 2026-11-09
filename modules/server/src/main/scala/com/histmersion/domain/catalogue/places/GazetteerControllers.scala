@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
@@ -95,7 +96,7 @@ final class GazetteerControllers(
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
-  private def refused(problem: domain.Problem): Api.Error = Api.Error(Problem(problem.value))
+  private def refused(problem: domain.Problem): Api.Error = Api.Error(problem.transformInto[Problem])
 
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(

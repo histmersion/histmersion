@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.periods
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
@@ -37,7 +38,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
   /** `POST /api/periods/seed?replace=` — the presets bundled with this server. */
   def seed(caller: Caller, replace: PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(WriteGate.OperationName("periods/seed"))(
-      imports.applySeed(replace).left.map(e => Api.Error(Problem(e.value)))
+      imports.applySeed(replace).left.map(e => Api.Error(e.transformInto[Problem]))
     )
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
@@ -50,7 +51,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
     maintenance.guard(WriteGate.OperationName("periods/import")):
       for
         set <- Dataset.ofParam(dataset.map(d => Dataset.Wire(d.value)))
-        d <- PeriodO.parse(body.value).left.map(e => Api.Error(Problem(e.value)))
+        d <- PeriodO.parse(body.value).left.map(e => Api.Error(e.transformInto[Problem]))
       yield imports.write(d.only(collections.map(c => HistoricalPeriod.Id(c.value.trim)).toSet), set)
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
@@ -64,4 +65,4 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
         Left(
           Api.Error(Problem(s"unknown period source '$source' (available: ${PeriodImports.PeriodOSource})"))
         )
-      else imports.fetch(collections).left.map(e => Api.Error(Problem(e.value)))
+      else imports.fetch(collections).left.map(e => Api.Error(e.transformInto[Problem]))

@@ -10,11 +10,14 @@ import com.histmersion.api.Problem as ApiProblem
   */
 object FailureTransformers:
 
-  /** A failure of the values layer as the domain's. */
-  def ofValues(p: ValuesProblem): Problem = Problem(p.value)
+  extension (p: ValuesProblem)
+    /** A failure of the values layer as the domain's. */
+    def valuesAsDomain: Problem = Problem(p.value)
 
-  /** A failure of the wire contract as the domain's. */
-  def ofApi(p: ApiProblem): Problem = Problem(p.value)
+  extension (p: ApiProblem)
+    /** A failure of the wire contract as the domain's. */
+    def apiAsDomain: Problem = Problem(p.value)
 
-  /** The domain's failure as the wire contract's, for a record of the api that carries it. */
-  def toApi(p: Problem): ApiProblem = ApiProblem(p.value)
+  extension (p: Problem)
+    /** The domain's failure as the wire contract's, for a record of the api that carries it. */
+    def domainAsApi: ApiProblem = ApiProblem(p.value)

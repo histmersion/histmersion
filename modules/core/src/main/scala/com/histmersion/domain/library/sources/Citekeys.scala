@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.domain.FailureTransformers
+import com.histmersion.domain.FailureTransformers.valuesAsDomain
 import com.histmersion.domain.Problem
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.given
@@ -23,7 +23,7 @@ object Citekeys:
     * link-shaped (`[[key]]` would resolve to an article, not the source).
     */
   def renameTo(oldCk: Citekey, newRaw: RenameToNewRaw): Either[Problem, Citekey] =
-    Citekey.parse(newRaw.value).left.map(FailureTransformers.ofValues).flatMap { ck =>
+    Citekey.parse(newRaw.value).left.map(_.valuesAsDomain).flatMap { ck =>
       if ck.value == oldCk.value.trim then Left(Problem(s"'$ck' is already the citekey of that source"))
       else if !WikiLinks.isCitekeyShaped(ck.value) then
         Left(

@@ -134,8 +134,8 @@ class VaultsSuite extends munit.FunSuite:
   test("pure helpers: the problem line, the value without its line break, arguments that look like options"):
     assertEquals(Subprocess.problem(Problem("\n  Error: locked \nmore")), "Error: locked")
     assertEquals(Subprocess.problem(Problem("")), "no message")
-    assertEquals(Subprocess.value(Subprocess.ValueOut(" v \n")), " v ")
-    assertEquals(Subprocess.value(Subprocess.ValueOut("v\r\n")), "v")
+    assertEquals(Subprocess.value(Processes.Result.Out(" v \n")), " v ")
+    assertEquals(Subprocess.value(Processes.Result.Out("v\r\n")), "v")
     assertEquals(Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("--help")), Left("x may not start with '-'"))
     assertEquals(Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("")), Left("x is empty"))
     assertEquals(
@@ -552,7 +552,7 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(
       KeePassXcSession.segment(
         Processes.Result.Out(out),
-        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Segment.From(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
       Some("show -q -a password A\nsecret\n")
@@ -560,7 +560,7 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(
       KeePassXcSession.segment(
         Processes.Result.Out(out.dropRight(8)),
-        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Segment.From(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
       None,
@@ -569,7 +569,7 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(
       KeePassXcSession.segment(
         Processes.Result.Out("v.kdbx> "),
-        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Segment.From(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
       None,

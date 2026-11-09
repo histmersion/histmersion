@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.Write
 
@@ -53,8 +54,8 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     for
       format <- parseFilename(filename)
-      region <- Iiif.Region.parse(regionStr).left.map(p => Api.Error(Problem(p.value)))
-      size <- Iiif.Size.parse(sizeStr).left.map(p => Api.Error(Problem(p.value)))
+      region <- Iiif.Region.parse(regionStr).left.map(p => Api.Error(p.transformInto[Problem]))
+      size <- Iiif.Size.parse(sizeStr).left.map(p => Api.Error(p.transformInto[Problem]))
       _ <- validateRotation(rotationStr)
       result <- render(citekey, safeName, region, size, format)
     yield result
@@ -65,7 +66,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   private def parseFilename(filename: IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
     filename.value match
       case s"default.$ext" =>
-        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Problem(p.value)))
+        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(p.transformInto[Problem]))
       case _ =>
         Left(
           Api.Error(Problem(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))

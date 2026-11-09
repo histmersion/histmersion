@@ -69,4 +69,4 @@ extension (work: WorkKey.type)
   /** The work a DOI names, with its title, authors and year from OpenAlex (else Crossref), as the server looks it up
     * before asking the acquisition chain ([[PluginHarness.workFromDoi]]).
     */
-  def fromDoi(doi: com.histmersion.plugin.Doi, harness: PluginHarness): Either[Problem, WorkKey] = harness.workFromDoi(doi)
+  def fromDoi(doi: plugin.Doi, harness: PluginHarness): Either[Problem, WorkKey] = harness.workFromDoi(doi)

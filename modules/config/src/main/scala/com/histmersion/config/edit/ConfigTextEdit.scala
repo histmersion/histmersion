@@ -57,7 +57,7 @@ object ConfigTextEdit:
       // a key changed twice in one write: the last change wins, the first is not written at all
       val last = edits.reverse.distinctBy(_.key.value).reverse
       loop(last, doc, Nil, Nil)
-    catch case e: ConfigException => Left(SettingError.Unreadable(Problem(e.getMessage)))
+    catch case e: ConfigException => Left(SettingError.Unreadable(Problem.of(e)))
 
   private val AddedBlock = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : \{\s*$""".r
   private val AddedValue = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : (.*)$""".r

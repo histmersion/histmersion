@@ -14,8 +14,6 @@ import sttp.tapir.server.ServerEndpoint
   * would read `events/import` as an event id.
   */
 object EventImportsRoutes:
-  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
-
   def apply(imports: EventImportsControllers): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(
@@ -26,11 +24,11 @@ object EventImportsRoutes:
         for
           ev <- event match
             case Some(e) =>
-              Event.Id.either(e.value).left.map(why => invalid(s"event '${e.value}': $why")).map(Some(_))
+              Event.Id.either(e.value).left.map(why => Write.invalid(Problem(s"event '${e.value}': $why"))).map(Some(_))
             case None => Right(None)
           off <- offset match
             case Some(o) =>
-              Offset.either(o.value).left.map(why => invalid(s"offset '${o.value}': $why")).map(Some(_))
+              Offset.either(o.value).left.map(why => Write.invalid(Problem(s"offset '${o.value}': $why"))).map(Some(_))
             case None => Right(None)
           list <- imports.corrections(
             status.map(s => Correction.StatusValue(s.value)),

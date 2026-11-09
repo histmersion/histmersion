@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.research.{Article, Articles, ReviewGoal}
@@ -30,7 +31,7 @@ object ArticleRoutes:
 
   /** A slug a write names: one that is no slug is refused. */
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
-    Slug.parse(slug.value).left.map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+    Slug.parse(slug.value).left.map(p => Api.Error(p.transformInto[Problem], Some(Api.Error.Code(Write.CodeInvalid))))
 
   def apply(articles: ArticlesControllers, pages: PageBuilder): List[ServerEndpoint[Any, Identity]] =
     val rest: List[ServerEndpoint[Any, Identity]] = List(

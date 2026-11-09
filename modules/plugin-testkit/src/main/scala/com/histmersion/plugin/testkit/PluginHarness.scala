@@ -126,7 +126,7 @@ final class PluginHarness private (
     * recorded and replayed with the rest. The contact e-mail of the user's config is never sent from a test (nor
     * recorded): the lookups are anonymous.
     */
-  def workFromDoi(doi: com.histmersion.plugin.Doi): Either[Problem, WorkKey] =
+  def workFromDoi(doi: Doi): Either[Problem, WorkKey] =
     val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))

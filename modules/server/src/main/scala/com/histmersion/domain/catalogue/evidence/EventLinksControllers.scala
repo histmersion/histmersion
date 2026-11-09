@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Problem
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Place
@@ -76,13 +77,13 @@ final class EventLinksControllers(
 ):
   private def ec = settings().events
 
-  private def notFound(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** The id of an event read from the store. */
   private def idOf(d: EventEntry): Event.Id = Event.Id.assume(d.event.id.value)
 
   private def eventOrFail(id: Event.Id): Either[Api.Error, EventEntry] =
-    events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(s"No event '$id'"))
+    events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(Problem(s"No event '$id'")))
 
   /** The names of an event worth searching for. */
   private def namesOf(d: EventEntry): List[String] =
@@ -261,20 +262,20 @@ final class EventLinksControllers(
       case Some(one) =>
         Event.Id
           .option(one)
-          .toRight(notFound(s"No event '$one'"))
+          .toRight(notFound(Problem(s"No event '$one'")))
           .flatMap(eventOrFail)
           .flatMap(_ =>
             jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) {
               (_, _) =>
                 Event.Id
                   .option(one)
-                  .toRight(notFound(s"No event '$one'"))
+                  .toRight(notFound(Problem(s"No event '$one'")))
                   .flatMap(eventOrFail)
                   .map(d =>
                     BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
                   )
                   .left
-                  .map(e => Problem(e.message.value))
+                  .map(e => e.message.transformInto[Problem])
             }
           )
       case None =>

@@ -19,6 +19,6 @@ import com.histmersion.pluginhost.PluginMedia
 final case class MediaVerdict(
     key: MediaRecord.Key,
     item: Option[MediaItem],
-    licence: Option[com.histmersion.domain.Licence.Id],
+    licence: Option[domain.Licence.Id],
     refused: Option[Problem]
 )

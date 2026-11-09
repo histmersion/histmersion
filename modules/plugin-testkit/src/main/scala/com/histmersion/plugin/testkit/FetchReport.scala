@@ -27,13 +27,13 @@ final case class FetchReport(
   /** The licence the copy is published under: what the fetcher stated on the file, else the first line it logged about
     * a licence (the server records the first and logs the second).
     */
-  def licence: Option[com.histmersion.domain.Licence.Id] =
+  def licence: Option[domain.Licence.Id] =
     file
       .flatMap(_.licence)
-      .map(l => com.histmersion.domain.Licence.Id(l.value))
+      .map(l => domain.Licence.Id(l.value))
       .orElse(log.collectFirst {
         case l
             if !l.source.value
               .startsWith("acquire") && l.message.value.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
-          com.histmersion.domain.Licence.Id(l.message.value)
+          domain.Licence.Id(l.message.value)
       })

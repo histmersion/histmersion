@@ -28,15 +28,14 @@ class GeneratedPluginsCompileSuite extends munit.FunSuite:
   /** The sources of the project, written under a fresh directory: `main` and `test`. */
   private def written(kind: PluginKind): (Path, List[Path], List[Path]) =
     val dir = Files.createTempDirectory("generated-plugin")
-    val files = PluginTemplate.files(request(kind))
-    files.foreach { f =>
-      val target = dir.resolve(f.path.value)
-      Files.createDirectories(target.getParent)
-      Files.writeString(target, f.content.value)
-    }
-    val scalaFiles = files.map(_.path.value).filter(_.endsWith(".scala"))
-    val (tests, mains) = scalaFiles.partition(p => p.contains("Suite") || p.startsWith("test/"))
-    (dir, mains.map(dir.resolve), tests.map(dir.resolve))
+    val paths = PluginAuthoring.write(dir, PluginTemplate.files(request(kind))).fold(e => fail(e.toString), identity)
+    val (tests, mains) = paths
+      .filter(_.toString.endsWith(".scala"))
+      .partition { p =>
+        val relative = dir.relativize(p).toString
+        relative.contains("Suite") || relative.startsWith("test/")
+      }
+    (dir, mains, tests)
 
   /** Compile `sources`; the compiler's messages when it fails, empty when it succeeds. */
   private def compile(sources: List[Path], classpath: String, out: Path): String =
