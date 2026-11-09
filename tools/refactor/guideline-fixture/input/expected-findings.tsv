@@ -65,6 +65,7 @@ silentPure	core	modules/core/src/main/scala/com/histmersion/domain/Services.scal
 silentPure	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	7	Citekey.option
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	value:Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	lambda:map;Citekey
+G49	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	arg-of-contains;Detail
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	Key=com/histmersion/domain/Policy$package.Citekey;renamed
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	other-package:com.histmersion.domain.Citekey
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey
@@ -94,6 +95,11 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	va
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Shelf.assume;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Problem.assume;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	construct:Problem.applyUnsafe;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	24	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	25	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	27	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	value:Detail
+G44	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	45	value:Citekey2
 G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	43	newtype:LookupResult
 G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	45	alias:Round1Result
 G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	46	alias:MergeArg2
@@ -107,3 +113,17 @@ G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.s
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	9	matches:Problem
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	10	==:Problem
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	11	!=:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	24	contains:Detail
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	25	startsWith:Detail
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	26	contains:field:message
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	27	==:Problem
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	28	!=:field:note
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	29	endsWith:field:message
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	30	contains:field:error
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	31	contains:field:error
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	32	contains:Throwable.getMessage
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	33	startsWith:Throwable.toString
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	34	regex:field:message
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	35	match:field:message
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	38	match:field:note
+G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	contains-in:Detail
