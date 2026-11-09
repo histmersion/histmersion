@@ -28,25 +28,17 @@ class ValuesSuite extends munit.FunSuite:
       Left("the period ends (-1700) before it starts (-1600)")
     )
 
-  test("coordinates are on the globe"):
+  // The SPI's values are unconstrained: the host validates them where they enter (SpiValuesSuite in plugin-host,
+  // and the domain types' own suites), so a rule change on the host needs no plugin release.
+  test("coordinates, DOIs and Wikidata ids are carried unchanged: the host judges them"):
     assertEquals((Latitude(36.4).value, Longitude(-25.4).value), (36.4, -25.4))
-    assertEquals(List(-90.0, 90.0, 90.5).map(Latitude.option(_).isDefined), List(true, true, false))
-    assertEquals(List(-180.0, 180.0, 180.5).map(Longitude.option(_).isDefined), List(true, true, false))
-
-  test("a DOI is 10.<registrant>/<suffix>, without a resolver"):
-    assertEquals(Doi("10.1038/nature14317").value, "10.1038/nature14317")
+    assertEquals(List(90.5, -91.0).map(Latitude(_).value), List(90.5, -91.0))
+    assertEquals(Longitude(180.5).value, 180.5)
     assertEquals(
-      List("10.1234/abc", "https://doi.org/10.1234/abc", "10.1234/", "doi:10.1/x").map(Doi.option(_).isDefined),
-      List(true, false, false, false)
+      List("10.1038/nature14317", "https://doi.org/10.1234/abc", "nature14317").map(Doi(_).value),
+      List("10.1038/nature14317", "https://doi.org/10.1234/abc", "nature14317")
     )
-    assert(Doi.either("nature14317").isLeft)
-
-  test("a Wikidata item is Q and its number"):
-    assertEquals(WikidataId("Q5788").value, "Q5788")
-    assertEquals(
-      List("Q1", "Q0", "q5788", "P31", "Q12x").map(WikidataId.option(_).isDefined),
-      List(true, false, false, false, false)
-    )
+    assertEquals(List("Q5788", "q12", "P31").map(WikidataId(_).value), List("Q5788", "q12", "P31"))
 
   test("a licence is the provider's statement, whatever it says: the host judges it"):
     assertEquals(
