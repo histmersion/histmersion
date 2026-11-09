@@ -3,6 +3,25 @@
 Status: design proposal for review. Nothing in the tree is changed by it.
 Evidence: `refactor-audit/g60/sites.tsv` (2,510 construction sites in 527 main files, extracted by script).
 
+## Decisions (user, 2026-11-09) — binding, they override the sections below where they differ
+
+1. **What failed is named by its type, not by a vocabulary.** A case does not carry a typed copy of the domain's
+   newtypes, nor a hand-kept `Entity.Kind` enum. It carries the **full name of the type** that failed (e.g.
+   `com.histmersion.domain.library.Citekey`) and **which constraint failed** (Iron's constraint, by name and its
+   own description), plus the raw input as an unconstrained newtype. Both are captured automatically where the
+   value is parsed (the `Newtype` trait supplies the type's full name at compile time; the constraint comes from
+   Iron), so no call site writes them by hand. `NotFound` likewise names the key's type and the raw key.
+   Replaces the `Entity.Kind` / `Rule` vocabulary of section 2 and open question 10.
+2. **`Problem.Unclassified(text)`** is allowed for the flag-day step 1 and ratcheted to 0 (`G60fromString`).
+3. **Internal problems:** log the exception under a problem id and return the id. Because there is no API, CLI or
+   web view of the server's logs yet, the answer **keeps showing the reported text as well, for now**; hiding it
+   waits for a way to look a problem id up (a follow-up goal: log lookup by id through the API, CLI and web).
+4. **Plugins:** the shared cases first, `Plugin.Said(plugin, kind, PluginSaid)` as the escape hatch.
+5. Accepted as recommended: 11 groups (`Io.Database`); HTTP body carries `text` and `data`; own `NonEmptyVector`
+   (no cats in the module or plugin-api); narration sites leave `Problem`; new statuses 403/422/429/502/504;
+   `Refused.Disabled(feature, setting)`; log format `group.case key=value` plus the sentence; slice owners re-sort
+   their sites.
+
 ## 0. Summary
 
 - Today a failure is a sentence. Five unrelated `Problem` string newtypes, `Api.Error` (message + code string), `Cli.Error` (message + exit code + two flags) and about 24 per-feature enums all end in text, and code that needs to branch re-reads that text (`Api.Error.isNotFound` looks at a code string, `Stopped.cause` parses a stored sentence).
