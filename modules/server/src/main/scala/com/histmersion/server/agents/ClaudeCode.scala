@@ -277,7 +277,6 @@ object ClaudeCode:
       firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
   )
 
-
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
 

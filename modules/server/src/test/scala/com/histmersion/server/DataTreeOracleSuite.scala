@@ -126,9 +126,7 @@ class DataTreeOracleSuite extends DbSuite:
           source = Some(
             (
               l,
-              ConfigSource(() =>
-                AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => Problem(p.value))
-              )
+              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => Problem(p.value)))
             )
           )
         )

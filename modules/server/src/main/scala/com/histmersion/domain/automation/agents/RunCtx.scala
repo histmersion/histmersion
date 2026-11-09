@@ -118,9 +118,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         )
       else
         decode[O](json.value).left
-          .map(e =>
-            Halt.Fail(domain.Problem(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
-          )
+          .map(e => Halt.Fail(domain.Problem(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})")))
     }
 
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at

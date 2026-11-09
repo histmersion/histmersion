@@ -1875,11 +1875,15 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding.Problem("1 source the filter returns is neither cited nor given a reason: [[knapp2016_tin]]").cause,
       Cause.UnplacedSources(Finding.Problem.Count(1), List(ApiCitekey("knapp2016_tin")))
     )
-    Finding.Problem(s"45 sources the filter returns are neither cited nor given a reason: $manyKeys (+5 more)").cause match
+    Finding
+      .Problem(s"45 sources the filter returns are neither cited nor given a reason: $manyKeys (+5 more)")
+      .cause match
       case Cause.UnplacedSources(n, listed) => assertEquals((n.toInt, listed.size), (45, 40))
-      case _                                 => fail("not read as UnplacedSources")
+      case _                                => fail("not read as UnplacedSources")
     assert(Finding.Problem("27 terms are undefined (more than 8)").isTermCount)
-    assert(Finding.Problem("  9 terms undefined (count only; the individual findings carry the severity)  ").isTermCount)
+    assert(
+      Finding.Problem("  9 terms undefined (count only; the individual findings carry the severity)  ").isTermCount
+    )
     assert(!Finding.Problem("27 terms are fine").isTermCount)
     List(
       Finding.Problem("The critique is not cited."),
@@ -1890,10 +1894,14 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   test("a ledger finding keeps its stored problem sentence through the JSON codec"):
     storedSentences.foreach { p =>
-      val json = s"""{"id":"M1","reviewer":"mechanical","severity":"major","kind":"citation","where":"body","quote":"","problem":${io.circe.Json
-          .fromString(s"$p")
-          .noSpaces},"fix":"f","evidence":[],"escalated":false,"pair":null}"""
+      val json =
+        s"""{"id":"M1","reviewer":"mechanical","severity":"major","kind":"citation","where":"body","quote":"","problem":${io.circe.Json
+            .fromString(s"$p")
+            .noSpaces},"fix":"f","evidence":[],"escalated":false,"pair":null}"""
       val f = io.circe.parser.decode[Finding](json).fold(e => fail(e.getMessage), identity)
       assertEquals(f.problem, p)
-      assertEquals(io.circe.parser.decode[Finding](io.circe.syntax.EncoderOps(f).asJson.noSpaces).map(_.problem), Right(p))
+      assertEquals(
+        io.circe.parser.decode[Finding](io.circe.syntax.EncoderOps(f).asJson.noSpaces).map(_.problem),
+        Right(p)
+      )
     }

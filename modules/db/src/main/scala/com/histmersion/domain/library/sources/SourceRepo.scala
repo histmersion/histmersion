@@ -120,7 +120,7 @@ private[sources] object SourceRepo:
               existing,
               Source.Write.srcAliased(p, apiCitekey(requested), apiCitekey(citekey))
             ) match
-              case Left(refusal) => Left(refusal.error)
+              case Left(refusal)  => Left(refusal.error)
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(Source.UpdatedAt(token(citekey).getOrElse("")))
 

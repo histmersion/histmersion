@@ -152,4 +152,3 @@ object HintProposals:
     */
   final case class Proposed(effect: Option[HintEffect], why: Problem, problems: List[Description] = Nil)
       derives KindlingsCodecAsObject
-

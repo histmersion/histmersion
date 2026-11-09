@@ -63,4 +63,3 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
         if c.isInstanceOf[LastHttpContent] then discarding = false
         val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
-

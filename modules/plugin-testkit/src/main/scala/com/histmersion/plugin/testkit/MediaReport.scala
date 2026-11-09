@@ -17,4 +17,3 @@ final case class MediaReport(
     requests: List[PluginHarness.Request]
 ):
   def kept: List[MediaVerdict] = verdicts.filter(_.refused.isEmpty)
-

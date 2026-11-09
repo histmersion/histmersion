@@ -92,8 +92,7 @@ object GoalRepo:
   def patchIn(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
-      if !exists then
-        Left(Api.Error(api.Problem(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      if !exists then Left(Api.Error(api.Problem(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       else
         p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())

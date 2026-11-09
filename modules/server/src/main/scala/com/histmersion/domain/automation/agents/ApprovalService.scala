@@ -145,7 +145,8 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left.map(_.transformInto[Problem])
+      ).left
+        .map(_.transformInto[Problem])
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -159,7 +160,8 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left.map(_.transformInto[Problem])
+      ).left
+        .map(_.transformInto[Problem])
     def approvalFacets(
         q: ApprovalQuery
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =

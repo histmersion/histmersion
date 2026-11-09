@@ -610,8 +610,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val ingestedBefore = a.autopilot.ingestedToday(Instant.now())
     up.answer = (d, into) =>
       if d.value == doi("a3") then found(d, Citekey("zzrecheck_a3"))
-      else if d.value == doi("a4") then
-        Left(Problem("HTTP 429 Too Many Requests from api.example.invalid"))
+      else if d.value == doi("a4") then Left(Problem("HTTP 429 Too Many Requests from api.example.invalid"))
       else
         Left(
           Problem(
@@ -766,8 +765,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       "the status names it"
     )
     val _ = transact(ds)(AutopilotRepo.setDrain(on = false, AutopilotRepo.Row.ChangedBy("test")))
-    up.answer =
-      (d, _) => Left(Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
+    up.answer = (d, _) => Left(Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
       resumed.exists(_.value.contains(s"job ${job.id} (${Stopped.DrainingText}) resumed as job")),

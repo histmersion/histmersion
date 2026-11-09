@@ -87,9 +87,7 @@ final class GoalFocusService(
   def statusNote(goal: Option[Goal.Slug], note: Manager.Status): Manager.Status =
     goal
       .filter(g => current.isDefined && queued(g))
-      .fold(note)(_ =>
-        Manager.Status(Manager.Status.Kind.Queued, s" its goal waits for a slot — ${note.render}")
-      )
+      .fold(note)(_ => Manager.Status(Manager.Status.Kind.Queued, s" its goal waits for a slot — ${note.render}"))
 
   private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Ref(goal.value))
 

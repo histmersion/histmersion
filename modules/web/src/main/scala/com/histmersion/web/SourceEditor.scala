@@ -70,7 +70,7 @@ object SourceEditor:
     def of(e: Api.Error): Field = e.field match
       case Some(Api.Error.Field.Period) => Period
       case Some(Api.Error.Field.Status) => Status
-      case None                               => Form
+      case None                         => Form
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -205,8 +205,8 @@ object SourceEditor:
                       errors.set(List(Field.Form -> ConflictMessage))
                       load()
                     case f: ApiFailure if f.unauthorized => errors.set(List(Field.Form -> f.error.message.value))
-                    case f: ApiFailure => errors.set(List(Field.of(f.error) -> f.error.message.value))
-                    case e             => errors.set(List(Field.Form -> e.getMessage))
+                    case f: ApiFailure                   => errors.set(List(Field.of(f.error) -> f.error.message.value))
+                    case e                               => errors.set(List(Field.Form -> e.getMessage))
                   },
                   sw =>
                     orig.set(Some(sw.source))

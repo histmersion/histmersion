@@ -151,8 +151,7 @@ final class EventImports(
             val span = r.timeSpan.outer
             val why =
               if span.exists(_._1.value > to.value) then Left(Problem(s"after $to"))
-              else if from.exists(f => span.exists(_._2.value < f.value)) then
-                Left(Problem(s"before ${from.get}"))
+              else if from.exists(f => span.exists(_._2.value < f.value)) then Left(Problem(s"before ${from.get}"))
               else EventProviders.keep(r, th)
             r -> why
           }
@@ -395,4 +394,3 @@ final class EventImports(
               .setTo((r.names ++ ns.map(CatalogRecord.Names(_))).filterNot(_.value == r.label.value).distinct)
           )
       )
-

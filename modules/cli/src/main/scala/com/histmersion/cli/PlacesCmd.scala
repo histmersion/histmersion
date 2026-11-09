@@ -89,8 +89,7 @@ object PlacesCmd:
       batch: Paging.Limit,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Place.ImportResult] =
-    if !Files.isRegularFile(file) then
-      Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+    if !Files.isRegularFile(file) then Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
         case Left(e)      => Left(Cli.Error(Problem(s"$file: $e"), exitCode = ExitCode.Usage))

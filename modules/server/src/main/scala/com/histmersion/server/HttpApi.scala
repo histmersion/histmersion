@@ -401,9 +401,7 @@ final class HttpApi(
 object HttpApi:
   /** A request value the domain refuses is the caller's mistake: a 400 that says which value and why. */
   private def refused[A](what: String, checked: Either[String, A]): Either[Api.Error, A] =
-    checked.left.map(why =>
-      Api.Error(Problem(s"invalid $what: $why"), Some(Api.Error.Code(Write.CodeInvalid)))
-    )
+    checked.left.map(why => Api.Error(Problem(s"invalid $what: $why"), Some(Api.Error.Code(Write.CodeInvalid))))
 
   private def citekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     refused("citekey", Citekey.either(ck.value))

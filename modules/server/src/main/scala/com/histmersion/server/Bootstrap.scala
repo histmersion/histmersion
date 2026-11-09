@@ -79,8 +79,7 @@ final class Bootstrap(
 
   /** The bundled seed's text. */
   private def bundledSeed: Either[Problem, PeriodImports.Document] =
-    if !Files.isRegularFile(periodsSeed) then
-      Left(Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
+    if !Files.isRegularFile(periodsSeed) then Left(Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
     else Right(PeriodImports.Document(Files.readString(periodsSeed)))
 
   // ── the gazetteer ───────────────────────────────────────────────────────────────────────────────

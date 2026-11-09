@@ -449,8 +449,7 @@ object ReviewArticle:
   /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the reason (the pair
     * becomes `reasoned`, §6.8).
     */
-  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem)
-      derives KindlingsCodecAsObject
+  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem) derives KindlingsCodecAsObject
   object NotMaterialAnswer:
     type Pair = CritiqueRef.Wire
     val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
@@ -727,9 +726,9 @@ object ReviewArticle:
 
       /** The sentence a cause is stored as. */
       def of(c: Cause): Problem = c match
-        case Cause.UncitedParagraph          => Problem("a paragraph with no [[citekey]]")
-        case Cause.HandWrittenSourcesCited   => Problem("a hand-written Sources cited section (the page generates it)")
-        case Cause.MissingSection(alts)      =>
+        case Cause.UncitedParagraph        => Problem("a paragraph with no [[citekey]]")
+        case Cause.HandWrittenSourcesCited => Problem("a hand-written Sources cited section (the page generates it)")
+        case Cause.MissingSection(alts)    =>
           Problem(s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)")
         case Cause.UnplacedSources(n, listed) =>
           val more = n.toInt - listed.size
@@ -750,10 +749,12 @@ object ReviewArticle:
         def cause: Cause =
           val text: String = p.value
           val read: Cause = text match
-            case "a paragraph with no [[citekey]]" => Cause.UncitedParagraph
+            case "a paragraph with no [[citekey]]"                              => Cause.UncitedParagraph
             case "a hand-written Sources cited section (the page generates it)" => Cause.HandWrittenSourcesCited
-            case MissingRe(alts) =>
-              Cause.MissingSection(alts.split(" or ").toList.map(a => Section.read(a.stripPrefix("'").stripSuffix("'"))))
+            case MissingRe(alts)                                                =>
+              Cause.MissingSection(
+                alts.split(" or ").toList.map(a => Section.read(a.stripPrefix("'").stripSuffix("'")))
+              )
             case UnplacedRe(listed, more) =>
               val cks = keys(listed)
               Cause.UnplacedSources(

@@ -319,9 +319,11 @@ final class ArticlesControllers(
     store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
         error(
-          Problem(s"article '${a.slug}' records no filter, so it has no generated coverage — " +
-            s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
-            "or patch_article with `filter`"),
+          Problem(
+            s"article '${a.slug}' records no filter, so it has no generated coverage — " +
+              s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
+              "or patch_article with `filter`"
+          ),
           Write.CodeNotFound
         )
       )

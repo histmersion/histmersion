@@ -38,7 +38,10 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           // one used to surface as a driver error) and `status` was written unchecked.
           for
             status <- Queue.statusOf(in.status).left.map(p => WorkListControllers.bad(p.transformInto[Problem]))
-            createdAt <- Queue.createdAtOf(in.createdAt).left.map(p => WorkListControllers.bad(p.transformInto[Problem]))
+            createdAt <- Queue
+              .createdAtOf(in.createdAt)
+              .left
+              .map(p => WorkListControllers.bad(p.transformInto[Problem]))
           yield queues.add(
             k,
             in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt)

@@ -152,9 +152,7 @@ object ConfigEdit:
     type Reload = Reload.T
     object Reload extends Newtype[Boolean, Pure]
 
-  final case class RestartNote(key: RestartNote.Key, why: Problem)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema
+  final case class RestartNote(key: RestartNote.Key, why: Problem) derives KindlingsCodecAsObject, KindlingsSchema
 
   object RestartNote:
     export Field.Key

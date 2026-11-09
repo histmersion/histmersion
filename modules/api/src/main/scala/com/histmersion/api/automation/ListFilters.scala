@@ -32,7 +32,6 @@ object ListFilters:
   type TimeBound = TimeBound.T
   object TimeBound extends Newtype[String, Pure]
 
-
   val FacetsHeader = "X-Facet-Counts"
 
   val FacetMax = 40

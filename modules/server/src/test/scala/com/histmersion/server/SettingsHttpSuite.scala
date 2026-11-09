@@ -64,9 +64,7 @@ class SettingsHttpSuite extends DbSuite:
           source = Some(
             (
               l,
-              ConfigSource(() =>
-                AppConfig.loadWithUserFile(env, Some(file)).left.map(e => Problem(e.value))
-              )
+              ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(e => Problem(e.value)))
             )
           )
         )

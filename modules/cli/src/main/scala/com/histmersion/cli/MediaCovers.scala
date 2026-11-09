@@ -70,7 +70,6 @@ object MediaCovers:
     case Skipped(reason: Problem)
     case Failed(message: MediaCoversReport.Failed)
 
-
   def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
     CoverChoice.choose(
       book.cover.map(p => CoverChoice.Pick.Calibre.Path(p.value)),

@@ -127,8 +127,7 @@ object FakeCli:
     )
 
   /** A pool sink in memory: records readings and blocks while `block` says so. */
-  final class Sink(var block: Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] = None)
-      extends PoolSink:
+  final class Sink(var block: Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] = None) extends PoolSink:
     val recorded = java.util.concurrent.ConcurrentLinkedQueue[(PoolId, Reading)]()
     @volatile var refreshed = 0 // how often a client asked for a fresh read
     def record(p: PoolId, rs: List[Reading]): Unit = rs.foreach(r => recorded.add(p -> r))

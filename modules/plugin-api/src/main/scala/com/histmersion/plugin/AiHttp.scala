@@ -23,8 +23,8 @@ trait AiHttp:
 
 object AiHttp:
 
-  /** A request that got no answer: what kind of failure the host's client met, with the text it reported
-    * (`<exception>: <message>`, never the request).
+  /** A request that got no answer: what kind of failure the host's client met, with the text it reported (`<exception>:
+    * <message>`, never the request).
     */
   enum Failure derives CanEqual:
     /** No connection could be made (refused, unknown host, no route, a malformed URL). */

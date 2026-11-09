@@ -54,8 +54,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginState.Wire(PluginState.Failed.wire.value),
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
-    error =
-      Some(api.Problem("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
+    error = Some(api.Problem("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
   )
   private val alien = PluginStatus(
     PluginStatus.Id("old"),

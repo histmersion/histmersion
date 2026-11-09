@@ -339,7 +339,7 @@ final class ModelPicker(
             if exhausted.isEmpty then
               Left(
                 PickFailure.Unavailable(
-                    Problem(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
+                  Problem(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
                 )
               )
             else

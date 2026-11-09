@@ -20,7 +20,6 @@ object TimeZoneCheck:
   type Report = Report.T
   object Report extends Newtype[String, Pure]
 
-
   /** How many region ids the JDK knows. */
   type ZoneCount = ZoneCount.T
   object ZoneCount extends Newtype[Int, Pure]

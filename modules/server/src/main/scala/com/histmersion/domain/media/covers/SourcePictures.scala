@@ -327,7 +327,7 @@ final class SourcePictures(
         seen += k.citekey.value
         progress(JobInfo.Progress(s"Open Library covers: ${i + 1}/${cands.size} (${k.citekey})"))
         openLibrary(k, dryRun, fetch) match
-          case Right(l)                                           => lines += l
+          case Right(l)                        => lines += l
           case Left(CoverRefusal.Failed(why))  => failed += s"${k.citekey}: $why"
           case Left(CoverRefusal.Skipped(why)) => skipped += s"cover: $why"
       }

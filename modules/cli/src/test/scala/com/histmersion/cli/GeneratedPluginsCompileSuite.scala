@@ -5,9 +5,9 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 /** The plugin projects `histmersion plugin new` writes, compiled against the plugin API of THIS build: a template that
-  * names a type, a constructor or a method the SPI no longer has fails here, offline, in the normal test run. The
-  * main sources are compiled against the plugin API, the test sources also against the plugin testkit, with the
-  * Scala compiler the build uses; the class path is this test's own, which holds both.
+  * names a type, a constructor or a method the SPI no longer has fails here, offline, in the normal test run. The main
+  * sources are compiled against the plugin API, the test sources also against the plugin testkit, with the Scala
+  * compiler the build uses; the class path is this test's own, which holds both.
   */
 class GeneratedPluginsCompileSuite extends munit.FunSuite:
 

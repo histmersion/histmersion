@@ -119,8 +119,10 @@ final class IngestControllers(
           case None =>
             Left(
               error(
-                Problem(s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
-                  "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host")
+                Problem(
+                  s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
+                    "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host"
+                )
               )
             )
           case Some(f) => ingest(params(filename.getOrElse(Ingest.Params.Filename(f.name.value))), f)
@@ -136,8 +138,10 @@ final class IngestControllers(
             if raw.length > limit then
               Left(
                 error(
-                  Problem(s"payload is ${raw.length} bytes, over the $limit-byte " +
-                    "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`")
+                  Problem(
+                    s"payload is ${raw.length} bytes, over the $limit-byte " +
+                      "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`"
+                  )
                 )
               )
             else
@@ -166,8 +170,10 @@ final class IngestControllers(
           case None =>
             Left(
               error(
-                Problem(s"no original stored for '$citekey' — the server keeps uploads in " +
-                  s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`")
+                Problem(
+                  s"no original stored for '$citekey' — the server keeps uploads in " +
+                    s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`"
+                )
               )
             )
           case Some((sha, file)) =>
@@ -197,8 +203,10 @@ final class IngestControllers(
             case None =>
               Left(
                 error(
-                  Problem(s"no original stored for '${s.citekey}' — the server keeps uploads in " +
-                    s"${cfg().converter.spoolDir}; pass the file yourself (--file)"),
+                  Problem(
+                    s"no original stored for '${s.citekey}' — the server keeps uploads in " +
+                      s"${cfg().converter.spoolDir}; pass the file yourself (--file)"
+                  ),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
@@ -280,8 +288,10 @@ final class IngestControllers(
       case Some(other) if other != citekey && !force.value =>
         Left(
           error(
-            Problem(s"this file is already stored as '$other' (sha256 ${sha.value.take(12)}…) — " +
-              "pass force to ingest it again under a different citekey"),
+            Problem(
+              s"this file is already stored as '$other' (sha256 ${sha.value.take(12)}…) — " +
+                "pass force to ingest it again under a different citekey"
+            ),
             Some(Api.Error.Code(Ingest.CodeConflict))
           )
         )

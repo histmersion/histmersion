@@ -36,4 +36,3 @@ final class JobStops:
   def forget(id: Job.Id): Unit =
     val _ = resumers.remove(id)
     answered(id)
-

@@ -20,7 +20,6 @@ object Fetch:
 
   /** What the host lends a fetcher for ONE fetch of one work. */
 
-
   trait Context:
     /** A value computed at most once per fetch of this work and shared by every fetcher of the chain — an index record
       * two steps both read. `compute` runs on the first call for `key`; later calls return that value. Name keys

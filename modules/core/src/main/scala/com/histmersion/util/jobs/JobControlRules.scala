@@ -12,7 +12,6 @@ import com.histmersion.api.RegisteredJobKinds
   */
 object JobControlRules:
 
-
   def stoppable(kind: JobKinds.Wire): Boolean = JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job` (a kind whose runner controls its own jobs is handed the action); `Left`

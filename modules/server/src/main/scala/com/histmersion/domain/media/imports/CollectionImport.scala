@@ -335,7 +335,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
                   )
                 )
               case Right(_)  => None
-              case Left(why) => scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem}"); None
+              case Left(why) =>
+                scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem}"); None
           }
           val made = own.orElse(
             converter.thumbnail(

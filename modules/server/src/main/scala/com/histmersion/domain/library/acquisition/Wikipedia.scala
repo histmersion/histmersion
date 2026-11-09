@@ -30,16 +30,15 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
           .left
           .map(_.problem)
           .flatMap { j =>
-            AcquireParse.wikiText(j).toRight(Problem(s"Wikipedia returned no wikitext for '$page'")).map {
-              text =>
-                val (dois, arxiv) = AcquireParse.wikiRefs(text)
-                WikirefsResult(
-                  WikirefsResult.Article(AcquireParse.wikiTitle(j).getOrElse(page).value),
-                  WikirefsResult.Url(articleUrl.value),
-                  WikirefsResult.DoiCount(dois.size),
-                  dois.map(d => WikirefsResult.Dois(d.value)),
-                  arxiv.map(a => WikirefsResult.Arxiv(a.value))
-                )
+            AcquireParse.wikiText(j).toRight(Problem(s"Wikipedia returned no wikitext for '$page'")).map { text =>
+              val (dois, arxiv) = AcquireParse.wikiRefs(text)
+              WikirefsResult(
+                WikirefsResult.Article(AcquireParse.wikiTitle(j).getOrElse(page).value),
+                WikirefsResult.Url(articleUrl.value),
+                WikirefsResult.DoiCount(dois.size),
+                dois.map(d => WikirefsResult.Dois(d.value)),
+                arxiv.map(a => WikirefsResult.Arxiv(a.value))
+              )
             }
           }
       }

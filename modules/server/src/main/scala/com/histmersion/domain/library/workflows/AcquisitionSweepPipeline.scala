@@ -228,9 +228,7 @@ final class AcquisitionSweepPipeline(
             g.notes,
             queries,
             cands,
-            sw.skipped.map((k, n) =>
-              Problem(k.value) -> AcquisitionSweepRules.SkipCount(n.value)
-            ) ++
+            sw.skipped.map((k, n) => Problem(k.value) -> AcquisitionSweepRules.SkipCount(n.value)) ++
               Option
                 .when(gone.nonEmpty)(
                   Problem("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
@@ -432,7 +430,6 @@ object AcquisitionSweepPipeline:
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
   final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives KindlingsCodecAsObject
-
 
   /** What the ingest step of a run with a backlog did. */
   final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject

@@ -99,4 +99,3 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
 
   /** Why there is no map (what the message says first). */
   def unavailable: Problem = why
-

@@ -63,7 +63,9 @@ final class PersonalControllers(
           .parse(MarkKind.Wire(k))
           .filter(allowed)
           .map(Some(_))
-          .toRight(bad(Problem(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire.value).mkString(", ")}")))
+          .toRight(
+            bad(Problem(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire.value).mkString(", ")}"))
+          )
 
   private def size(raw: Option[Paging.Limit]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw).value)
 

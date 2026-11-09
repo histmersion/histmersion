@@ -38,7 +38,6 @@ object CatalogMerge:
     case New(eventId: Event.Id, why: Problem)
     def eventId: Event.Id
 
-
   private def outer(ts: TimeSpan): Option[(Year, Year)] = ts.outer
 
   private def point(e: StoredEvent): (Option[Latitude], Option[Longitude]) =

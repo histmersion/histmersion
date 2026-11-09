@@ -33,8 +33,8 @@ object Processes:
   type CaptureArgv = CaptureArgv.T
   object CaptureArgv extends Newtype[String, Pure]
 
-  /** Why [[Processes.run]] gave no [[Result]]: the tool did not finish within the time limit (it was killed), or it could
-    * not be started. A tool that ran and exited non-zero is a [[Result]], not a failure.
+  /** Why [[Processes.run]] gave no [[Result]]: the tool did not finish within the time limit (it was killed), or it
+    * could not be started. A tool that ran and exited non-zero is a [[Result]], not a failure.
     */
   enum Failure derives CanEqual:
     case TimedOut(tool: Tool, after: FiniteDuration)

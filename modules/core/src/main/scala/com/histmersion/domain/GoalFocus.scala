@@ -394,7 +394,11 @@ object GoalFocus:
     val (kept, displaced) = (kept0.take(room0), kept0.drop(room0))
     // free slots, greedily: each pick changes who is near
     @annotation.tailrec
-    def fill(chosen: List[Facts], pool: List[Facts], acc: List[(Facts, Problem)]): (List[Facts], List[(Facts, Problem)]) =
+    def fill(
+        chosen: List[Facts],
+        pool: List[Facts],
+        acc: List[(Facts, Problem)]
+    ): (List[Facts], List[(Facts, Problem)]) =
       if chosen.size >= cap || pool.isEmpty then (chosen, acc)
       else
         val best = pool.minBy(g => key(g, stageOf(g.slug), kin(g, chosen, rootOf)._1))

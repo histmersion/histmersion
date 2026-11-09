@@ -74,7 +74,7 @@ object BundleFormat:
             obj("rev").flatMap(_.asString) match
               case None                       => Left(Problem("no rev"))
               case Some(r) if r == revOf(obj) => Right(())
-              case Some(r) => Left(Problem(s"rev $r does not match its content (${revOf(obj)})"))
+              case Some(r)                    => Left(Problem(s"rev $r does not match its content (${revOf(obj)})"))
           }
       revOk.flatMap(_ =>
         dec.decodeJson(json).left.map(e => Problem(s"${e.message} at ${e.pathToRootString.getOrElse("")}"))

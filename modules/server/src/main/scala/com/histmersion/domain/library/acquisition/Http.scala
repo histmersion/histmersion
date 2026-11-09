@@ -44,8 +44,8 @@ trait Http:
 
 object Http:
 
-  /** Why a request gave no answer to use, whichever of the verbs it was: the plugin SPI's [[Plugin.Http.Failure]] in the
-    * server's own layer (the conversions are at the two seams, [[SttpHttp]] and [[HttpPlugin]]).
+  /** Why a request gave no answer to use, whichever of the verbs it was: the plugin SPI's [[Plugin.Http.Failure]] in
+    * the server's own layer (the conversions are at the two seams, [[SttpHttp]] and [[HttpPlugin]]).
     */
   enum Failure derives CanEqual:
     /** The upstream answered and the client gave up on the answer: a refusal (401, 403), a missing page (404), a

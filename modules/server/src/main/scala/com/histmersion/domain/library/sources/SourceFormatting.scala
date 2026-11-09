@@ -18,4 +18,3 @@ trait SourceFormatting:
 
   /** Why a strict write is refused, when `issues` holds an error. */
   def refusal(issues: List[FormatIssue]): Option[Problem]
-

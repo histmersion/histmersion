@@ -973,25 +973,24 @@ final class BasemapService(
         done(work.makeDirectory())
         val h = http()
         val coords = tiles.map(_._2)
-        val got = coords.zipWithIndex.foldLeft[Either[Problem, Int]](Right(0)) {
-          case (acc, ((z, x, y), i)) =>
-            acc.flatMap { n =>
-              val f = Store.Key.applyUnsafe(s"$z-$x-$y.png")
-              val none = Store.Key.applyUnsafe(s"$z-$x-$y.none")
-              if work.isFile(f) || work.isFile(none) then Right(n)
-              else
-                if n > 0 then pace.sleep(BasemapFetch.Pace.GapMs(bc.requestGapMs.value.toLong))
-                if Thread.interrupted() then throw InterruptedException()
-                if i % 50 == 0 then note(BasemapFetch.Note(s"downloading ${i + 1} of ${ids.length} tiles"))
-                h.file(
-                  RangeHttp.Url(
-                    bc.url.value.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)
-                  )
-                ).map {
-                  case Some(b) => done(work.write(f, ByteSource.Content(b.value))); n + 1
-                  case None    => done(work.write(none, ByteSource.Content(Array.emptyByteArray))); n + 1
-                }
-            }
+        val got = coords.zipWithIndex.foldLeft[Either[Problem, Int]](Right(0)) { case (acc, ((z, x, y), i)) =>
+          acc.flatMap { n =>
+            val f = Store.Key.applyUnsafe(s"$z-$x-$y.png")
+            val none = Store.Key.applyUnsafe(s"$z-$x-$y.none")
+            if work.isFile(f) || work.isFile(none) then Right(n)
+            else
+              if n > 0 then pace.sleep(BasemapFetch.Pace.GapMs(bc.requestGapMs.value.toLong))
+              if Thread.interrupted() then throw InterruptedException()
+              if i % 50 == 0 then note(BasemapFetch.Note(s"downloading ${i + 1} of ${ids.length} tiles"))
+              h.file(
+                RangeHttp.Url(
+                  bc.url.value.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)
+                )
+              ).map {
+                case Some(b) => done(work.write(f, ByteSource.Content(b.value))); n + 1
+                case None    => done(work.write(none, ByteSource.Content(Array.emptyByteArray))); n + 1
+              }
+          }
         }
         got.map { _ =>
           note(BasemapFetch.Note("writing bathymetry.pmtiles"))
@@ -1096,21 +1095,20 @@ final class BasemapService(
         )
       else
         val h = http()
-        val read = files.foldLeft[Either[Problem, List[BasemapLabels.Label]]](Right(Nil)) {
-          case (acc, (f, url)) =>
-            acc.flatMap { got =>
-              note(BasemapFetch.Note(s"reading ${f.value}"))
-              if got.nonEmpty then pace.sleep(pace.gapMs)
-              h.text(RangeHttp.Url(url))
-                .flatMap(t =>
-                  io.circe.parser
-                    .parse(t.value)
-                    .left
-                    .map(e => Problem(s"$url is not JSON: ${e.getMessage}"))
-                )
-                .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
-                .map(got ++ _)
-            }
+        val read = files.foldLeft[Either[Problem, List[BasemapLabels.Label]]](Right(Nil)) { case (acc, (f, url)) =>
+          acc.flatMap { got =>
+            note(BasemapFetch.Note(s"reading ${f.value}"))
+            if got.nonEmpty then pace.sleep(pace.gapMs)
+            h.text(RangeHttp.Url(url))
+              .flatMap(t =>
+                io.circe.parser
+                  .parse(t.value)
+                  .left
+                  .map(e => Problem(s"$url is not JSON: ${e.getMessage}"))
+              )
+              .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
+              .map(got ++ _)
+          }
         }
         read.map { all =>
           val kept = all.filter(BasemapLabels.within(_, a.bbox))

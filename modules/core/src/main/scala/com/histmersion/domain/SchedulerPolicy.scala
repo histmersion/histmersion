@@ -207,7 +207,8 @@ object SchedulerPolicy:
       /** A spend cap is reached. */
       case Budget(cap: SpendCap)
 
-      /** The plan pools the item's role chains draw on are below their floors (`chain` says which and when it frees). */
+      /** The plan pools the item's role chains draw on are below their floors (`chain` says which and when it frees).
+        */
       case Starved(chain: Chain)
 
       /** The agents are draining: nothing new starts until a person lifts it. */
@@ -255,15 +256,16 @@ object SchedulerPolicy:
           s"draining since $s${b.fold("")(x => s" (by $x)")}: nothing new starts until it is lifted " +
             "(histmersion agent autopilot undrain)"
         case WaitsFor(Precondition.Plan)   => "its goal's plan comes first (the plan-goal item is open)"
-        case WaitsFor(Precondition.Filter) => "its article's coverage filter is inferred first (the infer-filter item is open)"
-        case ArticlesInProgress(d)         => s"$d"
-        case UnfinishedGoals(d)            => s"$d"
-        case PoolFull(p, n)                =>
+        case WaitsFor(Precondition.Filter) =>
+          "its article's coverage filter is inferred first (the infer-filter item is open)"
+        case ArticlesInProgress(d) => s"$d"
+        case UnfinishedGoals(d)    => s"$d"
+        case PoolFull(p, n)        =>
           s"plan pool $p has $n run(s) drawing on it already (its max-calls-in-flight × agents.scheduler.pool-overcommit)"
-        case ManagerFull(m, n)       => s"its manager $m has its own maxRuns $n in flight"
-        case NoPlaceFree(m, o, why)  =>
+        case ManagerFull(m, n)      => s"its manager $m has its own maxRuns $n in flight"
+        case NoPlaceFree(m, o, why) =>
           s"no place free: $m run(s) at once (agents.max-concurrent-runs), $o occupied${why.fold("")(w => s"; $w")}"
-        case Busy(r)                 => r.render
+        case Busy(r) => r.render
 
       def isStarved: Boolean = this match
         case Starved(_) => true
@@ -280,9 +282,9 @@ object SchedulerPolicy:
   def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[Candidate.Pools]): Set[Candidate.Pools] =
     waiting.flatMap { c =>
       c.block match
-        case None                            => c.pools
+        case None                       => c.pools
         case Some(b) if b.why.isStarved => chainPools(c)
-        case Some(_)                         => Nil
+        case Some(_)                    => Nil
     }.toSet
 
   /** What is free now: `maxRuns` (`agents.max-concurrent-runs`) and `occupied` (every queued or running agent run, a

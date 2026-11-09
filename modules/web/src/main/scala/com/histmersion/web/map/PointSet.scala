@@ -417,8 +417,7 @@ final class PointSet[D](
     val slides = mutable.ListBuffer.empty[ClusterMotion.Slide]
     fresh.foreach { (m, ks) =>
       ClusterMotion.origin(ks.flatMap(was.get)) match
-        case Some(from)
-            if !from._1.value.isNaN && (from._1 != m.screen._1 || from._2 != m.screen._2) =>
+        case Some(from) if !from._1.value.isNaN && (from._1 != m.screen._1 || from._2 != m.screen._2) =>
           slides += ClusterMotion.Slide(m, from, m.screen)
         case Some(_) => ()
         case None    => if ks.exists(was.contains) then arriving += m

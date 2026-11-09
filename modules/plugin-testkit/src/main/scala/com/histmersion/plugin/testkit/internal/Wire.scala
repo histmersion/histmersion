@@ -193,8 +193,9 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     written += 1
     val base = f"$written%03d-${RecordedExchange.hostOf(url)}"
     val exchange = answer match
-      case Left(error) => RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.problem.value)))
-      case Right(a)    =>
+      case Left(error) =>
+        RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.problem.value)))
+      case Right(a) =>
         val kept =
           RecordedExchange.KeptHeaders.flatMap(h => a.header(h).map(v => h -> CoreQuota.HeaderValue(scrub(v.value))))
         val contentType = a.header(CoreQuota.HeaderName("content-type"))

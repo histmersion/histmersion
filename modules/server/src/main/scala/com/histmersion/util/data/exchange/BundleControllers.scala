@@ -130,8 +130,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
     val source = HandedFile.source(f)
-    if source.size.value <= 0 then
-      Left(Api.Error(Problem("the upload is empty — send a .hmx bundle as the body")))
+    if source.size.value <= 0 then Left(Api.Error(Problem("the upload is empty — send a .hmx bundle as the body")))
     else Right(source)
 
 object BundleControllers:

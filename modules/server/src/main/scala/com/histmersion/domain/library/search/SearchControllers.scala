@@ -59,8 +59,10 @@ final class SearchControllers(
       .parseBy(by)
       .toRight(
         error(
-          Problem(s"unsupported by='$by' — use " +
-            "time | region | time,region | region,time")
+          Problem(
+            s"unsupported by='$by' — use " +
+              "time | region | time,region | region,time"
+          )
         )
       )
       .flatMap { axes =>
@@ -94,8 +96,10 @@ final class SearchControllers(
     if wanted > BigInt(math.max(1, ui.maxBuckets.value)) then
       Left(
         error(
-          Problem(s"that window needs $wanted buckets of ${size.value} year(s), over the " +
-            s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`")
+          Problem(
+            s"that window needs $wanted buckets of ${size.value} year(s), over the " +
+              s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`"
+          )
         )
       )
     else Right(aggregateWindow(axes, unit, q, from, to, size))

@@ -9,7 +9,6 @@ object Corrections:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
-
   enum Outcome derives CanEqual:
     case Keep
 

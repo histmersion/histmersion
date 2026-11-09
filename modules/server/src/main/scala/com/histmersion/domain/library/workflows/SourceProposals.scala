@@ -139,8 +139,6 @@ object SourceProposals:
       type What = OutcomeWhat
       val What: OutcomeWhat.type = OutcomeWhat
 
-
-
     object NotProposed:
       type What = OutcomeWhat
       val What: OutcomeWhat.type = OutcomeWhat

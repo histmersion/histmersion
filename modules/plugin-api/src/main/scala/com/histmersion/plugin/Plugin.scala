@@ -216,9 +216,9 @@ object Plugin:
 
     /** Why a request gave no answer to use, whichever of the host's calls it was. */
     enum Failure derives CanEqual:
-      /** The upstream answered and the host gave up on the answer: a refusal (401, 403: a key wanted, a bot
-        * challenge), a missing page (404), a slow-down it left alone, any other error status. `problem` names the
-        * host and what it said.
+      /** The upstream answered and the host gave up on the answer: a refusal (401, 403: a key wanted, a bot challenge),
+        * a missing page (404), a slow-down it left alone, any other error status. `problem` names the host and what it
+        * said.
         */
       case Status(code: HttpResponse.Status, problem: Problem)
 
@@ -228,7 +228,8 @@ object Plugin:
       /** The sentence for a person. */
       def problem: Problem
 
-      /** Did the upstream refuse the request (401, 403: a key wanted, a bot challenge)? Asking again is refused alike. */
+      /** Did the upstream refuse the request (401, 403: a key wanted, a bot challenge)? Asking again is refused alike.
+        */
       def refused: Boolean = this match
         case Status(code, _) => code.refusesAccess
         case Transport(_)    => false

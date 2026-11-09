@@ -172,7 +172,9 @@ final class EventsControllers(
       from =>
         LabelRenames
           .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
-          .flatMap(l => Event.Id.either(l.value).left.map(why => invalid(Problem(s"'${l.value}' is not an event id: $why"))))
+          .flatMap(l =>
+            Event.Id.either(l.value).left.map(why => invalid(Problem(s"'${l.value}' is not an event id: $why")))
+          )
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 
   def rename(

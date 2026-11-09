@@ -31,8 +31,7 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[Problem, String] = _ =>
-      Left(Problem("no managers to apply it"))
+    applyHint: Managers.HintProposal => Either[Problem, String] = _ => Left(Problem("no managers to apply it"))
 ):
 
   def list(

@@ -43,7 +43,18 @@ private[acquisition] object CandidateRepo:
       .query[WatchRow]
       .run()
       .toList
-      .map(r => CandidateWatch(r.goal, r.kind, r.subject, r.index, r.watermark, r.lastRun, r.lastError.map(_.transformInto[api.Problem]), r.lastFound))
+      .map(r =>
+        CandidateWatch(
+          r.goal,
+          r.kind,
+          r.subject,
+          r.index,
+          r.watermark,
+          r.lastRun,
+          r.lastError.map(_.transformInto[api.Problem]),
+          r.lastFound
+        )
+      )
 
   /** A watch read: its new watermark (on success; a failed read keeps the old one, so nothing is skipped), what it
     * found, or why it failed.

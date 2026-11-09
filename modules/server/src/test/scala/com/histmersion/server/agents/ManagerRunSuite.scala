@@ -549,7 +549,10 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managers.tick(t0); a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_s1")).status, "pending")
     val m = connect(ds)(ManagerRepo.get(Review)).get
-    assert(m.statusNote.exists(n => n.is == Manager.Status.Kind.Starved && n.render.startsWith("starved: skeptic")), m.statusNote)
+    assert(
+      m.statusNote.exists(n => n.is == Manager.Status.Kind.Starved && n.render.startsWith("starved: skeptic")),
+      m.statusNote
+    )
     assertEquals(events.count(_.kind == StarvedKind), 1, "one event per change, not per tick")
     a.managing.update(ReviewLight, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     a.managers.tick(t0)

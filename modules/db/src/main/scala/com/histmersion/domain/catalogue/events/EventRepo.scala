@@ -386,8 +386,7 @@ private[events] object EventRepo:
     */
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
-    if !exists(oldId) then
-      Left(Api.Error(api.Problem(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(oldId) then Left(Api.Error(api.Problem(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newId) then
       Left(
         Api.Error(

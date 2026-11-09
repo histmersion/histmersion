@@ -23,4 +23,3 @@ final case class ConfigSource(
     adjust: AppConfig => AppConfig = identity,
     prepare: AppConfig => Either[Problem, Unit] = _ => Right(())
 )
-

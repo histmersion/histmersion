@@ -249,8 +249,7 @@ object ArticleCli:
       )
         .mapN { (file, kind, strict) => (c: Client) =>
           val p = Path.of(file)
-          if !Files.isRegularFile(p) then
-            Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
+          if !Files.isRegularFile(p) then Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -369,8 +368,7 @@ object ArticleCli:
       (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
         .mapN { (dir, force) => (c: Client) =>
           val p = Path.of(dir)
-          if !Files.isDirectory(p) then
-            Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+          if !Files.isDirectory(p) then Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
           else Right(report(importAll(c, p, Api.Overwrite(force), Set(WikiLayout.SourcesDir))))
         }
     }

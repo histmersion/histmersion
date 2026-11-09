@@ -207,7 +207,10 @@ class PolitenessSuite extends munit.FunSuite:
       FakeMediaHttp.cfg,
       List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L))
     )
-    assertEquals(p.get(metUrl(1)).left.toOption.map(_.problem), Some(plugin.Problem(s"$metHost: HTTP 403 (still, after waiting 360 s)")))
+    assertEquals(
+      p.get(metUrl(1)).left.toOption.map(_.problem),
+      Some(plugin.Problem(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
+    )
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
     val (q, none) = FakeMediaHttp.polite(once)

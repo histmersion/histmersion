@@ -50,7 +50,9 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       (
         p,
         pids,
-        pids.map(pid => pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).left.map(_.problem).flatMap(PleiadesLinks.links))
+        pids.map(pid =>
+          pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).left.map(_.problem).flatMap(PleiadesLinks.links)
+        )
       )
     }
     // 2. the Commons files, at most per-place; the rest counted by reason

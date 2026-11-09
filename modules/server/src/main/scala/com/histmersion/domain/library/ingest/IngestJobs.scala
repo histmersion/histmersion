@@ -17,4 +17,3 @@ trait IngestJobs:
     *   metadata, so it can be enriched and queued)
     */
   def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[Problem, IngestOutcome]
-

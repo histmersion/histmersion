@@ -14,7 +14,6 @@ object ReadingShow:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Option[Wire]): Either[Problem, ReadingShow] =
     s.map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)

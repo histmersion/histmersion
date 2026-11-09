@@ -34,7 +34,6 @@ object Scheduling:
     case Skip(reason: Problem)
     case Defer(reason: Problem)
 
-
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): Boolean = !s.isTerminal
 

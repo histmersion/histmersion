@@ -16,4 +16,3 @@ final class ModelLimitReached(
     val until: Option[java.time.Instant],
     message: Problem
 ) extends RuntimeException(message.value)
-

@@ -36,4 +36,3 @@ trait OaFetcher:
     */
   def fetchWorkExplained(work: WorkKey, legalOnly: FetchChain.LegalOnly): FetchChain.Outcome =
     FetchChain.Outcome(fetchWork(work, legalOnly), Nil)
-

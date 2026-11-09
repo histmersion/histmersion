@@ -302,7 +302,9 @@ final class ManagersControllers(
             .filter(roles.contains)
             .toRight(
               error(
-                Problem(s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})")
+                Problem(
+                  s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"
+                )
               )
             )
             .flatMap(_ =>
@@ -343,9 +345,7 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns))
           val paused = if withRuns then
             inFlight(lightId(m))
-              .filter(r =>
-                r.status == RunState.Running.wire || r.status == RunState.Queued.wire
-              )
+              .filter(r => r.status == RunState.Running.wire || r.status == RunState.Queued.wire)
               .count(r => agents.engine.pause(runIdOf(r.id)).isRight)
           else 0
           record(
@@ -410,7 +410,9 @@ final class ManagersControllers(
           ItemStatus
             .parse(com.histmersion.api.automation.ItemStatus.Wire(s))
             .map(Some(_))
-            .toRight(error(Problem(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})")))
+            .toRight(
+              error(Problem(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
+            )
         case None => Right(None)
     yield
       val (off, lim) = (offset.getOrElse(Offset(0)), limits.page(limit, PageSize(25)))
@@ -493,7 +495,9 @@ final class ManagersControllers(
     EnqueueKind.parse(in.kind) match
       case None =>
         Left(
-          error(Problem(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})"))
+          error(
+            Problem(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})")
+          )
         )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
@@ -572,13 +576,19 @@ final class ManagersControllers(
           val g = i.hold.flatMap(_.focus).fold("")(_.value)
           Left(
             conflict(
-              Problem(s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
-                s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)")
+              Problem(
+                s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
+                  s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)"
+              )
             )
           )
         case "release" =>
           Either
-            .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(Problem(s"item #${i.id} is ${i.status}, not held")))
+            .cond(
+              transact(ds)(ManagerRepo.release(i.id)),
+              (),
+              conflict(Problem(s"item #${i.id} is ${i.status}, not held"))
+            )
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
           in.priority.toRight(Api.Error(Problem("give `priority`"))).map { p =>
@@ -612,7 +622,8 @@ final class ManagersControllers(
               conflict(Problem(s"item #${i.id} is ${i.status}; only a settled item can be re-opened"))
             )
             .map(_ => record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person"))
-        case other => Left(error(Problem(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})")))
+        case other =>
+          Left(error(Problem(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})")))
       out <- agents.managerStore.item(i.id).toRight(notFound(Problem(s"item ${i.id} vanished")))
     yield
       supervisor.nudge()
@@ -635,7 +646,10 @@ final class ManagersControllers(
     val suggest = in.suggest.exists(_.value)
     for
       m <- manager(id)
-      text <- Option(in.text.value.trim).filter(_.nonEmpty).map(ManagerHint.Text(_)).toRight(error(Problem("a hint needs text")))
+      text <- Option(in.text.value.trim)
+        .filter(_.nonEmpty)
+        .map(ManagerHint.Text(_))
+        .toRight(error(Problem("a hint needs text")))
       item <- in.item
         .map(_.value.trim)
         .filter(_.nonEmpty)

@@ -79,7 +79,6 @@ object AgentProposals:
     /** Nothing to do (the source already has that status). */
     case Skip(reason: Problem)
 
-
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
     * the edge mode.
@@ -87,8 +86,7 @@ object AgentProposals:
   def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
       case Approval.Kind.StatusChange =>
-        if p.status.isEmpty || p.status == current then
-          Route.Skip(Problem(s"already ${current.fold("?")(_.wire)}"))
+        if p.status.isEmpty || p.status == current then Route.Skip(Problem(s"already ${current.fold("?")(_.wire)}"))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply

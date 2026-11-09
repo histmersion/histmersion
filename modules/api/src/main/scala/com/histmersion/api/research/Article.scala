@@ -415,8 +415,7 @@ object Article:
     def parse(a: EditAnswer): Either[Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
-      if anchor.value.trim.isEmpty then
-        Left(Problem("no anchor — copy the passage the edit is about from the body"))
+      if anchor.value.trim.isEmpty then Left(Problem("no anchor — copy the passage the edit is about from the body"))
       else
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
@@ -1026,7 +1025,6 @@ object Article:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
     final case class FilterProposal(
         slug: Slug,
         filter: Filter,
@@ -1172,7 +1170,6 @@ object Article:
   object ReviewView:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
     type Outcome = Outcome.T
     object Outcome extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]

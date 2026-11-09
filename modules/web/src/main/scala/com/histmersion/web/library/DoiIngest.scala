@@ -2,6 +2,7 @@ package com.histmersion
 package web.library
 
 import com.histmersion.api.Problem
+
 /** "Add by DOI": what a person types — a DOI, a doi.org link, `arxiv:<id>` or a bare arXiv id — as the ingest the
   * server is asked for. The web UI asks the LEGAL open-access chain only, always: the server's configuration may allow
   * fetchers without the rights holder's authorisation, and nothing a page does may set them off. With no legal copy the

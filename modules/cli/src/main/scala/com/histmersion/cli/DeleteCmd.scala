@@ -55,7 +55,7 @@ object DeleteCmd:
       byId: Calibre.Book.Id => Either[Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
-      case None => CalibreEntryCheck.Unchecked(api.Problem(s"'$calibreId' is not a Calibre id"))
+      case None                      => CalibreEntryCheck.Unchecked(api.Problem(s"'$calibreId' is not a Calibre id"))
       case Some(_) if !libraryExists =>
         CalibreEntryCheck.Unchecked(api.Problem(s"no Calibre library at $library"))
       case Some(id) =>

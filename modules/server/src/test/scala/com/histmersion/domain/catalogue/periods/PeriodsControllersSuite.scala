@@ -21,8 +21,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
   private def controllers(
       download: PeriodSources.PeriodoUrl => Either[Problem, PeriodImports.Document] = _ =>
         Right(PeriodImports.Document(dump)),
-      seed: () => Either[Problem, PeriodImports.Document] = () =>
-        Left(Problem("no period seed here")),
+      seed: () => Either[Problem, PeriodImports.Document] = () => Left(Problem("no period seed here")),
       gate: WriteGate = WriteGate()
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))

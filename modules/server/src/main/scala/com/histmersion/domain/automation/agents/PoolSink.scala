@@ -23,4 +23,3 @@ trait PoolSink:
 
   /** Read the ChatGPT plan from the app-server when the last read is old enough (throttled). */
   def refresh(now: PlanQuotaRepo.EpochMillis): Unit
-

@@ -296,7 +296,7 @@ final class KeePassXcVault(
                 KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
                 YubiKey.Setting.Entries(entry.value)
               ) match
-                case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")
+                case YubiKey.Failure.Next(why)        => go(more, tried :+ s"${yk.shown}: $why ($msg)")
                 case YubiKey.Failure.NoEntry(missing) => Left(Problem(s"$name: no entry '$missing'"))
                 case YubiKey.Failure.Stop(why)        =>
                   report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")

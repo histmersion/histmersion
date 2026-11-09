@@ -50,5 +50,9 @@ private[histmersion] object Pipelines:
   def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problem, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
     ctx.write("log line", entry.asJson)(
-      workLists.add(WorkListControllers.ListName("log"), entry).left.map(e => e.message.transformInto[Problem]).map(_ => line)
+      workLists
+        .add(WorkListControllers.ListName("log"), entry)
+        .left
+        .map(e => e.message.transformInto[Problem])
+        .map(_ => line)
     )(Right(line))

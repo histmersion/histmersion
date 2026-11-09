@@ -26,7 +26,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MediaMatch:
 
-
   /** What ties a record to the place: the field and value (or the id) that name it, and the dates. */
   type Basis = Basis.T
   object Basis extends Newtype[String, Pure]

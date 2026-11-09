@@ -72,7 +72,10 @@ final class AttestationsControllers(
     maintenance.guard(WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value
       for
-        wire <- AttestationTarget.check(AttestationTarget.Wire(in.targetType.value)).left.map(p => invalid(p.transformInto[Problem]))
+        wire <- AttestationTarget
+          .check(AttestationTarget.Wire(in.targetType.value))
+          .left
+          .map(p => invalid(p.transformInto[Problem]))
         t = Attestation.TargetType(wire.value)
         _ <- Either.cond(
           Citekey.option(ck).flatMap(sources.canonical).isDefined,

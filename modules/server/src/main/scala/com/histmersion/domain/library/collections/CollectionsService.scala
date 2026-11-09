@@ -309,7 +309,7 @@ object CollectionsService:
         file <- c.file(item, req.format.map(f => SourceCollection.FileFormat(f.value))).left.map(failed)
         ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.value)))(checked)
         existing <- library.pushMeta(ck) match
-          case Right(m) => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
+          case Right(m)                => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
           case Left(e) if e.isNotFound => Right(None)
           case Left(e)                 => Left(e)
         target <- ImportTarget
