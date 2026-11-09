@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.managers
 
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunInfo}
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.AutomationState
@@ -321,8 +322,8 @@ object ManagerService:
     private def occupying(r: JobRunState): Boolean =
       r.row.status.value == "queued" || r.row.status.value == "running" ||
         (r.row.status.value == "paused" && (r.resumeAt.isDefined || r.error.exists(e =>
-          e.value.startsWith(s"${PauseReason.Allowance.wire.value}:") ||
-            e.value.startsWith(s"${PauseReason.PlanQuota.wire.value}:")
+          val cause = Stopped.from(e).cause
+          cause.pausedOn(PauseReason.Allowance) || cause.pausedOn(PauseReason.PlanQuota)
         )))
     private def runOf(i: ManagerItemRecord): Option[JobRunState] = i.runId.flatMap(jobs.get)
     private def goalOf(i: ManagerItemRecord): Option[String] = manager(i.managerId.value).flatMap(_.goal).map(_.value)

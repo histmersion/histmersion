@@ -138,6 +138,7 @@ modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SystemProcesses.sc
 modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Coursier.scala	process	resolves plugin dependencies to jars with coursier
 modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/LibDirectory.scala	process	reads and writes the plugin lib directory and its list files
 modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/Recordings.scala	process	finds a test's recorded exchange files
+modules/plugin-vaults/src/main/scala/com/histmersion/plugins/vaults/KeePassXcMessage.scala	process	reads KeePassXC's stderr into a message
 modules/plugin-vaults/src/main/scala/com/histmersion/plugins/vaults/Subprocess.scala	process	runs a vault's command-line tool with a time limit and captures its output
 modules/plugins/calibre/src/main/scala/com/histmersion/plugins/calibre/Shell.scala	process	runs a shell command and returns its output
 modules/server/src/main/scala/com/histmersion/server/SeedNoteFiles.scala	process	reads the Markdown notes and figures of a seed folder

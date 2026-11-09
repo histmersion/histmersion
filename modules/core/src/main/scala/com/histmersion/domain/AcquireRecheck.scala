@@ -285,16 +285,6 @@ object AcquireRecheck:
     val left = order(candidates.filterNot(c => checkedSince(c.last, plan.since)))
     if plan.all.value then left else left.filter(due).take(math.max(0, plan.upTo.value - math.max(0, triedByJob.value)))
 
-  /** The end of a job stopped while the autopilot drains: a later managers' tick resumes it. */
-  val StoppedDraining = "stopped while the autopilot drains: it resumes once the drain is lifted"
-
-  /** Does a later job take up where this one stopped? Only one a restart (`interrupted`) or the drain stopped; one that
-    * finished, or failed for another reason, is over.
-    */
-  def resumable(status: JobState.Wire, error: Option[Problem]): Boolean =
-    status == JobState.Failed.wire &&
-      error.exists(e => e.value == JobState.Interrupted || e.value == StoppedDraining)
-
   /** What a job did so far: of the `total` items it tries, how many it `tried`, and what they found; the last item that
     * got no answer, why (the job goes on with the next).
     */

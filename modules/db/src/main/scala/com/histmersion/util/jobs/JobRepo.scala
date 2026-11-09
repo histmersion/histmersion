@@ -296,17 +296,14 @@ object JobRepo:
                                 AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
           ORDER BY resume_at, created_at""".query[Run.Id].run()
 
-  /** The `paused` runs whose error starts like `like` and that do not resume by themselves before `at`: (id, pipeline,
-    * model, error).
-    */
-  def runsPausedLike(
+  /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, error). */
+  def runsPausedUntil(
       kind: Job.Kind,
       paused: RunRow.Status,
-      like: String,
       at: DueAt
   )(using DbCon): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
     sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
-          WHERE kind = $kind AND status = $paused AND error LIKE $like
+          WHERE kind = $kind AND status = $paused
             AND (resume_at IS NULL OR resume_at > $at::timestamptz)
           ORDER BY updated_at, created_at""".query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)].run()
 

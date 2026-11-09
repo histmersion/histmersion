@@ -419,19 +419,6 @@ class AcquireRecheckSuite extends munit.FunSuite:
       Nil
     )
 
-  test("which stopped job a later one takes up: a restart's interrupted one, or one the drain stopped"):
-    assert(resumable(JobState.Wire("failed"), Some(Problem(JobState.Interrupted))))
-    assert(resumable(JobState.Wire("failed"), Some(Problem(StoppedDraining))))
-    assert(
-      !resumable(
-        JobState.Wire("failed"),
-        Some(Problem("the acquisition toolset is not connected: nothing tried"))
-      )
-    )
-    assert(!resumable(JobState.Wire("failed"), Some(Problem("a restore started; stopped"))))
-    assert(!resumable(JobState.Wire("done"), None))
-    assert(!resumable(JobState.Wire("running"), None))
-
   test("the job's progress line counts what it found, with the last no-answer's reason, shortened"):
     val t = Tally(total = AcquireRecheck.Tally.Total(453))
       .add(Outcome.Closed, AcquireRecheck.Detail("a2020_x"))

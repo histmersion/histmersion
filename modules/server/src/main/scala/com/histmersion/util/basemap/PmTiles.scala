@@ -511,7 +511,7 @@ object PmTiles:
                 _ <- Either.cond(
                   h.rootOffset.value + h.rootLength.value <= bytes.length,
                   (),
-                  Problem(s"${where.value}: root directory outside the first 16 KiB")
+                  Problem("root directory outside the first 16 KiB")
                 )
                 root <- decompress(
                   CompressedBytes(
@@ -522,11 +522,11 @@ object PmTiles:
                   .flatMap(decodeDirectory)
                 meta <- metadata(reader, h)
               yield new File(where, reader, h, root, meta, maxLeaves)
-            catch case e: java.io.IOException => Left(Problem(s"${where.value}: ${e.getMessage}"))
+            catch case e: java.io.IOException => Left(Problem(s"${e.getMessage}"))
           if read.isLeft then reader.close()
           read
-        catch case e: java.io.IOException => Left(Problem(s"${where.value}: ${e.getMessage}"))
-      opened.left.map(e => if e.value.startsWith(where.value) then e else Problem(s"${where.value}: ${e.value}"))
+        catch case e: java.io.IOException => Left(Problem(s"${e.getMessage}"))
+      opened.left.map(e => Problem(s"${where.value}: ${e.value}"))
 
     private def metadata(reader: RandomReader, h: Header): Either[Problem, Json] =
       if h.metadataLength.value <= 0 then Right(Json.obj())

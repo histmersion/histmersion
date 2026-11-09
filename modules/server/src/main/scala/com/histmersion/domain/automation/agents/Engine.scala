@@ -34,6 +34,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.util.jobs.JobRuns
+import Halt.Stopped
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
@@ -227,7 +228,7 @@ final class Engine(
       jobKind,
       rowStatus(RunState.Running),
       rowStatus(RunState.Paused),
-      Problem(PauseReason.Interrupted.wire.value),
+      Stopped.write(Stopped.Cause.Interrupted),
       rowStatus(RunState.Queued),
       running.keySet.asScala.toList
     )
@@ -279,8 +280,9 @@ final class Engine(
     */
   def resumeFreed(now: java.time.Instant): List[Run.Id] =
     agents.jobRuns
-      .pausedWith(jobKind, rowStatus(RunState.Paused), JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now)
+      .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
+      .filter((_, _, _, error) => Stopped.from(error).cause.pausedOn(PauseReason.PlanQuota))
       .flatMap { (id, pipeline, model, error) =>
         val roles = ModelPicker
           .pausedRole(domain.Problem(error.value))
@@ -446,7 +448,7 @@ final class Engine(
                 id,
                 RunState.Running,
                 RunState.Paused,
-                error = Some(Problem(s"${reason.wire}: ${why.value.take(1000)}")),
+                error = Some(Stopped.write(Stopped.Cause.Paused(reason, Problem(why.value.take(1000))))),
                 resumeAt = at
               )
             case Left(Halt.Wait(approval, why)) =>
@@ -584,7 +586,7 @@ final class Engine(
             id,
             RunState.Queued,
             RunState.Paused,
-            error = Some(Problem(s"${PauseReason.Requested.wire}: paused before it started"))
+            error = Some(Stopped.write(Stopped.Cause.Paused(PauseReason.Requested, Problem("paused before it started"))))
           )
             .toRight(conflict(Problem(s"run $id moved on; look again")))
             .flatMap(_ => get(id))

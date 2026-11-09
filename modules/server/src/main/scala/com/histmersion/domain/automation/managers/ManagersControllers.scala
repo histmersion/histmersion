@@ -17,6 +17,7 @@ import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.api.automation.Goal.Plans.{LinkKind, Removed}
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
@@ -363,7 +364,7 @@ final class ManagersControllers(
             inFlight(lightId(m))
               .filter(r =>
                 r.status.value == RunState.Paused.wire.value && r.error
-                  .exists(_.value.startsWith(PauseReason.Requested.wire.value))
+                  .exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Requested))
               )
               .count(r => agents.engine.resume(runIdOf(r.id), None, None).isRight)
           else 0

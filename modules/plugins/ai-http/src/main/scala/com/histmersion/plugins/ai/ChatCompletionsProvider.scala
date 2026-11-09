@@ -59,7 +59,7 @@ final class ChatCompletionsProvider(
         )
         .left
         .map(e =>
-          SendFailure(SendFailure.Reported(e.value))
+          SendFailure(e)
             .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
             .value
         )

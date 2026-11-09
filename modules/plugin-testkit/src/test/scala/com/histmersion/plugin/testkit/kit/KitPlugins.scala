@@ -157,7 +157,7 @@ final class KitAiPlugin extends Plugin:
                     AiHttp.TimeoutSeconds(30)
                   )
                   .left
-                  .map(e => AiFailure.Error(Problem(e.value)))
+                  .map(e => AiFailure.Error(e.reported))
                   .map(resp => AiTurn(AiTurn.Text(resp.body.value)))
           )
           .left

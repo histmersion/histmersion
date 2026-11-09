@@ -35,27 +35,27 @@ final class HostAiHttp extends AiHttp:
       headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[Problem, AiHttp.Response] =
+  ): Either[AiHttp.Failure, AiHttp.Response] =
     send(
       url.value,
       headers.map((k, v) => k.value -> v.value),
       timeoutSeconds.value,
       _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.value, StandardCharsets.UTF_8))
-    ).left.map(m => Problem(m))
+    )
 
   def get(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[Problem, AiHttp.Response] =
-    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m => Problem(m))
+  ): Either[AiHttp.Failure, AiHttp.Response] =
+    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET())
 
   private def send(
       url: String,
       headers: Map[String, String],
       timeoutSeconds: Int,
       method: java.net.http.HttpRequest.Builder => java.net.http.HttpRequest.Builder
-  ): Either[String, AiHttp.Response] =
+  ): Either[AiHttp.Failure, AiHttp.Response] =
     try
       val b = java.net.http.HttpRequest
         .newBuilder(java.net.URI.create(url))
@@ -76,4 +76,21 @@ final class HostAiHttp extends AiHttp:
     catch
       case e: InterruptedException => throw e
       // the message only: never the request, which may carry a key in a header
-      case NonFatal(e) => Left(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+      case NonFatal(e) => Left(failureOf(e))
+
+  /** What a failed send was, from the type of the exception; its text is `<exception>: <message>`, cut at 300. */
+  def failureOf(e: Throwable): AiHttp.Failure =
+    val reported = Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+    e match
+      case _: java.net.ConnectException | _: java.net.UnknownHostException | _: java.net.MalformedURLException |
+          _: java.net.NoRouteToHostException | _: java.net.PortUnreachableException | _: java.net.ProtocolException |
+          _: java.net.URISyntaxException =>
+        AiHttp.Failure.Connect(reported)
+      case _: java.util.concurrent.TimeoutException | _: java.net.http.HttpTimeoutException |
+          _: java.net.SocketTimeoutException =>
+        AiHttp.Failure.TimedOut(reported)
+      case _: IllegalArgumentException | _: IllegalStateException | _: SecurityException |
+          _: UnsupportedOperationException | _: NullPointerException =>
+        AiHttp.Failure.Refused(reported)
+      case _: Exception => AiHttp.Failure.Read(reported)
+      case _            => AiHttp.Failure.Refused(reported)

@@ -52,6 +52,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.jobs.Job
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.ByteCount
 import com.histmersion.server.views.WorkListView
@@ -756,7 +757,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(a.drain.tick(Instant.now()), Nil, "not drained while the job's item is in flight")
     gate.release.countDown()
     val stopped = ended(a, job.id)
-    assertEquals((stopped.status, stopped.error), (JobState.Failed.wire, Some(AcquireRecheck.StoppedDraining)))
+    assertEquals((stopped.status, stopped.error), (JobState.Failed.wire, Some(Stopped.DrainingText)))
     assertEquals(asked(up).size, 1, "the item in flight finished, nothing after it")
     assertEquals(a.drain.tick(Instant.now()), List("drained"))
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no resume while draining")
@@ -769,7 +770,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       (d, _) => Left(Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found"))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
-      resumed.exists(_.value.contains(s"job ${job.id} (${AcquireRecheck.StoppedDraining}) resumed as job")),
+      resumed.exists(_.value.contains(s"job ${job.id} (${Stopped.DrainingText}) resumed as job")),
       resumed.toString
     )
     val next = Transactor(ds)

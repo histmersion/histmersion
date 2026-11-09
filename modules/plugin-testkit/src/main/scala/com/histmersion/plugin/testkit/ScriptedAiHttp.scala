@@ -10,9 +10,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
-  * `Left("no scripted answer")`) and keeps every request, to assert on what the provider sent.
+  * a refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.
   */
-final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends AiHttp:
+final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) extends AiHttp:
   // the answers not yet given and the requests seen; guarded by `this` (a provider may call from several threads)
   private val left = scala.collection.mutable.Queue(answers*)
   private val seen = List.newBuilder[AiHttpRequest]
@@ -24,7 +24,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
       headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[plugin.Problem, AiHttp.Response] =
+  ): Either[AiHttp.Failure, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("POST"),
@@ -32,13 +32,13 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
         ScriptedAiHttp.masked(headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))),
         Some(AiHttpRequest.Body(body.value))
       )
-    ).left.map(p => plugin.Problem(p.value))
+    )
 
   def get(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[plugin.Problem, AiHttp.Response] =
+  ): Either[AiHttp.Failure, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("GET"),
@@ -46,11 +46,11 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
         ScriptedAiHttp.masked(headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))),
         None
       )
-    ).left.map(p => plugin.Problem(p.value))
+    )
 
-  private def next(r: AiHttpRequest): Either[Problem, AiHttp.Response] = synchronized {
+  private def next(r: AiHttpRequest): Either[AiHttp.Failure, AiHttp.Response] = synchronized {
     seen += r
-    if left.isEmpty then Left(Problem("no scripted answer")) else left.dequeue()
+    if left.isEmpty then Left(AiHttp.Failure.Refused(Problem("no scripted answer"))) else left.dequeue()
   }
 
 object ScriptedAiHttp:

@@ -16,6 +16,7 @@ import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{Job, JobPool, JobRow}
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.util.jobs.JobRecords
 import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.ocr.ConverterClient
@@ -31,6 +32,7 @@ import javax.sql.DataSource
 import scala.jdk.OptionConverters.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
+import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
@@ -161,7 +163,7 @@ final class IngestQueue(
           id,
           JobState.Queued,
           JobState.Failed,
-          error = Some(Problem(s"${JobState.Interrupted}: the upload is no longer held by this process"))
+          error = Some(Stopped.write(Stopped.Cause.Paused(PauseReason.Interrupted, Problem("the upload is no longer held by this process"))))
         )
       case Some(job) =>
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match
