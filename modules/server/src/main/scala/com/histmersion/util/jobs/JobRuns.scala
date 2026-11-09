@@ -10,7 +10,6 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
-import io.github.iltotore.iron.constraint.any.Pure
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.
@@ -43,13 +42,12 @@ trait JobRuns:
   /** The `paused` runs whose resume time has come by `now`, oldest resume first. */
   def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id]
 
-  /** The `paused` runs whose error starts with `prefix` and that do not resume by themselves before `now`: (id,
-    * pipeline, model, error), the longest waiting first.
+  /** The `paused` runs that do not resume by themselves before `now`: (id, pipeline, model, error), the longest waiting
+    * first.
     */
-  def pausedWith(
+  def pausedWaiting(
       kind: Job.Kind,
       paused: RunRow.Status,
-      prefix: JobRuns.Prefix,
       now: Instant
   ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)]
 
@@ -73,9 +71,6 @@ trait JobRuns:
   def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean
 
 object JobRuns:
-  type Prefix = Prefix.T
-  object Prefix extends Newtype[String, Pure]
-
   def apply(db: Transactor): JobRuns = Implementation(db)
 
   final private class Implementation(db: Transactor) extends JobRuns:
@@ -97,13 +92,12 @@ object JobRuns:
       db.transact(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       db.read(JobRepo.runsDue(kind, paused, JobRepo.DueAt(now.toString)))
-    def pausedWith(
+    def pausedWaiting(
         kind: Job.Kind,
         paused: RunRow.Status,
-        prefix: Prefix,
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
-      db.read(JobRepo.runsPausedLike(kind, paused, s"$prefix%", JobRepo.DueAt(now.toString)))
+      db.read(JobRepo.runsPausedUntil(kind, paused, JobRepo.DueAt(now.toString)))
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       db.transact(JobRepo.runProgress(kind, id, text))
     def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit =
@@ -210,17 +204,14 @@ object JobRuns:
         .sortBy[(Instant, Long)]((_, r) => (r.resumeAt.get, r.created.value))
         .map(_._1)
         .toVector
-    def pausedWith(
+    def pausedWaiting(
         kind: Job.Kind,
         paused: RunRow.Status,
-        prefix: Prefix,
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
       mine(kind)
         .filter((_, r) =>
-          r.row.status == paused && r.error.exists(_.value.startsWith(prefix.value)) && r.resumeAt.forall(
-            _.isAfter(now)
-          )
+          r.row.status == paused && r.resumeAt.forall(_.isAfter(now))
         )
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
         .map((id, r) =>

@@ -139,13 +139,10 @@ abstract class JobRunsContract(name: String) extends DbSuite:
       )
     )
     assertEquals(r.due(Kind, RunRow.Status("paused"), now), Vector(soon))
+    assertEquals(r.pausedWaiting(Kind, RunRow.Status("paused"), now).map(_._1).toSet, Set(held, later))
     assertEquals(
-      r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("plan-quota:"), now).map(_._1),
-      Vector(held)
-    )
-    assertEquals(
-      r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("allowance:"), now).map(_._1),
-      Vector(later)
+      r.pausedWaiting(Kind, RunRow.Status("paused"), now).map(r => (r._1, r._4)).toSet,
+      Set((held, Problem("plan-quota: z")), (later, Problem("allowance: y")))
     )
     assert(r.resumeAt(Kind, later, RunRow.Status("paused"), now.minusSeconds(1)))
     assertEquals(r.due(Kind, RunRow.Status("paused"), now).toSet, Set(soon, later))

@@ -55,13 +55,13 @@ object Vaults:
     home.filter(_ => p == Path("~") || p.value.startsWith("~/")).fold(p)(h => Path(h.value + p.value.drop(1)))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
-  private[vaults] def answer[E](
+  private[vaults] def answer(
       vault: Secret.Vault.Name,
       ref: Secret.Vault.ResolveRef,
-      r: Either[E, Subprocess.Result],
+      r: Either[Processes.Failure, Subprocess.Result],
       classify: String => Option[String]
   ): Either[Problem, Secret.Resolved] =
-    r.left.map(e => Problem(e.toString)).flatMap { res =>
+    r.left.map(_.problem).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(res.out).value
         if v.isEmpty then Left(Problem(s"$vault: '$ref' has an empty value"))

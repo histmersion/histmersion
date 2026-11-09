@@ -128,7 +128,14 @@ class VaultsSuite extends munit.FunSuite:
     val slow = script(d, "slow", "sleep 30\n")
     val t0 = System.nanoTime
     val r = Subprocess.run(List(Processes.RunArgv(slow.toString)), Map.empty, None, 1.second)
-    assert(r.left.exists(_.value.contains("did not answer within 1 s")), r)
+    assert(r.left.exists(_.problem.value.contains("did not answer within 1 s")), r)
+    assert(
+      r.left.exists {
+        case Processes.Failure.TimedOut(_, after) => after.toSeconds == 1L
+        case _                                    => false
+      },
+      r
+    )
     assert((System.nanoTime - t0).nanos < 10.seconds)
 
   test("pure helpers: the problem line, the value without its line break, arguments that look like options"):
@@ -327,7 +334,7 @@ class VaultsSuite extends munit.FunSuite:
   test("yubikey: KeePassXC's messages — absent or failed is the next key; credentials, entry, touch stop"):
     import YubiKey.Failure.*
     def f(m: String) =
-      YubiKey.failure(Problem(m.toLowerCase(java.util.Locale.ROOT)), YubiKey.Setting.Entries("E"))
+      YubiKey.failure(KeePassXcMessage.parse(KeePassXcMessage.Stderr(m)), YubiKey.Setting.Entries("E"))
     assert(f("Could not find hardware key with serial number 1. Please plug it in to continue.").isInstanceOf[Next])
     assert(f("Failed to complete a challenge-response, the specific error was: x").isInstanceOf[Next])
     assert(f("Hardware key slot is not configured.").isInstanceOf[Next])
@@ -712,7 +719,7 @@ class VaultsSuite extends munit.FunSuite:
           Some(Processes.RunStdin(stdin)),
           60.seconds
         )
-        .fold(e => fail(e.value), identity)
+        .fold(e => fail(e.problem.value), identity)
       assertEquals(r.exit, 0, r.err)
     kp(List("db-create", "-q", "-p", db), "test-pw\ntest-pw\n")
     kp(List("mkdir", "-q", db, "G"), "test-pw\n")

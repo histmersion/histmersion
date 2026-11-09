@@ -10,6 +10,7 @@ import com.histmersion.util.jobs.{BackgroundJob, Job}
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Write
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Acquire.Checks.*
@@ -101,7 +102,7 @@ final class AcquireRecheckService(
   private def stopReason(j: JobInfo): String = j.error.fold("stopped")(_.value)
 
   private def resumable(j: JobInfo): Boolean =
-    AcquireRecheck.resumable(j.status, j.error.map(e => domain.Problem(e.value)))
+    j.status == JobState.Failed.wire && j.error.exists(e => Stopped.from(e).cause.resumable)
 
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
@@ -409,7 +410,7 @@ final class AcquireRecheckService(
         def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[String]) =
           left match
             case Nil                          => (t, rows, None)
-            case _ if agents.drain.draining   => (t, rows, Some(AcquireRecheck.StoppedDraining))
+            case _ if agents.drain.draining   => (t, rows, Some(Stopped.DrainingText))
             case _ if site.maintenance.active => (t, rows, Some("a restore started; stopped"))
             case f :: rest                    =>
               if Thread.interrupted() then throw InterruptedException()

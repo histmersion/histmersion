@@ -71,18 +71,14 @@ class AiProviderSpiSuite extends munit.FunSuite:
 
   test("the offline client sends nothing"):
     assertEquals(
-      ((AiHttp.Offline
-        .post(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.TimeoutSeconds(5)))
-        .left
-        .map(refactorError => (refactorError).value): Either[String, AiHttp.Response]),
-      Left("offline")
+      AiHttp.Offline
+        .post(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.TimeoutSeconds(5)),
+      Left(AiHttp.Failure.Refused(Problem("offline")))
     )
     assertEquals(
-      ((AiHttp.Offline
-        .get(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.TimeoutSeconds(5)))
-        .left
-        .map(refactorError2 => (refactorError2).value): Either[String, AiHttp.Response]),
-      Left("offline")
+      AiHttp.Offline
+        .get(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.TimeoutSeconds(5)),
+      Left(AiHttp.Failure.Refused(Problem("offline")))
     )
 
   test("a context written before AI providers existed still compiles and refuses one; the SPI is still 1"):

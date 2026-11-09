@@ -68,7 +68,7 @@ object Subprocess:
       env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  )(using processes: Processes): Either[plugin.Problem, Result] =
+  )(using processes: Processes): Either[Processes.Failure, Result] =
     processes.run(argv, env, stdin, timeout)
 
   /** A tool kept running to answer several requests (`keepassxc-cli open`'s interactive mode): lines written to its

@@ -31,6 +31,7 @@ import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 import javax.sql.DataSource
 import com.histmersion.api.automation.{Agents, Queue}
+import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerContext.TickLine
@@ -1128,7 +1129,7 @@ final class ManagerSupervisor(
   /** [[Engine.onSettled]]: a manager's run settled — an event (a stall named as one), and a tick soon. */
   def settled(r: RunInfo): Unit =
     r.managerId.foreach { mid =>
-      val stalled = r.error.exists(_.value.startsWith(PauseReason.Stalled.wire.value + ":"))
+      val stalled = r.error.exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Stalled))
       val text =
         s"${r.target}: run ${r.status}" + r.error.filter(_.value.nonEmpty).fold("")(e => s" — ${e.value.take(300)}")
       recordEvent(mid, r.managerItem, Some(runIdOf(r.id)), if stalled then Feed.Stall else Feed.Settled, text)

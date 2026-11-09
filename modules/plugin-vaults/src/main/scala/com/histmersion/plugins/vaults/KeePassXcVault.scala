@@ -38,18 +38,16 @@ final class KeePassXcVault(
             .run(argv(attr, entry, Some(yk)), Map.empty, stdin, yubikeyTimeout)
             .map(r => if r.exit.value == 0 then Right(r) else Left(r))
             .left
-            .map(timedOut(yubikeyTimeout))
+            .map(noAnswer)
         )
           .flatMap(r => Vaults.answer(name, ref, Right(r), _ => None))
       else Vaults.answer(name, ref, Subprocess.run(argv(attr, entry, None), Map.empty, stdin, timeout), classify(entry))
     }
 
-  /** The host's process runner says only in words that the tool did not answer in time (`Processes.run` fails with a
-    * `Problem`): the one place that reads those words into the case.
-    */
-  private def timedOut(waited: FiniteDuration)(failure: Problem): YubiKey.NoAnswer =
-    if failure.value.contains("did not answer") then YubiKey.NoAnswer.TimedOut(waited)
-    else YubiKey.NoAnswer.Unusable(failure)
+  /** Why the host's process runner gave no answer, as a try with a YubiKey sees it. */
+  private def noAnswer(failure: Processes.Failure): YubiKey.NoAnswer = failure match
+    case Processes.Failure.TimedOut(_, after) => YubiKey.NoAnswer.TimedOut(after)
+    case Processes.Failure.NotStarted(why)    => YubiKey.NoAnswer.Unusable(why)
 
   /** Every reference through ONE `keepassxc-cli open` session ([[KeePassXcSession]]): one unlock, one YubiKey touch. A
     * single reference (or one whose entry holds a line break) is read as [[resolve]] reads it; a failed unlock is every
@@ -245,7 +243,7 @@ final class KeePassXcVault(
             )
           );
           None
-        case Left(why) => log.info(Plugin.Log.Line(s"$why: trying the YubiKeys in order")); None
+        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem}: trying the YubiKeys in order")); None
     }
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:
@@ -295,7 +293,7 @@ final class KeePassXcVault(
             case Right(Left(r)) =>
               val msg = YubiKey.problem(Problem(r.err.value))
               YubiKey.failure(
-                Problem(r.err.value.toLowerCase(java.util.Locale.ROOT)),
+                KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
                 YubiKey.Setting.Entries(entry.value)
               ) match
                 case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")

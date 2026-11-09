@@ -21,12 +21,12 @@ final class SystemProcesses extends Processes:
       env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  ): Either[Problem, Result] =
+  ): Either[Processes.Failure, Result] =
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
     val pb = new ProcessBuilder(argv.map(_.value).asJava)
     env.foreach((k, v) => pb.environment().put(k.value, v.value))
     Try(pb.start()).toEither.left
-      .map(e => Problem(s"$tool could not be started: ${e.getMessage}"))
+      .map(e => Processes.Failure.NotStarted(Problem(s"$tool could not be started: ${e.getMessage}")))
       .flatMap { proc =>
         val out = drain(proc.getInputStream)
         val err = drain(proc.getErrorStream)
@@ -42,7 +42,7 @@ final class SystemProcesses extends Processes:
             val _ = p.destroyForcibly()
           }
           val _ = proc.destroyForcibly()
-          Left(Problem(s"$tool did not answer within ${timeout.toSeconds} s"))
+          Left(Processes.Failure.TimedOut(Processes.Tool(tool), timeout))
         else Right(Result(Result.Exit(proc.exitValue), Result.Out(out()), Result.Err(err())))
       }
 
