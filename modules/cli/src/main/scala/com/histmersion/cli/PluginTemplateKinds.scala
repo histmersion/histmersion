@@ -35,15 +35,19 @@ private[cli] object KindSources:
     case _                          => List("@Name@Config")
 
   private val Imports =
-    """import com.histmersion.plugin.*
+    """import com.histmersion.Newtype
+      |import com.histmersion.plugin.*
       |import com.histmersion.plugin.Plugin.Config.given
       |import hearth.kindlings.sconfigderivation.ConfigReader
+      |import io.github.iltotore.iron.constraint.any.Pure
       |
       |""".stripMargin
 
   private val TestImports =
     """import com.histmersion.plugin.*
       |import com.histmersion.plugin.testkit.*
+      |import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Registries}
+      |import com.histmersion.domain.CoreQuota
       |
       |import java.nio.file.Path
       |
@@ -56,8 +60,8 @@ private[cli] object KindSources:
   private val LiveStart =
     """    val mode = HttpMode.fromEnv(Path.of("recordings", "@case@"))
       |    mode.left.foreach(why => println(s"SKIPPED ${getClass.getSimpleName}: $why"))
-      |    assume(mode.isRight, mode.left.getOrElse(""))
-      |    val harness = PluginHarness.load("@id@", config, http = mode.toOption.get).fold(e => fail(e), identity)
+      |    assume(mode.isRight, mode.left.map(_.value).getOrElse(""))
+      |    val harness = PluginHarness.load(Plugin.Info.Id("@id@"), config, http = mode.toOption.get).fold(e => fail(e.value), identity)
       |""".stripMargin
 
   // ── source-fetcher ────────────────────────────────────────────────────────────────────────────
@@ -66,25 +70,32 @@ private[cli] object KindSources:
     """/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`.
       |  *
       |  * @param baseUrl where the copies are: a work with the DOI `10.1234/abc` is `<base-url>/10.1234/abc.pdf` */
-      |final case class @Name@Config(baseUrl: String) derives ConfigReader
+      |final case class @Name@Config(baseUrl: @Name@Config.BaseUrl) derives ConfigReader
+      |
+      |object @Name@Config:
+      |  type BaseUrl = BaseUrl.T
+      |  object BaseUrl extends Newtype[String, Pure]
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info(Plugin.Info.Id("@id@"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
       |
-      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
-      |    ctx.sourceFetchers.add("@id@", @Contribution@(config.baseUrl, ctx.http))
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[Problem, Unit] =
+      |    ctx.sourceFetchers.add(Registry.AddId("@id@"), @Contribution@(config.baseUrl, ctx.http))
       |
       |/** One step of the acquisition chain: a copy of a work by its DOI, from a mirror that serves PDFs. */
-      |final class @Contribution@(baseUrl: String, http: Plugin.Http) extends SourceFetcher:
+      |final class @Contribution@(baseUrl: @Name@Config.BaseUrl, http: Plugin.Http) extends SourceFetcher:
       |  val access = Access.Open
       |
       |  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       |    work.doi match
-      |      case None => Fetch.Miss("no DOI")
+      |      case None => Fetch.Miss(Problem("no DOI"))
       |      case Some(doi) =>
-      |        val url = s"${baseUrl.stripSuffix("/")}/${doi.value}.pdf"
-      |        http.get(url).fold(Fetch.Miss(_), bytes => Fetch.Found(FetchedFile("@id@", Some(url), bytes, "pdf")))
+      |        val url = Plugin.Http.Url(s"${baseUrl.value.stripSuffix("/")}/${doi.value}.pdf")
+      |        http.get(url).fold(Fetch.Miss(_), body => Fetch.Found(file(url, body)))
+      |
+      |  private def file(url: Plugin.Http.Url, body: Plugin.HttpResponse.Body): FetchedFile =
+      |    FetchedFile(FetchedFile.Source("@id@"), Some(FetchedFile.Url(url.value)), FetchedFile.Bytes(body.value), FetchedFile.Extension("pdf"))
       |""".stripMargin
 
   private val SourceFetcherTest =
@@ -92,28 +103,33 @@ private[cli] object KindSources:
       |  * request is answered by a stub. */
       |class @Name@Suite extends munit.FunSuite:
       |  /** A body the server takes for a PDF: `%PDF` in its first KiB, and more than a KiB of it. */
-      |  private val pdf  = ("%PDF-1.7\n" + " " * 2048 + "\n%%EOF\n").getBytes
-      |  private val page = "https://mirror.example/10.1234/abc.pdf"
+      |  private val pdf  = HttpAnswer.Body(("%PDF-1.7\n" + " " * 2048 + "\n%%EOF\n").getBytes)
+      |  private val page = HttpTransport.Url("https://mirror.example/10.1234/abc.pdf")
+      |  private val id   = Plugin.Info.Id("@id@")
       |
-      |  private def harness(pages: (String, StubAnswer)*): PluginHarness =
-      |    PluginHarness.load("@id@", "base-url = \"https://mirror.example/\"", http = HttpMode.Stub(pages.toMap))
-      |      .fold(e => fail(e), identity)
+      |  private def harness(pages: (HttpTransport.Url, StubAnswer)*): PluginHarness =
+      |    PluginHarness.load(id, "base-url = \"https://mirror.example/\"", http = HttpMode.Stub(pages.toMap))
+      |      .fold(e => fail(e.value), identity)
       |
       |  test("the server registers the fetcher under the plugin's id"):
-      |    assertEquals(harness().contributions.sourceFetchers, List("@id@"))
+      |    assertEquals(harness().contributions.sourceFetchers, List(Registries.SourceFetchersKey("@id@")))
       |
       |  test("a work the mirror has is found"):
-      |    harness(page -> StubAnswer.ok(pdf, "application/pdf")).fetch(WorkKey(doi = Some(Doi("10.1234/abc")))).outcome match
-      |      case FetchOutcome.Found(fetcher, file, _) => assertEquals((fetcher, file.url, file.extension), ("@id@", Some(page), "pdf"))
-      |      case other                               => fail(s"expected a copy, got $other")
+      |    val work = WorkKey(doi = Some(Doi("10.1234/abc")))
+      |    harness(page -> StubAnswer.ok(pdf, CoreQuota.HeaderValue("application/pdf"))).fetch(work).outcome match
+      |      case FetchOutcome.Found(_, file, _) =>
+      |        assertEquals(file.url, Some(FetchedFile.Url(page.value)))
+      |        assertEquals(file.extension, FetchedFile.Extension("pdf"))
+      |      case other => fail(s"expected a copy, got $other")
       |
       |  test("a page that is not a PDF is no copy: the server checks every PDF"):
-      |    val report = harness(page -> StubAnswer.text("<html>Sign in</html>", "text/html")).fetch(WorkKey(doi = Some(Doi("10.1234/abc"))))
-      |    assertEquals(report.outcome, FetchOutcome.Miss("@id@: not a PDF"))
+      |    val html = StubAnswer.text(HttpAnswer.Text("<html>Sign in</html>"), CoreQuota.HeaderValue("text/html"))
+      |    val report = harness(page -> html).fetch(WorkKey(doi = Some(Doi("10.1234/abc"))))
+      |    assert(report.outcome.isInstanceOf[FetchOutcome.Miss], report.outcome.toString)
       |
       |  test("a work the mirror lacks, or one without a DOI, is a miss"):
       |    assert(harness().fetch(WorkKey(doi = Some(Doi("10.1234/xyz")))).outcome.isInstanceOf[FetchOutcome.Miss])
-      |    assertEquals(harness().fetch(WorkKey(title = Some("A title"))).outcome, FetchOutcome.Miss("@id@: no DOI"))
+      |    assert(harness().fetch(WorkKey(title = Some(WorkKey.Title("A title")))).outcome.isInstanceOf[FetchOutcome.Miss])
       |""".stripMargin
 
   /** The live check: settings and a work in, a copy (and its file) out. */
@@ -128,12 +144,12 @@ private[cli] object KindSources:
       |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
       |  private val config = "base-url = \"https://mirror.example\""
       |  /** A work the source has: replace with a real one. */
-      |  private val doi = "10.1234/abc"
+      |  private val doi = Doi("10.1234/abc")
       |
       |  test("finds and downloads a copy of a known work"):
 """.stripMargin + LiveStart.replace("@case@", "known-work") +
       """      |    // the work as an ingest asks for it: its title, authors and year looked up by the DOI
-      |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Doi.option(doi)))
+      |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Some(doi)))
       |    val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
       |    assert(report.outcome.isInstanceOf[FetchOutcome.Found],
       |      (report.requests ++ report.log.map(_.toString) :+ s"=> ${report.outcome}").mkString("\n"))
@@ -153,54 +169,63 @@ private[cli] object KindSources:
       |  *
       |  * @param place   the name of the place on the map it shows
       |  * @param licence the licence as its provider states it (`CC-BY-4.0`, `Public domain`) */
-      |final case class ListedPicture(key: String, title: String, place: String, pageUrl: String, imageUrl: String,
-      |    licence: String, credit: String) derives ConfigReader
+      |final case class ListedPicture(key: MediaItem.Key, title: MediaItem.Title, place: MediaPlace.Label,
+      |    pageUrl: MediaItem.PageUrl, imageUrl: MediaItem.ImageUrl, licence: Licence, credit: MediaRights.Credit)
+      |    derives ConfigReader
       |
       |/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`. */
       |final case class @Name@Config(pictures: List[ListedPicture]) derives ConfigReader
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info(Plugin.Info.Id("@id@"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
       |
-      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
-      |    ctx.mediaCollections.add("@id@", @Contribution@(config.pictures))
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[Problem, Unit] =
+      |    ctx.mediaCollections.add(Registry.AddId("@id@"), @Contribution@(config.pictures))
       |
       |/** A media collection kept in the settings: the pictures listed under a place's name. The server
       |  * judges each licence and each match to a place itself. */
       |final class @Contribution@(pictures: List[ListedPicture]) extends MediaCollection:
-      |  val title = "@Name@ pictures"
-      |  override val description = "pictures listed in the @id@ plugin's settings"
+      |  val title = MediaCollection.Title("@Name@ pictures")
+      |  override val description = MediaCollection.Description("pictures listed in the @id@ plugin's settings")
       |  val role = MediaCollection.Image
       |
-      |  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
-      |    Right(pictures.filter(_.place.equalsIgnoreCase(place.label)).map(p =>
-      |      Right(MediaItem(p.key, p.title, p.pageUrl, Some(p.imageUrl), Right(MediaRights(Licence(p.licence), credit = p.credit)),
-      |        geography = List("place" -> p.place)))))
+      |  def search(place: MediaPlace, http: Plugin.Http): Either[Problem, List[Either[Problem, MediaItem]]] =
+      |    Right(pictures.filter(_.place.value.equalsIgnoreCase(place.label.value)).map(p => Right(item(p))))
+      |
+      |  private def item(p: ListedPicture): MediaItem =
+      |    MediaItem(p.key, p.title, p.pageUrl, Some(p.imageUrl), Right(MediaRights(p.licence, credit = p.credit)),
+      |      geography = List(MediaItem.Geography.Field("place") -> MediaItem.Geography.Value(p.place.value)))
       |""".stripMargin
 
   private val MediaCollectionTest =
     """/** The plugin loaded and run as the server runs it (the Histmersion plugin testkit), offline. */
       |class @Name@Suite extends munit.FunSuite:
+      |  private val id   = Plugin.Info.Id("@id@")
+      |  private val key  = Registries.MediaCollectionsKey("@id@")
+      |  private val troy = MediaPlace(MediaPlace.Id("pleiades_550595"), MediaPlace.Label("Troy"))
+      |
       |  private def picture(licence: String) =
       |    "pictures = [{ key = troy-1, title = \"The walls of Troy\", place = Troy, page-url = \"https://pictures.example/troy-1\", " +
       |      s"image-url = \"https://pictures.example/troy-1.jpg\", licence = \"$licence\", credit = \"A. Photographer\" }]"
       |
       |  private def harness(licence: String = "CC-BY-4.0"): PluginHarness =
-      |    PluginHarness.load("@id@", picture(licence)).fold(e => fail(e), identity)
+      |    PluginHarness.load(id, picture(licence)).fold(e => fail(e.value), identity)
       |
       |  test("the server registers the collection under the plugin's id"):
-      |    assertEquals(harness().contributions.mediaCollections, List("@id@"))
+      |    assertEquals(harness().contributions.mediaCollections, List(key))
       |
       |  test("a place's pictures are found by its name, and the server would keep them"):
-      |    val report = harness().searchMedia("@id@", MediaPlace("pleiades_550595", "Troy"))
-      |    assertEquals(report.kept.map(v => (v.key, v.licence)), List(("troy-1", Some("CC-BY-4.0"))))
+      |    val items = harness().searchMedia(key, troy).kept.flatMap(_.item)
+      |    assertEquals(items.map(_.key), List(MediaItem.Key("troy-1")))
+      |    assertEquals(items.flatMap(_.rights.toOption).map(_.licence), List(Licence("CC-BY-4.0")))
       |
       |  test("another place has none"):
-      |    assertEquals(harness().searchMedia("@id@", MediaPlace("pleiades_570491", "Hattusa")).verdicts, Nil)
+      |    val hattusa = MediaPlace(MediaPlace.Id("pleiades_570491"), MediaPlace.Label("Hattusa"))
+      |    assertEquals(harness().searchMedia(key, hattusa).verdicts, Nil)
       |
       |  test("a licence the server does not allow is refused, whatever the plugin says"):
-      |    val report = harness("CC BY-NC 4.0").searchMedia("@id@", MediaPlace("pleiades_550595", "Troy"))
+      |    val report = harness("CC BY-NC 4.0").searchMedia(key, troy)
       |    assert(report.kept.isEmpty && report.verdicts.forall(_.refused.isDefined), report.toString)
       |""".stripMargin
 
@@ -213,11 +238,11 @@ private[cli] object KindSources:
       |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
       |  private val config = ""
       |  /** A place the collection has pictures of. */
-      |  private val place = MediaPlace("pleiades_550595", "Troy")
+      |  private val place = MediaPlace(MediaPlace.Id("pleiades_550595"), MediaPlace.Label("Troy"))
       |
       |  test("a search for a known place answers pictures the server would keep"):
 """.stripMargin + LiveStart.replace("@case@", "known-place") +
-      """      |    val report = harness.searchMedia("@id@", place)
+      """      |    val report = harness.searchMedia(Registries.MediaCollectionsKey("@id@"), place)
       |    assert(report.kept.nonEmpty, (report.requests ++ report.log.map(_.toString) ++ report.verdicts.map(_.toString)).mkString("\n"))
       |""".stripMargin
 
@@ -237,36 +262,35 @@ private[cli] object KindSources:
       |  * @param year the year it happened, signed (BCE negative: 1600 BCE is -1600)
       |  * @param kind `eruption`, `earthquake`, `battle`, `treaty`, …
       |  * @param lat  degrees north, with `lon` degrees east: where it happened */
-      |final case class ListedEvent(id: String, label: String, kind: String, year: Int, lat: Double, lon: Double)
-      |    derives ConfigReader
+      |final case class ListedEvent(id: CatalogueEvent.Id, label: CatalogueEvent.Label, kind: CatalogueEvent.Kind,
+      |    year: Year, lat: Latitude, lon: Longitude) derives ConfigReader
       |
       |/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`. */
-      |final case class @Name@Config(source: String, events: List[ListedEvent]) derives ConfigReader
+      |final case class @Name@Config(source: EventCatalogue.Citation, events: List[ListedEvent]) derives ConfigReader
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info(Plugin.Info.Id("@id@"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
       |
-      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
-      |    ctx.eventCatalogues.add("@id@", @Contribution@(config.source, config.events))
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[Problem, Unit] =
+      |    ctx.eventCatalogues.add(Registry.AddId("@id@"), @Contribution@(config.source, config.events))
       |
       |/** An event catalogue kept in the settings, read in one part. The server keeps the events of the
       |  * years an import asks for and stores them as research leads. */
-      |final class @Contribution@(source: String, events: List[ListedEvent]) extends EventCatalogue:
-      |  val title    = "@Name@"
+      |final class @Contribution@(source: EventCatalogue.Citation, events: List[ListedEvent]) extends EventCatalogue:
+      |  val title    = EventCatalogue.Title("@Name@")
       |  val licence  = Licence("the user's own list")
       |  val citation = source
-      |  val home     = "https://example.org/@id@"
+      |  val home     = EventCatalogue.Home("https://example.org/@id@")
       |
-      |  def parts(query: CatalogueQuery): List[String] = List("all")
+      |  def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] = List(EventCatalogue.ReadPart("all"))
       |
-      |  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
-      |    Right(CataloguePage(events.map { e =>
-      |      // a position off the globe is left out: the event is still read, without one
-      |      val position = for lat <- Latitude.option(e.lat); lon <- Longitude.option(e.lon) yield (lat, lon)
-      |      CatalogueEvent(e.id, s"$home#${e.id}", e.label, e.kind, notBefore = Some(Year(e.year)), notAfter = Some(Year(e.year)),
-      |        lat = position.map(_._1), lon = position.map(_._2))
-      |    }))
+      |  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[Problem, CataloguePage] =
+      |    Right(CataloguePage(events.map(event)))
+      |
+      |  private def event(e: ListedEvent): CatalogueEvent =
+      |    CatalogueEvent(e.id, CatalogueEvent.Url(s"${home.value}#${e.id.value}"), e.label, e.kind,
+      |      notBefore = Some(e.year), notAfter = Some(e.year), lat = Some(e.lat), lon = Some(e.lon))
       |""".stripMargin
 
   private val EventCatalogueTest =
@@ -275,14 +299,17 @@ private[cli] object KindSources:
       |  private val thera =
       |    "source = \"my notes\", events = [{ id = thera, label = \"Eruption of Thera\", kind = eruption, year = -1600, lat = 36.4, lon = 25.4 }]"
       |
-      |  private val harness = PluginHarness.load("@id@", thera).fold(e => fail(e), identity)
+      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), thera).fold(e => fail(e.value), identity)
       |
       |  test("the server registers the catalogue under the plugin's id"):
-      |    assertEquals(harness.contributions.eventCatalogues, List("@id@"))
+      |    assertEquals(harness.contributions.eventCatalogues, List(Registries.EventCataloguesKey("@id@")))
       |
       |  test("every listed event is read, and stored dated to its year"):
-      |    val report = harness.readCatalogue("@id@", CatalogueQuery(None, Year(2025)))
-      |    assertEquals(report.accepted.map(e => (e.event.id, e.notBefore, e.notAfter)), List(("thera", Some(Year(-1600)), Some(Year(-1600)))))
+      |    val report = harness.readCatalogue(Registries.EventCataloguesKey("@id@"), CatalogueQuery(None, Year(2025)))
+      |    assertEquals(
+      |      report.accepted.map(e => (e.event.id, e.notBefore, e.notAfter)),
+      |      List((CatalogueEvent.Id("thera"), Some(Year(-1600)), Some(Year(-1600))))
+      |    )
       |    assertEquals(report.refused, Nil)
       |""".stripMargin
 
@@ -299,9 +326,9 @@ private[cli] object KindSources:
       |
       |  test("an import reads events the server would store"):
 """.stripMargin + LiveStart.replace("@case@", "an-import") +
-      """      |    val report = harness.readCatalogue("@id@", query)
+      """      |    val report = harness.readCatalogue(Registries.EventCataloguesKey("@id@"), query)
       |    assert(report.failure.isEmpty && report.accepted.nonEmpty,
-      |      (report.requests ++ report.log.map(_.toString) ++ report.refused :+ report.pages.toString).mkString("\n"))
+      |      (report.requests.map(_.value) ++ report.log.map(_.toString) ++ report.refused.map(_.value) :+ report.pages.toString).mkString("\n"))
       |""".stripMargin
 
   private val EventCatalogueDefaults =
@@ -319,26 +346,29 @@ private[cli] object KindSources:
     """/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`.
       |  *
       |  * @param reply what every call answers: a stand-in until `turn` calls a real model through `http` */
-      |final case class @Name@Config(reply: String) derives ConfigReader
+      |final case class @Name@Config(reply: AiTurn.Text) derives ConfigReader
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info(Plugin.Info.Id("@id@"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
       |
-      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
-      |    ctx.aiProviders.add("@id@", @Contribution@(config.reply))
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[Problem, Unit] =
+      |    ctx.aiProviders.add(Registry.AddId("@id@"), @Contribution@(config.reply))
       |
       |/** An AI provider, registered under the provider name `@id@` (`@id@:<model>` in the agents' roles).
       |  * The server runs the tools, the loop and the budgets; a provider answers one model call at a time. */
-      |final class @Contribution@(reply: String) extends AiProvider:
-      |  val title = "@Name@"
-      |  override val description = "answers every call with the reply in its settings"
-      |  override val capabilities = AiCapabilities(tools = false, structuredOutput = false)
+      |final class @Contribution@(reply: AiTurn.Text) extends AiProvider:
+      |  val title = AiProvider.Title("@Name@")
+      |  override val description = AiProvider.Description("answers every call with the reply in its settings")
+      |  override val capabilities =
+      |    AiCapabilities(tools = AiCapabilities.Tools(false), structuredOutput = AiCapabilities.StructuredOutput(false))
       |
-      |  override def models(http: AiHttp): Either[String, List[String]] = Right(List("fixed"))
+      |  override def models(http: AiHttp): Either[Problem, List[AiProvider.ModelName]] =
+      |    Right(List(AiProvider.ModelName("fixed")))
       |
       |  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
-      |    Right(AiTurn(reply, usage = Some(AiUsage(input = 0, output = 0)), servedBy = Some(request.model)))
+      |    Right(AiTurn(reply, usage = Some(AiUsage(AiUsage.Input(0L), AiUsage.Output(0L))),
+      |      servedBy = Some(AiTurn.ServedBy(request.model.value))))
       |""".stripMargin
 
   private val AiProviderTest =
@@ -346,18 +376,18 @@ private[cli] object KindSources:
       |  * go through a ScriptedAiHttp: answer them with `ScriptedAiHttp(Right(AiHttp.Response(200, "…")))`
       |  * and assert on what it sent (`requests`, keys masked). */
       |class @Name@Suite extends munit.FunSuite:
-      |  private val request = AiTurn.Request("fixed", "You are a test.", List(AiMessage.User("Hello")), Nil, None,
-      |    maxTokens = 100, iteration = 1, maxIterations = 1)
+      |  private val request = new AiTurn.Request("fixed", "You are a test.", List(AiMessage.User(AiMessage.User.Text("Hello"))),
+      |    Nil, None, 100, 1, 1)
       |
-      |  private val harness = PluginHarness.load("@id@", "reply = \"{}\"").fold(e => fail(e), identity)
+      |  private val harness = PluginHarness.load(Plugin.Info.Id("@id@"), "reply = \"{}\"").fold(e => fail(e.value), identity)
       |
       |  test("the server registers the provider under the plugin's id"):
-      |    assertEquals(harness.contributions.aiProviders, List("@id@"))
+      |    assertEquals(harness.contributions.aiProviders, List(Registries.AiProvidersKey("@id@")))
       |
       |  test("every call is answered with the reply"):
-      |    val report = harness.aiTurn("@id@", request)
+      |    val report = harness.aiTurn(Registries.AiProvidersKey("@id@"), request)
       |    assertEquals(report.check, Right(()))
-      |    assertEquals(report.turn.map(_.map(_.text)), Some(Right("{}")))
+      |    assertEquals(report.turn.map(_.map(_.text)), Some(Right(AiTurn.Text("{}"))))
       |""".stripMargin
 
   private val AiProviderDefaults =
@@ -373,24 +403,29 @@ private[cli] object KindSources:
     """/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`.
       |  *
       |  * @param directory the directory that holds one file per secret */
-      |final case class @Name@Config(directory: String) derives ConfigReader
+      |final case class @Name@Config(directory: @Name@Config.Directory) derives ConfigReader
+      |
+      |object @Name@Config:
+      |  type Directory = Directory.T
+      |  object Directory extends Newtype[String, Pure]
       |
       |final class @Plugin@ extends Plugin:
       |  type Config = @Name@Config
-      |  val info = Plugin.Info("@id@", "0.1.0", Spi.Version)
+      |  val info = Plugin.Info(Plugin.Info.Id("@id@"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
       |
-      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[String, Unit] =
-      |    ctx.secretVaults.add("@id@", @Contribution@(java.nio.file.Path.of(config.directory)))
+      |  def register(config: @Name@Config, ctx: Plugin.Context): Either[Problem, Unit] =
+      |    ctx.secretVaults.add(Registry.AddId("@id@"), @Contribution@(java.nio.file.Path.of(config.directory.value)))
       |
       |/** A secret vault: `@id@:<name>` in a setting is the content of the file `<name>` in the directory. */
       |final class @Contribution@(directory: java.nio.file.Path) extends Secret.Vault:
-      |  val name = "@id@"
+      |  val name = Secret.Vault.Name("@id@")
       |
-      |  def resolve(ref: String): Either[String, String] =
-      |    val file = directory.resolve(ref).normalize
-      |    if ref.isEmpty || ref.contains('/') || !file.startsWith(directory.normalize) then Left(s"'$ref' is not a name in the directory")
-      |    else if !java.nio.file.Files.isRegularFile(file) then Left(s"no secret '$ref'")
-      |    else Right(java.nio.file.Files.readString(file).trim)
+      |  def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
+      |    val file = directory.resolve(ref.value).normalize
+      |    if ref.value.isEmpty || ref.value.contains('/') || !file.startsWith(directory.normalize) then
+      |      Left(Problem(s"'${ref.value}' is not a name in the directory"))
+      |    else if !java.nio.file.Files.isRegularFile(file) then Left(Problem(s"no secret '${ref.value}'"))
+      |    else Right(Secret.Resolved(java.nio.file.Files.readString(file).trim))
       |""".stripMargin
 
   private val SecretVaultTest =
@@ -407,17 +442,20 @@ private[cli] object KindSources:
       |  )
       |
       |  private def harness(d: Path): PluginHarness =
-      |    PluginHarness.load("@id@", s"directory = \"$d\"").fold(e => fail(e), identity)
+      |    PluginHarness.load(Plugin.Info.Id("@id@"), s"directory = \"$d\"").fold(e => fail(e.value), identity)
+      |
+      |  private def resolved(d: Path, name: String) =
+      |    harness(d).resolveSecret(Secret.Ref.Vault.Value("@id@"), Secret.Ref.Vault.Ref(name))
       |
       |  directory.test("the server registers the vault under the plugin's id"): d =>
-      |    assertEquals(harness(d).contributions.secretVaults, List("@id@"))
+      |    assertEquals(harness(d).contributions.secretVaults, List(Registries.SecretVaultsKey("@id@")))
       |
       |  directory.test("a secret is the content of its file"): d =>
-      |    assertEquals(harness(d).resolveSecret("@id@", "portal-token"), Right("s3cret"))
+      |    assertEquals(resolved(d, "portal-token").map(_.value.toString), Right("s3cret"))
       |
       |  directory.test("a name outside the directory is refused"): d =>
-      |    assert(harness(d).resolveSecret("@id@", "../portal-token").isLeft)
-      |    assert(harness(d).resolveSecret("@id@", "missing").isLeft)
+      |    assert(resolved(d, "../portal-token").isLeft)
+      |    assert(resolved(d, "missing").isLeft)
       |""".stripMargin
 
   private val SecretVaultDefaults =

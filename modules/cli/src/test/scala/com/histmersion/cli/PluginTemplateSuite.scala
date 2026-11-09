@@ -175,7 +175,7 @@ class PluginTemplateSuite extends munit.FunSuite:
     val tests = file(PluginTemplate.files(request("mirror")), TemplateFile.Path("Mirror.test.scala"))
     assert(tests.contains("class MirrorSuite extends munit.FunSuite"), tests)
     assert(tests.contains("class MirrorPackagingSuite extends munit.FunSuite"), tests)
-    assert(tests.contains("PluginHarness.load(\"mirror\""), "the tests load the plugin as the server does")
+    assert(tests.contains("PluginHarness.load(Plugin.Info.Id(\"mirror\")"), "the tests load the plugin as the server does")
     assert(
       !tests.contains("extends Plugin.Context") && !tests.contains("extends Plugin.Http"),
       "no hand-made host in the tests"
@@ -246,7 +246,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       )
       val main = file(files, TemplateFile.Path("MyThing.scala"))
       assert(main.contains("final class MyThingPlugin extends Plugin:"), main)
-      assert(main.contains("Plugin.Info(\"my-thing\", \"0.1.0\", Spi.Version)"), main)
+      assert(main.contains("Plugin.Info.Id(\"my-thing\"), Plugin.Info.Version(\"0.1.0\"), Plugin.Info.SpiVersion(Spi.Version)"), main)
       assert(main.contains(s"final class MyThing${kind.classSuffix}"), main)
       assert(
         file(files, PluginTemplate.defaultsPath(PluginId.parse("my-thing").toOption.get)).contains("enabled = false\n")

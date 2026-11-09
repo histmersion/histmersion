@@ -177,13 +177,6 @@ com.histmersion.plugin.testkit.CatalogueReport$Events$ given_TypeTest_L_T(scala.
 com.histmersion.plugin.testkit.CatalogueReport$Events$ new()
 com.histmersion.plugin.testkit.CatalogueReport$Events$ option(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport$Events$ unapply(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ class
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ new()
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.CatalogueReport$Failure$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ applyUnsafe(java.lang.Object): java.lang.Object
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ class
 com.histmersion.plugin.testkit.CatalogueReport$LeftOut$ either(java.lang.Object): scala.util.Either
@@ -288,14 +281,8 @@ com.histmersion.plugin.testkit.FetchOutcome$Miss$ apply(java.lang.String): com.h
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ class
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ new()
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Miss): com.histmersion.plugin.testkit.FetchOutcome$Miss
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ class
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ new()
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.FetchOutcome$Miss$Why$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.FetchOutcome$Refused _1(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Refused apply(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused canEqual(java.lang.Object): boolean
@@ -317,14 +304,8 @@ com.histmersion.plugin.testkit.FetchOutcome$Refused$ apply(java.lang.String): co
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ class
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ new()
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Refused): com.histmersion.plugin.testkit.FetchOutcome$Refused
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ class
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ new()
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.FetchOutcome$Refused$Why$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.FetchReport _1(): com.histmersion.plugin.testkit.FetchOutcome
 com.histmersion.plugin.testkit.FetchReport _2(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.FetchReport _3(): scala.collection.immutable.List
@@ -413,13 +394,6 @@ com.histmersion.plugin.testkit.GazetteerReport$ apply(scala.collection.immutable
 com.histmersion.plugin.testkit.GazetteerReport$ class
 com.histmersion.plugin.testkit.GazetteerReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.GazetteerReport
 com.histmersion.plugin.testkit.GazetteerReport$ unapply(com.histmersion.plugin.testkit.GazetteerReport): com.histmersion.plugin.testkit.GazetteerReport
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ class
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ new()
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.GazetteerReport$Failure$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ applyUnsafe(java.lang.Object): java.lang.Object
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ class
 com.histmersion.plugin.testkit.GazetteerReport$Refused$ either(java.lang.Object): scala.util.Either
@@ -448,13 +422,6 @@ com.histmersion.plugin.testkit.HttpMode$ class
 com.histmersion.plugin.testkit.HttpMode$ fromEnv(java.nio.file.Path, scala.collection.immutable.Map): scala.util.Either
 com.histmersion.plugin.testkit.HttpMode$ fromOrdinal(int): com.histmersion.plugin.testkit.HttpMode
 com.histmersion.plugin.testkit.HttpMode$ ordinal(com.histmersion.plugin.testkit.HttpMode): int
-com.histmersion.plugin.testkit.HttpMode$Problem$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.HttpMode$Problem$ class
-com.histmersion.plugin.testkit.HttpMode$Problem$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.HttpMode$Problem$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.HttpMode$Problem$ new()
-com.histmersion.plugin.testkit.HttpMode$Problem$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.HttpMode$Problem$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.HttpMode$Record _1(): java.nio.file.Path
 com.histmersion.plugin.testkit.HttpMode$Record apply(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Record
 com.histmersion.plugin.testkit.HttpMode$Record canEqual(java.lang.Object): boolean
@@ -550,13 +517,6 @@ com.histmersion.plugin.testkit.LogLine$ apply(java.lang.String, boolean, java.la
 com.histmersion.plugin.testkit.LogLine$ class
 com.histmersion.plugin.testkit.LogLine$ fromProduct(scala.Product): com.histmersion.plugin.testkit.LogLine
 com.histmersion.plugin.testkit.LogLine$ unapply(com.histmersion.plugin.testkit.LogLine): com.histmersion.plugin.testkit.LogLine
-com.histmersion.plugin.testkit.LogLine$Message$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.LogLine$Message$ class
-com.histmersion.plugin.testkit.LogLine$Message$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.LogLine$Message$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.LogLine$Message$ new()
-com.histmersion.plugin.testkit.LogLine$Message$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.LogLine$Message$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.LogLine$Source$ applyUnsafe(java.lang.Object): java.lang.Object
 com.histmersion.plugin.testkit.LogLine$Source$ class
 com.histmersion.plugin.testkit.LogLine$Source$ either(java.lang.Object): scala.util.Either
@@ -564,6 +524,13 @@ com.histmersion.plugin.testkit.LogLine$Source$ given_TypeTest_L_T(scala.reflect.
 com.histmersion.plugin.testkit.LogLine$Source$ new()
 com.histmersion.plugin.testkit.LogLine$Source$ option(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.LogLine$Source$ unapply(java.lang.Object): scala.Option
+com.histmersion.plugin.testkit.LogLine$Text$ applyUnsafe(java.lang.Object): java.lang.Object
+com.histmersion.plugin.testkit.LogLine$Text$ class
+com.histmersion.plugin.testkit.LogLine$Text$ either(java.lang.Object): scala.util.Either
+com.histmersion.plugin.testkit.LogLine$Text$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
+com.histmersion.plugin.testkit.LogLine$Text$ new()
+com.histmersion.plugin.testkit.LogLine$Text$ option(java.lang.Object): scala.Option
+com.histmersion.plugin.testkit.LogLine$Text$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.MediaReport _1(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.MediaReport _2(): scala.Option
 com.histmersion.plugin.testkit.MediaReport _3(): scala.collection.immutable.List
@@ -592,14 +559,8 @@ com.histmersion.plugin.testkit.MediaReport verdicts(): scala.collection.immutabl
 com.histmersion.plugin.testkit.MediaReport$ apply(scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.MediaReport
 com.histmersion.plugin.testkit.MediaReport$ class
 com.histmersion.plugin.testkit.MediaReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport$ toString(): java.lang.String
 com.histmersion.plugin.testkit.MediaReport$ unapply(com.histmersion.plugin.testkit.MediaReport): com.histmersion.plugin.testkit.MediaReport
-com.histmersion.plugin.testkit.MediaReport$Failure$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.MediaReport$Failure$ class
-com.histmersion.plugin.testkit.MediaReport$Failure$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.MediaReport$Failure$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.MediaReport$Failure$ new()
-com.histmersion.plugin.testkit.MediaReport$Failure$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.MediaReport$Failure$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.MediaVerdict _1(): java.lang.String
 com.histmersion.plugin.testkit.MediaVerdict _2(): scala.Option
 com.histmersion.plugin.testkit.MediaVerdict _3(): scala.Option
@@ -653,13 +614,6 @@ com.histmersion.plugin.testkit.PluginHarness$ TestVaultsId(): java.lang.String
 com.histmersion.plugin.testkit.PluginHarness$ class
 com.histmersion.plugin.testkit.PluginHarness$ liveAiHttp(): com.histmersion.plugin.AiHttp
 com.histmersion.plugin.testkit.PluginHarness$ load(java.lang.String, java.lang.Comparable, com.histmersion.plugin.testkit.HttpMode, scala.collection.immutable.Map, scala.collection.immutable.Map, scala.Option): scala.util.Either
-com.histmersion.plugin.testkit.PluginHarness$Problem$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.PluginHarness$Problem$ class
-com.histmersion.plugin.testkit.PluginHarness$Problem$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.PluginHarness$Problem$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.PluginHarness$Problem$ new()
-com.histmersion.plugin.testkit.PluginHarness$Problem$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.PluginHarness$Problem$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.PluginHarness$Request$ applyUnsafe(java.lang.Object): java.lang.Object
 com.histmersion.plugin.testkit.PluginHarness$Request$ class
 com.histmersion.plugin.testkit.PluginHarness$Request$ either(java.lang.Object): scala.util.Either
@@ -677,13 +631,6 @@ com.histmersion.plugin.testkit.ScriptedAiHttp new(scala.collection.immutable.Seq
 com.histmersion.plugin.testkit.ScriptedAiHttp post(java.lang.String, scala.collection.immutable.Map, java.lang.String, int): scala.util.Either
 com.histmersion.plugin.testkit.ScriptedAiHttp requests(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.ScriptedAiHttp$ class
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ applyUnsafe(java.lang.Object): java.lang.Object
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ class
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ either(java.lang.Object): scala.util.Either
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ given_TypeTest_L_T(scala.reflect.TypeTest): io.github.iltotore.iron.Refined$given_TypeTest_L_T
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ new()
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ option(java.lang.Object): scala.Option
-com.histmersion.plugin.testkit.ScriptedAiHttp$Problem$ unapply(java.lang.Object): scala.Option
 com.histmersion.plugin.testkit.ScriptedAiHttp$package class
 com.histmersion.plugin.testkit.ScriptedAiHttp$package fromDoi(com.histmersion.plugin.WorkKey$, java.lang.String, com.histmersion.plugin.testkit.PluginHarness): scala.util.Either
 com.histmersion.plugin.testkit.ScriptedAiHttp$package$ class
