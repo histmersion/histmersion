@@ -765,6 +765,11 @@ object ReviewArticle:
             case _                => Cause.Other(p)
           if of(read).value == text then read else Cause.Other(p)
 
+        /** The sentence up to its first colon: what stays the same when only the detail after it changes (a coverage
+          * count), so a finding raised again is recognised.
+          */
+        def head: String = p.value.takeWhile(_ != ':')
+
         def isUncitedParagraph: Boolean = p.cause == Cause.UncitedParagraph
         def isHandWrittenSourcesCited: Boolean = p.cause == Cause.HandWrittenSourcesCited
         def isMissingSection: Boolean = p.cause match
@@ -1134,7 +1139,7 @@ object ReviewArticle:
           Finding.Kind("language"),
           Finding.Where("body"),
           Finding.Quote(""),
-          Finding.Problem(s"banned filler — ${i.detail.value.stripPrefix("filler: ")}"),
+          Finding.Problem(s"banned filler — ${i.detail.fillerMatches}"),
           Finding.Fix("rewrite the sentence")
         )
       )

@@ -2,6 +2,8 @@ package com.histmersion
 package domain.automation.agents
 
 import com.histmersion.domain.Problem
+import com.histmersion.api.Problem as ApiProblem
+import com.histmersion.api.automation.Stopped
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor
@@ -348,7 +350,7 @@ final class ModelPicker(
               Left(
                 PickFailure.Exhausted(
                   Problem(
-                    s"all models for role ${role.wire} are $what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})"
+                    s"${Stopped.AllModelsFor}${role.wire}${Stopped.Are}$what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})"
                   ),
                   frees.map(f => Instant.ofEpochMilli(f.value)),
                   if planHit then PauseReason.PlanQuota else PauseReason.Allowance
@@ -537,8 +539,7 @@ object ModelPicker:
       case None                  => "no window frees by itself — raise or reset the allowance"
     (earliest.map(_._2), when)
 
-  /** The role a `plan-quota`/`allowance` pause names (the [[PickFailure.Exhausted]] message says "all models for role
-    * <role> are …"), so a paused run can be asked about just that role again.
-    */
-  def pausedRole(error: Problem): Option[Role] =
-    "for role ([a-z-]+) are".r.findFirstMatchIn(error.value).flatMap(m => Role.parse(Role.Wire(m.group(1))))
+  /** The role a `plan-quota`/`allowance` pause names, so a paused run can be asked about just that role again. */
+  def pausedRole(error: ApiProblem): Option[Role] = Stopped.from(error).cause match
+    case Stopped.Cause.Exhausted(_, _, role, _) => Some(role)
+    case _                                      => None

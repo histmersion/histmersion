@@ -286,7 +286,7 @@ final class Engine(
       .filter((_, _, _, error) => Stopped.from(error).cause.pausedOn(PauseReason.PlanQuota))
       .flatMap { (id, pipeline, model, error) =>
         val roles = ModelPicker
-          .pausedRole(domain.Problem(error.value))
+          .pausedRole(error)
           .map(List(_))
           .getOrElse(Pipeline.parse(Pipeline.Wire(pipeline.value)).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]

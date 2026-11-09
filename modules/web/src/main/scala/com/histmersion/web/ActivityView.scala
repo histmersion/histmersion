@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.Problem
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Activity.{Entry, EntryKind}
+import com.histmersion.api.automation.Run
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -30,19 +31,19 @@ object ActivityView:
   /** The row's first words: what is going on, or what it was and when (`hm` = the clock time it shows). */
   def when(e: Entry, hm: String): String = e.entryKind match
     case Some(EntryKind.Run | EntryKind.Job) =>
-      e.state.value match
-        case "running"   => "Running"
-        case "queued"    => "Waiting its turn"
-        case "waiting"   => "Waits for you"
-        case "paused"    => s"Paused · $hm"
-        case "failed"    => s"Problem · $hm"
-        case "cancelled" => s"Cancelled · $hm"
-        case _           => s"Done · $hm"
+      Run.State.parse(e.state) match
+        case Some(Run.State.Running)         => "Running"
+        case Some(Run.State.Queued)          => "Waiting its turn"
+        case Some(Run.State.WaitingApproval) => "Waits for you"
+        case Some(Run.State.Paused)          => s"Paused · $hm"
+        case Some(Run.State.Failed)          => s"Problem · $hm"
+        case Some(Run.State.Cancelled)       => s"Cancelled · $hm"
+        case _                               => s"Done · $hm"
     case Some(EntryKind.Decision) => s"You decided · $hm"
     case _                        => s"Note · $hm"
 
   /** Does the row read as a problem (its first words in the attention colour)? */
-  def problem(e: Entry): Boolean = e.state.value == "failed"
+  def problem(e: Entry): Boolean = Run.State.parse(e.state).contains(Run.State.Failed)
 
   /** The actions a row offers: an agent run or a long background job that is going (pause, cancel), paused (resume,
     * cancel) or waiting its turn (cancel).
@@ -52,11 +53,11 @@ object ActivityView:
       (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(JobKinds.Wire(e.what.value)))
     if !controllable || e.job.isEmpty then Nil
     else
-      e.state.value match
-        case "running"            => List(Api.JobControl.Action("pause"), Api.JobControl.Action("cancel"))
-        case "paused"             => List(Api.JobControl.Action("resume"), Api.JobControl.Action("cancel"))
-        case "queued" | "waiting" => List(Api.JobControl.Action("cancel"))
-        case _                    => Nil
+      Run.State.parse(e.state) match
+        case Some(Run.State.Running) => List(Api.JobControl.Action("pause"), Api.JobControl.Action("cancel"))
+        case Some(Run.State.Paused)  => List(Api.JobControl.Action("resume"), Api.JobControl.Action("cancel"))
+        case Some(Run.State.Queued | Run.State.WaitingApproval) => List(Api.JobControl.Action("cancel"))
+        case _                                                  => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
   def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(Wording.Id(e.kind.value)))(_.wording)

@@ -3,6 +3,7 @@ package domain.automation.agents
 
 import com.histmersion.api.Problem
 import Halt.Stopped
+import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -30,6 +31,8 @@ class HowJobsStopSuite extends munit.FunSuite:
     Problem("allowance: all models for role extractor are below their allowance; next reset at 2026-10-05T14:00:00Z"),
     Problem("allowance: all models for role writer are below their allowance; no window frees by itself"),
     Problem("plan-quota: all models for role reviewer are below their plan floor or allowance; the plan is held"),
+    Problem("plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"),
+    Problem("plan-quota: review: all models for role cold-reader are below their allowance"),
     Problem("stalled: no sign of life for 10 min at step 4 (stall 1 of 3)"),
     Problem("requested: "),
     Problem("stalled: : "),
@@ -59,7 +62,12 @@ class HowJobsStopSuite extends munit.FunSuite:
   test("a pause is the reason and what follows it"):
     assertEquals(
       cause(Problem("allowance: all models for role writer are below their allowance")),
-      Stopped.Cause.Paused(PauseReason.Allowance, Problem("all models for role writer are below their allowance"))
+      Stopped.Cause.Exhausted(
+        PauseReason.Allowance,
+        Stopped.Lead(""),
+        AgentRole.Writer,
+        Stopped.Rest("below their allowance")
+      )
     )
     assert(cause(Problem("requested: paused before it started")).pausedOn(PauseReason.Requested))
     assert(!cause(Problem("plan-quota: x")).pausedOn(PauseReason.Allowance))
@@ -93,3 +101,36 @@ class HowJobsStopSuite extends munit.FunSuite:
 
   test("a sentence no writer produced is a failure, as written"):
     others.foreach(p => assertEquals(cause(p), Stopped.Cause.Failed(p)))
+
+  test("a paused run's reason is the one its stored sentence writes; no sentence means a person paused it"):
+    PauseReason.values.foreach { r =>
+      assertEquals(Stopped.pausedFor(Some(Stopped.write(Stopped.Cause.Paused(r, Problem("why"))))), Some(r))
+    }
+    assertEquals(Stopped.pausedFor(None), Some(PauseReason.Requested))
+    assertEquals(Stopped.pausedFor(Some(Problem("interrupted"))), Some(PauseReason.Interrupted))
+    assertEquals(Stopped.pausedFor(Some(Problem("cancelled"))), None)
+
+  test("the pattern a column is filtered by matches the sentences that read as that pause, and only those"):
+    PauseReason.values.foreach { r =>
+      val prefix = Stopped.pausedPattern(r).stripSuffix("%")
+      val written = s"${Stopped.write(Stopped.Cause.Paused(r, Problem("why")))}"
+      assert(written.startsWith(prefix), written)
+      assertEquals(cause(Problem(s"${r.wire}:no space")).pausedOn(r), false)
+      assert(!"%_\\".exists(prefix.contains(_)), prefix)
+    }
+
+  test("the role an exhausted pause names is read from its sentence, with the step that put its lead in front"):
+    assertEquals(
+      cause(Problem("plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …")),
+      Stopped.Cause.Exhausted(
+        PauseReason.PlanQuota,
+        Stopped.Lead("enrich: "),
+        AgentRole.Extractor,
+        Stopped.Rest("below their plan floor or allowance; …")
+      )
+    )
+    assert(!cause(Problem("plan-quota: all models for role nobody are below")).isInstanceOf[Stopped.Cause.Exhausted])
+    assertEquals(
+      cause(Problem("plan-quota: something else")),
+      Stopped.Cause.Paused(PauseReason.PlanQuota, Problem("something else"))
+    )

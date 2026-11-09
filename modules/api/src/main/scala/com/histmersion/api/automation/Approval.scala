@@ -7,9 +7,20 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
 object Approval:
   type Note = Note.T
-  object Note extends Newtype[String, Pure]
+  object Note extends Newtype[String, Pure]:
+    private def text(n: Note): String = n.value
+
+    extension (n: Note)
+      /** Is this the note of a decision the autopilot's checks took? */
+      def byAutopilot: Boolean = text(n).startsWith(DecidedBy.AutopilotNote)
+
+      /** The note without the mark that says the autopilot wrote it. */
+      def withoutAutopilotMark: Note = Note(text(n).stripPrefix(DecidedBy.AutopilotNote).trim)
   type Outcome = Outcome.T
-  object Outcome extends Newtype[String, Pure]
+  object Outcome extends Newtype[String, Pure]:
+    extension (o: Outcome)
+      /** Is this the result of a proposal applied the moment it was proposed? */
+      def appliedAutomatically: Boolean = o.value.startsWith(DecidedBy.AutoResult)
 
   /** A change an agent run proposed that a person may have to accept before code applies it: a source's status, a typed
     * disagreement edge between two sources, a goal's plan, or an article a run compiled. `blocking` = the run WAITS for
@@ -114,6 +125,6 @@ object Approval:
       */
     def of(state: State.Wire, note: Option[Note], result: Option[Outcome]): Option[DecidedBy] =
       if state == State.Open.wire then None
-      else if note.exists((_).value.startsWith(AutopilotNote)) then Some(Autopilot)
-      else if note.isEmpty && result.exists((_).value.startsWith(AutoResult)) then Some(Auto)
+      else if note.exists(_.byAutopilot) then Some(Autopilot)
+      else if note.isEmpty && result.exists(_.appliedAutomatically) then Some(Auto)
       else Some(Person)

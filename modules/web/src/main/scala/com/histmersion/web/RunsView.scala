@@ -219,26 +219,24 @@ object RunsView:
     if !r.isWaiting then None
     else r.progress.map(_.value).collect { case WaitingOn(id) => Agents.ApprovalInfo.Id(id.toLong) }
 
-  /** Why a paused run stopped, from its `error` (`budget: …`, `provider: …`, `interrupted`). */
-  def pausedFor(r: RunInfo): Option[Agents.PauseReason.Wire] =
-    Option.when(stateWire(r.status) == RunState.Paused.wire)(
-      Agents.PauseReason.Wire(r.error.map(_.value.takeWhile(_ != ':').trim).getOrElse("requested"))
-    )
+  /** Why a paused run stopped: the cause the server reads from the run's stored sentence. */
+  def pausedFor(r: RunInfo): Option[Agents.PauseReason] = r.pausedFor
 
   /** What a paused run's window says about its pause. An allowance pause ends by itself. */
-  def pausedText(r: RunInfo, why: Agents.PauseReason.Wire): Text =
+  def pausedText(r: RunInfo, why: Agents.PauseReason): Text =
     Text(
-      if why == Agents.PauseReason.Budget.wire then s"Paused: $why. Raise the budget to resume."
-      else if why == Agents.PauseReason.Allowance.wire then
-        s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold(
-            "it resumes once an allowance is raised"
-          )(t => s"it resumes by itself at $t")}."
-      else if why == Agents.PauseReason.PlanQuota.wire then
-        s"Paused: a subscription is below its floor (or held), and the chain does not fall through to a paid key; " +
-          s"${r.resumeAt.fold("it resumes once the hold is released or a floor is lowered")(t =>
-              s"it resumes by itself at $t"
-            )}."
-      else s"Paused: $why."
+      why match
+        case Agents.PauseReason.Budget    => s"Paused: ${why.wire}. Raise the budget to resume."
+        case Agents.PauseReason.Allowance =>
+          s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold(
+              "it resumes once an allowance is raised"
+            )(t => s"it resumes by itself at $t")}."
+        case Agents.PauseReason.PlanQuota =>
+          s"Paused: a subscription is below its floor (or held), and the chain does not fall through to a paid key; " +
+            s"${r.resumeAt.fold("it resumes once the hold is released or a floor is lowered")(t =>
+                s"it resumes by itself at $t"
+              )}."
+        case _ => s"Paused: ${why.wire}."
     )
 
   /** A budget the person typed: a positive number of dollars, or nothing. */
@@ -584,7 +582,7 @@ object RunsView:
           cls := "run-paused",
           pausedText(r, why).value,
           Option
-            .when(why == Agents.PauseReason.Allowance.wire)(span(" ", WinLink(WindowKey.Models, "models & allowances")))
+            .when(why == Agents.PauseReason.Allowance)(span(" ", WinLink(WindowKey.Models, "models & allowances")))
         )
       ),
       Option.when(r.isWaiting)(
@@ -602,7 +600,7 @@ object RunsView:
         )
       ),
       r.error
-        .filter(e => e.value.nonEmpty && stateWire(r.status) != RunState.Paused.wire)
+        .filter(e => e.value.nonEmpty && pausedFor(r).isEmpty)
         .map(e => p(cls := "job-error", e.value)),
       r.progress.filter(_.value.nonEmpty).map(pr => p(cls := "job-progress", pr.value)),
       dl(

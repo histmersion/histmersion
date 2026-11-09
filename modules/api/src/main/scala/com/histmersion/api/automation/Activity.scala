@@ -98,8 +98,7 @@ object Activity:
     export EntryKind.Wire as Kind
     type At = At.T
     object At extends Newtype[String, Pure]
-    type State = State.T
-    object State extends Newtype[String, Pure]
+    export Run.State.Wire as State
     type What = What.T
     object What extends Newtype[String, Pure]
     type Text = Text.T

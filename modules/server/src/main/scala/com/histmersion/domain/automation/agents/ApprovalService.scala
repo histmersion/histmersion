@@ -289,10 +289,8 @@ object ApprovalService:
 
     private def decidedBy(r: ApprovalRecord): Option[String] =
       if r.state.value == Open then None
-      else if r.note.exists(_.value.startsWith(ListFilters.DecidedBy.AutopilotNote)) then
-        Some(ListFilters.DecidedBy.Autopilot.wire.value)
-      else if r.note.isEmpty && r.result.exists(_.value.startsWith(ListFilters.DecidedBy.AutoResult)) then
-        Some(ListFilters.DecidedBy.Auto.wire.value)
+      else if r.note.exists(_.byAutopilot) then Some(ListFilters.DecidedBy.Autopilot.wire.value)
+      else if r.note.isEmpty && r.result.exists(_.appliedAutomatically) then Some(ListFilters.DecidedBy.Auto.wire.value)
       else Some(ListFilters.DecidedBy.Person.wire.value)
     private def contains(v: Option[String], t: String): Boolean = v.exists(_.toLowerCase.contains(t.toLowerCase))
 
@@ -431,7 +429,7 @@ object ApprovalService:
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       rows
         .filter(r =>
-          r.kind.value == kind.wire.value && r.note.exists(_.value.startsWith("autopilot: approved")) && r.decidedAt
+          r.kind.value == kind.wire.value && r.note.exists(_.approvedByAutopilot) && r.decidedAt
             .exists(
               !_.isBefore(since)
             )

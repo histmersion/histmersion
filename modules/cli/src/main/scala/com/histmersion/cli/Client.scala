@@ -130,6 +130,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     */
   private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[Cli.Error, O] =
     scala.util.Try(req.send(backend)) match
+      case scala.util.Failure(e) if WorkingDir.denied(e) =>
+        Left(Cli.Error(Problem(s"${WorkingDir.message}"), workingDirDenied = true))
       case scala.util.Failure(e) =>
         Left(
           Cli.Error(

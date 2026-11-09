@@ -81,15 +81,12 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
             c.approvalsOf(run, Approval.Kind.ArticlePublish)
               .lastOption
-              .filter(a =>
-                a.state == ApprovalState.Rejected.wire && a.note
-                  .exists(_.value.startsWith(AutopilotPolicy.NotePrefix.value))
-              ) match
+              .filter(a => a.state == ApprovalState.Rejected.wire && a.note.exists(_.byAutopilot)) match
               case Some(a) =>
                 StepFacts.Redo(
                   ManagerPolicy.ItemOutcome(
                     s"draft rejected by the autopilot's checks (approval #${a.id}: " +
-                      a.note.fold("")(_.value).stripPrefix(AutopilotPolicy.NotePrefix.value).trim.take(300) + ")"
+                      a.note.fold("")(_.withoutAutopilotMark.value).take(300) + ")"
                   )
                 )
               case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why}"), None)

@@ -24,6 +24,7 @@ object GuidelineInventory {
     semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
     testMarkers: List[String] = List("/src/test/"),
     textBranchTypes: String = "(?i).*(problem|error|reason|refus|fail|why|because|message|detail|note|outcome|warning|stopped|state)(s|text)?",
+    textBranchExceptions: String = "",
     textBranchFields: Set[String] = Set("message", "error", "detail", "note", "why", "reason"),
     controllerFile: String = ".*(Controller|Controllers|Routes)\\.scala",
     rawSqlOwners: List[String] = List("com/histmersion/util/database/Sql#", "com/histmersion/util/database/Sql."),
@@ -109,6 +110,15 @@ object GuidelineInventory {
     try stream.iterator.asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".scala") &&
       (p.toString.contains("/src/main/") || p.toString.contains("/src/test/"))).map(p => relative(p.toString)).toList finally stream.close()
   }.toSet
+  /** `path<TAB>why` rows: a file whose reading of a text is not a branch on a failure of ours, and why. */
+  def readTextExceptions(path: String): Map[String, String] =
+    if (path.isEmpty || !Files.exists(Paths.get(path))) Map.empty
+    else Files.readAllLines(Paths.get(path), UTF_8).asScala.toList.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#") && !l.startsWith("path\t")).map { l =>
+      val cols = l.split("\t", -1)
+      require(cols.length == 2 && cols(0).nonEmpty && cols(1).nonEmpty, "Malformed text exception row: " + l)
+      require(Files.isRegularFile(Paths.get(cols(0))), "Text exception file does not exist: " + cols(0))
+      cols(0) -> cols(1)
+    }.toMap
   def readBoundaries(path: String): Map[String, String] =
     if (path.isEmpty || !Files.exists(Paths.get(path))) Map.empty
     else Files.readAllLines(Paths.get(path), UTF_8).asScala.toList.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#") && !l.startsWith("path\t")).map { l =>
@@ -120,9 +130,9 @@ object GuidelineInventory {
     }.toMap
 }
 
-class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: Map[String, String],
+class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: Map[String, String], textBranchAllowed: Map[String, String],
     index: ConcurrentHashMap[String, scala.meta.internal.semanticdb.SymbolInformation]) extends SemanticRule("GuidelineInventory") {
-  def this() = this(GuidelineInventory.Policy(), Map.empty, new ConcurrentHashMap())
+  def this() = this(GuidelineInventory.Policy(), Map.empty, Map.empty, new ConcurrentHashMap())
   import GuidelineInventory._
   private val findings = new ConcurrentLinkedQueue[Finding]()
   private val visited = new ConcurrentLinkedQueue[String]()
@@ -138,7 +148,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     c.conf.getOrElse("GuidelineInventory")(Policy()).map { p =>
       val b = readBoundaries(p.boundaries)
       Option(Paths.get(p.report).getParent).foreach(Files.createDirectories(_))
-      new GuidelineInventory(p, b, buildIndex(p.semanticdbRoots))
+      new GuidelineInventory(p, b, readTextExceptions(p.textBranchExceptions), buildIndex(p.semanticdbRoots))
     }
 
   private def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
@@ -505,7 +515,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     // `message`/`error`/`detail`/`note`/`why`/`reason` field. Operation: contains, startsWith, endsWith, matches, == or
     // != against a constant, takeWhile/split/stripPrefix/indexOf/... (reading the text apart), a match on a literal or a regex, or a Regex applied to it. A comparison of two such values
     // (no constant operand) is a value comparison, not a branch on the text.
-    if (scope == "main" && !boundary) {
+    if (scope == "main" && !boundary && !textBranchAllowed.contains(path)) {
       def isStringBase(sym: Symbol): Boolean = sym.value == "java/lang/String#" || sym.value == "scala/Predef.String#"
       def stringish(t: Option[s.Type], depth: Int = 0): Boolean = t.map(dealias(_)).exists { tpe =>
         newtypeOf(tpe).flatMap(newtypeParents).exists(p => isStringBase(p._2)) || isStringBase(typeSymbol(tpe)) ||
@@ -589,9 +599,9 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         case m: Term.Match =>
           textSubject(m.expr).filter { _ =>
             m.cases.exists(c => c.pat.collect {
-              case _: Lit.String => true
-              case _: Pat.Interpolate => true
-              case e: Pat.Extract => termType(e.fun).map(dealias(_)).exists(tt => typeSymbol(tt).value == "scala/util/matching/Regex#")
+              case _: Lit.String => ()
+              case _: Pat.Interpolate => ()
+              case e: Pat.Extract if termType(e.fun).map(dealias(_)).exists(tt => typeSymbol(tt).value == "scala/util/matching/Regex#") => ()
             }.nonEmpty)
           }.filterNot(_ => ownText(m, m.expr)).foreach(flag(m, "match", _))
         case _ =>

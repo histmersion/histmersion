@@ -24,6 +24,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.domain.CodexRetention
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.Stopped
 import com.histmersion.domain.automation.Approval
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
@@ -153,7 +154,8 @@ object AgentRepo:
       r.dryRun,
       r.managerId,
       r.managerItem,
-      r.heartbeatAt
+      r.heartbeatAt,
+      pausedFor = Option.when(r.status == RunState.Paused.wire)(Stopped.pausedFor(r.error)).flatten
     )
 
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =

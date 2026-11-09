@@ -204,7 +204,7 @@ object ReviewLedger:
     (
       f.kind.value,
       normalised(f.where.value).value,
-      normalised(f.problem.value.takeWhile(_ != ':')).value,
+      normalised(f.problem.head).value,
       normalised(f.quote.value).value
     )
 

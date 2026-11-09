@@ -154,11 +154,9 @@ final class AutoApprovals(
           case Right(d) =>
             val text =
               s"$what ${if decision == Decision.Approve then "approved" else "rejected"} by the autopilot's checks: " +
-                note.value
-                  .stripPrefix(AutopilotPolicy.NotePrefix.value)
-                  .trim + (if d.state == ApprovalState.Failed.wire then
-                             s" — applying it failed: ${d.result.getOrElse("")}"
-                           else "")
+                note.withoutAutopilotMark.value + (if d.state == ApprovalState.Failed.wire then
+                                                     s" — applying it failed: ${d.result.getOrElse("")}"
+                                                   else "")
             mgr.foreach(m =>
               agents.managerStore.event(
                 m.id,
