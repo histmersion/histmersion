@@ -209,7 +209,7 @@ companion and at a boundary listed in `architecture/boundaries.tsv` (SQL, HTTP b
 config, processes, the plugin SPI), and there preferably through a lifted type class, not by hand. A file is a boundary only
 if translating to or from the outside is its job (an adapter); a service that also does I/O moves the I/O behind one. Controllers convert
 API values to domain values; renderers work on concepts and hand only the final text out. A missing operation goes on
-the type's companion. Building a newtype from a literal (`Citekey("x")`) is fine anywhere.
+the type's companion. Building a newtype from a literal (`Citekey("x")`) is fine anywhere, and so is building an unconstrained (`Pure`) one from an interpolated string (`Problem(s"cannot open $path")`): there is nothing to validate (a `.value` in the splices is still a finding).
 
 ```scala
 type Year = Year.T

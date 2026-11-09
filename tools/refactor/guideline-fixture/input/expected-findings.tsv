@@ -82,3 +82,15 @@ G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	10	text:Text
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	operator:raw
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	text:Text.applyUnsafe
+G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	Failures.spliced(c: Citekey)
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	value:Citekey
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Shelf.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Problem.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	construct:Problem.applyUnsafe;expr
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	43	newtype:LookupResult
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	45	alias:Round1Result
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	46	alias:MergeArg2
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	47	alias:HeaderPart1
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	domain/Problems$package.ReviewProblem.
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	30	domain/Check.Why.
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/review/Problem.scala	9	second top-level Problem
