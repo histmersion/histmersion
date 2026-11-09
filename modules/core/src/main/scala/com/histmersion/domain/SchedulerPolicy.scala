@@ -146,8 +146,14 @@ object SchedulerPolicy:
     type Person = Person.T
     object Person extends Newtype[Boolean, Pure]
 
+  /** What stands in the way of an item, as the managers' notes and the stall report tell it: a spend cap, plan pools
+    * below their floors, or anything else.
+    */
+  enum Blocker derives CanEqual:
+    case Budget, Starved, Other
+
   /** Why an item cannot start now whatever the order: a code and a sentence. */
-  final case class Block(code: Block.Code, why: Block.Why)
+  final case class Block(code: Block.Code, why: Block.Why, blocker: Blocker = Blocker.Other)
 
   object Block:
     type Code = Code.T
@@ -380,7 +386,8 @@ object SchedulerPolicy:
       code: Wait.Code,
       why: Wait.Why,
       behind: List[Wait.Behind] = Nil,
-      position: Wait.Position = Wait.Position(0)
+      position: Wait.Position = Wait.Position(0),
+      blocker: Blocker = Blocker.Other
   )
 
   object Wait:
@@ -426,7 +433,7 @@ object SchedulerPolicy:
   ): Decision =
     val scored = cands.map(score(_, s, now))
     val (blocked, open) = scored.partition(_.c.block.isDefined)
-    val blockedWaits = blocked.map(x => x -> Wait(Code.Blocked, x.c.block.get.why))
+    val blockedWaits = blocked.map(x => x -> Wait(Code.Blocked, x.c.block.get.why, blocker = x.c.block.get.blocker))
     res.stop match
       case Some(b) =>
         Decision(

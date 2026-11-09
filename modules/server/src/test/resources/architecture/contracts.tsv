@@ -819,7 +819,7 @@ unwrap	api:api/automation/ProviderKind.scala	.value outside a boundary	5
 unwrap	api:api/automation/Queue.scala	.value outside a boundary	27
 unwrap	api:api/automation/Run.scala	.value outside a boundary	1
 unwrap	api:api/automation/ScheduleKind.scala	.value outside a boundary	3
-unwrap	api:api/automation/Stalls.scala	.value outside a boundary	12
+unwrap	api:api/automation/Stalls.scala	.value outside a boundary	10
 unwrap	api:api/automation/TargetKind.scala	.value outside a boundary	1
 unwrap	api:api/backup/Backup.scala	.value outside a boundary	24
 unwrap	api:api/basemap/BaseMapSource.scala	.value outside a boundary	1
@@ -1143,7 +1143,7 @@ unwrap	server:domain/automation/managers/HintEffectPipeline.scala	.value outside
 unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	237
-unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	101
+unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	99
 unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	132
 unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	156
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7

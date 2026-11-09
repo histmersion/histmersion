@@ -79,14 +79,20 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
+  /** What stands in the way of a blocked wait: a spend cap, plan pools below their floors, or anything else. */
+  enum Blocker derives CanEqual:
+    case Budget, Starved, Other
+
   final case class SchedWait(
       code: SchedWait.Code,
       why: SchedWait.Why,
-      position: SchedWait.Position = SchedWait.Position(0)
+      position: SchedWait.Position = SchedWait.Position(0),
+      blocker: Blocker = Blocker.Other
   )
 
   object SchedWait:
     export Stall.{Code, Why}
+
     type Position = Position.T
     object Position extends Newtype[Int, Pure]
 
@@ -177,7 +183,7 @@ object Stalls:
         Stall.Action(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("budget"))
+      waitOf(w => w.code == Stall.Code("blocked") && w.blocker == Blocker.Budget)
         .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("budget"))))) match
         case Some(w) =>
           (
@@ -186,7 +192,7 @@ object Stalls:
             Stall.Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("starved"))
+          waitOf(w => w.code == Stall.Code("blocked") && w.blocker == Blocker.Starved)
             .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("pool"))))) match
             case Some(w) =>
               (

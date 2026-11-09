@@ -24,7 +24,7 @@ G3misplaced	server	test	71
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	923
-G44	api	main	4405
+G44	api	main	4403
 G44	api	test	735
 G44	chimney-iron-tests	test	11
 G44	cli	main	333
@@ -64,7 +64,7 @@ G44	plugins/gazetteers	main	23
 G44	plugins/gazetteers	test	68
 G44	plugins/media	main	124
 G44	plugins/media	test	97
-G44	server	main	10681
+G44	server	main	10679
 G44	server	test	4502
 G44	upstreams	main	143
 G44	upstreams	test	45
@@ -232,7 +232,7 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	109
 G49	plugins/media	test	16
-G49	server	main	4217
+G49	server	main	4215
 G49	server	test	1218
 G49	upstreams	main	42
 G49	upstreams	test	18

@@ -711,11 +711,11 @@ final class ManagerSupervisor(
           .map(_._2)
           .filterNot(_.why == SchedulerPolicy.Wait.Why("settled without a run"))
       val blocked = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.value.startsWith("budget"))
+        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.blocker == SchedulerPolicy.Blocker.Budget)
         .map(_.why.value)
         .orElse(waits.find(_.code == SchedulerPolicy.Wait.Code("budget")).map(_.why.value))
       val starved = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.value.startsWith("starved: "))
+        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.blocker == SchedulerPolicy.Blocker.Starved)
         .map(_.why.value.stripPrefix("starved: "))
       val full = waits.exists(w =>
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
