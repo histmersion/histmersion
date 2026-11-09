@@ -35,6 +35,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.config.MediaPluginCollectionsConfig
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.plugins.PluginDescription
 import com.histmersion.plugin.Registry
 import com.histmersion.config.ConfigReload
 import com.histmersion.plugin.MediaItem
@@ -330,7 +331,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
           MediaProvider.Info.Title("Zq portal objects"),
           MediaProvider.Info.Over("places"),
           MediaProvider.Info.Description(""),
-          MediaProvider.Info.Plugin("zq-plugin"),
+          PluginDescription.Id("zq-plugin"),
           builtin = MediaProvider.Info.Builtin(false),
           MediaProvider.Info.Licences("cc0,cc-by")
         )
@@ -430,7 +431,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val g1 = ServerPlugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn))
     // the secret vaults on the class path, off: a plugin's own block or a media key leaves them as they are
     val vaults = Set(PluginName.Id("1password"), PluginName.Id("bitwarden"), PluginName.Id("keepassxc"))
-    val carried = Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain")))
+    val carried = Plugins.carried(g1, List(ConfigReload.Key("histmersion.acquire.chain")))
     assertEquals(
       carried.keySet.map(_.value: String),
       (BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
@@ -439,7 +440,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     // their own block rebuilds them alone
     assertEquals(
       Plugins
-        .carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.media-met.enabled")))
+        .carried(g1, List(ConfigReload.Key("histmersion.plugins.media-met.enabled")))
         .keySet
         .map(_.value: String),
       (BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
@@ -448,13 +449,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     // a media setting rebuilds the media collections, which are supplied it, and nothing else
     assertEquals(
-      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.media.met.licences"))).keySet.map(_.value: String),
+      Plugins.carried(g1, List(ConfigReload.Key("histmersion.media.met.licences"))).keySet.map(_.value: String),
       (BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ BuiltinGazetteers.pluginIds ++ vaults + PluginName.Id(
         "zq-plugin"
       )).map(_.value: String)
     )
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins.order"))), Map.empty)
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins.order"))), Map.empty)
+    assertEquals(Plugins.carried(g1, List(ConfigReload.Key("histmersion.plugins"))), Map.empty)
     // the carried built-in is the same instance in the next generation
     val g2 = ServerPlugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn), carried = carried)
     assert(

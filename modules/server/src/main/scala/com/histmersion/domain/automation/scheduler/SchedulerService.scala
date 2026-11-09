@@ -374,7 +374,7 @@ final class SchedulerService(
     val waits = ordered(snap.d)
     val res = snap.in.res
     SchedulerStatus(
-      SchedulerStatus.Strategy(s.strategy.name.value),
+      StrategyLine.Name(s.strategy.name.value),
       if chosen.isDefined then AgentScheduler.SchedulerStatus.StrategyFrom("person")
       else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(StrategyLine.Name(x.name.value), StrategyLine.Describe(x.describe))),

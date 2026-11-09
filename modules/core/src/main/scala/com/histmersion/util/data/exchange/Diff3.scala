@@ -14,12 +14,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Diff3:
 
-  type MergeBase = MergeBase.T
-  object MergeBase extends Newtype[String, Pure]
-  type MergeLeft = MergeLeft.T
-  object MergeLeft extends Newtype[String, Pure]
-  type MergeRight = MergeRight.T
-  object MergeRight extends Newtype[String, Pure]
+  /** The text of a version being merged: the common ancestor, or one of the two sides. */
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
   enum Hunk derives CanEqual:
@@ -82,10 +79,10 @@ object Diff3:
 
   private def agreedOf(ls: Vector[String]): Hunk = Hunk.Agreed(ls.map(Hunk.Agreed.Lines(_)))
 
-  def merge(base: MergeBase, left: MergeLeft, right: MergeRight): Result =
-    if left.value == right.value then Result(List(agreedOf(lines(left.value))))
-    else if left.value == base.value then Result(List(agreedOf(lines(right.value))))
-    else if right.value == base.value then Result(List(agreedOf(lines(left.value))))
+  def merge(base: Text, left: Text, right: Text): Result =
+    if left == right then Result(List(agreedOf(lines(left.value))))
+    else if left == base then Result(List(agreedOf(lines(right.value))))
+    else if right == base then Result(List(agreedOf(lines(left.value))))
     else mergeLines(lines(base.value), lines(left.value), lines(right.value))
 
   private def mergeLines(o: Vector[String], a: Vector[String], b: Vector[String]): Result =

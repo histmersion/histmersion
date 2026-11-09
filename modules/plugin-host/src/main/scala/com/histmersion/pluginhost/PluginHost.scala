@@ -599,14 +599,14 @@ object PluginHost:
       PluginStatus.Version(p.info.version.value),
       PluginStatus.SpiVersion(p.info.spiVersion.value),
       PluginStatus.Enabled(enabled),
-      PluginStatus.State(state.wire.value),
+      PluginState.Wire(state.wire.value),
       provides,
       block.map(settings).getOrElse(Nil),
       warns.map(w => PluginStatus.Warnings(w.value)),
       error.map(e => api.Problem(e.value))
     )
 
-  private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state.value == state.wire.value
+  private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state == state.wire
 
   /** Build one generation: check, order, layer, type-check, decode, resolve secrets, register.
     *

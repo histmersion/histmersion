@@ -418,7 +418,7 @@ final class PointSet[D](
     fresh.foreach { (m, ks) =>
       ClusterMotion.origin(ks.flatMap(was.get)) match
         case Some(from)
-            if !from._1.value.isNaN && (from._1.value != m.screen._1.value || from._2.value != m.screen._2.value) =>
+            if !from._1.value.isNaN && (from._1 != m.screen._1 || from._2 != m.screen._2) =>
           slides += ClusterMotion.Slide(m, from, m.screen)
         case Some(_) => ()
         case None    => if ks.exists(was.contains) then arriving += m

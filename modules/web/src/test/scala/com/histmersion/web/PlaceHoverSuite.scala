@@ -11,7 +11,7 @@ import com.histmersion.api.{ServiceState, Wording}
 import scala.collection.mutable
 import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginStatus}
+import com.histmersion.api.plugins.{PluginSetting, PluginState, PluginsReport, PluginStatus}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.backup.Backup
@@ -354,7 +354,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Version("1.0.0"),
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(true),
-          PluginStatus.State("registered"),
+          PluginState.Wire("registered"),
           List(PluginDescription.Provides("media-collection:met"))
         ),
         PluginStatus(
@@ -362,7 +362,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Version("0.2.0"),
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(true),
-          PluginStatus.State("registered"),
+          PluginState.Wire("registered"),
           List(
             PluginDescription.Provides("media-collection:portal"),
             PluginDescription.Provides("event-catalogue:portal")
@@ -377,14 +377,14 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Version("1.0.0"),
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(false),
-          PluginStatus.State("disabled")
+          PluginState.Wire("disabled")
         ),
         PluginStatus(
           PluginStatus.Id("broken"),
           PluginStatus.Version("0.1.0"),
           PluginStatus.SpiVersion(1),
           enabled = PluginStatus.Enabled(true),
-          PluginStatus.State("failed"),
+          PluginState.Wire("failed"),
           error = Some(Problem("histmersion.plugins.broken.x: bad"))
         )
       ),

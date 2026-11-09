@@ -78,9 +78,9 @@ object PlacesMarkdown:
         .mkString("\n")
 
   def placeOverrideChanged(r: Place.OverrideChanged): String =
-    val kind = if r.kindBefore.value == r.kindAfter.value then s"kind ${r.kindAfter}"
+    val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}"
     else s"kind ${r.kindBefore} → ${r.kindAfter}"
-    val period = if r.periodBefore.value == r.periodAfter.value then s"period ${r.periodAfter}"
+    val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}"
     else s"period ${r.periodBefore} → ${r.periodAfter}"
     val point = (r.latBefore, r.lonBefore, r.latAfter, r.lonAfter) match
       case (Some(a), Some(b), Some(c), Some(d)) if a != c || b != d =>

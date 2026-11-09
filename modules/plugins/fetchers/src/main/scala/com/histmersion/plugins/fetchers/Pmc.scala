@@ -111,7 +111,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
             Plugin.Log.Line(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")
           );
           None
-        case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_.value != m.value)) =>
+        case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_ != m)) =>
           ctx.log.warn(Plugin.Log.Line(s"pmc: $url does not match the MD5 its record gives — skipping")); None
         case Right(b) => Some(FetchedFile(FetchedFile.Source("pmc"), Some(FetchedFile.Url(url)), b, ext))
 

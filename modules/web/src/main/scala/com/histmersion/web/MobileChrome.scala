@@ -56,7 +56,7 @@ object MobileChrome:
     math.abs(dx) >= SwipeMinPx && math.abs(dx) > SwipeRatio * math.abs(dy)
 
   /** The filters that are set but not visible in the bar (the search is): the ☰ badge. */
-  def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key.value != UiState.q.key.value)
+  def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key != UiState.q.key)
 
   /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most of the screen
     * with it open; on a phone it waits for ⏱.

@@ -31,8 +31,8 @@ class PersonalMarkdownSuite extends munit.FunSuite:
       Target(ItemKind.Point, lat = Some(Latitude(37.5)), lon = Some(Longitude(22.75))),
       Note.Text("\n\nBridge here?\nSecond line."),
       Title("Place on the map"),
-      Note.CreatedAt("2026-10-30T12:40:00Z"),
-      Note.UpdatedAt("2026-10-31T09:00:00Z")
+      Note.At("2026-10-30T12:40:00Z"),
+      Note.At("2026-10-31T09:00:00Z")
     )
     assert(PersonalMarkdown.noteLine(n).endsWith("\n  Bridge here?"), PersonalMarkdown.noteLine(n))
     assert(PersonalMarkdown.note(n).contains("place on the map · 37.50° N, 22.75° E"), PersonalMarkdown.note(n))

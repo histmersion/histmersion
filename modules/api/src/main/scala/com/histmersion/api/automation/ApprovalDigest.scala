@@ -30,7 +30,7 @@ object ApprovalDigest:
       oldest: Option[KindGroup.Oldest] = None,
       decidedBy: KindGroup.DecidedBy = Approval.DecidedBy.Wire("person"),
       subjects: List[SubjectCount] = Nil,
-      ids: List[KindGroup.Ids] = Nil
+      ids: List[Open.Id] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -42,8 +42,6 @@ object ApprovalDigest:
     type Oldest = Oldest.T
     object Oldest extends Newtype[String, Pure]
     export Approval.DecidedBy.Wire as DecidedBy
-    type Ids = Ids.T
-    object Ids extends Newtype[Long, Pure]
 
   final case class Digest(
       at: Digest.At,
@@ -72,7 +70,7 @@ object ApprovalDigest:
       decision: BulkDecide.Decision,
       kind: Option[BulkDecide.Kind] = None,
       subject: Option[BulkDecide.Subject] = None,
-      ids: List[BulkDecide.Ids] = Nil,
+      ids: List[Open.Id] = Nil,
       note: Option[BulkDecide.Note] = None,
       dryRun: BulkDecide.DryRun = BulkDecide.DryRun(false),
       limit: Option[BulkDecide.Limit] = None,
@@ -87,8 +85,6 @@ object ApprovalDigest:
     export Approval.Kind.Wire as Kind
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
-    type Ids = Ids.T
-    object Ids extends Newtype[Long, Pure]
     export Approval.Note
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
@@ -169,7 +165,7 @@ object ApprovalDigest:
           else if checked(k) then Approval.DecidedBy.Wire("checked")
           else Approval.DecidedBy.Wire("person"),
           subjects,
-          sorted.take(IdsShown).map(o => KindGroup.Ids(o.id.value))
+          sorted.take(IdsShown).map(o => o.id)
         )
       }
       .sortBy(g => (-(g.count).value, g.kind.value))
@@ -180,7 +176,7 @@ object ApprovalDigest:
         b.kind.forall(k => o.kind.value == k.value.trim) && b.subject.forall(s =>
           o.subject.exists(_.value == s.value.trim)
         ) &&
-          (b.ids.isEmpty || b.ids.exists(_.value == o.id.value))
+          (b.ids.isEmpty || b.ids.exists(_ == o.id))
       )
       .sortBy(_.id)
       .take(math.max(1, b.limit.map(_.value).getOrElse(Int.MaxValue)))

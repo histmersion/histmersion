@@ -344,7 +344,7 @@ final class ManagersControllers(
           val paused = if withRuns then
             inFlight(lightId(m))
               .filter(r =>
-                r.status.value == RunState.Running.wire.value || r.status.value == RunState.Queued.wire.value
+                r.status == RunState.Running.wire || r.status == RunState.Queued.wire
               )
               .count(r => agents.engine.pause(runIdOf(r.id)).isRight)
           else 0
@@ -363,7 +363,7 @@ final class ManagersControllers(
           val resumed = if m.pauseRuns.value && cfg.enabled.value then
             inFlight(lightId(m))
               .filter(r =>
-                r.status.value == RunState.Paused.wire.value && r.error
+                r.status == RunState.Paused.wire && r.error
                   .exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Requested))
               )
               .count(r => agents.engine.resume(runIdOf(r.id), None, None).isRight)

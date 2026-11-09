@@ -16,7 +16,7 @@ final case class PluginsReport(
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def ok: Boolean = (plugins.forall(p =>
-    p.state.value != PluginState.Failed.wire.value && p.state.value != PluginState.Refused.wire.value
+    p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire
   ))
 
 object PluginsReport:

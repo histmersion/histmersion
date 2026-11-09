@@ -111,23 +111,23 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
                 List(
                   IssueField(
                     IssueField.Field("claim"),
-                    Some(IssueField.Left(lf.claim.value)),
-                    Some(IssueField.Right(rf.claim.value))
+                    Some(IssueField.Value(lf.claim.value)),
+                    Some(IssueField.Value(rf.claim.value))
                   ),
                   IssueField(
                     IssueField.Field("period"),
-                    lf.period.map(x => IssueField.Left(MergeIssue.Detail.rangeText(Some(x)))),
-                    rf.period.map(x => IssueField.Right(MergeIssue.Detail.rangeText(Some(x))))
+                    lf.period.map(x => IssueField.Value(MergeIssue.Detail.rangeText(Some(x)))),
+                    rf.period.map(x => IssueField.Value(MergeIssue.Detail.rangeText(Some(x))))
                   ),
                   IssueField(
                     IssueField.Field("region"),
-                    lf.region.map(x => IssueField.Left(x.value)),
-                    rf.region.map(x => IssueField.Right(x.value))
+                    lf.region.map(x => IssueField.Value(x.value)),
+                    rf.region.map(x => IssueField.Value(x.value))
                   ),
                   IssueField(
                     IssueField.Field("confidence"),
-                    lf.confidence.map(c => IssueField.Left(c.toString.toLowerCase)),
-                    rf.confidence.map(c => IssueField.Right(c.toString.toLowerCase))
+                    lf.confidence.map(c => IssueField.Value(c.toString.toLowerCase)),
+                    rf.confidence.map(c => IssueField.Value(c.toString.toLowerCase))
                   )
                 )
               )

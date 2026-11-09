@@ -28,9 +28,9 @@ object ActivityRules:
       case Show.Running    => isRunOrJob(e) && RunningStates.contains(e.state)
       case Show.Agents     =>
         kind
-          .contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Agent.wire.value))
+          .contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.exists(_ == Writer.Agent.wire))
       case Show.Jobs =>
-        kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Job.wire.value))
+        kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.exists(_ == Writer.Job.wire))
       case Show.Yours    => kind.contains(EntryKind.Decision)
       case Show.Problems => isRunOrJob(e) && ProblemStates.contains(e.state)
 

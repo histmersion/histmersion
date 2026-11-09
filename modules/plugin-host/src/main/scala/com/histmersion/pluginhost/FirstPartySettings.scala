@@ -25,7 +25,7 @@ import scala.util.Try
 final case class FirstPartySettings(plugin: Plugin.Info.Id, paths: List[ConfigReload.Key]):
 
   /** Whether a change of the host key `changed` (not this plugin's own block) concerns this plugin. */
-  def readsHostKey(changed: ConfigReload.ChangedKey): Boolean = paths.exists(HotPlan.keyMatches(changed, _))
+  def readsHostKey(changed: ConfigReload.Key): Boolean = paths.exists(HotPlan.keyMatches(changed, _))
 
   /** The settings the host supplies this plugin out of `host` (the `histmersion` tree, other plugins' blocks
     * effective), keys relative to the plugin's block.
@@ -107,13 +107,13 @@ object FirstPartySettings:
     */
   def hostKeys: List[ConfigReload.Key] =
     (ClientKeys ++ all.flatMap(_.paths)).distinct.filterNot(k =>
-      HotPlan.keyMatches(ConfigReload.ChangedKey(k.value), ConfigReload.Key(PluginHost.Root))
+      HotPlan.keyMatches(ConfigReload.Key(k.value), ConfigReload.Key(PluginHost.Root))
     )
 
   /** Whether a change of the host key `changed` rebuilds `plugin`: one of its paths for a first-party plugin, a client
     * key for any other.
     */
-  def rebuilds(plugin: Plugin.Info.Id, changed: ConfigReload.ChangedKey): Boolean =
+  def rebuilds(plugin: Plugin.Info.Id, changed: ConfigReload.Key): Boolean =
     of(plugin).fold(ClientKeys.exists(HotPlan.keyMatches(changed, _)))(_.readsHostKey(changed))
 
   /** The host settings first-party plugins are supplied from: `merged` (the resolved `histmersion` tree) with each

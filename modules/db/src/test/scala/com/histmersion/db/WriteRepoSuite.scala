@@ -7,7 +7,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.{GeoPoint, ListPatch, Write}
+import com.histmersion.api.{Api, GeoPoint, ListPatch, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -234,7 +234,7 @@ class WriteRepoSuite extends DbSuite:
       .swap
       .toOption
       .get
-    assertEquals(e.code, Some(Write.CodeInvalid))
+    assertEquals(e.code, Some(Api.Error.Field.Period.code))
     assertEquals(SourceFixtures.load(ds, ck).get.period, Some(Period(Year(-2000), Year(-1500))))
 
   // ── export ───────────────────────────────────────────────────────────────────────────────────

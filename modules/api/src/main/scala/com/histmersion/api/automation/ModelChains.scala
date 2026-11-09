@@ -420,7 +420,7 @@ object ModelChains:
 
   final case class AllowanceStatus(
       target: AllowanceStatus.Target,
-      source: AllowanceStatus.Source,
+      source: SettingSource.Wire,
       reservePct: AllowanceStatus.ReservePct,
       limits: List[LimitStatus],
       usable: AllowanceStatus.Usable,
@@ -433,8 +433,6 @@ object ModelChains:
   object AllowanceStatus:
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Source = Source.T
-    object Source extends Newtype[String, Pure]
     export Allowance.ReservePct
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
@@ -469,7 +467,7 @@ object ModelChains:
 
   final case class RoleChain(
       role: RoleChain.Role,
-      source: RoleChain.Source,
+      source: SettingSource.Wire,
       models: List[ChainEntry],
       active: Option[RoleChain.Active] = None,
       problem: Option[Problem] = None
@@ -480,7 +478,5 @@ object ModelChains:
   object RoleChain:
     type Role = Role.T
     object Role extends Newtype[String, Pure]
-    type Source = Source.T
-    object Source extends Newtype[String, Pure]
     type Active = Active.T
     object Active extends Newtype[String, Pure]

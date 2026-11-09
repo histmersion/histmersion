@@ -231,8 +231,8 @@ private[places] object Geocoder:
             Move(
               Finding.Id(p.id.value),
               com.histmersion.api.library.Citekey(p.citekey.value),
-              Move.Asked(p.name.value),
-              p.region.map(g => Move.Region(g.value)),
+              Move.Name(p.name.value),
+              p.region.map(g => Move.Name(g.value)),
               Move.FromLon(p.lon.value),
               Move.FromLat(p.lat.value),
               r

@@ -415,7 +415,7 @@ final class ModelPicker(
         case Left(m) =>
           RoleChain(
             RoleChain.Role(r.wire.value),
-            RoleChain.Source(SettingSource.Config.wire.value),
+            SettingSource.Config.wire,
             Nil,
             None,
             Some(api.Problem(m.value))
@@ -444,7 +444,7 @@ final class ModelPicker(
           }
           RoleChain(
             RoleChain.Role(r.wire.value),
-            RoleChain.Source(src.wire.value),
+            src.wire,
             entries,
             entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
             Option.when(ms.isEmpty)(
@@ -458,7 +458,7 @@ final class ModelPicker(
       case Effective(t, Left(why), src) =>
         AllowanceStatus(
           AllowanceStatus.Target(t.value),
-          AllowanceStatus.Source(src.wire.value),
+          src.wire,
           ModelChains.AllowanceStatus.ReservePct(0),
           Nil,
           usable = ModelChains.AllowanceStatus.Usable(false),
@@ -474,7 +474,7 @@ final class ModelPicker(
           )
         AllowanceStatus(
           AllowanceStatus.Target(t.value),
-          AllowanceStatus.Source(src.wire.value),
+          src.wire,
           a.reservePct,
           ss.map(s =>
             LimitStatus(

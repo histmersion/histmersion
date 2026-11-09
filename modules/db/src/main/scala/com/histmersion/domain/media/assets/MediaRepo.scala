@@ -108,8 +108,8 @@ private[assets] object MediaRepo:
     */
   private def placeAt(uid: MediaItemRow.Uid, target: (Target.TargetType, Target.Id))(using DbCon): Unit =
     val (tt, id) = target
-    if tt.value == PictureTarget.Source.wire.value then () // a source's picture (a cover) is not on the map
-    else if tt.value == PictureTarget.Place.wire.value then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+    if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
+    else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
               period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
             FROM (SELECT ST_PointOnSurface(coalesce(geom_clipped, geom)) AS g, period AS p FROM places WHERE id = $id) t
             WHERE a.uid = $uid::uuid""".update.run()

@@ -167,7 +167,7 @@ object AboutView:
       Section(
         "Plugins",
         r.plugins.map { p =>
-          val st = PluginState.parse(PluginState.Wire(p.state.value)) match
+          val st = PluginState.parse(p.state) match
             case Some(PluginState.Registered)                   => ServiceState.Ok
             case Some(PluginState.Failed | PluginState.Refused) => ServiceState.Down
             case _                                              => ServiceState.Unknown

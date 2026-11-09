@@ -243,7 +243,7 @@ class ModelChainsSuite extends munit.FunSuite:
       chains = List(
         RoleChain(
           ModelChains.RoleChain.Role("extractor"),
-          ModelChains.RoleChain.Source("saved"),
+          ModelChains.SettingSource.Wire("saved"),
           List(
             ChainEntry(
               ModelChains.ChainEntry.Model("claude-code:sonnet"),
@@ -264,7 +264,7 @@ class ModelChainsSuite extends munit.FunSuite:
       allowances = List(
         AllowanceStatus(
           ModelChains.AllowanceStatus.Target("claude-code:*"),
-          ModelChains.AllowanceStatus.Source("config"),
+          ModelChains.SettingSource.Wire("config"),
           ModelChains.AllowanceStatus.ReservePct(20),
           List(
             LimitStatus(
@@ -300,7 +300,7 @@ class ModelChainsSuite extends munit.FunSuite:
           List(
             RoleChain(
               ModelChains.RoleChain.Role("writer"),
-              ModelChains.RoleChain.Source("config"),
+              ModelChains.SettingSource.Wire("config"),
               Nil,
               None,
               Some(api.Problem("no model"))

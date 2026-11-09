@@ -120,7 +120,7 @@ object ActivityView:
             " · by ",
             RouteLink(
               Route.Job(Route.Job.Id(id.value)),
-              if e.by.exists(_.value == Activity.Writer.Agent.wire.value) || kind.contains(EntryKind.Decision)
+              if e.by.exists(_ == Activity.Writer.Agent.wire) || kind.contains(EntryKind.Decision)
               then s"agent work ${id.value.take(8)}"
               else s"job ${id.value.take(8)}"
             )

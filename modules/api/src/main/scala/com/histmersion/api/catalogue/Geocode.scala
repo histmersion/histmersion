@@ -358,8 +358,8 @@ object Geocode:
   final case class Move(
       findingId: Finding.Id,
       citekey: Citekey,
-      asked: Move.Asked,
-      region: Option[Move.Region],
+      asked: Move.Name,
+      region: Option[Move.Name],
       fromLon: Move.FromLon,
       fromLat: Move.FromLat,
       to: Resolution
@@ -367,7 +367,7 @@ object Geocode:
     def km: DistanceKm = distanceKm(fromLon, fromLat, to.lon, to.lat)
 
     def describe: String =
-      val from = region.filter(_.value != asked.value).fold("")(r => s" (stored as '${r.value}')")
+      val from = region.filter(_ != asked).fold("")(r => s" (stored as '${r.value}')")
       String.format(
         java.util.Locale.ROOT,
         "%s: '%s'%s at %.2f N %.2f E → %s at %.2f N %.2f E, %.0f km%s",
@@ -387,10 +387,8 @@ object Geocode:
     type MinKm = MinKm.T
     object MinKm extends Newtype[Double, Pure]
 
-    type Asked = Asked.T
-    object Asked extends Newtype[String, Pure]
-    type Region = Region.T
-    object Region extends Newtype[String, Pure]
+    type Name = Name.T
+    object Name extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.{Latitude as FromLat, Longitude as FromLon}
 
   def worthMoving(m: Move, minKm: Move.MinKm): Boolean = (m.km).value > minKm.value

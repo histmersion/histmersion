@@ -370,7 +370,7 @@ object ResultsList:
           cls := "empty-chips",
           chips.map { c =>
             // a chosen place is named by its label and kind, never by its id (#places-fix)
-            if c.key.value == UiState.placeIds.key.value then
+            if c.key == UiState.placeIds.key then
               li(
                 child <-- PlacesInput
                   .chipTextSignal(Pages.PlaceId(c.value.value))

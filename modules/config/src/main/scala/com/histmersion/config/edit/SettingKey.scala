@@ -53,7 +53,7 @@ object SettingKey extends Newtype[String, SettingKeyRule]:
     def hoconPath: HoconPath = HoconPath(ConfigUtil.joinPath(segments.map(_.value).asJava))
 
     /** Is this key `other` or under it? */
-    def within(other: SettingKey): Boolean = k.value == other.value || k.value.startsWith(other.value + ".")
+    def within(other: SettingKey): Boolean = k == other || k.value.startsWith(other.value + ".")
     def parent: Option[SettingKey] =
       Option.when(segments.size > 2)(SettingKey.applyUnsafe(segments.init.mkString(".")))
 

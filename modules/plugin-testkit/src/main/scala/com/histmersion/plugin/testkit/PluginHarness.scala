@@ -624,10 +624,10 @@ object PluginHarness:
     )
     val statuses = generation.report.plugins
     val failedVaults =
-      statuses.find(s => s.id.value == TestVaultsId.value && s.state.value != PluginState.Registered.wire.value)
+      statuses.find(s => s.id.value == TestVaultsId.value && s.state != PluginState.Registered.wire)
     statuses.find(_.id.value == id.value) match
       case None => Left(Problem(s"$id: the server did not consider the plugin"))
-      case Some(st) if st.state.value == PluginState.Registered.wire.value =>
+      case Some(st) if st.state == PluginState.Registered.wire =>
         Right(
           PluginHarness(
             id,
@@ -642,7 +642,7 @@ object PluginHarness:
             st.warnings
           )
         )
-      case Some(st) if st.state.value == PluginState.Disabled.wire.value =>
+      case Some(st) if st.state == PluginState.Disabled.wire =>
         Left(Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
       case Some(st) =>
         Left(

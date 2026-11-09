@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class IssueField(field: IssueField.Field, left: Option[IssueField.Left], right: Option[IssueField.Right])
+final case class IssueField(field: IssueField.Field, left: Option[IssueField.Value], right: Option[IssueField.Value])
     derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -15,7 +15,6 @@ final case class IssueField(field: IssueField.Field, left: Option[IssueField.Lef
 object IssueField:
   type Field = Field.T
   object Field extends Newtype[String, Pure]
-  type Left = Left.T
-  object Left extends Newtype[String, Pure]
-  type Right = Right.T
-  object Right extends Newtype[String, Pure]
+  /** One field's value on one side of a merge issue. */
+  type Value = Value.T
+  object Value extends Newtype[String, Pure]

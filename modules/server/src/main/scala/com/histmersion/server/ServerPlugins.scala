@@ -23,7 +23,7 @@ object ServerPlugins:
   def load(
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
-      changed: List[ConfigReload.ChangedKey] = Nil,
+      changed: List[ConfigReload.Key] = Nil,
       core: CoreBudget,
       transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =

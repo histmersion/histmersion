@@ -7,5 +7,4 @@ final case class PmcObject(key: PmcObject.Key, md5: Option[PmcObject.Md5])
 object PmcObject:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
-  type Md5 = Md5.T
-  object Md5 extends Newtype[String, Pure]
+  export com.histmersion.upstreams.identifiers.Md5

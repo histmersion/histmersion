@@ -84,8 +84,7 @@ object ImportService:
   val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
   type TargetId = Target.Id
   val TargetId: Target.Id.type = Target.Id
-  type TargetType = Target.TargetType
-  val TargetType: Target.TargetType.type = Target.TargetType
+  export Target.TargetType
   type CheckName = CheckName.T
   object CheckName extends Newtype[String, Pure]
   type CommonsCategory = CommonsCategory.T

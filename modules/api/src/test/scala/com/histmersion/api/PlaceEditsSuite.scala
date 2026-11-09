@@ -265,10 +265,10 @@ class PlaceEditsSuite extends munit.FunSuite:
       Place.Id("pleiades_886355306"),
       Place.OverrideChanged.Label("Regio XII (Piscina Publica)"),
       reset = Place.OverrideChanged.Reset(false),
-      Place.OverrideChanged.KindBefore("site"),
-      Place.OverrideChanged.KindAfter("region"),
-      Place.OverrideChanged.PeriodBefore("undated"),
-      Place.OverrideChanged.PeriodAfter("undated"),
+      Place.KindValue("site"),
+      Place.KindValue("region"),
+      Place.Dating.Description("undated"),
+      Place.Dating.Description("undated"),
       Place.OverrideChanged.FindingsBefore(59),
       Place.OverrideChanged.FindingsAfter(0),
       Place.OverrideChanged.Unlocated(0)
@@ -290,9 +290,9 @@ class PlaceEditsSuite extends munit.FunSuite:
             .modify(_.reset)
             .setTo(Place.OverrideChanged.Reset(true))
             .modify(_.kindBefore)
-            .setTo(Place.OverrideChanged.KindBefore("region"))
+            .setTo(Place.KindValue("region"))
             .modify(_.kindAfter)
-            .setTo(Place.OverrideChanged.KindAfter("site"))
+            .setTo(Place.KindValue("site"))
         )
         .startsWith(
           "reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"
@@ -446,10 +446,10 @@ class PlaceEditsSuite extends munit.FunSuite:
       Place.Id("pleiades_952097"),
       Place.OverrideChanged.Label("Parthyene/Parthia"),
       reset = Place.OverrideChanged.Reset(false),
-      Place.OverrideChanged.KindBefore("region"),
-      Place.OverrideChanged.KindAfter("region"),
-      Place.OverrideChanged.PeriodBefore("900 BCE–300 CE"),
-      Place.OverrideChanged.PeriodAfter("900 BCE–300 CE"),
+      Place.KindValue("region"),
+      Place.KindValue("region"),
+      Place.Dating.Description("900 BCE–300 CE"),
+      Place.Dating.Description("900 BCE–300 CE"),
       Place.OverrideChanged.FindingsBefore(0),
       Place.OverrideChanged.FindingsAfter(0),
       Place.OverrideChanged.Unlocated(0),

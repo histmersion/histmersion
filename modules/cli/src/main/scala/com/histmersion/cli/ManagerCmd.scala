@@ -297,7 +297,7 @@ object ManagerCmd:
           ApprovalDigest.BulkDecide.Decision(d),
           kind.map(ApprovalDigest.BulkDecide.Kind(_)),
           subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-          ids.map(ApprovalDigest.BulkDecide.Ids(_)),
+          ids.map(ApprovalDigest.Open.Id(_)),
           note.map(ApprovalDigest.BulkDecide.Note(_)),
           ApprovalDigest.BulkDecide.DryRun(dry),
           limit.map(ApprovalDigest.BulkDecide.Limit(_)),

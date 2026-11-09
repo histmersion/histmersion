@@ -103,8 +103,7 @@ object RepositoryLanding:
   object ZenodoFile:
     type Url = Url.T
     object Url extends Newtype[String, Pure]
-    type Md5 = Md5.T
-    object Md5 extends Newtype[String, Pure]
+    export com.histmersion.upstreams.identifiers.Md5
 
   /** The hosts and platforms the decision reads (`acquire.landing.*`, comma-separated in config). A host entry matches
     * the host itself or any subdomain of it.

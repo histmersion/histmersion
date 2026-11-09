@@ -9,8 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class Target(targetType: Target.TargetType, id: Target.Id, qid: Target.Qid, label: Target.Label)
 
 object Target:
-  type TargetType = TargetType.T
-  object TargetType extends Newtype[String, Pure]
+  export com.histmersion.domain.media.assets.PictureTarget.Wire as TargetType
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Qid = Qid.T

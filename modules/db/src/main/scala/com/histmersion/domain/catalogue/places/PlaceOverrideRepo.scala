@@ -163,15 +163,14 @@ private[places] object PlaceOverrideRepo:
                 start.map(s => Year(s.value)),
                 end.map(e => Year(e.value))
               )
-              .value
           Place.OverrideChanged(
             Place.Id(id.value),
             Place.OverrideChanged.Label(before.label.value),
             Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
-            Place.OverrideChanged.KindBefore(before.kind.value),
-            Place.OverrideChanged.KindAfter(after.kind.value),
-            Place.OverrideChanged.PeriodBefore(period(before.start, before.end)),
-            Place.OverrideChanged.PeriodAfter(period(after.start, after.end)),
+            Place.KindValue(before.kind.value),
+            Place.KindValue(after.kind.value),
+            period(before.start, before.end),
+            period(after.start, after.end),
             Place.OverrideChanged.FindingsBefore(had.size),
             Place.OverrideChanged.FindingsAfter(now.size),
             Place.OverrideChanged.Unlocated(lost),

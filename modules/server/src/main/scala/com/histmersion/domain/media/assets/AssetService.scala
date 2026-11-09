@@ -156,8 +156,7 @@ object AssetService:
   val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
   type ProviderKey = MediaItemRow.ProviderKey
   val ProviderKey: MediaItemRow.ProviderKey.type = MediaItemRow.ProviderKey
-  type TargetType = Target.TargetType
-  val TargetType: Target.TargetType.type = Target.TargetType
+  export Target.TargetType
   type TargetId = Target.Id
   val TargetId: Target.Id.type = Target.Id
   type Bytes = Bytes.T
@@ -597,7 +596,7 @@ object AssetService:
       }
       !before.mediaLinks.exists(same)
 
-    private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType.value == target.wire.value
+    private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType == target.wire
 
     def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty]): Unit =
       def mine(m: HeldMediaLink) =
@@ -786,7 +785,7 @@ object AssetService:
       val links = state.get.mediaLinks.filter(m => m.targetType == targetType && m.targetId == targetId)
       val best = links
         .flatMap(m => byUid(m.assetUid).map(a => (m, a)))
-        .filter((_, a) => a.thumb.isDefined || targetType.value == PictureTarget.Source.wire.value)
+        .filter((_, a) => a.thumb.isDefined || targetType == PictureTarget.Source.wire)
         .groupBy(_._2.uid)
         .values
         .map(_.minBy((m, _) => (ord(m.role), m.rank.value: Int)))

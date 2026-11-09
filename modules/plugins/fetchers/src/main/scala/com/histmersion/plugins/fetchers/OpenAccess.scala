@@ -285,7 +285,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         files.iterator
           .map { f =>
             downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.Url(f.url.value)).filter { got =>
-              val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_.value == m.value))
+              val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_ == m))
               if !ok then
                 ctx.log.warn(
                   Plugin.Log.Line(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")

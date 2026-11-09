@@ -4,6 +4,7 @@ package domain.library.acquisition
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.plugins.{PluginSetting, PluginStatus}
+import com.histmersion.api.plugins.PluginState
 import com.histmersion.plugin.Access
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.api.plugins.PluginDescription
@@ -19,7 +20,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
     PluginStatus.Version("1.0"),
     PluginStatus.SpiVersion(2),
     enabled = PluginStatus.Enabled(true),
-    PluginStatus.State("registered"),
+    PluginState.Wire("registered"),
     provides = List(PluginDescription.Provides("source-fetcher:core")),
     settings = List(PluginSetting(PluginSetting.Key("api-key"), key))
   )
@@ -28,7 +29,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
     PluginStatus.Version("1.0"),
     PluginStatus.SpiVersion(2),
     enabled = PluginStatus.Enabled(true),
-    PluginStatus.State("registered"),
+    PluginState.Wire("registered"),
     provides = List(PluginDescription.Provides("source-fetcher:unpaywall")),
     settings = List(PluginSetting(PluginSetting.Key("contact-email"), PluginSetting.Value("null")))
   )
@@ -38,7 +39,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
       PluginStatus.Version("0.1"),
       PluginStatus.SpiVersion(2),
       enabled = PluginStatus.Enabled(true),
-      PluginStatus.State("registered"),
+      PluginState.Wire("registered"),
       provides = List(PluginDescription.Provides("secret-vault:keepassxc"))
     )
   private def gen(
@@ -71,7 +72,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
       PluginStatus.Version("9"),
       PluginStatus.SpiVersion(2),
       enabled = PluginStatus.Enabled(true),
-      PluginStatus.State("registered"),
+      PluginState.Wire("registered"),
       provides = List(PluginDescription.Provides("source-fetcher:stub")),
       settings = List(PluginSetting(PluginSetting.Key("token"), PluginSetting.Value("env:X")))
     )

@@ -403,8 +403,8 @@ class GeocodeSuite extends munit.FunSuite:
     val m = Move(
       Finding.Id("heraclides2025_ancient#0"),
       Citekey("heraclides2025_ancient"),
-      Geocode.Move.Asked("Albania"),
-      Some(Geocode.Move.Region("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
+      Geocode.Move.Name("Albania"),
+      Some(Geocode.Move.Name("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
       Longitude(45.85589),
       Latitude(34.46511),
       Resolution(

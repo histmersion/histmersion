@@ -649,7 +649,7 @@ object RunsView:
           cls := "run-trace",
           h4("Trace"),
           d.messages.groupBy(_.seq).toList.sortBy(t => t._1.value: Int).map { (seq, ms) =>
-            val name = d.steps.find(_.seq.value == seq.value).map(_.name.value).getOrElse(s"step $seq")
+            val name = d.steps.find(_.seq == seq).map(_.name.value).getOrElse(s"step $seq")
             htmlTag("details")(
               htmlTag("summary")(
                 s"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"

@@ -52,7 +52,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
       List(1L, 3L)
     )
     assertEquals(
-      matching(open, BulkDecide(BulkDecide.Decision("approve"), ids = List(BulkDecide.Ids(5), BulkDecide.Ids(4))))
+      matching(open, BulkDecide(BulkDecide.Decision("approve"), ids = List(Open.Id(5), Open.Id(4))))
         .map(_.id),
       List(4L, 5L)
     )

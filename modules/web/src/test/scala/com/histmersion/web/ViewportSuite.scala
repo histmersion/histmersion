@@ -129,14 +129,14 @@ class ViewportSuite extends munit.FunSuite:
   test("the ☰ badge counts the filters that are set but hidden in the drawer, not the search"):
     val chips = List(
       UiState
-        .ActiveChip(UiState.ActiveChip.Key("q"), UiState.ActiveChip.Label("search"), UiState.ActiveChip.Value("troy")),
+        .ActiveChip(Field.Key("q"), UiState.ActiveChip.Label("search"), UiState.ActiveChip.Value("troy")),
       UiState.ActiveChip(
-        UiState.ActiveChip.Key("tags"),
+        Field.Key("tags"),
         UiState.ActiveChip.Label("tag"),
         UiState.ActiveChip.Value("argolid")
       ),
       UiState.ActiveChip(
-        UiState.ActiveChip.Key("status"),
+        Field.Key("status"),
         UiState.ActiveChip.Label("status"),
         UiState.ActiveChip.Value("current")
       )

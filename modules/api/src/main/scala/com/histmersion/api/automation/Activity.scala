@@ -107,8 +107,7 @@ object Activity:
     type EndedAt = EndedAt.T
     object EndedAt extends Newtype[String, Pure]
     export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
-    type By = By.T
-    object By extends Newtype[String, Pure]
+    export Writer.Wire as By
     export com.histmersion.api.research.ReviewGoal.Slug as Article
     export Goal.Plans.GoalLink.QueueNumber as QueueItem
     type QueueList = QueueList.T

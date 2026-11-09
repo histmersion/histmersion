@@ -13,7 +13,7 @@ final case class PluginStatus(
     version: PluginStatus.Version,
     spiVersion: PluginStatus.SpiVersion,
     enabled: PluginStatus.Enabled,
-    state: PluginStatus.State,
+    state: PluginState.Wire,
     provides: List[PluginStatus.Provides] = Nil,
     settings: List[PluginSetting] = Nil,
     warnings: List[PluginStatus.Warnings] = Nil,
@@ -26,8 +26,6 @@ object PluginStatus:
   export PluginDescription.{Id, SpiVersion, Version}
   type Enabled = Enabled.T
   object Enabled extends Newtype[Boolean, Pure]
-  type State = State.T
-  object State extends Newtype[String, Pure]
   export PluginDescription.Provides
   type Warnings = Warnings.T
   object Warnings extends Newtype[String, Pure]

@@ -143,13 +143,13 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     )
     assertEquals(
       fs.find(_.field.value == "authors").get,
-      IssueField(IssueField.Field("authors"), Some(IssueField.Left("A")), Some(IssueField.Right("A; B")))
+      IssueField(IssueField.Field("authors"), Some(IssueField.Value("A")), Some(IssueField.Value("A; B")))
     )
     assertEquals(fs.find(_.field.value == "period").get.left, Some("-1650..…"))
     assertEquals(fs.find(_.field.value == "summary").get.left, Some("a summary"))
     assertEquals(
       fs.find(_.field.value == "OCR body").get,
-      IssueField(IssueField.Field("OCR body"), Some(IssueField.Left(s"sha256 ${"f" * 12}…")), None)
+      IssueField(IssueField.Field("OCR body"), Some(IssueField.Value(s"sha256 ${"f" * 12}…")), None)
     )
 
   test("an event pair: its dates, geometries and the span of its outer dates"):
@@ -182,11 +182,11 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     )
     assertEquals(
       d.fields.find(_.field.value == "span").get,
-      IssueField(IssueField.Field("span"), Some(IssueField.Left("-2000..-1600")), Some(IssueField.Right("none")))
+      IssueField(IssueField.Field("span"), Some(IssueField.Value("-2000..-1600")), Some(IssueField.Value("none")))
     )
     assertEquals(
       d.fields.find(_.field.value == "names").get,
-      IssueField(IssueField.Field("names"), Some(IssueField.Left("Thera; Santorini")), None)
+      IssueField(IssueField.Field("names"), Some(IssueField.Value("Thera; Santorini")), None)
     )
     assertEquals(d.place.flatMap(_.leftSpan), Some(IssueSpan(Some(Year(-2000)), Some(Year(-1600)))))
 

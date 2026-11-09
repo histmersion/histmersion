@@ -39,7 +39,7 @@ object PersonalMarkdown:
       s"## Note on ${n.title}",
       "",
       s"_${targetLine(n.target)} · written ${minute(n.createdAt.value)}" +
-        (if n.updatedAt.value != n.createdAt.value then s", changed ${minute(n.updatedAt.value)}"
+        (if n.updatedAt != n.createdAt then s", changed ${minute(n.updatedAt.value)}"
          else "") + s" · id `${n.id.value}`_",
       "",
       n.text.value

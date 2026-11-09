@@ -337,7 +337,7 @@ object BasemapFetch:
 
   /** The requests not downloaded yet. */
   def pending(p: Plan, work: Store): Vector[(ByteOffset, ByteCount)] =
-    p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size.value == r._2.value))
+    p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size == r._2))
 
   /** Download every pending request into `work`; `room(bytes)` is asked before each one and stops the fetch (with its
     * reason) when the disk would get too full.
