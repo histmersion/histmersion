@@ -52,8 +52,7 @@ object AutopilotPolicy:
   object MinSources extends Newtype[Int, Pure]
   type NewSources = NewSources.T
   object NewSources extends Newtype[Int, Pure]
-  type Note = Note.T
-  object Note extends Newtype[String, Pure]
+  export Approval.Note
   type OpenCount = OpenCount.T
   object OpenCount extends Newtype[Int, Pure]
   type Proposed = Proposed.T

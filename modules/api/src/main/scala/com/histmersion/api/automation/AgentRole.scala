@@ -18,6 +18,7 @@ enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
 
 object AgentRole:
   type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  object Wire extends Newtype[String, Pure]:
+    def read(text: String): Wire = Wire(text)
 
   def parse(s: Wire): Option[AgentRole] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

@@ -3,6 +3,7 @@ package domain.automation.agents
 
 import com.histmersion.api.Problem
 import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Stopped
 import com.histmersion.api.automation.{Goal as ApiGoal, Managers, Queue}
 import com.histmersion.domain.automation.Run
 import com.histmersion.util.jobs.Job
@@ -218,13 +219,15 @@ object RunService:
       Count(n)
     private def info(r: JobRunState): RunInfo =
       val ss = stepsOf(jobOf(r)).map(_.step)
+      val error = r.error.map(e => Problem(e.value))
+      val status = RunInfo.Status(r.row.status.value)
       RunInfo(
         RunInfo.Id(r.id.value),
         RunInfo.Pipeline(r.row.pipeline.value),
         RunInfo.Target(r.row.target.value),
-        RunInfo.Status(r.row.status.value),
+        status,
         r.progress.map(p => RunInfo.Progress(p.value)),
-        r.error.map(e => Problem(e.value)),
+        error,
         r.row.model.map(m => RunInfo.Model(m.value)),
         Usage(
           Usage.Input(ss.map(_.usage.input.value).sum),
@@ -248,7 +251,8 @@ object RunService:
         RunInfo.DryRun(r.row.dryRun.value),
         r.row.managerId.map(m => Managers.ManagerInfo.Id(m.value)),
         r.row.managerItem.map(i => Managers.ManagerItem.Id(i.value)),
-        r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t)))
+        r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t))),
+        pausedFor = Option.when(status == RunState.Paused.wire)(Stopped.pausedFor(error)).flatten
       )
     private def key(r: JobRunState): (Instant, Long) = (r.createdAt, r.created.value)
     private def newest(rs: List[JobRunState]): List[JobRunState] = rs.sortBy(key).reverse

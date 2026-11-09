@@ -820,6 +820,7 @@ unwrap	api:api/automation/Queue.scala	.value outside a boundary	27
 unwrap	api:api/automation/Run.scala	.value outside a boundary	1
 unwrap	api:api/automation/ScheduleKind.scala	.value outside a boundary	3
 unwrap	api:api/automation/Stalls.scala	.value outside a boundary	10
+unwrap	api:api/automation/Stopped.scala	.value outside a boundary	2
 unwrap	api:api/automation/TargetKind.scala	.value outside a boundary	1
 unwrap	api:api/backup/Backup.scala	.value outside a boundary	24
 unwrap	api:api/basemap/BaseMapSource.scala	.value outside a boundary	1
@@ -857,7 +858,7 @@ unwrap	api:api/catalogue/TileLayer.scala	.value outside a boundary	1
 unwrap	api:api/checks/FormatField.scala	.value outside a boundary	2
 unwrap	api:api/checks/FormatRule.scala	.value outside a boundary	3
 unwrap	api:api/checks/FormatSeverity.scala	.value outside a boundary	2
-unwrap	api:api/checks/Lint.scala	.value outside a boundary	30
+unwrap	api:api/checks/Lint.scala	.value outside a boundary	27
 unwrap	api:api/exchange/Bundle.scala	.value outside a boundary	11
 unwrap	api:api/exchange/EditionsPolicy.scala	.value outside a boundary	1
 unwrap	api:api/exchange/InitPlan.scala	.value outside a boundary	4
@@ -971,7 +972,7 @@ unwrap	core:domain/PlanArticles.scala	.value outside a boundary	25
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	44
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
 unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	208
-unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	72
+unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	71
 unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	54
 unwrap	core:domain/Scheduling.scala	.value outside a boundary	5
 unwrap	core:domain/SeedPlanDefaults.scala	.value outside a boundary	5
@@ -1107,15 +1108,14 @@ unwrap	server:domain/automation/agents/AgentTrees.scala	.value outside a boundar
 unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	141
 unwrap	server:domain/automation/agents/AgentsSettings.scala	.value outside a boundary	20
 unwrap	server:domain/automation/agents/AllowanceGuard.scala	.value outside a boundary	2
-unwrap	server:domain/automation/agents/ApprovalService.scala	.value outside a boundary	139
+unwrap	server:domain/automation/agents/ApprovalService.scala	.value outside a boundary	136
 unwrap	server:domain/automation/agents/CompareRunsViews.scala	.value outside a boundary	7
-unwrap	server:domain/automation/agents/Engine.scala	.value outside a boundary	74
+unwrap	server:domain/automation/agents/Engine.scala	.value outside a boundary	73
 unwrap	server:domain/automation/agents/EngineSite.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/FirstCallProbe.scala	.value outside a boundary	1
-unwrap	server:domain/automation/agents/Halt.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/LlmClient.scala	.value outside a boundary	12
 unwrap	server:domain/automation/agents/ModelLimitReached.scala	.value outside a boundary	1
-unwrap	server:domain/automation/agents/ModelPicker.scala	.value outside a boundary	62
+unwrap	server:domain/automation/agents/ModelPicker.scala	.value outside a boundary	61
 unwrap	server:domain/automation/agents/PluginAiClient.scala	.value outside a boundary	23
 unwrap	server:domain/automation/agents/PluginTree.scala	.value outside a boundary	9
 unwrap	server:domain/automation/agents/Prompt.scala	.value outside a boundary	1
@@ -1131,7 +1131,7 @@ unwrap	server:domain/automation/agents/VerbatimFailure.scala	.value outside a bo
 unwrap	server:domain/automation/approvals/ApprovalDigestService.scala	.value outside a boundary	22
 unwrap	server:domain/automation/approvals/ApprovalEffects.scala	.value outside a boundary	1
 unwrap	server:domain/automation/approvals/Approvals.scala	.value outside a boundary	16
-unwrap	server:domain/automation/approvals/AutoApprovals.scala	.value outside a boundary	41
+unwrap	server:domain/automation/approvals/AutoApprovals.scala	.value outside a boundary	40
 unwrap	server:domain/automation/autopilot/AutopilotRowService.scala	.value outside a boundary	17
 unwrap	server:domain/automation/autopilot/AutopilotService.scala	.value outside a boundary	155
 unwrap	server:domain/automation/goals/FocusService.scala	.value outside a boundary	35
@@ -1316,7 +1316,7 @@ unwrap	server:domain/research/workflows/ResearchWorkflow.scala	.value outside a 
 unwrap	server:domain/research/workflows/ReviewArticlePipeline.scala	.value outside a boundary	100
 unwrap	server:domain/research/workflows/ReviewLedgerService.scala	.value outside a boundary	6
 unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a boundary	95
-unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	67
+unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
 unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
 unwrap	server:server/AuthHandler.scala	.value outside a boundary	3
 unwrap	server:server/Bootstrap.scala	.value outside a boundary	33

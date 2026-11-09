@@ -27,6 +27,3 @@ object WorkingDir:
       .takeWhile(_ != null)
       .take(16)
       .exists(e => Option(e.getMessage).exists(_.contains(Marker)))
-
-  /** Pure: the same check on an error text the CLI already turned into a message. */
-  def denied(text: String): Boolean = text.contains(Marker)

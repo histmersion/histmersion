@@ -40,6 +40,13 @@ object MergeApplyJob:
 
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 
+  /** Why a stored row failed: a restart cut it short (the store keeps that as its own sentence), or it ended with a
+    * reason of its own.
+    */
+  enum Failure derives CanEqual:
+    case Interrupted
+    case Other(problem: Problem)
+
   val InterruptedText: Problem =
     Problem(
       "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
@@ -53,7 +60,7 @@ object MergeApplyJob:
       bundle: MergeApplyJob.OfBundle,
       planHash: MergeApplyJob.OfPlanHash,
       elapsedMs: OfElapsedMs,
-      error: Option[Problem],
+      error: Option[Failure],
       result: Option[MergeApplyResult]
   ): MergeApplyJob =
     status match
@@ -83,7 +90,7 @@ object MergeApplyJob:
             result = Some(r)
           )
         )
-      case JobState.Failed if error.contains(JobState.Interrupted) =>
+      case JobState.Failed if error.contains(Failure.Interrupted) =>
         MergeApplyJob(
           SpatialHierarchyResult.Job.Id((id).value),
           MergeJobState.Interrupted,
@@ -99,5 +106,8 @@ object MergeApplyJob:
           bundle,
           planHash,
           elapsedMs,
-          error = error
+          error = error.map {
+            case Failure.Interrupted   => InterruptedText
+            case Failure.Other(reason) => reason
+          }
         )

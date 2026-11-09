@@ -26,13 +26,18 @@ class RunsViewSuite extends munit.FunSuite:
     UiState.store = Store.Memory()
     UiState.loadHash(UiState.UrlHash(""))
 
-  private def run(status: RunInfo.Status, error: Option[Problem] = None) =
+  private def run(
+      status: RunInfo.Status,
+      error: Option[Problem] = None,
+      pausedFor: Option[Agents.PauseReason] = None
+  ) =
     RunInfo(
       Agents.RunInfo.Id("r1"),
       Agents.RunInfo.Pipeline("enrich-source"),
       Agents.RunInfo.Target("a2020_b"),
       status,
-      error = error
+      error = error,
+      pausedFor = pausedFor
     )
 
   test("only queued and running runs are live; the poll stops once nothing is"):
@@ -73,12 +78,20 @@ class RunsViewSuite extends munit.FunSuite:
 
   test("why a run paused, the filter, and a typed budget"):
     assertEquals(
-      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(Problem("budget: the run spent 2 of its 2 USD")))),
-      Some("budget")
+      RunsView.pausedFor(
+        run(
+          RunInfo.Status("paused"),
+          Some(Problem("budget: the run spent 2 of its 2 USD")),
+          Some(Agents.PauseReason.Budget)
+        )
+      ),
+      Some(Agents.PauseReason.Budget)
     )
     assertEquals(
-      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(Problem("interrupted")))),
-      Some("interrupted")
+      RunsView.pausedFor(
+        run(RunInfo.Status("paused"), Some(Problem("interrupted")), Some(Agents.PauseReason.Interrupted))
+      ),
+      Some(Agents.PauseReason.Interrupted)
     )
     assertEquals(RunsView.pausedFor(run(RunInfo.Status("done"))), None)
     val rs = List(run(RunInfo.Status("done")), run(RunInfo.Status("paused")), run(RunInfo.Status("done")))

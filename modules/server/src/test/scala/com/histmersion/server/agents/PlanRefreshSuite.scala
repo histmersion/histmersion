@@ -22,6 +22,7 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.config.ClaudePlanConfig
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.config.CodexConfig
+import com.histmersion.api.Problem as ApiProblem
 
 /** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument vector and environment,
   * its output read into readings, the single-flight gate, the login checks — and the probe end to end against a FAKE
@@ -255,7 +256,7 @@ class PlanRefreshSuite extends munit.FunSuite:
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
     assertEquals(
       ModelPicker.pausedRole(
-        domain.Problem(
+        ApiProblem(
           "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
         )
       ),
@@ -263,11 +264,11 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     assertEquals(
       ModelPicker.pausedRole(
-        domain.Problem("plan-quota: review: all models for role cold-reader are below their allowance")
+        ApiProblem("plan-quota: review: all models for role cold-reader are below their allowance")
       ),
       Some(Role.ColdReader)
     )
-    assertEquals(ModelPicker.pausedRole(domain.Problem("plan-quota: something else")), None)
+    assertEquals(ModelPicker.pausedRole(ApiProblem("plan-quota: something else")), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time

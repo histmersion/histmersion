@@ -103,16 +103,17 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Target("a2020_b"),
       Agents.RunInfo.Status("paused"),
       error = Some(Problem("allowance: all models …")),
-      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z"))
+      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z")),
+      pausedFor = Some(Agents.PauseReason.Allowance)
     )
-    assertEquals(RunsView.pausedFor(r), Some("allowance"))
+    assertEquals(RunsView.pausedFor(r), Some(Agents.PauseReason.Allowance))
     assert(
       RunsView
-        .pausedText(r, Agents.PauseReason.Wire("allowance"))
+        .pausedText(r, Agents.PauseReason.Allowance)
         .value
         .contains("resumes by itself at 2026-10-05T14:00:00Z")
     )
-    assert(RunsView.pausedText(r, Agents.PauseReason.Wire("budget")).value.contains("Raise the budget"))
+    assert(RunsView.pausedText(r, Agents.PauseReason.Budget).value.contains("Raise the budget"))
 
   test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
     val w = PlanQuota.WindowStatus(
@@ -141,12 +142,13 @@ class ModelsViewSuite extends munit.FunSuite:
       Agents.RunInfo.Target("x"),
       Agents.RunInfo.Status("paused"),
       error = Some(Problem("plan-quota: …")),
-      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z"))
+      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z")),
+      pausedFor = Some(Agents.PauseReason.PlanQuota)
     )
-    assertEquals(RunsView.pausedFor(r), Some("plan-quota"))
+    assertEquals(RunsView.pausedFor(r), Some(Agents.PauseReason.PlanQuota))
     assert(
       RunsView
-        .pausedText(r, Agents.PauseReason.Wire("plan-quota"))
+        .pausedText(r, Agents.PauseReason.PlanQuota)
         .value
         .contains("resumes by itself at 2026-10-05T21:40:00Z")
     )

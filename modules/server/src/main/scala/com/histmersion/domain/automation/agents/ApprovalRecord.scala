@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.agents
 
 import java.time.Instant
+import com.histmersion.domain.automation.Approval
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
@@ -47,7 +48,5 @@ object ApprovalRecord:
   object Proposal extends Newtype[String, Pure]
   type State = State.T
   object State extends Newtype[String, Pure]
-  type Note = Note.T
-  object Note extends Newtype[String, Pure]
-  type Result = Result.T
-  object Result extends Newtype[String, Pure]
+  export Approval.Note
+  export Approval.Outcome as Result

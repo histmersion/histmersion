@@ -1,5 +1,6 @@
 package com.histmersion
 package api.jobs
+import com.histmersion.api.Problem
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 enum JobState derives CanEqual:
@@ -13,6 +14,9 @@ object JobState:
   object Wire extends Newtype[String, Pure]
 
   val Interrupted = "interrupted"
+
+  /** The sentence a restart leaves in a job it cut short. */
+  val InterruptedSentence: Problem = Problem(Interrupted)
 
   def parse(s: Wire): Option[JobState] =
     values.find(_.wire == Wire((s).value.trim.toLowerCase))

@@ -906,9 +906,7 @@ object Article:
             Some(
               LintItem(
                 com.histmersion.api.library.Citekey((slug).value),
-                com.histmersion.api.checks.Lint.LintItem.Detail(s"filler: ${matches.take(3).mkString(", ")}${
-                    if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""
-                  }")
+                com.histmersion.api.checks.Lint.LintItem.Detail.filler(matches)
               )
             )
         }

@@ -197,8 +197,12 @@ object Agents:
     case Stalled extends PauseReason(PauseReason.Wire("stalled"))
 
   object PauseReason:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    export WireEnumValues.Wire
+
+    given WireEnumValues[PauseReason]:
+      def all: Array[PauseReason] = values
+      def wire(e: PauseReason): WireEnumValues.Wire = e.wire
+      def fromWire(s: WireEnumValues.Wire): Option[PauseReason] = values.find(_.wire == s)
 
   enum StepKind(val wire: StepKind.Wire) derives CanEqual:
     case Code extends StepKind(StepKind.Wire("code"))
@@ -443,7 +447,8 @@ object Agents:
       dryRun: RunInfo.DryRun = RunInfo.DryRun(false),
       managerId: Option[Managers.ManagerInfo.Id] = None,
       managerItem: Option[Managers.ManagerItem.Id] = None,
-      heartbeatAt: Option[RunInfo.HeartbeatAt] = None
+      heartbeatAt: Option[RunInfo.HeartbeatAt] = None,
+      pausedFor: Option[PauseReason] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema,

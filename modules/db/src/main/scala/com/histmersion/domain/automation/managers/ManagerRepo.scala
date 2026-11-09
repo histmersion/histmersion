@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.Run
+import com.histmersion.api.automation.Stopped
 import com.histmersion.domain.EnrichSource
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Goal
@@ -260,8 +261,8 @@ object ManagerRepo:
     of(
       s"($t.status IN ('queued', 'running') OR ($t.status = 'paused' AND ($t.resume_at IS NOT NULL OR $t.error LIKE ? " +
         s"OR $t.error LIKE ?)))",
-      str(s"${PauseReason.Allowance.wire.value}:%"),
-      str(s"${PauseReason.PlanQuota.wire.value}:%")
+      str(Stopped.pausedPattern(PauseReason.Allowance)),
+      str(Stopped.pausedPattern(PauseReason.PlanQuota))
     )
 
   /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares count).

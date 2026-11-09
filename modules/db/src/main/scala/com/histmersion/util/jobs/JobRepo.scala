@@ -235,7 +235,7 @@ object JobRepo:
     */
   def failInterrupted(except: List[Job.Id] = Nil)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
+      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.InterruptedSentence},
                           progress = NULL, updated_at = now()
           WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
             AND kind <> ${AgentJobKinds.Agent.kind}
@@ -388,7 +388,12 @@ object JobRepo:
           MergeApplyJob.OfBundle(bundle),
           MergeApplyJob.OfPlanHash(plan),
           MergeApplyJob.OfElapsedMs(math.max(0L, ms)),
-          error.map(Problem(_)),
+          error
+            .map(Problem(_))
+            .map(p =>
+              if p == JobState.InterruptedSentence then MergeApplyJob.Failure.Interrupted
+              else MergeApplyJob.Failure.Other(p)
+            ),
           result.flatMap(r => Jsonb.read[MergeApplyResult](Jsonb.JsonText(r)))
         )
       }

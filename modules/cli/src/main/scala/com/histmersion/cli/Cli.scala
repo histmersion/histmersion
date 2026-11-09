@@ -770,15 +770,16 @@ object Cli:
         val url = server.getOrElse(Settings.app.cli.serverUrl.value)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
         run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
-          case Right(())                                     => ()
-          case Left(e) if WorkingDir.denied(e.message.value) => err.println(WorkingDir.message); sys.exit(3)
-          case Left(e) => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
+          case Right(())                     => ()
+          case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
+          case Left(e)                       => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(
       message: Problem,
       exitCode: ExitCode = ExitCode.Unreachable,
-      notFound: Boolean = false
+      notFound: Boolean = false,
+      workingDirDenied: Boolean = false
   )
 
   object Error:
