@@ -643,7 +643,7 @@ The Zr culture built walls [[zralpha1990_walls]].
 200 {
   "error" : {
     "code" : -32602,
-    "message" : "Invalid arguments: DecodingFailure at .article: article: unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons. Input: {\"slug\":\"zr_x\",\"article\":{\"title\":\"x\",\"nope\":1}}"
+    "message" : "Invalid arguments: DecodingFailure at .article: unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons. Input: {\"slug\":\"zr_x\",\"article\":{\"title\":\"x\",\"nope\":1}}"
   },
   "id" : 1,
   "jsonrpc" : "2.0"

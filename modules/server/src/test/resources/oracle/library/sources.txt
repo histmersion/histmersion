@@ -927,7 +927,7 @@ _No source 'zqnone2000_x'_
   }
 }
 == PATCH zqgamma1975_kings: metadata refused: a null title
-400 Invalid value for: body (metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone at 'metadata')
+400 Invalid value for: body (metadata: metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone)
 == PATCH zqgamma1975_kings: summary
 200 {
   "findings" : [
@@ -2104,7 +2104,7 @@ Kings, again; see [[zqalpha1990_tell]].
 200 {
   "error" : {
     "code" : -32602,
-    "message" : "Invalid arguments: DecodingFailure at .patch: patch: unknown key 'nope'; expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt. Input: {\"citekey\":\"zqgamma1975_kings\",\"patch\":{\"nope\":1}}"
+    "message" : "Invalid arguments: DecodingFailure at .patch: unknown key 'nope'; expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt. Input: {\"citekey\":\"zqgamma1975_kings\",\"patch\":{\"nope\":1}}"
   },
   "id" : 1,
   "jsonrpc" : "2.0"
