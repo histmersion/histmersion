@@ -4,8 +4,6 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueuePatch}
 
@@ -22,90 +20,42 @@ import com.histmersion.api.library.AcquisitionWorkApi
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
   *
-  * `queue` deliberately keeps the grammar the plan specifies (`queue acquire add "…"`, `queue tasks`, `queue done 3`,
-  * `queue export <dir>`), which does not fit decline's subcommand-per-verb shape — so the positional arguments are
-  * dispatched by [[QueueArgs.parse]], a pure function with its own tests, rather than by a nest of subcommands.
+  * `queue` reads as the plan specifies (`queue acquire add "…"`, `queue tasks`, `queue done 3`, `queue export <dir>`):
+  * each list and each verb is a subcommand.
   */
 object Ops:
 
-  // ── queue argument grammar (pure) ────────────────────────────────────────────────────────────
+  // ── queue ───────────────────────────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
-  enum QueueCmd derives CanEqual:
-    case Show(list: Queue.Kind.Label, all: Boolean)
+  enum QueueCmd extends Cli.Command derives CanEqual:
+    case Show(list: Queue.Kind.Label, all: Boolean, json: Cli.JsonOutput)
     case Add(
         list: Queue.Kind.Label,
         text: Queue.QueueItem.Text,
         topic: Option[Queue.QueueItem.Topic],
-        reason: Option[Problem]
+        reason: Option[Problem],
+        json: Cli.JsonOutput
     )
-    case Done(id: Queue.Id)
-    case Edit(id: Queue.Id, text: Queue.QueueItem.Text)
-    case Rm(id: Queue.Id)
+    case Done(id: Queue.Id, json: Cli.JsonOutput)
+    case Edit(id: Queue.Id, text: Queue.QueueItem.Text, json: Cli.JsonOutput)
+    case Rm(id: Queue.Id, json: Cli.JsonOutput)
     case Export(dir: String)
     case Import(dir: String)
 
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
       * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
       */
-    case Recheck(dryRun: Boolean, limit: Option[Int], id: Option[Int], all: Boolean = false, noWait: Boolean = false)
-
-  object QueueArgs:
-    val usage: String =
-      "usage: histmersion queue <acquire|tasks|log> [--all] | queue <list> add \"<text>\" [--topic t] | " +
-        "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir> | " +
-        "queue acquire recheck [--all] [--dry-run] [--limit n] [--id <item>] [--no-wait]"
-
-    /** Pure: positional words + flags → a command, or the usage line. `--dry-run`, `--limit`, `--id` and `--no-wait`
-      * belong to `acquire recheck` alone; `--all` there means every open item.
-      */
-    def parse(
-        args: List[String],
-        topic: Option[String],
-        reason: Option[String],
+    case Recheck(
+        dryRun: Boolean,
+        limit: Option[Int],
+        id: Option[Int],
         all: Boolean,
-        dryRun: Boolean = false,
-        limit: Option[Int] = None,
-        item: Option[Int] = None,
-        noWait: Boolean = false
-    ): Either[String, QueueCmd] =
-      def id(s: String): Either[String, Queue.Id] =
-        s.toIntOption.map(Queue.Id(_)).toRight(s"'$s' is not an item id — $usage")
-      val recheckFlags = dryRun || limit.isDefined || item.isDefined || noWait
-      args match
-        case "acquire" :: "recheck" :: Nil =>
-          if limit.exists(_ < 0) then Left(s"--limit is 0 or more — $usage")
-          else if all && item.isDefined then
-            Left(s"--all re-checks every open item, --id one of them — not both — $usage")
-          else if all && limit.isDefined then
-            Left(s"--all re-checks every open item, past every cap; --limit caps a pass — not both — $usage")
-          else Right(QueueCmd.Recheck(dryRun, limit, item, all, noWait))
-        case _ if recheckFlags =>
-          Left(s"--dry-run, --limit, --id and --no-wait go with `queue acquire recheck` — $usage")
-        case "done" :: i :: Nil         => id(i).map(QueueCmd.Done.apply)
-        case "edit" :: i :: text :: Nil =>
-          if text.trim.isEmpty then Left(s"edit needs the new text — $usage")
-          else id(i).map(QueueCmd.Edit(_, Queue.QueueItem.Text(text)))
-        case "edit" :: _            => Left(s"edit takes an item id and the new text — $usage")
-        case "rm" :: i :: Nil       => id(i).map(QueueCmd.Rm.apply)
-        case "export" :: dir :: Nil => Right(QueueCmd.Export(dir))
-        case "import" :: dir :: Nil => Right(QueueCmd.Import(dir))
-        case list :: rest if Queue.Kind.parse(Queue.Kind.Label(list)).isDefined =>
-          rest match
-            case Nil                  => Right(QueueCmd.Show(Queue.Kind.Label(list), all))
-            case "add" :: text :: Nil =>
-              Right(
-                QueueCmd.Add(
-                  Queue.Kind.Label(list),
-                  Queue.QueueItem.Text(text),
-                  topic.map(Queue.QueueItem.Topic(_)),
-                  reason.map((text => Problem.Unclassified(Legacy.Text(text))))
-                )
-              )
-            case "add" :: Nil => Left(s"add needs the item text — $usage")
-            case _            => Left(usage)
-        case list :: _ => Left(s"unknown list or verb '$list' — $usage")
-        case Nil       => Left(usage)
+        noWait: Boolean,
+        json: Cli.JsonOutput
+    )
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Ops.runQueue(c, this)
 
   // ── the meta files on disk ────────────────────────────────────────────────────────────────────────
 
@@ -233,115 +183,30 @@ object Ops:
         r.modify(_.subject).setTo(FormatReport.Subject(p.getFileName.toString)).modify(_.text).setTo(None)
       }
 
-  def lint(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
-      (
-        Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts
-          .flag(
-            "fix",
-            "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)"
-          )
-          .orFalse,
-        Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
-        Opts
-          .option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)")
-          .orNone,
-        Opts
-          .option[String](
-            "file",
-            "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)"
-          )
-          .orNone,
-        Output.jsonFlag
-      ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
-        def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
-        (article, source, file) match
-          case (Some(slug), _, _) =>
-            (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
-          case (_, Some(ck), _) => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
-          case (_, _, Some(f))  => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
-          case _                =>
-            for
-              fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
-              rep <- c.lint(rules.map(Lint.Wire(_)))
-            yield
-              val full = rep.modify(_.fixed).setTo(fixed)
-              Output.emit(json, full)(Lint.markdown(_).value)
-      }
-    }
-
-  def query(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
-      (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
-        c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
-      }
-    }
-
-  def schema(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
-      Output.jsonFlag.map { json => (c: Client) =>
-        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))
-      }
-    }
-
-  def queue(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
-    // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
-    Opts.subcommand(
-      "queue",
-      "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)"
-    ) {
-      (
-        Opts.arguments[String]("args").orEmpty,
-        Opts.option[String]("topic", "Group the added item under this heading").orNone,
-        Opts.option[String]("reason", "Why this item is on the list / what research direction it serves").orNone,
-        Opts
-          .flag(
-            "all",
-            "Include done items and the file's prose blocks; acquire recheck: every open item with a DOI, due or not, past the caps (a server job)"
-          )
-          .orFalse,
-        Opts
-          .flag("dry-run", "acquire recheck: list what it would close and try; no fetcher is asked, nothing stored")
-          .orFalse,
-        Opts
-          .option[Int]("limit", "acquire recheck: try at most this many due items (default acquire.recheck.per-pass)")
-          .orNone,
-        Opts.option[Int]("id", "acquire recheck: this acquisition item only, due or not").orNone,
-        Opts.flag("no-wait", "acquire recheck: print the job id and return instead of following the job").orFalse,
-        Output.jsonFlag
-      ).mapN { (args, topic, reason, all, dryRun, limit, item, noWait, json) => (c: Client) =>
-        QueueArgs.parse(args, topic, reason, all, dryRun, limit, item, noWait) match
-          case Left(msg)  => Left(Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = ExitCode.Usage))
-          case Right(cmd) => run(c, cmd, json)
-      }
-    }
-
-  private def run(c: Client, cmd: QueueCmd, json: Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] =
+  private[cli] def runQueue(c: Client, cmd: QueueCmd)(using console: Console): Either[Cli.Error, Unit] =
     cmd match
-      case QueueCmd.Show(list, all) =>
+      case QueueCmd.Show(list, all, json) =>
         c.queueList(Queue.Wire(list.value), all)
           .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
-      case QueueCmd.Add(list, text, topic, reason) =>
+      case QueueCmd.Add(list, text, topic, reason, json) =>
         c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
           .map(i =>
             Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
           )
       // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
-      case QueueCmd.Done(id) =>
+      case QueueCmd.Done(id, json) =>
         c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
           .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
-      case QueueCmd.Edit(id, text) =>
+      case QueueCmd.Edit(id, text, json) =>
         c.queuePatch(id, QueuePatch(text = Some(text)))
           .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
-      case QueueCmd.Rm(id) =>
+      case QueueCmd.Rm(id, json) =>
         c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
       case QueueCmd.Export(dir) =>
         writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
       case QueueCmd.Import(dir) =>
         readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
-      case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
+      case QueueCmd.Recheck(dryRun, limit, id, all, noWait, json) =>
         c.call(AcquisitionWorkApi.acquireRecheck)(
           Acquire.Checks.RecheckRequest(
             Acquire.Checks.RecheckRequest.DryRun(dryRun),
@@ -356,3 +221,40 @@ object Ops:
             case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
             case _                                 => Right(())
         }
+
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Lint(
+        rules: List[String],
+        fix: Boolean,
+        article: Option[String],
+        source: Option[String],
+        file: Option[String],
+        json: Cli.JsonOutput
+    )
+    case Query(sql: String, json: Cli.JsonOutput)
+    case Schema(json: Cli.JsonOutput)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Ops.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Lint(rules, fix, article, source, file, json) =>
+        def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
+        (article, source, file) match
+          case (Some(slug), _, _) =>
+            (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
+          case (_, Some(ck), _) => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
+          case (_, _, Some(f))  => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
+          case _                =>
+            for
+              fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
+              rep <- c.lint(rules.map(Lint.Wire(_)))
+            yield
+              val full = rep.modify(_.fixed).setTo(fixed)
+              Output.emit(json, full)(Lint.markdown(_).value)
+      case Command.Query(sql, json) =>
+        c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
+      case Command.Schema(json) =>
+        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))

@@ -143,3 +143,19 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
       "Allow a credential written as value:<the value itself> (anyone who can read the file can read it)"
     )
     () => f.getOrElse(false)
+
+  /** `--model provider:model` of an agent call. */
+  protected def modelFlag(): () => Option[String] =
+    val m = value[String]("model", "provider:model for this call (default: the role's configured model)")
+    () => m.toOption
+
+  /** `--follow` of a started run. */
+  protected def followFlag(): () => Boolean =
+    val f = flag("follow", "Wait for the run to finish (or pause, or wait for an approval), printing its progress")
+    () => f.getOrElse(false)
+
+  /** `--before` of a listing's next page. */
+  protected def beforeFlag(what: String): () => Option[String] =
+    val b =
+      value[String]("before", s"The next older page: the id of the last $what shown (the listing prints the command)")
+    () => b.toOption

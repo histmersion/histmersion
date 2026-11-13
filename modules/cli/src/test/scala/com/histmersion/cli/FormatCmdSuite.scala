@@ -24,10 +24,10 @@ class FormatCmdSuite extends munit.FunSuite:
     assert(Parsing.parses("article", "put", "x.md", "--strict"))
 
   test("lint takes --article, --source or --file, with --fix"):
-    assert(parses(Ops.lint, "lint", "--source", "haak2015_massive", "--fix"))
-    assert(parses(Ops.lint, "lint", "--article", "sea_peoples"))
-    assert(parses(Ops.lint, "lint", "--file", "draft.md", "--fix", "--json"))
-    assert(parses(Ops.lint, "lint", "--rule", "article-markdown", "--rule", "note-markdown"))
+    assert(Parsing.parses("lint", "--source", "haak2015_massive", "--fix"))
+    assert(Parsing.parses("lint", "--article", "sea_peoples"))
+    assert(Parsing.parses("lint", "--file", "draft.md", "--fix", "--json"))
+    assert(Parsing.parses("lint", "--rule", "article-markdown", "--rule", "note-markdown"))
 
   test("places rename <old> <new>; an unusable id is refused before anything is sent"):
     assert(parses(PlacesCmd.command, "places", "rename", "zz_old", "zz_new"))

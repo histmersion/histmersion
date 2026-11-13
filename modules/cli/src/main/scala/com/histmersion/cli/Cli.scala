@@ -747,15 +747,15 @@ object Cli:
             ) orElse migrated("article") orElse PlacesCmd.command
             orElse migrated("periods") orElse migrated("init")
             orElse EventsCmd.command orElse migrated("attestations") orElse migrated("candidates")
-            orElse GoalsCmd.command orElse migrated("agent-state") orElse AgentCmd.command
-            orElse MediaCmd.command orElse migrated("asset-links")
+            orElse migrated("goals") orElse migrated("agent-state") orElse AgentCmd.command
+            orElse migrated("media") orElse migrated("asset-links")
             // stream 2.8 — lint · queue · read-only query
-            orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
+            orElse migrated("lint") orElse migrated("queue") orElse migrated("query") orElse migrated("schema")
             // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
             orElse AcquireCmd.all orElse CalibreCmd.all
             // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
             // which owns the name and dispatches file-vs-DOI)
-            orElse IngestCmd.all orElse migrated("activity")
+            orElse migrated("reocr") orElse migrated("assets") orElse migrated("jobs") orElse migrated("activity")
             orElse migrated("bookmarks") orElse migrated("notes")
             orElse migrated("config")
             // the terrain base map's extracts on the server's machine

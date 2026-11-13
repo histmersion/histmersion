@@ -129,11 +129,9 @@ class ListOptsSuite extends munit.FunSuite:
     assert(agent.parse(List("agent", "approve", "12", "13", "14", "--note", "checked"), Map.empty).isRight)
     assert(agent.parse(List("agent", "reject", "12"), Map.empty).isRight)
     assert(agent.parse(List("agent", "approve"), Map.empty).isLeft, "an id is needed")
-    val jobs = Command("histmersion", "test")(IngestCmd.all)
-    assert(
-      jobs.parse(List("jobs", "--kind", "ingest", "--status", "failed", "--subject", "x", "--json"), Map.empty).isRight
-    )
-    assert(jobs.parse(List("jobs", "4f1c"), Map.empty).isRight)
+    assert(Parsing.parses("jobs", "--kind", "ingest", "--status", "failed", "--subject", "x", "--json"))
+    assert(Parsing.parses("jobs", "4f1c"))
+    assert(Parsing.parses("jobs", "cancel", "4f1c", "--json"))
 
   test("ingest takes --legal-only for an identifier"):
     assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal-only").isRight)

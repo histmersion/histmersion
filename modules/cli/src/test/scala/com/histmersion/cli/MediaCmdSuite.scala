@@ -77,13 +77,11 @@ class MediaCmdSuite extends munit.FunSuite:
     try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"), seen)
     finally srv.stop(0)
 
-  private val cmd = Command("histmersion", "test")(MediaCmd.command)
-
   /** Run the command line against `url`; its result, stdout and stderr. */
   private def run(url: Client.ServerUrl, args: String*): (Either[Cli.Error, Unit], String, String) =
-    val f = cmd.parse(args.toList, Map.empty).fold(h => fail(h.toString), identity)
+    val f = Parsing.parse(args*).fold(h => fail(h.toString), identity)
     val (out, err) = (ByteArrayOutputStream(), ByteArrayOutputStream())
-    val r = Console.withOut(out)(Console.withErr(err)(f(new Client(url))))
+    val r = Console.withOut(out)(Console.withErr(err)(f.run(new Client(url))))
     (r, out.toString(UTF_8), err.toString(UTF_8))
 
   test("the import starts a job and follows its n/total progress to the summary"):

@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.AliasKinds
@@ -20,6 +21,25 @@ import com.histmersion.util.console.Console
   * The label is checked here with the server's own rule ([[LabelRenames]]).
   */
 object LabelRenameCmd:
+
+  /** `<kind> rename <old> <new>`, the new label already checked; `from` trimmed. */
+  final case class Rename(kind: Bundle.Kind, from: String, to: LabelRename.To, json: Cli.JsonOutput)
+      extends Cli.Command:
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] =
+      val r = kind match
+        case Bundle.Kind.Article => c.renameArticle(ReviewGoal.Slug(from), to)
+        case Bundle.Kind.Event   => c.renameEvent(Event.Uid(from), to)
+        case Bundle.Kind.Place   => c.renamePlace(Place.Id(from), to)
+        case _                   => c.renameGoal(Goal.Uid(from), to)
+      r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
+
+  /** The rename `kind` asks for, or why the new label is refused. */
+  def rename(kind: Bundle.Kind, from: String, to: String, json: Cli.JsonOutput): Either[Problem, Rename] =
+    LabelRenames
+      .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
+      .left
+      .map(_.message)
+      .map(t => Rename(kind, from.trim, LabelRename.To(t.value), json))
 
   def apply(kind: Bundle.Kind)(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     args(kind)
