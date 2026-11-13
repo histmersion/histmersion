@@ -39,6 +39,9 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package;
   *   - `circe` (G62): circe named outside the one adapter file per library that still speaks it (Chimp, sttp-ai): JSON
   *     is jsoniter-scala with Kindlings' derivation and AST;
+  *   - `scallop` (G62b): scallop's mutable configuration (`ScallopConf`, `Subcommand`, `opt[`, `trailArg[`,
+  *     `addSubcommand(`, the `org.rogach` package) outside the CLI's command-line core (`cli/CommandLine.scala`) and
+  *     its per-group adapters (package `cli.commandline`): everything else works on the typed commands they build;
   *   - `nonempty-pattern` (G60): a type pattern `case …: NonEmptyVector[…] =>` outside the problem module — the union
   *     `Problems` is folded (`fold`, `toVector`), never matched on;
   *   - `problem-field` (rule 1, G60): a case of the closed `util.problem.Problem` (or a small type of its file) with a
@@ -113,6 +116,22 @@ class ContractsSuite extends munit.FunSuite:
       "sealed trait Shape\nfinal case class Circle(\n    r: Int = 1\n) extends Shape\n    derives CanEqual\nobject Other\n"
     assertEquals(oneType(oneLine), List("Shape Other"))
     assertEquals(oneType(broken), oneType(oneLine))
+
+  test("scallop's configuration is declared only in the command-line core and its adapters"):
+    def hits(key: String, text: String): List[String] =
+      val file = ArchitectureSuite.SourceFile(key, "com.histmersion.cli", ArchitectureSuite.Blank(text), text)
+      Rules.all(List(file)).filter(_.rule == "scallop").map(_.file)
+    val code =
+      "object X:\n  class C extends ScallopConf(Nil):\n    val a = opt[String](\"a\")\n    val b = trailArg[Int]()\n"
+    assertEquals(hits("cli:cli/Cli.scala", code), List("cli:cli/Cli.scala"))
+    assertEquals(hits("cli:cli/CommandLine.scala", code), Nil)
+    assertEquals(hits("cli:cli/commandline/ArticleArgs.scala", code), Nil)
+    assertEquals(
+      hits("cli:cli/Ops.scala", "object Ops:\n  // opt[String] in a comment\n  val s = \"Subcommand\"\n"),
+      Nil
+    )
+    assertEquals(hits("cli:cli/Ops.scala", "import org.rogach.scallop.Subcommand\n"), List("cli:cli/Ops.scala"))
+    assertEquals(hits("core:x/Y.scala", "object Y:\n  def opt[A](a: Option[A]): Option[A] = a\n"), Nil)
 
   test("a parameter names a concept by its newtype's name, or by its last words"):
     val concepts = Set("Citekey", "Doi", "JobId", "Slug", "GoalSlug")
@@ -223,7 +242,7 @@ object ContractsSuite:
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
           global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s) ++
-          circe(s) ++
+          circe(s) ++ scallop(s) ++
           counted(
             "nonempty-pattern",
             s,
@@ -389,6 +408,22 @@ object ContractsSuite:
     )
     private val Circe =
       "\\bio\\.circe\\b|\\bsttp\\.tapir\\.json\\.circe\\b|\\bsttp\\.apispec\\.circe\\b|\\bcircederivation\\b".r
+
+    /** The CLI's command-line core and its per-group adapters: the only code that touches scallop. */
+    def scallopAdapter(key: String): Boolean =
+      key == "cli:cli/CommandLine.scala" || key.startsWith("cli:cli/commandline/")
+    private val Scallop =
+      "\\bScallopConf(?:Base)?\\b|\\bSubcommand\\b|(?<!def\\s)\\bopt\\[|(?<!def\\s)\\btrailArg\\[|\\baddSubcommand\\(|\\borg\\.rogach\\b".r
+
+    private def scallop(s: SourceFile): List[Violation] =
+      if scallopAdapter(s.key) then Nil
+      else
+        counted(
+          "scallop",
+          s,
+          "scallop outside the command-line adapters",
+          Scallop.findAllMatchIn(s.code).map(_.start).toList
+        )
 
     private def circe(s: SourceFile): List[Violation] =
       if CirceAdapters(s.key) then Nil

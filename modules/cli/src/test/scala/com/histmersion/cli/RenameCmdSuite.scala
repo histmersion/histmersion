@@ -1,7 +1,6 @@
 package com.histmersion
 package cli
 
-import com.monovore.decline.Command
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Citekey
 
@@ -12,8 +11,7 @@ class RenameCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private val cmd = Command("rename", "test")(RenameCmd.args)
-  private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
+  private def parse(args: String*) = Parsing.parse("rename" +: args*)
 
   test("two positional citekeys, --json optional"):
     assertEquals(
@@ -45,9 +43,8 @@ class RenameCmdSuite extends munit.FunSuite:
   }
 
   test("the subcommand is registered under `rename`"):
-    val top = Command("histmersion", "test")(RenameCmd.command)
-    assert(top.parse(List("rename", "a2020_x", "a1999_x"), Map.empty).isRight)
-    assert(top.parse(List("rename", "--help"), Map.empty).left.exists(_.toString.contains("alias")))
+    assert(Parsing.parses("rename", "a2020_x", "a1999_x"))
+    assert(Parsing.help("rename", "--help").contains("alias"))
 
   test("a full export removes the mirror notes of renamed citekeys, and nothing else"):
     import java.nio.file.Files

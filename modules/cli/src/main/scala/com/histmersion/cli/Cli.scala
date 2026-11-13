@@ -52,6 +52,12 @@ object Cli:
   type Strict = Strict.T
   object Strict extends Newtype[Boolean, Pure]
 
+  /** A command the command line asked for, every argument already a typed value ([[CommandLine]] builds it): each
+    * command group's ADT extends it and says how it runs against a server.
+    */
+  trait Command:
+    def run(c: Client)(using Console): Either[Error, Unit]
+
   def out(using console: Console): Console.Output = console.out
   def err(using console: Console): Console.Output = console.err
 
@@ -727,34 +733,41 @@ object Cli:
 
   private[cli] def command(using
       console: Console
-  ): Command[(Option[String], Option[String], Client => Either[Error, Unit])] =
-    Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
-      (
-        serverOpt,
-        tokenOpt,
-        version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse passages orElse geoWhen
-          orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
-          orElse RenameCmd.command orElse DeleteCmd.command orElse exportCmd
-          orElse backup orElse backups orElse restore orElse maintenanceCmd orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command
-          orElse PeriodsCmd.command orElse PeriodsCmd.init
-          orElse EventsCmd.command orElse AttestationsCmd.command orElse CandidatesCmd.command
-          orElse GoalsCmd.command orElse AgentStateCmd.command orElse AgentCmd.command
-          orElse MediaCmd.command orElse AssetLinksCmd.command
-          // stream 2.8 — lint · queue · read-only query
-          orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
-          // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
-          orElse AcquireCmd.all orElse CalibreCmd.all
-          // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
-          // which owns the name and dispatches file-vs-DOI)
-          orElse IngestCmd.all orElse ActivityCmd.command
-          orElse BookmarksCmd.command orElse NotesCmd.command
-          orElse ConfigCmd.command
-          // the terrain base map's extracts on the server's machine
-          orElse BasemapCmd.command
-          // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
-          orElse PluginCmd.command
-      ).tupled
-    }
+  ): com.monovore.decline.Command[(Option[String], Option[String], Client => Either[Error, Unit])] =
+    com.monovore.decline
+      .Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
+        (
+          serverOpt,
+          tokenOpt,
+          version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse passages orElse geoWhen
+            orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
+            orElse migrated("rename") orElse migrated("delete") orElse exportCmd
+            orElse backup orElse backups orElse restore orElse maintenanceCmd orElse migrated("bundle") orElse migrated(
+              "merge"
+            ) orElse migrated("article") orElse PlacesCmd.command
+            orElse PeriodsCmd.command orElse PeriodsCmd.init
+            orElse EventsCmd.command orElse AttestationsCmd.command orElse CandidatesCmd.command
+            orElse GoalsCmd.command orElse AgentStateCmd.command orElse AgentCmd.command
+            orElse MediaCmd.command orElse AssetLinksCmd.command
+            // stream 2.8 — lint · queue · read-only query
+            orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
+            // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
+            orElse AcquireCmd.all orElse CalibreCmd.all
+            // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
+            // which owns the name and dispatches file-vs-DOI)
+            orElse IngestCmd.all orElse migrated("activity")
+            orElse migrated("bookmarks") orElse migrated("notes")
+            orElse ConfigCmd.command
+            // the terrain base map's extracts on the server's machine
+            orElse BasemapCmd.command
+            // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
+            orElse PluginCmd.command
+        ).tupled
+      }
+
+  /** A top-level word [[CommandLine]] parses now: decline only lists it, so the root's help keeps its place. */
+  private def migrated(name: String) =
+    Opts.subcommand(name, CommandLine.helpOf(name))(Opts.unit.map(_ => (_: Client) => Right(())))
 
   def run(args: Array[String])(using console: Console): Unit =
     // #901: a working directory macOS will not let this binary read fails on the first `user.dir`
@@ -777,7 +790,7 @@ object Cli:
       case CommandLine.Outcome.Failed(problem, help) =>
         err.println(s"error: ${problem.sentence}\n\n$help"); sys.exit(ExitCode.Usage.value)
       case CommandLine.Outcome.Run(server, tok, cmd) =>
-        finish(server.map(_.value), tok.map(_.value), c => ArticleCli.run(c, cmd))
+        finish(server.map(_.value), tok.map(_.value), cmd.run)
 
   private def runDeclined(args: Array[String])(using console: Console): Unit =
     command.parse(args.toList, sys.env) match

@@ -9,27 +9,21 @@ import com.histmersion.api.research.{Article, ReviewGoal}
 import com.histmersion.domain.research.Slug
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.problem.{NonEmptyVector, Problem}
-import com.monovore.decline.Command
 import com.histmersion.cli.CommandLine.given
 import org.rogach.scallop.*
 
 import java.nio.file.Path
 
-/** `histmersion article …` through scallop ([[CommandLine]]): the same typed command decline builds for the same argv,
-  * and the failures as typed problems.
+/** `histmersion article …` through scallop ([[CommandLine]]): the typed command for each argv, and the failures as
+  * typed problems.
   */
 class CommandLineSuite extends munit.FunSuite:
-
-  private val declined = Command("histmersion", "test")(ArticleCli.opts)
-
-  private def decline(args: String*): Either[String, ArticleCommand] =
-    declined.parse(args.toList, Map.empty).left.map(_.toString)
 
   private def scallop(args: String*): CommandLine.Outcome = CommandLine.parse("article" +: args)
 
   private def run(args: String*): ArticleCommand = scallop(args*) match
-    case CommandLine.Outcome.Run(_, _, cmd) => cmd
-    case other                              => fail(s"${args.mkString(" ")}: $other")
+    case CommandLine.Outcome.Run(_, _, cmd: ArticleCommand) => cmd
+    case other                                              => fail(s"${args.mkString(" ")}: $other")
 
   private def problem(args: String*): Problem = scallop(args*) match
     case CommandLine.Outcome.Failed(p, _) => p
@@ -97,12 +91,8 @@ class CommandLineSuite extends munit.FunSuite:
     List("rename", " old_slug ", "new_slug", "--json")
   )
 
-  test("every subcommand: scallop builds the command decline builds for the same argv"):
-    argvs.foreach { argv =>
-      val expected = decline("article" +: argv*)
-      assert(expected.isRight, s"decline refused ${argv.mkString(" ")}: $expected")
-      assertEquals(Right(run(argv*)), expected, argv.mkString(" "))
-    }
+  test("every subcommand parses, in the shapes people write them"):
+    argvs.foreach(argv => assert(scallop(argv*).isInstanceOf[CommandLine.Outcome.Run], argv.mkString(" ")))
 
   test("the values arrive typed: a repeated option in order, a negative year, an option written --name=value"):
     assertEquals(
@@ -139,7 +129,6 @@ class CommandLineSuite extends munit.FunSuite:
   test("a missing positional argument is Missing"):
     assertEquals(problem("get"), Problem.Invalid.Missing(Problem.Field("slug")))
     assertEquals(problem("version", "sea_peoples"), Problem.Invalid.Missing(Problem.Field("id")))
-    assert(decline("article", "get").isLeft)
 
   test("an unknown option is Unknown, with the help of the subcommand it was given to"):
     scallop("get", "sea_peoples", "--bogus") match
@@ -154,7 +143,6 @@ class CommandLineSuite extends munit.FunSuite:
         )
         assert(help.value.contains("--parts"), help.value)
       case other => fail(s"$other")
-    assert(decline("article", "get", "sea_peoples", "--bogus").isLeft)
 
   test("a value its newtype's base type cannot read is Malformed, naming the newtype and the argument"):
     problem("version", "sea_peoples", "forty-two") match
@@ -168,7 +156,6 @@ class CommandLineSuite extends munit.FunSuite:
         assertEquals(t, Problem.TypeName("com.histmersion.api.library.Filter.Limit"))
         assertEquals((raw, at), (Problem.Raw("many"), Vector(Problem.Field("limit"))))
       case other => fail(s"$other")
-    assert(decline("article", "version", "sea_peoples", "forty-two").isLeft)
 
   test("a constrained newtype's converter checks the constraint"):
     val c = summon[ValueConverter[Slug]]
@@ -184,9 +171,7 @@ class CommandLineSuite extends munit.FunSuite:
         Problem.Invalid.Exclusion.OneOf
       )
     )
-    assert(decline("article", "check", "sea_peoples").isLeft)
     assert(scallop("rename", "a", "Not A Slug").isInstanceOf[CommandLine.Outcome.Failed])
-    assert(decline("article", "rename", "a", "Not A Slug").isLeft)
     assertEquals(
       run("rename", "a", "b"),
       ArticleCommand.Rename(ReviewGoal.Slug("a"), LabelRename.To("b"), json)
@@ -206,16 +191,6 @@ class CommandLineSuite extends munit.FunSuite:
     scallop("get", "sea_peoples", "--help") match
       case CommandLine.Outcome.Help(text) => assert(text.value.contains("--parts"), text.value)
       case other                          => fail(s"$other")
-
-  test("the help is decline's, byte for byte, for the group and every subcommand"):
-    given com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
-    val paths = List(List("article")) ++ argvs.map(_.head).distinct.map(List("article", _))
-    paths.foreach { path =>
-      val expected = Cli.command.parse(path :+ "--help", Map.empty).fold(_.toString, _ => "").stripTrailing
-      CommandLine.parse(path :+ "--help") match
-        case CommandLine.Outcome.Help(text) => assertEquals(text.value.stripTrailing, expected, path.mkString(" "))
-        case other                          => fail(s"${path.mkString(" ")}: $other")
-    }
 
   test("a group with no subcommand is a missing command"):
     assertEquals(problem(), Problem.Invalid.Missing(Problem.Field("command")))

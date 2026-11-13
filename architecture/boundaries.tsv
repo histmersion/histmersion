@@ -13,6 +13,15 @@ modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses 
 modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
 modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	cli-args	the scallop adapter: the one file that declares scallop options and parses a command line into a typed command
+modules/cli/src/main/scala/com/histmersion/cli/commandline/ActivityArgs.scala	cli-args	the scallop adapter of `histmersion activity`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/ArticleArgs.scala	cli-args	the scallop adapter of `histmersion article`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/BookmarksArgs.scala	cli-args	the scallop adapter of `histmersion bookmarks`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/BundleArgs.scala	cli-args	the scallop adapter of `histmersion bundle`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/DeleteArgs.scala	cli-args	the scallop adapter of `histmersion delete`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/MergeArgs.scala	cli-args	the scallop adapter of `histmersion merge`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/NotesArgs.scala	cli-args	the scallop adapter of `histmersion notes`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/RenameArgs.scala	cli-args	the scallop adapter of `histmersion rename`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/SharedFlags.scala	cli-args	the scallop adapter of the flags several command groups share: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/ConfigCmd.scala	cli-args	parses `histmersion config` arguments
 modules/cli/src/main/scala/com/histmersion/cli/DeleteCmd.scala	cli-args	parses `histmersion delete` arguments
 modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	cli-args	parses `histmersion events` arguments

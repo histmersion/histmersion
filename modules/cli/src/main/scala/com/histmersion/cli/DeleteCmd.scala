@@ -3,8 +3,6 @@ package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.api.library.CalibreEntryCheck
@@ -21,7 +19,8 @@ import com.histmersion.config.CalibreCliConfig
   * there.
   */
 object DeleteCmd:
-  final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json)
+  final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json) extends Cli.Command:
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = DeleteCmd.run(c, this)
 
   object Args:
     type Citekey = com.histmersion.api.library.Citekey
@@ -31,20 +30,8 @@ object DeleteCmd:
     type Json = Cli.JsonOutput
     val Json: Cli.JsonOutput.type = Cli.JsonOutput
 
-  val args: Opts[Args] =
-    (
-      Opts.argument[String]("citekey"),
-      Opts.flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)").orFalse,
-      Output.jsonFlag
-    ).mapN((ck, apply, json) => Args(Args.Citekey(ck.trim), Args.Apply(apply), json))
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(
-      "delete",
-      "Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched"
-    ) {
-      args.map(a => (c: Client) => run(c, a))
-    }
+  val Help: String =
+    "Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched"
 
   /** The linked entry as the host's library has it (#1776), read-only: the record's `calibreId` may name an entry a
     * person has deleted since. Not a number, or no library: unchecked, with why.

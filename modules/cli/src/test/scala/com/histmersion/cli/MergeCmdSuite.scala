@@ -3,7 +3,6 @@ package cli
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.config.*
-import com.monovore.decline.Command
 import java.nio.file.Files
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
@@ -15,8 +14,7 @@ class MergeCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private val top = Command("histmersion", "test")(MergeCmd.command orElse BundleCmd.command)
-  private def parses(args: String*) = top.parse(args.toList, Map.empty).isRight
+  private def parses(args: String*) = Parsing.parses(args*)
 
   test("merge plan and bundle import parse their resolution flags"):
     assert(parses("merge", "plan", "work.hmx"))

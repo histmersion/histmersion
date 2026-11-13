@@ -9,8 +9,6 @@ import com.histmersion.api.library.SourcesMarkdown
 
 import com.histmersion.api.library.Citekey
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -23,22 +21,12 @@ import com.histmersion.util.console.Console
   * the new key and answers why it refuses one.
   */
 object RenameCmd:
-  final case class Args(oldCitekey: Citekey, newCitekey: Citekey, json: Cli.JsonOutput)
+  final case class Args(oldCitekey: Citekey, newCitekey: Citekey, json: Cli.JsonOutput) extends Cli.Command:
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] =
+      c.renameSource(oldCitekey, newCitekey).map(r => Output.emit(json, r)(SourcesMarkdown.sourceRenamed))
 
-  val args: Opts[Args] =
-    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN((old, new_, json) =>
-      Args(Citekey(old.trim), Citekey(new_.trim), json)
-    )
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(
-      "rename",
-      s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"
-    ) {
-      args.map { a => (c: Client) =>
-        c.renameSource(a.oldCitekey, a.newCitekey).map(r => Output.emit(a.json, r)(SourcesMarkdown.sourceRenamed))
-      }
-    }
+  val Help: String =
+    s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"
 
   private def plainName(name: String): Boolean =
     name.nonEmpty && !name.exists(c => c == '/' || c == '\\') && !name.startsWith(".")
