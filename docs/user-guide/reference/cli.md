@@ -210,7 +210,7 @@ hand.
 | `histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--acquire-item <integer>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched) |
 | `histmersion calibre link [--json] <citekey> <calibre-id>` | Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed) |
 | `histmersion calibre push [--file <string>] [--replace] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed) |
-| `histmersion calibre update [--json] <citekey>` | Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed) |
+| `histmersion calibre update [--all] [--apply] [--json] [<citekey>]` | Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed) |
 | `histmersion calibre set --field <string> [--field <string>]... <calibre-id>` | Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed) |
 | `histmersion calibre audit [--json]` | Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only |
 | `histmersion calibre sync [--apply] [--limit <integer>] [--json]` | Push every source with a fetched file that is not in Calibre yet (dry run unless --apply) |

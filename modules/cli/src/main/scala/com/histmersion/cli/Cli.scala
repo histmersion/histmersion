@@ -754,7 +754,7 @@ object Cli:
             // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
             orElse migrated("discover") orElse migrated("refs") orElse migrated("assess") orElse migrated(
               "followups"
-            ) orElse migrated("ingest") orElse migrated("archive") orElse CalibreCmd.all
+            ) orElse migrated("ingest") orElse migrated("archive") orElse migrated("calibre")
             // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
             // which owns the name and dispatches file-vs-DOI)
             orElse migrated("reocr") orElse migrated("assets") orElse migrated("jobs") orElse migrated("activity")
@@ -763,7 +763,7 @@ object Cli:
             // the terrain base map's extracts on the server's machine
             orElse migrated("basemap")
             // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
-            orElse PluginCmd.command
+            orElse migrated("plugin")
         ).tupled
       }
 

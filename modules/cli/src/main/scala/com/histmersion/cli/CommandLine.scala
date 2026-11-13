@@ -81,7 +81,9 @@ object CommandLine:
     commandline.AcquireArgs.AssessEntry,
     commandline.AcquireArgs.FollowupsEntry,
     commandline.AcquireArgs.IngestEntry,
-    commandline.AcquireArgs.ArchiveEntry
+    commandline.AcquireArgs.ArchiveEntry,
+    commandline.CalibreArgs.CalibreEntry,
+    commandline.PluginArgs.PluginEntry
   )
 
   private val Globals = Set("--server", "--token")
@@ -159,7 +161,7 @@ object CommandLine:
       def usage(o: SimpleOption): String =
         val one = if isFlag(o) then s"--${o.name}" else s"--${o.name} <${o.argName}>"
         o.converter match
-          case _: Repeated[?] => if o.required then s"$one..." else s"[$one]..."
+          case _: Repeated[?] => if o.required then s"$one [$one]..." else s"[$one]..."
           case _              => if o.required then one else s"[$one]"
       def operand(o: TrailingArgsOption): String =
         val one = o.converter match
@@ -172,9 +174,12 @@ object CommandLine:
           (s.subbuilders.map((name, _) => s"    $path $name") ++
             Option.when(own.nonEmpty)(s"    ${(path :: own).mkString(" ")}")).mkString("Usage:\n", "\n", "")
         else (s"Usage: $path" :: own).mkString(" ")
-      val flags = ("    --help\n        Display this help text." :: options.map(o =>
-        s"    ${if isFlag(o) then s"--${o.name}" else s"--${o.name} <${o.argName}>"}\n        ${o.descr}"
-      )).mkString("Options and flags:\n", "\n", "")
+      def spelled(o: SimpleOption) =
+        val long = if isFlag(o) then s"--${o.name}" else s"--${o.name} <${o.argName}>"
+        o.short.fold(long)(c => if isFlag(o) then s"$long, -$c" else s"$long, -$c <${o.argName}>")
+      val flags =
+        ("    --help\n        Display this help text." :: options.map(o => s"    ${spelled(o)}\n        ${o.descr}"))
+          .mkString("Options and flags:\n", "\n", "")
       val subcommands =
         if s.subbuilders.isEmpty then Nil
         else
@@ -283,10 +288,11 @@ object CommandLine:
       */
     protected def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
 
-    /** A flag: present or not. */
-    protected def flag(name: String, descr: String): ScallopOption[Boolean] =
+    /** A flag: present or not; `short`, a one-letter spelling (`-y`). */
+    protected def flag(name: String, descr: String, short: Char = '\u0000'): ScallopOption[Boolean] =
       types.option(name, typeName[Boolean])
-      opt[Boolean](name = name, descr = descr)(using flagConverter)
+      if short == '\u0000' then opt[Boolean](name = name, descr = descr)(using flagConverter)
+      else opt[Boolean](name = name, descr = descr, short = short, noshort = false)(using flagConverter)
 
     /** `--json`, as every command that offers it spells it. */
     protected def json(): () => Cli.JsonOutput =
