@@ -32,6 +32,9 @@ object Problem:
     /** The name of a newtype, as Hearth names its `T` where it is asked. */
     def of[A, C](newtype: Newtype[A, C])(using Named[newtype.T]): TypeName = of(newtype.typeName)
 
+    /** The name of any other type (an enum, a record), as Hearth names it where it is asked. */
+    def named[A](using named: Named[A]): TypeName = of(Newtype.TypeName.of(named))
+
   /** An Iron constraint a value failed: its type as written and Iron's description of it. */
   import Constraint.{Description, Name}
 
@@ -67,12 +70,18 @@ object Problem:
   /** A count of things. */
   type Count = Count.T
   object Count extends Newtype[Long, Pure]:
+    /** `number` things. */
+    def of(number: Long): Count = Count(number)
+
     /** A count written in decimal digits. */
     def read(digits: String): Option[Count] = digits.toLongOption.map(Count(_))
 
   /** A length of time, in milliseconds. */
   type Millis = Millis.T
   object Millis extends Newtype[Long, Pure]:
+    /** The length of `duration`. */
+    def of(duration: scala.concurrent.duration.FiniteDuration): Millis = Millis(duration.toMillis)
+
     /** A length of time written in decimal digits of milliseconds. */
     def read(digits: String): Option[Millis] = digits.toLongOption.map(Millis(_))
 
@@ -121,6 +130,11 @@ object Problem:
     final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field] = Vector.empty)
         extends Invalid
 
+    /** A secret's reference (`value:<literal>`, `env:<NAME>`, `<vault>:<ref>`) is not one: `form` says how. The input
+      * itself is never kept: it may be the secret.
+      */
+    final case class Reference(form: Form, at: Vector[Field] = Vector.empty) extends Invalid
+
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw]) derives CanEqual
 
@@ -137,6 +151,23 @@ object Problem:
 
       /** Each no greater than the next (a start before its end). */
       case Ordered
+
+    /** How a text fails to be a secret's reference. */
+    enum Form derives CanEqual:
+      /** It names no scheme: a bare value. */
+      case Bare
+
+      /** `value:` with nothing after it. */
+      case EmptyValue
+
+      /** `env:` with no environment variable's name after it. */
+      case EnvName(name: Raw)
+
+      /** `<vault>:` with no entry after it. */
+      case NoEntry(vault: Raw)
+
+      /** A scheme that is no vault's name. */
+      case VaultName(name: Raw)
 
     /** The input a newtype refused: its type, its constraint and the input, as the newtype module recorded them. */
     def malformed(refusal: Newtype.Refusal): Invalid =
@@ -218,6 +249,9 @@ object Problem:
 
       /** Only legal open-access sources may be fetched. */
       case LegalOnly
+
+      /** The collection is read-only: it takes no new items and rewrites none. */
+      case ReadOnly
 
     /** The allowances a request can spend. */
     enum Limit derives CanEqual:
@@ -305,11 +339,15 @@ object Problem:
     enum Access derives CanEqual:
       case Read, Write, Create, Delete, Move, List
 
+    /** What a path should be. `Listed`: named by the manifest it is checked against. `OnPath`: found on the `PATH`. */
     enum Kind derives CanEqual:
-      case File, Directory, Present, Absent, Executable
+      case File, Directory, Present, Absent, Executable, Listed, OnPath
+
+      /** Inside `directory`, the one the operation is confined to. */
+      case Inside(directory: Path)
 
     enum Format derives CanEqual:
-      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text
+      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit
 
     /** What is wrong with the data. */
     enum Damage derives CanEqual:
@@ -317,6 +355,12 @@ object Problem:
 
       /** It holds `found` units where `expected` belong. */
       case Length(expected: Count, found: Count)
+
+      /** Its reader refused it; `reported` is what the reader said. */
+      case Unreadable(reported: External.Reported)
+
+      /** It is written in format `found`, newer than the format `reads` this version reads. */
+      case Newer(found: Raw, reads: Raw)
 
     /** How a process ended that did not end well. */
     enum Ending derives CanEqual:
@@ -346,6 +390,9 @@ object Problem:
     /** Reloading the settings failed at `stage`, in `scope`. */
     final case class Reload(stage: Stage, scope: Scope) extends Config
 
+    /** The parts a reload rebuilds depend on each other in a cycle: `scopes`, the first one again at the end. */
+    final case class Cycle(scopes: NonEmptyVector[Scope]) extends Config
+
     /** What is wrong with a setting. */
     enum Fault derives CanEqual:
       /** It has no value, or an empty one. */
@@ -366,9 +413,46 @@ object Problem:
       /** It names a secret no vault holds. */
       case NoSecret
 
-    /** What a server may lack. */
+      /** It is a block of settings, not one setting. */
+      case Block
+
+      /** Its value is a `found` where an `expected` belongs. */
+      case WrongKind(expected: ValueKind, found: ValueKind)
+
+      /** Its reader refused its value; `reported` is what the reader said. */
+      case Unreadable(reported: External.Reported)
+
+      /** It is no setting Histmersion knows: it is ignored. */
+      case Undeclared
+
+      /** It is outside the `histmersion` block, where no setting is: it is ignored. */
+      case OutsideRoot
+
+      /** It holds a credential itself, which is never written into the settings file; `variable` is the environment
+        * variable that holds it instead, when it has one.
+        */
+      case Credential(variable: Option[SettingKey])
+
+      /** It holds `value:` (the credential itself, in the file) and the person did not confirm it. */
+      case Literal
+
+      /** The file writes it with a substitution or `+=`, which is kept exactly as it is. */
+      case Substituted
+
+      /** It is set in `file`, which the settings file includes. */
+      case Included(file: Io.Path)
+
+      /** Written, it did not read back as it was written. */
+      case NotReadBack
+
+    /** The kinds of value a setting holds. */
+    enum ValueKind derives CanEqual:
+      case Text, Number, Flag, List, Block, Null
+
+    /** What a server (or the host a plugin runs in) may lack. */
     enum Capability derives CanEqual:
-      case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre
+      case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre, Processes, LocalFiles,
+        MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network
 
     /** The stages of a settings reload. */
     enum Stage derives CanEqual:
@@ -392,6 +476,11 @@ object Problem:
     /** The secret vault `vault` failed: `failure`. */
     final case class Vault(vault: Id, failure: Retrieval) extends Plugin
 
+    /** `plugin` needs `module` at `wanted`, newer than the `shipped` one the server holds: one class loader holds one
+      * version, and the server's would win.
+      */
+    final case class Dependency(plugin: Id, module: Raw, wanted: Raw, shipped: Raw) extends Plugin
+
     /** `plugin` failed in a way no other case names: `claim` is what kind of failure it reports, `text` its words. */
     final case class Said(plugin: Id, claim: Claim, text: External.PluginSaid) extends Plugin
 
@@ -399,12 +488,28 @@ object Problem:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
 
+    /** The key a plugin jar is signed with, as the host shows it. */
+    type Signer = Signer.T
+    object Signer extends Newtype[String, Pure]
+
     /** Why a plugin did not load. */
     enum Fault derives CanEqual:
       case Missing, NullComponent, BadDescriptor, VersionMismatch, Duplicate
 
       /** Loading it threw. */
       case Threw(reported: External.Reported)
+
+      /** It was built against plugin SPI `built`; this version speaks `speaks`. */
+      case SpiMismatch(built: Raw, speaks: Raw)
+
+      /** It was installed signed by `pinned`; this jar is signed by `seen`. */
+      case SignerChanged(pinned: Signer, seen: Signer)
+
+      /** The jar names no plugin provider. */
+      case NoProvider
+
+      /** Its id is another jar's already: `by`. */
+      case Taken(by: Raw)
 
     /** Why a plugin did not take an item. */
     enum Refusal derives CanEqual:
@@ -419,6 +524,27 @@ object Problem:
 
       /** Its tool failed; `stderr` is the end of what it wrote. */
       case Failed(stderr: External.Stderr)
+
+      /** `ref` holds an empty value. */
+      case Blank(ref: Raw)
+
+      /** The vault holds no `ref`. */
+      case Absent(ref: Raw)
+
+      /** Its tool could not read `ref`: it exited with `exit`; `stderr` is the end of what it wrote. */
+      case Unread(ref: Raw, exit: Io.ExitCode, stderr: External.Stderr)
+
+      /** None of the `configured` hardware keys is connected; `seen` are the ones that are. */
+      case NoKey(configured: Vector[Raw], seen: Vector[Raw])
+
+      /** The hardware key `key` did not open the vault: `attempt`; `stderr` is what the tool said, when it said
+        * anything.
+        */
+      case Key(key: Raw, attempt: Attempt, stderr: Option[External.Stderr])
+
+    /** How one try with a hardware key failed. */
+    enum Attempt derives CanEqual:
+      case NotConnected, NotTouched, WrongCredentials, ChallengeFailed, Refused
 
     /** The kinds of failure a plugin may report in its own words. */
     enum Claim derives CanEqual:
@@ -594,6 +720,7 @@ object Problem:
       case Invalid.Missing(f, at)             => Invalid.Missing(f, field +: at)
       case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
       case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
+      case Invalid.Reference(form, at)        => Invalid.Reference(form, field +: at)
       case other                              => other
 
   // ---- one of each ------------------------------------------------------------------------------------------
@@ -623,6 +750,7 @@ object Problem:
       Invalid
         .OutOfRange(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
+      Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       NotFound.Entity(citekey, Raw("anthony2007")),
       Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
@@ -670,9 +798,16 @@ object Problem:
       Config.Setting(SettingKey("histmersion.agents.providers.codex.command"), Config.Fault.Empty),
       Config.Unavailable(Config.Capability.Originals),
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
+      Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
       Plugin.Load(Plugin.Id("media-met"), Plugin.Fault.NullComponent),
       Plugin.Rejected(Plugin.Id("media-smithsonian"), Raw("edanmdm:nmnhanthro_8371234"), Plugin.Refusal.NoImage),
       Plugin.Vault(Plugin.Id("keepassxc"), Plugin.Retrieval.TimedOut(Millis(20000L))),
+      Plugin.Dependency(
+        Plugin.Id("doi-mirror-0.1.0.jar"),
+        Raw("com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3"),
+        Raw("2.42.0"),
+        Raw("2.41.5")
+      ),
       Plugin.Said(
         Plugin.Id("gazetteer-awmc"),
         Plugin.Claim.Unavailable,

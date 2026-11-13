@@ -62,6 +62,7 @@ object Answer:
       case _: Plugin.Load            => StatusCode.InternalServerError
       case _: Plugin.Vault           => StatusCode.InternalServerError
       case _: Plugin.Rejected        => StatusCode.UnprocessableEntity
+      case _: Plugin.Dependency      => StatusCode.Conflict
       case Plugin.Said(_, claim, _)  => claim.status
       case _: Problem.Run            => StatusCode.Conflict
       case _: Content                => StatusCode.UnprocessableEntity
