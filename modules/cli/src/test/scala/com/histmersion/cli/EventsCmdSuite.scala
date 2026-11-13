@@ -19,7 +19,7 @@ class EventsCmdSuite extends munit.FunSuite:
     Parsing.parse("events" +: "patch" +: args*) match
       case Right(EventsCmd.Command.Patch(id, p))        => Right((id, p))
       case Left(CommandLine.Outcome.Failed(problem, _)) => Left(problem.sentence)
-      case other                                        => fail(s"$other")
+      case other                                        => fail(s"${other.toString}")
 
   test("--scale and --place-id make the patch"):
     assertEquals(
@@ -45,7 +45,7 @@ class EventsCmdSuite extends munit.FunSuite:
   test("nothing to change, a scale that is none, or half a point is refused before any request"):
     def refused(args: String*) = parse(args*) match
       case Left(sentence) => sentence
-      case other          => fail(s"not refused: $other")
+      case other          => fail(s"not refused: ${other.toString}")
     assert(refused("x").contains("nothing to change"))
     assert(refused("x", "--scale", "global").contains("local, regional or auto"))
     assert(refused("x", "--lat", "36.5").contains("lat and lon go together"))

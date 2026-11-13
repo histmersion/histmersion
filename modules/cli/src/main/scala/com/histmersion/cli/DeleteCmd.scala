@@ -20,7 +20,7 @@ import com.histmersion.config.CalibreCliConfig
   */
 object DeleteCmd:
   final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json) extends Cli.Command:
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = DeleteCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   object Args:
     type Citekey = com.histmersion.api.library.Citekey
@@ -55,29 +55,31 @@ object DeleteCmd:
               Problem.Unclassified(Legacy.Text(e.sentence.linesIterator.nextOption().getOrElse(e.sentence).take(200)))
             )
 
-  def run(c: Client, a: Args)(using console: Console): Either[Cli.Error, Unit] =
-    c.deleteSource(a.citekey, a.apply).flatMap { d =>
-      lazy val check = d.calibreId.map { id =>
-        val cfg = Settings.app.cli.calibre
-        val lib = Calibre(cfg)
-        calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
-      }
-      Output.emit(a.json, d)(Source.Delete.markdown(_, check).value)
-      // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-      if d.refused then
-        Left(
-          Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused)
-        )
-      else if d.filesFailed.nonEmpty then
-        Left(
-          Cli.Error(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
-              )
-            ),
-            exitCode = ExitCode.Refused
+  /** Carries out Args commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(a: Args): Either[Cli.Error, Unit] =
+      c.deleteSource(a.citekey, a.apply).flatMap { d =>
+        lazy val check = d.calibreId.map { id =>
+          val cfg = Settings.app.cli.calibre
+          val lib = Calibre(cfg)
+          calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
+        }
+        Output.emit(a.json, d)(Source.Delete.markdown(_, check).value)
+        // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
+        if d.refused then
+          Left(
+            Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused)
           )
-        )
-      else Right(())
-    }
+        else if d.filesFailed.nonEmpty then
+          Left(
+            Cli.Error(
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
+                )
+              ),
+              exitCode = ExitCode.Refused
+            )
+          )
+        else Right(())
+      }

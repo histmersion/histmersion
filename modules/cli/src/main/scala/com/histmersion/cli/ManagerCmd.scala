@@ -165,184 +165,185 @@ object ManagerCmd:
         json: Cli.JsonOutput
     )
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = ManagerCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Managers(json) =>
-        c.call(ManagersApi.list)(()).map(ms => Output.emit(json, ms)(ManagersMarkdown.list))
-      case Command.Enqueue(kind, t, p, json) =>
-        c.call(ManagersApi.enqueue)(
-          EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
-        ).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
-      case Command.Stalls(days, json) =>
-        c.call(ManagersApi.stalls)(days.map(Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
-      case Command.Digest(json) =>
-        c.call(ManagersApi.digest)(()).map(d => Output.emit(json, d)(ApprovalDigestMarkdown.digest))
-      case Command.DecideAll(d, kind, subject, ids, note, limit, dry, json) =>
-        c.call(ManagersApi.decideAll)(
-          ApprovalDigest.BulkDecide(
-            ApprovalDigest.BulkDecide.Decision(d),
-            kind.map(ApprovalDigest.BulkDecide.Kind(_)),
-            subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-            ids.map(ApprovalDigest.Open.Id(_)),
-            note.map(ApprovalDigest.BulkDecide.Note(_)),
-            ApprovalDigest.BulkDecide.DryRun(dry),
-            limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-            Some(ApprovalDigest.BulkDecide.By("cli"))
-          )
-        ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
-      case Command.Create(kind, goal, kvs, cron, active, json) =>
-        config(kvs)
-          .flatMap(cfg =>
-            c.call(ManagersApi.create)(
-              ManagerCreate(
-                ManagerCreate.Kind(kind),
-                goal.map(Goal.Slug(_)),
-                cfg,
-                Some(ManagerCreate.Paused(!active)),
-                cron.map(ManagerCreate.Cron(_))
-              )
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Managers(json) =>
+          c.call(ManagersApi.list)(()).map(ms => Output.emit(json, ms)(ManagersMarkdown.list))
+        case Command.Enqueue(kind, t, p, json) =>
+          c.call(ManagersApi.enqueue)(
+            EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
+          ).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
+        case Command.Stalls(days, json) =>
+          c.call(ManagersApi.stalls)(days.map(Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
+        case Command.Digest(json) =>
+          c.call(ManagersApi.digest)(()).map(d => Output.emit(json, d)(ApprovalDigestMarkdown.digest))
+        case Command.DecideAll(d, kind, subject, ids, note, limit, dry, json) =>
+          c.call(ManagersApi.decideAll)(
+            ApprovalDigest.BulkDecide(
+              ApprovalDigest.BulkDecide.Decision(d),
+              kind.map(ApprovalDigest.BulkDecide.Kind(_)),
+              subject.map(ApprovalDigest.BulkDecide.Subject(_)),
+              ids.map(ApprovalDigest.Open.Id(_)),
+              note.map(ApprovalDigest.BulkDecide.Note(_)),
+              ApprovalDigest.BulkDecide.DryRun(dry),
+              limit.map(ApprovalDigest.BulkDecide.Limit(_)),
+              Some(ApprovalDigest.BulkDecide.By("cli"))
             )
-          )
-          .map(m => Output.emit(json, m)(ManagersMarkdown.line))
-      case Command.Autopilot(verb, json) =>
-        def status(call: Either[Cli.Error, AutopilotStatus])(using console: Console) =
-          call.map(s => Output.emit(json, s)(_.markdown))
-        verb match
-          case AutopilotVerb.Status => status(c.call(AutopilotApi.autopilot)(()))
-          case AutopilotVerb.On     =>
-            status(
-              c.call(AutopilotApi.setAutopilot)(
-                Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))
-              )
-            )
-          case AutopilotVerb.Off =>
-            status(
-              c.call(AutopilotApi.setAutopilot)(
-                Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))
-              )
-            )
-          case AutopilotVerb.Drain =>
-            status(
-              c.call(AutopilotApi.drain)(
-                Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))
-              )
-            )
-          case AutopilotVerb.Undrain =>
-            status(
-              c.call(AutopilotApi.drain)(
-                Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))
-              )
-            )
-          case AutopilotVerb.RepairAcquire(dry) =>
-            c.call(AcquisitionWorkApi.repairAcquire)(
-              RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(Activity.Actor("cli")))
-            ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
-          case AutopilotVerb.Focus(request) =>
-            request
-              .fold(c.call(ManagersApi.focus)(()))(r => c.call(ManagersApi.setFocus)(r))
-              .map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
-          case AutopilotVerb.Mode(m) =>
-            status(
-              c.call(AutopilotApi.setMode)(
-                AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(AgentMode.ModeSet.By("cli")))
-              )
-            )
-      case Command.SchedulerStatus(limit, json) =>
-        c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_)))
-          .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
-      case Command.SchedulerQueue(limit, json) =>
-        c.call(ManagersApi.scheduler)(limit.orElse(Some(200)).map(Scheduler.Limit(_)))
-          .map(s =>
-            Output.emit(json, s.waiting)(ws =>
-              if ws.isEmpty then "_Nothing waits._"
-              else
-                (s"# Waiting (${s.waitingTotal}, strategy ${s.strategy})" :: "" :: ws
-                  .map(AgentSchedulerMarkdown.waiting)).mkString("\n")
-            )
-          )
-      case Command.SchedulerWhy(item, json) =>
-        c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item))
-          .map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
-      case Command.SchedulerStrategy(name, json) =>
-        c.call(ManagersApi.setScheduler)(
-          AgentScheduler
-            .SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli")))
-        ).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
-      case Command.Manager(idText, verb) =>
-        val id = ManagerInfo.Id(idText)
-        def action(a: String, runs: Option[Boolean]) =
-          c.call(ManagersApi.action)((id, ManagersApi.Action(a), runs))
-            .map(m => Cli.out.println(ManagersMarkdown.line(m)))
-        verb match
-          case ManagerVerb.Show => c.call(ManagersApi.get)(id).map(d => Cli.out.println(ManagersMarkdown.detail(d)))
-          case ManagerVerb.Status(json) =>
-            c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
-          case ManagerVerb.Items(st, off, lim, json) =>
-            c.call(ManagersApi.items)(
-              (id, st.map(ItemStatus.Wire(_)), off.map(ItemPage.Limit(_)), lim.map(UnreadPage.Offset(_)))
-            ).map(p => Output.emit(json, p)(ManagersMarkdown.items))
-          case ManagerVerb.Events(b, lim) =>
-            c.call(ManagersApi.events)((id, b.map(EventPage.Before(_)), lim.map(EventPage.Limit(_))))
-              .map(p => Cli.out.println(ManagersMarkdown.events(p)))
-          case ManagerVerb.Pause(r)                        => action("pause", Some(r))
-          case ManagerVerb.Resume                          => action("resume", None)
-          case ManagerVerb.Stop                            => action("stop", None)
-          case ManagerVerb.Hint(text, item, once, suggest) =>
-            c.call(ManagersApi.addHint)(
-              (
-                id,
-                HintAdd(
-                  HintAdd.Text(text),
-                  item.map(HintAdd.Item(_)),
-                  Some(HintAdd.Once(once)),
-                  None,
-                  Some(HintAdd.Author("cli")),
-                  suggest = Some(HintAdd.Suggest(suggest))
+          ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
+        case Command.Create(kind, goal, kvs, cron, active, json) =>
+          config(kvs)
+            .flatMap(cfg =>
+              c.call(ManagersApi.create)(
+                ManagerCreate(
+                  ManagerCreate.Kind(kind),
+                  goal.map(Goal.Slug(_)),
+                  cfg,
+                  Some(ManagerCreate.Paused(!active)),
+                  cron.map(ManagerCreate.Cron(_))
                 )
               )
-            ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))
-          case ManagerVerb.Enqueue(kind, t, p) =>
-            c.call(ManagersApi.addItem)(
-              (
+            )
+            .map(m => Output.emit(json, m)(ManagersMarkdown.line))
+        case Command.Autopilot(verb, json) =>
+          def status(call: Either[Cli.Error, AutopilotStatus])(using console: Console) =
+            call.map(s => Output.emit(json, s)(_.markdown))
+          verb match
+            case AutopilotVerb.Status => status(c.call(AutopilotApi.autopilot)(()))
+            case AutopilotVerb.On     =>
+              status(
+                c.call(AutopilotApi.setAutopilot)(
+                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))
+                )
+              )
+            case AutopilotVerb.Off =>
+              status(
+                c.call(AutopilotApi.setAutopilot)(
+                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))
+                )
+              )
+            case AutopilotVerb.Drain =>
+              status(
+                c.call(AutopilotApi.drain)(
+                  Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))
+                )
+              )
+            case AutopilotVerb.Undrain =>
+              status(
+                c.call(AutopilotApi.drain)(
+                  Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))
+                )
+              )
+            case AutopilotVerb.RepairAcquire(dry) =>
+              c.call(AcquisitionWorkApi.repairAcquire)(
+                RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(Activity.Actor("cli")))
+              ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
+            case AutopilotVerb.Focus(request) =>
+              request
+                .fold(c.call(ManagersApi.focus)(()))(r => c.call(ManagersApi.setFocus)(r))
+                .map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
+            case AutopilotVerb.Mode(m) =>
+              status(
+                c.call(AutopilotApi.setMode)(
+                  AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(AgentMode.ModeSet.By("cli")))
+                )
+              )
+        case Command.SchedulerStatus(limit, json) =>
+          c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_)))
+            .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+        case Command.SchedulerQueue(limit, json) =>
+          c.call(ManagersApi.scheduler)(limit.orElse(Some(200)).map(Scheduler.Limit(_)))
+            .map(s =>
+              Output.emit(json, s.waiting)(ws =>
+                if ws.isEmpty then "_Nothing waits._"
+                else
+                  (s"# Waiting (${s.waitingTotal}, strategy ${s.strategy})" :: "" :: ws
+                    .map(AgentSchedulerMarkdown.waiting)).mkString("\n")
+              )
+            )
+        case Command.SchedulerWhy(item, json) =>
+          c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item))
+            .map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
+        case Command.SchedulerStrategy(name, json) =>
+          c.call(ManagersApi.setScheduler)(
+            AgentScheduler
+              .SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli")))
+          ).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+        case Command.Manager(idText, verb) =>
+          val id = ManagerInfo.Id(idText)
+          def action(a: String, runs: Option[Boolean]) =
+            c.call(ManagersApi.action)((id, ManagersApi.Action(a), runs))
+              .map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          verb match
+            case ManagerVerb.Show => c.call(ManagersApi.get)(id).map(d => Cli.out.println(ManagersMarkdown.detail(d)))
+            case ManagerVerb.Status(json) =>
+              c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
+            case ManagerVerb.Items(st, off, lim, json) =>
+              c.call(ManagersApi.items)(
+                (id, st.map(ItemStatus.Wire(_)), off.map(ItemPage.Limit(_)), lim.map(UnreadPage.Offset(_)))
+              ).map(p => Output.emit(json, p)(ManagersMarkdown.items))
+            case ManagerVerb.Events(b, lim) =>
+              c.call(ManagersApi.events)((id, b.map(EventPage.Before(_)), lim.map(EventPage.Limit(_))))
+                .map(p => Cli.out.println(ManagersMarkdown.events(p)))
+            case ManagerVerb.Pause(r)                        => action("pause", Some(r))
+            case ManagerVerb.Resume                          => action("resume", None)
+            case ManagerVerb.Stop                            => action("stop", None)
+            case ManagerVerb.Hint(text, item, once, suggest) =>
+              c.call(ManagersApi.addHint)(
+                (
+                  id,
+                  HintAdd(
+                    HintAdd.Text(text),
+                    item.map(HintAdd.Item(_)),
+                    Some(HintAdd.Once(once)),
+                    None,
+                    Some(HintAdd.Author("cli")),
+                    suggest = Some(HintAdd.Suggest(suggest))
+                  )
+                )
+              ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))
+            case ManagerVerb.Enqueue(kind, t, p) =>
+              c.call(ManagersApi.addItem)(
+                (
+                  id,
+                  EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
+                )
+              ).map(i => Cli.out.println(ManagersMarkdown.item(i)))
+            case ManagerVerb.Hold(t, u, s, r) =>
+              itemPatch(
+                c,
                 id,
-                EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
+                ManagerItem.Ref(t),
+                ItemPatch(
+                  ItemPatch.Action("hold"),
+                  until = u.map(ItemPatch.Until(_)),
+                  untilSource = s.map(ItemPatch.UntilSource(_)),
+                  reason = r.map(text => Problem.Unclassified(Legacy.Text(text)))
+                )
               )
-            ).map(i => Cli.out.println(ManagersMarkdown.item(i)))
-          case ManagerVerb.Hold(t, u, s, r) =>
-            itemPatch(
-              c,
-              id,
-              ManagerItem.Ref(t),
-              ItemPatch(
-                ItemPatch.Action("hold"),
-                until = u.map(ItemPatch.Until(_)),
-                untilSource = s.map(ItemPatch.UntilSource(_)),
-                reason = r.map(text => Problem.Unclassified(Legacy.Text(text)))
+            case ManagerVerb.Release(t) => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release")))
+            case ManagerVerb.Skip(t, r) =>
+              itemPatch(
+                c,
+                id,
+                ManagerItem.Ref(t),
+                ItemPatch(ItemPatch.Action("skip"), reason = r.map(text => Problem.Unclassified(Legacy.Text(text))))
               )
-            )
-          case ManagerVerb.Release(t) => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release")))
-          case ManagerVerb.Skip(t, r) =>
-            itemPatch(
-              c,
-              id,
-              ManagerItem.Ref(t),
-              ItemPatch(ItemPatch.Action("skip"), reason = r.map(text => Problem.Unclassified(Legacy.Text(text))))
-            )
-          case ManagerVerb.Reopen(t)      => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen")))
-          case ManagerVerb.Priority(t, p) =>
-            itemPatch(
-              c,
-              id,
-              ManagerItem.Ref(t),
-              ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(p)))
-            )
-          case ManagerVerb.Cron(t) =>
-            c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(ManagerUpdate.Cron(t)))))
-              .map(m => Cli.out.println(ManagersMarkdown.line(m)))
-          case ManagerVerb.Config(kvs) =>
-            config(kvs)
-              .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
-              .map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            case ManagerVerb.Reopen(t) => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen")))
+            case ManagerVerb.Priority(t, p) =>
+              itemPatch(
+                c,
+                id,
+                ManagerItem.Ref(t),
+                ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(p)))
+              )
+            case ManagerVerb.Cron(t) =>
+              c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(ManagerUpdate.Cron(t)))))
+                .map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            case ManagerVerb.Config(kvs) =>
+              config(kvs)
+                .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
+                .map(m => Cli.out.println(ManagersMarkdown.line(m)))

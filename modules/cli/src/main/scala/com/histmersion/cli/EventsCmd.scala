@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.api.library.Filter
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.exchange.Bundle
@@ -123,7 +124,7 @@ object EventsCmd:
         place: Option[String],
         tier: Option[String],
         ctx: Boolean,
-        f: com.histmersion.api.library.Filter,
+        f: Filter,
         json: Cli.JsonOutput
     )
     case Show(id: String, json: Cli.JsonOutput)
@@ -144,97 +145,98 @@ object EventsCmd:
     case Catalogues()
     case Links(id: String, re: Boolean, confirm: List[String], reject: List[String])
     case Candidates(all: Boolean, ev: Option[String], limit: Option[Int], noWait: Boolean)
-    case Leads(kind: Option[String], tier: Option[String], area: Option[String], f: com.histmersion.api.library.Filter)
+    case Leads(kind: Option[String], tier: Option[String], area: Option[String], f: Filter)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = EventsCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Search(q, kind, hist, place, tier, ctx, f, json) =>
-        c.listEvents(
-          Api.EventQuery(
-            f,
-            q.map(_.trim).filter(_.nonEmpty).map(Api.EventQuery.Text(_)),
-            kind.map(Api.EventQuery.Kind(_)),
-            hist.map(Api.EventQuery.Historicity(_)),
-            place.map(Api.EventQuery.PlaceId(_)),
-            tier.map(Api.EventQuery.Tier(_)),
-            Option.when(ctx)(Api.EventQuery.Context(true))
-          )
-        ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
-      case Command.Show(id, json) =>
-        c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
-      case Command.Import(p, dry, limit, bbox, from, to, vei, mag, refresh, noWait) =>
-        c.call(EventsApi.importEvents)(
-          EventImportRequest(
-            EventImportRequest.Provider(p),
-            EventImportRequest.DryRun(dry),
-            limit.map(EventImportRequest.Limit(_)),
-            bbox.map(EventImportRequest.Bbox(_)),
-            from.map(EventImportRequest.From(_)),
-            to.map(EventImportRequest.To(_)),
-            vei.map(EventImportRequest.MinVei(_)),
-            mag.map(EventImportRequest.MinMagnitude(_)),
-            EventImportRequest.Refresh(refresh)
-          )
-        ).flatMap(follow(c, _, Cli.NoWait(noWait)))
-      case Command.Rederive(p, dry, noWait) =>
-        c.call(EventsApi.rederive)(
-          EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))
-        ).flatMap { j =>
-          Cli.out.println(
-            s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
-          )
-          if noWait then Right(())
-          else
-            IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-              done.detail
-                .flatMap(EventRederiveReport.Detail.of)
-                .foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
-            }
-        }
-      case Command.Corrections(st, ev, limit) =>
-        c.call(EventsApi.corrections)(
-          (st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)
-        ).map(l => Cli.out.println(Corrections.markdown(l)))
-      case Command.Catalogues() =>
-        c.call(EventsApi.catalogues)(())
-          .map(cs =>
-            Cli.out.println(
-              cs.map(i =>
-                s"- **${i.id}** — ${i.title} (${i.home})\n  - licence: ${i.licence}\n  - cite as: ${i.citation}"
-              ).mkString("\n")
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Search(q, kind, hist, place, tier, ctx, f, json) =>
+          c.listEvents(
+            Api.EventQuery(
+              f,
+              q.map(_.trim).filter(_.nonEmpty).map(Api.EventQuery.Text(_)),
+              kind.map(Api.EventQuery.Kind(_)),
+              hist.map(Api.EventQuery.Historicity(_)),
+              place.map(Api.EventQuery.PlaceId(_)),
+              tier.map(Api.EventQuery.Tier(_)),
+              Option.when(ctx)(Api.EventQuery.Context(true))
             )
-          )
-      case Command.Links(id, re, confirm, reject) =>
-        if re || confirm.nonEmpty || reject.nonEmpty then
-          c.call(EventsApi.applyLinks)(
-            (
-              Event.Id(id),
-              EventLinksRequest(
-                EventLinksRequest.Recompute(re),
-                confirm.map(EventLinksRequest.Confirm(_)),
-                reject.map(EventLinksRequest.Reject(_))
+          ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
+        case Command.Show(id, json) =>
+          c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
+        case Command.Import(p, dry, limit, bbox, from, to, vei, mag, refresh, noWait) =>
+          c.call(EventsApi.importEvents)(
+            EventImportRequest(
+              EventImportRequest.Provider(p),
+              EventImportRequest.DryRun(dry),
+              limit.map(EventImportRequest.Limit(_)),
+              bbox.map(EventImportRequest.Bbox(_)),
+              from.map(EventImportRequest.From(_)),
+              to.map(EventImportRequest.To(_)),
+              vei.map(EventImportRequest.MinVei(_)),
+              mag.map(EventImportRequest.MinMagnitude(_)),
+              EventImportRequest.Refresh(refresh)
+            )
+          ).flatMap(follow(c, _, Cli.NoWait(noWait)))
+        case Command.Rederive(p, dry, noWait) =>
+          c.call(EventsApi.rederive)(
+            EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))
+          ).flatMap { j =>
+            Cli.out.println(
+              s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+            )
+            if noWait then Right(())
+            else
+              IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
+                done.detail
+                  .flatMap(EventRederiveReport.Detail.of)
+                  .foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
+              }
+          }
+        case Command.Corrections(st, ev, limit) =>
+          c.call(EventsApi.corrections)(
+            (st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)
+          ).map(l => Cli.out.println(Corrections.markdown(l)))
+        case Command.Catalogues() =>
+          c.call(EventsApi.catalogues)(())
+            .map(cs =>
+              Cli.out.println(
+                cs.map(i =>
+                  s"- **${i.id}** — ${i.title} (${i.home})\n  - licence: ${i.licence}\n  - cite as: ${i.citation}"
+                ).mkString("\n")
               )
             )
-          ).map(r => Cli.out.println(EventLinksMarkdown.result(r)))
-        else c.call(EventsApi.links)(Event.Id(id)).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
-      case Command.Candidates(all, ev, limit, noWait) =>
-        c.call(EventsApi.candidatesJob)(
-          EventCandidatesRequest(
-            EventCandidatesRequest.All(all),
-            ev.map(Event.Id(_)),
-            limit.map(EventCandidatesRequest.Limit(_))
-          )
-        ).flatMap(follow(c, _, Cli.NoWait(noWait)))
-      case Command.Leads(kind, tier, area, f) =>
-        c.call(EventsApi.leads)(
-          Api.EventQuery(
-            f,
-            kind = kind.map(Api.EventQuery.Kind(_)),
-            tier = tier.map(Api.EventQuery.Tier(_)),
-            area = area.map(Api.EventQuery.Area(_))
-          )
-        ).map(l => Cli.out.println(EventLeads.markdown(l)))
-      case Command.Patch(id, p) => c.patchEvent(Event.Uid(id), p).map(d => Cli.out.println(d.markdown))
+        case Command.Links(id, re, confirm, reject) =>
+          if re || confirm.nonEmpty || reject.nonEmpty then
+            c.call(EventsApi.applyLinks)(
+              (
+                Event.Id(id),
+                EventLinksRequest(
+                  EventLinksRequest.Recompute(re),
+                  confirm.map(EventLinksRequest.Confirm(_)),
+                  reject.map(EventLinksRequest.Reject(_))
+                )
+              )
+            ).map(r => Cli.out.println(EventLinksMarkdown.result(r)))
+          else c.call(EventsApi.links)(Event.Id(id)).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
+        case Command.Candidates(all, ev, limit, noWait) =>
+          c.call(EventsApi.candidatesJob)(
+            EventCandidatesRequest(
+              EventCandidatesRequest.All(all),
+              ev.map(Event.Id(_)),
+              limit.map(EventCandidatesRequest.Limit(_))
+            )
+          ).flatMap(follow(c, _, Cli.NoWait(noWait)))
+        case Command.Leads(kind, tier, area, f) =>
+          c.call(EventsApi.leads)(
+            Api.EventQuery(
+              f,
+              kind = kind.map(Api.EventQuery.Kind(_)),
+              tier = tier.map(Api.EventQuery.Tier(_)),
+              area = area.map(Api.EventQuery.Area(_))
+            )
+          ).map(l => Cli.out.println(EventLeads.markdown(l)))
+        case Command.Patch(id, p) => c.patchEvent(Event.Uid(id), p).map(d => Cli.out.println(d.markdown))

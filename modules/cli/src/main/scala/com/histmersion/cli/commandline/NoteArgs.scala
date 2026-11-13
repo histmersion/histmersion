@@ -15,8 +15,8 @@ import org.rogach.scallop.*
 import scala.util.chaining.*
 
 /** The command line of [[NotesCmd]]. */
-object NotesArgs:
-  object NotesEntry extends CommandLine.Entry:
+object NoteArgs:
+  object NoteEntry extends CommandLine.Entry:
     val name = "notes"
     def help: String = "Your notes: list, show, add, edit, rm"
     def conf(): Subcommand = GroupNotes()

@@ -192,175 +192,176 @@ object PlacesCmd:
     case Rebuild()
     case BuildHierarchy(nw: Boolean)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = PlacesCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Search(q, asOf, limit) =>
-        c.places(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), asOf, limit.map(Paging.Limit(_)))
-          .map(show(_, asOf))
-      case Command.Show(id, asOf, depth, noTree) =>
-        for
-          d <- c.place(Place.Id(id), asOf)
-          tree <- if noTree then Right(Nil) else c.placeTree(Place.Id(id), asOf, depth.map(Place.Depth(_)))
-        yield Cli.out.println(PlacesMarkdown.place(d, tree.toVector))
-      case Command.Children(id, asOf) =>
-        c.placeChildren(Place.Id(id), asOf).map { rows =>
-          if rows.isEmpty then Cli.out.println("_No children._")
-          else Cli.out.println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
-        }
-      case Command.SiteTypes(dry, limit, refresh, noWait) =>
-        c.call(EventsApi.refineSiteTypes)(
-          SiteTypes.Request(
-            SiteTypes.Request.DryRun(dry),
-            limit.map(SiteTypes.Request.Limit(_)),
-            SiteTypes.Request.Refresh(refresh)
-          )
-        ).flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
-      case Command.NameAdd(id, name, lang) =>
-        c.addPlaceName(Place.Id(id), Place.NameAdd(Place.NameAdd.Name(name), lang.map(Place.NameAdd.Lang(_))))
-          .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
-      case Command.NameRm(id, name, lang) =>
-        c.removePlaceName(
-          Place.Id(id),
-          Place.NameRemove(Place.NameRemove.Name(name), lang.map(Place.NameRemove.Lang(_)))
-        ).map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
-      case Command.NameListing(place, csv) =>
-        c.placeNames(place.map(Place.Id(_)))
-          .map(rows =>
-            Cli.out.print(if csv then Place.Edits.csv(rows)
-            else PlacesMarkdown.manualPlaceNames(rows) + "\n")
-          )
-      case Command.SetCmd(id, kind, from, to, point, reason, reset) =>
-        c.setPlaceOverride(
-          Place.Id(id),
-          Place
-            .OverrideSet(
-              kind.map(Place.OverrideSet.Kind(_)),
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Search(q, asOf, limit) =>
+          c.places(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), asOf, limit.map(Paging.Limit(_)))
+            .map(show(_, asOf))
+        case Command.Show(id, asOf, depth, noTree) =>
+          for
+            d <- c.place(Place.Id(id), asOf)
+            tree <- if noTree then Right(Nil) else c.placeTree(Place.Id(id), asOf, depth.map(Place.Depth(_)))
+          yield Cli.out.println(PlacesMarkdown.place(d, tree.toVector))
+        case Command.Children(id, asOf) =>
+          c.placeChildren(Place.Id(id), asOf).map { rows =>
+            if rows.isEmpty then Cli.out.println("_No children._")
+            else Cli.out.println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
+          }
+        case Command.SiteTypes(dry, limit, refresh, noWait) =>
+          c.call(EventsApi.refineSiteTypes)(
+            SiteTypes.Request(
+              SiteTypes.Request.DryRun(dry),
+              limit.map(SiteTypes.Request.Limit(_)),
+              SiteTypes.Request.Refresh(refresh)
+            )
+          ).flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
+        case Command.NameAdd(id, name, lang) =>
+          c.addPlaceName(Place.Id(id), Place.NameAdd(Place.NameAdd.Name(name), lang.map(Place.NameAdd.Lang(_))))
+            .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
+        case Command.NameRm(id, name, lang) =>
+          c.removePlaceName(
+            Place.Id(id),
+            Place.NameRemove(Place.NameRemove.Name(name), lang.map(Place.NameRemove.Lang(_)))
+          ).map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
+        case Command.NameListing(place, csv) =>
+          c.placeNames(place.map(Place.Id(_)))
+            .map(rows =>
+              Cli.out.print(if csv then Place.Edits.csv(rows)
+              else PlacesMarkdown.manualPlaceNames(rows) + "\n")
+            )
+        case Command.SetCmd(id, kind, from, to, point, reason, reset) =>
+          c.setPlaceOverride(
+            Place.Id(id),
+            Place
+              .OverrideSet(
+                kind.map(Place.OverrideSet.Kind(_)),
+                from.map(Year(_)),
+                to.map(Year(_)),
+                reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
+                Place.OverrideSet.Reset(reset),
+                point.map(_._1),
+                point.map(_._2)
+              )
+          ).map(r => Cli.out.println(PlacesMarkdown.placeOverrideChanged(r)))
+        case Command.Overrides(place) =>
+          c.placeOverrides(place.map(Place.Id(_))).map(rows => Cli.out.println(PlacesMarkdown.placeOverrides(rows)))
+        case Command.Merge(id, into, reason) =>
+          c.mergePlace(
+            Place.Id(id),
+            Place.MergeIn(Place.Id(into), reason.map((text => Problem.Unclassified(Legacy.Text(text)))))
+          ).map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
+        case Command.Rm(id, reason) =>
+          c.removePlace(Place.Id(id), Place.RemoveIn(reason.map((text => Problem.Unclassified(Legacy.Text(text))))))
+            .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
+        case Command.Add(label, kind, lon, lat, source, id, names, lang, from, to) =>
+          c.addPlace(
+            Place.Add(
+              Place.Add.Label(label),
+              Place.Add.Kind(kind),
+              Longitude(lon),
+              Latitude(lat),
+              Place.Add.Source(source),
+              id.map(Place.Id(_)),
+              names.map(Place.Add.Names(_)),
+              lang.map(Place.Add.Lang(_)),
               from.map(Year(_)),
-              to.map(Year(_)),
-              reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
-              Place.OverrideSet.Reset(reset),
-              point.map(_._1),
-              point.map(_._2)
+              to.map(Year(_))
             )
-        ).map(r => Cli.out.println(PlacesMarkdown.placeOverrideChanged(r)))
-      case Command.Overrides(place) =>
-        c.placeOverrides(place.map(Place.Id(_))).map(rows => Cli.out.println(PlacesMarkdown.placeOverrides(rows)))
-      case Command.Merge(id, into, reason) =>
-        c.mergePlace(
-          Place.Id(id),
-          Place.MergeIn(Place.Id(into), reason.map((text => Problem.Unclassified(Legacy.Text(text)))))
-        ).map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
-      case Command.Rm(id, reason) =>
-        c.removePlace(Place.Id(id), Place.RemoveIn(reason.map((text => Problem.Unclassified(Legacy.Text(text))))))
-          .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
-      case Command.Add(label, kind, lon, lat, source, id, names, lang, from, to) =>
-        c.addPlace(
-          Place.Add(
-            Place.Add.Label(label),
-            Place.Add.Kind(kind),
-            Longitude(lon),
-            Latitude(lat),
-            Place.Add.Source(source),
-            id.map(Place.Id(_)),
-            names.map(Place.Add.Names(_)),
-            lang.map(Place.Add.Lang(_)),
-            from.map(Year(_)),
-            to.map(Year(_))
+          ).map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
+        case Command.Import(file, kind, batch, dataset) =>
+          importFile(
+            c,
+            Path.of(file),
+            kind.map(Place.KindValue(_)),
+            batch.map(Paging.Limit(_)).getOrElse(defaultBatch),
+            dataset
           )
-        ).map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
-      case Command.Import(file, kind, batch, dataset) =>
-        importFile(
-          c,
-          Path.of(file),
-          kind.map(Place.KindValue(_)),
-          batch.map(Paging.Limit(_)).getOrElse(defaultBatch),
-          dataset
-        )
-          .map(r => Cli.out.println(PlacesMarkdown.placeImport(r)))
-      case Command.Seed(dir, batch, noRebuild) =>
-        val exe = scala.util
-          .Try(ProcessHandle.current().info().command().orElse(null))
-          .toOption
-          .flatMap(Option(_))
-          .map(Path.of(_))
-        val (d, tried) = resolveSeedDir(
-          dir.filter(_.nonEmpty).map(PlacesConfig.SeedDir(_)).getOrElse(seedDir),
-          Path.of("").toAbsolutePath,
-          exe
-        )
-        val n = batch.map(Paging.Limit(_)).getOrElse(defaultBatch)
-        if !Files.isDirectory(d) then
-          Left(
-            Cli.Error(
-              Problem.Unclassified(
-                Legacy.Text(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>")
-              ),
-              exitCode = ExitCode.Usage
-            )
+            .map(r => Cli.out.println(PlacesMarkdown.placeImport(r)))
+        case Command.Seed(dir, batch, noRebuild) =>
+          val exe = scala.util
+            .Try(ProcessHandle.current().info().command().orElse(null))
+            .toOption
+            .flatMap(Option(_))
+            .map(Path.of(_))
+          val (d, tried) = resolveSeedDir(
+            dir.filter(_.nonEmpty).map(PlacesConfig.SeedDir(_)).getOrElse(seedDir),
+            Path.of("").toAbsolutePath,
+            exe
           )
-        else
-          val files = seedFiles(d)
-          if files.isEmpty then
+          val n = batch.map(Paging.Limit(_)).getOrElse(defaultBatch)
+          if !Files.isDirectory(d) then
             Left(
               Cli.Error(
-                Problem.Unclassified(Legacy.Text(s"no JSON files under $d — run db/places/fetch.sh first")),
+                Problem.Unclassified(
+                  Legacy.Text(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>")
+                ),
                 exitCode = ExitCode.Usage
               )
             )
           else
-            def pass(
-                fs: List[(Path, Option[Place.KindValue])],
-                label: String
-            )(using console: Console): Either[Cli.Error, List[(Path, Option[Place.KindValue])]] =
-              fs.foldLeft[Either[Cli.Error, List[(Path, Option[Place.KindValue])]]](Right(Nil)) {
-                case (acc, (f, kind)) =>
-                  acc.flatMap { retry =>
-                    importFile(c, f, kind, n, Dataset.Seed).map { r =>
-                      Cli.out.println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
-                      if r.failed.isEmpty then retry else retry :+ (f -> kind)
-                    }
-                  }
-              }
-            for
-              retry <- pass(files, "")
-              _ <-
-                if retry.isEmpty then Right(Nil)
-                else pass(retry, "re-resolving parents: ")
-              _ <-
-                if noRebuild then Right(())
-                else c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
-            yield ()
-      case Command.Fetch(source, dryRun, nw) =>
-        c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
-          r.job match
-            case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), nw)
-            case None     =>
-              Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
-        }
-      case Command.Sources() =>
-        c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
-      case Command.Load(source, apply, noWait) =>
-        c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(apply)).flatMap { j =>
-          Cli.out.println(
-            s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
-          )
-          if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
-        }
-      case Command.Rebuild() =>
-        c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
-      case Command.BuildHierarchy(nw) =>
-        c.buildHierarchy.flatMap { r =>
-          r.job match
-            // a server that runs it as a job (#1946) answers the job; the counts are its summary
-            case Some(id) => started(c, id, nw)
-            case None     =>
-              Right(
-                Cli.out.println(
-                  s"**${r.edgesCreated}** spatial containment edges created " +
-                    s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)"
+            val files = seedFiles(d)
+            if files.isEmpty then
+              Left(
+                Cli.Error(
+                  Problem.Unclassified(Legacy.Text(s"no JSON files under $d — run db/places/fetch.sh first")),
+                  exitCode = ExitCode.Usage
                 )
               )
-        }
+            else
+              def pass(
+                  fs: List[(Path, Option[Place.KindValue])],
+                  label: String
+              )(using console: Console): Either[Cli.Error, List[(Path, Option[Place.KindValue])]] =
+                fs.foldLeft[Either[Cli.Error, List[(Path, Option[Place.KindValue])]]](Right(Nil)) {
+                  case (acc, (f, kind)) =>
+                    acc.flatMap { retry =>
+                      importFile(c, f, kind, n, Dataset.Seed).map { r =>
+                        Cli.out.println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
+                        if r.failed.isEmpty then retry else retry :+ (f -> kind)
+                      }
+                    }
+                }
+              for
+                retry <- pass(files, "")
+                _ <-
+                  if retry.isEmpty then Right(Nil)
+                  else pass(retry, "re-resolving parents: ")
+                _ <-
+                  if noRebuild then Right(())
+                  else c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
+              yield ()
+        case Command.Fetch(source, dryRun, nw) =>
+          c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
+            r.job match
+              case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), nw)
+              case None     =>
+                Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
+          }
+        case Command.Sources() =>
+          c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
+        case Command.Load(source, apply, noWait) =>
+          c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(apply)).flatMap { j =>
+            Cli.out.println(
+              s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
+            )
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }
+        case Command.Rebuild() =>
+          c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
+        case Command.BuildHierarchy(nw) =>
+          c.buildHierarchy.flatMap { r =>
+            r.job match
+              // a server that runs it as a job (#1946) answers the job; the counts are its summary
+              case Some(id) => started(c, id, nw)
+              case None     =>
+                Right(
+                  Cli.out.println(
+                    s"**${r.edgesCreated}** spatial containment edges created " +
+                      s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)"
+                  )
+                )
+          }

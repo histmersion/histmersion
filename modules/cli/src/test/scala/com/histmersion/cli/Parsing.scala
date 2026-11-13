@@ -13,6 +13,6 @@ object Parsing:
   /** The help it printed: asked for, or after a refusal. */
   def help(args: String*): String =
     CommandLine.parse(args) match
-      case CommandLine.Outcome.Help(t)      => t.value
-      case CommandLine.Outcome.Failed(_, t) => t.value
+      case CommandLine.Outcome.Help(t)      => t.printed
+      case CommandLine.Outcome.Failed(_, t) => t.printed
       case _                                => ""

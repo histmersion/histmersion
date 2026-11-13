@@ -28,34 +28,35 @@ object AttestationsCmd:
     )
     case Rm(id: Long)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = AttestationsCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Search(ck, tt, ti, limit, offset) =>
-        c.listAttestations(
-          Api.AttestationQuery(
-            ck.map(Citekey(_)),
-            tt.map(Api.AttestationQuery.TargetType(_)),
-            ti.map(Api.AttestationQuery.TargetId(_)),
-            limit.map(Api.AttestationQuery.Limit(_)),
-            offset.map(Api.AttestationQuery.Offset(_))
-          )
-        ).map(r => Cli.out.println(AttestationsMarkdown.attestationList(r)))
-      case Command.Show(id) =>
-        c.getAttestation(Attestation.Id(id)).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
-      case Command.Add(ck, tt, ti, quote, page, chunk, note) =>
-        c.createAttestation(
-          Attestation.Put(
-            Citekey(ck),
-            Attestation.TargetType(tt),
-            Attestation.TargetId(ti),
-            quote = quote.map(Attestation.Quote(_)),
-            page = page.map(Attestation.Page(_)),
-            chunkOrd = chunk.map(Attestation.ChunkOrd(_)),
-            note = note.map(Attestation.Note(_))
-          )
-        ).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
-      case Command.Rm(id) =>
-        c.deleteAttestation(Attestation.Id(id)).map(d => Cli.out.println(s"Deleted attestation #${d.id}."))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Search(ck, tt, ti, limit, offset) =>
+          c.listAttestations(
+            Api.AttestationQuery(
+              ck.map(Citekey(_)),
+              tt.map(Api.AttestationQuery.TargetType(_)),
+              ti.map(Api.AttestationQuery.TargetId(_)),
+              limit.map(Api.AttestationQuery.Limit(_)),
+              offset.map(Api.AttestationQuery.Offset(_))
+            )
+          ).map(r => Cli.out.println(AttestationsMarkdown.attestationList(r)))
+        case Command.Show(id) =>
+          c.getAttestation(Attestation.Id(id)).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
+        case Command.Add(ck, tt, ti, quote, page, chunk, note) =>
+          c.createAttestation(
+            Attestation.Put(
+              Citekey(ck),
+              Attestation.TargetType(tt),
+              Attestation.TargetId(ti),
+              quote = quote.map(Attestation.Quote(_)),
+              page = page.map(Attestation.Page(_)),
+              chunkOrd = chunk.map(Attestation.ChunkOrd(_)),
+              note = note.map(Attestation.Note(_))
+            )
+          ).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
+        case Command.Rm(id) =>
+          c.deleteAttestation(Attestation.Id(id)).map(d => Cli.out.println(s"Deleted attestation #${d.id}."))

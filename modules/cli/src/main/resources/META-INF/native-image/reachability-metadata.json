@@ -2957,10 +2957,19 @@
       "type": "com.histmersion.api.automation.Queue$GoalRef$",
       "fields": [
         {
+          "name": "derived$JsonCodec$lzy3"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy4"
         },
         {
+          "name": "derived$KindlingsSchema$lzy3"
+        },
+        {
           "name": "derived$KindlingsSchema$lzy4"
+        },
+        {
+          "name": "derived$Schema$lzy3"
         },
         {
           "name": "given_Schema_GoalRef$lzy1"
@@ -2971,10 +2980,19 @@
       "type": "com.histmersion.api.automation.Queue$ItemGoals$",
       "fields": [
         {
+          "name": "derived$JsonCodec$lzy2"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy3"
         },
         {
+          "name": "derived$KindlingsSchema$lzy2"
+        },
+        {
           "name": "derived$KindlingsSchema$lzy3"
+        },
+        {
+          "name": "derived$Schema$lzy2"
         },
         {
           "name": "given_Schema_ItemGoals$lzy1"
@@ -6461,10 +6479,16 @@
       "type": "com.histmersion.api.library.Acquire$Checks$AcquireCheck$",
       "fields": [
         {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy1"
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
         },
         {
           "name": "given_Schema_AcquireCheck$lzy1"
@@ -10708,10 +10732,19 @@
       "type": "com.histmersion.api.views.QueueListing$",
       "fields": [
         {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy2"
         },
         {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
           "name": "derived$KindlingsSchema$lzy2"
+        },
+        {
+          "name": "derived$Schema$lzy1"
         },
         {
           "name": "given_Schema_QueueListing$lzy1"

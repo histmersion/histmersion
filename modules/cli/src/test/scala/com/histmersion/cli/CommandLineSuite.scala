@@ -23,11 +23,11 @@ class CommandLineSuite extends munit.FunSuite:
 
   private def run(args: String*): ArticleCommand = scallop(args*) match
     case CommandLine.Outcome.Run(_, _, cmd: ArticleCommand) => cmd
-    case other                                              => fail(s"${args.mkString(" ")}: $other")
+    case other                                              => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private def problem(args: String*): Problem = scallop(args*) match
     case CommandLine.Outcome.Failed(p, _) => p
-    case other                            => fail(s"${args.mkString(" ")}: $other")
+    case other                            => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private val json = Cli.JsonOutput(false)
   private val slug = ReviewGoal.Slug("sea_peoples")
@@ -105,12 +105,12 @@ class CommandLineSuite extends munit.FunSuite:
         assertEquals(filter.tags, List(Filter.Tags("a"), Filter.Tags("b"), Filter.Tags("c")))
         assertEquals(filter.offset, Filter.Offset(10))
         assert(filter.period.isDefined)
-      case other => fail(s"$other")
+      case other => fail(s"${other.toString}")
     run("patch", "s", "--reason", "a=1", "--reason", "b=", "--period", "-1300,-1100") match
       case ArticleCommand.Patch(_, edit, _, _, reasons, _) =>
         assertEquals(reasons, List(ArticlePatches.ReasonText("a=1"), ArticlePatches.ReasonText("b=")))
         assertEquals(edit.period, Some(ArticlePatches.FilterFlags.Period("-1300,-1100")))
-      case other => fail(s"$other")
+      case other => fail(s"${other.toString}")
 
   test("the global options before the group"):
     assertEquals(
@@ -137,8 +137,8 @@ class CommandLineSuite extends munit.FunSuite:
             Vector(Problem.Raw("--json"), Problem.Raw("--parts"))
           )
         )
-        assert(help.value.contains("--parts"), help.value)
-      case other => fail(s"$other")
+        assert(help.mentions("--parts"), help.printed)
+      case other => fail(s"${other.toString}")
 
   test("a value its newtype's base type cannot read is Malformed, naming the newtype and the argument"):
     problem("version", "sea_peoples", "forty-two") match
@@ -146,12 +146,12 @@ class CommandLineSuite extends munit.FunSuite:
         assertEquals(t, Problem.TypeName("com.histmersion.api.research.Article.VersionId"))
         assertEquals(raw, Problem.Raw("forty-two"))
         assertEquals(at, Vector(Problem.Field("id")))
-      case other => fail(s"$other")
+      case other => fail(s"${other.toString}")
     problem("list", "--limit", "many") match
       case Problem.Invalid.Malformed(t, _, raw, at) =>
         assertEquals(t, Problem.TypeName("com.histmersion.api.library.Filter.Limit"))
         assertEquals((raw, at), (Problem.Raw("many"), Vector(Problem.Field("limit"))))
-      case other => fail(s"$other")
+      case other => fail(s"${other.toString}")
 
   test("a constrained newtype's converter checks the constraint"):
     val c = summon[ValueConverter[Slug]]
@@ -176,17 +176,17 @@ class CommandLineSuite extends munit.FunSuite:
   test("--help is the help, not an error: of the group, and of each subcommand"):
     scallop("--help") match
       case CommandLine.Outcome.Help(text) =>
-        List("list", "patch", "rename", "version").foreach(s => assert(text.value.contains(s), text.value))
-      case other => fail(s"$other")
+        List("list", "patch", "rename", "version").foreach(s => assert(text.mentions(s), text.printed))
+      case other => fail(s"${other.toString}")
     scallop("patch", "--help") match
       case CommandLine.Outcome.Help(text) =>
         List("--filter-query", "--critique-reason", "--if-updated-at", "slug").foreach(s =>
-          assert(text.value.contains(s), text.value)
+          assert(text.mentions(s), text.printed)
         )
-      case other => fail(s"$other")
+      case other => fail(s"${other.toString}")
     scallop("get", "sea_peoples", "--help") match
-      case CommandLine.Outcome.Help(text) => assert(text.value.contains("--parts"), text.value)
-      case other                          => fail(s"$other")
+      case CommandLine.Outcome.Help(text) => assert(text.mentions("--parts"), text.printed)
+      case other                          => fail(s"${other.toString}")
 
   test("a group with no subcommand is a missing command"):
     assertEquals(problem(), Problem.Invalid.Missing(Problem.Field("command")))

@@ -18,22 +18,25 @@ object BookmarksCmd:
     case Add(raw: TargetFlags.Raw, label: Option[String], title: Option[String], json: Cli.JsonOutput)
     case Rm(id: String, json: Cli.JsonOutput)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = BookmarksCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.ListCmd(kind, q, limit, json) =>
-        c.call(PersonalApi.bookmarks)(
-          (kind.map(ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
-        ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
-      case Command.Add(raw, label, title, json) =>
-        TargetFlags
-          .target(raw)
-          .flatMap(t =>
-            c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(Title(_))))
-              .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
-          )
-      case Command.Rm(id, json) =>
-        c.call(PersonalApi.removeBookmark)(Bookmark.Id(id))
-          .map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.ListCmd(kind, q, limit, json) =>
+          c.call(PersonalApi.bookmarks)(
+            (kind.map(ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
+          ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
+        case Command.Add(raw, label, title, json) =>
+          TargetFlags
+            .target(raw)
+            .flatMap(t =>
+              c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(Title(_))))
+                .map(b =>
+                  Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}")
+                )
+            )
+        case Command.Rm(id, json) =>
+          c.call(PersonalApi.removeBookmark)(Bookmark.Id(id))
+            .map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))

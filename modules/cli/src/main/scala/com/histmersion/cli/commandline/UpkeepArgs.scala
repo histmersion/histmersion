@@ -21,7 +21,7 @@ import org.rogach.scallop.*
 import scala.util.chaining.*
 
 /** The command line of [[Ops]]. */
-object OpsArgs:
+object UpkeepArgs:
   object LintEntry extends CommandLine.Entry:
     val name = "lint"
     def help: String = s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})"

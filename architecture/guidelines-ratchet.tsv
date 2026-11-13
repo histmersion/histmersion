@@ -1,6 +1,6 @@
 # rule	module	scope	count — guideline findings (GuidelineInventory) that may only go down (G57); regenerate with HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'
 G3misplaced	api	main	562
-G3misplaced	cli	main	97
+G3misplaced	cli	main	94
 G3misplaced	config	main	10
 G3misplaced	core	main	351
 G3misplaced	core	test	5
@@ -86,7 +86,7 @@ G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	27
 G45boundary	api	main	581
-G45boundary	cli	main	993
+G45boundary	cli	main	958
 G45boundary	config	main	56
 G45boundary	console	main	4
 G45boundary	core	main	10
@@ -123,7 +123,7 @@ G46	upstreams	main	18
 G46	web	main	63
 G47fqn	api	main	819
 G47fqn	cli	main	49
-G47fqn	cli	test	57
+G47fqn	cli	test	55
 G47fqn	config	main	3
 G47fqn	core	main	150
 G47fqn	core	test	376
@@ -196,7 +196,7 @@ G48	core	main	129
 G48	server	main	287
 G49	api	main	1150
 G49	api	test	146
-G49	cli	main	217
+G49	cli	main	216
 G49	cli	test	17
 G49	config	main	67
 G49	config	test	8
@@ -246,7 +246,7 @@ G5problem	api	main	3
 G5problem	core	main	2
 G60fromString	api	main	214
 G60fromString	api	test	77
-G60fromString	cli	main	149
+G60fromString	cli	main	142
 G60fromString	cli	test	23
 G60fromString	config	main	53
 G60fromString	config	test	24

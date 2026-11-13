@@ -17,8 +17,8 @@ class CliHelpSnapshotSuite extends munit.FunSuite:
 
   private def help(path: List[String]): String =
     CommandLine.parse(path :+ "--help") match
-      case CommandLine.Outcome.Help(text) => text.value
-      case other                          => s"(no help for ${path.mkString(" ")}: $other)"
+      case CommandLine.Outcome.Help(text) => text.printed
+      case other                          => s"(no help for ${path.mkString(" ")}: ${other.toString})"
 
   private def subcommands(text: String): List[String] =
     text.linesIterator

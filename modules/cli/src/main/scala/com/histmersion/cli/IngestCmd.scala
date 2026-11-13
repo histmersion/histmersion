@@ -111,37 +111,38 @@ object IngestCmd:
     )
     case Control(action: Api.JobControl.Action, id: String, json: Cli.JsonOutput)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = IngestCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Reocr(ck, quality, noWait) =>
-        c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
-          Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
-          if noWait then Right(()) else pollJob(c, a.jobId, 0)
-        }
-      case Command.Assets(ck) =>
-        c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
-      case Command.Control(action, id, json) =>
-        c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
-      case Command.Jobs(id, f, limit, before, json) =>
-        id match
-          case Some(i) => c.job(Job.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
-          case None    =>
-            c.jobs(f, limit.map(Paging.Limit(_)), before.map(Api.Jobs.Status(_))).map { (js, page) =>
-              Output.emit(json, js)(js =>
-                IngestMarkdown.jobs(
-                  js.toVector,
-                  page,
-                  f.qualifier.map(q => Ingest.JobStatus(q.value)),
-                  PageCmd
-                    .older(
-                      page,
-                      "jobs",
-                      f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))
-                    )
-                    .map(t => Ingest.JobAge(t.value))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Reocr(ck, quality, noWait) =>
+          c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
+            Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
+            if noWait then Right(()) else pollJob(c, a.jobId, 0)
+          }
+        case Command.Assets(ck) =>
+          c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
+        case Command.Control(action, id, json) =>
+          c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
+        case Command.Jobs(id, f, limit, before, json) =>
+          id match
+            case Some(i) => c.job(Job.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
+            case None    =>
+              c.jobs(f, limit.map(Paging.Limit(_)), before.map(Api.Jobs.Status(_))).map { (js, page) =>
+                Output.emit(json, js)(js =>
+                  IngestMarkdown.jobs(
+                    js.toVector,
+                    page,
+                    f.qualifier.map(q => Ingest.JobStatus(q.value)),
+                    PageCmd
+                      .older(
+                        page,
+                        "jobs",
+                        f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))
+                      )
+                      .map(t => Ingest.JobAge(t.value))
+                  )
                 )
-              )
-            }
+              }

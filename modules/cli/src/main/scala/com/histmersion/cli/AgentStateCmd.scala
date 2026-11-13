@@ -20,24 +20,25 @@ object AgentStateCmd:
     case Get(key: String)
     case SetCmd(key: String, valueStr: String)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = AgentStateCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.ListCmd() =>
-        c.agentStateList().map(entries => Cli.out.println(AgentStateMarkdown.agentStateList(entries)))
-      case Command.Get(key) =>
-        c.agentStateGet(Api.AgentState.Key(key)).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
-      case Command.SetCmd(key, valueStr) =>
-        RawJson.parse(valueStr) match
-          case Right(_) =>
-            c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr)))
-              .map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
-          case Left(err) =>
-            Left(
-              Cli.Error(
-                Problem.Unclassified(Legacy.Text(s"Invalid JSON: $err")),
-                exitCode = ExitCode.Usage
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.ListCmd() =>
+          c.agentStateList().map(entries => Cli.out.println(AgentStateMarkdown.agentStateList(entries)))
+        case Command.Get(key) =>
+          c.agentStateGet(Api.AgentState.Key(key)).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
+        case Command.SetCmd(key, valueStr) =>
+          RawJson.parse(valueStr) match
+            case Right(_) =>
+              c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr)))
+                .map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
+            case Left(err) =>
+              Left(
+                Cli.Error(
+                  Problem.Unclassified(Legacy.Text(s"Invalid JSON: $err")),
+                  exitCode = ExitCode.Usage
+                )
               )
-            )

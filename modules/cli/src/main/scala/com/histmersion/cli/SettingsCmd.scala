@@ -142,31 +142,32 @@ object SettingsCmd:
     case Unset(key: String, onlyLocal: Boolean, nr: Boolean, json: Cli.JsonOutput)
     case Restart(json: Cli.JsonOutput)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = SettingsCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Get(key, prefix, onlyLocal, json) =>
-        val asked = key.orElse(prefix)
-        val askedPrefix = asked.map(Settings.Prefix(_))
-        val page =
-          if onlyLocal then Local.page(askedPrefix) else orLocal(c.settings(askedPrefix), Local.page(askedPrefix))
-        page.flatMap { p =>
-          key match
-            case Some(k) =>
-              p.field(ConfigEdit.Field.Key(k))
-                .toRight(
-                  Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage)
-                )
-                .map { f =>
-                  Output.emit(json, f)(ConfigEditMarkdown.field)
-                }
-            case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
-        }
-      case Command.SetCmd(key, value, onlyLocal, nr, consent, json) =>
-        change(key, Some(value), onlyLocal, !nr, consent, json, c)
-      case Command.Unset(key, onlyLocal, nr, json) =>
-        change(key, None, onlyLocal, !nr, consent = false, json, c)
-      case Command.Restart(json) =>
-        c.restartServer.map(r => Output.emit(json, r)(ConfigEditMarkdown.restart))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Get(key, prefix, onlyLocal, json) =>
+          val asked = key.orElse(prefix)
+          val askedPrefix = asked.map(Settings.Prefix(_))
+          val page =
+            if onlyLocal then Local.page(askedPrefix) else orLocal(c.settings(askedPrefix), Local.page(askedPrefix))
+          page.flatMap { p =>
+            key match
+              case Some(k) =>
+                p.field(ConfigEdit.Field.Key(k))
+                  .toRight(
+                    Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage)
+                  )
+                  .map { f =>
+                    Output.emit(json, f)(ConfigEditMarkdown.field)
+                  }
+              case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
+          }
+        case Command.SetCmd(key, value, onlyLocal, nr, consent, json) =>
+          change(key, Some(value), onlyLocal, !nr, consent, json, c)
+        case Command.Unset(key, onlyLocal, nr, json) =>
+          change(key, None, onlyLocal, !nr, consent = false, json, c)
+        case Command.Restart(json) =>
+          c.restartServer.map(r => Output.emit(json, r)(ConfigEditMarkdown.restart))

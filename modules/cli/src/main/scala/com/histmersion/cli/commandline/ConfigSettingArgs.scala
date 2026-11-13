@@ -16,7 +16,7 @@ import org.rogach.scallop.*
 import scala.util.chaining.*
 
 /** The command line of [[SettingsCmd]]. */
-object SettingsArgs:
+object ConfigSettingArgs:
   /** `config get|set|unset|restart`, held by `config`. */
   def leaves(): List[Subcommand] = List(LeafGet(), LeafSetCmd(), LeafUnset(), LeafRestart())
 

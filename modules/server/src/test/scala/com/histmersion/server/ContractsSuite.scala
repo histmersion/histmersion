@@ -242,7 +242,15 @@ object ContractsSuite:
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
           global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s) ++
-          circe(s) ++ scallop(s) ++
+          circe(s) ++
+          (if scallopAdapter(s.key) then Nil
+           else
+             counted(
+               "scallop",
+               s,
+               "scallop outside the command-line adapters",
+               Scallop.findAllMatchIn(s.code).map(_.start).toList
+             )) ++
           counted(
             "nonempty-pattern",
             s,
@@ -414,16 +422,6 @@ object ContractsSuite:
       key == "cli:cli/CommandLine.scala" || key.startsWith("cli:cli/commandline/")
     private val Scallop =
       "\\bScallopConf(?:Base)?\\b|\\bSubcommand\\b|(?<!def\\s)\\bopt\\[|(?<!def\\s)\\btrailArg\\[|\\baddSubcommand\\(|\\borg\\.rogach\\b".r
-
-    private def scallop(s: SourceFile): List[Violation] =
-      if scallopAdapter(s.key) then Nil
-      else
-        counted(
-          "scallop",
-          s,
-          "scallop outside the command-line adapters",
-          Scallop.findAllMatchIn(s.code).map(_.start).toList
-        )
 
     private def circe(s: SourceFile): List[Violation] =
       if CirceAdapters(s.key) then Nil
