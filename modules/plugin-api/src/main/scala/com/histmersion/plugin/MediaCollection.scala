@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Media collections, the second part of the app that plugins extend: an open-access collection of pictures — a
@@ -106,8 +107,8 @@ trait MediaCollection:
       read = MediaFound.Read(asked.map(_._2.fold(_ => 0, _.size)).sum),
       failed = asked.flatMap((t, r) =>
         r.fold(
-          e => List(MediaFound.Failed(s"$title search for ${t.id}: ${e.problem.legacyText}")),
-          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: ${e.problem.legacyText}") }
+          e => List(MediaFound.Failed(s"$title search for ${t.id}: ${e.problem.sentence}")),
+          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: ${e.problem.sentence}") }
         )
       )
     )
@@ -119,7 +120,7 @@ trait MediaCollection:
     val done = items.map(it => it.key -> complete(it, http))
     MediaCompleted(
       done.collect { case (k, Right(it)) => k -> it }.toMap,
-      done.collect { case (k, Left(e)) => MediaCompleted.Failed(s"$k: ${e.legacyText}") }
+      done.collect { case (k, Left(e)) => MediaCompleted.Failed(s"$k: ${e.sentence}") }
     )
 
 object MediaCollection:

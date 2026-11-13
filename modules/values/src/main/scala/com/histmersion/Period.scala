@@ -1,8 +1,7 @@
 package com.histmersion
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.Year
-import io.github.iltotore.iron.constraint.any.Pure
 final case class Period private (start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 
@@ -18,4 +17,9 @@ object Period:
 
     def message: Problem = this match
       case EndsBeforeStart(s, e) =>
-        Problem.Unclassified(Legacy.Text(s"the period ends (${e.value}) before it starts (${s.value})"))
+        Problem.Invalid.OutOfRange(
+          Problem.TypeName.of(Year),
+          Problem.Raw(s"$e"),
+          Problem.Invalid.Bounds(Some(Problem.Raw(s"$s")), None),
+          Vector(Problem.Field("end"))
+        )

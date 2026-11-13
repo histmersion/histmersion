@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problems.traverseAll
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
@@ -18,13 +19,18 @@ object LibDirectory:
   val Inputs = "inputs"
   val Repositories = "repositories"
 
-  def storedRepositories(lib: Path): Either[Problem, List[RepositoryUrl]] =
+  def storedRepositories(lib: Path): Either[Problems, List[RepositoryUrl]] =
     val f = lib.resolve(Repositories)
     if !Files.isRegularFile(f) then Right(Nil)
     else
-      traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => Problem.Unclassified(Legacy.Text(s"$f: '$r': $e")))
-      )
+      Files
+        .readAllLines(f, UTF_8)
+        .asScala
+        .toList
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .traverseAll(r => RepositoryUrl.parse(r).left.map(_.at(Problem.Field(s"$f"))))
+        .map(_.toList)
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.
     */

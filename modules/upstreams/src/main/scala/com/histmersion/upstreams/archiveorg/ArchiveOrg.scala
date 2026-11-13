@@ -1,7 +1,7 @@
 package com.histmersion
 package upstreams.archiveorg
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.FetchedFile
 import com.histmersion.domain.library.acquisition.Endpoint
@@ -35,8 +35,6 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
           "sort[]" -> "downloads desc"
         ).value
       )
-      .left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
       .map(AcquireParse.archiveSearch)
       // the search index returns only identifiers reliably; the item metadata (title, creator,
       // restriction) comes from /metadata, one call per hit
@@ -46,8 +44,6 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
     http
       .json(Url(Candidate.Url(archive.url.value), Url.UrlPath(s"/metadata/$ident")).value)
-      .left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
       .map(AcquireParse.archiveItem(ident, _))
 
   def download(id: ArchiveId, file: ArchiveOrg.DownloadFile): Either[Problem, FetchedFile] =
@@ -62,7 +58,14 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     )
     http.get(Plugin.Http.Url(url.value)).left.map(_.problem).flatMap { b =>
       if b.value.length < 10240 then
-        Left(Problem.Unclassified(Legacy.Text(s"archive.org returned only ${b.value.length} bytes for $file")))
+        Left(
+          Problem.Upstream.BadReply(
+            Problem.Upstream.Name("archive.org"),
+            Problem.Upstream.Url(s"$url"),
+            Problem.Upstream.Shape.Document,
+            External.Reported(s"only ${b.value.length} bytes")
+          )
+        )
       else
         Right(
           FetchedFile(

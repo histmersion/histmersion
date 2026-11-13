@@ -4,8 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.given
 
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -17,6 +16,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet}
 import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.automation.ProviderKind
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
@@ -65,7 +65,7 @@ object PluginKit:
     )
 
   def parseSet(text: String): Either[Problem, PluginSet] =
-    RawJson.decode[PluginSet](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugin-set.json: $e")))
+    RawJson.decode[PluginSet](text).left.map(e => unreadable("plugin-set.json", s"$e"))
 
   def renderSet(s: PluginSet): String = s.asJson.withoutNulls.spaces2
 
@@ -73,7 +73,14 @@ object PluginKit:
     RawJson
       .decode[List[PluginJar]](text)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"plugin description: $e")))
+      .map(e => unreadable("the plugin description", s"$e"))
+
+  private def unreadable(where: String, reported: String): Problem =
+    Problem.Io.Corrupt(
+      Problem.Io.Format.Json,
+      Problem.Where(s"$where"),
+      Problem.Io.Damage.Unreadable(External.Reported.of(reported))
+    )
 
   def renderJars(js: List[PluginJar]): String = js.asJson.withoutNulls.spaces2
 
@@ -179,6 +186,10 @@ object PluginKit:
     type Version = Version.T
     object Version extends Newtype[String, Pure]
 
+    /** Coordinates as written: `group:artifact:version`, or `group::artifact:version` for a Scala 3 artifact. */
+    type Written = Written.T
+    object Written extends Newtype[String, Match["[A-Za-z0-9_.\\-+]+::?[A-Za-z0-9_.\\-+]+:[A-Za-z0-9_.\\-+]+"]]
+
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
   def parseCoordinates(s: String): Either[Problem, Coordinates] =
@@ -188,12 +199,7 @@ object PluginKit:
       case scala3(g, a, v) =>
         Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(s"${a}_3"), Coordinates.Version(v)))
       case plain(g, a, v) => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
-      case other          =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)")
-          )
-        )
+      case other          => Left(Problem.Invalid.malformed(Coordinates.Written.refused(other)))
 
   enum Origin derives CanEqual:
     case File(path: Origin.File.Path)
@@ -273,7 +279,7 @@ object PluginKit:
       jars.find(j => j.plugins.exists(_.id == id) && j.signer.nonEmpty).flatMap(_.signer)
 
   def parseIndex(text: String): Either[Problem, Index] =
-    RawJson.decode[Index](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugins index: $e")))
+    RawJson.decode[Index](text).left.map(e => unreadable("the plugins index", s"$e"))
 
   def renderIndex(i: Index): String = i.asJson.withoutNulls.spaces2
 
@@ -293,11 +299,9 @@ object PluginKit:
       case Nil               => Right(())
       case (id, pinned) :: _ =>
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"plugin '$id' was installed signed by $pinned, this jar is signed by $seen — refused " +
-                s"(remove the plugin first with `histmersion plugin rm $id` to trust the new key)"
-            )
+          Problem.Plugin.Load(
+            Problem.Plugin.Id(s"$id"),
+            Problem.Plugin.Fault.SignerChanged(Problem.Plugin.Signer(s"$pinned"), Problem.Plugin.Signer(s"$seen"))
           )
         )
 
@@ -309,36 +313,22 @@ object PluginKit:
       spiVersion: PluginSet.SpiVersion,
       taken: Map[PluginDescription.Id, String]
   ): List[Problem] =
-    val none = if jar.plugins.isEmpty then
-      List(
-        Problem.Unclassified(
-          Legacy.Text(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)")
-        )
-      )
-    else Nil
+    val file = Problem.Plugin.Id(s"${jar.file}")
+    val none =
+      if jar.plugins.isEmpty then List(Problem.Plugin.Load(file, Problem.Plugin.Fault.NoProvider)) else Nil
     none ++ jar.plugins.flatMap { p =>
       // a provider that could not be loaded has no id, version or SPI to compare: its error is the reason
-      if p.id.isEmpty then
-        List(
-          Problem.Unclassified(
-            Legacy.Text(s"a provider in ${jar.file} could not be loaded: ${p.error.map(_.sentence).getOrElse("?")}")
-          )
-        )
+      if p.id.isEmpty then List(p.error.getOrElse(Problem.Plugin.Load(file, Problem.Plugin.Fault.BadDescriptor)))
       else
-        val spi = if p.spiVersion != spiVersion then
-          List(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${p.id} ${p.version} was built for plugin SPI ${p.spiVersion}; this Histmersion speaks SPI $spiVersion — " +
-                  s"rebuild it against SPI $spiVersion"
-              )
-            )
+        val id = Problem.Plugin.Id(s"${p.id}")
+        val spi = Option
+          .when(p.spiVersion != spiVersion)(
+            Problem.Plugin
+              .Load(id, Problem.Plugin.Fault.SpiMismatch(Problem.Raw(s"${p.spiVersion}"), Problem.Raw(s"$spiVersion")))
           )
-        else Nil
-        val clash = taken
-          .get(p.id)
-          .map(o => Problem.Unclassified(Legacy.Text(s"plugin id '${p.id}' is already provided by $o")))
           .toList
+        val clash =
+          taken.get(p.id).map(o => Problem.Plugin.Load(id, Problem.Plugin.Fault.Taken(Problem.Raw(s"$o")))).toList
         spi ++ clash
     }
 
@@ -384,10 +374,17 @@ object PluginKit:
     RawJson
       .decode[KitManifest](text)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"kit.json: $e")))
-      .filterOrElse(
-        _.format <= KitFormat,
-        Problem.Unclassified(Legacy.Text(s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)"))
+      .map(e => unreadable("kit.json", s"$e"))
+      .flatMap(k =>
+        Either.cond(
+          k.format <= KitFormat,
+          k,
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Json,
+            Problem.Where("kit.json"),
+            Problem.Io.Damage.Newer(Problem.Raw(s"${k.format}"), Problem.Raw(s"$KitFormat"))
+          )
+        )
       )
 
   def renderKit(k: KitManifest): String = k.asJson.withoutNulls.spaces2
@@ -398,11 +395,21 @@ object PluginKit:
 
   def parseSha256sums(text: String): Either[Problem, List[KitFile]] =
     val line = "([0-9a-f]{64}) [ *](.+)".r
-    text.linesIterator.filter(_.trim.nonEmpty).toList.foldLeft[Either[Problem, List[KitFile]]](Right(Nil)) {
-      case (Right(acc), line(h, f)) => Right(acc :+ KitFile(KitFile.File(f), KitFile.Sha256.applyUnsafe(h)))
-      case (Right(_), bad)          => Left(Problem.Unclassified(Legacy.Text(s"SHA256SUMS: not a checksum line: $bad")))
-      case (left, _)                => left
-    }
+    text.linesIterator.zipWithIndex
+      .filter(_._1.trim.nonEmpty)
+      .toList
+      .foldLeft[Either[Problem, List[KitFile]]](Right(Nil)) {
+        case (Right(acc), (line(h, f), _)) => Right(acc :+ KitFile(KitFile.File(f), KitFile.Sha256.applyUnsafe(h)))
+        case (Right(_), (_, i))            =>
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.Text,
+              Problem.Where(s"SHA256SUMS line ${i + 1}"),
+              Problem.Io.Damage.Undecodable
+            )
+          )
+        case (left, _) => left
+      }
 
   /** Pure: every difference between the manifest and the kit on disk (`actual`: path → SHA-256 of every file found
     * under `kit/`, the manifests themselves excluded). Empty = intact.
@@ -410,16 +417,20 @@ object PluginKit:
   def verifyKit(expected: List[KitFile], actual: Map[KitFile.File, KitFile.Sha256]): List[Problem] =
     val want = expected.map(f => f.file -> f.sha256).toMap
     val missing =
-      want.keys.filterNot(actual.contains).toList.sorted.map(f => Problem.Unclassified(Legacy.Text(s"missing: $f")))
+      want.keys
+        .filterNot(actual.contains)
+        .toList
+        .sorted
+        .map(f => Problem.Io.Wrong(Problem.Io.Path(s"$f"), Problem.Io.Kind.Present))
     val changed =
       want
         .collect { case (f, h) if actual.get(f).exists(_ != h) => f }
         .toList
         .sorted
-        .map(f => Problem.Unclassified(Legacy.Text(s"changed: $f")))
+        .map(f => Problem.Io.Corrupt(Problem.Io.Format.Kit, Problem.Where(s"$f"), Problem.Io.Damage.Checksum))
     val extra = actual.keys
       .filterNot(want.contains)
       .toList
       .sorted
-      .map(f => Problem.Unclassified(Legacy.Text(s"not in the manifest: $f")))
+      .map(f => Problem.Io.Wrong(Problem.Io.Path(s"$f"), Problem.Io.Kind.Listed))
     missing ++ changed ++ extra

@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a change may be written at all, against the schema: the key is a setting, the value is of its kind, a
@@ -68,7 +68,7 @@ object SettingPolicy:
               SecretForm
                 .reference(t.value)
                 .left
-                .map(why => SettingError.NotAReference(key, Problem.Unclassified(Legacy.Text(why))))
+                .map(SettingError.NotAReference(key, _))
                 .flatMap {
                   case SecretForm.Literal if !literalConsent.value => Left(SettingError.LiteralNeedsConsent(key))
                   case SecretForm.Literal                          =>

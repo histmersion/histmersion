@@ -1,8 +1,8 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.config.{AppConfig, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
@@ -53,7 +53,7 @@ object SettingsService:
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
-      loaded: Either[Problem, LoadedConfig],
+      loaded: Either[Problems, LoadedConfig],
       env: Config,
       prefix: Option[SettingKey],
       completed: SetupConfig.Completed,
@@ -63,7 +63,7 @@ object SettingsService:
     val merged =
       loaded.fold(_ => AppConfig.loadWithUserText(env, "").fold(_ => ConfigFactory.empty, _.merged), _.merged)
     val problems =
-      loaded.fold(p => List(p.sentence), l => l.file.warnings.map(_.sentence)).map(SettingsSnapshot.Problems(_))
+      loaded.fold(p => p.sentences.toList, l => l.file.warnings.map(_.sentence)).map(SettingsSnapshot.Problems(_))
     SettingsSnapshot(
       file,
       SettingsSnapshot.Exists(state.text.isDefined),
@@ -168,7 +168,7 @@ object SettingsService:
         for
           notes <- SettingPolicy.all(edits, schema, literalConsent)
           current <- state
-          _ <- Either.cond(expected.forall(_ == current.version), (), SettingError.Changed)
+          _ <- expected.filterNot(_ == current.version).map(SettingError.Changed(_, current.version)).toLeft(())
           edited <- ConfigTextEdit(current.text.getOrElse(ConfigFileWriter.NewFileHeader), current.parsed, here, edits)
           _ <-
             if edited.changed.isEmpty then Right(())

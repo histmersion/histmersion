@@ -1,7 +1,7 @@
 package com.histmersion
 package config
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import scala.annotation.tailrec
 
 import java.nio.file.Path
@@ -16,14 +16,13 @@ final case class UserConfigFile(
     loaded: UserConfigFile.Loaded,
     unknownKeys: List[UserConfigFile.UnknownKeys] = Nil
 ):
-  /** One line per ignored key, for the log. */
+  /** One problem per ignored key, for the log. */
   def warnings: List[Problem] =
-    val where = path.fold("the config file")(_.toString)
     unknownKeys.map { k =>
-      val hint =
-        if k.value == "histmersion" || k.value.startsWith("histmersion.") then ""
-        else " (settings go under histmersion { … })"
-      Problem.Unclassified(Legacy.Text(s"$where: unknown setting '${k.value}' is ignored$hint"))
+      val fault =
+        if k.value == "histmersion" || k.value.startsWith("histmersion.") then Problem.Config.Fault.Undeclared
+        else Problem.Config.Fault.OutsideRoot
+      Problem.Config.Setting(Problem.SettingKey(s"$k"), fault)
     }
 
 object UserConfigFile:

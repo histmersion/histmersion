@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,10 +14,11 @@ object ModuleKey:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-  /** `group:artifact`. */
+  /** `group:artifact` as written. */
+  type Written = Written.T
+  object Written extends Newtype[String, Match["[A-Za-z0-9_.\\-+]+:[A-Za-z0-9_.\\-+]+"]]
 
-  def parse(raw: Text): Either[Problem, ModuleKey] = (raw).value.trim.split(':').toList match
-    case List(g, a) =>
-      (for group <- GroupId.either(g); artifact <- ArtifactId.either(a)
-      yield ModuleKey(group, artifact)).left.map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))
-    case _ => Left(Problem.Unclassified(Legacy.Text(s"not group:artifact: '$raw'")))
+  /** `group:artifact`. */
+  def parse(raw: Text): Either[Problems, ModuleKey] = (raw).value.trim.split(':').toList match
+    case List(g, a) => GroupId.parse(g).and(ArtifactId.parse(a)).map(ModuleKey(_, _))
+    case _          => Left(Problem.Invalid.malformed(Written.refused(s"$raw".trim)))

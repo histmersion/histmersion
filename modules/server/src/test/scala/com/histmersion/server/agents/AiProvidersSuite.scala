@@ -3,7 +3,7 @@ package server.agents
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -77,7 +77,7 @@ class AiProvidersSuite extends munit.FunSuite:
     */
   private def build(plugins: List[Plugin], user: String = "", env: String = ""): Generation =
     val (u, e) = (ConfigFactory.parseString(user), ConfigFactory.parseString(env))
-    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m.sentence), _.merged)
+    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m.sentences.mkString("; ")), _.merged)
     val host = FirstPartySettings.hostView(reference, u, e, plugins)
     PluginHost.build(
       plugins,

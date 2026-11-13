@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import Subprocess.{code, firstLine}
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -59,22 +60,27 @@ object Vaults:
       vault: Secret.Vault.Name,
       ref: Secret.Vault.ResolveRef,
       r: Either[Processes.Failure, Subprocess.Result],
-      classify: String => Option[String]
+      classify: String => Option[Problem]
   ): Either[Problem, Secret.Resolved] =
     r.left.map(_.problem).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(res.out).value
-        if v.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$vault: '$ref' has an empty value")))
+        if v.isEmpty then Left(vault.failed(Problem.Plugin.Retrieval.Blank(Problem.Raw(s"$ref"))))
         else Right(Secret.Resolved(v))
       else
         val low = res.err.value.toLowerCase(java.util.Locale.ROOT)
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              classify(low).getOrElse(
-                s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Problem.Unclassified(Legacy.Text(res.err.value))).legacyText})"
-              )
-            )
+          classify(low).getOrElse(
+            vault.failed(Problem.Plugin.Retrieval.Unread(Problem.Raw(s"$ref"), res.exit.code, res.err.firstLine))
           )
         )
     }
+
+  extension (vault: Secret.Vault.Name)
+    /** The vault failed: `failure`. */
+    private[vaults] def failed(failure: Problem.Plugin.Retrieval): Problem =
+      Problem.Plugin.Vault(Problem.Plugin.Id(s"$vault"), failure)
+
+    /** The vault said what no shared case names: `claim`, in its own words. */
+    private[vaults] def said(claim: Problem.Plugin.Claim, words: String): Problem =
+      Problem.Plugin.Said(Problem.Plugin.Id(s"$vault"), claim, External.PluginSaid.of(words))

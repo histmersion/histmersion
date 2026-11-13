@@ -1,7 +1,9 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
+
+import com.histmersion.util.problem.{External, Problem}
 
 /** The AI-provider part of the SPI (docs/research-plugins.md §22). */
 class AiProviderSpiSuite extends munit.FunSuite:
@@ -11,7 +13,12 @@ class AiProviderSpiSuite extends munit.FunSuite:
     def turn(r: AiTurn.Request, http: AiHttp) =
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
-        .toRight(AiFailure.Error(Problem.Unclassified(Legacy.Text("no user message"))))
+        .toRight(
+          AiFailure.Error(
+            Problem.Plugin
+              .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
+          )
+        )
         .map(t =>
           AiTurn(AiTurn.Text((t).value), usage = Some(AiUsage(AiUsage.Input((10).toLong), AiUsage.Output((2).toLong))))
         )
@@ -64,23 +71,33 @@ class AiProviderSpiSuite extends munit.FunSuite:
     )
     assertEquals(
       Echo.turn(req.copy(messages = Nil), AiHttp.Offline),
-      Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("no user message"))))
+      Left(
+        AiFailure.Error(
+          Problem.Plugin
+            .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
+        )
+      )
     )
     assertEquals(
-      AiFailure.LimitReached(Problem.Unclassified(Legacy.Text("limit"))),
-      AiFailure.LimitReached(Problem.Unclassified(Legacy.Text("limit")), None)
+      AiFailure.LimitReached(
+        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("limit"))
+      ),
+      AiFailure.LimitReached(
+        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("limit")),
+        None
+      )
     )
 
   test("the offline client sends nothing"):
     assertEquals(
       AiHttp.Offline
         .post(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.TimeoutSeconds(5)),
-      Left(AiHttp.Failure.Refused(Problem.Unclassified(Legacy.Text("offline"))))
+      Left(AiHttp.Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
     )
     assertEquals(
       AiHttp.Offline
         .get(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.TimeoutSeconds(5)),
-      Left(AiHttp.Failure.Refused(Problem.Unclassified(Legacy.Text("offline"))))
+      Left(AiHttp.Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
     )
 
   test("a context written before AI providers existed still compiles and refuses one; the SPI is still 1"):
@@ -90,14 +107,17 @@ class AiProviderSpiSuite extends munit.FunSuite:
             url: Plugin.Http.Url,
             headers: Map[Header.Name, Header.Value]
         ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-          Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+          Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
-        Left(Problem.Unclassified(Legacy.Text("none")))
-      def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
-    assert(ctx.aiProviders.add(Registry.AddId("echo"), Echo).left.exists((_).legacyText.contains("no AI providers")))
+        Left(
+          Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
+        )
+      def secretVaults =
+        Registry.refusing(Problem.Plugin.Vault(Problem.Plugin.Id("test"), Problem.Plugin.Retrieval.NoVault))
+    assert(ctx.aiProviders.add(Registry.AddId("echo"), Echo).left.exists(_.sentence.contains("no ai providers")))
     assertEquals(Spi.Version, 2)

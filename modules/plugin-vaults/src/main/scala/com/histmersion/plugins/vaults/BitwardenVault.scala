@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.vaults
+import Vaults.{failed, said}
 import com.histmersion.util.problem.Problem
 
 import scala.annotation.tailrec
@@ -32,9 +33,15 @@ final class BitwardenVault(
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(i.value))
     yield v
 
-  private def classify(item: String)(err: String): Option[String] =
+  private def classify(item: String)(err: String): Option[Problem] =
     if err.contains("vault is locked") || err.contains("not logged in") then
-      Some(s"$name: the vault is locked — run `bw unlock` and set session = \"env:BW_SESSION\" for this vault")
-    else if err.contains("more than one result") then Some(s"$name: '$item' matches more than one item — use its id")
-    else if err.contains("not found") then Some(s"$name: no item '$item'")
+      Some(
+        name.said(
+          Problem.Plugin.Claim.Misconfigured,
+          "the vault is locked — run `bw unlock` and set session = \"env:BW_SESSION\" for this vault"
+        )
+      )
+    else if err.contains("more than one result") then
+      Some(name.said(Problem.Plugin.Claim.Rejected, s"'$item' matches more than one item — use its id"))
+    else if err.contains("not found") then Some(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$item"))))
     else None

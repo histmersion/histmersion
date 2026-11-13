@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problems.traverseAll
 import coursierapi.{Cache, Fetch, Logger, MavenRepository, Module, Repository, ResolutionParams, Version}
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -21,7 +22,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
   def resolve(
       roots: List[ModuleCoordinates],
       excluded: Set[ModuleKey]
-  ): Either[Problem, List[(ModuleCoordinates, Option[Path])]] =
+  ): Either[Problems, List[(ModuleCoordinates, Option[Path])]] =
     val params = excluded.foldLeft(ResolutionParams.create())((p, k) => p.addExclusion(k.group.value, k.artifact.value))
     val fetch = Fetch
       .create()
@@ -30,14 +31,18 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
       .withResolutionParams(params)
       .withCache(cache.foldLeft(Cache.create().withLogger(Logger.nop()))((c, dir) => c.withLocation(dir.toFile)))
     Try(fetch.fetchResult()).toEither.left
-      .map(e => Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
+      .map(e => Problem.from(e, Problem.Where("resolving the plugins' dependencies"), Problem.Internal.Id.mint()))
       .flatMap { result =>
         val jars = result.getArtifacts.asScala.toList.map(e => e.getKey.getUrl -> e.getValue.toPath)
-        traverse(result.getDependencies.asScala.toList) { d =>
-          ModuleCoordinates
-            .parse(ModuleCoordinates.Text(s"${d.getModule.getOrganization}:${d.getModule.getName}:${d.getVersion}"))
-            .map(c => c -> jars.collectFirst { case (url, file) if url.endsWith((Coursier.jarPath(c)).value) => file })
-        }.map(_.distinctBy(_._1))
+        result.getDependencies.asScala.toList
+          .traverseAll { d =>
+            ModuleCoordinates
+              .parse(ModuleCoordinates.Text(s"${d.getModule.getOrganization}:${d.getModule.getName}:${d.getVersion}"))
+              .map(c =>
+                c -> jars.collectFirst { case (url, file) if url.endsWith((Coursier.jarPath(c)).value) => file }
+              )
+          }
+          .map(_.toList.distinctBy(_._1))
       }
 
   private def module(k: ModuleKey): Module = Module.of(k.group.value, k.artifact.value)
@@ -66,21 +71,24 @@ object Coursier:
   def pluginRepository(
       dir: Path,
       plugins: List[PluginArtifact]
-  ): Either[Problem, List[(PluginArtifact, ModuleCoordinates)]] =
-    traverse(plugins.flatMap(p => p.pom.map(p -> _))) { (plugin, pom) =>
-      Pom
-        .coordinates(pom)
-        .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"${plugin.fileName}: its POM: ${e.legacyText}")))
-        .map { c =>
-          val jar = dir.resolve((jarPath(c)).value.drop(1))
-          Files.createDirectories(jar.getParent)
-          Files.copy(plugin.jar, jar, StandardCopyOption.REPLACE_EXISTING)
-          Files.writeString(
-            jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom"),
-            (pom).value,
-            UTF_8
-          )
-          plugin -> c
-        }
-    }
+  ): Either[Problems, List[(PluginArtifact, ModuleCoordinates)]] =
+    plugins
+      .flatMap(p => p.pom.map(p -> _))
+      .traverseAll { (plugin, pom) =>
+        Pom
+          .coordinates(pom)
+          .left
+          .map(_.at(Problem.Field(s"${plugin.fileName}")))
+          .map { c =>
+            val jar = dir.resolve((jarPath(c)).value.drop(1))
+            Files.createDirectories(jar.getParent)
+            Files.copy(plugin.jar, jar, StandardCopyOption.REPLACE_EXISTING)
+            Files.writeString(
+              jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom"),
+              (pom).value,
+              UTF_8
+            )
+            plugin -> c
+          }
+      }
+      .map(_.toList)

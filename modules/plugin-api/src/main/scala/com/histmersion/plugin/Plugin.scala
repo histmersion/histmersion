@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import hearth.kindlings.sconfigderivation.ConfigReader
 import scala.compiletime.deferred
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
@@ -137,27 +137,27 @@ object Plugin:
       * context written for an earlier extension point (a test's) still compiles.
       */
     def sourceFetchers: Registry[SourceFetcher] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no acquisition chain")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.AcquisitionChain))
 
     /** The media collections `histmersion media import <id>` runs: each under its own id — the name the import is asked
       * for, and the provider its pictures are stored under. The host judges every licence and every match itself
       * ([[MediaCollection]]).
       */
     def mediaCollections: Registry[MediaCollection] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no media import")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.MediaImport))
 
     /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's name and the
       * catalogue its records are stored under.
       */
     def eventCatalogues: Registry[EventCatalogue] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no event catalogues")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.EventCatalogues))
 
     /** The AI providers the embedded agents call, each under its PROVIDER NAME — the part before the colon of a
       * `provider:model` reference. The host runs the tool loop, the tools, the validation and every budget; the
       * provider answers one model call at a time.
       */
     def aiProviders: Registry[AiProvider] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no AI providers")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.AiProviders))
 
     /** The host's budget for the metered upstream `upstream` (`core`: CORE's API), shared with the host's own calls to
       * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] —
@@ -176,14 +176,14 @@ object Plugin:
       * earlier extension point still compiles.
       */
     def gazetteerSources: Registry[GazetteerSource] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no gazetteer import")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.GazetteerImport))
 
     /** The collections of sources the library searches and imports from, and may write back to, each under its own name
       * — the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has
       * no library refuses every addition — the default, so a context written before collections existed still compiles.
       */
     def sourceCollections: Registry[SourceCollection] =
-      Registry.refusing(Problem.Unclassified(Legacy.Text("this host has no source collections")))
+      Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.SourceCollections))
 
   object Context:
     type QuotaUpstream = QuotaUpstream.T
@@ -236,10 +236,10 @@ object Plugin:
         case Status(code, _) => code.refusesAccess
         case Transport(_)    => false
 
-      /** The same failure with `context` before its sentence ("item 7: …"). */
-      def within(context: String): Failure = this match
-        case Status(code, why) => Status(code, Problem.Unclassified(Legacy.Text(s"$context: ${why.legacyText}")))
-        case Transport(why)    => Transport(Problem.Unclassified(Legacy.Text(s"$context: ${why.legacyText}")))
+      /** The same failure, found at `field` of what was asked (`item 7`): an input's path gets `field` in front. */
+      def within(field: Problem.Field): Failure = this match
+        case Status(code, why) => Status(code, why.within(field))
+        case Transport(why)    => Transport(why.within(field))
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *

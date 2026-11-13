@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.Header
 import com.histmersion.plugin.UpstreamQuota
@@ -44,31 +44,26 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
           case Left(e)  => Left(CoreFailure.Failed(e.problem))
           case Right(a) =>
             quota.observe(a.status, a.headers)
-            if a.status == Plugin.HttpResponse.Status(429) then
-              Left(
-                CoreFailure.Skipped(
-                  Problem.Unclassified(
-                    Legacy.Text(
-                      quota.waitingUntil.fold("CORE answered HTTP 429")(u =>
-                        s"CORE answered HTTP 429; not asked until $u"
-                      )
-                    )
-                  )
-                )
-              )
-            else if (a.status).value >= 400 then
-              Left(
-                CoreFailure.Failed(
-                  Problem.Unclassified(Legacy.Text(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}"))
-                )
-              )
+            val answered = Problem.Upstream.Http(
+              Problem.Upstream.Name("core"),
+              Problem.Upstream.Url(s"$url"),
+              Problem.Upstream.Status((a.status).value),
+              External.ReplyExcerpt.head(String(a.body.value, UTF_8))
+            )
+            if a.status == Plugin.HttpResponse.Status(429) then Left(CoreFailure.Skipped(answered))
+            else if (a.status).value >= 400 then Left(CoreFailure.Failed(answered))
             else
               RawJson
                 .parse(String(a.body.value, UTF_8))
                 .left
                 .map(e =>
                   CoreFailure.Failed(
-                    Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e"))
+                    Problem.Upstream.BadReply(
+                      Problem.Upstream.Name("core"),
+                      Problem.Upstream.Url(s"$url"),
+                      Problem.Upstream.Shape.Json,
+                      External.Reported.of(s"$e")
+                    )
                   )
                 )
 

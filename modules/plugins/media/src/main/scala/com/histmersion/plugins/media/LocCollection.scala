@@ -56,7 +56,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
             .askJson(LocCollection.itemUrl(conf.apiUrl, id))
             .flatMap(j => LocCollection.record(j, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx).unreadable)
             .left
-            .map(e => explain(e).within(s"item $id"))
+            .map(e => explain(e).within(Problem.Field(s"item $id")))
         )
       )
 

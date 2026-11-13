@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -64,7 +64,7 @@ object SettingsCmd:
     private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(e.message.toNonEmpty.head, ExitCode.Refused)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
@@ -106,7 +106,7 @@ object SettingsCmd:
           ConfigEdit.Page.Version(state.version.value),
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
           loaded.fold(
-            l => List(ConfigEdit.Page.Problems(l.sentence)),
+            l => l.sentences.toList.map(ConfigEdit.Page.Problems(_)),
             _.file.warnings.map(w => ConfigEdit.Page.Problems(w.sentence))
           )
         )

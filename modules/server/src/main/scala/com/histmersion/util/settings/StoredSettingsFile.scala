@@ -57,7 +57,10 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
                   AppConfig
                     .loadWithUserFile(env, Some(temp))
                     .left
-                    .map(p => Problem.Unclassified(Legacy.Text(p.sentence.replace(temp.toString, shown.value))))
+                    .map(
+                      _.toNonEmpty
+                        .map(p => Problem.Unclassified(Legacy.Text(p.sentence.replace(temp.toString, shown.value))))
+                    )
               )
             )
             bak <- backup(existed)

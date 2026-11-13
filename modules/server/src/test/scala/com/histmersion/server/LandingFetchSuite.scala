@@ -3,7 +3,7 @@ package server
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -57,7 +57,9 @@ class LandingFetchSuite extends munit.FunSuite:
       .fetch(Some(doi), None)
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
+    AppConfig
+      .loadWithUserText(org.ekrich.config.ConfigFactory.empty, text)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def fail2(http: FakeUpstream)(e: Problem) = fail(e.sentence + "\n" + http.asked.mkString("\n"))
 

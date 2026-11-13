@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 /** One change to the config file: a setting written, or taken out (back to its default). */
 enum SettingEdit(val key: SettingKey) derives CanEqual:
@@ -42,5 +42,5 @@ object SettingEdit:
           parse(k, v, schema) match
             case Left(e)  => Left(e)
             case Right(e) => loop(tail, e :: acc)
-    if changes.isEmpty then Left(SettingError.BadKey(Problem.Unclassified(Legacy.Text("no change was given"))))
+    if changes.isEmpty then Left(SettingError.BadKey(Problem.Invalid.Missing(Problem.Field("changes"))))
     else loop(changes, Nil)

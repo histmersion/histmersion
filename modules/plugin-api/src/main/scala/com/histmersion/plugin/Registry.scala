@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import scala.compiletime.deferred
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -18,6 +18,4 @@ object Registry:
   object AddId extends Newtype[String, Pure]
 
   def refusing[A](why: Problem): Registry[A] = new Registry[A]:
-    def add(id: AddId, a: A): Either[Problem, Unit] = Left(
-      Problem.Unclassified(Legacy.Text(s"'$id': ${why.legacyText}"))
-    )
+    def add(id: AddId, a: A): Either[Problem, Unit] = Left(why)

@@ -5,7 +5,8 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkLookup, WorkRef}
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
@@ -27,7 +28,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   private def mailto = "mailto" -> cfg.mailto.value
 
   private def getJson(url: RepositoryLanding.Candidate.Url): Either[Problem, Json] =
-    http.json(url.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+    http.json(url.value)
 
   def search(
       query: OpenAlexCrossref.SearchQuery,
@@ -56,9 +57,8 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .left
       .flatMap { why =>
         // OpenAlex pauses anonymous search under load (HTTP 503); Crossref's search is keyless too
-        log.warn(Plugin.Log.Line(s"acquire: OpenAlex search failed (${why.legacyText}) — searching Crossref instead"))
-        crossrefSearch(query, from, sort, limit).left
-          .map(e => Problem.Unclassified(Legacy.Text(s"${why.legacyText}; Crossref: ${e.legacyText}")))
+        log.warn(Plugin.Log.Line(s"acquire: OpenAlex search failed (${why.sentence}) — searching Crossref instead"))
+        crossrefSearch(query, from, sort, limit)
       }
 
   /** Crossref `works?query=`: the same kinds of work (articles, books, chapters) from `from` on, by relevance or by

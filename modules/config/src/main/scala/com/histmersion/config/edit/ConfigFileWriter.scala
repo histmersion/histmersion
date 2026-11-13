@@ -24,7 +24,7 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
       for
         notes <- SettingPolicy.all(edits, schema, literalConsent)
         current <- read()
-        _ <- Either.cond(expected.forall(_ == current.version), (), SettingError.Changed)
+        _ <- expected.filterNot(_ == current.version).map(SettingError.Changed(_, current.version)).toLeft(())
         edited <- ConfigTextEdit(
           current.text.getOrElse(ConfigFileWriter.NewFileHeader),
           current.parsed,

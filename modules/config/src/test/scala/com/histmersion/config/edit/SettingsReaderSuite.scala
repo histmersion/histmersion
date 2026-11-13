@@ -1,6 +1,9 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
+
 import com.histmersion.config.AppConfig
 import com.histmersion.config.testsupport.ComparedByValue.given
 import org.ekrich.config.ConfigFactory
@@ -17,14 +20,14 @@ class SettingsReaderSuite extends munit.FunSuite:
     val f = d.resolve("histmersion.conf")
     Files.writeString(f, text)
     val e = ConfigFactory.parseMap(env.asJava)
-    val parsed = AppConfig.parseUserFile(f).fold(m => fail(m.legacyText), _.getOrElse(fail("no file")))
+    val parsed = AppConfig.parseUserFile(f).fold(m => fail(m.sentence), _.getOrElse(fail("no file")))
     val state = ConfigFileState(
       Some(ConfigFileState.Text(text)),
       FileVersion.of(Some(ConfigFileState.Text(text))),
       parsed,
       AppConfig.writtenIn(f)
     )
-    val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m.legacyText), _.merged)
+    val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m.sentences.mkString("; ")), _.merged)
     SettingsReader
       .read(ConfigSchema.reference, state, merged, e, prefix.map(key))
       .map(r => r.field.key.relative -> r)
@@ -68,7 +71,17 @@ class SettingsReaderSuite extends munit.FunSuite:
   test("loading a config file's text says what loading the file says"):
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = 3").isRight)
     val bad = AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = lots")
-    assert(bad.left.exists(_.legacyText.contains("backups.keep")), s"$bad")
+    assertEquals(
+      bad.swap.map(_.toVector),
+      Right(
+        Vector(
+          Problem.Config.Setting(
+            Problem.SettingKey("histmersion.backups.keep"),
+            Problem.Config.Fault.WrongKind(Problem.Config.ValueKind.Number, Problem.Config.ValueKind.Text)
+          )
+        )
+      )
+    )
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion { ").isLeft)
 
   test("the user file as a load parses it: with its includes, its own values told from an included file's"):
@@ -76,7 +89,7 @@ class SettingsReaderSuite extends munit.FunSuite:
     Files.writeString(d.resolve("shared.conf"), "histmersion.backups.keep = 11\n")
     val f = d.resolve("histmersion.conf")
     Files.writeString(f, "include \"shared.conf\"\nhistmersion.ui.page-size = 30\n")
-    val c = AppConfig.parseUserFile(f).fold(m => fail(m.legacyText), _.getOrElse(fail("no file")))
+    val c = AppConfig.parseUserFile(f).fold(m => fail(m.sentence), _.getOrElse(fail("no file")))
     assertEquals(c.getInt("histmersion.backups.keep"), 11)
     assert(AppConfig.writtenIn(f)(c.getValue("histmersion.ui.page-size").origin))
     assert(!AppConfig.writtenIn(f)(c.getValue("histmersion.backups.keep").origin))

@@ -1,7 +1,8 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.config.ConfigLayers
 import org.ekrich.config.{
   ConfigException,
   ConfigFactory,
@@ -61,16 +62,17 @@ object SettingValue:
   /** What a person typed, read as a setting of `kind` — the CLI's argument, a field of the web form. Text is taken as
     * typed; a number, a flag and a list are read; `Any` (a plugin's own key) guesses the kind.
     */
-  def parse(raw: Typed, kind: SettingKind): Either[Problem, SettingValue] =
+  def parse(raw: Typed, kind: SettingKind): Either[Problem.Config.Fault, SettingValue] =
     val t = Option(raw).map(_.value).getOrElse("")
+    def notA(expected: Problem.Config.ValueKind) =
+      Problem.Config.Fault.WrongKind(expected, Problem.Config.ValueKind.Text)
     kind match
       case SettingKind.Text   => Right(Text(Text.Value(t)))
-      case SettingKind.Number => number(t).toRight(Problem.Unclassified(Legacy.Text(s"'${t.trim}' is not a number")))
-      case SettingKind.Flag   => flag(t).toRight(Problem.Unclassified(Legacy.Text(s"'${t.trim}' is not true or false")))
+      case SettingKind.Number => number(t).toRight(notA(Problem.Config.ValueKind.Number))
+      case SettingKind.Flag   => flag(t).toRight(notA(Problem.Config.ValueKind.Flag))
       case SettingKind.Items  => items(t)
-      case SettingKind.Block  =>
-        Left(Problem.Unclassified(Legacy.Text("this is a block of settings: set one of the keys inside it")))
-      case SettingKind.Any =>
+      case SettingKind.Block  => Left(Problem.Config.Fault.Block)
+      case SettingKind.Any    =>
         Right(
           flag(t)
             .orElse(number(t))
@@ -88,22 +90,19 @@ object SettingValue:
       case _              => None
 
   /** `[a, "b c", 3]` (HOCON's list), or words between commas. */
-  private def items(t: String): Either[Problem, SettingValue] =
+  private def items(t: String): Either[Problem.Config.Fault, SettingValue] =
     val s = t.trim
     if s.isEmpty then Right(Items(Nil))
     else if s.startsWith("[") then
       try
         ConfigFactory.parseString(s"v = $s").getValue("v") match
           case l: ConfigList =>
-            fromConfig(l).toRight(Problem.Unclassified(Legacy.Text(s"'$s' holds something other than plain values")))
-          case _ => Left(Problem.Unclassified(Legacy.Text(s"'$s' is not a list")))
-      catch
-        case e: ConfigException =>
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}")
+            fromConfig(l).toRight(
+              Problem.Config.Fault.WrongKind(Problem.Config.ValueKind.List, Problem.Config.ValueKind.Block)
             )
-          )
+          case other =>
+            Left(Problem.Config.Fault.WrongKind(Problem.Config.ValueKind.List, ConfigLayers.kindOf(other)))
+      catch case e: ConfigException => Left(Problem.Config.Fault.Unreadable(External.Reported.of(e)))
     else Right(Items(s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(x => Text(Text.Value(x)))))
 
   /** A value as HOCON holds it — `None` for an object or null. */

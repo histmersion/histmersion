@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.plugin.Header
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -128,7 +128,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     val u = ConfigFactory.parseString(user)
     val host =
       FirstPartySettings.hostView(
-        AppConfig.loadWithUserFile(env, None).fold(p => fail(p.sentence), _.merged),
+        AppConfig.loadWithUserFile(env, None).fold(p => fail(p.sentences.mkString("; ")), _.merged),
         u,
         env,
         all

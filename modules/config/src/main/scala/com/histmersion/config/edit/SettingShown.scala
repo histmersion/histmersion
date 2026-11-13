@@ -58,5 +58,5 @@ object SettingShown:
       ),
       credentialForm = r.credential.map(c => CredentialForm(c.wire)),
       credentialShown = r.shown,
-      locked = r.locked.map(_.message)
+      locked = r.locked.map(_.message.toNonEmpty.head)
     )

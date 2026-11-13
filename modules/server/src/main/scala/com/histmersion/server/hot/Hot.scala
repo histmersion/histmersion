@@ -200,7 +200,7 @@ object Hot:
         )
         for
           _ <- if closed.get() then Left(Problem.Unclassified(Legacy.Text("hot graph: closed"))) else Right(())
-          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList)
+          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList).left.map(_.toNonEmpty.head)
           s = current.get()
           i <- instantiate(d, BuildCtx[C, Any](s.config, None, None, Nil, n => s.nodes(n).value), s.generation)
         yield
@@ -246,6 +246,8 @@ object Hot:
           val specs = defs.get()
           HotPlan
             .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.Key(n.value)), forced)
+            .left
+            .map(_.toNonEmpty.head)
             .flatMap { plan =>
               val byName = specs.map(d => d.name -> d).toMap
               val gen = Generation(s.generation.value + 1)

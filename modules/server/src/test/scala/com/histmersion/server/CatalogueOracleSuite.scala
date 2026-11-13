@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.Geocoding
@@ -553,7 +553,7 @@ class CatalogueOracleSuite extends DbSuite:
   private lazy val oracleLoaded: LoadedConfig =
     AppConfig
       .loadWithUserText(org.ekrich.config.ConfigFactory.empty, "histmersion.events.gvp.request-interval-ms = 0\n")
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   // ── the reads ──────────────────────────────────────────────────────────────────────────────
 

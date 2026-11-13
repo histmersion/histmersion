@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.settings.{info, ConfigSource}
 
@@ -49,7 +49,7 @@ import com.histmersion.util.console.Console
       // plugin that fails contributes nothing and the server still starts; --self-check says so.
       (l, ServerPlugins.load(l, core = core))
     case Left(err) =>
-      scribe.error(s"${err.sentence}")
+      err.sentences.foreach(scribe.error(_))
       sys.exit(3)
   val loaded = loadedConfig.config
   // the environment the settings were read with, and the paths and the clock: the only reads of them

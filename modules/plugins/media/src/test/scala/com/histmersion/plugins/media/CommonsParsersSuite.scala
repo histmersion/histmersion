@@ -1,5 +1,7 @@
 package com.histmersion
 package plugins.media
+
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -25,7 +27,8 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
-    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.legacyText), identity)
+    val loaded =
+      AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.sentences.mkString("; ")), identity)
     val supplied = FirstPartySettings.fallback(Plugin.Info.Id("media-wikidata"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
@@ -124,7 +127,7 @@ class CommonsParsersSuite extends munit.FunSuite:
       "AttributionRequired" -> "true"
     )
     assertEquals(it.withheld, None)
-    val r = it.rights.fold(e => fail(e.legacyText), identity)
+    val r = it.rights.fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(r.licence, Licence("CC-BY-SA-3.0"))
     assertEquals(HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family, "cc-by-sa")
     assertEquals(r.credit, "David Monniaux, CC BY-SA 3.0, via Wikimedia Commons")

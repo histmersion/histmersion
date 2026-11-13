@@ -3,7 +3,7 @@ package server.plugins
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -46,7 +46,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
     ): Either[Http.Failure, HttpAnswer.Body] = fail(s"asked $url")
 
   private def loaded(user: String, env: Map[String, String]): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e.sentence), identity)
+    AppConfig
+      .loadWithUserText(ConfigFactory.parseMap(env.asJava), user)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   /** As the server builds it: discovered, a former plugin's settings (oa-index) mapped first ([[LegacyPlugins]]), the
     * host's settings supplied.

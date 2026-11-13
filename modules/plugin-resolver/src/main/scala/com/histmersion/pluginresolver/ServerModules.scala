@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
+import com.histmersion.util.problem.Problems.traverseAll
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
@@ -21,15 +22,10 @@ object ServerModules:
   type ParseExcludes = Resolver.ManifestLine
   val ParseExcludes: Resolver.ManifestLine.type = Resolver.ManifestLine
 
-  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[Problem, ServerModules] =
+  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[Problems, ServerModules] =
     def entries(lines: List[ParseEntriesLines]) =
       lines.map((_).value.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
-    for
-      shipped <- traverse(entries(modules)) {
-        val refactorFunction = ModuleCoordinates.parse;
-        (refactorValue5) => refactorFunction(ModuleCoordinates.Text(refactorValue5))
-      }
-      excluded <- traverse(entries(excludes)) {
-        val refactorFunction2 = ModuleKey.parse; (refactorValue) => refactorFunction2(ModuleKey.Text(refactorValue))
-      }
-    yield ServerModules(shipped.map(c => c.key -> c.version).toMap, excluded.toSet)
+    entries(modules)
+      .traverseAll(m => ModuleCoordinates.parse(ModuleCoordinates.Text(m)))
+      .and(entries(excludes).traverseAll(e => ModuleKey.parse(ModuleKey.Text(e))))
+      .map((shipped, excluded) => ServerModules(shipped.map(c => c.key -> c.version).toMap, excluded.toSet))

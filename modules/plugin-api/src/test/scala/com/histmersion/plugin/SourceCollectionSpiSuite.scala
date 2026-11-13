@@ -1,7 +1,9 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
+
+import com.histmersion.util.problem.{External, Problem}
 
 /** SPI-11, the source collections: a context written before them refuses a collection, and a collection that declares
   * nothing but reading refuses every write by default, naming why.
@@ -13,7 +15,7 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
     ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+      Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
 
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
@@ -22,9 +24,10 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
     }
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
-      Problem.Unclassified(Legacy.Text("none"))
+      Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
     )
-    def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
+    def secretVaults =
+      Registry.refusing(Problem.Plugin.Vault(Problem.Plugin.Id("test"), Problem.Plugin.Retrieval.NoVault))
 
   /** A read-only collection with one item. */
   private object Shelf extends SourceCollection:
@@ -43,12 +46,14 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
     def file(
         item: CollectionItem,
         format: Option[SourceCollection.FileFormat]
-    ): Either[Problem, CollectionFile] = Left(Problem.Unclassified(Legacy.Text("no files")))
+    ): Either[Problem, CollectionFile] = Left(
+      Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no files"))
+    )
     def original(
         item: CollectionItem,
         file: CollectionFile
     ): Either[Problem, FetchedFile] = Left(
-      Problem.Unclassified(Legacy.Text("no files"))
+      Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no files"))
     )
 
   test("a context written before source collections refuses one, naming why"):
@@ -56,8 +61,8 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       ((EarlyContext.sourceCollections
         .add(Registry.AddId("shelf"), Shelf))
         .left
-        .map(refactorError3 => (refactorError3).legacyText): Either[String, Unit]),
-      Left("'shelf': this host has no source collections")
+        .map(refactorError3 => (refactorError3).sentence): Either[String, Unit]),
+      Left("this server has no source collections")
     )
 
   test("a collection reads only, admits every item, has no cover, is reachable and finds nothing to audit by default"):
@@ -84,23 +89,23 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       FetchedFile(FetchedFile.Source("test"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     val id = CollectionId("b1")
     assertEquals(
-      ((Shelf.add(meta, file)).left.map(refactorError => (refactorError).legacyText): Either[String, CollectionId]),
-      Left("Shelf does not take new items: it is read-only")
+      ((Shelf.add(meta, file)).left.map(refactorError => (refactorError).sentence): Either[String, CollectionId]),
+      Left("the collection is read-only")
     )
     assertEquals(
       (((Shelf
         .replace(id, SourceCollection.ReplaceKey("k"), file))
         .left
-        .map(refactorError4 => (refactorError4).legacyText))
+        .map(refactorError4 => (refactorError4).sentence))
         .map(refactorValue2 => (refactorValue2).value): Either[String, String]),
-      Left("Shelf does not take new files: it is read-only")
+      Left("the collection is read-only")
     )
     assertEquals(
       ((Shelf
         .update(id, meta))
         .left
-        .map(refactorError2 => (refactorError2).legacyText): Either[String, List[CollectionChange]]),
-      Left("Shelf does not rewrite its items: it is read-only")
+        .map(refactorError2 => (refactorError2).sentence): Either[String, List[CollectionChange]]),
+      Left("the collection is read-only")
     )
     assertEquals(
       Shelf.updateAll(List(CollectionLink(id, meta)), apply = SourceCollection.UpdateAllApply(false)).isLeft,

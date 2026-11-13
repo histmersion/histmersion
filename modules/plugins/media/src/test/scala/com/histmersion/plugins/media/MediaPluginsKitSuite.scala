@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.util.problem.Text.sentences
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -33,11 +35,14 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       config: String = "",
       env: Map[String, String] = Map.empty
   ) =
-    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = env).fold(e => fail(e.legacyText), identity)
+    PluginHarness
+      .load(id, config, http = HttpMode.Stub(stubs), env = env)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
-    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.legacyText), identity)
+    val loaded =
+      AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.sentences.mkString("; ")), identity)
     val supplied = FirstPartySettings.fallback(Plugin.Info.Id("media-met"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
@@ -68,7 +73,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
   test("the keyless plugins are on by default, the two that need a key of the user's own off, with no key"):
     collections.foreach { (id, _) =>
       val h = load(Plugin.Info.Id(id))
-      val defaults = PluginHost.defaults(h.plugin).fold(e => fail(e.legacyText), identity).resolve()
+      val defaults = PluginHost.defaults(h.plugin).fold(e => fail(e.sentences.mkString("; ")), identity).resolve()
       assertEquals(defaults.getBoolean("enabled"), !keyed(id), id)
       if keyed(id) then assert(defaults.getIsNull("api-key"), s"$id ships no key")
     }

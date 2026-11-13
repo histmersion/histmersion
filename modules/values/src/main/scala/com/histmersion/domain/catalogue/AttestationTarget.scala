@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 object AttestationTarget:
   type Wire = Wire.T
@@ -19,5 +19,5 @@ object AttestationTarget:
     Either.cond(
       all.contains(n),
       Wire(n),
-      Problem.Unclassified(Legacy.Text(s"unknown target type '$t' (${all.mkString(", ")})"))
+      Problem.Invalid.Unknown(Problem.TypeName.of(Wire), Problem.Raw(s"$t"), all.map(w => Problem.Raw(s"$w")).toVector)
     )

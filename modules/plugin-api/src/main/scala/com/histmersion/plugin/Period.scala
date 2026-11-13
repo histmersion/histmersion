@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -29,7 +29,12 @@ object Period:
     Either.cond(
       start <= end,
       new Period(start, end),
-      Problem.Unclassified(Legacy.Text(s"the period ends (${end.value}) before it starts (${start.value})"))
+      Problem.Invalid.OutOfRange(
+        Problem.TypeName.of(Year),
+        Problem.Raw(s"$end"),
+        Problem.Invalid.Bounds(Some(Problem.Raw(s"$start")), None),
+        Vector(Problem.Field("end"))
+      )
     )
 
   /** The period of one year. */

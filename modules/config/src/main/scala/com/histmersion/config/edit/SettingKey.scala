@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import org.ekrich.config.ConfigUtil
@@ -34,13 +34,7 @@ object SettingKey extends Newtype[String, SettingKeyRule]:
   def parse(raw: ParseRaw): Either[Problem, SettingKey] =
     val t = Option(raw).map(_.value).getOrElse("").trim
     val full = if t == Root || t.startsWith(s"$Root.") then t else s"$Root.$t"
-    either(full).left.map(_ =>
-      Problem.Unclassified(
-        Legacy.Text(
-          s"'$t' is not a setting's name: dot-separated words of letters, digits, '_' and '-', such as backups.keep"
-        )
-      )
-    )
+    either(full).left.map(_ => Problem.Invalid.malformed(refused(t)))
 
   extension (k: SettingKey)
     /** The path's words, `histmersion` first. */

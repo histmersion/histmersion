@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -454,7 +454,7 @@ class AcquisitionOracleSuite extends DbSuite:
     CalibreFixture.refuseRealLibrary(lib.dir)
     val loaded = AppConfig
       .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), userText(up, lib, allowUnauthorised))
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     val c = loaded.config
     val cfg = c
       .modify(_.db)

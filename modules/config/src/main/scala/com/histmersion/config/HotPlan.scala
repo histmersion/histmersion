@@ -1,8 +1,7 @@
 package com.histmersion
 package config
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
   * them (every node that depends on one, transitively), and in which order. The server's `hot.HotGraph` builds and
@@ -23,30 +22,35 @@ object HotPlan:
   /** The nodes in an order where every node comes after the nodes it depends on (declaration order among independent
     * ones). Refused: a name used twice, a dependency on no node, a cycle (named).
     */
-  def order(nodes: List[HotNode]): Either[Problem, List[HotNode.Name]] =
+  def order(nodes: List[HotNode]): Either[Problems, List[HotNode.Name]] =
     val names = nodes.map(_.name)
-    val dup = names.diff(names.distinct).distinct
     val known = names.toSet
-    val missing = nodes.flatMap(n => depNames(n).filterNot(known).map(d => s"${n.name} → $d"))
-    if dup.nonEmpty then
-      Left(Problem.Unclassified(Legacy.Text(s"hot graph: node name used twice: ${dup.mkString(", ")}")))
-    else if missing.nonEmpty then
-      Left(Problem.Unclassified(Legacy.Text(s"hot graph: dependency on no node: ${missing.mkString(", ")}")))
-    else
-      val byName = nodes.map(n => n.name -> n).toMap
-      // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
-      @annotation.tailrec
-      def go(left: List[HotNode], done: Vector[HotNode.Name]): Either[Problem, List[HotNode.Name]] =
-        if left.isEmpty then Right(done.toList)
-        else
-          val doneSet = done.toSet
-          left.find(depNames(_).forall(doneSet)) match
-            case Some(n) => go(left.filterNot(_.name == n.name), done :+ n.name)
-            case None    =>
-              Left(
-                Problem.Unclassified(Legacy.Text(s"hot graph: dependency cycle ${cycle(left, byName).mkString(" → ")}"))
-              )
-      go(nodes, Vector.empty)
+    val name = Problem.TypeName.of(HotNode.Name)
+    val dup = names
+      .diff(names.distinct)
+      .distinct
+      .map(d => Problem.Conflict.AlreadyExists(name, Problem.Raw(s"$d")))
+    val missing = nodes.flatMap(n =>
+      depNames(n)
+        .filterNot(known)
+        .map(d => Problem.Invalid.Unknown(name, Problem.Raw(s"$d"), Vector.empty, Vector(Problem.Field(s"${n.name}"))))
+    )
+    NonEmptyVector.from((dup ++ missing).toVector) match
+      case Some(faults) => Left(faults)
+      case None         =>
+        val byName = nodes.map(n => n.name -> n).toMap
+        // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
+        @annotation.tailrec
+        def go(left: List[HotNode], done: Vector[HotNode.Name]): Either[Problems, List[HotNode.Name]] =
+          if left.isEmpty then Right(done.toList)
+          else
+            val doneSet = done.toSet
+            left.find(depNames(_).forall(doneSet)) match
+              case Some(n) => go(left.filterNot(_.name == n.name), done :+ n.name)
+              case None    =>
+                val path = cycle(left, byName).map(n => Problem.Config.Scope(s"$n"))
+                Left(Problem.Config.Cycle(NonEmptyVector.of(path.head, path.tail*)))
+        go(nodes, Vector.empty)
 
   /** One cycle among `left` (every node of which waits on another of them), as a closed path. */
   private def cycle(left: List[HotNode], byName: Map[HotNode.Name, HotNode]): List[HotNode.Name] =
@@ -80,7 +84,7 @@ object HotPlan:
       nodes: List[HotNode],
       changed: Iterable[ConfigReload.Key],
       forced: Set[HotNode.Name] = Set.empty
-  ): Either[Problem, List[HotNode.Name]] =
+  ): Either[Problems, List[HotNode.Name]] =
     order(nodes).map { ordered =>
       val rebuild = dependents(nodes, touched(nodes, changed) ++ forced.intersect(nodes.map(_.name).toSet))
       ordered.filter(rebuild)

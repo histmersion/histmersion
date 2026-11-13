@@ -1,7 +1,7 @@
 package com.histmersion
 package server.plugins
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -144,7 +144,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("the full built-in set: the fetchers, the collections and the catalogues; no plugin needs a setting"):
     val loaded = AppConfig
       .loadWithUserText(ConfigFactory.empty, "")
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     val g = ServerPlugins.load(
       loaded,
       transport = _ => fail("no HTTP at registration"),

@@ -242,7 +242,10 @@ class PluginCmdSuite extends munit.FunSuite:
       val src = jarFile(e.home.getParent.resolve("downloads"), "p.jar")
       e.describe("hello", "0.1.0", spi = 7)
       val spi = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
-      assert(spi.left.exists(_.message.sentence.contains("built for plugin SPI 7; this Histmersion speaks SPI 1")), spi)
+      assert(
+        spi.left.exists(_.message.sentence.contains("built against plugin SPI 7; this Histmersion speaks SPI 1")),
+        spi
+      )
       e.describe("hello", "0.1.0")
       val sum =
         e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true), sha256 = Some(AddOptions.Sha256("0" * 64))))

@@ -1,6 +1,8 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.Problem
+
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.
   */
@@ -25,9 +27,6 @@ object SecretForm:
   private val EnvName = "[A-Za-z_][A-Za-z0-9_]*".r
   private val VaultName = "[a-z0-9][a-z0-9-]*".r
 
-  /** The forms a reference takes, for a message. */
-  val Forms = "env:<NAME>, <vault>:<entry> (keepassxc:…, 1password:…, bitwarden:…) or value:<the value itself>"
-
   /** How `text` refers to a credential (`rule`: what its setting is). */
   def of(text: String, rule: SecretRule): SecretForm =
     val t = Option(text).getOrElse("").trim
@@ -36,19 +35,21 @@ object SecretForm:
     else reference(t).fold(_ => Plain, identity)
 
   /** The reference's form, or why `text` is none. Never repeats `text` (it may be the value). */
-  def reference(text: String): Either[String, SecretForm] =
+  def reference(text: String): Either[Problem, SecretForm] =
     val t = text.trim
+    def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference(form))
     t.indexOf(':') match
-      case i if i <= 0 => Left(s"a credential is written as a reference — $Forms — never as the bare value")
+      case i if i <= 0 => not(Problem.Invalid.Form.Bare)
       case i           =>
         val (scheme, rest) = (t.take(i), t.drop(i + 1).trim)
         scheme match
-          case ValueScheme => if rest.isEmpty then Left("value: holds nothing") else Right(Literal)
+          case ValueScheme => if rest.isEmpty then not(Problem.Invalid.Form.EmptyValue) else Right(Literal)
           case EnvScheme   =>
             if EnvName.matches(rest) then Right(Environment)
-            else Left(s"env:$rest is not an environment variable's name")
-          case VaultName() => if rest.isEmpty then Left(s"$scheme: names no entry") else Right(Vault)
-          case _           => Left(s"a credential is written as a reference — $Forms")
+            else not(Problem.Invalid.Form.EnvName(Problem.Raw(s"$rest")))
+          case VaultName() =>
+            if rest.isEmpty then not(Problem.Invalid.Form.NoEntry(Problem.Raw(s"$scheme"))) else Right(Vault)
+          case _ => not(Problem.Invalid.Form.VaultName(Problem.Raw(s"$scheme")))
 
   /** The reference as it may be shown: the scheme and name of an environment variable or a vault entry, `value:***` for
     * a literal, nothing for a plain value.

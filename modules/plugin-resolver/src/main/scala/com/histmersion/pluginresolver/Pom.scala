@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import org.w3c.dom.{Element, Node}
 import org.xml.sax.helpers.DefaultHandler
 
@@ -30,21 +30,17 @@ object Pom:
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
 
-  def coordinates(xml: Pom.CoordinatesXml): Either[Problem, ModuleCoordinates] =
-    for
-      project <- parse(xml)
-      parent = child(project, ElementName("parent"))
-      group <- text(project, ElementName("groupId"))
-        .orElse(parent.flatMap(text(_, ElementName("groupId"))))
-        .toRight(Problem.Unclassified(Legacy.Text("the POM names no groupId")))
-      artifact <- text(project, ElementName("artifactId")).toRight(
-        Problem.Unclassified(Legacy.Text("the POM names no artifactId"))
-      )
-      version <- text(project, ElementName("version"))
-        .orElse(parent.flatMap(text(_, ElementName("version"))))
-        .toRight(Problem.Unclassified(Legacy.Text("the POM names no version")))
-      coords <- ModuleCoordinates.parse(ModuleCoordinates.Text(s"$group:$artifact:$version"))
-    yield coords
+  def coordinates(xml: Pom.CoordinatesXml): Either[Problems, ModuleCoordinates] =
+    parse(xml).flatMap { project =>
+      val parent = child(project, ElementName("parent"))
+      def named(name: String, inherited: Boolean) =
+        text(project, ElementName(name))
+          .orElse(Option.when(inherited)(parent.flatMap(text(_, ElementName(name)))).flatten)
+          .toRight(Problem.Invalid.Missing(Problem.Field(s"$name"), Vector(Problem.Field("project"))))
+      (named("groupId", true), named("artifactId", false), named("version", true)).allOrProblems.flatMap {
+        (group, artifact, version) => ModuleCoordinates.parse(ModuleCoordinates.Text(s"$group:$artifact:$version"))
+      }
+    }
 
   /** The POM published beside a jar (`x-1.0.jar` → `x-1.0.pom`), else the one Maven's jar plugin puts in the jar when
     * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
@@ -82,8 +78,14 @@ object Pom:
       builder.setErrorHandler(new DefaultHandler)
       builder.parse(ByteArrayInputStream((xml).value.getBytes(UTF_8))).getDocumentElement
     }.toEither.left
-      .map(e => Problem.Unclassified(Legacy.Text(s"not a POM: ${e.getMessage}")))
-      .filterOrElse(_.getLocalName == "project", Problem.Unclassified(Legacy.Text("not a POM: no <project>")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Xml,
+          Problem.Where("the POM"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(e))
+        )
+      )
+      .filterOrElse(_.getLocalName == "project", Problem.Invalid.Missing(Problem.Field("project")))
 
   private def child(e: Element, name: ElementName): Option[Element] =
     val nodes = e.getChildNodes

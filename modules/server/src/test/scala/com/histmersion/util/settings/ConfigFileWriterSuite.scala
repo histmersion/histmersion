@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.cli.LocalSettingsFile
@@ -43,7 +43,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
   private def ok(f: Path, edits: SettingEdit*): WriteOutcome =
     writer(f)
       .write(edits.toList, None, literalConsent = SettingPolicy.LiteralConsent(false))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.message.sentences.mkString(" ")), identity)
 
   private def refused(f: Path, edits: SettingEdit*): SettingError =
     writer(f)
@@ -111,7 +111,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val f = d.resolve("histmersion.conf")
     val o = writer(f)
       .write(List(set(K("backups.keep"), num(9))), None, literalConsent = SettingPolicy.LiteralConsent(false))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.message.sentences.mkString(" ")), identity)
     assert(o.created.value)
     assertEquals(o.backup, None)
     assert(read(f).startsWith(ConfigFileWriter.NewFileHeader.value))
@@ -174,10 +174,12 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
 
   test("a value of the wrong kind, an unknown key and a block are refused in plain words"):
     val f = fileWith(Commented)
-    assert(refused(f, set(K("backups.keep"), text(T("many")))).message.sentence.contains("takes a number"))
-    val unknown = refused(f, set(K("backups.kep"), num(1))).message.sentence
+    assert(
+      refused(f, set(K("backups.keep"), text(T("many")))).message.sentences.mkString(" ").contains("takes a number")
+    )
+    val unknown = refused(f, set(K("backups.kep"), num(1))).message.sentences.mkString(" ")
     assert(unknown.contains("no setting called backups.kep") && unknown.contains("Did you mean backups.keep"), unknown)
-    assert(refused(f, set(K("backups"), num(1))).message.sentence.contains("group of settings"))
+    assert(refused(f, set(K("backups"), num(1))).message.sentences.mkString(" ").contains("group of settings"))
     assertEquals(read(f), Commented)
 
   test("a value the server could not start with is refused before the file is touched"):
@@ -188,7 +190,10 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
       set(K("basemap.bathymetry.source"), text(T("nonsense")))
     )
     assert(e.isInstanceOf[SettingError.Invalid], s"$e")
-    assert(e.message.sentence.contains("could not") || e.message.sentence.contains("cannot"), e.message)
+    assert(
+      e.message.sentences.mkString(" ").contains("could not") || e.message.sentences.mkString(" ").contains("cannot"),
+      e.message
+    )
     assertEquals(read(f), Commented)
     assert(
       !Files.list(f.getParent).iterator.asScala.exists(_.getFileName.toString.endsWith(".tmp")),
@@ -204,11 +209,11 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val w = writer(f)
     val v = w.read().toOption.get.version
     Files.writeString(f, Commented + "\n# edited by hand\n")
+    val now = w.read().toOption.get.version
     assertEquals(
       w.write(List(set(K("backups.keep"), num(8))), Some(v), literalConsent = SettingPolicy.LiteralConsent(false)),
-      Left(SettingError.Changed)
+      Left(SettingError.Changed(v, now))
     )
-    val now = w.read().toOption.get.version
     assert(
       w.write(List(set(K("backups.keep"), num(8))), Some(now), literalConsent = SettingPolicy.LiteralConsent(false))
         .isRight
@@ -216,8 +221,16 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
 
   test("credentials: the value itself never goes in the file; a plugin's is a reference, value: only when confirmed"):
     val f = fileWith(Commented)
-    assert(refused(f, set(K("auth.api-key"), text(T("s3cret")))).message.sentence.contains("HISTMERSION_API_KEY"))
-    assert(refused(f, set(K("plugins.oa-core.api-key"), text(T("s3cret")))).message.sentence.contains("reference"))
+    assert(
+      refused(f, set(K("auth.api-key"), text(T("s3cret")))).message.sentences
+        .mkString(" ")
+        .contains("HISTMERSION_API_KEY")
+    )
+    assert(
+      refused(f, set(K("plugins.oa-core.api-key"), text(T("s3cret")))).message.sentences
+        .mkString(" ")
+        .contains("reference")
+    )
     assert(
       refused(f, set(K("plugins.oa-core.api-key"), text(T("value:s3cret"))))
         .isInstanceOf[SettingError.LiteralNeedsConsent]
@@ -234,7 +247,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
         None,
         literalConsent = SettingPolicy.LiteralConsent(true)
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.message.sentences.mkString(" ")), identity)
     assert(lit.warnings.exists(_.value.contains("anyone who can read")), s"${lit.warnings}")
 
   test("the file's permissions are kept"):
@@ -252,7 +265,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
         None,
         literalConsent = SettingPolicy.LiteralConsent(false)
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.message.sentences.mkString(" ")), identity)
     assertEquals(o.restart.map(_._1.relative), List("server.port"))
     assert(o.warnings.exists(_.value.contains("HISTMERSION_BACKUPS_KEEP")), s"${o.warnings}")
 
@@ -273,7 +286,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val link = Files.createSymbolicLink(d.resolve("histmersion.conf"), real)
     writer(link)
       .write(List(set(K("backups.keep"), num(12))), None, literalConsent = SettingPolicy.LiteralConsent(false))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.message.sentences.mkString(" ")), identity)
     assert(Files.isSymbolicLink(link))
     assert(read(real).contains("keep = 12"))
 

@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.server.CatalogueWiring
@@ -80,7 +80,7 @@ class EventTrafficSuite extends DbSuite:
       |""".stripMargin
 
   private lazy val loaded: LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentences.mkString("; ")), identity)
   private def cfg = loaded.config
 
   private lazy val ds =

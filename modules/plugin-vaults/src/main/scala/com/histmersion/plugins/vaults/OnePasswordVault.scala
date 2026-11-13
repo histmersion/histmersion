@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.vaults
+import Vaults.{failed, said}
 import com.histmersion.util.problem.Problem
 
 import scala.annotation.tailrec
@@ -33,10 +34,16 @@ final class OnePasswordVault(
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(uri))
     yield v
 
-  private def classify(uri: String)(err: String): Option[String] =
+  private def classify(uri: String)(err: String): Option[Problem] =
     if err.contains("not currently signed in") || err.contains("sign in") || err.contains("authorization") ||
       err.contains("session expired") || err.contains("locked")
-    then Some(s"$name: not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\"")
+    then
+      Some(
+        name.said(
+          Problem.Plugin.Claim.Misconfigured,
+          "not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\""
+        )
+      )
     else if err.contains("isn't an item") || err.contains("could not find") || err.contains("not found") then
-      Some(s"$name: no item at $uri")
+      Some(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$uri"))))
     else None

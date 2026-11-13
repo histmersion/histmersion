@@ -2,7 +2,7 @@ package com.histmersion
 package server.media
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -168,7 +168,7 @@ object MediaWire:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
 
-  def load(more: String): Either[Problem, LoadedConfig] =
+  def load(more: String): Either[Problems, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
   private def place(

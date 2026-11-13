@@ -1,7 +1,7 @@
 package com.histmersion
 package config
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, NonEmptyVector, Problem, Problems, Raised}
 import scala.annotation.tailrec
 import org.ekrich.config.{
   Config,
@@ -10,14 +10,13 @@ import org.ekrich.config.{
   ConfigObject,
   ConfigOrigin,
   ConfigParseOptions,
-  ConfigRenderOptions,
   ConfigUtil,
   ConfigValue,
   ConfigValueFactory,
   ConfigValueType
 }
 import com.histmersion.config.edit.SettingKey
-import hearth.kindlings.sconfigderivation.ConfigDecodingError
+import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -108,10 +107,7 @@ private[config] object ConfigLayers:
           if !Try(known.hasPathOrNull(path)).getOrElse(false) then loop(tail, settings, unknown :+ Keys.Unknown(path))
           else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
             if isBlock then loop(tail, settings, unknown)
-            else
-              Left(
-                Problem.Unclassified(Legacy.Text(s"'$path' is a block of settings ($path { … }), not a single value"))
-              )
+            else Left(Problem.Config.Setting(Problem.SettingKey(s"$path"), Problem.Config.Fault.Block))
           else loop(tail, settings :+ Keys.Settings(path), unknown)
     loop(leaves(user.root, Nil), Nil, Nil)
 
@@ -120,36 +116,50 @@ private[config] object ConfigLayers:
     * accept it (that is how env values arrive). Finer mismatches (a fraction for a whole number) are left to the
     * readers.
     */
-  def typeCheck(settings: List[Keys.Settings], merged: Config, known: Config): Either[Problem, Unit] =
-    settings.iterator
-      .flatMap(path =>
-        (Try(known.getValue(path.value)).toOption, Try(merged.getValue(path.value)).toOption) match
-          case (Some(k), Some(v)) => mismatch(path, k, v)
-          case _                  => None
+  def typeCheck(settings: List[Keys.Settings], merged: Config, known: Config): Either[Problems, Unit] =
+    NonEmptyVector
+      .from(
+        settings.toVector.flatMap(path =>
+          (Try(known.getValue(path.value)).toOption, Try(merged.getValue(path.value)).toOption) match
+            case (Some(k), Some(v)) => mismatch(path, k, v)
+            case _                  => None
+        )
       )
-      .nextOption()
       .toLeft(())
 
   private def mismatch(path: Keys.Settings, k: ConfigValue, v: ConfigValue): Option[Problem] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
-    def shown = v.render(ConfigRenderOptions.concise)
     val (ok, want) = k.valueType match
-      case NUMBER  => (v.valueType == NUMBER || v.valueType == STRING && text.toDoubleOption.isDefined, "a number")
-      case BOOLEAN =>
-        (v.valueType == BOOLEAN || v.valueType == STRING && text.toBooleanOption.isDefined, "true or false")
-      case STRING => (v.valueType == STRING || v.valueType == NUMBER || v.valueType == BOOLEAN, "a string")
-      case LIST   => (v.valueType == LIST, "a list [ … ]")
-      case _      => (true, "")
-    Option.unless(ok)(Problem.Unclassified(Legacy.Text(s"'$path' must be $want, not $shown")))
+      case NUMBER  => (v.valueType == NUMBER || v.valueType == STRING && text.toDoubleOption.isDefined, kindOf(k))
+      case BOOLEAN => (v.valueType == BOOLEAN || v.valueType == STRING && text.toBooleanOption.isDefined, kindOf(k))
+      case STRING  => (v.valueType == STRING || v.valueType == NUMBER || v.valueType == BOOLEAN, kindOf(k))
+      case LIST    => (v.valueType == LIST, kindOf(k))
+      case _       => (true, kindOf(k))
+    Option.unless(ok)(
+      Problem.Config.Setting(Problem.SettingKey(s"$path"), Problem.Config.Fault.WrongKind(want, kindOf(v)))
+    )
+
+  /** The kind of value HOCON holds. */
+  def kindOf(v: ConfigValue): Problem.Config.ValueKind = v.valueType match
+    case ConfigValueType.NUMBER  => Problem.Config.ValueKind.Number
+    case ConfigValueType.BOOLEAN => Problem.Config.ValueKind.Flag
+    case ConfigValueType.STRING  => Problem.Config.ValueKind.Text
+    case ConfigValueType.LIST    => Problem.Config.ValueKind.List
+    case ConfigValueType.OBJECT  => Problem.Config.ValueKind.Block
+    case _                       => Problem.Config.ValueKind.Null
 
   /** `file` as HOCON; `None` when there is no such file. */
   def parse(file: Path): Either[Problem, Option[Config]] =
     if !Files.exists(file) then Right(None)
-    else if !Files.isRegularFile(file) then Left(Problem.Unclassified(Legacy.Text(s"$file is not a file")))
+    else if !Files.isRegularFile(file) then Left(Problem.Io.Wrong(Problem.Io.Path(s"$file"), Problem.Io.Kind.File))
     else
       try Right(Some(ConfigFactory.parseFile(file.toFile, ConfigParseOptions.defaults.setAllowMissing(false))))
-      catch case e: ConfigException => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
+      catch case e: ConfigException => Left(unreadable(e, Problem.Where(s"$file")))
+
+  /** Settings that do not read: the HOCON at `where`, and what its reader said. */
+  def unreadable(e: ConfigException, where: Problem.Where): Problem =
+    Problem.Io.Corrupt(Problem.Io.Format.Hocon, where, Problem.Io.Damage.Unreadable(External.Reported.of(e)))
 
   /** Is `o` the origin of `file` itself, not of a file it includes? */
   def sameFile(o: ConfigOrigin, file: Path): Boolean =
@@ -157,14 +167,43 @@ private[config] object ConfigLayers:
       Try(Path.of(f).toAbsolutePath.normalize).toOption.contains(file.toAbsolutePath.normalize)
     )
 
-  /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
-  def describe(err: ConfigDecodingError): Problem =
+  /** What a decoding error says, at the key it names (spelled as it is in the file): the problems a reader of ours
+    * raised ([[Raised]]), else the reader library's own words about the key.
+    */
+  def describe(err: ConfigDecodingError): Problems =
     err match
       case ConfigDecodingError.Multiple(errs) =>
-        Problem.Unclassified(Legacy.Text(errs.toList.map(describe).mkString("; ")))
+        NonEmptyVector.of(errs.head, errs.tail*).map(describe).toVector.reduce(_ ++ _)
+      case ConfigDecodingError.CannotConvert(path, _, Some(raised: Raised)) =>
+        raised.problems.at(Problem.Field(s"${keyOf(path)}"))
+      case ConfigDecodingError.Missing(path, key) =>
+        Problem.Invalid.Missing(Problem.Field(s"${keyOf(ending(path, key))}"))
+      case ConfigDecodingError.UnknownKey(path, key) =>
+        Problem.Config.Setting(Problem.SettingKey(s"${keyOf(ending(path, key))}"), Problem.Config.Fault.Undeclared)
       case e =>
-        val key = ("histmersion" :: e.path).mkString(".")
-        Problem.Unclassified(Legacy.Text(s"$key: ${e.message}"))
+        Problem.Config
+          .Setting(
+            Problem.SettingKey(s"${keyOf(e.path)}"),
+            Problem.Config.Fault.Unreadable(External.Reported.of(e.message))
+          )
+
+  private def keyOf(path: List[String]): String = ("histmersion" :: path).mkString(".")
+
+  private def ending(path: List[String], key: String): List[String] =
+    if path.lastOption.contains(key) then path else path :+ key
+
+  /** A reader of a setting that checks what it read: a `Left` is raised to [[describe]], which places it at the key. */
+  def checking[A, B](reader: ConfigReader[A])(check: A => Either[Problems, B]): ConfigReader[B] =
+    new ConfigReader[B]:
+      def from(v: ConfigValue) =
+        reader
+          .from(v)
+          .flatMap(a =>
+            check(a).left.map { problems =>
+              val raised = Raised(problems)
+              ConfigDecodingError.CannotConvert(Nil, raised.getMessage, Some(raised))
+            }
+          )
 
   /** The three layers resolved: env overrides > `user` > reference.conf, with the environment also available to
     * substitutions (`${?VAR}`) in the user file.

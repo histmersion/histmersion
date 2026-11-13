@@ -1,6 +1,8 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.Problem
+
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -18,6 +20,15 @@ enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe)
   case Any extends SettingKind(SettingKind.Wire("any"), SettingKind.Describe("a value"))
 
 object SettingKind:
+  extension (kind: SettingKind)
+    /** The kind as a problem names it. */
+    def valueKind: Problem.Config.ValueKind = kind match
+      case Number => Problem.Config.ValueKind.Number
+      case Flag   => Problem.Config.ValueKind.Flag
+      case Items  => Problem.Config.ValueKind.List
+      case Block  => Problem.Config.ValueKind.Block
+      case _      => Problem.Config.ValueKind.Text
+
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   type Describe = Describe.T
