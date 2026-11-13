@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.util.problem.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -753,19 +754,30 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.markdownUnlinked(Nil, Paging.Page.Total(0)), "_Every Calibre entry is linked to a source._")
 
   test("calibre search takes a query or --unlinked; calibre import takes --acquire-item, but not with --no-convert"):
-    val top = com.monovore.decline.Command("histmersion", "test")(CalibreCmd.all)
-    def parse(args: String*) = top.parse(args.toList, Map.empty)
+    def parse(args: String*) = Parsing.parse(args*)
+    def refusal(args: String*) = parse(args*) match
+      case Left(CommandLine.Outcome.Failed(p, _)) => p
+      case other                                  => fail(s"not refused: $other")
     assert(parse("calibre", "search", "troy").isRight)
     assert(parse("calibre", "search", "--unlinked").isRight)
     assert(parse("calibre", "search", "--unlinked", "troy", "--limit", "5").isRight)
     assert(parse("calibre", "search", "").isRight, "an empty query is the whole library")
-    assert(parse("calibre", "search").left.exists(_.errors.mkString.contains("--unlinked")))
+    assertEquals(refusal("calibre", "search"), Problem.Invalid.Missing(Problem.Field("query")))
     assert(parse("calibre", "import", "1693", "--acquire-item", "12").isRight)
-    assert(
-      parse("calibre", "import", "1693", "--acquire-item", "12", "--no-convert").left.exists(
-        _.errors.mkString.contains("drop --no-convert")
+    assertEquals(
+      refusal("calibre", "import", "1693", "--acquire-item", "12", "--no-convert"),
+      Problem.Invalid.Inconsistent(
+        NonEmptyVector.of(Problem.Field("--no-convert"), Problem.Field("--acquire-item")),
+        Problem.Invalid.Exclusion.AtMostOne
       )
     )
+
+  test("calibre update: one citekey, or --all [--apply]; not both, not neither, --apply only with --all"):
+    assert(Parsing.parse("calibre", "update", "troy2001_x").isRight)
+    assert(Parsing.parse("calibre", "update", "--all", "--apply", "--json").isRight)
+    assert(Parsing.parse("calibre", "update").isLeft)
+    assert(Parsing.parse("calibre", "update", "troy2001_x", "--all").isLeft)
+    assert(Parsing.parse("calibre", "update", "troy2001_x", "--apply").isLeft)
 
   test("#1446: a book's cover file — calibredb's `cover` field, the sqlite fallback's `has_cover`"):
     val b = Calibre

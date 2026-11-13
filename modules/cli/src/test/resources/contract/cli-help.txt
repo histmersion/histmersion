@@ -3759,21 +3759,19 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion calibre update
-Usage:
-    histmersion calibre update [--json] <citekey>
-    histmersion calibre update --all [--apply] [--json]
+Usage: histmersion calibre update [--all] [--apply] [--json] [<citekey>]
 
 Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)
 
 Options and flags:
     --help
         Display this help text.
-    --json
-        Print the raw JSON response instead of Markdown
     --all
         Every Calibre entry a source is linked to (a dry run listing the changes, unless --apply)
     --apply
         With --all: write the changes (Calibre GUI must be closed)
+    --json
+        Print the raw JSON response instead of Markdown
 
 ==== histmersion calibre set
 Usage: histmersion calibre set --field <string> [--field <string>]... <calibre-id>
@@ -4373,7 +4371,7 @@ Options and flags:
         Relink right after removing
 
 ==== histmersion plugin list
-Usage: histmersion plugin list 
+Usage: histmersion plugin list
 
 The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each
 
@@ -4382,7 +4380,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion plugin status
-Usage: histmersion plugin status 
+Usage: histmersion plugin status
 
 Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing
 
