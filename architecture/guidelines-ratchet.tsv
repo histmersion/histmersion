@@ -20,7 +20,7 @@ G3misplaced	plugins/fetchers	test	1
 G3misplaced	plugins/gazetteers	main	4
 G3misplaced	plugins/media	main	23
 G3misplaced	server	main	354
-G3misplaced	server	test	71
+G3misplaced	server	test	70
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	923
@@ -85,11 +85,11 @@ G44plaindef	server	main	29
 G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	27
-G45boundary	api	main	584
+G45boundary	api	main	581
 G45boundary	cli	main	993
 G45boundary	config	main	56
 G45boundary	console	main	4
-G45boundary	core	main	13
+G45boundary	core	main	10
 G45boundary	db	main	2082
 G45boundary	files	main	33
 G45boundary	plugin-host	main	290
@@ -194,7 +194,7 @@ G47self	web	main	745
 G48	api	main	31
 G48	core	main	129
 G48	server	main	287
-G49	api	main	1151
+G49	api	main	1150
 G49	api	test	146
 G49	cli	main	217
 G49	cli	test	17
@@ -282,7 +282,7 @@ G60fromString	plugins/gazetteers	test	12
 G60fromString	plugins/media	main	75
 G60fromString	plugins/media	test	61
 G60fromString	problem	main	2
-G60fromString	server	main	750
+G60fromString	server	main	749
 G60fromString	server	test	314
 G60fromString	upstreams	main	16
 G60fromString	upstreams	test	1

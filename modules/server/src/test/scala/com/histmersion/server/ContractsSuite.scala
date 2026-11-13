@@ -37,6 +37,8 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     are not properties;
   *   - `bucket` (rule 10): a type in a layer bucket (`com.histmersion.db`, `com.histmersion.files`,
   *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package;
+  *   - `circe` (G62): circe named outside the one adapter file per library that still speaks it (Chimp, sttp-ai): JSON
+  *     is jsoniter-scala with Kindlings' derivation and AST;
   *   - `nonempty-pattern` (G60): a type pattern `case …: NonEmptyVector[…] =>` outside the problem module — the union
   *     `Problems` is folded (`fold`, `toVector`), never matched on;
   *   - `problem-field` (rule 1, G60): a case of the closed `util.problem.Problem` (or a small type of its file) with a
@@ -177,6 +179,7 @@ object ContractsSuite:
 
   val Modules: List[String] = List(
     "problem",
+    "json",
     "values",
     "api",
     "config",
@@ -220,6 +223,7 @@ object ContractsSuite:
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
           global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s) ++
+          circe(s) ++
           counted(
             "nonempty-pattern",
             s,
@@ -376,12 +380,30 @@ object ContractsSuite:
         }
 
     private val Codecs =
-      "(?:Encoder|Decoder|Codec|Schema|KeyEncoder|KeyDecoder|DbCodec|ConfigReader|Kindlings\\w*)"
+      "(?:JsonValueCodec|JsonKeyCodec|JsonCodec|Encoder|Decoder|Codec|Schema|KeyEncoder|KeyDecoder|DbCodec|ConfigReader|Kindlings\\w*)"
+
+    /** The one file per library that speaks circe (Chimp, sttp-ai) where it meets our codecs. */
+    private val CirceAdapters = Set(
+      "server:util/mcp/ChimpJson.scala",
+      "server:domain/automation/agents/SttpAiJson.scala"
+    )
+    private val Circe =
+      "\\bio\\.circe\\b|\\bsttp\\.tapir\\.json\\.circe\\b|\\bsttp\\.apispec\\.circe\\b|\\bcircederivation\\b".r
+
+    private def circe(s: SourceFile): List[Violation] =
+      if CirceAdapters(s.key) then Nil
+      else counted("circe", s, "circe outside a listed adapter", Circe.findAllMatchIn(s.code).map(_.start).toList)
     private val HandGiven = ("(?m)^\\s*given\\s+(?:\\w+\\s*:\\s*)?" + Codecs + "\\[").r
 
+    /** The JSON module is the codec library itself: its givens are the base instances (a string, a list) that every
+      * derivation builds on, as circe's own were.
+      */
     private def derives(s: SourceFile): List[Violation] =
-      val hits = HandGiven.findAllMatchIn(s.code).map(_.start) ++ "\\.derived\\b".r.findAllMatchIn(s.code).map(_.start)
-      counted("derives", s, "codec given written by hand", hits.toList.distinct.sorted)
+      if module(s) == "json" then Nil
+      else
+        val hits =
+          HandGiven.findAllMatchIn(s.code).map(_.start) ++ "\\.derived\\b".r.findAllMatchIn(s.code).map(_.start)
+        counted("derives", s, "codec given written by hand", hits.toList.distinct.sorted)
 
     private def copies(s: SourceFile): List[Violation] =
       counted("copy", s, ".copy(", "\\.copy\\(".r.findAllMatchIn(s.code).map(_.start).toList)
@@ -497,6 +519,9 @@ object ContractsSuite:
     /** The closed Problem's module, below the api: the contract's one failure type, which the clients share. */
     private val SharedProblem = "com.histmersion.util.problem."
 
+    /** The JSON module, below the api: the codecs and raw JSON every client and plugin shares (G62). */
+    private val SharedJson = "com.histmersion.util.json."
+
     /** The closed Problem's renderers (the sentence, the answer, the stored column): the problem module's edge, kept in
       * the api only because every layer that renders sees it; a domain file may render a problem through them.
       */
@@ -507,7 +532,10 @@ object ContractsSuite:
       if ClientModules(m) then
         val outside = Named
           .findAllMatchIn(s.code)
-          .filterNot(n => n.group(1) == "api" || n.group(1) == "web" || s.code.startsWith(SharedProblem, n.start))
+          .filterNot(n =>
+            n.group(1) == "api" || n.group(1) == "web" || s.code.startsWith(SharedProblem, n.start) ||
+              s.code.startsWith(SharedJson, n.start)
+          )
         val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil
         counted("layer", s, "the client names a package outside api", outside.map(_.start).toList.take(1)) ++
           counted("layer", s, "an api file outside com.histmersion.api", own)
