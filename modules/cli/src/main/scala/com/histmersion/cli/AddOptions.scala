@@ -1,8 +1,6 @@
 package com.histmersion
 package cli
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import scala.jdk.CollectionConverters.*

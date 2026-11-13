@@ -3,7 +3,6 @@ package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import cats.syntax.all.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}

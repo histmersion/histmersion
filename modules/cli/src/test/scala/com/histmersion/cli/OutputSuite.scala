@@ -6,7 +6,6 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.monovore.decline.Command
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -36,9 +35,11 @@ class OutputSuite extends munit.FunSuite:
     assert(js.contains("\"reason\" : null"), "an absent field is printed as null, as the server sends it: " + js)
 
   test("the one --json flag parses, and defaults to Markdown"):
-    val cmd = Command("t", "t")(Output.jsonFlag)
-    assertEquals(cmd.parse(List("--json")), Right(Cli.JsonOutput(true)))
-    assertEquals(cmd.parse(Nil), Right(Cli.JsonOutput(false)))
+    assertEquals(
+      Parsing.parse("query", "select 1", "--json"),
+      Right(Ops.Command.Query("select 1", Cli.JsonOutput(true)))
+    )
+    assertEquals(Parsing.parse("query", "select 1"), Right(Ops.Command.Query("select 1", Cli.JsonOutput(false))))
 
   test("calibre search --json keeps the field names it always printed"):
     val b =

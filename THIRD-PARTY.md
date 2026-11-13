@@ -38,7 +38,6 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | com.kubuszok:kindlings-tapir-schema-derivation_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-tapir-schema-derivation_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.lihaoyi:sourcecode_3 | 0.4.4 | MIT | compatible |
-| com.monovore:decline_3 | 2.6.2 | Apache-2.0 | compatible |
 | com.outr:moduload_3 | 1.1.7 | MIT | compatible |
 | com.outr:perfolation_3 | 1.3.0 | MIT | compatible |
 | com.outr:scribe-slf4j2_3 | 3.19.0 | MIT | compatible |

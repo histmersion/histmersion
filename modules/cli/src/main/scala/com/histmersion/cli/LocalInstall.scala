@@ -2,8 +2,6 @@ package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}

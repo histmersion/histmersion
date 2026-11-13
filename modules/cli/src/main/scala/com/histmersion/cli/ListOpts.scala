@@ -1,8 +1,6 @@
 package com.histmersion
 package cli
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.{Goal, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
@@ -80,42 +78,3 @@ object ListOpts:
       until.map(ListFilters.JobFilter.Until(_)),
       subject.map(ListFilters.JobFilter.Subject(_))
     )
-
-  private def many(name: String, help: String): Opts[List[String]] =
-    Opts.options[String](name, s"$help (repeatable, or comma-separated)").orEmpty
-  private def one(name: String, help: String): Opts[Option[String]] = Opts.option[String](name, help).orNone
-
-  private val since = one("since", "Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")
-  private val until = one("until", "Only those started before the end of: 2026-10-01, or an ISO instant")
-
-  val approvals: Opts[ListFilters.ApprovalFilter] =
-    (
-      one("state", Help.approvalState),
-      many("kind", Help.approvalKind),
-      one("subject", "Only those about something matching this text: a goal or article slug, a manager, a citekey"),
-      one("goal", "Only one goal's: its plan, or proposed by a run for it"),
-      many("decided-by", Help.decidedBy)
-    ).mapN(approvalFilter)
-
-  val runs: Opts[ListFilters.RunFilter] =
-    (
-      many("status", Help.runStatus),
-      many("pipeline", Help.pipeline),
-      many("manager", "Only the runs these process managers dispatched (review, enrich, seed:<goal>, …)"),
-      one("goal", "Only the runs for this goal"),
-      many("model", "Only runs a step of which used this provider:model"),
-      many("provider", "Only runs a step of which used this provider (codex, claude-code, …)"),
-      many("origin", Help.origin),
-      since,
-      until,
-      one("subject", "Only runs whose target matches this text (a citekey, an article or goal slug)")
-    ).mapN(runFilter)
-
-  val jobs: Opts[ListFilters.JobFilter] =
-    (
-      many("status", Help.jobStatus),
-      many("kind", "Only these job kinds: ingest, reocr, agent, media-import, events-import, init, basemap-fetch, …"),
-      since,
-      until,
-      one("subject", "Only jobs about something matching this text (citekey, target, detail), or whose id starts so")
-    ).mapN(jobFilter)

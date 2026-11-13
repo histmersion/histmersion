@@ -4,14 +4,14 @@ package server
 import scala.io.Source
 
 /** JSON is jsoniter-scala, so circe and Typelevel's libraries (cats, jawn) are on a shipped class path only where a
-  * library that still speaks them brings them: Chimp (the MCP server) and sttp-ai (the agent loop) and its test kit —
-  * and, until the CLI's own step of G62 replaces it, decline (the CLI's argument parser, on cats). Any other route — a
-  * module of ours, a new dependency — fails, naming the chain that brought it.
+  * library that still speaks them brings them: Chimp (the MCP server) and sttp-ai (the agent loop) and its test kit.
+  * Any other route — a module of ours, a new dependency — fails, naming the chain that brought it. The CLI has none of
+  * them at all: its parser is scallop (G62b), which depends on the Scala library only.
   */
 class ClasspathSuite extends munit.FunSuite:
   import ClasspathSuite.*
 
-  test("circe and cats arrive only through Chimp, sttp-ai and (for now) decline"):
+  test("circe and cats arrive only through Chimp and sttp-ai"):
     val bad = rows.groupBy(r => (r.project, r.conf)).toList.sortBy(_._1).flatMap { case ((project, conf), rs) =>
       val byName = rs.map(r => r.module -> r).toMap
       rs.filter(r => Carried(r.organization)).flatMap { r =>
@@ -23,6 +23,11 @@ class ClasspathSuite extends munit.FunSuite:
       bad.isEmpty,
       bad.mkString("circe or cats on a class path through something else than a carrier:\n", "\n", "")
     )
+
+  test("the CLI's class path has no circe and no Typelevel library at all"):
+    val cli = rows.filter(r => r.project == "cli" && Carried(r.organization)).map(_.module)
+    assert(rows.exists(_.project == "cli"), "no cli rows in dependency-callers.tsv")
+    assert(cli.isEmpty, cli.mkString("on the CLI's class path: ", ", ", ""))
 
   test("a module of ours bringing circe would be caught"):
     val rs = List(
@@ -48,15 +53,13 @@ object ClasspathSuite:
   /** The organisations whose libraries arrive only through a carrier. */
   val Carried: Set[String] = Set("io.circe", "org.typelevel")
 
-  /** The libraries that may still bring them: Chimp and sttp-ai speak circe, and Histmersion meets each in one adapter;
-    * decline is the CLI's parser until the CLI's step of G62 replaces it (then it leaves this list).
+  /** The libraries that may still bring them: Chimp and sttp-ai speak circe, and Histmersion meets each in one adapter.
     */
   val Carriers: Set[String] = Set(
     "com.softwaremill.chimp:chimp-core_3",
     "com.softwaremill.chimp:chimp-server_3",
     "com.softwaremill.sttp.ai:core_3",
-    "com.softwaremill.sttp.ai:agent-testkit_3",
-    "com.monovore:decline_3"
+    "com.softwaremill.sttp.ai:agent-testkit_3"
   )
 
   lazy val rows: List[Row] =

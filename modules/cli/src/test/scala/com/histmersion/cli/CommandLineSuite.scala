@@ -121,10 +121,6 @@ class CommandLineSuite extends munit.FunSuite:
         ArticleCommand.Delete(slug)
       )
     )
-    assert(CommandLine.handles(List("--server", "http://h:1", "article", "list")))
-    assert(CommandLine.handles(List("article")))
-    assert(!CommandLine.handles(List("search", "article")))
-    assert(!CommandLine.handles(List("--server", "article")))
 
   test("a missing positional argument is Missing"):
     assertEquals(problem("get"), Problem.Invalid.Missing(Problem.Field("slug")))

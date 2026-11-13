@@ -1,13 +1,12 @@
 package com.histmersion
 package cli
+import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
-import cats.data.Validated
-import cats.syntax.all.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 

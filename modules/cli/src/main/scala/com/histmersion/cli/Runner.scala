@@ -1,8 +1,6 @@
 package com.histmersion
 package cli
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import java.nio.charset.StandardCharsets.UTF_8

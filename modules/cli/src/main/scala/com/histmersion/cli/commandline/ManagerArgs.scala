@@ -48,13 +48,25 @@ object ManagerArgs:
 
   private val Agent = "histmersion agent"
 
-  final private class LeafManagers() extends Leaf(Agent, "managers", "The process managers: each one's state, items, runs in flight, status line and last event") with SharedFlags:
+  final private class LeafManagers()
+      extends Leaf(
+        Agent,
+        "managers",
+        "The process managers: each one's state, items, runs in flight, status line and last event"
+      )
+      with SharedFlags:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.Managers(json_()))
 
-  final private class LeafEnqueue() extends Leaf(Agent, "enqueue", "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
-      "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused") with SharedFlags:
+  final private class LeafEnqueue()
+      extends Leaf(
+        Agent,
+        "enqueue",
+        "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
+          "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused"
+      )
+      with SharedFlags:
     private val kind_ = arg[String]("kind")
     private val t_ = arg[String]("target")
     private val p_ = value[Int]("priority", "Its priority (default 10: first)")
@@ -62,23 +74,41 @@ object ManagerArgs:
 
     def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.Enqueue(kind_(), t_(), p_.toOption, json_()))
 
-  final private class LeafStalls() extends Leaf(Agent, "stalls", "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
-      "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
-      "queue, a block, a failed item, no candidates, idle — and the command that unblocks it") with SharedFlags:
+  final private class LeafStalls()
+      extends Leaf(
+        Agent,
+        "stalls",
+        "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
+          "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
+          "queue, a block, a failed item, no candidates, idle — and the command that unblocks it"
+      )
+      with SharedFlags:
     private val days_ = value[Int]("days", "No progress in this many days")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.Stalls(days_.toOption, json_()))
 
-  final private class LeafDigest() extends Leaf(Agent, "digest", "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
-      "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
-      "written to the worklog (agents.autopilot.digest-hour)") with SharedFlags:
+  final private class LeafDigest()
+      extends Leaf(
+        Agent,
+        "digest",
+        "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
+          "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
+          "written to the worklog (agents.autopilot.digest-hour)"
+      )
+      with SharedFlags:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.Digest(json_()))
 
-  final private class LeafDecideAll() extends Leaf(Agent, "decide-all", "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
-      "narrow together; one is needed), the oldest first, each through the same decision a single one takes") with SharedFlags:
+  final private class LeafDecideAll()
+      extends Leaf(
+        Agent,
+        "decide-all",
+        "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
+          "narrow together; one is needed), the oldest first, each through the same decision a single one takes"
+      )
+      with SharedFlags:
     private val d_ = arg[String]("approve|reject")
     private val kind_ = value[String]("kind", "Only this kind (goal-plan, article-publish, …)")
     private val subject_ = value[String]("subject", "Only approvals about this goal or article")
@@ -88,7 +118,18 @@ object ManagerArgs:
     private val dry_ = flag("dry-run", "List what it would decide; decide nothing")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.DecideAll(d_(), kind_.toOption, subject_.toOption, ids_.getOrElse(Nil), note_.toOption, limit_.toOption, dry_.getOrElse(false), json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      ManagerCmd.Command.DecideAll(
+        d_(),
+        kind_.toOption,
+        subject_.toOption,
+        ids_.getOrElse(Nil),
+        note_.toOption,
+        limit_.toOption,
+        dry_.getOrElse(false),
+        json_()
+      )
+    )
 
   // ── manager ────────────────────────────────────────────────────────────────────────────────────
 
@@ -137,8 +178,7 @@ object ManagerArgs:
         val once = v.flag("once", "For the next run only")
         val suggest =
           v.flag("suggest", "Let the server's planner model propose a structured action (an approval you decide)")
-        () =>
-          ManagerCmd.ManagerVerb.Hint(text(), item.toOption, once.getOrElse(false), suggest.getOrElse(false))
+        () => ManagerCmd.ManagerVerb.Hint(text(), item.toOption, once.getOrElse(false), suggest.getOrElse(false))
       ),
       LeafVerb(
         "enqueue",
@@ -197,7 +237,9 @@ object ManagerArgs:
     )
 
     def command: Either[Problem, Cli.Command] =
-      id_.toOption.toRight(Problem.Invalid.Missing(Problem.Field("id"))).map(ManagerCmd.Command.Manager(_, ManagerCmd.ManagerVerb.Show))
+      id_.toOption
+        .toRight(Problem.Invalid.Missing(Problem.Field("id")))
+        .map(ManagerCmd.Command.Manager(_, ManagerCmd.ManagerVerb.Show))
 
   /** One verb of `agent manager <id>`: `declare` declares its options and returns the verb to read after parsing. */
   final private class LeafVerb(name: String, help: String, id: () => Option[String])(
@@ -257,9 +299,10 @@ object ManagerArgs:
       ):
     private val json_ = json()
     holds(
-      LeafAutopilotVerb("status", "Per research goal its stage, managers, sources, articles, approvals, activity and pace")(
-        _ => () => Right(ManagerCmd.AutopilotVerb.Status)
-      ),
+      LeafAutopilotVerb(
+        "status",
+        "Per research goal its stage, managers, sources, articles, approvals, activity and pace"
+      )(_ => () => Right(ManagerCmd.AutopilotVerb.Status)),
       LeafAutopilotVerb("on", "Every goal gets an active seeding manager and watcher")(_ =>
         () => Right(ManagerCmd.AutopilotVerb.On)
       ),
@@ -290,7 +333,9 @@ object ManagerArgs:
       )
     )
 
-    def command: Either[Problem, Cli.Command] = Right(ManagerCmd.Command.Autopilot(ManagerCmd.AutopilotVerb.Status, json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      ManagerCmd.Command.Autopilot(ManagerCmd.AutopilotVerb.Status, json_())
+    )
 
   final private class LeafAutopilotVerb(name: String, help: String)(
       declare: LeafAutopilotVerb => () => Either[Problem, ManagerCmd.AutopilotVerb]

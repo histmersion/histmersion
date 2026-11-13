@@ -1,7 +1,6 @@
 package com.histmersion
 package cli
 
-import com.monovore.decline.Command
 import com.histmersion.config.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatReport, FormatRule, FormatSeverity}
 
@@ -12,9 +11,6 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, For
 class FormatCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
-
-  private def parses(cmd: com.monovore.decline.Opts[?], args: String*): Boolean =
-    Command("histmersion", "test")(cmd).parse(args.toList, Map.empty).isRight
 
   test("article lint <slug> [--fix] [--json]; patch and put take --strict"):
     assert(Parsing.parses("article", "lint", "sea_peoples"))

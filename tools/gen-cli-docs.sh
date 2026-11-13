@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Regenerate the CLI reference table of the documentation site (docs/user-guide/reference/cli.md) from
-# the CLI's own `--help` output, so the docs cannot drift from decline's command definitions.
+# the CLI's own `--help` output, so the docs cannot drift from the command definitions.
 #
 #   ./tools/gen-cli-docs.sh            # rewrite the page between the CLI REFERENCE markers
 #   ./tools/gen-cli-docs.sh --check    # fail if the page is out of date (use in CI)
@@ -49,7 +49,7 @@ else
   CLI_CMD=("$java_bin" -cp "$(cat "$cpfile")" com.histmersion.cli.histmersionCli); CLI_DESC="the JVM build ($cpfile)"
 fi
 
-# decline's help goes to STDERR (cli/Main.scala prints it with System.err.println) and exits 1, and
+# The help goes to stdout (an error's help to stderr), and
 # the runtime may prepend Unsafe/native-access warnings there too. Merge the streams and drop those.
 help_of() { "${CLI_CMD[@]}" "$@" --help 2>&1 | grep -v '^WARNING:' || true; }
 

@@ -6,7 +6,6 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.catalogue.EventsMarkdown
 
-import cats.syntax.all.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.catalogue.Historicity

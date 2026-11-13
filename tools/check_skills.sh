@@ -3,7 +3,7 @@
 # Verify that the skills only name things that actually exist:
 #
 #   * every `histmersion <cmd> [<sub>]` mentioned in skills/*/SKILL.md is a real command
-#     (its `--help` prints a Usage block; decline exits 1 on --help, so the OUTPUT is the test)
+#     (its `--help` prints a Usage block; the OUTPUT is the test)
 #   * every MCP tool name mentioned is present in the live server's tools/list
 #
 # Usage:
@@ -38,7 +38,7 @@ echo
 
 fail=0
 ignored() { local c="$1" i; for i in "${IGNORE_CMDS[@]}"; do [[ "$c" == "$i" ]] && return 0; done; return 1; }
-# decline prints the Usage block and exits 1 for --help, so match the OUTPUT, not the status.
+# Match the Usage block in the OUTPUT, not the status.
 # (Capture first: with `pipefail` a pipeline would inherit the CLI's exit 1 even when grep matched.)
 # JDK 25 native binaries print an Unsafe WARNING on stderr before the Usage block — match anywhere.
 resolves() { local out; out="$($CLI $1 --help 2>&1)"; [[ "$out" == *Usage:* ]]; }

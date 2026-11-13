@@ -7,7 +7,6 @@ import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
-import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress

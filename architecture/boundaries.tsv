@@ -13,6 +13,7 @@ modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses 
 modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
 modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	cli-args	the scallop adapter: the one file that declares scallop options and parses a command line into a typed command
+modules/cli/src/main/scala/com/histmersion/cli/commandline/TopArgs.scala	cli-args	the scallop adapter of `histmersion top`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/AgentArgs.scala	cli-args	the scallop adapter of `histmersion agent`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/ManagerArgs.scala	cli-args	the scallop adapter of `histmersion manager`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/CalibreArgs.scala	cli-args	the scallop adapter of `histmersion calibre`: declares its options, parses them into typed commands
@@ -46,7 +47,6 @@ modules/cli/src/main/scala/com/histmersion/cli/ConfigCmd.scala	cli-args	parses `
 modules/cli/src/main/scala/com/histmersion/cli/DeleteCmd.scala	cli-args	parses `histmersion delete` arguments
 modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	cli-args	parses `histmersion events` arguments
 modules/cli/src/main/scala/com/histmersion/cli/FileFormat.scala	cli-args	splits a note file into frontmatter and body for `histmersion lint --file`
-modules/cli/src/main/scala/com/histmersion/cli/FilterFlags.scala	cli-args	parses the shared search filter flags (--tag, --place, --from, --to, --bbox)
 modules/cli/src/main/scala/com/histmersion/cli/GoalsCmd.scala	cli-args	parses `histmersion goals` arguments
 modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	cli-args	parses `histmersion ingest` arguments
 modules/cli/src/main/scala/com/histmersion/cli/LabelRenameCmd.scala	cli-args	parses `histmersion label-rename` arguments
@@ -54,7 +54,6 @@ modules/cli/src/main/scala/com/histmersion/cli/ListOpts.scala	cli-args	parses th
 modules/cli/src/main/scala/com/histmersion/cli/ManagerCmd.scala	cli-args	parses `histmersion manager` arguments
 modules/cli/src/main/scala/com/histmersion/cli/MediaCmd.scala	cli-args	parses `histmersion media` arguments
 modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	cli-args	parses `histmersion merge` arguments
-modules/cli/src/main/scala/com/histmersion/cli/NewtypeArguments.scala	cli-args	reads a command-line argument as a newtype from its base type
 modules/cli/src/main/scala/com/histmersion/cli/NotesCmd.scala	cli-args	parses `histmersion notes` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Ops.scala	cli-args	parses `histmersion lint`, `queue`, `query` and `schema` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Output.scala	cli-args	prints a command answer to the terminal as Markdown or as the server's JSON

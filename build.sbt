@@ -1100,7 +1100,6 @@ lazy val cli = project
   .settings(nativeImageName := "histmersion-cli")
   .settings(
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % V.decline,
       "org.rogach" %% "scallop" % V.scallop,
       "com.outr" %% "scribe" % V.scribe,
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-client4" % V.tapir,

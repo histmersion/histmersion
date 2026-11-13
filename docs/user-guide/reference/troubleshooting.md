@@ -45,7 +45,7 @@ About says so and names the biggest locations on it that can be made smaller, wi
   stderr from the native binaries (JDK 25, JEP 498). Cosmetic. Scala 3.8 itself compiles lazy vals to
   `VarHandle`s (our own jars are clean); the caller is the *old* `LazyVals.getOffset*` path inside
   dependencies still published from a pre-3.8 compiler — circe-core, cats-core, tapir-core, sttp core,
-  decline, sconfig, magnolia (`unzip -p <jar> … | grep getOffset` to check). It goes away as those
+  sconfig, magnolia (`unzip -p <jar> … | grep getOffset` to check). It goes away as those
   libraries re-publish on 3.8+. **Fix: [VirtusLab Sloth](https://github.com/VirtusLab/sloth)** rewrites
   that bytecode to the 3.8 `VarHandle` form; `nativeImage` runs it over a copy of every classpath jar
   (`target/sloth/`) when a Sloth CLI jar is found — `SLOTH_JAR` first, else a Sloth checkout built
