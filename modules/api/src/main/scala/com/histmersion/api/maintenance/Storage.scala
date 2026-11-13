@@ -8,7 +8,7 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 import com.histmersion.api.TableSize
 import com.histmersion.api.backup.BackupsUsage
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -169,7 +169,7 @@ object Storage:
       shrink: Option[Entry.Shrink] = None,
       volume: Option[Entry.Volume] = None,
       host: Entry.Host = Entry.Host("server")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -207,12 +207,12 @@ object Storage:
       lowFreeBytes: ByteCount = DefaultLowFreeBytes,
       hints: List[Hint] = Nil,
       problems: List[Report.Problems] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   final case class Volume(id: Volume.Id, totalBytes: ByteCount, freeBytes: ByteCount)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

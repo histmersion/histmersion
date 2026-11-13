@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.upstreams.media.MediaText
-import io.circe.Json
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
@@ -74,13 +77,13 @@ object Commons:
     * for the whole answer.
     */
   def imageInfo(json: Json): Either[Problem, Map[File.Title, Either[Problem, File]]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("error").focus match
       case Some(err) =>
         Left(
           Problem.Unclassified(
             Legacy.Text(
-              s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+              s"${err.cursor.get[String]("code").getOrElse("error")}: ${err.cursor.get[String]("info").getOrElse("")}".trim
             )
           )
         )
@@ -93,11 +96,11 @@ object Commons:
           .toList
           .flatten
           .flatMap { n =>
-            for f <- n.hcursor.get[String]("from").toOption; t <- n.hcursor.get[String]("to").toOption yield t -> f
+            for f <- n.cursor.get[String]("from").toOption; t <- n.cursor.get[String]("to").toOption yield t -> f
           }
           .groupMap(_._1)(_._2)
         val pages = q.downField("pages").focus.flatMap(_.asArray).toList.flatten.flatMap { p =>
-          val h = p.hcursor
+          val h = p.cursor
           val title = h.get[String]("title").getOrElse("")
           val info = h.downField("imageinfo").downArray
           val entry: Either[Problem, File] =
@@ -112,7 +115,7 @@ object Commons:
                 .toList
                 .flatMap(_.toList)
                 .flatMap { (k, v) =>
-                  v.hcursor
+                  v.cursor
                     .downField("value")
                     .focus
                     .flatMap(j =>
@@ -188,7 +191,7 @@ object Commons:
         else
           qids.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
             ids -> http.askJson(entitiesUrl(ids, wikidata)).left.map(_.problem).flatMap { j =>
-              j.hcursor
+              j.cursor
                 .downField("error")
                 .focus
                 .fold(Right(j))(_ => Left(Problem.Unclassified(Legacy.Text("Wikidata error"))))
@@ -293,13 +296,13 @@ object Commons:
 
     /** Pure: the file titles of a search answer, in its order; an API error is a `Left`. */
     def titles(json: Json): Either[Problem, List[File.Title]] =
-      val c = json.hcursor
+      val c = json.cursor
       c.downField("error").focus match
         case Some(err) =>
           Left(
             Problem.Unclassified(
               Legacy.Text(
-                s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+                s"${err.cursor.get[String]("code").getOrElse("error")}: ${err.cursor.get[String]("info").getOrElse("")}".trim
               )
             )
           )
@@ -311,23 +314,23 @@ object Commons:
               .flatMap(_.asArray)
               .toList
               .flatten
-              .flatMap(_.hcursor.get[String]("title").toOption)
+              .flatMap(_.cursor.get[String]("title").toOption)
               .filter(_.startsWith("File:"))
               .map(File.Title(_))
           )
 
     /** Pure: the items an entity names under `P1299 depicted by`, per entity asked, best rank first. */
     def depictedBy(json: Json): Map[WikidataId, List[WikidataId]] =
-      json.hcursor
+      json.cursor
         .downField("entities")
         .focus
         .flatMap(_.asObject)
         .toList
         .flatMap(_.toList)
         .map { (key, ent) =>
-          val sts = ent.hcursor.downField("claims").downField(DepictedBy).focus.flatMap(_.asArray).toList.flatten
+          val sts = ent.cursor.downField("claims").downField(DepictedBy).focus.flatMap(_.asArray).toList.flatten
           val ids = sts.flatMap { st =>
-            val s = st.hcursor
+            val s = st.cursor
             val rank = s.get[String]("rank").getOrElse("normal")
             Option
               .when(rank != "deprecated")(

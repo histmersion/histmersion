@@ -1,10 +1,11 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
-import io.circe.parser.parse
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
@@ -116,9 +117,9 @@ class VacuumSuite extends munit.FunSuite:
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))
 
   test("a request body: unknown keys refused, absent ones defaulted"):
-    assertEquals(parse("""{}""").flatMap(_.as[Vacuum.Request]), Right(Vacuum.Request()))
+    assertEquals(RawJson.parse("""{}""").flatMap(_.as[Vacuum.Request]), Right(Vacuum.Request()))
     assertEquals(
-      parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[Vacuum.Request]),
+      RawJson.parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[Vacuum.Request]),
       Right(Vacuum.Request(Vacuum.Request.Analyze(true), List(Vacuum.Request.Tables("places"))))
     )
-    assert(parse("""{"full":true}""").flatMap(_.as[Vacuum.Request]).isLeft)
+    assert(RawJson.parse("""{"full":true}""").flatMap(_.as[Vacuum.Request]).isLeft)

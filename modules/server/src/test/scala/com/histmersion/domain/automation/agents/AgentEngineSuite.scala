@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.domain.automation.agents.SttpAiJson
+import com.histmersion.domain.automation.agents.SttpAiJson.given
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -32,7 +37,6 @@ import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.jobs.{Job, JobRepo}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
-import io.circe.syntax.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
 
@@ -1349,7 +1353,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
     val first = a.run(runId(run.id)).toOption.get.steps.find(s => s.name.value == "notes" && s.attempt.value == 1).get
     val err = first.error.map(_.sentence).getOrElse("")
-    assert(err.contains("at .notes") && err.contains("expecting string"), err)
+    assert(err.contains("at .notes") && err.contains("expected '\"'"), err)
     assert(err.contains("""{"notes": 5}"""), s"the start of the answer too: $err")
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
     assert(retry.contains("at .notes"), retry)

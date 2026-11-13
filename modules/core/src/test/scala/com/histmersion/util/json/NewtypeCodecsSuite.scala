@@ -1,11 +1,12 @@
 package com.histmersion
 package util.json
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.jobs.Job as JobInfo
 
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.circe.{Decoder, Encoder, Json}
-import io.circe.parser.decode
-import io.circe.syntax.*
 import sttp.tapir.Schema
 
 import java.util.UUID
@@ -33,11 +34,11 @@ import com.histmersion.util.plugins.Plugin
 class NewtypeCodecsSuite extends munit.FunSuite:
 
   /** The newtype's JSON is its base value's, it decodes back to itself, and its schema is the base type's. */
-  private def roundTrip[T: {Encoder, Decoder, Schema}, B: {Encoder, Schema}](value: T, base: B)(using
+  private def roundTrip[T: {JsonValueCodec, Schema}, B: {JsonValueCodec, Schema}](value: T, base: B)(using
       munit.Location
   ): Unit =
     assertEquals(value.asJson, base.asJson)
-    assertEquals(decode[T](value.asJson.noSpaces), Right(value))
+    assertEquals(RawJson.decode[T](value.asJson.noSpaces), Right(value))
     assertEquals(summon[Schema[T]].schemaType.toString, summon[Schema[B]].schemaType.toString)
     assertEquals(summon[Schema[T]].name, None)
     assertEquals[Any, Any](summon[Schema[T]].validator, summon[Schema[B]].validator)
@@ -80,18 +81,20 @@ class NewtypeCodecsSuite extends munit.FunSuite:
     roundTrip(Licence.Id("CC-BY-SA-4.0"), "CC-BY-SA-4.0")
     roundTrip(PageSize(200), 200)
     roundTrip(Offset.Start, 0)
-    assert(decode[PageSize]("0").isLeft)
-    assert(decode[Offset]("-1").isLeft)
+    assert(RawJson.decode[PageSize]("0").isLeft)
+    assert(RawJson.decode[Offset]("-1").isLeft)
 
   test("a value its constraint refuses does not decode"):
-    assert(decode[Slug]("\"Sea Peoples\"").isLeft)
-    assert(decode[Slug](Json.fromString("a" * 122).noSpaces).isLeft)
-    assert(decode[Goal.Slug]("\"-x\"").isLeft)
-    assert(decode[Event.Id]("\"\"").isLeft)
-    assert(decode[Place.Id]("\"2911611\"").isLeft && decode[Place.Id]("\"geonames_\"").isLeft)
+    assert(RawJson.decode[Slug]("\"Sea Peoples\"").isLeft)
+    assert(RawJson.decode[Slug](Json.fromString("a" * 122).noSpaces).isLeft)
+    assert(RawJson.decode[Goal.Slug]("\"-x\"").isLeft)
+    assert(RawJson.decode[Event.Id]("\"\"").isLeft)
+    assert(RawJson.decode[Place.Id]("\"2911611\"").isLeft && RawJson.decode[Place.Id]("\"geonames_\"").isLeft)
     assert(
-      decode[JobInfo.Id]("\"not-a-uuid\"").isLeft && decode[Run.Id]("\"0B3F6A4E-2C1D-4E5F-8A9B-0C1D2E3F4A5B\"").isLeft
+      RawJson.decode[JobInfo.Id]("\"not-a-uuid\"").isLeft && RawJson
+        .decode[Run.Id]("\"0B3F6A4E-2C1D-4E5F-8A9B-0C1D2E3F4A5B\"")
+        .isLeft
     )
-    assert(decode[Plugin.Id]("\"Oa_Unpaywall\"").isLeft)
-    assert(decode[Source.Uid]("\"x\"").isLeft)
-    assert(decode[Doi]("\"doi:10.1/x\"").isLeft && decode[Latitude]("91").isLeft)
+    assert(RawJson.decode[Plugin.Id]("\"Oa_Unpaywall\"").isLeft)
+    assert(RawJson.decode[Source.Uid]("\"x\"").isLeft)
+    assert(RawJson.decode[Doi]("\"doi:10.1/x\"").isLeft && RawJson.decode[Latitude]("91").isLeft)

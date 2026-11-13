@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
@@ -20,7 +21,6 @@ import com.histmersion.domain.EnrichSource.{
   VerifiedFindings
 }
 import com.histmersion.domain.ReviewArticle.{Check, Evidence, Merged, Report, Reviewer, Severity, SpotCheck, Verdict}
-import io.circe.{Decoder, Encoder}
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
@@ -41,7 +41,10 @@ import com.histmersion.api.automation.Activity
   */
 object CheckpointGolden:
 
-  final case class Golden[A](file: String, values: List[A])(using val encoder: Encoder[A], val decoder: Decoder[A])
+  final case class Golden[A](file: String, values: List[A])(using
+      val encoder: JsonValueCodec[A],
+      val decoder: JsonValueCodec[A]
+  )
 
   private val findingInputs = List(
     Finding.Input(

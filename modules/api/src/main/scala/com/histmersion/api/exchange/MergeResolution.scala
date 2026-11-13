@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -11,7 +11,7 @@ final case class MergeResolution(
     issue: MergeResolution.Issue,
     decision: MergeResolution.Decision,
     text: Option[MergeResolution.Text] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

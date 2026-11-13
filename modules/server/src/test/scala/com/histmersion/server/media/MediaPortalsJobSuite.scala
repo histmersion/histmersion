@@ -1,5 +1,6 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -23,7 +24,6 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -323,10 +323,10 @@ class MediaPortalsJobSuite extends DbSuite:
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)
         assertEquals(js, 202, jb)
-        val id = decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity).id
+        val id = RawJson.decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity).id
         @annotation.tailrec
         def until(n: Int): JobInfo =
-          val j = decode[JobInfo](get(s"$url/api/jobs/$id")._2).fold(e => fail(e.toString), identity)
+          val j = RawJson.decode[JobInfo](get(s"$url/api/jobs/$id")._2).fold(e => fail(e.toString), identity)
           if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(n - 1) }
         until(400)
       try
@@ -337,7 +337,7 @@ class MediaPortalsJobSuite extends DbSuite:
         val (ds0, db0) =
           post(s"$url/api/media/import", """{"provider":"opencontext","dryRun":true,"place":"zqmp_site"}""")
         assertEquals(ds0, 200, db0)
-        val dry = decode[MediaImportReport](db0).fold(e => fail(s"$e: $db0"), identity)
+        val dry = RawJson.decode[MediaImportReport](db0).fold(e => fail(s"$e: $db0"), identity)
         val basis = "pleiades:99900001 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE"
         assertEquals(dry.samples.map(s => (s.key, s.basis)), List((Uuid, basis)))
         assert(asked.exists(a => a.startsWith("/query/.json?") && a.contains("q=Zqmpetra")), asked.toString)
@@ -345,7 +345,7 @@ class MediaPortalsJobSuite extends DbSuite:
         val (rs, rb) =
           post(s"$url/api/media/import", """{"provider":"opencontext","dryRun":true,"place":"zqmp_region"}""")
         assertEquals(rs, 200, rb)
-        val region = decode[MediaImportReport](rb).fold(e => fail(s"$e: $rb"), identity)
+        val region = RawJson.decode[MediaImportReport](rb).fold(e => fail(s"$e: $rb"), identity)
         assert(
           region.samples.isEmpty && region.rejected.exists(
             _.key.value == "its place id names another place on the map"
@@ -363,7 +363,7 @@ class MediaPortalsJobSuite extends DbSuite:
             .head
         )
         assertEquals((b1, role), (Some(basis), MediaRole.Object))
-        val item = decode[MediaItem](get(s"$url/api/media/$uid")._2).fold(e => fail(e.toString), identity)
+        val item = RawJson.decode[MediaItem](get(s"$url/api/media/$uid")._2).fold(e => fail(e.toString), identity)
         assertEquals((item.provider, item.license), (Some(MediaProvider.OpenContext), Some("CC-BY-4.0")))
         assertEquals(item.originalUrl, Some("https://archive.org/download/zqmp/full.jpg"))
         assert(

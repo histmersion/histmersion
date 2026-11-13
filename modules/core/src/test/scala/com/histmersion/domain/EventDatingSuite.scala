@@ -1,5 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,9 +15,6 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
-
-import io.circe.Json
-import io.circe.syntax.*
 
 import scala.util.Random
 import com.histmersion.api.catalogue.{

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.jobs
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -15,7 +15,7 @@ final case class JobCounts(
     failed: JobCounts.Failed = JobCounts.Failed(0),
     paused: JobCounts.Paused = JobCounts.Paused(0),
     cancelled: JobCounts.Cancelled = JobCounts.Cancelled(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def of(s: JobState): JobCounts.Count = s match

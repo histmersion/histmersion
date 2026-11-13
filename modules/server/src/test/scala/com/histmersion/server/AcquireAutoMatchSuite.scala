@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import hearth.kindlings.optics.syntax.*
 
@@ -107,7 +110,7 @@ class AcquireAutoMatchSuite extends DbSuite:
     go(0)
 
   private def addItem(url: String, text: String): Int =
-    val (st, b) = post(s"$url/api/queue/acquire", io.circe.Json.obj("text" -> io.circe.Json.fromString(text)).noSpaces)
+    val (st, b) = post(s"$url/api/queue/acquire", Json.obj("text" -> Json.fromString(text)).noSpaces)
     assertEquals(st, 200, b)
     """"id":(\d+)""".r.findFirstMatchIn(b).get.group(1).toInt
 
@@ -159,7 +162,7 @@ class AcquireAutoMatchSuite extends DbSuite:
         // `jobs <id>` renders the same progress line
         assert(
           IngestMarkdown
-            .job(io.circe.parser.decode[JobInfo](job).fold(e => fail(e.getMessage), identity))
+            .job(RawJson.decode[JobInfo](job).fold(e => fail(e), identity))
             .contains(s"ticked off acquisition item #$exact")
         )
 

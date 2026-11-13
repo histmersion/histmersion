@@ -1,5 +1,6 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,7 +20,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -211,7 +211,7 @@ class MediaImportJobSuite extends DbSuite:
   private def job(url: String, jid: JobInfo.Id): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$jid")
     assertEquals(s, 200, b)
-    decode[JobInfo](b).fold(e => fail(s"$e: $b"), identity)
+    RawJson.decode[JobInfo](b).fold(e => fail(s"$e: $b"), identity)
 
   @annotation.tailrec
   private def until(url: String, jid: JobInfo.Id, n: Int)(p: JobInfo => Boolean): JobInfo =
@@ -232,7 +232,7 @@ class MediaImportJobSuite extends DbSuite:
 
         val (s, body) = post(s"$url/api/media/import/job", s"""{"dryRun":false,"limit":$N}""")
         assertEquals(s, 202, body)
-        val started = decode[JobInfo](body).fold(e => fail(s"$e: $body"), identity)
+        val started = RawJson.decode[JobInfo](body).fold(e => fail(s"$e: $body"), identity)
         assertEquals(started.kind.value: String, ImportsControllers.ImportJobKind.value: String)
         assert(!started.isTerminal, started.toString)
 

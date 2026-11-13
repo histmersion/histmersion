@@ -1,5 +1,8 @@
 package com.histmersion
 package web
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -420,20 +423,20 @@ object ApiClient:
     xhr.onload = (_: dom.Event) =>
       val body = Option(xhr.responseText).getOrElse("")
       if xhr.status == 202 || xhr.status == 200 then
-        io.circe.parser
+        RawJson
           .decode[Ingest.Accepted](body)
           .fold(
             e =>
               result.failure(
                 ApiFailure(
                   ApiFailure.Status(xhr.status),
-                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: ${e.getMessage}")))
+                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: $e")))
                 )
               ),
             ok => result.success(ok)
           )
       else
-        val decoded = io.circe.parser.decode[Api.Error](body).toOption
+        val decoded = RawJson.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(ApiFailure.Status(xhr.status), decoded)))
     xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(ApiFailure.Status(0), None))
     xhr.send(file)
@@ -467,20 +470,20 @@ object ApiClient:
     xhr.onload = (_: dom.Event) =>
       val body = Option(xhr.responseText).getOrElse("")
       if xhr.status == 200 then
-        io.circe.parser
+        RawJson
           .decode[ExchangeBundle.Upload](body)
           .fold(
             e =>
               result.failure(
                 ApiFailure(
                   ApiFailure.Status(xhr.status),
-                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: ${e.getMessage}")))
+                  Api.Error(Problem.Unclassified(Legacy.Text(s"could not read the server's answer: $e")))
                 )
               ),
             ok => result.success(ok)
           )
       else
-        val decoded = io.circe.parser.decode[Api.Error](body).toOption
+        val decoded = RawJson.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(ApiFailure.Status(xhr.status), decoded)))
     xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(ApiFailure.Status(0), None))
     xhr.send(file)
@@ -582,7 +585,7 @@ object ApiClient:
     }
 
   private def decodeError(body: String): Option[Api.Error] =
-    io.circe.parser.decode[Api.Error](body).toOption
+    RawJson.decode[Api.Error](body).toOption
 
   /** GET `url`: the status and the body, decoded by the browser. */
   private def fetchText(url: String): Future[(Int, String)] =

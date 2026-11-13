@@ -1,11 +1,14 @@
 package com.histmersion
 package util.mcp
-
-import hearth.kindlings.circederivation.Configuration
+import hearth.kindlings.jsoniterderivation.JsoniterConfig
+import com.histmersion.util.json.JsonCodec
 
 /** How an MCP tool's arguments decode: a field the model leaves out takes its Scala default (without it every
   * non-`Option` field is required, so `get_source {"citekey":"x"}` was refused for a missing `fullText`), and an
   * argument the tool does not know is refused.
   */
 object ToolInputs:
-  given configuration: Configuration = Configuration.default.withDefaults.withStrictDecoding
+  given unknown: JsonCodec.Unknown = JsonCodec.Unknown.Refused
+
+  /** The schemas the tools advertise say so too: a field with a default may be left out. */
+  given schemas: JsoniterConfig = JsonCodec.schemas

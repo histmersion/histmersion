@@ -1,11 +1,13 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.WireEnumValues
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.api.given
@@ -107,6 +109,8 @@ object MergeDecision:
         Left(Problem.Unclassified(Legacy.Text(s"'$s': ${Kind.wireOf(d)} takes no argument")))
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
-  given Encoder[MergeDecision] = Encoder.encodeString.contramap((refactorCallback => (refactorCallback.wire).value))
-  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(Wire(s)).left.map(_.sentence))
+  given JsonValueCodec[MergeDecision] = JsonCodec.mapped[MergeDecision, String](
+    (refactorCallback => (refactorCallback.wire).value),
+    s => parse(Wire(s)).left.map(_.sentence)
+  )
   given Schema[MergeDecision] = Schema.string[MergeDecision]

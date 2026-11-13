@@ -1,5 +1,6 @@
 package com.histmersion
 package files
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
@@ -207,7 +208,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
           None,
           None,
           Bundle.EventCatalogue.Historicity("attested"),
-          io.circe.Json.obj("VEI" -> io.circe.Json.fromInt(7)),
+          Json.obj("VEI" -> Json.fromInt(7)),
           Bundle.EventCatalogue.RetrievedAt(at)
         )
       ),
@@ -219,7 +220,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
           Bundle.EventCandidate.Score(0.75),
           Bundle.EventCandidate.Status("confirmed"),
           List(Bundle.EventCandidate.Findings("ck2001_a#0")),
-          io.circe.Json.arr(),
+          Json.arr(),
           List(Bundle.EventCandidate.Reasons("near")),
           Bundle.EventCandidate.ComputedAt(at)
         )

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.automation.agents
+import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -1106,7 +1110,7 @@ final class AgentsControllers(
         goals.children(slug),
         goals.links(slug),
         managing.goalSchedules(Some(slug)),
-        plan.flatMap(j => io.circe.parser.decode[Plan](j.value).toOption),
+        plan.flatMap(j => RawJson.decode[Plan](j.value).toOption),
         budget.map(b => GoalView.BudgetUsd(b.toDouble))
       )
     }
@@ -1269,7 +1273,7 @@ final class AgentsControllers(
               attempt + 1,
               ask + Prompt.retry(
                 problems.map((text => Problem.Unclassified(Legacy.Text(text)))),
-                answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)
+                answer.map(a => writeToString(a))
               ),
               use,
               toolCalls

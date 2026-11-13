@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -42,7 +44,7 @@ class VacuumHttpSuite extends munit.FunSuite:
     )
 
   private def job(body: String): JobInfo =
-    io.circe.parser.decode[JobInfo](body).fold(e => fail(s"not a job: $body ($e)"), identity)
+    RawJson.decode[JobInfo](body).fold(e => fail(s"not a job: $body ($e)"), identity)
 
   /** Poll the job until it ends (a vacuum of two tiny tables takes well under a second). */
   private def await(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =

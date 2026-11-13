@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -136,7 +138,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         // ── the list: a badge per row, from the cheap query ───────────────────────────────────
         val (ls, lb) = get(s"$url/api/articles?title=Zz%20zzrev&limit=50")
         assertEquals(ls, 200, lb)
-        val rows = io.circe.parser.decode[Article.List](lb).toOption.get.articles.map(a => a.slug -> a.review).toMap
+        val rows = RawJson.decode[Article.List](lb).toOption.get.articles.map(a => a.slug -> a.review).toMap
         val running = rows(Article.Slug(Running)).get
         assertEquals(
           (running.state, running.label, running.round),
@@ -149,7 +151,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         // ── one article's review: history in run order, goals, approvals ─────────────────────
         val (rs, rb) = get(s"$url/api/articles/$Running/review")
         assertEquals(rs, 200, rb)
-        val r = io.circe.parser.decode[Article.ReviewView](rb).toOption.get
+        val r = RawJson.decode[Article.ReviewView](rb).toOption.get
         assertEquals(
           r.rounds.map(rd => (rd.run, rd.runNumber, rd.round, rd.findings.map(_.id))),
           List((RunA, 1, 1, List("R1", "C1")), (RunB, 2, 1, List("S1")))
@@ -162,7 +164,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         )
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
-        val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get
+        val fresh = RawJson.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get
         assertEquals((fresh.badge.state, fresh.rounds, fresh.goals), (ReviewState.Unreviewed, Nil, Nil))
 
         // ── the page: the badge and the goal under the title, the history at the end ─────────

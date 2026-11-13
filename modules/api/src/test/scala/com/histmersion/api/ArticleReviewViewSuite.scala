@@ -1,12 +1,12 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
@@ -109,6 +109,6 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       round = Some(ReviewRound.Round(2))
     )
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
-    assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
+    assertEquals(RawJson.decode[ReviewBadge](b.asJson.noSpaces), Right(b))
     assertEquals(ReviewState.parse(ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))
     assertEquals(Goal.Stages.all.map(_._1.value), Goal.Status.all.map(_.value))

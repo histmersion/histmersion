@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -12,9 +13,8 @@ import chimp.server.*
 import com.histmersion.api.StrictJson
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.Api
@@ -34,7 +34,7 @@ object PlacesTools:
       id: Option[PlacesInput.Id] = None,
       asOf: Option[PlacesInput.AsOf] = None,
       limit: Option[PlacesInput.Limit] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object PlacesInput:
     type Query = Query.T
     object Query extends Newtype[String, Pure]
@@ -67,7 +67,7 @@ object PlacesTools:
       remove: Option[PlaceOverrideInput.Remove] = None,
       pointLat: Option[PlaceOverrideInput.PointLat] = None,
       pointLon: Option[PlaceOverrideInput.PointLon] = None
-  )
+  ) derives StrictJson
   object PlaceOverrideInput:
     type PlaceId = PlaceId.T
     object PlaceId extends Newtype[String, Pure]
@@ -101,7 +101,6 @@ object PlacesTools:
       .modify(_.reset)(_.description("true: drop the override and restore what the source says"))
       .modify(_.mergeInto)(_.description("The id of the place this one is the same as: merge it there"))
       .modify(_.remove)(_.description("true: delete this place (only when nothing refers to it)"))
-    given Codec.AsObject[PlaceOverrideInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceOverrideInput])
 
   /** Input of the `place_names` tool (#987). */
   final case class PlaceNamesInput(
@@ -109,7 +108,7 @@ object PlacesTools:
       name: Option[PlaceNamesInput.Name] = None,
       lang: Option[PlaceNamesInput.Lang] = None,
       remove: Option[PlaceNamesInput.Remove] = None
-  )
+  ) derives StrictJson
   object PlaceNamesInput:
     type PlaceId = PlaceId.T
     object PlaceId extends Newtype[String, Pure]
@@ -127,7 +126,6 @@ object PlacesTools:
       .modify(_.name)(_.description("The name to add (or remove); omit to list the names added by hand"))
       .modify(_.lang)(_.description("Language tag of the name: en, grc, la, pl …; omit when unknown"))
       .modify(_.remove)(_.description("true: remove this name (only a name added by hand)"))
-    given Codec.AsObject[PlaceNamesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNamesInput])
 
   private def placeId(raw: String): Either[Api.Error, Place.Id] =
     Place.Id

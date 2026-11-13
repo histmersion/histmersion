@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -10,7 +13,6 @@ import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
-import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
@@ -99,7 +101,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       .PUT(HttpRequest.BodyPublishers.ofString(json))
     http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
 
-  private def decode[A: io.circe.Decoder](s: String): A = parser.decode[A](s).fold(e => fail(s"$e in $s"), identity)
+  private def decode[A: JsonValueCodec](s: String): A = RawJson.decode[A](s).fold(e => fail(s"$e in $s"), identity)
 
   test("instance, export, verify and an own-bundle import over HTTP"):
     withServer { url =>

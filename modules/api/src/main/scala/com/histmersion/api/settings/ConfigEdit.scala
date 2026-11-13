@@ -3,7 +3,7 @@ package api.settings
 
 import com.histmersion.util.problem.Problem
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Write
@@ -28,7 +28,7 @@ object ConfigEdit:
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema:
     def isSet: Boolean = (form != Credential.Form("unset"))
 
@@ -54,7 +54,7 @@ object ConfigEdit:
       restart: Option[Field.Restart] = None,
       credential: Option[Credential] = None,
       locked: Option[Field.Locked] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema:
     def relative: Field.LocalKey = Field.LocalKey((key).value.stripPrefix("histmersion."))
 
@@ -87,7 +87,7 @@ object ConfigEdit:
     object Locked extends Newtype[String, Pure]
 
   final case class Section(id: Section.Id, doc: Section.Doc = Section.Doc(""), fields: List[Field] = Nil)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema
 
   object Section:
@@ -104,7 +104,7 @@ object ConfigEdit:
       problems: List[Page.Problems] = Nil,
       restartable: Page.Restartable = Page.Restartable(false),
       setupDue: Page.SetupDue = Page.SetupDue(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
@@ -128,9 +128,7 @@ object ConfigEdit:
     type SetupDue = SetupDue.T
     object SetupDue extends Newtype[Boolean, Pure]
 
-  final case class Change(key: Change.Key, value: Option[Change.Value] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema
+  final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives JsonCodec, KindlingsSchema
 
   object Change:
     export Field.Key
@@ -142,7 +140,7 @@ object ConfigEdit:
       version: Option[Write.Version] = None,
       literalConsent: Write.LiteralConsent = Write.LiteralConsent(false),
       reload: Write.Reload = Write.Reload(true)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -154,7 +152,7 @@ object ConfigEdit:
     type Reload = Reload.T
     object Reload extends Newtype[Boolean, Pure]
 
-  final case class RestartNote(key: RestartNote.Key, why: Problem) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class RestartNote(key: RestartNote.Key, why: Problem) derives JsonCodec, KindlingsSchema
 
   object RestartNote:
     export Field.Key
@@ -170,7 +168,7 @@ object ConfigEdit:
       warnings: List[Written.Warnings] = Nil,
       reload: Option[ReloadReport] = None,
       restartable: Written.Restartable = Written.Restartable(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -197,7 +195,7 @@ object ConfigEdit:
   object Notice extends Newtype[String, Pure]
 
   final case class Restart(accepted: Restart.Accepted, notice: Notice)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

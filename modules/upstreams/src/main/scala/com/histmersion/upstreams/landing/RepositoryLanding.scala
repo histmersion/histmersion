@@ -1,6 +1,10 @@
 package com.histmersion
 package upstreams.landing
-import io.circe.{ACursor, Json}
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather than the PDF — a
@@ -184,16 +188,9 @@ object RepositoryLanding:
 
   // ── which pages ────────────────────────────────────────────────────────────────────────────
 
-  private def str(c: ACursor, keys: String*): Option[String] =
-    (keys
-      .foldLeft(c)(_.downField(_))
-      .as[String]
-      .toOption
-      .map(_.trim)
-      .filter(_.nonEmpty))
-      .map(refactorValue => (refactorValue))
-  private def arr(c: ACursor, keys: String*): List[Json] =
-    keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
+  extension (c: Cursor)
+    private def str(keys: String*): Option[String] = c.down(keys*).filled
+    private def arr(keys: String*): List[Json] = c.down(keys*).elements
 
   private def notPdfPath(u: String) = !(u).toLowerCase.split("[?#]").head.endsWith(".pdf")
 
@@ -201,15 +198,15 @@ object RepositoryLanding:
     * page (no `.pdf`: the direct step already tried it as a file) — best location first, repositories marked.
     */
   def openalexCandidates(json: Json): List[Candidate] =
-    val c = json.hcursor
-    val locs = c.downField("best_oa_location").focus.filterNot(_.isNull).toList ++ arr(c, "locations")
+    val c = json.cursor
+    val locs = c.downField("best_oa_location").focus.filterNot(_.isNull).toList ++ c.arr("locations")
     distinct(locs.flatMap { l =>
-      val h = l.hcursor
-      val kind = str(h, "source", "type").map((_).toLowerCase)
+      val h = l.cursor
+      val kind = h.str("source", "type").map((_).toLowerCase)
       val repo = kind.contains("repository")
       val pub = kind.exists(k => PublisherSourceTypes.contains(PublisherSourceType(k)))
       val open = h.downField("is_oa").as[Boolean].contains(true)
-      (str(h, "pdf_url").filter(((notPdfPath))).toList ++ str(h, "landing_page_url").toList)
+      (h.str("pdf_url").filter(((notPdfPath))).toList ++ h.str("landing_page_url").toList)
         .map(u =>
           Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), Candidate.Open(open))
         )
@@ -217,13 +214,13 @@ object RepositoryLanding:
 
   /** Pure: the landing pages of Unpaywall's OA locations (`host_type: repository` marked). */
   def unpaywallCandidates(json: Json): List[Candidate] =
-    val c = json.hcursor
-    val locs = c.downField("best_oa_location").focus.filterNot(_.isNull).toList ++ arr(c, "oa_locations")
+    val c = json.cursor
+    val locs = c.downField("best_oa_location").focus.filterNot(_.isNull).toList ++ c.arr("oa_locations")
     distinct(locs.flatMap { l =>
-      val h = l.hcursor
-      val repo = str(h, "host_type").contains("repository")
-      val pub = str(h, "host_type").contains("publisher")
-      (str(h, "url_for_pdf").filter(((notPdfPath))).toList ++ str(h, "url_for_landing_page").toList)
+      val h = l.cursor
+      val repo = h.str("host_type").contains("repository")
+      val pub = h.str("host_type").contains("publisher")
+      (h.str("url_for_pdf").filter(((notPdfPath))).toList ++ h.str("url_for_landing_page").toList)
         .map(u =>
           Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), open = Candidate.Open(true))
         )
@@ -231,7 +228,7 @@ object RepositoryLanding:
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
   def dataciteUrl(json: Json): Option[Candidate.Url] =
-    (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => Candidate.Url((refactorValue2)))
+    (json.cursor.str("data", "attributes", "url")).map(refactorValue2 => Candidate.Url((refactorValue2)))
 
   /** Candidates by URL, the first of each kept; repository if any index says so, publisher only if one says so and none
     * says repository, open if any says so.
@@ -267,10 +264,12 @@ object RepositoryLanding:
     * Read only for an open location on an OA publisher, so a `doi.org` link is still never followed blind.
     */
   def handleUrl(json: Json): Option[Candidate.Url] =
-    (arr(json.hcursor, "values").iterator
-      .map(_.hcursor)
-      .filter(v => str(v, "type").contains("URL"))
-      .flatMap(v => str(v, "data", "value"))
+    (json.cursor
+      .arr("values")
+      .iterator
+      .map(_.cursor)
+      .filter(v => v.str("type").contains("URL"))
+      .flatMap(v => v.str("data", "value"))
       .nextOption())
       .map(refactorValue3 => Candidate.Url((refactorValue3)))
 
@@ -290,18 +289,18 @@ object RepositoryLanding:
     * `access.files: public`); restricted, embargoed or closed records give none.
     */
   def zenodoFiles(json: Json): List[ZenodoFile] =
-    val c = json.hcursor
-    val right = str(c, "metadata", "access_right").map((_).toLowerCase)
-    val files = str(c, "access", "files").map((_).toLowerCase)
+    val c = json.cursor
+    val right = c.str("metadata", "access_right").map((_).toLowerCase)
+    val files = c.str("access", "files").map((_).toLowerCase)
     val open = right.forall(_ == "open") && files.forall(_ == "public") && (right.isDefined || files.isDefined)
     if !open then Nil
     else
-      arr(c, "files").flatMap { f =>
-        val h = f.hcursor
-        val name = str(h, "key").orElse(str(h, "filename")).getOrElse("")
-        val mime = str(h, "mimetype").getOrElse("")
-        val url = str(h, "links", "self").orElse(str(h, "links", "content")).orElse(str(h, "links", "download"))
-        val md5 = str(h, "checksum").filter((_).toLowerCase.startsWith("md5:")).map((_).drop(4).toLowerCase)
+      c.arr("files").flatMap { f =>
+        val h = f.cursor
+        val name = h.str("key").orElse(h.str("filename")).getOrElse("")
+        val mime = h.str("mimetype").getOrElse("")
+        val url = h.str("links", "self").orElse(h.str("links", "content")).orElse(h.str("links", "download"))
+        val md5 = h.str("checksum").filter((_).toLowerCase.startsWith("md5:")).map((_).drop(4).toLowerCase)
         url
           .filter(_ => name.toLowerCase.endsWith(".pdf") || mime.equalsIgnoreCase("application/pdf"))
           .map(u => ZenodoFile(ZenodoFile.Url(u), (md5).map(refactorValue4 => ZenodoFile.Md5(refactorValue4))))

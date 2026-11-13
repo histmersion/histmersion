@@ -8,9 +8,8 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
 import com.histmersion.api.StrictJson
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
@@ -63,6 +62,7 @@ object Vacuum:
     * slowly on tables that size.
     */
   final case class Request(analyze: Request.Analyze = Request.Analyze(false), tables: List[Request.Tables] = Nil)
+      derives StrictJson
   object Request:
     type Analyze = Analyze.T
     object Analyze extends Newtype[Boolean, Pure]
@@ -74,4 +74,3 @@ object Vacuum:
       .schema
       .modify(_.analyze)(_.description("also refresh the planner's statistics (VACUUM (ANALYZE))"))
       .modify(_.tables)(_.description("tables to vacuum (default: config maintenance.vacuum-tables)"))
-    given Codec.AsObject[Request] = StrictJson.codec(KindlingsCodecAsObject.derived[Request])

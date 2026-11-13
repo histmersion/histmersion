@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -14,8 +16,6 @@ import com.histmersion.domain.given
 
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.api.research.{CritiquePair, CritiquePairing, CritiqueRef, Critiques, CritiqueSide, CritiqueState}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
@@ -37,7 +37,8 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   private val minRatio = ReviewArticle.CritiqueRule.MinRatio(0.9)
 
   private def live(slug: String): Ledger =
-    decode[Ledger](scala.io.Source.fromResource(s"review/ledger-$slug.json")(using scala.io.Codec.UTF8).mkString)
+    RawJson
+      .decode[Ledger](scala.io.Source.fromResource(s"review/ledger-$slug.json")(using scala.io.Codec.UTF8).mkString)
       .fold(e => fail(s"$slug: $e"), identity)
 
   test("live ledgers decode — entries written before §6.9 have no not-fixed count and no deferral"):
@@ -49,7 +50,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Some("kelly2021_gods>bachvarova2016_hittite")
     )
     // and round-trips with the new fields
-    assertEquals(decode[Ledger](a.asJson.noSpaces).map(_.entries.size), Right(6))
+    assertEquals(RawJson.decode[Ledger](a.asJson.noSpaces).map(_.entries.size), Right(6))
     assertEquals(live("gods_and_migrations").entries.count(_.reopened.value > 0), 3)
 
   // ── the final pass defers what it finds new ────────────────────────────────────────────────────

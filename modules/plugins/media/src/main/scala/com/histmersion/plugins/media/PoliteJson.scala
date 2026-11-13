@@ -1,10 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Header
-
-import io.circe.Json
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
@@ -21,7 +23,7 @@ extension (http: Plugin.Http)
     http
       .get(url, headers)
       .flatMap(body =>
-        io.circe.parser
+        RawJson
           .parse(String(body.value, UTF_8))
           .left
           .map(e =>
@@ -29,7 +31,7 @@ extension (http: Plugin.Http)
               Problem.Unclassified(
                 Legacy.Text(
                   s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
-                    s"unparseable JSON (${e.getMessage})"
+                    s"unparseable JSON ($e)"
                 )
               )
             )

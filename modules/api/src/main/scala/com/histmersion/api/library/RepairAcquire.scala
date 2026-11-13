@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
@@ -17,7 +17,7 @@ object RepairAcquire:
   final case class RepairRequest(
       dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false),
       by: Option[RepairRequest.By] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -34,7 +34,7 @@ object RepairAcquire:
       action: RepairRow.Action = RepairRow.Action(""),
       detail: RepairRow.Detail = RepairRow.Detail(""),
       backlogItem: Option[RepairRow.BacklogItem] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -60,7 +60,7 @@ object RepairAcquire:
       rows: List[RepairRow] = Nil,
       backlog: Managers.ManagerInfo.Backlog = Managers.ManagerInfo.Backlog(0),
       backlogDays: Option[Managers.ManagerInfo.BacklogDays] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

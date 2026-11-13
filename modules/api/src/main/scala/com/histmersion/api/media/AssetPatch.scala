@@ -1,9 +1,8 @@
 package com.histmersion
 package api.media
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -19,9 +18,6 @@ final case class AssetPatch(
     lon: Option[Longitude] = None,
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None
-) derives KindlingsSchema,
+) derives StrictJson,
+      KindlingsSchema,
       com.histmersion.api.json.Schema
-
-object AssetPatch:
-
-  given Codec.AsObject[AssetPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AssetPatch])

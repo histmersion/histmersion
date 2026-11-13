@@ -1,6 +1,6 @@
 package com.histmersion
 package api.instance
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -12,7 +12,7 @@ final case class EventsUiConfig(
     regionalFadeSeconds: EventsUiConfig.RegionalFadeSeconds,
     mapLimit: EventsUiConfig.MapLimit,
     outlineToleranceDeg: EventsUiConfig.OutlineToleranceDeg
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

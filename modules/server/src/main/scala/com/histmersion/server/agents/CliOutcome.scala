@@ -2,10 +2,7 @@ package com.histmersion
 package server.agents
 import com.histmersion.util.problem.Problem
 
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a CLI run printed, read into sttp-ai's result types: the conversation (text, tool calls and their results, in

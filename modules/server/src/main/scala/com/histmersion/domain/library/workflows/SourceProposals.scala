@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -13,7 +14,6 @@ import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.AgentProposals.Route
 import com.histmersion.domain.automation.agents.*
 
-import io.circe.syntax.*
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey

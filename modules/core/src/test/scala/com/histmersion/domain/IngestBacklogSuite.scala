@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -356,9 +358,9 @@ class IngestBacklogSuite extends munit.FunSuite:
           )
         )
       )
-    assertEquals(io.circe.parser.decode[ItemState](io.circe.syntax.EncoderOps(st).asJson.noSpaces), Right(st))
+    assertEquals(RawJson.decode[ItemState]((st).asJson.noSpaces), Right(st))
     assertEquals(
-      io.circe.parser.decode[ItemState]("""{"history":[]}"""),
+      RawJson.decode[ItemState]("""{"history":[]}"""),
       Right(ItemState()),
       "an old item's state still decodes"
     )

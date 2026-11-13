@@ -1,12 +1,13 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.{
@@ -39,7 +40,7 @@ object CollectionsTools:
       replace: CollectionInput.Replace = CollectionInput.Replace(false),
       apply: CollectionInput.Apply = CollectionInput.Apply(false),
       fields: List[CollectionInput.Fields] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

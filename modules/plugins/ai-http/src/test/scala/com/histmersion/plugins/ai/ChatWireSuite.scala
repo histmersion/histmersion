@@ -107,12 +107,12 @@ class ChatWireSuite extends munit.FunSuite:
   test("a success answer that cannot be read says why, at the field"):
     assertEquals(
       ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body("[]")).turn.left.map(_.legacyText),
-      Left("DecodingFailure at : Got value '[]' with wrong type, expecting object")
+      Left("expected an object")
     )
     assertEquals(
       ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body(ok.replace(""""role":"assistant",""", ""))).turn.left
         .map(_.legacyText),
-      Left("DecodingFailure at .choices[0].message.role: Missing required field")
+      Left("choices[0].message.role: missing required field")
     )
 
   test("an error status: its message; none, the status and body; another shape, its body's first 500 characters"):

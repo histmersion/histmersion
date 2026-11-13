@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{LatinFold, WireEnum}
@@ -56,8 +56,7 @@ object Geocode:
       def wire(e: KindHint): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[KindHint] =
         values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
-    given Encoder[KindHint] = WireEnum.encoder
-    given Decoder[KindHint] = WireEnum.decoder
+    given JsonValueCodec[KindHint] = WireEnum.codec
     given Schema[KindHint] = WireEnum.schema
 
   /** Must equal the separator list of the SQL function `histmersion_place_key`. */

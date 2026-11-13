@@ -6,7 +6,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -38,7 +38,7 @@ object FilterInference:
       topics: List[Article.Filter.Topics] = Nil,
       tags: List[Article.Filter.Tags] = Nil,
       extraQueries: List[Article.Filter.ExtraQueries] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object FilterAnswer:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
@@ -68,8 +68,7 @@ object FilterInference:
     object MinCitedShare extends Newtype[Double, Pure]
 
   /** What the pipeline checkpoints: the proposal that passed, or None with why nothing did. */
-  final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil)
-      derives KindlingsCodecAsObject
+  final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil) derives JsonCodec
 
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
   def filterOf(a: FilterAnswer): Either[List[Problem], Article.Filter] =

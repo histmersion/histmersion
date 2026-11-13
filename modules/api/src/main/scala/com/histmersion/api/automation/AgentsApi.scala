@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.json.NewtypeCodecs.given
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import com.histmersion.api.json.TapirJson.*
 import sttp.model.StatusCode
 import com.histmersion.api.{Paging, Write}
 import com.histmersion.api.given

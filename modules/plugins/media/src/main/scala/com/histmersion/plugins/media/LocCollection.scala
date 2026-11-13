@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.Json
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -85,12 +88,12 @@ object LocCollection:
 
   /** Pure: the item ids of a search answer, in its order. */
   def results(json: Json): Either[Problem, List[MediaItem.Key]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("results").focus.flatMap(_.asArray) match
       case None     => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
-          val h = r.hcursor
+          val h = r.cursor
           (h.str("id").toList ++ h.str("url").toList).flatMap(u => itemId(Plugin.Http.Url(u))).headOption
         }.distinct)
 
@@ -111,7 +114,7 @@ object LocCollection:
       displayPx: CollectionSettings.DisplayPx,
       thumbPx: MediaSettings.ThumbPx
   ): Either[Problem, MediaItem] =
-    val item = json.hcursor.downField("item")
+    val item = json.cursor.downField("item")
     if item.focus.isEmpty then Left(Problem.Unclassified(Legacy.Text("no item in the answer")))
     else
       val c = item
@@ -129,7 +132,7 @@ object LocCollection:
         val page = s"${base.value.stripSuffix("/")}/item/${key.value}/"
         val credit =
           (List(Some(title), creator).flatten :+ "Library of Congress, Geography and Map Division").mkString(", ")
-        val files = json.hcursor
+        val files = json.cursor
           .downField("resources")
           .focus
           .flatMap(_.asArray)
@@ -137,10 +140,10 @@ object LocCollection:
           .flatten
           .headOption
           .toList
-          .flatMap(_.hcursor.downField("files").focus.flatMap(_.asArray).toList.flatten)
+          .flatMap(_.cursor.downField("files").focus.flatMap(_.asArray).toList.flatten)
           .flatMap(_.asArray.toList.flatten)
           .flatMap { f =>
-            val h = f.hcursor
+            val h = f.cursor
             for
               u <- h.str("url")
               if h.str("mimetype").exists(_.equalsIgnoreCase("image/jpeg")) ||

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.api.given
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CollectionUpdateAll(
     rows: List[CollectionUpdateRow],
     applied: CollectionUpdateAll.Applied
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -23,7 +23,7 @@ object CollectionUpdateAll:
 
   final case class Request(
       apply: Request.Apply = Request.Apply(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

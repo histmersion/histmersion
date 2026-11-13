@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -18,7 +19,6 @@ import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 import com.augustnagro.magnum.*
-import io.circe.syntax.*
 import java.io.InputStream
 import java.util.UUID
 import javax.sql.DataSource

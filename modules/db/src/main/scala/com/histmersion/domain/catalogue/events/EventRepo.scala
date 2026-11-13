@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.events
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -223,7 +224,7 @@ private[events] object EventRepo:
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its
     * correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
     */
-  private def recordCorrections(id: BEventRow.Id, fields: Map[String, io.circe.Json])(using DbCon): Unit =
+  private def recordCorrections(id: BEventRow.Id, fields: Map[String, Json])(using DbCon): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(Event.Id.assume(id.value)).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)

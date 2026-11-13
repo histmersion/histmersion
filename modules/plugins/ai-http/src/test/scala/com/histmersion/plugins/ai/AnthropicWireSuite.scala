@@ -93,10 +93,7 @@ class AnthropicWireSuite extends munit.FunSuite:
         )
       )
     )
-    assert(
-      AnthropicRequest.of(r).left.exists(_.legacyText.startsWith("DecodingFailure")),
-      AnthropicRequest.of(r).toString
-    )
+    assertEquals(AnthropicRequest.of(r).left.map(_.legacyText), Left("expected '{'"))
 
   private val ok =
     """{"id":"m","type":"message","role":"assistant","model":"claude-y","content":[{"type":"thinking","thinking":"…"},""" +
@@ -131,11 +128,11 @@ class AnthropicWireSuite extends munit.FunSuite:
     )
     assertEquals(
       AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"""")).turn.left.map(_.legacyText),
-      Left("exhausted input")
+      Left("id: unexpected end of input")
     )
     assertEquals(
       AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"}""")).turn.left.map(_.legacyText),
-      Left("DecodingFailure at .error: Missing required field")
+      Left("error: missing required field")
     )
     // a content block of an unknown type is not a message
     assertEquals(
@@ -143,7 +140,7 @@ class AnthropicWireSuite extends munit.FunSuite:
         AnthropicAnswer.Status(200),
         AnthropicAnswer.Body(ok.replace("thinking\",\"thinking", "unknown\",\"thinking"))
       ).turn.left.map(_.legacyText),
-      Left("DecodingFailure at .error: Missing required field")
+      Left("error: missing required field")
     )
 
   test("only the models known to lack structured output are refused it"):

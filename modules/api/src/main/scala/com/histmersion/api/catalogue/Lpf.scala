@@ -1,9 +1,11 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import io.circe.{Json, JsonObject}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -316,10 +318,10 @@ object Lpf:
       json: String,
       defaultKind: Place.KindValue = Place.KindValue(Place.Kind.Region)
   ): Either[Problem, List[Place.Input]] =
-    io.circe.parser
+    RawJson
       .parse((json))
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
       .flatMap { doc =>
         val found: Option[List[Json]] =
           doc.asArray
@@ -344,7 +346,7 @@ object Lpf:
 
   private def renderFeature(in: Place.Input): Json =
     val leftover = in.place.properties
-      .flatMap(p => io.circe.parser.parse(p.value).toOption)
+      .flatMap(p => RawJson.parse(p.value).toOption)
       .flatMap(_.asObject)
       .getOrElse(JsonObject.empty)
     val props = JsonObject.fromIterable(
@@ -379,7 +381,7 @@ object Lpf:
         )
       }*)
     fields += "geometry" -> in.place.geometry
-      .flatMap(g => io.circe.parser.parse(g.value).toOption)
+      .flatMap(g => RawJson.parse(g.value).toOption)
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 

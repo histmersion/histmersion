@@ -11,7 +11,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.research.Articles
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -43,7 +43,7 @@ object PlanArticles:
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
       why: Problem = Problem.Unclassified(Legacy.Text(""))
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ArticleAnswer:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
@@ -72,7 +72,7 @@ object PlanArticles:
       .modify(_.why)(_.description("What the article would establish that the area's articles do not, in one sentence"))
 
   final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
   object ArticlesAnswer:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]

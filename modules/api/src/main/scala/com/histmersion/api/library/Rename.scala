@@ -5,7 +5,7 @@ import com.histmersion.api.Write
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -31,7 +31,7 @@ object Rename:
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement((newCk).value))
 
   final case class Count(table: Count.Table, rows: Count.Rows)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -48,7 +48,7 @@ object Rename:
       links: Counts.Links,
       columns: List[Count],
       edgesPromoted: Counts.EdgesPromoted
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -64,7 +64,4 @@ object Rename:
     type EdgesPromoted = EdgesPromoted.T
     object EdgesPromoted extends Newtype[Int, Pure]
 
-  final case class Request(newCitekey: Citekey)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Request(newCitekey: Citekey) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

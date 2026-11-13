@@ -1,5 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
@@ -73,7 +76,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     )
     // from the wire: "text": null decodes as absent
     val js = """[{"op":"replace","anchor":"by sea","text":null}]"""
-    val decoded = io.circe.parser.decode[List[EditAnswer]](js).fold(e => fail(e.getMessage), identity)
+    val decoded = RawJson.decode[List[EditAnswer]](js).fold(e => fail(e), identity)
     assert(applyAll(Body, decoded).problems.head.value.contains("a replace with no new text"))
 
   test("an anchor is matched with whitespace normalised, and nothing else"):
@@ -142,7 +145,7 @@ class ArticleEditsSuite extends munit.FunSuite:
   test("the answer's JSON: op by its wire name, text optional"):
     val js = """[{"op":"insertAfter","anchor":"by sea","text":" x"},{"op":"delete","anchor":"y"}]"""
     assertEquals(
-      io.circe.parser.decode[List[EditAnswer]](js),
+      RawJson.decode[List[EditAnswer]](js),
       Right(List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" x"))), e(Op.Delete, Anchor("y"))))
     )
-    assert(io.circe.parser.decode[List[EditAnswer]]("""[{"op":"rewrite","anchor":"y"}]""").isLeft)
+    assert(RawJson.decode[List[EditAnswer]]("""[{"op":"rewrite","anchor":"y"}]""").isLeft)

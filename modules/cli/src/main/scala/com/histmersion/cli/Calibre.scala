@@ -1,5 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -16,7 +19,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.CollectionAudit
 import com.histmersion.api.library.{CollectionEntry, CollectionGapRow, CollectionGaps, CollectionUpdateRow}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import java.text.Normalizer
 import com.histmersion.api.Api
 import com.histmersion.api.Paging
@@ -610,12 +613,12 @@ object Calibre:
   def parseMachineJson(out: String): Either[Problem, List[Book]] =
     if out.trim.isEmpty then Right(Nil) // no match: nothing is printed at all (#967)
     else
-      io.circe.parser
+      RawJson
         .parse(out)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: ${e.getMessage}")))
+        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
-          val c = j.hcursor
+          val c = j.cursor
           c.downField("id").as[Int].toOption.map { id =>
             Book(
               id = Book.Id(id),
@@ -643,12 +646,12 @@ object Calibre:
     // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input" (#967)
     if out.trim.isEmpty then Right(Nil)
     else
-      io.circe.parser
+      RawJson
         .parse(out)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: ${e.getMessage}")))
+        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
-          val c = j.hcursor
+          val c = j.cursor
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
           c.downField("id").as[Int].toOption.map { id =>
             Book(
@@ -1056,7 +1059,7 @@ object Calibre:
         tags: List[Book.Tags],
         identifiers: Map[Book.IdentifiersKey, Book.IdentifiersValue],
         formats: List[Book.Formats]
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
     object Book:
       type Id = Calibre.Book.Id
       val Id: Calibre.Book.Id.type = Calibre.Book.Id
@@ -1092,8 +1095,7 @@ object Calibre:
         )
 
     /** `calibre link --json`, `calibre push --json`. */
-    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId)
-        derives KindlingsCodecAsObject
+    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId) derives JsonCodec
 
     object Linked:
       type CalibreId = Calibre.Book.Id
@@ -1104,7 +1106,7 @@ object Calibre:
         citekey: com.histmersion.api.library.Citekey,
         calibreId: Replaced.CalibreId,
         replaced: Replaced.Value
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
 
     object Replaced:
       type CalibreId = Calibre.Book.Id
@@ -1117,7 +1119,7 @@ object Calibre:
         citekey: com.histmersion.api.library.Citekey,
         calibreId: Updated.CalibreId,
         changed: List[Updated.Changed]
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
 
     object Updated:
       type CalibreId = Calibre.Book.Id
@@ -1125,7 +1127,7 @@ object Calibre:
       type Changed = CollectionUpdatedOne.Changed
       val Changed: CollectionUpdatedOne.Changed.type = CollectionUpdatedOne.Changed
 
-    final case class Change(field: Change.Field, from: Change.From, to: Change.To) derives KindlingsCodecAsObject
+    final case class Change(field: Change.Field, from: Change.From, to: Change.To) derives JsonCodec
 
     object Change:
       type Field = CollectionFieldChange.Field
@@ -1142,7 +1144,7 @@ object Calibre:
         state: UpdateRow.State,
         changes: List[Change],
         reason: Option[Problem]
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
     object UpdateRow:
       type CalibreId = Calibre.Book.Id
       val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
@@ -1188,7 +1190,7 @@ object Calibre:
         citekeys: List[AuditRow.Citekeys],
         issues: List[AuditRow.Issues],
         fix: Option[AuditRow.Fix]
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
     object AuditRow:
       type CalibreId = Calibre.Book.Id
       val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
@@ -1229,7 +1231,7 @@ object Calibre:
         storedOriginal: Option[GapRow.StoredOriginal],
         original: GapRow.Original,
         counted: GapRow.Counted
-    ) derives KindlingsCodecAsObject
+    ) derives JsonCodec
     object GapRow:
       type Citekey = com.histmersion.api.library.Citekey
       val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
@@ -1297,7 +1299,7 @@ object Calibre:
         )
 
     final case class Gaps(count: Gaps.Count, uncounted: Gaps.Uncounted, total: Gaps.Total, gaps: List[GapRow])
-        derives KindlingsCodecAsObject
+        derives JsonCodec
     object Gaps:
       type Count = CollectionGaps.Count
       val Count: CollectionGaps.Count.type = CollectionGaps.Count

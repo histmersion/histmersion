@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.database.Transactor
@@ -12,7 +14,6 @@ import com.histmersion.config.{DbConfig, LoadedConfig}
 import com.histmersion.db.TestDb
 import com.histmersion.util.jobs.{Job, JobRepo}
 import com.histmersion.server.Deps
-import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.api.jobs.JobInfo

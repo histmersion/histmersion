@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -98,8 +101,8 @@ class PassagesHttpSuite extends DbSuite:
     val put = json(
       "PUT",
       s"$url/api/sources/$Ck",
-      io.circe.Json
-        .obj("title" -> io.circe.Json.fromString("Theseus"), "body" -> io.circe.Json.fromString(Body))
+      Json
+        .obj("title" -> Json.fromString("Theseus"), "body" -> Json.fromString(Body))
         .noSpaces
     )
     assertEquals(put.statusCode, 200, put.body)
@@ -107,7 +110,7 @@ class PassagesHttpSuite extends DbSuite:
   private def passages(url: String, ck: Citekey, q: String, extra: String = ""): PassageResult =
     val r = get(s"$url/api/sources/$ck/passages?q=${enc(q)}$extra")
     assertEquals(r.statusCode, 200, r.body)
-    io.circe.parser.decode[PassageResult](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
+    RawJson.decode[PassageResult](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
 
   test("the body passages searches is the body get_source slices"):
     withServer { url =>

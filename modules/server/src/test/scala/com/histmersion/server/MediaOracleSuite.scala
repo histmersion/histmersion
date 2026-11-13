@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -16,8 +20,6 @@ import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi
 import com.histmersion.server.media.{FakeMediaHttp, MediaWire}
 import com.augustnagro.magnum.*
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -418,10 +420,10 @@ class MediaOracleSuite extends DbSuite:
     )
     val text = String(r.body, UTF_8)
     val payload = text.linesIterator.find(_.startsWith("data:")).map(_.stripPrefix("data:").trim).getOrElse(text)
-    parser
+    RawJson
       .parse(payload)
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
+      .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
   private def awaitJob(url: String, id: String, left: Int = 600): String =
@@ -848,8 +850,8 @@ class MediaOracleSuite extends DbSuite:
             if digest(k) && v.isString then k -> Json.fromString("DIGEST") else k -> walk(v)
           })
       )
-    parser.parse(text) match
-      case Right(j) => normalise(walk(j).spaces2SortKeys, names)
+    RawJson.parse(text) match
+      case Right(j) => normalise(walk(j).sortedKeys.spaces2, names)
       case Left(_)  => normalise(text, names)
 
   /** A recorded answer: its status, then its body as sorted JSON when it is JSON. */
@@ -899,15 +901,15 @@ class MediaOracleSuite extends DbSuite:
         o =>
           Json.fromFields(o.toList.map { (k, v) =>
             val w = walk(v)
-            if HashOrdered(k) then k -> w.asArray.fold(w)(a => Json.fromValues(a.sortBy(_.spaces2SortKeys)))
+            if HashOrdered(k) then k -> w.asArray.fold(w)(a => Json.fromValues(a.sortBy(_.sortedKeys.spaces2)))
             else k -> w
           })
       )
     val (status, body) =
       "^(\\d{3} )([\\s\\S]*)$".r.findFirstMatchIn(text).fold(("", text))(m => (m.group(1), m.group(2)))
-    parser
+    RawJson
       .parse(body)
-      .fold(_ => text, j => status + walk(j).spaces2SortKeys + (if text.endsWith("\n") then "\n" else ""))
+      .fold(_ => text, j => status + walk(j).sortedKeys.spaces2 + (if text.endsWith("\n") then "\n" else ""))
 
   test("pictures: figures, asset links, IIIF, covers, illustrations, the list, the map, MCP and lint, as recorded"):
     assume(testDb.isDefined, "HISTMERSION_TEST_DB_URL not set")
@@ -1066,11 +1068,11 @@ class MediaOracleSuite extends DbSuite:
     )
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
     def report(r: Either[Api.Error, MediaImportReport]): String =
-      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
+      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.sortedKeys.spaces2}\n")
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)
       sb ++= s"## $name\n" + wire.take() + report(r)
-    sb ++= s"providers: ${handlers.imports.providers.asJson.spaces2SortKeys}\n"
+    sb ++= s"providers: ${handlers.imports.providers.asJson.sortedKeys.spaces2}\n"
     val builtins = List(
       ("wikidata", Some("pleiades_570491"), None),
       ("wikidata", None, Some("fall_of_x")),
@@ -1166,7 +1168,7 @@ class MediaOracleSuite extends DbSuite:
     def covers(name: String, req: MediaCoversRequest): Unit =
       val r = handlers.covers.covers(req)
       sb ++= s"## covers: $name\n" + wire.take() +
-        r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
+        r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.sortedKeys.spaces2}\n")
     covers(
       "dry run",
       MediaCoversRequest(
@@ -1229,7 +1231,7 @@ class MediaOracleSuite extends DbSuite:
         .fold(
           e => s"## $name\nrefused: ${e.message.sentence}\n",
           (r, asks) =>
-            s"## $name\nreport: ${r.asJson.spaces2SortKeys}\nasks: ${asks.map((c, i) => ((c.value: String), (i.value: String))).asJson.noSpaces}\n"
+            s"## $name\nreport: ${r.asJson.sortedKeys.spaces2}\nasks: ${Json.fromValues(asks.map((c, i) => Json.arr(Json.fromString(c.value), Json.fromString(i.value)))).noSpaces}\n"
         )
     step("dry run", None, refresh = MediaImportRequest.Refresh(false), dry = MediaImportRequest.DryRun(true)) +
       step(
@@ -1297,15 +1299,15 @@ class MediaOracleSuite extends DbSuite:
     else { Thread.sleep(100); applyJob(url, job, left - 1) }
 
   private def openIssues(plan: String): List[(String, List[String])] =
-    parser
+    RawJson
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           if c.downField("condition").focus.forall(_.isNull)
@@ -1318,15 +1320,15 @@ class MediaOracleSuite extends DbSuite:
     else options.filterNot(Set("map", "rename-right", "rename-left", "file")).headOption.getOrElse("keep-right")
 
   private def issueNamesOf(plan: String): Map[String, String] =
-    parser
+    RawJson
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           kind <- c.downField("kind").as[String].toOption

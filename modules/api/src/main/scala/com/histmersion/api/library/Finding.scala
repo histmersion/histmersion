@@ -8,9 +8,8 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.StrictJson
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -60,7 +59,7 @@ object Finding:
       tags: List[Tags] = Nil,
       confidence: Option[Input.Confidence] = None,
       significance: Option[Significance] = None
-  )
+  ) derives StrictJson
   object Input:
     export com.histmersion.api.library.Confidence.Wire as Confidence
 
@@ -68,8 +67,6 @@ object Finding:
       .derived[Input]
       .schema
       .modify(_.confidence)(_.description("high | medium | low | contested — another word is refused"))
-
-    given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
 
     def of(f: Finding): Input = Input(
       claim = f.claim,
@@ -96,7 +93,7 @@ object Finding:
       tags: List[Tags],
       why: List[Problem],
       places: List[Match.Places] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -116,6 +113,6 @@ object Finding:
       confidence: Option[Confidence],
       significance: Option[Significance] = None,
       uid: Option[java.util.UUID] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

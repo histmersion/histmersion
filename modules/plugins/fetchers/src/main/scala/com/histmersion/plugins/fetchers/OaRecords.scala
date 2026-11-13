@@ -1,12 +1,15 @@
 package com.histmersion
 package plugins.fetchers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
-import io.circe.Json
 import com.histmersion.plugin.Plugin
 
 /** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's

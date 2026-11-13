@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -22,9 +23,8 @@ import com.histmersion.api.research.{
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.domain.AgentProposals.Proposal
@@ -132,8 +132,7 @@ object ReviewArticle:
       def all: Array[Reviewer] = values
       def wire(e: Reviewer): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
       def fromWire(s: WireEnumValues.Wire): Option[Reviewer] = parse(Wire(s.value))
-    given Encoder[Reviewer] = WireEnum.encoder
-    given Decoder[Reviewer] = WireEnum.decoder
+    given JsonValueCodec[Reviewer] = WireEnum.codec
     given Schema[Reviewer] = WireEnum.schema
 
   enum Severity(val wire: Severity.Wire) derives CanEqual:
@@ -149,8 +148,7 @@ object ReviewArticle:
       def all: Array[Severity] = values
       def wire(e: Severity): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
       def fromWire(s: WireEnumValues.Wire): Option[Severity] = parse(Wire(s.value))
-    given Encoder[Severity] = WireEnum.encoder
-    given Decoder[Severity] = WireEnum.decoder
+    given JsonValueCodec[Severity] = WireEnum.codec
     given Schema[Severity] = WireEnum.schema
 
   /** An article's (or one reviewer's) verdict, ordered: the worst one wins. */
@@ -175,8 +173,7 @@ object ReviewArticle:
       def all: Array[Verdict] = values
       def wire(e: Verdict): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
       def fromWire(s: WireEnumValues.Wire): Option[Verdict] = parse(Wire(s.value))
-    given Encoder[Verdict] = WireEnum.encoder
-    given Decoder[Verdict] = WireEnum.decoder
+    given JsonValueCodec[Verdict] = WireEnum.codec
     given Schema[Verdict] = WireEnum.schema
 
   /** The four slots of the cold reader's explain-back (question, answer, disagreement, open). */
@@ -197,7 +194,7 @@ object ReviewArticle:
       citekey: EvidenceAnswer.Citekey,
       offset: Option[EvidenceAnswer.Offset] = None,
       quote: EvidenceAnswer.Quote
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object EvidenceAnswer:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
@@ -233,7 +230,7 @@ object ReviewArticle:
       fix: FindingAnswer.Fix,
       evidence: List[EvidenceAnswer] = Nil,
       pair: Option[FindingAnswer.Pair] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object FindingAnswer:
     type Severity = ReviewArticle.Severity.Wire
     val Severity: ReviewArticle.Severity.Wire.type = ReviewArticle.Severity.Wire
@@ -281,7 +278,7 @@ object ReviewArticle:
       quote: ReaderFindingAnswer.Quote,
       problem: ReaderFindingAnswer.Problem,
       fix: ReaderFindingAnswer.Fix
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def asFinding: FindingAnswer = FindingAnswer(severity, kind, where, quote, problem, fix)
   object ReaderFindingAnswer:
     type Severity = ReviewArticle.Severity.Wire
@@ -315,7 +312,7 @@ object ReviewArticle:
       statusesSilent: List[RulesAnswer.StatusesSilent] = Nil,
       spotChecks: List[SpotCheckAnswer] = Nil,
       checks: List[CheckAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object RulesAnswer:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
@@ -353,7 +350,7 @@ object ReviewArticle:
       claim: SpotCheckAnswer.Claim,
       verdict: SpotCheckAnswer.Verdict,
       recordQuote: SpotCheckAnswer.RecordQuote
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SpotCheckAnswer:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
@@ -382,7 +379,7 @@ object ReviewArticle:
       opaqueSentences: ColdReaderAnswer.OpaqueSentences,
       lostAt: Option[ColdReaderAnswer.LostAt] = None,
       checks: List[CheckAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ColdReaderAnswer:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
@@ -423,7 +420,7 @@ object ReviewArticle:
       claimsChecked: SkepticAnswer.ClaimsChecked,
       checks: List[CheckAnswer] = Nil,
       notMaterial: List[NotMaterialAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SkepticAnswer:
     type Verdict = ReviewArticle.Verdict.Wire
     val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
@@ -451,7 +448,7 @@ object ReviewArticle:
   /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the reason (the pair
     * becomes `reasoned`, §6.8).
     */
-  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem) derives KindlingsCodecAsObject
+  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem) derives JsonCodec
   object NotMaterialAnswer:
     type Pair = CritiqueRef.Wire
     val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
@@ -474,7 +471,7 @@ object ReviewArticle:
       fixed: CheckAnswer.Fixed,
       quote: CheckAnswer.Quote,
       note: CheckAnswer.Note
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object CheckAnswer:
     type Id = Check.Id
     val Id: Check.Id.type = Check.Id
@@ -505,7 +502,7 @@ object ReviewArticle:
       checks: List[CheckAnswer] = Nil,
       findings: List[FindingAnswer] = Nil,
       lessons: List[RecheckAnswer.Lessons] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object RecheckAnswer:
     type Lessons = Recheck.Lessons
     val Lessons: Recheck.Lessons.type = Recheck.Lessons
@@ -530,7 +527,7 @@ object ReviewArticle:
       reason: Problem,
       citekey: RejectionAnswer.Citekey,
       quote: RejectionAnswer.Quote
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object RejectionAnswer:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
@@ -558,7 +555,7 @@ object ReviewArticle:
       reasons: List[Coverage.Reason] = Nil,
       wontFix: List[WontFixAnswer] = Nil,
       setAside: List[SetAsideAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object FixerAnswer:
     type Applied = Fix.Applied
     val Applied: Fix.Applied.type = Fix.Applied
@@ -603,7 +600,7 @@ object ReviewArticle:
       id: SetAsideAnswer.Id,
       pair: Option[SetAsideAnswer.Pair] = None,
       reason: Problem
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SetAsideAnswer:
     type Id = SetAside.Id
     val Id: SetAside.Id.type = SetAside.Id
@@ -625,7 +622,7 @@ object ReviewArticle:
         )
       )
 
-  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Problem) derives KindlingsCodecAsObject
+  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Problem) derives JsonCodec
   object WontFixAnswer:
     type Id = WontFix.Id
     val Id: WontFix.Id.type = WontFix.Id
@@ -653,7 +650,7 @@ object ReviewArticle:
       escalated: Finding.Escalated = Finding.Escalated(false),
       /** A missing-critique finding's pair of the critique checklist (§6.8). */
       pair: Option[CritiqueRef] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def major: Boolean = severity == Severity.Major
@@ -795,7 +792,7 @@ object ReviewArticle:
       offset: Option[Evidence.Offset],
       quote: Evidence.Quote,
       ratio: Evidence.Ratio
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -817,7 +814,7 @@ object ReviewArticle:
       recordQuote: SpotCheck.RecordQuote,
       ratio: SpotCheck.Ratio,
       tool: SpotCheck.Tool
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object SpotCheck:
     type Claim = Claim.T
@@ -845,7 +842,7 @@ object ReviewArticle:
       spotChecks: List[SpotCheck] = Nil,
       /** The skeptic's verified rulings that an open checklist pair is not material (§6.8). */
       notMaterial: List[CritiqueReason] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Report:
     type ExplainBack = ColdReaderAnswer.ExplainBack
@@ -854,8 +851,7 @@ object ReviewArticle:
     val EmptySlots: ColdReaderAnswer.EmptySlots.type = ColdReaderAnswer.EmptySlots
 
   /** A verified [[CheckAnswer]]. */
-  final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note)
-      derives KindlingsCodecAsObject
+  final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note) derives JsonCodec
 
   object Check:
     type Id = Finding.Id
@@ -875,7 +871,7 @@ object ReviewArticle:
       checks: List[Check],
       findings: List[Finding],
       lessons: List[Recheck.Lessons] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Recheck:
     type Lessons = Lessons.T
@@ -893,7 +889,7 @@ object ReviewArticle:
       cited: List[CitedSource] = Nil,
       /** The critique checklist of this body (§6.8), whether or not the article records a filter. */
       critiques: List[CritiquePair] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
     def generated: Option[Article.Coverage.Sections] = coverage.map(Article.Coverage.sections)
 
@@ -937,7 +933,7 @@ object ReviewArticle:
       emptySlots: List[Merged.EmptySlots],
       proposals: List[Proposal],
       deferred: List[Merged.Deferred] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
     def escalated: List[Finding] = findings.filter(_.escalated.value)
     def count(r: Reviewer): FindingCount = FindingCount(findings.count(_.reviewer == r))
@@ -959,7 +955,7 @@ object ReviewArticle:
       citekey: com.histmersion.domain.library.Citekey,
       quote: Rejection.Quote,
       ratio: Rejection.Ratio
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Rejection:
     type Id = Finding.Id
@@ -999,7 +995,7 @@ object ReviewArticle:
       notFixed: List[WontFix] = Nil,
       /** Pairs of the checklist set aside with no finding (a pair the revision brought in). */
       pairsAside: List[CritiqueReason] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Fix:
     type Body = Article.Body
@@ -1021,14 +1017,14 @@ object ReviewArticle:
     type Repairs = Repairs.T
     object Repairs extends Newtype[String, Pure]
 
-  final case class WontFix(id: WontFix.Id, reason: Problem) derives KindlingsCodecAsObject
+  final case class WontFix(id: WontFix.Id, reason: Problem) derives JsonCodec
 
   object WontFix:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
-  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Problem) derives KindlingsCodecAsObject
+  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Problem) derives JsonCodec
 
   object SetAside:
     type Id = Finding.Id
@@ -1041,7 +1037,7 @@ object ReviewArticle:
       written: Patched.Written,
       previousVersion: Option[Patched.PreviousVersion],
       conflict: Patched.Conflict
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Patched:
     type Written = Written.T
@@ -1061,7 +1057,7 @@ object ReviewArticle:
       rejected: Outcome.Rejected,
       fixed: Outcome.Fixed,
       approvals: Outcome.Approvals
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Outcome:
     type Slug = com.histmersion.domain.research.Slug

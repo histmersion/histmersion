@@ -3,7 +3,7 @@ package api.library
 
 import com.histmersion.util.problem.Problem
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -19,7 +19,7 @@ final case class CandidateWatch(
     lastRun: Option[CandidateWatch.LastRun] = None,
     lastError: Option[Problem] = None,
     lastFound: CandidateWatch.LastFound = CandidateWatch.LastFound(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

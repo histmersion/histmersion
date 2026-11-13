@@ -9,7 +9,8 @@ import com.histmersion.api.research.Articles
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -22,8 +23,6 @@ import com.histmersion.api.research.Coverage
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import io.circe.KeyEncoder
-import io.circe.KeyDecoder
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
 
@@ -46,8 +45,8 @@ object CompileArticle:
   type Written = Written.T
   object Written extends Newtype[Boolean, Pure]
 
-  given citekeyKeyEncoder: KeyEncoder[Citekey] = KeyEncoder.encodeKeyString.contramap(_.value)
-  given citekeyKeyDecoder: KeyDecoder[Citekey] = KeyDecoder.instance(Citekey.option(_))
+  given citekeyKey: JsonKeyCodec[Citekey] =
+    JsonCodec.key[Citekey](_.value, k => Citekey.option(k).toRight(s"not a citekey: '$k'"))
 
   // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
@@ -57,7 +56,7 @@ object CompileArticle:
       date: Option[ClaimAnswer.Date] = None,
       place: Option[ClaimAnswer.Place] = None,
       confidence: com.histmersion.domain.library.Confidence.Wire
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ClaimAnswer:
     type Claim = Claim.T
     object Claim extends Newtype[String, Pure]
@@ -81,7 +80,7 @@ object CompileArticle:
       relevant: ExtractAnswer.Relevant,
       reason: Problem,
       claims: List[ClaimAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ExtractAnswer:
     type Relevant = Relevant.T
     object Relevant extends Newtype[Boolean, Pure]
@@ -104,11 +103,10 @@ object CompileArticle:
       place: Option[ClaimAnswer.Place],
       confidence: Confidence,
       ratio: AgentVerify.Ratio
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Problem])
-      derives KindlingsCodecAsObject
+  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Problem]) derives JsonCodec
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
     * in the vocabulary; a source judged irrelevant must say why. Unverifiable claims send the answer back; on the last
@@ -181,18 +179,17 @@ object CompileArticle:
 
   /** What the database says about one source the filter returned. */
   final case class SourceFact(citekey: Citekey, title: Title, year: Option[Year], status: Source.Status)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
-  final case class EdgeFact(from: Citekey, kind: Article.Coverage.DisagreementKind, to: Citekey)
-      derives KindlingsCodecAsObject
+  final case class EdgeFact(from: Citekey, kind: Article.Coverage.DisagreementKind, to: Citekey) derives JsonCodec
 
   /** The evidence model: the sources with their statuses and claim counts (due weight), the disagreement edges among
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
     * for the `_Method_` note.
     */
   /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: Citekey, reason: Problem) derives KindlingsCodecAsObject
+  final case class NotUsed(citekey: Citekey, reason: Problem) derives JsonCodec
 
   final case class Evidence(
       filter: ArticleDraft.Filter,
@@ -202,7 +199,7 @@ object CompileArticle:
       edges: List[EdgeFact],
       disputed: List[Citekey],
       notUsed: List[NotUsed]
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def used: List[Citekey] =
       sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
 
@@ -287,7 +284,7 @@ object CompileArticle:
       body: Article.Body,
       section: Option[Article.Section] = None,
       reasons: List[Coverage.Reason] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object DraftAnswer:
     given Schema[DraftAnswer] = KindlingsSchema
       .derived[DraftAnswer]

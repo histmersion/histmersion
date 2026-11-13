@@ -4,7 +4,7 @@ package api
 import com.histmersion.testsupport.ComparedByValue.given
 
 import sttp.tapir.{Schema, SchemaType}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.library.Filter
 
@@ -12,7 +12,7 @@ import com.histmersion.api.library.Filter
 class FilterDocsSuite extends munit.FunSuite:
 
   final case class Probe(query: Option[String] = None, tags: List[String] = Nil, other: Option[Int] = None)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   private def descriptions[T](s: Schema[T]): Map[String, Option[String]] = s.schemaType match
     case p: SchemaType.SProduct[T] @unchecked => p.fields.map(f => f.name.name -> f.schema.description).toMap

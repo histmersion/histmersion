@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.JsonObject
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.JsonObject
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8

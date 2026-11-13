@@ -1,16 +1,20 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Api
+import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
+import hearth.kindlings.tapiropenapijsoniter.OpenApiJsoniter
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.util.settings.{SettingsService, SettingsViews}
 import com.histmersion.server.agents.{Generated, PromptBudget, ToolboxOrder}
-import io.circe.Json
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 import sttp.tapir.server.netty.sync.NettySyncServer
@@ -70,12 +74,12 @@ class ContractSnapshotSuite extends munit.FunSuite:
   private val loaded: LoadedConfig = AppConfig.loadWithUserText(env, "").fold(e => throw AssertionError(e), identity)
 
   test("openapi.json: the OpenAPI document of Api.all"):
-    import sttp.apispec.openapi.circe.*
     val doc = sttp.tapir.docs.openapi.OpenAPIDocsInterpreter().toOpenAPI(Api.all, "Histmersion", "contract")
-    check("openapi.json", doc.asJson.deepDropNullValues.spaces2)
+    val json = writeToString(doc)(using OpenApiJsoniter.openapi_3_1.openAPICodec)
+    check("openapi.json", RawJson.parse(json).fold(e => throw AssertionError(e), identity).withoutNulls.spaces2)
     // an enum without its WireEnum schema is derived from its case objects: anonymous `type`, `type1`, ... schemas
     val anonymous = doc.components.toList.flatMap(_.schemas.keys).filter(_.matches("type[0-9]*")).sorted
-    assertEquals(anonymous, Nil, "a wire enum lacks `given Schema[E] = WireEnum.schema` (and its Encoder/Decoder)")
+    assertEquals(anonymous, Nil, "a wire enum lacks `given Schema[E] = WireEnum.schema` (and its codec)")
 
   test("mcp-tools.json: the MCP tools/list"):
     val deps = Deps(loaded.config, RefusingDataSource)
@@ -111,7 +115,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
         HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString()).body
       finally b.stop()
     }
-    val json = io.circe.parser.parse(body.dropWhile(_ != '{')).fold(e => throw AssertionError(e.toString), identity)
+    val json = RawJson.parse(body.dropWhile(_ != '{')).fold(e => throw AssertionError(e.toString), identity)
     check("mcp-tools.json", json.spaces2)
 
   test("toolbox.json: every agent tool, and each agent role's tools and answer schema"):
@@ -123,7 +127,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
         "answer" -> PromptBudget.answers
           .get(a.name)
           .fold(Json.Null)(s =>
-            io.circe.parser.parse(ClaudeCode.schemaJson(s).value).fold(e => Json.fromString(e.toString), identity)
+            RawJson.parse(ClaudeCode.schemaJson(s).value).fold(e => Json.fromString(e.toString), identity)
           )
       )
     }*)
@@ -148,11 +152,11 @@ class ContractSnapshotSuite extends munit.FunSuite:
     */
   private def withoutProcessEnvironment(page: Json): Json =
     def field(f: Json): Json =
-      val set = f.hcursor.get[String]("envVar").toOption.exists(sys.env.contains)
-      f.hcursor.downField("default").focus.filter(_ => set).fold(f)(d => f.mapObject(_.add("effective", d)))
+      val set = f.cursor.get[String]("envVar").toOption.exists(sys.env.contains)
+      f.cursor.downField("default").focus.filter(_ => set).fold(f)(d => f.mapObject(_.updated("effective", d)))
     def section(s: Json): Json =
-      s.mapObject(o => o.add("fields", o("fields").fold(Json.arr())(_.mapArray(_.map(field)))))
-    page.mapObject(o => o.add("sections", o("sections").fold(Json.arr())(_.mapArray(_.map(section)))))
+      s.mapObject(o => o.updated("fields", o("fields").fold(Json.arr())(_.mapArray(_.map(field)))))
+    page.mapObject(o => o.updated("sections", o("sections").fold(Json.arr())(_.mapArray(_.map(section)))))
 
 /** A data source with no database behind it: every connection is refused. */
 private object RefusingDataSource extends javax.sql.DataSource:

@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -7,7 +9,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 
-import io.circe.parser.decode
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataPatch}
 import com.histmersion.api.library.Edge
@@ -137,13 +138,16 @@ object Patches:
 
   private def csvItems(s: String): List[Write.ListItem] = csv(s).map(Write.ListItem(_))
 
-  private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
-    decode[A](s).left.map(e =>
-      Cli.Error(
-        Problem.Unclassified(Legacy.Text(s"$flag: not valid JSON for this option (${e.getMessage})")),
-        exitCode = ExitCode.Usage
+  private def parse[A: JsonValueCodec](flag: String, s: String): Either[Cli.Error, A] =
+    RawJson
+      .decode[A](s)
+      .left
+      .map(e =>
+        Cli.Error(
+          Problem.Unclassified(Legacy.Text(s"$flag: not valid JSON for this option ($e)")),
+          exitCode = ExitCode.Usage
+        )
       )
-    )
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.

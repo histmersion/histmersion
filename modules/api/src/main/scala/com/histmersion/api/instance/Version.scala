@@ -2,7 +2,7 @@ package com.histmersion
 package api.instance
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -17,7 +17,7 @@ object Version:
   val licence: Licence = Licence("AGPL-3.0-or-later")
 
   final case class Info(name: Info.Name, version: Info.Version)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

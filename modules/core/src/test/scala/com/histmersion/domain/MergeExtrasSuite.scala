@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -20,7 +21,6 @@ import com.histmersion.api.given
 
 import BundlePlan.Decision
 import MergeFixture.*
-import io.circe.Json
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{IssueHunk, IssueSpan, MergeResolution, MergeResolutions}
 import com.histmersion.api.exchange.Bundle

@@ -1,5 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -32,8 +35,8 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
 
   private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties
-      .flatMap(p => io.circe.parser.parse(p.value).toOption)
-      .flatMap(_.hcursor.get[String](key).toOption)
+      .flatMap(p => RawJson.parse(p.value).toOption)
+      .flatMap(_.cursor.get[String](key).toOption)
       .toList
       .flatMap(_.split(",").toList)
       .map(_.trim)

@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
-import io.circe.{Json, JsonObject}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Polity polygons from the Seshat Cliopatria dataset.
@@ -39,10 +42,10 @@ object Cliopatria extends DownloadedGazetteer:
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
-    io.circe.parser
+    RawJson
       .parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))
@@ -138,5 +141,5 @@ object Cliopatria extends DownloadedGazetteer:
 
   private def numYear(o: JsonObject, key: String): Option[DownloadedGazetteer.Year] =
     o(key)
-      .flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))
+      .flatMap(j => j.asNumber.flatMap(_.asLong).orElse(j.asString.flatMap(_.toLongOption)))
       .map(DownloadedGazetteer.Year(_))

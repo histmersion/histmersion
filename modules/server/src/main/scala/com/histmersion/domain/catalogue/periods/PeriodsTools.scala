@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.catalogue.periods
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodsMarkdown}
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -21,7 +22,7 @@ object PeriodsTools:
       region: Option[PeriodsInput.Region] = None,
       from: Option[PeriodsInput.From] = None,
       to: Option[PeriodsInput.To] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object PeriodsInput:
     type Query = Query.T
     object Query extends Newtype[String, Pure]

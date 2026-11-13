@@ -356,7 +356,7 @@ class StorageSuite extends munit.FunSuite:
     assert(AboutMarkdown.render(about).contains("## Storage — "), AboutMarkdown.render(about))
 
   test("an About without storage (an older server) still decodes; one with it round-trips"):
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val about = About(
       About.Name("histmersion"),
       BuildStamp(BuildStamp.Version("1")),

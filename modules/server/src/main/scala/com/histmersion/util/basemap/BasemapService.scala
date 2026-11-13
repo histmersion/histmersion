@@ -1,5 +1,9 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -126,13 +130,13 @@ final class BasemapService(
       case Right(None)    => base
       case Right(Some(f)) =>
         val h = f.header
-        val mine = f.metadata.hcursor.downField("histmersion")
+        val mine = f.metadata.cursor.downField("histmersion")
         val keepAll = Basemap.FetchQuery.KeepAll(mine.get[Boolean]("keepAll").getOrElse(false))
         val drop = mine.get[String]("drop").toOption.map(Basemap.DropRule.Spec(_))
         val credit = if l != Basemap.Layer.Bathymetry then attribution(l)
         else
           BasemapService.seaCredit(
-            f.metadata.hcursor.get[String]("attribution").toOption.map(BasemapFetch.Attribution(_)),
+            f.metadata.cursor.get[String]("attribution").toOption.map(BasemapFetch.Attribution(_)),
             BasemapFetch.Attribution(cfg.bathymetry.attribution.value),
             cfg.bathymetry.onDemand.enabled.value
           )
@@ -214,7 +218,7 @@ final class BasemapService(
         Basemap.Focus.MinZoom(h.minZoom.value),
         Basemap.Focus.MaxZoom(h.maxZoom.value),
         Basemap.Focus.Tiles(h.addressedTiles.value),
-        f.metadata.hcursor.downField("histmersion").get[String]("fetchedAt").toOption.map(Basemap.Focus.FetchedAt(_))
+        f.metadata.cursor.downField("histmersion").get[String]("fetchedAt").toOption.map(Basemap.Focus.FetchedAt(_))
       )
     }
   }
@@ -294,7 +298,7 @@ final class BasemapService(
     * was kept whole; without an extract, the configured list.
     */
   private def vectorRules(): Map[Mvt.LayerName, Mvt.Rule] =
-    val meta = reader(Basemap.Layer.Vector).toOption.flatten.map(_.metadata.hcursor.downField("histmersion"))
+    val meta = reader(Basemap.Layer.Vector).toOption.flatten.map(_.metadata.cursor.downField("histmersion"))
     val keepAll = meta.flatMap(_.get[Boolean]("keepAll").toOption).getOrElse(false)
     val drop = meta.flatMap(_.get[String]("drop").toOption).getOrElse(cfg.vector.drop.value)
     if keepAll then Map.empty
@@ -308,7 +312,7 @@ final class BasemapService(
     */
   private def vectorPlanet(): RangeHttp.Url =
     val fromExtract = reader(Basemap.Layer.Vector).toOption.flatten
-      .flatMap(_.metadata.hcursor.downField("histmersion").get[String]("build").toOption)
+      .flatMap(_.metadata.cursor.downField("histmersion").get[String]("build").toOption)
       .filter(_.endsWith(".pmtiles"))
     val pinned = Option(cfg.vector.build.value.trim).filter(b => b.nonEmpty && !b.equalsIgnoreCase("latest"))
     RangeHttp.Url(
@@ -819,9 +823,9 @@ final class BasemapService(
     files
       .get(work(l).child(Store.EntryName("state.json")))
       .map(_.text().value)
-      .flatMap(s => io.circe.parser.parse(s).toOption)
+      .flatMap(s => RawJson.parse(s).toOption)
       .flatMap { j =>
-        val c = j.hcursor
+        val c = j.cursor
         val same =
           c.get[Int]("maxZoom").toOption.contains(zoomOf(l, a).value) &&
             c.get[String]("extra").toOption.contains(extra.value) &&
@@ -895,7 +899,7 @@ final class BasemapService(
     val target = out.getOrElse(key(l))
     val state = BasemapFetch
       .stateOf(plan, extra)
-      .deepMerge(io.circe.Json.obj("label" -> io.circe.Json.fromString(plan.source.label.value)))
+      .deepMerge(Json.obj("label" -> Json.fromString(plan.source.label.value)))
     val had = BasemapFetch.prepare(work, state)
     val pendingBytes = BasemapFetch.pending(plan, work).map(_._2.value).sum
     // the local archive is at most the distinct contents the requests carry (the vector one is far
@@ -1011,16 +1015,16 @@ final class BasemapService(
             }
           }
           val header = BasemapService.pngHeader(bc.maxZoom.value, a.bbox)
-          val meta = io.circe.Json.obj(
-            "name" -> io.circe.Json.fromString("histmersion sea floor"),
-            "attribution" -> io.circe.Json.fromString(bc.attribution.value),
-            "histmersion" -> io.circe.Json.obj(
-              "layer" -> io.circe.Json.fromString(Basemap.Layer.Bathymetry.wire.value),
-              "source" -> io.circe.Json.fromString(bc.url.value),
-              "build" -> io.circe.Json.fromString("ETOPO1 (Mapzen terrain tiles)"),
-              "bbox" -> io.circe.Json.fromString(BasemapService.bboxText(a.bbox)),
-              "maxZoom" -> io.circe.Json.fromInt(bc.maxZoom.value),
-              "fetchedAt" -> io.circe.Json.fromString(Instant.now(clock).toString)
+          val meta = Json.obj(
+            "name" -> Json.fromString("histmersion sea floor"),
+            "attribution" -> Json.fromString(bc.attribution.value),
+            "histmersion" -> Json.obj(
+              "layer" -> Json.fromString(Basemap.Layer.Bathymetry.wire.value),
+              "source" -> Json.fromString(bc.url.value),
+              "build" -> Json.fromString("ETOPO1 (Mapzen terrain tiles)"),
+              "bbox" -> Json.fromString(BasemapService.bboxText(a.bbox)),
+              "maxZoom" -> Json.fromInt(bc.maxZoom.value),
+              "fetchedAt" -> Json.fromString(Instant.now(clock).toString)
             )
           )
           val bytes = w.finish(header, meta)
@@ -1062,16 +1066,16 @@ final class BasemapService(
             n <- sea.build(plan, work, w.add, note)
           yield
             val header = BasemapService.pngHeader(bc.gebco.maxZoom.value, a.bbox)
-            val meta = io.circe.Json.obj(
-              "name" -> io.circe.Json.fromString("histmersion sea floor"),
-              "attribution" -> io.circe.Json.fromString(bc.gebco.attribution.value),
-              "histmersion" -> io.circe.Json.obj(
-                "layer" -> io.circe.Json.fromString(Basemap.Layer.Bathymetry.wire.value),
-                "source" -> io.circe.Json.fromString(bc.gebco.url.value),
-                "build" -> io.circe.Json.fromString("GEBCO grid"),
-                "bbox" -> io.circe.Json.fromString(BasemapService.bboxText(a.bbox)),
-                "maxZoom" -> io.circe.Json.fromInt(bc.gebco.maxZoom.value),
-                "fetchedAt" -> io.circe.Json.fromString(Instant.now(clock).toString)
+            val meta = Json.obj(
+              "name" -> Json.fromString("histmersion sea floor"),
+              "attribution" -> Json.fromString(bc.gebco.attribution.value),
+              "histmersion" -> Json.obj(
+                "layer" -> Json.fromString(Basemap.Layer.Bathymetry.wire.value),
+                "source" -> Json.fromString(bc.gebco.url.value),
+                "build" -> Json.fromString("GEBCO grid"),
+                "bbox" -> Json.fromString(BasemapService.bboxText(a.bbox)),
+                "maxZoom" -> Json.fromInt(bc.gebco.maxZoom.value),
+                "fetchedAt" -> Json.fromString(Instant.now(clock).toString)
               )
             )
             val bytes = w.finish(header, meta)
@@ -1113,10 +1117,10 @@ final class BasemapService(
             if got.nonEmpty then pace.sleep(pace.gapMs)
             h.text(RangeHttp.Url(url))
               .flatMap(t =>
-                io.circe.parser
+                RawJson
                   .parse(t.value)
                   .left
-                  .map(e => Problem.Unclassified(Legacy.Text(s"$url is not JSON: ${e.getMessage}")))
+                  .map(e => Problem.Unclassified(Legacy.Text(s"$url is not JSON: $e")))
               )
               .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
               .map(got ++ _)
@@ -1289,8 +1293,7 @@ object BasemapService:
       b: BBox,
       names: NameCount,
       fetchedAt: BasemapFetch.FetchedAt
-  ): io.circe.Json =
-    import io.circe.Json
+  ): Json =
     val build = "/(v\\d+\\.\\d+(\\.\\d+)?)/".r
       .findFirstMatchIn(lc.url.value)
       .map(m => s"Natural Earth ${m.group(1)}")
@@ -1339,21 +1342,21 @@ object BasemapService:
 
   /** The provider's builds, oldest first: `[{key, size}, …]` → `(key, size)`. Pure. */
   def builds(json: JsonText): Either[Problem, List[(BuildName, Long)]] =
-    io.circe.parser
+    RawJson
       .parse(json.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"the list of builds is not JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"the list of builds is not JSON: $e")))
       .flatMap { j =>
         j.asArray
           .toRight(Problem.Unclassified(Legacy.Text("the list of builds is not a JSON array")))
           .map(
             _.toList
               .flatMap { b =>
-                b.hcursor
+                b.cursor
                   .get[String]("key")
                   .toOption
                   .filter(_.endsWith(".pmtiles"))
-                  .map(k => (BuildName(k), b.hcursor.get[Long]("size").getOrElse(-1L)))
+                  .map(k => (BuildName(k), b.cursor.get[Long]("size").getOrElse(-1L)))
               }
               .sortBy(_._1.value)
           )

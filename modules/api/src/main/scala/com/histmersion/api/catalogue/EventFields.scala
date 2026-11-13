@@ -1,10 +1,12 @@
 package com.histmersion
 package api.catalogue
-import io.circe.Json
-import io.circe.syntax.*
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.Span
 import com.histmersion.api.library.Label
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object EventFields:
   val Label = "label"
@@ -22,7 +24,7 @@ object EventFields:
     )
 
   def geometry(g: Option[EventGeometry.Geojson]): Json =
-    g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))
+    g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => RawJson.parse(t).getOrElse(t.asJson))
 
   def upstream(r: CatalogRecord): Map[String, Json] =
     Map(

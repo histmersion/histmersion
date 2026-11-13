@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,7 +10,6 @@ import hearth.kindlings.optics.syntax.*
 import ox.supervised
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.aliases.LabelRenamed
@@ -53,7 +54,7 @@ class AliasRuleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         )
         .build()
     )
-  private def decode[A: io.circe.Decoder](s: String): A = parser.decode[A](s).fold(e => fail(s"$e in $s"), identity)
+  private def decode[A: JsonValueCodec](s: String): A = RawJson.decode[A](s).fold(e => fail(s"$e in $s"), identity)
   private def ok(r: (Int, String)): String = { assertEquals(r._1, 200, r._2); r._2 }
 
   private def withServer(body: String => Unit): Unit =

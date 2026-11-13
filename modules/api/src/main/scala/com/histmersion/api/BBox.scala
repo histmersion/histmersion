@@ -1,9 +1,8 @@
 package com.histmersion
 package api
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Longitude
@@ -12,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 /** `minLon > maxLon`: the box crosses the antimeridian. */
 final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, maxLat: Latitude)
-    derives KindlingsCodecAsObject,
+    derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def crossesAntimeridian: Boolean = (minLon).value > (maxLon).value

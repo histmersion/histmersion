@@ -1,10 +1,13 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.AiMessage
-import io.circe.{Encoder, Json}
-import io.circe.parser.parse
 import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
 import io.github.iltotore.iron.constraint.any.Pure
@@ -33,7 +36,7 @@ object AnthropicRequest:
     messages(r.messages).map { msgs =>
       val tools = Option.when(r.tools.nonEmpty)(
         Json.fromValues(r.tools.map { t =>
-          val raw = parse(t.inputSchema.value).getOrElse(Json.obj())
+          val raw = RawJson.parse(t.inputSchema.value).getOrElse(Json.obj())
           Json.obj(
             "name" -> Json.fromString(t.name.value),
             "description" -> Json.fromString(t.description.value),
@@ -42,7 +45,7 @@ object AnthropicRequest:
         })
       )
       val schema =
-        r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption)
+        r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => RawJson.parse(s).toOption)
       val output = schema.map(s =>
         Json.obj(
           "format" -> Json.obj("type" -> Json.fromString("json_schema"), "schema" -> SchemaJson(s).closed.json)
@@ -91,13 +94,13 @@ object AnthropicRequest:
     calls match
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
-        parse((input).value).flatMap(_.as[Map[String, Json]]) match
-          case Left(e)  => Left(Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
+        RawJson.parse((input).value).flatMap(_.as[Map[String, Json]]) match
+          case Left(e)  => Left(Problem.Unclassified(Legacy.Text(s"$e")))
           case Right(m) =>
             val use = Json.obj(
               "id" -> Json.fromString((id).value),
               "name" -> Json.fromString((name).value),
-              "input" -> Encoder[Map[String, Json]].apply(m),
+              "input" -> Json.fromFields(m),
               "type" -> Json.fromString("tool_use")
             )
             toolUses(tail, use :: acc)
@@ -105,4 +108,4 @@ object AnthropicRequest:
   /** The conversation without null values (an unset field and a null in a tool call's input alike, as the API has
     * always been sent them).
     */
-  private def dropNulls(ms: List[Json]): List[Json] = ms.map(_.deepDropNullValues)
+  private def dropNulls(ms: List[Json]): List[Json] = ms.map(_.withoutNulls)

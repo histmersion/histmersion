@@ -1,6 +1,6 @@
 package com.histmersion
 package api.plugins
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -12,7 +12,7 @@ final case class PluginsReport(
     plugins: List[PluginStatus] = Nil,
     warnings: List[PluginsReport.Warnings] = Nil,
     set: Option[PluginSet] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def ok: Boolean = (plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire))

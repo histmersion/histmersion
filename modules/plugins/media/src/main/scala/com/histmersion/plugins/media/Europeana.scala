@@ -1,9 +1,13 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.{ACursor, Json}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
@@ -153,13 +157,14 @@ object Europeana:
   /** Pure: the values of a field that may be a string, an array of strings, a LangMap (`{"en": [..]}`) or an array of
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
-  private def values(c: ACursor, field: Field): List[String] =
-    def ofJson(j: Json): List[String] =
-      j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
-        val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
-        langs.flatMap(k => o(k).toList.flatMap(ofJson))
-      }
-    c.downField(field.value).focus.toList.flatMap(ofJson).map(_.trim).filter(_.nonEmpty).distinct
+  extension (c: Cursor)
+    private def langValues(field: Field): List[String] =
+      def ofJson(j: Json): List[String] =
+        j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
+          val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
+          langs.flatMap(k => o(k).toList.flatMap(ofJson))
+        }
+      c.downField(field.value).focus.toList.flatMap(ofJson).map(_.trim).filter(_.nonEmpty).distinct
 
   private def isUri(s: String) = s.startsWith("http://") || s.startsWith("https://")
 
@@ -170,7 +175,7 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
         case "" => Problem.Unclassified(Legacy.Text("the search failed"))
@@ -189,16 +194,19 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.str("id").filter(_.startsWith("/")).toRight(Problem.Unclassified(Legacy.Text("no Europeana id"))).map { id =>
       val title =
-        values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
-      val creator = values(c, Field("dcCreator")).filterNot(isUri).headOption
-      val provider = values(c, Field("dataProvider")).headOption
-      val shownBy = values(c, Field("edmIsShownBy")).headOption
+        c.langValues(Field("title")).headOption.orElse(c.langValues(Field("dcTitleLangAware")).headOption).getOrElse(id)
+      val creator = c.langValues(Field("dcCreator")).filterNot(isUri).headOption
+      val provider = c.langValues(Field("dataProvider")).headOption
+      val shownBy = c.langValues(Field("edmIsShownBy")).headOption
       val media =
-        values(c, Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
-      val rights: Either[Problem, MediaRights] = values(c, Field("rights")).headOption match
+        c.langValues(Field("edmPreview"))
+          .headOption
+          .flatMap(v => previewSource(Preview(v)).map(_.value))
+          .orElse(shownBy)
+      val rights: Either[Problem, MediaRights] = c.langValues(Field("rights")).headOption match
         case None    => Left(Problem.Unclassified(Legacy.Text("no rights statement on the record")))
         case Some(u) =>
           val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
@@ -216,15 +224,16 @@ object Europeana:
                 )
               )
             )
-      val spatial = values(c, Field("dctermsSpatial"))
+      val spatial = c.langValues(Field("dctermsSpatial"))
       val geo = (spatial.filterNot(isUri).map(Spatial -> _) ++
-        (values(c, Field("edmPlaceLabel")) ++ values(c, Field("edmPlaceLabelLangAware"))).distinct.map(Place -> _))
+        (c.langValues(Field("edmPlaceLabel")) ++ c.langValues(Field("edmPlaceLabelLangAware"))).distinct
+          .map(Place -> _))
         .map((k, v) => (MediaItem.Geography.Field(k), MediaItem.Geography.Value(v)))
-      val ids = (spatial.filter(isUri) ++ values(c, Field("edmPlace")))
+      val ids = (spatial.filter(isUri) ++ c.langValues(Field("edmPlace")))
         .flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u)))
         .distinct
         .map((k, v) => (GazetteerRef.Scheme(k.value), GazetteerRef.Id(v.value)))
-      val years = values(c, Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
+      val years = c.langValues(Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => Period.span(years.min, years.max))
       MediaItem(
         MediaItem.Key(id.stripPrefix("/")),
@@ -238,8 +247,8 @@ object Europeana:
         period = period,
         ids = ids,
         withheld = excludedBy(
-          values(c, Field("provider")).map(Exclusions.Providers(_)),
-          values(c, Field("dataProvider")).map(Exclusions.DataProviders(_)),
+          c.langValues(Field("provider")).map(Exclusions.Providers(_)),
+          c.langValues(Field("dataProvider")).map(Exclusions.DataProviders(_)),
           ex
         ).map(w => MediaItem.Withheld(w.value))
       )
@@ -255,12 +264,12 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     if c.bool("success").contains(false) then
       Left(Problem.Unclassified(Legacy.Text(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": "))))
     else
       val obj = c.downField("object")
-      val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
+      val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.cursor)
       val types =
         obj
           .downField("proxies")
@@ -268,26 +277,26 @@ object Europeana:
           .flatMap(_.asArray)
           .toList
           .flatten
-          .map(_.hcursor)
-          .flatMap(values(_, Field("dcType")))
+          .map(_.cursor)
+          .flatMap(_.langValues(Field("dcType")))
           .map(Exclusions.Types(_))
-      val firstAggregation: Either[Problem, ACursor] = excludedType(types, ex) match
+      val firstAggregation: Either[Problem, Cursor] = excludedType(types, ex) match
         case Some(t) => Left(Problem.Unclassified(Legacy.Text(s"an excluded type (${t.value})")))
         case None    => aggs.headOption.toRight(Problem.Unclassified(Legacy.Text("no aggregation on the record")))
       firstAggregation.flatMap { agg =>
-        val shownBy = agg.str("edmIsShownBy").orElse(values(agg, Field("edmIsShownBy")).headOption)
+        val shownBy = agg.str("edmIsShownBy").orElse(agg.langValues(Field("edmIsShownBy")).headOption)
         val resource = agg
           .downField("webResources")
           .focus
           .flatMap(_.asArray)
           .toList
           .flatten
-          .map(_.hcursor)
+          .map(_.cursor)
           .find(r => shownBy.isDefined && r.str("about") == shownBy)
         val stated =
           resource
-            .flatMap(values(_, Field("webResourceEdmRights")).headOption)
-            .orElse(values(agg, Field("edmRights")).headOption)
+            .flatMap(_.langValues(Field("webResourceEdmRights")).headOption)
+            .orElse(agg.langValues(Field("edmRights")).headOption)
         rec.rights.flatMap { r =>
           val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
           stated.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.views
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.media.MediaThumb
@@ -30,4 +30,4 @@ final case class PlaceDetail(
     media: List[MediaThumb] = Nil,
     siteType: Option[Place.Entry.SiteType] = None,
     record: Place.Record = Place.Record()
-) extends Place.Card derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+) extends Place.Card derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

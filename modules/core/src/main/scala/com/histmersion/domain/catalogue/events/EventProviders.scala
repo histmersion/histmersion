@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
-
-import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -42,27 +43,27 @@ object EventProviders:
 
     /** Pure: each item's labels and aliases in the asked languages, distinct. */
     def names(json: Json): Either[Problem, Map[String, List[String]]] =
-      val c = json.hcursor
+      val c = json.cursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.hcursor.get[String]("info").getOrElse("error"))))
+        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.cursor.get[String]("info").getOrElse("error"))))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
-            val labels = e.hcursor
+            val labels = e.cursor
               .downField("labels")
               .focus
               .flatMap(_.asObject)
               .toList
               .flatMap(_.values)
-              .flatMap(_.hcursor.get[String]("value").toOption)
-            val aliases = e.hcursor
+              .flatMap(_.cursor.get[String]("value").toOption)
+            val aliases = e.cursor
               .downField("aliases")
               .focus
               .flatMap(_.asObject)
               .toList
               .flatMap(_.values)
               .flatMap(_.asArray.toList.flatten)
-              .flatMap(_.hcursor.get[String]("value").toOption)
+              .flatMap(_.cursor.get[String]("value").toOption)
             id -> (labels ++ aliases).map(_.trim).filter(_.nonEmpty).distinct
           }.toMap)
 
@@ -70,17 +71,17 @@ object EventProviders:
       * from ([[SiteTypes.wikidata]]); P279 likewise for a class.
       */
     def claims(json: Json, property: WikidataProperty): Either[Problem, Map[String, List[String]]] =
-      val c = json.hcursor
+      val c = json.cursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.hcursor.get[String]("info").getOrElse("error"))))
+        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.cursor.get[String]("info").getOrElse("error"))))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
-            val sts = e.hcursor.downField("claims").downField(property.value).focus.flatMap(_.asArray).toList.flatten
+            val sts = e.cursor.downField("claims").downField(property.value).focus.flatMap(_.asArray).toList.flatten
             id -> sts
-              .filterNot(_.hcursor.get[String]("rank").toOption.contains("deprecated"))
+              .filterNot(_.cursor.get[String]("rank").toOption.contains("deprecated"))
               .flatMap(st =>
-                st.hcursor.downField("mainsnak").downField("datavalue").downField("value").get[String]("id").toOption
+                st.cursor.downField("mainsnak").downField("datavalue").downField("value").get[String]("id").toOption
               )
           }.toMap)
 

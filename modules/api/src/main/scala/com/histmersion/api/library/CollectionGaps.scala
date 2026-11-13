@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.api.given
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -15,7 +15,7 @@ final case class CollectionGaps(
     uncounted: CollectionGaps.Uncounted,
     total: CollectionGaps.Total,
     gaps: List[CollectionGapRow]
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

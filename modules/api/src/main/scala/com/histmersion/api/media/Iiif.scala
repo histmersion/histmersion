@@ -1,9 +1,10 @@
 package com.histmersion
 package api.media
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -143,10 +144,8 @@ object Iiif:
     case "png" => Api.ContentType("image/png")
     case _     => Api.ContentType("image/jpeg")
 
-  /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond circe derivation. */
-  def infoJson(id: ImageId, width: ImageSize.Width, height: ImageSize.Height): io.circe.Json =
-    import io.circe.Json
-    import io.circe.syntax.*
+  /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond derivation. */
+  def infoJson(id: ImageId, width: ImageSize.Width, height: ImageSize.Height): Json =
     Json.obj(
       "@context" -> Json.fromString(ApiContext),
       "id" -> Json.fromString((id).value),

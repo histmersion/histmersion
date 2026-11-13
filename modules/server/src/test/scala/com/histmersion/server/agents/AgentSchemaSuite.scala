@@ -1,5 +1,10 @@
 package com.histmersion
 package server.agents
+import com.histmersion.domain.automation.agents.SttpAiJson
+import com.histmersion.domain.automation.agents.SttpAiJson.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,7 +17,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.domain.library.LibraryTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.tapir.Schema
@@ -31,7 +36,7 @@ import com.histmersion.api.library.Source
 class AgentSchemaSuite extends munit.FunSuite:
 
   test("a typed answer's response schema renders from its Kindlings schema"):
-    val js = sttp.apispec.circe.encoderSchema(ResponseSchema.derived[ProbeAnswer]().schema).noSpaces
+    val js = SttpAiJson.schema(ResponseSchema.derived[ProbeAnswer]().schema).noSpaces
     assert(js.contains("\"title\""), js)
     assert(js.contains("\"citekey\""), js)
 
@@ -43,7 +48,7 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("the review panel's answers render as response schemas, with the field descriptions the prompts rely on"):
     import com.histmersion.domain.ReviewArticle.*
-    def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
+    def js[A](s: ResponseSchema[A]) = SttpAiJson.schema(s.schema).noSpaces
     val skeptic = js(ResponseSchema.derived[SkepticAnswer]())
     assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
     val fixer = js(ResponseSchema.derived[FixerAnswer]())
@@ -67,9 +72,7 @@ class AgentSchemaSuite extends munit.FunSuite:
       assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
-    val js = sttp.apispec.circe
-      .encoderSchema(ResponseSchema.derived[EnrichSource.Findings]().schema)
-      .noSpaces
+    val js = SttpAiJson.schema(ResponseSchema.derived[EnrichSource.Findings]().schema).noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
@@ -84,7 +87,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(List("\"slug\"", "\"edits\"", "\"anchor\"", "\"body\"", "insertBefore").forall(js.contains), js)
 
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
-    def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
+    def js[A](s: ResponseSchema[A]) = SttpAiJson.schema(s.schema).noSpaces
     val fixer = js(ResponseSchema.derived[ReviewArticle.FixerAnswer]())
     assert(
       fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"),
@@ -114,8 +117,8 @@ class AgentSchemaSuite extends munit.FunSuite:
   test("a property named title is kept"):
     val t = AgentTool.fromFunction[AgentSchemaSuite.Titled]("t", "d")(_ => "")
     val js = Toolbox.inputSchema(t)
-    assert(js.hcursor.downField("properties").downField("title").succeeded, js.noSpaces)
-    assert(js.hcursor.downField("title").failed, js.noSpaces)
+    assert(js.cursor.downField("properties").downField("title").succeeded, js.noSpaces)
+    assert(js.cursor.downField("title").succeeded == false, js.noSpaces)
 
   test("the agent search, facets and get_source take what steps use, mapped onto the same handlers"):
     val search = schema(LibraryAgentTools.Search)
@@ -161,29 +164,25 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
-    import io.circe.parser.decode
     // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
     assertEquals(
-      decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
+      RawJson.decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
       Right(AgentSearchInput(topics = List(Filter.Topics("dragon_slaying_myth")), limit = Some(Filter.Limit(50))))
     )
     assertEquals(
-      decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""),
+      RawJson.decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""),
       Right(AgentGetSourceInput(Citekey.assume("x")))
     )
     assertEquals(
-      decode[AgentFacetsInput]("""{"field":"tags"}"""),
+      RawJson.decode[AgentFacetsInput]("""{"field":"tags"}"""),
       Right(AgentFacetsInput(AgentFacetsInput.Field("tags")))
     )
-    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
+    assertEquals(RawJson.decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
     val t = box.tool(LibraryAgentTools.Search).get
     assert(
-      t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
+      SttpAiJson.arguments(t, Json.fromFields(List("topics" -> Json.fromValues(List(Json.fromString("a")))))).isRight,
       "the codec the agent endpoints decode with"
     )
 
 object AgentSchemaSuite:
-  final case class Titled(title: String)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Titled(title: String) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

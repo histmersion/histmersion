@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -57,6 +57,5 @@ object DeletePart:
     def all: Array[DeletePart] = values
     def wire(e: DeletePart): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[DeletePart] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
-  given Encoder[DeletePart] = WireEnum.encoder
-  given Decoder[DeletePart] = WireEnum.decoder
+  given JsonValueCodec[DeletePart] = WireEnum.codec
   given Schema[DeletePart] = WireEnum.schema

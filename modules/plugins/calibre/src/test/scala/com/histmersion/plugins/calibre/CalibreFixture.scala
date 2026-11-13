@@ -1,8 +1,9 @@
 package com.histmersion
 package plugins.calibre
-
-import io.circe.Json
-import io.circe.syntax.*
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.attribute.PosixFilePermissions

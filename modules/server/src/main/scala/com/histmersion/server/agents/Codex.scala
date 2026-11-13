@@ -1,5 +1,10 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.domain.automation.agents.SttpAiJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -8,10 +13,7 @@ import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.CodexConfig
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 import com.histmersion.api.Plural
 import com.histmersion.domain.CodexRetention
 import com.histmersion.domain.CodexRetention.FileInfo
@@ -40,7 +42,7 @@ object Codex:
   def outputSchemaJson(s: ResponseSchema[?]): SchemaJson = SchemaJson(StrictJsonSchema(schema(s)).noSpaces)
 
   private def schema(s: ResponseSchema[?]): Json =
-    s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema"))
+    SttpAiJson.answerSchema(s).asObject.fold(Json.Null)(o => Json.fromJsonObject(o.remove("$schema")))
 
   /** `codex exec --json -p <role> …` with the prompt on stdin (`-`). Not `--ephemeral`: the rollout keeps the run's
     * rate-limit snapshot.
@@ -92,7 +94,7 @@ object Codex:
     * with their results, reasoning; `turn.completed.usage`; `turn.failed` and `error` messages.
     */
   def parse(lines: List[CliProcess.Run.Lines]): CliOutcome =
-    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
+    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
@@ -101,7 +103,7 @@ object Codex:
     var error: Option[Problem] = None
     var turns = 0
     events.foreach { e =>
-      val c = e.hcursor
+      val c = e.cursor
       c.downField("type").as[String].getOrElse("") match
         case "item.completed" =>
           val it = c.downField("item")
@@ -120,7 +122,7 @@ object Codex:
                 .downField("content")
                 .as[List[Json]]
                 .getOrElse(Nil)
-                .flatMap(_.hcursor.downField("text").as[String].toOption)
+                .flatMap(_.cursor.downField("text").as[String].toOption)
                 .mkString("\n")
               val out = it.downField("error").downField("message").as[String].toOption.fold(res)(m => s"error: $m")
               entries += ConversationEntry.AssistantResponse("", List(ToolCall(id, tool, args)))

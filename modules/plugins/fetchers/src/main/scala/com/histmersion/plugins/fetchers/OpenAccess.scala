@@ -1,5 +1,9 @@
 package com.histmersion
 package plugins.fetchers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.{Fetch, FetchedFile, SourceFetcher, UpstreamQuota, WorkKey}
@@ -11,7 +15,6 @@ import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
-import io.circe.Json
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Access
 import io.github.iltotore.iron.constraint.any.Pure

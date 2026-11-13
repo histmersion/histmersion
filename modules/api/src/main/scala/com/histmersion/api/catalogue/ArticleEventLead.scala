@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
@@ -16,7 +16,7 @@ final case class ArticleEventLead(
     size: Option[ArticleEventLead.Size],
     findingsNear: ArticleEventLead.FindingsNear,
     provider: ArticleEventLead.Provider
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object ArticleEventLead:

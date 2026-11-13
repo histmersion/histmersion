@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -458,9 +460,9 @@ class TreeSuite extends munit.FunSuite:
         Tree.RegionTreeSamples(2)
       )
       .head
-    val js = io.circe.syntax.EncoderOps(b).asJson.noSpaces
+    val js = (b).asJson.noSpaces
     assert(js.contains("Hittite Empire"), js)
-    assertEquals(io.circe.parser.decode[Bucket](js), Right(b))
+    assertEquals(RawJson.decode[Bucket](js), Right(b))
     assert(Bucket.schema.toString.nonEmpty)
 
   test("SearchMarkdown.tree renders the indented tree with the non-additive caveat"):

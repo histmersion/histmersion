@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.automation.AgentStateMarkdown
@@ -29,14 +31,14 @@ object AgentStateCmd:
   private def set(using console: Console) = Opts.subcommand("set", "Set an agent state key (value as JSON)") {
     (Opts.argument[String]("key"), Opts.argument[String]("value"))
       .mapN { (key, valueStr) => (c: Client) =>
-        io.circe.parser.parse(valueStr) match
+        RawJson.parse(valueStr) match
           case Right(_) =>
             c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr)))
               .map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
             Left(
               Cli.Error(
-                Problem.Unclassified(Legacy.Text(s"Invalid JSON: ${err.getMessage}")),
+                Problem.Unclassified(Legacy.Text(s"Invalid JSON: $err")),
                 exitCode = ExitCode.Usage
               )
             )

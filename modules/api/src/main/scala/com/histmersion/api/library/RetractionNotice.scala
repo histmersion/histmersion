@@ -3,7 +3,7 @@ package api.library
 
 import com.histmersion.util.problem.Problem
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -14,7 +14,7 @@ final case class RetractionNotice(
     nature: Option[RetractionNotice.Nature],
     reason: Option[Problem],
     date: Option[RetractionNotice.Date]
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

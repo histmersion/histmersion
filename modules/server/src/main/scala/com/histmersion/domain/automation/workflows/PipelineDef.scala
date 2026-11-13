@@ -7,8 +7,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.VocabularyCodecs.given
-import io.circe.parser.decode
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*

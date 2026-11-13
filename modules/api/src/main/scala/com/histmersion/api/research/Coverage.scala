@@ -4,7 +4,7 @@ package api.research
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.StatusCount
@@ -34,7 +34,7 @@ final case class Coverage(
     drift: List[Coverage.Drift],
     eventLeads: List[ArticleEventLead] = Nil,
     critiques: List[CritiquePair] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def capped: Boolean = ((checked).value < (total).value)
@@ -49,12 +49,12 @@ object Coverage:
   object Checked extends Newtype[Int, Pure]
 
   final case class Drift(kind: DriftKind, citekeys: List[Citekey])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   final case class Edge(from: Citekey, kind: Edge.Kind, to: Citekey)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -62,11 +62,11 @@ object Coverage:
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
   final case class Entry(source: Source, reason: Option[Problem])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  final case class Reason(citekey: Citekey, reason: Problem) derives KindlingsCodecAsObject
+  final case class Reason(citekey: Citekey, reason: Problem) derives JsonCodec
   object Reason:
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
@@ -103,6 +103,6 @@ object Coverage:
       year: Option[Year],
       status: com.histmersion.api.library.Source.Status,
       authors: List[AuthorName] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

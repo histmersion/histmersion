@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -13,7 +13,7 @@ final case class InitPlan(
     periodPresets: InitPlan.PeriodPresets = InitPlan.PeriodPresets(false),
     fetch: List[InitPlan.Fetch] = Nil,
     check: InitPlan.Check = InitPlan.Check(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def isEmpty: Boolean = (!(gazetteer).value && !(periodPresets).value && fetch.isEmpty)

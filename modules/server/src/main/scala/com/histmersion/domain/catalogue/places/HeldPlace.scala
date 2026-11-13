@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Place
@@ -32,10 +35,10 @@ final case class HeldPlace(
 
   def contested: Boolean =
     place.properties.exists(p =>
-      io.circe.parser
+      RawJson
         .parse(p.value)
         .toOption
-        .flatMap(_.hcursor.downField("contested").as[Boolean].toOption)
+        .flatMap(_.cursor.downField("contested").as[Boolean].toOption)
         .contains(true)
     )
 

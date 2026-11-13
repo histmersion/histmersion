@@ -1,8 +1,11 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.plugin.{Latitude, Longitude, Year}
-import io.circe.ACursor
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reading a catalogue's JSON: a field as text, a whole number or a number, whatever the catalogue wrote it as. */
@@ -18,29 +21,17 @@ object JsonFields:
   type Year = Year.T
   object Year extends Newtype[Long, Pure]
 
-  def str(c: ACursor, k: Key): Option[Text] =
-    c.downField(k.value)
-      .focus
-      .flatMap(j => j.asString.orElse(j.asNumber.map(_.toString)))
-      .map(_.trim)
-      .filter(_.nonEmpty)
-      .map(t => Text(t))
+  extension (c: Cursor)
+    /** The field as text: a string, or a number as written; trimmed, if it is not blank. */
+    def str(k: Key): Option[Text] = c.downField(k.value).literal.map(Text(_))
 
-  def long(c: ACursor, k: Key): Option[Integer] =
-    c.downField(k.value)
-      .focus
-      .flatMap(j =>
-        j.asNumber
-          .map(n => n.toLong.getOrElse(n.toDouble.toLong))
-          .orElse(j.asString.flatMap(_.trim.toLongOption))
-      )
-      .map(n => Integer(n))
+    /** The field as a whole number: an integer, a numeric string, or a fraction cut to its whole part. */
+    def long(k: Key): Option[Integer] =
+      val f = c.downField(k.value)
+      f.integer.orElse(f.focus.flatMap(_.asNumber).flatMap(_.toDouble).map(_.toLong)).map(Integer(_))
 
-  def dbl(c: ACursor, k: Key): Option[Decimal] =
-    c.downField(k.value)
-      .focus
-      .flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
-      .map(d => Decimal(d))
+    /** The field as a number: a number or a numeric string. */
+    def dbl(k: Key): Option[Decimal] = c.downField(k.value).double.map(Decimal(_))
 
   /** A year as the SPI states it; `None` beyond what a `Year` holds. */
   def year(y: Year): Option[com.histmersion.plugin.Year] =

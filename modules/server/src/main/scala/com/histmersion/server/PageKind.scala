@@ -3,7 +3,7 @@ package server
 
 import sttp.tapir.*
 import sttp.tapir.files.*
-import sttp.tapir.json.circe.*
+import com.histmersion.api.json.TapirJson.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Source

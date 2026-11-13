@@ -1,7 +1,10 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.JsonCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.RegisteredPlanMatches
-import io.circe.{Decoder, Encoder, Json}
 import sttp.tapir.Schema
 
 /** How each of the bundle's records of the kind that matches records across collections was matched, as a merge plan
@@ -14,6 +17,6 @@ object PlanMatches:
 
   val empty: PlanMatches = PlanMatches(Nil)
 
-  given Encoder[PlanMatches] = Encoder.encodeList[Json].contramap(_.rows)
-  given Decoder[PlanMatches] = Decoder.decodeList[Json].map(PlanMatches(_))
+  given JsonValueCodec[PlanMatches] =
+    JsonCodec.mapped[PlanMatches, List[Json]](_.rows, rows => Right(PlanMatches(rows)))
   given Schema[PlanMatches] = RegisteredPlanMatches.kind.schema

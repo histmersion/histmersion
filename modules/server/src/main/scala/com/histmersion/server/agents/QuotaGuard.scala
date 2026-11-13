@@ -3,7 +3,6 @@ package server.agents
 
 import com.histmersion.domain.automation.agents.AgentGenerator
 
-import io.circe.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The quota-guard mod (docs/research-agent-runtimes.md §2.5, §3a P3): a Claude Code mod module that POSTs every

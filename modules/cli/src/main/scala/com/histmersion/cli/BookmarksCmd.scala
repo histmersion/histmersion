@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import cats.syntax.all.*
 import com.monovore.decline.*

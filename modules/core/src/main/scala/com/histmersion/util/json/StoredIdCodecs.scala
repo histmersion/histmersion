@@ -1,7 +1,8 @@
 package com.histmersion
 package util.json
 
-import io.circe.Decoder
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.catalogue.Place
@@ -12,14 +13,10 @@ import com.histmersion.domain.automation.Run
   * a model hands in are checked where they come in.
   */
 object StoredIdCodecs:
-  given citekey: Decoder[Citekey] =
-    Decoder.decodeString.map(Citekey.assume(_))
+  given citekey: JsonValueCodec[Citekey] = JsonCodec.text[Citekey](_.value, s => Right(Citekey.assume(s)))
 
-  given doi: Decoder[Doi] =
-    Decoder.decodeString.map(Doi.assume(_))
+  given doi: JsonValueCodec[Doi] = JsonCodec.text[Doi](_.value, s => Right(Doi.assume(s)))
 
-  given placeId: Decoder[Place.Id] =
-    Decoder.decodeString.map(Place.Id.assume(_))
+  given placeId: JsonValueCodec[Place.Id] = JsonCodec.text[Place.Id](_.value, s => Right(Place.Id.assume(s)))
 
-  given runId: Decoder[Run.Id] =
-    Decoder.decodeString.map(Run.Id.assume(_))
+  given runId: JsonValueCodec[Run.Id] = JsonCodec.text[Run.Id](_.value, s => Right(Run.Id.assume(s)))

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{

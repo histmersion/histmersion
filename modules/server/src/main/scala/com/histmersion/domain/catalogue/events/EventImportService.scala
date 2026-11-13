@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventFields, EventTaxonomy}
@@ -116,7 +119,7 @@ object EventImportService:
         c.targetKind.value == Correction.Target.Event && c.targetId.value == id.value &&
           Correction.Status.applied(Correction.Status.Applied(c.status.value))
       )
-      def json(t: String) = io.circe.parser.parse(t).getOrElse(io.circe.Json.Null)
+      def json(t: String) = RawJson.parse(t).getOrElse(Json.Null)
       val outcomes = applied.flatMap(c =>
         now
           .get(c.field.value)

@@ -17,12 +17,27 @@ import com.histmersion.api.automation.Agents.{RunParams, WouldWrite}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Managers.{HintEffect, HintProposal, Hold, ItemState, ManagerConfig}
 import com.histmersion.api.automation.ModelChains.LimitSpec
-import com.histmersion.api.catalogue.{CatalogRecord, EventImportReport, EventPassage, EventRederiveReport, EventsJobKinds, Period, SkippedPeriod}
+import com.histmersion.api.catalogue.{
+  CatalogRecord,
+  EventImportReport,
+  EventPassage,
+  EventRederiveReport,
+  EventsJobKinds,
+  Period,
+  SkippedPeriod
+}
 import com.histmersion.api.jobs.{JobDetail, JobKinds}
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.library.Acquire
-import com.histmersion.api.exchange.{Bundle, ExchangeJobKinds, MergeDecision, InitPlan, MergeApplyResult, MergeResolutions}
+import com.histmersion.api.exchange.{
+  Bundle,
+  ExchangeJobKinds,
+  InitPlan,
+  MergeApplyResult,
+  MergeDecision,
+  MergeResolutions
+}
 import com.histmersion.api.research.Article
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
@@ -30,7 +45,8 @@ import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
-import StoredCodecs.{BundleCodec, Codec, JsonAst, JsonSamples, sameJson}
+import StoredCodecs.{sameJson, BundleCodec, Codec, JsonAst, JsonSamples}
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Every JSON shape the user's data holds — the `jsonb` columns and the `.hmx` bundle's lines — as the circe codecs
   * wrote it, kept as fixtures (`stored-shapes/<name>.jsonl`, one document per line) and read back by today's codecs:
@@ -134,7 +150,13 @@ object StoredShapesSuite:
     )
 
   /** A file the server keeps on disk, written and read by its owner's own functions. */
-  def file[A](name: String, salt: Int, gen: => Gen[A], render: A => String, parse: String => Either[Problem, A]): Shape =
+  def file[A](
+      name: String,
+      salt: Int,
+      gen: => Gen[A],
+      render: A => String,
+      parse: String => Either[Problem, A]
+  ): Shape =
     Shape(
       s"file-$name",
       () => write(s"file-$name", samples(gen, salt).map(a => render(a).replace("\n", "\\n"))),
@@ -147,8 +169,8 @@ object StoredShapesSuite:
             Option.unless(sameJson(again, text))(s"writes $again")
     )
 
-  /** A `jsonb` column holding any JSON (a place's properties, a correction's values, the agents' state): what the
-    * store prints must parse and print the same document again.
+  /** A `jsonb` column holding any JSON (a place's properties, a correction's values, the agents' state): what the store
+    * prints must parse and print the same document again.
     */
   val anyJson: Shape =
     val fixed = List(
@@ -176,10 +198,18 @@ object StoredShapesSuite:
       column[MergeApplyResult]("jobs-result-merge-apply", 2, Arbitrary.derived[MergeApplyResult].arbitrary),
       column[List[WouldWrite]]("agent-steps-would-write", 3, Arbitrary.derived[List[WouldWrite]].arbitrary),
       column[Goal.Plans.Plan]("approvals-proposal-plan", 4, Arbitrary.derived[Goal.Plans.Plan].arbitrary),
-      column[Goal.Plans.ArticleDraft]("approvals-proposal-draft", 5, Arbitrary.derived[Goal.Plans.ArticleDraft].arbitrary),
+      column[Goal.Plans.ArticleDraft](
+        "approvals-proposal-draft",
+        5,
+        Arbitrary.derived[Goal.Plans.ArticleDraft].arbitrary
+      ),
       column[HintProposal]("approvals-proposal-hint", 6, Arbitrary.derived[HintProposal].arbitrary),
       column[ProposalEvidence]("approvals-proposal-evidence", 7, Arbitrary.derived[ProposalEvidence].arbitrary),
-      column[AgentProposals.Proposal]("approvals-proposal-source", 8, Arbitrary.derived[AgentProposals.Proposal].arbitrary),
+      column[AgentProposals.Proposal](
+        "approvals-proposal-source",
+        8,
+        Arbitrary.derived[AgentProposals.Proposal].arbitrary
+      ),
       column[ManagerConfig]("agent-managers-config", 9, Arbitrary.derived[ManagerConfig].arbitrary),
       droppedColumn[ManagerConfig]("agent-managers-config", "agent-managers-config"),
       column[ItemState]("manager-items-state", 10, Arbitrary.derived[ItemState].arbitrary),
@@ -220,10 +250,40 @@ object StoredShapesSuite:
       bundle[Bundle.GoalAlias]("goal-aliases", 53, Arbitrary.derived[Bundle.GoalAlias].arbitrary, false),
       bundle[Bundle.PlaceAlias]("place-aliases", 54, Arbitrary.derived[Bundle.PlaceAlias].arbitrary, false),
       bundle[Bundle.Manifest]("manifest", 55, Arbitrary.derived[Bundle.Manifest].arbitrary, stamped = false),
-      file[PluginSet]("plugin-set", 70, Arbitrary.derived[PluginSet].arbitrary, PluginKit.renderSet, PluginKit.parseSet),
-      file[List[PluginJar]]("plugin-jars", 71, Arbitrary.derived[List[PluginJar]].arbitrary, PluginKit.renderJars, PluginKit.parseJars),
-      file[PluginKit.Index]("plugin-index", 72, Arbitrary.derived[PluginKit.Index].arbitrary, PluginKit.renderIndex, PluginKit.parseIndex),
-      file[PluginKit.KitManifest]("kit-manifest", 73, Arbitrary.derived[PluginKit.KitManifest].arbitrary.map(k => PluginKit.KitManifest(PluginKit.KitFormat, k.version, k.commit, k.graalvm, k.spiVersion, k.mainClass, k.files)), PluginKit.renderKit, PluginKit.parseKit),
+      file[PluginSet](
+        "plugin-set",
+        70,
+        Arbitrary.derived[PluginSet].arbitrary,
+        PluginKit.renderSet,
+        PluginKit.parseSet
+      ),
+      file[List[PluginJar]](
+        "plugin-jars",
+        71,
+        Arbitrary.derived[List[PluginJar]].arbitrary,
+        PluginKit.renderJars,
+        PluginKit.parseJars
+      ),
+      file[PluginKit.Index](
+        "plugin-index",
+        72,
+        Arbitrary.derived[PluginKit.Index].arbitrary,
+        PluginKit.renderIndex,
+        PluginKit.parseIndex
+      ),
+      file[PluginKit.KitManifest](
+        "kit-manifest",
+        73,
+        Arbitrary
+          .derived[PluginKit.KitManifest]
+          .arbitrary
+          .map(k =>
+            PluginKit
+              .KitManifest(PluginKit.KitFormat, k.version, k.commit, k.graalvm, k.spiVersion, k.mainClass, k.files)
+          ),
+        PluginKit.renderKit,
+        PluginKit.parseKit
+      ),
       anyJson
     )
 
@@ -251,18 +311,25 @@ object StoredShapesSuite:
     */
   object Arbitraries:
     private val chars: Gen[Char] =
-      Gen.frequency(20 -> Gen.alphaNumChar, 3 -> Gen.oneOf(" -_.,:;/'"), 1 -> Gen.oneOf("\"\\\n\t\r\u0001\u001fé—€ę𓂀".toList))
+      Gen.frequency(
+        20 -> Gen.alphaNumChar,
+        3 -> Gen.oneOf(" -_.,:;/'"),
+        1 -> Gen.oneOf("\"\\\n\t\r\u0001\u001fé—€ę𓂀".toList)
+      )
     private val identifier: Gen[String] =
-      Gen.zip(Gen.alphaLowerChar, Gen.nonEmptyListOf(Gen.oneOf(Gen.alphaLowerChar, Gen.numChar, Gen.oneOf('-', '_'))))
+      Gen
+        .zip(Gen.alphaLowerChar, Gen.nonEmptyListOf(Gen.oneOf(Gen.alphaLowerChar, Gen.numChar, Gen.oneOf('-', '_'))))
         .map((h, t) => (h :: t.take(12)).mkString)
     private val hex64: Gen[String] = Gen.listOfN(64, Gen.hexChar).map(_.mkString.toLowerCase)
     given Arbitrary[String] =
       Arbitrary(Gen.oneOf(identifier, Gen.listOf(chars).map(_.mkString), Gen.uuid.map(_.toString), hex64))
     given Arbitrary[MergeDecision] = Arbitrary(
-      Gen.oneOf(MergeDecision.Kind.values.toList).flatMap(k =>
-        if k.takesArgument then identifier.map(a => MergeDecision.withArg(k, MergeDecision.Argument(s"$a")))
-        else Gen.const(MergeDecision.of(k))
-      )
+      Gen
+        .oneOf(MergeDecision.Kind.values.toList)
+        .flatMap(k =>
+          if k.takesArgument then identifier.map(a => MergeDecision.withArg(k, MergeDecision.Argument(s"$a")))
+          else Gen.const(MergeDecision.of(k))
+        )
     )
     given Arbitrary[Double] = Arbitrary(
       Gen.oneOf(Gen.choose(-1e6, 1e6), Gen.choose(-90.0, 90.0), Gen.oneOf(0.0, -0.0, 1.0, 0.1, 1e-7, 1e21, 12345.678))
@@ -270,7 +337,11 @@ object StoredShapesSuite:
     given Arbitrary[Float] = Arbitrary(Gen.choose(-1000f, 1000f))
     given Arbitrary[BigDecimal] = Arbitrary(Gen.choose(-1000000L, 1000000L).map(n => BigDecimal(n, 3)))
     given Arbitrary[Instant] =
-      Arbitrary(Gen.choose(0L, 4102444800000L).flatMap(ms => Gen.oneOf(0, 123000000, 1).map(n => Instant.ofEpochMilli(ms).plusNanos(n.toLong))))
+      Arbitrary(
+        Gen
+          .choose(0L, 4102444800000L)
+          .flatMap(ms => Gen.oneOf(0, 123000000, 1).map(n => Instant.ofEpochMilli(ms).plusNanos(n.toLong)))
+      )
     given Arbitrary[UUID] = Arbitrary(Gen.uuid)
     // the base type's values the constraint accepts, lifted as `NewtypeCodecs` lifts the base type's codec
     given [T] => (m: RefinedType.Mirror[T]) => (base: Arbitrary[m.BaseType]) => Arbitrary[T] =

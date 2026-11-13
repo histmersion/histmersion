@@ -5,10 +5,9 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
@@ -45,7 +44,7 @@ object Queue:
       goal: Option[Goal.Slug] = None,
       createdBy: Option[QueueItem.CreatedBy] = None,
       closedBy: Option[QueueItem.ClosedBy] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -69,12 +68,12 @@ object Queue:
     object ClosedBy extends Newtype[String, Pure]
 
   final case class ItemGoals(item: QueueItem.Id, goals: List[GoalRef])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   final case class GoalRef(slug: Goal.Slug, title: Goal.Title)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -86,13 +85,12 @@ object Queue:
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[SpatialHierarchyResult.Job.Id] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
   object QueueAdd:
 
     export QueueItem.CreatedAt
-
-    given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
   final case class QueuePatch(
       status: Option[QueueItem.Status] = None,
@@ -101,16 +99,15 @@ object Queue:
       reason: Option[Problem] = None,
       goal: Option[Goal.Slug] = None,
       closedBy: Option[QueuePatch.ClosedBy] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
   object QueuePatch:
 
     export QueueItem.ClosedBy
 
-    given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
-
   final case class QueueImport(text: QueueItem.Text, replace: QueueImport.Replace = QueueImport.Replace(true))
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -123,7 +120,7 @@ object Queue:
       items: QueueImported.Items,
       notes: QueueImported.Notes,
       replaced: QueueImported.Replaced
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
@@ -26,7 +26,7 @@ final case class EventSummary(
     central: Option[EventSummary.Central] = None,
     plusMinus: Option[EventSummary.PlusMinus] = None,
     datingMethod: Option[EventSummary.DatingMethod] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def datingNote: Option[String] = EventPrecision.note(central, plusMinus, datingMethod)

@@ -1,9 +1,8 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -13,7 +12,8 @@ final case class EventLinksRequest(
     recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
     confirm: List[EventLinksRequest.Confirm] = Nil,
     reject: List[EventLinksRequest.Reject] = Nil
-) derives KindlingsSchema,
+) derives StrictJson,
+      KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventLinksRequest:
 
@@ -23,5 +23,3 @@ object EventLinksRequest:
   object Confirm extends Newtype[String, Pure]
   type Reject = Reject.T
   object Reject extends Newtype[String, Pure]
-
-  given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])

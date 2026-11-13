@@ -1,5 +1,8 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -97,7 +100,7 @@ class CliopatriaSuite extends munit.FunSuite:
   test("a concept whose slices carry no years stays undated"):
     val undated = Cliopatria
       .readFeature(
-        io.circe.parser.parse("""{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get,
+        RawJson.parse("""{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get,
         Cliopatria.Ordinal(7)
       )
       .toOption
@@ -196,14 +199,10 @@ class CliopatriaSuite extends munit.FunSuite:
     )
 
   test("years in either order make one span; a year beyond what a Year holds leaves the slice undated"):
-    val swapped = io.circe.parser
-      .parse("""{"properties":{"Name":"Late","FromYear":-100,"ToYear":-200},"geometry":null}""")
-      .toOption
-      .get
+    val swapped =
+      RawJson.parse("""{"properties":{"Name":"Late","FromYear":-100,"ToYear":-200},"geometry":null}""").toOption.get
     assertEquals(Cliopatria.readFeature(swapped, Cliopatria.Ordinal(0)).toOption.get.period, period(-200, -100))
-    val huge = io.circe.parser
-      .parse("""{"properties":{"Name":"Deep","FromYear":-3000000000,"ToYear":0},"geometry":null}""")
-      .toOption
-      .get
+    val huge =
+      RawJson.parse("""{"properties":{"Name":"Deep","FromYear":-3000000000,"ToYear":0},"geometry":null}""").toOption.get
     val deep = Cliopatria.readFeature(huge, Cliopatria.Ordinal(0)).toOption.get
     assertEquals((deep.id, deep.period), ("cliopatria_deep_-3000000000_0", None))

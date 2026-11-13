@@ -1,5 +1,10 @@
 package com.histmersion
 package server.agents
+import com.histmersion.domain.automation.agents.SttpAiJson
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -10,8 +15,6 @@ import com.histmersion.domain.library.workflows.*
 import com.histmersion.domain.automation.agents.{AnswerSchemas, StrictJsonSchema}
 import com.histmersion.domain.automation.managers.Zero
 
-import io.circe.{parser, Json, JsonObject}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import java.nio.file.{Files, Paths}
@@ -106,8 +109,8 @@ class AnswerSchemasSuite extends munit.FunSuite:
       unsupported ++ badFormat ++ bareRef ++ untyped ++ obj
     }
 
-  private def strict(s: ResponseSchema[?]): Json = parser.parse(Codex.outputSchemaJson(s).value).toOption.get
-  private def derived(s: ResponseSchema[?]): Json = parser.parse(Codex.schemaJson(s).value).toOption.get
+  private def strict(s: ResponseSchema[?]): Json = RawJson.parse(Codex.outputSchemaJson(s).value).toOption.get
+  private def derived(s: ResponseSchema[?]): Json = RawJson.parse(Codex.schemaJson(s).value).toOption.get
 
   test("every step schema has a name, and they are all listed"):
     assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
@@ -156,7 +159,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
   test(
     "strict form: optional scalars, arrays, refs, enums, objects and anyOfs become nullable; unsupported keywords go"
   ):
-    val in = parser
+    val in = RawJson
       .parse("""{
       "$defs": {"Y": {"type":"object","required":["v"],"properties":{"v":{"type":"integer","format":"int64","default":0}}}},
       "type":"object","required":["a"],
@@ -176,7 +179,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
       .get
     val out = StrictJsonSchema(in)
     val y = """{"type":"object","required":["v"],"properties":{"v":{"type":"integer"}},"additionalProperties":false}"""
-    val expected = parser
+    val expected = RawJson
       .parse(s"""{
       "$$defs": {"Y": $y},
       "type":"object",
@@ -201,8 +204,10 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   test("#1461 the cold reader's emptySlots is an array of the four slot names, in both forms Claude and Codex get"):
     for js <- List(derived(ResearchAnswers.coldReader), strict(ResearchAnswers.coldReader)) do
-      val p = js.hcursor.downField("properties").downField("emptySlots")
-      val items = p.downField("items").success.orElse(p.downField("anyOf").downN(0).downField("items").success)
+      val p = js.cursor.downField("properties").downField("emptySlots")
+      val items = Option(p.downField("items"))
+        .filter(_.succeeded)
+        .orElse(Option(p.downField("anyOf").downN(0).downField("items")).filter(_.succeeded))
       assertEquals(
         items.flatMap(_.downField("enum").as[List[String]].toOption),
         Some(ReviewArticle.ExplainSlots),
@@ -309,7 +314,8 @@ class AnswerSchemasSuite extends munit.FunSuite:
       assert(b.isRight, s"$name: ${claude.noSpaces} → $b")
       assertEquals(a, b, s"$name: ${codex.noSpaces}")
       // and re-encoded, the decoded answer is the same JSON — what the step's validate and checkpoint see
-      def enc(x: Either[AgentFailure, Any]) = x.toOption.map(v => s.codec.asInstanceOf[io.circe.Codec[Any]](v))
+      def enc(x: Either[AgentFailure, Any]) =
+        x.toOption.map(v => SttpAiJson.encoded(s.asInstanceOf[ResponseSchema[Any]], v))
       assertEquals(enc(a), enc(b), name)
 
   test("a required field sent as null is still refused"):

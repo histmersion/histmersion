@@ -1,7 +1,8 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.json.NewtypeCodecs.given
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 

@@ -1,13 +1,15 @@
 package com.histmersion
 package api.automation
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -74,7 +76,7 @@ object Agents:
       output: Usage.Output = Usage.Output((0).toLong),
       cacheRead: Usage.CacheRead = Usage.CacheRead((0).toLong),
       cacheWrite: Usage.CacheWrite = Usage.CacheWrite((0).toLong)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
@@ -224,8 +226,7 @@ object Agents:
       def wire(e: PauseReason): WireEnumValues.Wire = e.wire
       def fromWire(s: WireEnumValues.Wire): Option[PauseReason] = values.find(_.wire == s)
     // without these, a record deriving its codec spells the enum as an object (ContractSnapshotSuite refuses that)
-    given Encoder[PauseReason] = WireEnum.encoder
-    given Decoder[PauseReason] = WireEnum.decoder
+    given JsonValueCodec[PauseReason] = WireEnum.codec
     given Schema[PauseReason] = WireEnum.schema
 
   enum StepKind(val wire: StepKind.Wire) derives CanEqual:
@@ -257,7 +258,7 @@ object Agents:
     def parse(s: Wire): Option[Origin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class ProbeRequest(citekey: Citekey, model: Option[ProbeRequest.Model] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -266,7 +267,7 @@ object Agents:
     object Model extends Newtype[String, Pure]
 
   final case class ProbeAnswer(citekey: Citekey, title: com.histmersion.api.library.Title, year: Option[Year])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
@@ -300,7 +301,7 @@ object Agents:
       millis: ProbeResult.Millis,
       problems: List[ProbeResult.Problems] = Nil,
       attempts: ProbeResult.Attempts = ProbeResult.Attempts(1)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -344,7 +345,7 @@ object Agents:
       goal: Option[Goal.Slug] = None,
       dryRun: Option[RunRequest.DryRun] = None,
       modelFor: List[ModelOverride] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -377,7 +378,7 @@ object Agents:
     object DryRun extends Newtype[Boolean, Pure]
 
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
@@ -416,7 +417,7 @@ object Agents:
       hint: Option[RunParams.Hint] = None,
       subGoals: Option[RunParams.SubGoals] = None,
       oaBacklog: Option[RunParams.OaBacklog] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
@@ -473,7 +474,7 @@ object Agents:
       managerItem: Option[Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None,
       pausedFor: Option[PauseReason] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual:
@@ -518,7 +519,7 @@ object Agents:
     object HeartbeatAt extends Newtype[String, Pure]
 
   final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -546,7 +547,7 @@ object Agents:
       wouldWrite: List[WouldWrite] = Nil,
       firstCallTokens: Option[StepInfo.FirstCallTokens] = None,
       turns: Option[StepInfo.Turns] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def modelText: String = (model, actualModel) match
@@ -595,7 +596,7 @@ object Agents:
       toolInput: Option[MessageInfo.ToolInput] = None,
       toolResult: Option[MessageInfo.ToolOutput] = None,
       latencyMs: Option[MessageInfo.LatencyMs] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -616,7 +617,7 @@ object Agents:
     object LatencyMs extends Newtype[Int, Pure]
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual
@@ -626,7 +627,7 @@ object Agents:
       model: Option[RoleModel.Model],
       ready: RoleModel.Ready,
       problem: Option[Problem]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -646,7 +647,7 @@ object Agents:
       chains: List[ModelChains.RoleChain] = Nil,
       allowances: List[ModelChains.AllowanceStatus] = Nil,
       now: ModelsInfo.Now = ModelsInfo.Now("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -676,12 +677,11 @@ object Agents:
       def all: Array[CheckLevel] = values
       def wire(e: CheckLevel): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[CheckLevel] = parse(Wire((s).value))
-    given io.circe.Encoder[CheckLevel] = WireEnum.encoder
-    given io.circe.Decoder[CheckLevel] = WireEnum.decoder
+    given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[CheckLevel] = WireEnum.codec
     given Schema[CheckLevel] = WireEnum.schema
 
   final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -697,7 +697,7 @@ object Agents:
       models: List[ProviderDoctor.Models],
       checks: List[DoctorCheck],
       upstreamModels: List[ProviderDoctor.UpstreamModels] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def level: CheckLevel =
@@ -720,7 +720,7 @@ object Agents:
       online: DoctorReport.Online,
       providers: List[ProviderDoctor],
       checks: List[DoctorCheck]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -733,7 +733,7 @@ object Agents:
   final case class GenerateRequest(
       runtimes: List[GenerateRequest.Runtimes] = Nil,
       out: Option[GenerateRequest.Out] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -750,7 +750,7 @@ object Agents:
       written: GenerateResult.Written,
       removed: GenerateResult.Removed,
       definitions: GenerateResult.Definitions
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -800,7 +800,7 @@ object Agents:
       filter: Option[Article.Plans.FilterProposal] = None,
       articles: Option[Article.Plans.ArticlePlan] = None,
       hintEffect: Option[Managers.HintProposal] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual:
@@ -809,7 +809,7 @@ object Agents:
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
       * plan of articles), its rationale as the evidence; None for a kind that carries none.
       */
-    def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
+    def withArticleProposal(payload: Option[Json]): Option[ApprovalInfo] =
       if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == (true)))) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
         Some(
@@ -857,7 +857,7 @@ object Agents:
     object Subject extends Newtype[String, Pure]
 
   final case class DecisionRequest(note: Option[DecisionRequest.Note] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

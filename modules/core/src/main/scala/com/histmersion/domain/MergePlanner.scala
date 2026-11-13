@@ -1,5 +1,9 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.JsonObject
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.exchange.MergeIssue
@@ -47,7 +51,6 @@ import com.histmersion.util.text.Anchor
 import com.histmersion.util.text.MinHash
 import com.histmersion.api.text.SafeName
 
-import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.library.MatchOutcome
@@ -320,17 +323,17 @@ object MergePlanner:
     if mapped.isEmpty then es
     else
       val m = mapped.map((f, l) => f.toString -> l.toString)
-      def go[A](as: List[A], labelField: Option[String])(using enc: Encoder.AsObject[A], dec: Decoder[A]): List[A] =
+      def go[A](as: List[A], labelField: Option[String])(using JsonValueCodec[A]): List[A] =
         as.map { a =>
-          val obj = enc.encodeObject(a)
+          val obj = a.asJson.asObject.getOrElse(JsonObject.empty)
           val own = obj("uid").flatMap(_.asString).flatMap(u => scala.util.Try(UUID.fromString(u)).toOption)
           val relabelled = (for
             f <- own
             l <- mapped.get(f)
             field <- labelField
             lab <- localLabel.get(l)
-          yield obj.add(field, Json.fromString(lab.value))).getOrElse(obj)
-          dec.decodeJson(mapJson(m)(Json.fromJsonObject(relabelled))).getOrElse(a)
+          yield obj.updated(field, Json.fromString(lab.value))).getOrElse(obj)
+          mapJson(m)(Json.fromJsonObject(relabelled)).as[A].getOrElse(a)
         }
       es.copy(
         sources = go(es.sources, Some("citekey")),

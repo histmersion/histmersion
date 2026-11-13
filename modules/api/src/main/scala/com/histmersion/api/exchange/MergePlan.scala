@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -25,7 +25,7 @@ final case class MergePlan(
     resolutionErrors: List[MergePlan.ResolutionErrors],
     resolved: MergePlan.Resolved,
     changes: MergePlan.Changes = MergePlan.Changes(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == (true))))
@@ -53,7 +53,7 @@ object MergePlan:
   object Changes extends Newtype[Int, Pure]
 
   final case class Request(bundle: Request.Bundle, resolutions: MergeResolutions = MergeResolutions())
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

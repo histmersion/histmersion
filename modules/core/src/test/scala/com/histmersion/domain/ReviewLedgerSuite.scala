@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
@@ -13,8 +15,6 @@ import com.histmersion.config.given
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.ReviewLedger.*
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
@@ -896,7 +896,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       ReviewLedger.LearnRound(1)
     ).copy(task = Some(Ledger.Task(12)))
-    assertEquals(decode[Ledger](l.asJson.noSpaces), Right(l))
+    assertEquals(RawJson.decode[Ledger](l.asJson.noSpaces), Right(l))
     assert(l.asJson.noSpaces.contains("\"status\":\"wont-fix\""))
     // an older ledger without the optional fields still decodes
-    assertEquals(decode[Ledger]("""{"slug":"tin"}""").map(_.entries), Right(Nil))
+    assertEquals(RawJson.decode[Ledger]("""{"slug":"tin"}""").map(_.entries), Right(Nil))

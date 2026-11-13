@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -23,7 +23,7 @@ final case class ReviewFinding(
     closedRunNumber: Option[ReviewFinding.ClosedRunNumber] = None,
     reopened: ReviewFinding.Reopened = ReviewFinding.Reopened(0),
     deferred: ReviewFinding.Deferred = ReviewFinding.Deferred(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

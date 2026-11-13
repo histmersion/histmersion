@@ -1,8 +1,11 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.{ACursor, Json}
 import com.histmersion.api.given
 
 object Candidates:
@@ -74,52 +77,58 @@ object Candidates:
       .modify(_.openalexId)
       .setTo(a.openalexId.orElse(b.openalexId))
 
-  private def str(c: ACursor, k: String): Option[String] =
-    (c.get[String]((k)).toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue4 => (refactorValue4))
-
   def europepmcWorks(json: Json): List[WorkRef] =
-    json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
-      val c = r.hcursor
+    json.cursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
+      val c = r.cursor
       WorkRef(
-        doi = (str(c, ("doi"))).map((com).histmersion.api.library.Doi.apply),
-        title = (str(c, ("title")).map((_).stripSuffix("."))).map(Title.apply),
-        year = (str(c, ("pubYear")).flatMap((_).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
-        authors = (str(c, ("authorString")).toList
+        doi = (c.downField("doi").filled).map((com).histmersion.api.library.Doi.apply),
+        title = (c.downField("title").filled.map((_).stripSuffix("."))).map(Title.apply),
+        year = (c.downField("pubYear").filled.flatMap((_).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (c
+          .downField("authorString")
+          .filled
+          .toList
           .flatMap((_).stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty)))
           .map(com.histmersion.api.library.AuthorName.apply),
-        venue = (str(c, ("journalTitle"))
+        venue = (c
+          .downField("journalTitle")
+          .filled
           .orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption))
           .map(com.histmersion.api.library.Source.Venue.apply),
-        isOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(str(c, ("isOpenAccess")).contains("Y")),
-        abstractText = str(c, ("abstractText")).map(
-          (
-              refactorCallback =>
-                _root_.com.histmersion.api.library.Source.Candidate
-                  .AbstractText((refactorCallback).replaceAll("<[^>]+>", ""))
+        isOa =
+          _root_.com.histmersion.api.library.Source.Candidate.IsOa(c.downField("isOpenAccess").filled.contains("Y")),
+        abstractText = c
+          .downField("abstractText")
+          .filled
+          .map(
+            (
+                refactorCallback =>
+                  _root_.com.histmersion.api.library.Source.Candidate
+                    .AbstractText((refactorCallback).replaceAll("<[^>]+>", ""))
+            )
           )
-        )
       )
     }
 
   /** CORE holds full texts, so a work with one is open access by CORE's nature. */
   def coreWorks(json: Json): List[WorkRef] =
-    json.hcursor.downField("results").values.toList.flatten.map { r =>
-      val c = r.hcursor
+    json.cursor.downField("results").values.toList.flatten.map { r =>
+      val c = r.cursor
       WorkRef(
-        doi = (str(c, ("doi"))).map((com).histmersion.api.library.Doi.apply),
-        title = (str(c, ("title"))).map((com).histmersion.api.library.Title.apply),
+        doi = (c.downField("doi").filled).map((com).histmersion.api.library.Doi.apply),
+        title = (c.downField("title").filled).map((com).histmersion.api.library.Title.apply),
         year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
         authors = (c
           .downField("authors")
           .values
           .toList
           .flatten
-          .flatMap(a => str(a.hcursor, ("name"))))
+          .flatMap(a => a.cursor.downField("name").filled))
           .map((com).histmersion.api.library.AuthorName.apply),
-        venue = (str(c, ("publisher"))).map((com).histmersion.api.library.Venue.apply),
-        isOa = WorkRef.IsOa(str(c, "downloadUrl").isDefined),
-        abstractText = str(c, "abstract").map(WorkRef.AbstractText(_)),
-        arxivId = str(c, ("arxivId")).map(WorkRef.ArxivId(_))
+        venue = (c.downField("publisher").filled).map((com).histmersion.api.library.Venue.apply),
+        isOa = WorkRef.IsOa(c.downField("downloadUrl").filled.isDefined),
+        abstractText = c.downField("abstract").filled.map(WorkRef.AbstractText(_)),
+        arxivId = c.downField("arxivId").filled.map(WorkRef.ArxivId(_))
       )
     }
 
@@ -151,12 +160,12 @@ object Candidates:
     }
 
   def openalexAuthorIds(json: Json): List[AuthorId] =
-    (json.hcursor
+    (json.cursor
       .downField("authorships")
       .values
       .toList
       .flatten
-      .flatMap(a => a.hcursor.downField("author").get[String]("id").toOption)
+      .flatMap(a => a.cursor.downField("author").get[String]("id").toOption)
       .map(_.split("/").last)
       .filter(_.startsWith("A")))
       .map(refactorValue2 => AuthorId(refactorValue2))

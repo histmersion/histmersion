@@ -1,8 +1,10 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-
-import io.circe.Json
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -16,12 +18,10 @@ final class CatalogueJson(http: Plugin.Http):
       .left
       .map(_.problem)
       .flatMap(b =>
-        io.circe.parser
+        RawJson
           .parse(String(b.value, "UTF-8"))
           .left
-          .map(e =>
-            Problem.Unclassified(Legacy.Text(s"${CatalogueJson.host(url).value}: unparseable JSON (${e.getMessage})"))
-          )
+          .map(e => Problem.Unclassified(Legacy.Text(s"${CatalogueJson.host(url).value}: unparseable JSON ($e)")))
       )
 
 object CatalogueJson:

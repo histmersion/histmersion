@@ -1,6 +1,6 @@
 package com.histmersion
 package api.automation
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -22,7 +22,7 @@ object RunCompare:
       seconds: RunSide.Seconds,
       attempts: RunSide.Attempts,
       failures: RunSide.Failures
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -53,7 +53,7 @@ object RunCompare:
       failures: StepSide.Failures,
       firstCallTokens: Option[StepSide.FirstCallTokens] = None,
       turns: Option[StepSide.Turns] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -71,7 +71,7 @@ object RunCompare:
     object Turns extends Newtype[Int, Pure]
 
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -91,7 +91,7 @@ object RunCompare:
       summaryChars: EnrichSide.SummaryChars,
       notesChars: EnrichSide.NotesChars,
       uniqueClaims: List[EnrichSide.UniqueClaims]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -120,7 +120,7 @@ object RunCompare:
       verdict: Option[ReviewerSide.Verdict],
       majors: ReviewerSide.Majors,
       minors: ReviewerSide.Minors
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -135,7 +135,7 @@ object RunCompare:
     object Minors extends Newtype[Int, Pure]
 
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -151,7 +151,7 @@ object RunCompare:
       reviewers: List[ReviewerSide],
       kinds: List[KindCount],
       majors: List[ReviewSide.Majors]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -170,7 +170,7 @@ object RunCompare:
       bMajors: MajorOverlap.BMajors,
       shared: MajorOverlap.Shared,
       pairs: List[MajorOverlap.Pairs]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -197,7 +197,7 @@ object RunCompare:
       review: List[ReviewSide] = Nil,
       overlaps: List[MajorOverlap] = Nil,
       notes: List[Comparison.Notes] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

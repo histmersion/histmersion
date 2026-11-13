@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -13,8 +15,6 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.api.catalogue.{
   EventGeo,
@@ -213,10 +213,10 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("the wire: a patch and a put take scale; a summary carries it with whether it is stated"):
     assertEquals(
-      decode[EventPatch]("""{"scale":"regional"}"""),
+      RawJson.decode[EventPatch]("""{"scale":"regional"}"""),
       Right(EventPatch(scale = Some(EventSummary.Scale("regional"))))
     )
-    assertEquals(decode[EventPut]("""{"label":"x","scale":"local"}""").map(_.scale), Right(Some("local")))
+    assertEquals(RawJson.decode[EventPut]("""{"label":"x","scale":"local"}""").map(_.scale), Right(Some("local")))
     val s = EventSummary(
       Event.Id("e"),
       EventSummary.Label("E"),
@@ -226,10 +226,11 @@ class EventScaleSuite extends munit.FunSuite:
       scale = EventSummary.Scale("local"),
       scaleStated = EventSummary.ScaleStated(true)
     )
-    assertEquals(decode[EventSummary](s.asJson.noSpaces), Right(s))
+    assertEquals(RawJson.decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
     assertEquals(
-      decode[EventSummary]("""{"id":"e","label":"E","kind":"battle","timeSpan":{},"historicity":"attested"}""")
+      RawJson
+        .decode[EventSummary]("""{"id":"e","label":"E","kind":"battle","timeSpan":{},"historicity":"attested"}""")
         .map(_.scale),
       Right("local")
     )

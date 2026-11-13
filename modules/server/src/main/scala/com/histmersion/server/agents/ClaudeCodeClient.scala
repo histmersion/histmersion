@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.automation.agents.{
@@ -14,10 +15,7 @@ import com.histmersion.domain.automation.agents.{
 
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

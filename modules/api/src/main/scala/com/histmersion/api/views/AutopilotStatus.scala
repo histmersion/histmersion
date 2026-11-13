@@ -1,6 +1,6 @@
 package com.histmersion
 package api.views
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -38,7 +38,7 @@ final case class AutopilotStatus(
     upstreams: List[UpstreamQuota] = Nil,
     /** Absent from an older server. */
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
 

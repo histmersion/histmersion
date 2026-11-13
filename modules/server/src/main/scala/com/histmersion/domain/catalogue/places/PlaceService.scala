@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.{Dataset, Write}
@@ -810,7 +813,7 @@ object PlaceService:
         case (lo, hi)     => Some(Period(Year(lo.fold(Long.MinValue)(_.value)), Year(hi.fold(Long.MaxValue)(_.value))))
 
     def isPoint(geojson: String): Boolean =
-      io.circe.parser.parse(geojson).toOption.flatMap(_.hcursor.downField("type").as[String].toOption).contains("Point")
+      RawJson.parse(geojson).toOption.flatMap(_.cursor.downField("type").as[String].toOption).contains("Point")
 
     def timestamp(at: Instant): HeldOverride.UpdatedAt =
       HeldOverride.UpdatedAt(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString)

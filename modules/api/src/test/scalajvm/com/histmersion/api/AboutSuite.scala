@@ -177,7 +177,7 @@ class AboutSuite extends munit.FunSuite:
     assert(none.contains("- config file: /c/histmersion.conf (not found: defaults and environment only)"), none)
 
   test("an About without configFile (an older server) still decodes"):
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val json = about.asJson.mapObject(_.remove("configFile"))
     assertEquals(json.as[About].map(_.configFile), Right(ConfigFileInfo()))
 

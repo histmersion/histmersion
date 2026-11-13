@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -17,7 +17,7 @@ final case class EventLead(
     actions: scala.List[EventLead.Action] = Nil,
     findingsNear: EventLead.FindingsNear = EventLead.FindingsNear(0),
     candidates: EventLead.Candidates = EventLead.Candidates(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventLead:
@@ -42,7 +42,7 @@ object EventLead:
       label: Action.Label,
       command: Action.Command,
       query: Option[Action.Query] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -57,7 +57,7 @@ object EventLead:
     object Query extends Newtype[String, Pure]
 
   final case class List(total: List.Total, leads: scala.List[EventLead])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.automation.agents
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -12,9 +16,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.api.VocabularyCodecs.given
-import io.circe.{Decoder, Encoder}
-import io.circe.parser.decode
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
@@ -92,7 +93,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * (the whole write, as JSON) are recorded on the step under "dry run: not written", and `simulated` stands in for
     * the result.
     */
-  def write[A](what: String, payload: => io.circe.Json)(perform: => A)(simulated: => A): A =
+  def write[A](what: String, payload: => Json)(perform: => A)(simulated: => A): A =
     if !dryRun then perform
     else
       skipped.add(WouldWrite(WouldWrite.What(what), WouldWrite.Payload(payload.noSpaces)))
@@ -103,7 +104,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.
     */
-  private def replay[O: Decoder](
+  private def replay[O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name
   ): Option[Either[Halt, O]] =
@@ -120,11 +121,13 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             )
         )
       else
-        decode[O](json.value).left
+        RawJson
+          .decode[O](json.value)
+          .left
           .map(e =>
             Halt.Fail(
               Problem
-                .Unclassified(Legacy.Text(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
+                .Unclassified(Legacy.Text(s"step $seq ($name): the checkpoint no longer decodes ($e)"))
             )
           )
     }
@@ -132,7 +135,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
     * most once per run.
     */
-  def code[O: {Encoder, Decoder}](name: AgentRepo.StepRecord.Name)(body: => Either[String, O]): Either[Halt, O] =
+  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[String, O]): Either[Halt, O] =
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
@@ -314,7 +317,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     */
   def notes: String = Prompt.notes(run.params.noteList.map(_.value))
 
-  def llm[A, O: {Encoder, Decoder}](
+  def llm[A, O: JsonValueCodec](
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
       user: Prompt.UserText,
@@ -329,7 +332,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * `max-turns` for a step whose work grows with its input (the fixer: one more turn per finding, see
     * [[Engine.stepTurns]]).
     */
-  def llmAt[A, O: {Encoder, Decoder}](
+  def llmAt[A, O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
@@ -345,7 +348,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * opencode's events), so an answer that says it looked something up can be held to a call that did (#1840). A retry
     * amends its answer without repeating its lookups, so the earlier attempts' calls count.
     */
-  def llmAtSeen[A, O: {Encoder, Decoder}](
+  def llmAtSeen[A, O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
@@ -406,7 +409,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           .foreach(why => warn(s"${role.wire}: passed over $why; used ${p.client.model.wire}"))
         Right(p)
 
-  private def attempts[A, O: {Encoder, Decoder}](
+  private def attempts[A, O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: AgentDef,

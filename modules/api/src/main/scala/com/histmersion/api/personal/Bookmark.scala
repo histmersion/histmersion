@@ -1,12 +1,12 @@
 package com.histmersion
 package api.personal
+import com.histmersion.api.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
@@ -20,7 +20,7 @@ final case class Bookmark(
     label: Option[Bookmark.Label] = None,
     createdAt: Bookmark.CreatedAt = Bookmark.CreatedAt(""),
     updatedAt: Bookmark.UpdatedAt = Bookmark.UpdatedAt("")
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def name: Bookmark.Name =
@@ -35,16 +35,12 @@ object Bookmark:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
-  final case class Edit(label: Option[Label] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Edit(label: Option[Label] = None) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   type Id = Id.T
 
   object Id extends Newtype[String, Pure]:
-    given Encoder[Id] = Encoder.encodeString.contramap(_.value)
-    given Decoder[Id] = Decoder.decodeString.map(Id(_))
+    given JsonValueCodec[Id] = JsonCodec.mapped[Id, String](_.value, b => Right(Id(b)))
     given Schema[Id] = Schema.string[Id]
 
   type Label = Label.T
@@ -59,11 +55,10 @@ object Bookmark:
         case Some(l) if l.length > MaxChars =>
           Left(Problem.Unclassified(Legacy.Text(s"a bookmark's name is at most $MaxChars characters")))
         case other => Right(other.map(Label(_)))
-    given Encoder[Label] = Encoder.encodeString.contramap(_.value)
-    given Decoder[Label] = Decoder.decodeString.map(Label(_))
+    given JsonValueCodec[Label] = JsonCodec.mapped[Label, String](_.value, b => Right(Label(b)))
     given Schema[Label] = Schema.string[Label]
 
   final case class New(target: Target, label: Option[Label] = None, title: Option[Title] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

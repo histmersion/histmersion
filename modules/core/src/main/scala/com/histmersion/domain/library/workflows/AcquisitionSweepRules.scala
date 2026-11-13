@@ -11,7 +11,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
@@ -48,7 +48,7 @@ object AcquisitionSweepRules:
       isOa: WorkRef.IsOa,
       query: Candidate.Query,
       abstractText: Option[WorkRef.AbstractText]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Candidate:
     type Query = Query.T
@@ -92,7 +92,7 @@ object AcquisitionSweepRules:
     )
 
   /** The ranking model's answer: which candidates belong to the goal. */
-  final case class Pick(doi: Pick.DoiText, why: Problem) derives KindlingsCodecAsObject
+  final case class Pick(doi: Pick.DoiText, why: Problem) derives JsonCodec
   object Pick:
     type DoiText = DoiText.T
     object DoiText extends Newtype[String, Pure]
@@ -102,7 +102,7 @@ object AcquisitionSweepRules:
       .schema
       .modify(_.doi)(_.description("The DOI of a candidate, exactly as listed"))
       .modify(_.why)(_.description("Why it belongs to the goal, in one sentence"))
-  final case class Ranking(picks: List[Pick] = Nil) derives KindlingsCodecAsObject
+  final case class Ranking(picks: List[Pick] = Nil) derives JsonCodec
   object Ranking:
     given sttp.tapir.Schema[Ranking] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Ranking]

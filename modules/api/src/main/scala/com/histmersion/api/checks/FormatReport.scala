@@ -1,6 +1,6 @@
 package com.histmersion
 package api.checks
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -12,7 +12,7 @@ final case class FormatReport(
     issues: List[FormatIssue],
     fixed: List[FormatReport.Fixed] = Nil,
     text: Option[FormatReport.Text] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def errors: FormatReport.ErrorCount = FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))

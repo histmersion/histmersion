@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.RunCtx
@@ -10,7 +12,6 @@ import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.Queue
@@ -64,7 +65,7 @@ private[workflows] trait GoalSweep:
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",
-          io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
+          Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
         ) {
           val _ =
             goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value)))

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage}
 import com.histmersion.util.database.Jsonb

@@ -1,11 +1,13 @@
 package com.histmersion
 package plugins.ai
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
-import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
-import io.circe.DecodingFailure.Reason.WrongTypeExpectation
-import io.circe.parser.{decode, parse}
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiMessage
@@ -24,9 +26,11 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
         ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))
       )
     else
-      decode((body).value)(using ChatAnswer.response).left.map(
-        (refactorCallback => Problem.Unclassified(Legacy.Text(refactorCallback.getMessage)))
-      )
+      RawJson
+        .parse((body).value)
+        .flatMap(ChatAnswer.response(_))
+        .left
+        .map((refactorCallback => Problem.Unclassified(Legacy.Text(refactorCallback))))
 
 object ChatAnswer:
   /** Why the provider stopped the first choice: the `finish_reason` values its API documents, and any other as it came.
@@ -70,17 +74,17 @@ object ChatAnswer:
     */
   def errorMessage(status: Status, body: Body): Problem =
     val fallback = (body).value.take(MaxRawErrorBody)
-    parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
+    RawJson.parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
-        node.as(using error) match
+        error(node) match
           case Right(Some(message)) => message
           case Right(None)          => Problem.Unclassified(Legacy.Text(s"statusCode: $status, response: $body"))
           case Left(_)              => Problem.Unclassified(Legacy.Text(fallback))
       case None => Problem.Unclassified(Legacy.Text(fallback))
 
-  private val error: Decoder[Option[Problem]] = Decoder.instance { c =>
+  private val error: Cursor.Read[Option[Problem]] = Cursor.Read { c =>
     for
-      _ <- objectAt(c)
+      _ <- c.anObject
       m <- c.downField("message").as[Option[String]]
       _ <- c.downField("type").as[Option[String]]
       _ <- c.downField("param").as[Option[String]]
@@ -88,20 +92,19 @@ object ChatAnswer:
     yield (m).map(refactorValue => Problem.Unclassified(Legacy.Text(refactorValue)))
   }
 
-  private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
-    if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))
-
   /** A field with a default: missing or null is the default, anything else must decode. */
-  private def orDefault[A](c: ACursor, default: A)(using d: Decoder[A]): Either[DecodingFailure, A] =
-    d.tryDecode(c) match
+  private def orDefault[A](c: Cursor, default: A)(d: Cursor.Read[A]): Either[String, A] =
+    c.read(d) match
       case r @ Right(_)                                            => r
       case l @ Left(_) if c.succeeded && !c.focus.exists(_.isNull) => l
       case _                                                       => Right(default)
 
-  private def product[A](f: HCursor => Either[DecodingFailure, A]): Decoder[A] =
-    Decoder.instance(c => objectAt(c).flatMap(_ => f(c)))
+  private def product[A](f: Cursor => Either[String, A]): Cursor.Read[A] =
+    Cursor.Read(c => c.anObject.flatMap(_ => f(c)))
 
-  private val topLogprob: Decoder[Unit] = product { c =>
+  private def as[A](using codec: JsonValueCodec[A]): Cursor.Read[A] = Cursor.Read(_.as[A])
+
+  private val topLogprob: Cursor.Read[Unit] = product { c =>
     for
       _ <- c.downField("token").as[String]
       _ <- c.downField("logprob").as[Float]
@@ -109,39 +112,38 @@ object ChatAnswer:
     yield ()
   }
 
-  private val logprobData: Decoder[Unit] = product { c =>
+  private val logprobData: Cursor.Read[Unit] = product { c =>
     for
       _ <- c.downField("token").as[String]
       _ <- c.downField("logprob").as[Float]
       _ <- c.downField("bytes").as[Option[Seq[Int]]]
-      _ <- c.downField("top_logprobs").as(using Decoder.decodeSeq(using topLogprob))
+      _ <- c.downField("top_logprobs").read(Cursor.Read.list(topLogprob))
     yield ()
   }
 
-  private val logprobs: Decoder[Unit] = product { c =>
-    given Decoder[Unit] = logprobData
+  private val logprobs: Cursor.Read[Unit] = product { c =>
     for
-      _ <- c.downField("content").as[Option[Seq[Unit]]]
-      _ <- c.downField("refusal").as[Option[Seq[Unit]]]
+      _ <- c.downField("content").read(Cursor.Read.option(Cursor.Read.list(logprobData)))
+      _ <- c.downField("refusal").read(Cursor.Read.option(Cursor.Read.list(logprobData)))
     yield ()
   }
 
-  private val function: Decoder[(AiTool.Call.Input, Option[AiTool.Call.Tool])] = product { c =>
+  private val function: Cursor.Read[(AiTool.Call.Input, Option[AiTool.Call.Tool])] = product { c =>
     for
       args <- c.downField("arguments").as[String]
       name <- c.downField("name").as[Option[String]]
     yield (AiTool.Call.Input(args), name.map(AiTool.Call.Tool(_)))
   }
 
-  private val toolCall: Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] =
-    Decoder.instance { c =>
+  private val toolCall: Cursor.Read[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] =
+    Cursor.Read { c =>
       for
         id <- c.downField("id").as[Option[String]]
-        f <- c.downField("function").as(using function)
+        f <- c.downField("function").read(function)
       yield (id.map(AiTool.Call.Id(_)), f)
     }
 
-  private val audio: Decoder[Unit] = product { c =>
+  private val audio: Cursor.Read[Unit] = product { c =>
     for
       _ <- c.downField("id").as[String]
       _ <- c.downField("expires_at").as[Int]
@@ -150,18 +152,17 @@ object ChatAnswer:
     yield ()
   }
 
-  private val message: Decoder[(AiMessage.Assistant.Text, List[AiTool.Call])] = product { c =>
-    given Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] = toolCall
+  private val message: Cursor.Read[(AiMessage.Assistant.Text, List[AiTool.Call])] = product { c =>
     for
-      content <- orDefault(c.downField("content"), "")
+      content <- orDefault(c.downField("content"), "")(as[String])
       _ <- c.downField("refusal").as[Option[String]]
       calls <- orDefault(
         c.downField("tool_calls"),
-        Seq.empty[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))]
-      )
+        List.empty[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))]
+      )(Cursor.Read.list(toolCall))
       _ <- c.downField("role").as[String]
-      _ <- c.downField("function_call").as(using Decoder.decodeOption(using function))
-      _ <- c.downField("audio").as(using Decoder.decodeOption(using audio))
+      _ <- c.downField("function_call").read(Cursor.Read.option(function))
+      _ <- c.downField("audio").read(Cursor.Read.option(audio))
     yield (
       AiMessage.Assistant.Text(content),
       calls.toList.zipWithIndex.map { case ((id, (args, name)), i) =>
@@ -170,16 +171,16 @@ object ChatAnswer:
     )
   }
 
-  private val choice: Decoder[(AiTurn.Text, List[AiTool.Call], FinishReason)] = product { c =>
+  private val choice: Cursor.Read[(AiTurn.Text, List[AiTool.Call], FinishReason)] = product { c =>
     for
-      m <- c.downField("message").as(using message)
+      m <- c.downField("message").read(message)
       finish <- c.downField("finish_reason").as[String]
       _ <- c.downField("index").as[Int]
-      _ <- c.downField("logprobs").as(using Decoder.decodeOption(using logprobs))
+      _ <- c.downField("logprobs").read(Cursor.Read.option(logprobs))
     yield (AiTurn.Text((m._1).value), m._2, FinishReason.parse(FinishText(finish)))
   }
 
-  private val usage: Decoder[AiUsage] = product { c =>
+  private val usage: Cursor.Read[AiUsage] = product { c =>
     val completion = product { d =>
       for
         _ <- d.downField("accepted_prediction_tokens").as[Option[Int]]
@@ -198,8 +199,8 @@ object ChatAnswer:
       in <- c.downField("prompt_tokens").as[Int]
       out <- c.downField("completion_tokens").as[Int]
       _ <- c.downField("total_tokens").as[Int]
-      reasoning <- c.downField("completion_tokens_details").as(using Decoder.decodeOption(using completion))
-      cached <- c.downField("prompt_tokens_details").as(using Decoder.decodeOption(using prompt))
+      reasoning <- c.downField("completion_tokens_details").read(Cursor.Read.option(completion))
+      cached <- c.downField("prompt_tokens_details").read(Cursor.Read.option(prompt))
     yield AiUsage(
       AiUsage.Input(in.toLong),
       AiUsage.Output(out.toLong),
@@ -210,14 +211,14 @@ object ChatAnswer:
   }
 
   /** A success answer as the turn its first choice says. */
-  val response: Decoder[AiTurn] = product { c =>
+  val response: Cursor.Read[AiTurn] = product { c =>
     for
       _ <- c.downField("id").as[String]
-      choices <- c.downField("choices").as(using Decoder.decodeSeq(using choice))
+      choices <- c.downField("choices").read(Cursor.Read.list(choice))
       _ <- c.downField("created").as[Int]
       model <- c.downField("model").as[String]
       _ <- c.downField("object").as[String]
-      u <- c.downField("usage").as(using usage)
+      u <- c.downField("usage").read(usage)
       _ <- c.downField("system_fingerprint").as[Option[String]]
       _ <- c.downField("service_tier").as[Option[String]]
     yield

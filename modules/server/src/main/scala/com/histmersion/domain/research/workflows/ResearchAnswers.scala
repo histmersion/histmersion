@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, ReviewArticle}
 import com.histmersion.api.VocabularyCodecs.given

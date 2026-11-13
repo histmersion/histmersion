@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -13,7 +14,6 @@ import com.histmersion.plugin.{Doi, Fetch, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
 import com.histmersion.server.plugins.MakerPlugin
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.Json
 import org.ekrich.config.ConfigFactory
 
 import java.net.InetSocketAddress

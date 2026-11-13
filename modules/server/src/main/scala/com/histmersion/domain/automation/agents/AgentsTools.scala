@@ -1,12 +1,16 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.mcp.ChimpJson
+import com.histmersion.util.mcp.ChimpJson.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
 import com.histmersion.domain.automation.workflows.Pipelines
 
 import chimp.server.*
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.PageSize
@@ -641,17 +645,17 @@ object AgentsTools:
     }
 
   private def mcpTool[T](t: sttp.ai.core.agent.AgentTool[sttp.shared.Identity, T]) =
-    tool(t.name).description(t.description).inputJson(Toolbox.inputSchema(t)).handle { json =>
-      t.codec
-        .decodeJson(json)
+    ChimpJson.rawTool(tool(t.name).description(t.description), Toolbox.inputSchema(t)) { json =>
+      SttpAiJson
+        .arguments(t, json)
         .fold(
-          e => ToolResult.error(s"bad arguments for ${t.name}: ${e.getMessage}"),
+          e => ToolResult.error(s"bad arguments for ${t.name}: $e"),
           in => ToolResult.text(t.execute(in))
         )
     }
 
   final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false, quota: Boolean = false)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
   object ModelsInput:
     given Schema[ModelsInput] = KindlingsSchema
       .derived[ModelsInput]
@@ -674,7 +678,7 @@ object AgentsTools:
       floors: Option[String] = None,
       fallthrough: Option[Boolean] = None,
       refresh: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SetModelsInput:
 
     given Schema[SetModelsInput] = KindlingsSchema
@@ -724,7 +728,7 @@ object AgentsTools:
       goal: Option[String] = None,
       dryRun: Boolean = false,
       modelFor: List[String] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object RunInput:
 
     given Schema[RunInput] = KindlingsSchema
@@ -791,7 +795,7 @@ object AgentsTools:
       since: Option[String] = None,
       until: Option[String] = None,
       subject: Option[String] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
     def filter: ListFilters.RunFilter =
       ListFilters.RunFilter(
@@ -842,7 +846,7 @@ object AgentsTools:
       ref: String,
       note: Option[String] = None,
       remove: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object GoalLinkInput:
 
     given Schema[GoalLinkInput] = KindlingsSchema
@@ -861,7 +865,7 @@ object AgentsTools:
       enabled: Boolean = true,
       budgetUsd: Option[Double] = None,
       remove: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ScheduleInput:
 
     given Schema[ScheduleInput] = KindlingsSchema
@@ -887,7 +891,7 @@ object AgentsTools:
       goal: Option[String] = None,
       decidedBy: List[String] = Nil,
       digest: Boolean = false
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(
       state.map(ListFilters.ApprovalFilter.State(_)),
       kind.map(ListFilters.ApprovalFilter.Kind(_)),
@@ -925,7 +929,7 @@ object AgentsTools:
       ids: List[Long] = Nil,
       dryRun: Boolean = false,
       limit: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object DecideInput:
 
     given Schema[DecideInput] = KindlingsSchema
@@ -948,7 +952,7 @@ object AgentsTools:
       strategy: Option[String] = None,
       limit: Option[Int] = None,
       days: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SchedulerInput:
 
     given Schema[SchedulerInput] = KindlingsSchema
@@ -983,7 +987,7 @@ object AgentsTools:
       focus: Option[String] = None,
       value: Option[Int] = None,
       mode: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ManagerInput:
 
     given Schema[ManagerInput] = KindlingsSchema

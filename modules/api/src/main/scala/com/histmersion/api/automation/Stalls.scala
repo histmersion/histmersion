@@ -1,6 +1,6 @@
 package com.histmersion
 package api.automation
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
@@ -23,7 +23,7 @@ object Stalls:
       code: Stall.Code = Stall.Code(""),
       why: Stall.Why = Stall.Why(""),
       action: Stall.Action = Stall.Action("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -38,7 +38,7 @@ object Stalls:
     object Action extends Newtype[String, Pure]
 
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -53,7 +53,7 @@ object Stalls:
       goals: StallReport.Goals = StallReport.Goals(0),
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

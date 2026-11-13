@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -38,7 +40,7 @@ class UiNoticesHttpSuite extends DbSuite:
     )
 
   private def decode(body: String): Counters =
-    io.circe.parser.decode[Counters](body).fold(e => fail(s"$e: $body"), identity)
+    RawJson.decode[Counters](body).fold(e => fail(s"$e: $body"), identity)
 
   /** The queue tables are shared with QueueRepoSuite and OpsHttpSuite (which wipe them): the same advisory lock
     * serialises the three. `var`: the connection outlives `beforeAll`.
@@ -90,7 +92,7 @@ class UiNoticesHttpSuite extends DbSuite:
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""")._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
-        added = io.circe.parser.decode[Queue.QueueItem](ab).toOption.map(_.id)
+        added = RawJson.decode[Queue.QueueItem](ab).toOption.map(_.id)
         val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key.value == "tasks").get
         assertEquals(after.count, tasks0.count.map(c => UiNotices.Counter.Count(c.value + 1)))
         assert(after.fresh.value, after.toString)

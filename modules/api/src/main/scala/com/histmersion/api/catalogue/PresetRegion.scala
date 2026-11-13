@@ -118,6 +118,5 @@ object PresetRegion:
     def wire(e: PresetRegion): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[PresetRegion] = PresetRegion.fromWire(Wire((s).value))
 
-  given io.circe.Encoder[PresetRegion] = WireEnum.encoder
-  given io.circe.Decoder[PresetRegion] = WireEnum.decoder
+  given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[PresetRegion] = WireEnum.codec
   given Schema[PresetRegion] = WireEnum.schema

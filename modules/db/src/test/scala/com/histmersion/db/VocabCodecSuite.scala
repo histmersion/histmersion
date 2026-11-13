@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -108,9 +109,9 @@ class VocabCodecSuite extends DbSuite:
   * an exception; nulls are dropped only when asked.
   */
 class JsonbCodecSuite extends DbSuite:
-  import hearth.kindlings.circederivation.KindlingsCodecAsObject
+  import com.histmersion.util.json.JsonCodec
 
-  final case class Doc(a: Int = 1, b: Option[String] = None) derives KindlingsCodecAsObject
+  final case class Doc(a: Int = 1, b: Option[String] = None) derives JsonCodec
 
   test("write: compact, nulls kept unless dropNulls"):
     assertEquals(Jsonb.write(Doc(2, None)), """{"a":2,"b":null}""")

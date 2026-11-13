@@ -1,7 +1,8 @@
 package com.histmersion
 package api.catalogue
-import io.circe.Json
-import io.circe.syntax.*
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -36,7 +37,7 @@ object Corrections:
     )
 
   def show(json: String): String =
-    io.circe.parser.parse(json).toOption match
+    RawJson.parse(json).toOption match
       case Some(j) if j.isNull => ("none")
       case Some(j)             => (j.asString.getOrElse(j.noSpaces))
       case None                => (json)

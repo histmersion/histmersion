@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
 import com.histmersion.api.problem.Text.sentence
 
@@ -20,8 +21,7 @@ import com.histmersion.api.research.Article.Plans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Article
@@ -259,7 +259,7 @@ object InferFilterPipeline:
       excerpt: Loaded.Excerpt,
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Loaded:
     type Summary = Summary.T
@@ -277,7 +277,7 @@ object InferFilterPipeline:
     * and the line for the log.
     */
   final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], applied: Boolean, line: Recorded.Line)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object Recorded:
     type Line = Line.T

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
+import hearth.kindlings.jsoniterjson.JsonObject
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
@@ -10,7 +14,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.storage.{Blob, Reservation, Store}
 
-import io.circe.{Json, JsonObject}
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
@@ -78,10 +81,10 @@ object GazetteerLoad:
   def manifest(p: Stores): Either[Problem, Gazetteer.Manifest] =
     p.manifestText()
       .flatMap(text =>
-        io.circe.parser
+        RawJson
           .decode[Gazetteer.Manifest](text.value)
           .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"${p.manifestAt}: ${e.getMessage}")))
+          .map(e => Problem.Unclassified(Legacy.Text(s"${p.manifestAt}: $e")))
       )
 
   private def pin(p: Stores, kind: Gazetteer.Kind): Either[Problem, Gazetteer.Extract] =
@@ -340,10 +343,10 @@ object GazetteerLoad:
       dataset: Gazetteer.DatasetName,
       source: Option[Gazetteer.SourceInfo.Key]
   ): Either[Problem, GazRecord] =
-    io.circe.parser
+    RawJson
       .parse(line)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"line $n: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"line $n: $e")))
       .flatMap(
         Gazetteer
           .fromFeature(_, dataset, n, source)
@@ -405,7 +408,7 @@ object GazetteerLoad:
     val name = f.key.name.value.replaceAll("(?i)\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
     dir
       .get(f.key.parent.child(Store.EntryName(name + ".meta.json")))
-      .flatMap(m => io.circe.parser.parse(m.text().value).toOption.flatMap(_.asObject))
+      .flatMap(m => RawJson.parse(m.text().value).toOption.flatMap(_.asObject))
 
   private def loadLpf(
       db: Transactor,
@@ -483,10 +486,10 @@ object GazetteerLoad:
           )
         )
       else
-        io.circe.parser
+        RawJson
           .parse(Using.resource(open(f))(in => new String(in.readAllBytes(), StandardCharsets.UTF_8)))
           .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"$name: invalid JSON: ${e.getMessage}")))
+          .map(e => Problem.Unclassified(Legacy.Text(s"$name: invalid JSON: $e")))
           .flatMap { doc =>
             val top = doc.asObject.getOrElse(JsonObject.empty)
             val feats = doc.asArray.map(_.toList).orElse(top("features").flatMap(_.asArray).map(_.toList))

@@ -1,5 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.Problem
 import com.histmersion.api.problem.Text.sentence
 
@@ -318,15 +320,15 @@ object BasemapExtractTool:
       f.tile(z, x, y).toOption.flatten.foreach(w.add(id, _))
     }
     val meta = f.metadata.deepMerge(
-      io.circe.Json.obj(
-        "histmersion" -> f.metadata.hcursor
+      Json.obj(
+        "histmersion" -> f.metadata.cursor
           .downField("histmersion")
           .focus
-          .getOrElse(io.circe.Json.obj())
+          .getOrElse(Json.obj())
           .deepMerge(
-            io.circe.Json.obj(
-              "bbox" -> io.circe.Json.fromString(s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"),
-              "maxZoom" -> io.circe.Json.fromInt(maxZoom.value)
+            Json.obj(
+              "bbox" -> Json.fromString(s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"),
+              "maxZoom" -> Json.fromInt(maxZoom.value)
             )
           )
       )

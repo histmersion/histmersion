@@ -1,7 +1,9 @@
 package com.histmersion
 package plugins.ai
-
-import io.circe.{Json, JsonObject}
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 /** A JSON Schema as a provider must be sent it: a tool's input or the step's answer, with the repairs each API needs —
   * an object type and properties for Anthropic's tools, `additionalProperties: false` on Anthropic's answer, and
@@ -17,11 +19,11 @@ final case class SchemaJson(json: Json):
     else
       json.asObject match
         case Some(obj) =>
-          val typed = if obj.contains("type") then obj else obj.add("type", Json.fromString("object"))
+          val typed = if obj.contains("type") then obj else obj.updated("type", Json.fromString("object"))
           val repaired =
             if typed("type").contains(Json.fromString("object")) && !typed.contains("properties") &&
               !(SchemaJson.shapedElsewhere(typed))
-            then typed.add("properties", Json.obj())
+            then typed.updated("properties", Json.obj())
             else typed
           SchemaJson(Json.fromJsonObject(repaired))
         case None => this
@@ -61,7 +63,7 @@ object SchemaJson:
         val updated =
           if obj("type").contains(Json.fromString("object")) && obj.contains("properties") &&
             !obj.contains("additionalProperties")
-          then recursed.add("additionalProperties", Json.False)
+          then recursed.updated("additionalProperties", Json.False)
           else recursed
         Json.fromJsonObject(updated)
     )
@@ -117,11 +119,11 @@ object SchemaJson:
         obj("type") match
           case Some(t) if t.isString =>
             if t.asString.contains("null") then schema
-            else Json.fromJsonObject(nullEnum(obj.add("type", Json.arr(t, Json.fromString("null")))))
+            else Json.fromJsonObject(nullEnum(obj.updated("type", Json.arr(t, Json.fromString("null")))))
           case Some(t) if t.isArray =>
             val types = t.asArray.getOrElse(Vector.empty)
             if types.contains(Json.fromString("null")) then schema
-            else Json.fromJsonObject(nullEnum(obj.add("type", Json.fromValues(types :+ Json.fromString("null")))))
+            else Json.fromJsonObject(nullEnum(obj.updated("type", Json.fromValues(types :+ Json.fromString("null")))))
           case _ =>
             val nullableAlready =
               obj("anyOf").flatMap(_.asArray).exists(_.contains(Json.obj("type" -> Json.fromString("null"))))
@@ -131,7 +133,7 @@ object SchemaJson:
 
   private def nullEnum(obj: JsonObject): JsonObject =
     obj("enum").flatMap(_.asArray) match
-      case Some(values) if !values.contains(Json.Null) => obj.add("enum", Json.fromValues(values :+ Json.Null))
+      case Some(values) if !values.contains(Json.Null) => obj.updated("enum", Json.fromValues(values :+ Json.Null))
       case _                                           => obj
 
   private def strictRoot(json: Json): Json =
@@ -139,8 +141,8 @@ object SchemaJson:
       case Some(obj) if !obj.contains("properties") && !obj.contains("type") && !ShapeKeywords.exists(obj.contains) =>
         Json.fromJsonObject(
           obj
-            .add("type", Json.fromString("object"))
-            .add("properties", Json.obj())
-            .add("additionalProperties", Json.False)
+            .updated("type", Json.fromString("object"))
+            .updated("properties", Json.obj())
+            .updated("additionalProperties", Json.False)
         )
       case _ => json

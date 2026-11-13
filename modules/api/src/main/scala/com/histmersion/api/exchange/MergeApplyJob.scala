@@ -3,7 +3,7 @@ package api.exchange
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.jobs.JobState
@@ -24,7 +24,7 @@ final case class MergeApplyJob(
     elapsedMs: MergeApplyJob.ElapsedMs,
     result: Option[MergeApplyResult] = None,
     error: Option[Problem] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object MergeApplyJob:

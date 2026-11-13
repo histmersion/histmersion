@@ -2,7 +2,7 @@ package com.histmersion
 package api.library
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -51,7 +51,7 @@ object Ingest:
       citekey: Citekey,
       status: Accepted.Status,
       sha256: Option[Sha256] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -91,7 +91,7 @@ object Ingest:
       assessment: Option[Assessment],
       steps: List[Step],
       dropIn: Option[Report.DropIn] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -108,7 +108,7 @@ object Ingest:
       arxiv: Option[Request.Arxiv] = None,
       refetch: Request.Refetch = Request.Refetch(false),
       legalOnly: Request.LegalOnly = Request.LegalOnly(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -122,7 +122,7 @@ object Ingest:
     object LegalOnly extends Newtype[Boolean, Pure]
 
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

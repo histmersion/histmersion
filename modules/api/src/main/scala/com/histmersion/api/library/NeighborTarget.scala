@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -21,6 +21,5 @@ object NeighborTarget:
     def fromWire(s: WireEnumValues.Wire): Option[NeighborTarget] =
       values.find(_.toString.equalsIgnoreCase((s).value))
 
-  given Encoder[NeighborTarget] = WireEnum.encoder
-  given Decoder[NeighborTarget] = WireEnum.decoder
+  given JsonValueCodec[NeighborTarget] = WireEnum.codec
   given Schema[NeighborTarget] = WireEnum.schema

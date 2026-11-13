@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,7 +11,6 @@ import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.config.AppConfig
 import com.histmersion.api.automation.Managers
-import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.DbSuite
@@ -75,7 +76,7 @@ class ManagersHttpSuite extends DbSuite:
 
         val (cs, cb) = post(s"$url/api/agents/managers", s"""{"kind":"seed","goal":"$Goal"}""")
         assertEquals(cs, 200, cb)
-        val m = decode[Managers.ManagerInfo](cb).fold(e => fail(s"$e: $cb"), identity)
+        val m = RawJson.decode[Managers.ManagerInfo](cb).fold(e => fail(s"$e: $cb"), identity)
         assertEquals((m.id, m.state, m.counts.pending), (s"seed:$Goal", "paused", 1))
         assertEquals(m.effective.minSources.map(_.value), Some(cfg.libraryAgents.seed.minSources.value))
         assertEquals(post(s"$url/api/agents/managers", """{"kind":"seed"}""")._1, 400, "a seed needs its goal")
@@ -84,7 +85,7 @@ class ManagersHttpSuite extends DbSuite:
         def enqueue(kind: String, target: String) =
           val (s, body) = post(s"$url/api/agents/enqueue", s"""{"kind":"$kind","target":"$target"}""")
           assertEquals(s, 200, body)
-          decode[Managers.EnqueueResult](body).fold(e => fail(s"$e: $body"), identity)
+          RawJson.decode[Managers.EnqueueResult](body).fold(e => fail(s"$e: $body"), identity)
         assertEquals(
           enqueue("review", "zqmgr_a").items.map(i => (i.managerId, i.kind)),
           List(("review", Managers.ArticleReview))
@@ -100,7 +101,7 @@ class ManagersHttpSuite extends DbSuite:
         val (ls, lb) = get(s"$url/api/agents/managers")
         assertEquals(ls, 200, lb)
         assertEquals(
-          decode[List[Managers.ManagerInfo]](lb).map(_.map(_.id).toSet),
+          RawJson.decode[List[Managers.ManagerInfo]](lb).map(_.map(_.id).toSet),
           Right(Set("review", "enrich", s"seed:$Goal"))
         )
         val (is, ib) = get(s"$url/api/agents/managers/review/items")
@@ -129,7 +130,8 @@ class ManagersHttpSuite extends DbSuite:
         // the central scheduler: its status (a dry pass with agents off), why one item waits, the live switch
         val (ss, sb) = get(s"$url/api/agents/scheduler?limit=5")
         assertEquals(ss, 200, sb)
-        val st = decode[AgentScheduler.SchedulerStatus](sb)
+        val st = RawJson
+          .decode[AgentScheduler.SchedulerStatus](sb)
           .fold(e => fail(s"$e: $sb"), identity)
         assertEquals(
           (st.strategy.value: String, st.strategyFrom),
@@ -156,7 +158,7 @@ class ManagersHttpSuite extends DbSuite:
         // the approval digest and a group decision
         val (ds_, db_) = get(s"$url/api/agents/approvals/digest")
         assertEquals(ds_, 200, db_)
-        assert(decode[ApprovalDigest.Digest](db_).isRight, db_)
+        assert(RawJson.decode[ApprovalDigest.Digest](db_).isRight, db_)
         assertEquals(
           post(s"$url/api/agents/approvals/decide", """{"decision":"approve"}""")._1,
           400,
@@ -175,7 +177,7 @@ class ManagersHttpSuite extends DbSuite:
         val (ss2, sb2) = get(s"$url/api/agents/stalls?days=0")
         assertEquals(ss2, 200, sb2)
         assert(
-          decode[Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug.value == Goal)),
+          RawJson.decode[Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug.value == Goal)),
           sb2
         )
         val (dr, drb) = post(s"$url/api/agents/autopilot/drain", """{"on":true,"by":"test"}""")

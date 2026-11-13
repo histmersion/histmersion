@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.domain.{CompareRuns, ReviewArticle}
 import com.histmersion.domain.CompareRuns.{KindCount, MajorOverlap, ReviewerSide, ReviewSide, Run}

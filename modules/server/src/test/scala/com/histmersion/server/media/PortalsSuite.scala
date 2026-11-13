@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -370,7 +372,7 @@ class PortalsSuite extends munit.FunSuite:
   /** Commons' imageinfo: every title asked is a CC BY-SA 4.0 file with an author. */
   private def info(titles: List[String], width: String): String =
     val pages = titles.zipWithIndex.map { (t, i) =>
-      s"""{"pageid":${i + 1},"ns":6,"title":${io.circe.Json
+      s"""{"pageid":${i + 1},"ns":6,"title":${Json
           .fromString(t)
           .noSpaces},"imageinfo":[{"size":100,"width":10,"height":10,
          "thumburl":"https://upload.example/$i-$width.jpg","thumbwidth":$width,"thumbheight":$width,

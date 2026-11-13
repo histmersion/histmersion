@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
@@ -15,7 +15,7 @@ final case class EventDating(
     timeSpan: TimeSpan,
     method: Option[EventDating.Method] = None,
     note: Option[EventDating.Note] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

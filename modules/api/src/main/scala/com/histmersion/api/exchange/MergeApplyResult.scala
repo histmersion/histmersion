@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -24,7 +24,7 @@ final case class MergeApplyResult(
     problems: List[MergeApplyResult.Problems] = Nil,
     issues: List[MergeIssue] = Nil,
     notes: List[MergeApplyResult.Notes] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def changed: Bundle.ChangedCount = Bundle.ChangedCount(counts.map(c => c.changed.value: Int).sum)

@@ -1,31 +1,25 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.plugin.{Period, Year}
-import io.circe.ACursor
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 
 /** A field as text: a string, or a number written out; blank is none. */
-extension (c: ACursor)
-  def str(k: String): Option[String] =
-    c.downField(k).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
+extension (c: Cursor)
+  def str(k: String): Option[String] = c.downField(k).literal
 
   /** A field's strings: an array of them, or one; blanks dropped. */
-  def strs(k: String): List[String] =
-    c.downField(k)
-      .focus
-      .toList
-      .flatMap(j => j.asArray.map(_.toList.flatMap(_.asString)).getOrElse(j.asString.toList))
-      .map(_.trim)
-      .filter(_.nonEmpty)
+  def strs(k: String): List[String] = c.downField(k).strings
 
-  def long(k: String): Option[Long] =
-    c.downField(k).focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
+  def long(k: String): Option[Long] = c.downField(k).integer
 
-  def bool(k: String): Option[Boolean] =
-    c.downField(k).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
+  def bool(k: String): Option[Boolean] = c.downField(k).boolean
 
 /** A query parameter's value, URL-encoded. */
 extension (s: String) def enc: String = URLEncoder.encode(s, UTF_8)

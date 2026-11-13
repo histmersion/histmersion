@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -31,7 +33,6 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, ServerWiring}
-import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant
@@ -716,7 +717,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
           )
       )
     val (a, h) = handlers(ScriptedClient(Model), capped); seed(h)
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     def plan(slugs: Article.Slug*) = Article.Plans.ArticlePlan(
       GoalPlanGoal,
       Article.Plans.ArticlePlan.Rationale("r"),
@@ -806,7 +807,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
             .setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual")))
         )
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val waiting =
       (1 to 60).map(i =>
         TestRuns
