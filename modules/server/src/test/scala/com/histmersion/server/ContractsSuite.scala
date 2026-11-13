@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
+import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
 
 /** The coding practices of AGENTS.md (rules 1–14) that a reading of the sources can check, over every main module:
   *
@@ -45,8 +45,14 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *   - `nonempty-pattern` (G60): a type pattern `case …: NonEmptyVector[…] =>` outside the problem module — the union
   *     `Problems` is folded (`fold`, `toVector`), never matched on;
   *   - `problem-field` (rule 1, G60): a case of the closed `util.problem.Problem` (or a small type of its file) with a
-  *     `String`, `Int`, `Long`, `Double` or `Boolean` field — free text or an unnamed number where a newtype or an enum
-  *     says what it is; only the two cases that carry text no case wrote (`Unclassified`, `Stored.Unrecognised`) may.
+  *     `String`, `Int`, `Long`, `Double` or `Boolean` field, or the free text of an unclassified site (`Legacy.Text`) —
+  *     free text or an unnamed number where a newtype or an enum says what it is. A ratchet whose one row is the
+  *     temporary `Unclassified`; the text a column held (`Stored.Text`) is the stored reader's, and no finding;
+  *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the stored
+  *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made.
+  *
+  * Besides the listed rules, one holds with no exception at all: a module G60 has classified ([[Classified]]) holds no
+  * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code.
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
@@ -55,7 +61,7 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
 class ContractsSuite extends munit.FunSuite:
   import ContractsSuite.*
 
-  private lazy val sources: List[SourceFile] = Modules.flatMap(SourceFile.all)
+  private lazy val sources: List[SourceFile] = Modules.flatMap(SourceFile.all(_))
 
   test("no contract violation but the listed exceptions, and every listed exception still exists"):
     val file = ArchitectureSuite.Resources.resolve("contracts.tsv")
@@ -146,7 +152,8 @@ class ContractsSuite extends munit.FunSuite:
         |object Problem:
         |  final case class Malformed(typeName: TypeName, raw: Raw, at: Vector[Field] = Vector.empty) extends Invalid
         |  final case class Said(plugin: String, count: Int) extends Plugin
-        |  final case class Unclassified(text: String) extends Problem
+        |  final case class Unclassified(text: Legacy.Text) extends Problem
+        |  final case class Unrecognised(text: Text) extends Stored
         |  enum Damage:
         |    case Length(expected: Long, found: Count)
         |  def within(p: Problem) = p match
@@ -160,7 +167,8 @@ class ContractsSuite extends munit.FunSuite:
         "Malformed.at: Vector[Field]",
         "Said.plugin: String",
         "Said.count: Int",
-        "Unclassified.text: String",
+        "Unclassified.text: Legacy.Text",
+        "Unrecognised.text: Text",
         "Length.expected: Long",
         "Length.found: Count"
       )
@@ -168,8 +176,51 @@ class ContractsSuite extends munit.FunSuite:
     val file = ArchitectureSuite.SourceFile(Rules.ProblemFile, "com.histmersion.util.problem", code, code)
     assertEquals(
       Rules.all(List(file)).filter(_.rule == "problem-field").map(_.detail),
-      List("Said.plugin: String", "Said.count: Int", "Length.expected: Long")
+      List("Said.plugin: String", "Said.count: Int", "Unclassified.text: Legacy.Text", "Length.expected: Long")
     )
+
+  test("the modules G60 has classified hold no unclassified problem, in main or test code"):
+    val found = Rules.unclassified(Classified.flatMap(m => SourceFile.all(m) ++ SourceFile.all(m, "test")))
+    assertEquals(found.map(v => s"${v.at}: ${v.detail}"), Nil)
+
+  test("an unclassified problem is found however it is spelled, never in a comment or a string"):
+    val code =
+      """import com.histmersion.util.problem.{Legacy, Problem}
+        |// Problem.Unclassified(Legacy.Text("in a comment"))
+        |object Sites:
+        |  val a = Problem.Unclassified(Legacy.Text("x"))
+        |  val b = Problem.Unclassified.of(e)
+        |  def c(p: Problem) = p.legacyText
+        |  val d = "Unclassified in a string"
+        |  val e = Problem.Invalid.Missing(Problem.Field("ok"))
+        |""".stripMargin
+    val file = ArchitectureSuite.SourceFile("values:x/Sites.scala", "com.histmersion.x", Blank(code), code)
+    assertEquals(
+      Rules.unclassified(List(file)).map(v => (v.at, v.detail)),
+      List(
+        ("values:x/Sites.scala:1", "Legacy"),
+        ("values:x/Sites.scala:4", "Unclassified"),
+        ("values:x/Sites.scala:4", "Legacy"),
+        ("values:x/Sites.scala:5", "Unclassified"),
+        ("values:x/Sites.scala:6", "legacyText")
+      )
+    )
+
+  test("Stored.Unrecognised is built in main code only by the stored column's reader"):
+    val code =
+      """object Reads:
+        |  def read(s: String): Problem = Stored.Unrecognised(Stored.Text(s))
+        |  def shown(p: Problem) = p match
+        |    case Stored.Unrecognised(text) => s"$text"
+        |    case other                     => "x"
+        |""".stripMargin
+    def found(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "unrecognised")
+    assertEquals(found("server:x/Reads.scala").map(v => (v.count, v.at)), List((1, "server:x/Reads.scala:2")))
+    assertEquals(found("api:api/problem/Column.scala"), Nil)
+    assertEquals(found("problem:util/problem/Problem.scala"), Nil)
 
   test("a type pattern on the problems' NonEmptyVector is a violation outside the problem module"):
     val code =
@@ -195,6 +246,12 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(Rules.propertyOf("Sources", entities), None)
 
 object ContractsSuite:
+
+  /** The modules G60 has classified: none of their sites builds `Problem.Unclassified` any more (step 2 the leaf
+    * layers; each later step adds its own).
+    */
+  val Classified: List[String] =
+    List("values", "config", "files", "plugin-api", "plugin-resolver", "upstreams", "plugin-vaults")
 
   val Modules: List[String] = List(
     "problem",
@@ -256,6 +313,13 @@ object ContractsSuite:
             s,
             "a type pattern on NonEmptyVector outside the problem module",
             if module(s) == "problem" then Nil else NonEmptyPattern.findAllMatchIn(s.code).map(_.start).toList
+          )
+          ++ counted(
+            "unrecognised",
+            s,
+            "Stored.Unrecognised built outside the stored column's reader",
+            if Unrecognisers(s.key) then Nil
+            else Unrecognised.findAllMatchIn(s.code).filterNot(m => inPattern(s.code, m.start)).map(_.start).toList
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -626,12 +690,32 @@ object ContractsSuite:
     /** The file of the closed Problem, its cases and the small types they hold. */
     val ProblemFile = "problem:util/problem/Problem.scala"
 
-    /** The cases that carry text no case wrote: the temporary one and the stored one. */
-    val TextCases: Set[String] = Set("Unclassified", "Unrecognised")
-
     private val CaseWithFields = "\\bcase\\s+(?:class\\s+)?([A-Z]\\w*)\\s*\\(".r
     private val PrimitiveField =
-      "^(?:(?:Option|List|Set|Seq|Vector|NonEmptyVector)\\[)?(?:String|Int|Long|Double|Boolean)\\]?$".r
+      "^(?:(?:Option|List|Set|Seq|Vector|NonEmptyVector)\\[)?(?:String|Int|Long|Double|Boolean|Legacy\\.Text)\\]?$".r
+
+    /** The files that may build `Stored.Unrecognised`: the stored column's reader and the cases' own file. */
+    private val Unrecognisers: Set[String] = Set(ProblemFile, "api:api/problem/Column.scala")
+    private val Unrecognised = "\\bUnrecognised\\s*\\(".r
+
+    /** Is `at` inside a `case … =>` pattern on its line (a match, not a construction)? */
+    private def inPattern(code: String, at: Int): Boolean =
+      val start = code.lastIndexOf('\n', at) + 1
+      val end = code.indexOf('\n', at) match
+        case -1 => code.length
+        case n  => n
+      val line = code.substring(start, end)
+      line.trim.startsWith("case ") && line.indexOf("=>") > at - start
+
+    private val UnclassifiedSite = "\\b(Unclassified|legacyText|Legacy)\\b".r
+
+    /** Every unclassified site of the files: the temporary case, its text carrier, the accessor of its words. */
+    def unclassified(sources: List[SourceFile]): List[Violation] =
+      sources.flatMap(s =>
+        UnclassifiedSite
+          .findAllMatchIn(s.code)
+          .map(m => Violation("unclassified", s.key, m.group(1), 1, s"${s.key}:${s.lineOf(m.start)}"))
+      )
 
     /** The fields (name, type) of every case with fields in a text: `case class X(…)` and an enum's `case X(…)`. */
     def caseFields(code: String): List[(String, String, String, Int)] =
@@ -652,7 +736,7 @@ object ContractsSuite:
         .filter(_.key == ProblemFile)
         .flatMap(s =>
           caseFields(s.code).collect {
-            case (name, field, tpe, at) if PrimitiveField.matches(tpe) && !TextCases(name) =>
+            case (name, field, tpe, at) if PrimitiveField.matches(tpe) =>
               Violation("problem-field", s.key, s"$name.$field: $tpe", 1, s"${s.key}:${s.lineOf(at)}")
           }
         )

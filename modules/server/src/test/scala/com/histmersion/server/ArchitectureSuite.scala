@@ -27,7 +27,7 @@ import scala.jdk.CollectionConverters.*
 class ArchitectureSuite extends munit.FunSuite:
   import ArchitectureSuite.*
 
-  private lazy val sources: List[SourceFile] = Modules.flatMap(SourceFile.all)
+  private lazy val sources: List[SourceFile] = Modules.flatMap(SourceFile.all(_))
   private lazy val places: Map[String, String] = readPlaces()
   private lazy val placed: List[(SourceFile, String)] = sources.map(s => s -> placeOf(s))
   private lazy val violations: List[Violation] = Rules.all(placed)
@@ -113,25 +113,29 @@ object ArchitectureSuite:
     def lineOf(index: Int): Int = code.substring(0, index).count(_ == '\n') + 1
 
   object SourceFile:
-    def all(module: String): List[SourceFile] =
-      val main = Path.of("modules", module, "src", "main")
-      Files
-        .list(main)
-        .iterator
-        .asScala
-        .toList
-        .filter(_.getFileName.toString.startsWith("scala"))
-        .flatMap { root =>
-          val base = root.resolve("com/histmersion")
-          if !Files.isDirectory(base) then Nil
-          else
-            Files.walk(base).iterator.asScala.filter(_.toString.endsWith(".scala")).toList.map { p =>
-              val text = Files.readString(p, UTF_8)
-              val pkg = "(?m)^package ([\\w.]+)".r.findAllMatchIn(text).map(_.group(1)).mkString(".")
-              SourceFile(s"$module:${base.relativize(p).toString.replace('\\', '/')}", pkg, Blank(text), text)
-            }
-        }
-        .sortBy(_.key)
+    /** The sources of `module`'s `scope` (`main`, or `test`, whose keys are `<module>:test/<path>`). */
+    def all(module: String, scope: String = "main"): List[SourceFile] =
+      val main = Path.of("modules", module, "src", scope)
+      val prefix = if scope == "main" then "" else s"$scope/"
+      if !Files.isDirectory(main) then Nil
+      else
+        Files
+          .list(main)
+          .iterator
+          .asScala
+          .toList
+          .filter(_.getFileName.toString.startsWith("scala"))
+          .flatMap { root =>
+            val base = root.resolve("com/histmersion")
+            if !Files.isDirectory(base) then Nil
+            else
+              Files.walk(base).iterator.asScala.filter(_.toString.endsWith(".scala")).toList.map { p =>
+                val text = Files.readString(p, UTF_8)
+                val pkg = "(?m)^package ([\\w.]+)".r.findAllMatchIn(text).map(_.group(1)).mkString(".")
+                SourceFile(s"$module:$prefix${base.relativize(p).toString.replace('\\', '/')}", pkg, Blank(text), text)
+              }
+          }
+          .sortBy(_.key)
 
   /** The text with every comment and string literal replaced by spaces. A splice (`s"…${expr}…"`) is code and is kept:
     * `.value` in one is an unwrap like any other (user, 2026-11-08). Line breaks stay, so a check reads the same code
