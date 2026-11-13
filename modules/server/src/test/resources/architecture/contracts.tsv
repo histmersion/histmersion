@@ -755,6 +755,7 @@ prefix	server:util/jobs/JobRuns.scala	JobRuns → Job.Runs	1
 prefix	server:util/jobs/JobStopped.scala	JobStopped → Job.Stopped	1
 prefix	server:util/jobs/JobStops.scala	JobStops → Job.Stops	1
 prefix	server:util/plugins/PluginSetResource.scala	PluginSetResource → Plugin.SetResource	1
+problem-field	problem:util/problem/Problem.scala	Unclassified.text: Legacy.Text	1
 service	server:domain/library/findings/FindingService.scala	FindingService without InMemory	1
 service	server:domain/library/labels/LabelService.scala	LabelService without InMemory	1
 service	server:domain/library/search/QueryService.scala	QueryService without InMemory	1
