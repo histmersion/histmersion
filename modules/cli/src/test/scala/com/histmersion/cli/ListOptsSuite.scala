@@ -114,21 +114,13 @@ class ListOptsSuite extends munit.FunSuite:
     )
 
   test("the commands take the filters, --limit, --before and --json; approve/reject take several ids"):
-    val agent = Command("histmersion", "test")(AgentCmd.command)
+    assert(Parsing.parses("agent", "approvals", "--kind", "goal-plan", "--state", "open", "--json"))
     assert(
-      agent.parse(List("agent", "approvals", "--kind", "goal-plan", "--state", "open", "--json"), Map.empty).isRight
+      Parsing.parses("agent", "runs", "--pipeline", "review-article", "--status", "failed", "--limit", "5", "--json")
     )
-    assert(
-      agent
-        .parse(
-          List("agent", "runs", "--pipeline", "review-article", "--status", "failed", "--limit", "5", "--json"),
-          Map.empty
-        )
-        .isRight
-    )
-    assert(agent.parse(List("agent", "approve", "12", "13", "14", "--note", "checked"), Map.empty).isRight)
-    assert(agent.parse(List("agent", "reject", "12"), Map.empty).isRight)
-    assert(agent.parse(List("agent", "approve"), Map.empty).isLeft, "an id is needed")
+    assert(Parsing.parses("agent", "approve", "12", "13", "14", "--note", "checked"))
+    assert(Parsing.parses("agent", "reject", "12"))
+    assert(!Parsing.parses("agent", "approve"), "an id is needed")
     assert(Parsing.parses("jobs", "--kind", "ingest", "--status", "failed", "--subject", "x", "--json"))
     assert(Parsing.parses("jobs", "4f1c"))
     assert(Parsing.parses("jobs", "cancel", "4f1c", "--json"))

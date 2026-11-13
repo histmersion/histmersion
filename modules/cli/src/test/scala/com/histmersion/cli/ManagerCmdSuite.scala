@@ -4,7 +4,6 @@ import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.library.RepairAcquire
-import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
@@ -20,35 +19,36 @@ class ManagerCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private val manager = Command("t", "test")(ManagerCmd.manager)
-  private val enqueue = Command("t", "test")(ManagerCmd.enqueue)
-  private val managers = Command("t", "test")(ManagerCmd.managers)
+  private def parses(args: String*) = Parsing.parses("agent" +: args*)
 
   test("new seed --goal, new enrich, with settings and --json"):
-    assert(
-      manager
-        .parse(
-          List("manager", "new", "seed", "--goal", "bronze-age-tin", "--config", "min-sources=3", "--json"),
-          Map.empty
-        )
-        .isRight
+    assert(parses("manager", "new", "seed", "--goal", "bronze-age-tin", "--config", "min-sources=3", "--json"))
+    assert(parses("manager", "new", "enrich", "--config", "max-runs=2"))
+    assert(parses("manager", "seed:bronze-age-tin", "items", "--status", "held", "--json"))
+    assert(parses("manager", "review", "status", "--json"))
+    assert(parses("manager", "seed:x", "enqueue", "propose", "x"))
+    assert(parses("manager", "review"), "a manager alone shows it")
+    assertEquals(
+      Parsing.parse("agent", "manager", "seed:x", "pause", "--runs"),
+      Right(ManagerCmd.Command.Manager("seed:x", ManagerCmd.ManagerVerb.Pause(true)))
     )
-    assert(manager.parse(List("manager", "new", "enrich", "--config", "max-runs=2"), Map.empty).isRight)
-    assert(
-      manager.parse(List("manager", "seed:bronze-age-tin", "items", "--status", "held", "--json"), Map.empty).isRight
-    )
-    assert(manager.parse(List("manager", "review", "status", "--json"), Map.empty).isRight)
-    assert(manager.parse(List("manager", "seed:x", "enqueue", "propose", "x"), Map.empty).isRight)
+    assert(!parses("manager", "items"), "a verb needs the manager's id")
 
-  test("enqueue takes a kind and a target; managers takes --json"):
-    assert(enqueue.parse(List("enqueue", "extend", "sea_peoples"), Map.empty).isRight)
-    assert(enqueue.parse(List("enqueue", "enrich", "bronze-age-tin", "--priority", "3", "--json"), Map.empty).isRight)
-    assert(enqueue.parse(List("enqueue", "seed"), Map.empty).isLeft, "a target is needed")
-    assert(managers.parse(List("managers", "--json"), Map.empty).isRight)
+  test("enqueue takes a kind and a target; managers takes --json; the agent command offers enqueue"):
+    assert(parses("enqueue", "extend", "sea_peoples"))
+    assert(parses("enqueue", "enrich", "bronze-age-tin", "--priority", "3", "--json"))
+    assert(!parses("enqueue", "seed"), "a target is needed")
+    assert(parses("managers", "--json"))
+    assert(parses("enqueue", "review", "x"))
 
-  test("the agent command offers enqueue"):
-    val agent = Command("histmersion", "test")(AgentCmd.command)
-    assert(agent.parse(List("agent", "enqueue", "review", "x"), Map.empty).isRight)
+  test("the scheduler: status by default; queue, why <item>, strategy <name>"):
+    assert(parses("scheduler"))
+    assert(parses("scheduler", "--limit", "5", "--json"))
+    assert(parses("scheduler", "queue", "--limit", "5"))
+    assert(parses("scheduler", "why", "x"))
+    assert(parses("scheduler", "strategy", "goal-first"))
+    assert(!parses("scheduler", "why"))
+    assert(!parses("scheduler", "bogus"))
 
   test("autopilot focus: list, pin, unpin, priority, max parse into the request; a malformed one is a usage error"):
     import com.histmersion.api.automation.Autopilot.FocusSet
@@ -81,15 +81,11 @@ class ManagerCmdSuite extends munit.FunSuite:
     List(List("pin"), List("max", "-1"), List("max", "many"), List("priority", "x"), List("bogus")).foreach { a =>
       assert(ManagerCmd.focusRequest(a).left.exists(_.exitCode == ExitCode.Usage), a)
     }
-    val cmd = Command("t", "test")(ManagerCmd.autopilot)
-    assert(cmd.parse(List("autopilot", "focus", "pin", "x", "--json"), Map.empty).isRight)
-    assert(cmd.parse(List("autopilot", "focus"), Map.empty).isRight)
-    assert(cmd.parse(List("autopilot"), Map.empty).isRight)
-    val extra = cmd.parse(List("autopilot", "on", "x"), Map.empty).fold(h => fail(h.toString), identity)
-    assert(
-      extra(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.exitCode == ExitCode.Usage),
-      "on takes no further argument"
-    )
+    assert(parses("autopilot", "focus", "pin", "x", "--json"))
+    assert(parses("autopilot", "focus"))
+    assert(parses("autopilot"))
+    assert(!parses("autopilot", "on", "x"), "on takes no further argument")
+    assert(!parses("autopilot", "focus", "max", "-1"), "a malformed focus is refused while parsing")
 
   test(
     "autopilot repair-acquire [--dry-run] posts the request and prints what it did; an unknown verb is a usage error"
@@ -127,11 +123,9 @@ class ManagerCmdSuite extends munit.FunSuite:
     )
     srv.start()
     try
-      val cmd = Command("t", "test")(ManagerCmd.autopilot)
-      val f =
-        cmd.parse(List("autopilot", "repair-acquire", "--dry-run"), Map.empty).fold(h => fail(h.toString), identity)
+      val f = Parsing.parse("agent", "autopilot", "repair-acquire", "--dry-run").fold(h => fail(h.toString), identity)
       val out = ByteArrayOutputStream()
-      val r = Console.withOut(out)(f(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
+      val r = Console.withOut(out)(f.run(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
       assertEquals(r, Right(()))
       assert(
         seen.peek().startsWith("POST /api/agents/autopilot/repair-acquire") && seen.peek().contains("\"dryRun\":true"),
@@ -139,9 +133,5 @@ class ManagerCmdSuite extends munit.FunSuite:
       )
       val text = out.toString(UTF_8)
       assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
-      val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
-      assert(
-        bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left
-          .exists(_.message.sentence.contains("repair-acquire"))
-      )
+      assert(!parses("autopilot", "repair"), "an unknown verb is refused")
     finally srv.stop(0)
