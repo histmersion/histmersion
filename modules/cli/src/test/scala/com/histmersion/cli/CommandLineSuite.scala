@@ -15,8 +15,8 @@ import org.rogach.scallop.*
 
 import java.nio.file.Path
 
-/** `histmersion article …` through scallop ([[CommandLine]]): the same typed command decline builds for the same argv, and
-  * the failures as typed problems.
+/** `histmersion article …` through scallop ([[CommandLine]]): the same typed command decline builds for the same argv,
+  * and the failures as typed problems.
   */
 class CommandLineSuite extends munit.FunSuite:
 
@@ -29,11 +29,11 @@ class CommandLineSuite extends munit.FunSuite:
 
   private def run(args: String*): ArticleCommand = scallop(args*) match
     case CommandLine.Outcome.Run(_, _, cmd) => cmd
-    case other                          => fail(s"${args.mkString(" ")}: $other")
+    case other                              => fail(s"${args.mkString(" ")}: $other")
 
   private def problem(args: String*): Problem = scallop(args*) match
     case CommandLine.Outcome.Failed(p, _) => p
-    case other                        => fail(s"${args.mkString(" ")}: $other")
+    case other                            => fail(s"${args.mkString(" ")}: $other")
 
   private val json = Cli.JsonOutput(false)
   private val slug = ReviewGoal.Slug("sea_peoples")
@@ -205,7 +205,7 @@ class CommandLineSuite extends munit.FunSuite:
       case other => fail(s"$other")
     scallop("get", "sea_peoples", "--help") match
       case CommandLine.Outcome.Help(text) => assert(text.value.contains("--parts"), text.value)
-      case other                      => fail(s"$other")
+      case other                          => fail(s"$other")
 
   test("the help is decline's, byte for byte, for the group and every subcommand"):
     given com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
@@ -214,7 +214,7 @@ class CommandLineSuite extends munit.FunSuite:
       val expected = Cli.command.parse(path :+ "--help", Map.empty).fold(_.toString, _ => "").stripTrailing
       CommandLine.parse(path :+ "--help") match
         case CommandLine.Outcome.Help(text) => assertEquals(text.value.stripTrailing, expected, path.mkString(" "))
-        case other                      => fail(s"${path.mkString(" ")}: $other")
+        case other                          => fail(s"${path.mkString(" ")}: $other")
     }
 
   test("a group with no subcommand is a missing command"):

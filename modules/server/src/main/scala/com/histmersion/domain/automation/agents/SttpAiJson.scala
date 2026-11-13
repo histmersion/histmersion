@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, JsonValueCodec}
 import hearth.kindlings.jsoniterjson.Json
 import hearth.kindlings.tapiropenapijsoniter.OpenApiJsoniter
 import io.circe
@@ -12,9 +12,9 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 
 /** sttp-ai, the agent loop's library, takes circe codecs for a tool's input and a step's typed answer; our records have
-  * jsoniter codecs. This is the one place the two meet: sttp-ai gets each record's own codec as circe's, its JSON Schemas
-  * are written by Kindlings' apispec codecs (what apispec's circe module wrote, byte for byte), and its decoding
-  * failures are read here.
+  * jsoniter codecs. This is the one place the two meet: sttp-ai gets each record's own codec as circe's, its JSON
+  * Schemas are written by Kindlings' apispec codecs (what apispec's circe module wrote, byte for byte), and its
+  * decoding failures are read here.
   */
 object SttpAiJson:
   /** A record's own codec, as sttp-ai takes it. A failure names where in the answer it is (`.findings[0].quote`), which

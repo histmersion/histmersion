@@ -10,11 +10,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import java.nio.file.Path
 
-/** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser (decline
-  * in [[ArticleCli]], scallop in [[CommandLine]]) builds one, and [[ArticleCli.run]] carries it out against a server.
+/** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser
+  * (decline in [[ArticleCli]], scallop in [[CommandLine]]) builds one, and [[ArticleCli.run]] carries it out against a
+  * server.
   */
 enum ArticleCommand derives CanEqual:
-  case Listing(text: Option[Api.ArticleQuery.Text], kind: Option[Api.ArticleQuery.Kind], filter: Filter, json: Cli.JsonOutput)
+  case Listing(
+      text: Option[Api.ArticleQuery.Text],
+      kind: Option[Api.ArticleQuery.Kind],
+      filter: Filter,
+      json: Cli.JsonOutput
+  )
   case Get(slug: ReviewGoal.Slug, parts: Vector[Article.Part], json: Cli.JsonOutput)
   case Put(file: Path, kind: Option[Article.Kind.Wire], strict: Cli.Strict)
   case Patch(
