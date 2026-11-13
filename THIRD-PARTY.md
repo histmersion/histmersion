@@ -168,6 +168,7 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | org.portable-scala:portable-scala-reflect_sjs1_2.13 | 1.1.3 | BSD New | compatible |
 | org.postgresql:postgresql | 42.7.14 | BSD-2-Clause | compatible |
 | org.reactivestreams:reactive-streams | 1.0.4 | MIT-0 | compatible |
+| org.rogach:scallop_3 | 6.0.1 | MIT License | compatible |
 | org.scala-js:scalajs-dom_sjs1_3 | 2.8.1 | MIT | compatible |
 | org.scala-js:scalajs-java-securerandom_sjs1_2.13 | 1.0.0 | Apache-2.0 | compatible |
 | org.scala-js:scalajs-javalib | 1.22.0 | Apache-2.0 | compatible |

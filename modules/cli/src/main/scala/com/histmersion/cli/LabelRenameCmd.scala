@@ -22,13 +22,19 @@ import com.histmersion.util.console.Console
 object LabelRenameCmd:
 
   def apply(kind: Bundle.Kind)(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    val (what, effect) = kind match
-      case Bundle.Kind.Article =>
-        ("an article a new slug", "versions, links and every [[old]] in other articles follow")
-      case Bundle.Kind.Event => ("an event a new id", "attestations and asset links follow")
-      case Bundle.Kind.Place => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
-      case _                 => ("a goal a new slug", "sub-goals, links and schedules follow")
-    Opts.subcommand("rename", s"Give $what — $effect. ${AliasKinds.of(kind).fold(Aliases.Rule)(Aliases.rule)}") {
+    args(kind)
+      .map { (from, to, json) => (c: Client) =>
+        val r = kind match
+          case Bundle.Kind.Article => c.renameArticle(ReviewGoal.Slug(from), to)
+          case Bundle.Kind.Event   => c.renameEvent(Event.Uid(from), to)
+          case Bundle.Kind.Place   => c.renamePlace(Place.Id(from), to)
+          case _                   => c.renameGoal(Goal.Uid(from), to)
+        r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
+      }
+
+  /** The `rename` subcommand of `kind` as decline parses it: the old label (trimmed), the new one checked. */
+  def args(kind: Bundle.Kind): Opts[(String, LabelRename.To, Cli.JsonOutput)] =
+    Opts.subcommand("rename", help(kind)) {
       (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).tupled
         .mapValidated((from, to, json) =>
           LabelRenames
@@ -37,12 +43,14 @@ object LabelRenameCmd:
             .toValidatedNel
             .map(t => (from.trim, LabelRename.To(t.value), json))
         )
-        .map { (from, to, json) => (c: Client) =>
-          val r = kind match
-            case Bundle.Kind.Article => c.renameArticle(ReviewGoal.Slug(from), to)
-            case Bundle.Kind.Event   => c.renameEvent(Event.Uid(from), to)
-            case Bundle.Kind.Place   => c.renamePlace(Place.Id(from), to)
-            case _                   => c.renameGoal(Goal.Uid(from), to)
-          r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
-        }
     }
+
+  /** The help line of the `rename` subcommand of `kind`. */
+  def help(kind: Bundle.Kind): String =
+    val (what, effect) = kind match
+      case Bundle.Kind.Article =>
+        ("an article a new slug", "versions, links and every [[old]] in other articles follow")
+      case Bundle.Kind.Event => ("an event a new id", "attestations and asset links follow")
+      case Bundle.Kind.Place => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
+      case _                 => ("a goal a new slug", "sub-goals, links and schedules follow")
+    s"Give $what — $effect. ${AliasKinds.of(kind).fold(Aliases.Rule)(Aliases.rule)}"
