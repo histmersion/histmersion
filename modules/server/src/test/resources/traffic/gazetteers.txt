@@ -90,10 +90,10 @@ dry run: failed: zip contains no usable file
 source: https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
 GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
   User-agent: Histmersion/<version> (gazetteer import)
-places: failed: invalid JSON: expected json value got '<html>...' (line 1, column 1)
+places: failed: invalid JSON: expected value
 GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
   User-agent: Histmersion/<version> (gazetteer import)
-dry run: failed: invalid JSON: expected json value got '<html>...' (line 1, column 1)
+dry run: failed: invalid JSON: expected value
 ## chronontology: a JSON body of another shape
 source: https://chronontology.dainst.org/data/period?size=15000&from=0
 GET /data/period?size=15000&from=0
