@@ -5,8 +5,6 @@ import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.config.edit.*
 import org.ekrich.config.ConfigFactory
@@ -19,22 +17,6 @@ import com.histmersion.util.console.Console
   */
 object SettingsCmd:
 
-  private val local = Opts
-    .flag(
-      "local",
-      "Read or change the settings file on this machine directly, without the server (the default when it does not answer)"
-    )
-    .orFalse
-
-  private val noReload = Opts.flag("no-reload", "Change the file only; do not make the server apply it").orFalse
-
-  private val literal = Opts
-    .flag(
-      "literal-secret",
-      "Allow a credential written as value:<the value itself> (anyone who can read the file can read it)"
-    )
-    .orFalse
-
   /** The server is down: the file on this machine instead (said once, on stderr). */
   private def orLocal[A](viaServer: => Either[Cli.Error, A], viaFile: => Either[Cli.Error, A])(using
       console: Console
@@ -44,34 +26,6 @@ object SettingsCmd:
         Cli.err.println(s"(${e.message.sentence.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
-
-  def get(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
-    "get",
-    "A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, " +
-      "its default and what it does — a credential only as set or not"
-  ) {
-    (
-      Opts.argument[String]("key").orNone,
-      Opts.option[String]("prefix", "The settings under this block, e.g. acquire").orNone,
-      local,
-      Output.jsonFlag
-    ).mapN { (key, prefix, onlyLocal, json) => (c: Client) =>
-      val asked = key.orElse(prefix)
-      val askedPrefix = asked.map(Settings.Prefix(_))
-      val page =
-        if onlyLocal then Local.page(askedPrefix) else orLocal(c.settings(askedPrefix), Local.page(askedPrefix))
-      page.flatMap { p =>
-        key match
-          case Some(k) =>
-            p.field(ConfigEdit.Field.Key(k))
-              .toRight(Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage))
-              .map { f =>
-                Output.emit(json, f)(ConfigEditMarkdown.field)
-              }
-          case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
-      }
-    }
-  }
 
   private def change(
       key: String,
@@ -90,35 +44,6 @@ object SettingsCmd:
     val viaFile = Local.write(w).map(out => if reload then out.modify(_.reload).setTo(c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
     done.map(out => Output.emit(json, out)(ConfigEditMarkdown.written))
-
-  def set(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
-    "set",
-    "Change a setting in the settings file, in place (comments, order, includes and anything written by hand are kept, " +
-      "the old file is kept as .bak), checked first; then the server applies it"
-  ) {
-    (Opts.argument[String]("key"), Opts.argument[String]("value"), local, noReload, literal, Output.jsonFlag).mapN {
-      (key, value, onlyLocal, nr, consent, json) => (c: Client) =>
-        change(key, Some(value), onlyLocal, !nr, consent, json, c)
-    }
-  }
-
-  def unset(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
-    "unset",
-    "Take a setting out of the settings file (back to its default), in place; then the server applies it"
-  ) {
-    (Opts.argument[String]("key"), local, noReload, Output.jsonFlag).mapN { (key, onlyLocal, nr, json) => (c: Client) =>
-      change(key, None, onlyLocal, !nr, consent = false, json, c)
-    }
-  }
-
-  def restart(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
-    "restart",
-    "Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)"
-  ) {
-    Output.jsonFlag.map { json => (c: Client) =>
-      c.restartServer.map(r => Output.emit(json, r)(ConfigEditMarkdown.restart))
-    }
-  }
 
   /** The settings file on this machine, read and changed by the config module's own writer. */
   private object Local:
@@ -209,3 +134,39 @@ object SettingsCmd:
         ),
         out.warnings.map(n => ConfigEdit.Written.Warnings(n.value))
       )
+
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Get(key: Option[String], prefix: Option[String], onlyLocal: Boolean, json: Cli.JsonOutput)
+    case SetCmd(key: String, value: String, onlyLocal: Boolean, nr: Boolean, consent: Boolean, json: Cli.JsonOutput)
+    case Unset(key: String, onlyLocal: Boolean, nr: Boolean, json: Cli.JsonOutput)
+    case Restart(json: Cli.JsonOutput)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = SettingsCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Get(key, prefix, onlyLocal, json) =>
+        val asked = key.orElse(prefix)
+        val askedPrefix = asked.map(Settings.Prefix(_))
+        val page =
+          if onlyLocal then Local.page(askedPrefix) else orLocal(c.settings(askedPrefix), Local.page(askedPrefix))
+        page.flatMap { p =>
+          key match
+            case Some(k) =>
+              p.field(ConfigEdit.Field.Key(k))
+                .toRight(
+                  Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage)
+                )
+                .map { f =>
+                  Output.emit(json, f)(ConfigEditMarkdown.field)
+                }
+            case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
+        }
+      case Command.SetCmd(key, value, onlyLocal, nr, consent, json) =>
+        change(key, Some(value), onlyLocal, !nr, consent, json, c)
+      case Command.Unset(key, onlyLocal, nr, json) =>
+        change(key, None, onlyLocal, !nr, consent = false, json, c)
+      case Command.Restart(json) =>
+        c.restartServer.map(r => Output.emit(json, r)(ConfigEditMarkdown.restart))

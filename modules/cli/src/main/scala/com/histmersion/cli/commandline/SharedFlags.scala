@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 package commandline
 
-import com.histmersion.api.ItemKind
+import com.histmersion.api.{Dataset, ItemKind}
 import com.histmersion.api.exchange.MergeResolutions
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.cli.CommandLine.{given, *}
@@ -54,7 +54,8 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
 
   private def many(name: String, help: String) = values[String](name, s"$help (repeatable, or comma-separated)")
   private def one(name: String, help: String) = value[String](name, help)
-  private def since() = one("since", "Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")
+  private def since() =
+    one("since", "Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")
   private def until() = one("until", "Only those started before the end of: 2026-10-01, or an ISO instant")
 
   /** The filters of `agent approvals`. */
@@ -109,5 +110,36 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
     val to = until()
     val subject =
       one("subject", "Only jobs about something matching this text (citekey, target, detail), or whose id starts so")
-    () =>
-      ListOpts.jobFilter(status.getOrElse(Nil), kind.getOrElse(Nil), from.toOption, to.toOption, subject.toOption)
+    () => ListOpts.jobFilter(status.getOrElse(Nil), kind.getOrElse(Nil), from.toOption, to.toOption, subject.toOption)
+
+  /** `--dataset local|seed` (`periods import`, `places import`): whose the imported rows are; local by default. */
+  protected def datasetFlag(): () => Dataset =
+    given ValueConverter[Dataset] =
+      reading(s => Dataset.parse(Dataset.Wire(s)).toRight(s"--dataset $s: expected local or seed"))
+    given Metavar[Dataset] = Metavar.of("string")
+    val d = value[Dataset](
+      "dataset",
+      "Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)"
+    )
+    () => d.getOrElse(Dataset.Local)
+
+  /** `config get|set|unset --local`. */
+  protected def localFlag(): () => Boolean =
+    val f = flag(
+      "local",
+      "Read or change the settings file on this machine directly, without the server (the default when it does not answer)"
+    )
+    () => f.getOrElse(false)
+
+  /** `config set|unset --no-reload`. */
+  protected def noReloadFlag(): () => Boolean =
+    val f = flag("no-reload", "Change the file only; do not make the server apply it")
+    () => f.getOrElse(false)
+
+  /** `config set --literal-secret`. */
+  protected def literalSecretFlag(): () => Boolean =
+    val f = flag(
+      "literal-secret",
+      "Allow a credential written as value:<the value itself> (anyone who can read the file can read it)"
+    )
+    () => f.getOrElse(false)

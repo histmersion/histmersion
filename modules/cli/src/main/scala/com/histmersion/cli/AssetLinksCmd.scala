@@ -3,8 +3,6 @@ package cli
 
 import com.histmersion.api.media.MediaMarkdown
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.media.AssetRelation
 import com.histmersion.domain.media.Asset
@@ -17,34 +15,33 @@ import com.histmersion.api.media.MediaTarget
 
 object AssetLinksCmd:
 
-  private def search(using console: Console) = Opts.subcommand("search", "Find asset links") {
-    (
-      Opts.option[String]("citekey", "Filter by citekey").orNone,
-      Opts.option[String]("asset", "Filter by asset name").orNone,
-      Opts.option[String]("target-type", s"Target type: ${Asset.LinkTarget.all.mkString("|")}").orNone,
-      Opts.option[String]("target-id", "Filter by target id").orNone
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Search(ck: Option[String], asset: Option[String], tt: Option[String], ti: Option[String])
+    case Add(
+        ck: String,
+        asset: String,
+        rel: String,
+        tt: String,
+        ti: String,
+        xywh: Option[String],
+        notes: Option[String]
     )
-      .mapN { (ck, asset, tt, ti) => (c: Client) =>
+    case Rm(id: Long)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = AssetLinksCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Search(ck, asset, tt, ti) =>
         c.assetLinks(
           ck.map(Citekey(_)),
           asset.map(Bundle.Asset.Variant(_)),
           tt.map(Attestation.TargetType(_)),
           ti.map(Attestation.TargetId(_))
         ).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
-      }
-  }
-
-  private def addCmd(using console: Console) = Opts.subcommand("add", "Create an asset link") {
-    (
-      Opts.option[String]("citekey", "Source citekey"),
-      Opts.option[String]("asset", "Asset file name"),
-      Opts.option[String]("relation", s"Relation: ${AssetRelation.all.mkString("|")}"),
-      Opts.option[String]("target-type", s"Target type: ${Asset.LinkTarget.all.mkString("|")}"),
-      Opts.option[String]("target-id", "Target entity id"),
-      Opts.option[String]("xywh", "Region within the asset (x,y,w,h)").orNone,
-      Opts.option[String]("notes", "Free-text notes").orNone
-    )
-      .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
+      case Command.Add(ck, asset, rel, tt, ti, xywh, notes) =>
         c.createAssetLink(
           AssetLink.Put(
             Citekey(ck),
@@ -56,16 +53,5 @@ object AssetLinksCmd:
             notes.map(AssetLink.Notes(_))
           )
         ).map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
-      }
-  }
-
-  private def rmCmd(using console: Console) = Opts.subcommand("rm", "Delete an asset link by id") {
-    Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
-    }
-  }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("asset-links", "Semantic links between assets and entities: search, add, rm") {
-      search orElse addCmd orElse rmCmd
-    }
+      case Command.Rm(id) =>
+        c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))

@@ -13,7 +13,8 @@ object DeleteArgs extends CommandLine.Entry:
 
   def conf(): Subcommand = new Leaf("histmersion", name, help):
     private val citekey = arg[String]("citekey")
-    private val apply = flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)")
+    private val apply =
+      flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)")
     private val asJson = json()
 
     def command: Either[Problem, Cli.Command] =

@@ -745,10 +745,10 @@ object Cli:
             orElse backup orElse backups orElse restore orElse maintenanceCmd orElse migrated("bundle") orElse migrated(
               "merge"
             ) orElse migrated("article") orElse PlacesCmd.command
-            orElse PeriodsCmd.command orElse PeriodsCmd.init
-            orElse EventsCmd.command orElse AttestationsCmd.command orElse CandidatesCmd.command
-            orElse GoalsCmd.command orElse AgentStateCmd.command orElse AgentCmd.command
-            orElse MediaCmd.command orElse AssetLinksCmd.command
+            orElse migrated("periods") orElse migrated("init")
+            orElse EventsCmd.command orElse migrated("attestations") orElse migrated("candidates")
+            orElse GoalsCmd.command orElse migrated("agent-state") orElse AgentCmd.command
+            orElse MediaCmd.command orElse migrated("asset-links")
             // stream 2.8 — lint · queue · read-only query
             orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
             // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
@@ -757,9 +757,9 @@ object Cli:
             // which owns the name and dispatches file-vs-DOI)
             orElse IngestCmd.all orElse migrated("activity")
             orElse migrated("bookmarks") orElse migrated("notes")
-            orElse ConfigCmd.command
+            orElse migrated("config")
             // the terrain base map's extracts on the server's machine
-            orElse BasemapCmd.command
+            orElse migrated("basemap")
             // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
             orElse PluginCmd.command
         ).tupled

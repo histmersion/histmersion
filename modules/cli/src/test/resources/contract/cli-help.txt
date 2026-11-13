@@ -2190,7 +2190,7 @@ Subcommands:
         Set an agent state key (value as JSON)
 
 ==== histmersion agent-state list
-Usage: histmersion agent-state list 
+Usage: histmersion agent-state list
 
 List all agent state keys
 
@@ -3973,7 +3973,7 @@ Subcommands:
         Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)
 
 ==== histmersion config path
-Usage: histmersion config path 
+Usage: histmersion config path
 
 Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about
 
