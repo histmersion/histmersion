@@ -413,11 +413,11 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(f))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_cov2001_egypt") -> Problem.Unclassified(Legacy.Text("about Egypt"))))
+        .setTo(Map(Citekey("zz_cov2001_egypt") -> Coverage.Rationale("about Egypt")))
     )
     val a = ArticleFixtures.load(ds, slug).get
     assertEquals(
-      (a.filter, a.reasons.view.mapValues(_.sentence).toMap),
+      (a.filter, a.reasons.view.mapValues(w => s"$w").toMap),
       (Some(f), Map("zz_cov2001_egypt" -> "about Egypt"))
     )
     val _ = ArticleFixtures.patch(
@@ -425,13 +425,13 @@ class ArticleRepoSuite extends DbSuite:
       slug,
       Article.Patch(reasons =
         List(
-          Coverage.Reason(Citekey("zz_cov2002_hatti"), Problem.Unclassified(Legacy.Text("about Hatti"))),
-          Coverage.Reason(Citekey("zz_cov2001_egypt"), Problem.Unclassified(Legacy.Text("")))
+          Coverage.Reason(Citekey("zz_cov2002_hatti"), Coverage.Rationale("about Hatti")),
+          Coverage.Reason(Citekey("zz_cov2001_egypt"), Coverage.Rationale(""))
         )
       )
     )
     assertEquals(
-      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(_.sentence).toMap,
+      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(w => s"$w").toMap,
       Map("zz_cov2002_hatti" -> "about Hatti")
     )
     assertEquals(ArticleFixtures.load(ds, slug).get.filter, Some(f), "a patch that does not name the filter keeps it")
@@ -442,7 +442,7 @@ class ArticleRepoSuite extends DbSuite:
     assertEquals(
       ArticleFixtures
         .load(ds, Slug("zz_article_other"))
-        .map(x => (x.filter, x.reasons.view.mapValues(_.sentence).toMap)),
+        .map(x => (x.filter, x.reasons.view.mapValues(w => s"$w").toMap)),
       Some((None, Map.empty[String, String]))
     )
 
@@ -460,7 +460,7 @@ class ArticleRepoSuite extends DbSuite:
         .modify(_.filter)
         .setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x")))))
         .modify(_.reasons)
-        .setTo(Map(Citekey("zz_covren2001_old") -> Problem.Unclassified(Legacy.Text("about Egypt"))))
+        .setTo(Map(Citekey("zz_covren2001_old") -> Coverage.Rationale("about Egypt")))
     )
     assert(
       SourceFixtures
@@ -472,7 +472,7 @@ class ArticleRepoSuite extends DbSuite:
         .isRight
     )
     assertEquals(
-      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(_.sentence).toMap,
+      ArticleFixtures.load(ds, slug).get.reasons.view.mapValues(w => s"$w").toMap,
       Map("zz_covren2001_new" -> "about Egypt")
     )
     wipe()

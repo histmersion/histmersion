@@ -390,7 +390,7 @@ final class CompileArticlePipeline(
           val stale =
             s.reasons
               .filter(r => d.cited.contains(r.citekey))
-              .map(_.modify(_.reason).setTo(Problem.Unclassified(Legacy.Text(""))))
+              .map(_.modify(_.reason).setTo(Coverage.Rationale("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),

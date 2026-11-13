@@ -854,8 +854,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     Set(com.histmersion.api.library.Citekey("knapp2016_tin")),
     List(ApiCitekey("knapp2016_tin")),
     Map(
-      com.histmersion.api.library.Citekey("egypt2001_old") -> Problem.Unclassified(Legacy.Text("about Egypt")),
-      com.histmersion.api.library.Citekey("knapp2016_tin") -> Problem.Unclassified(Legacy.Text("stale"))
+      com.histmersion.api.library.Citekey("egypt2001_old") -> Coverage.Rationale("about Egypt"),
+      com.histmersion.api.library.Citekey("knapp2016_tin") -> Coverage.Rationale("stale")
     ),
     Nil,
     Nil
@@ -955,9 +955,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("[[iso2024_new]]"),
-          Problem.Unclassified(Legacy.Text("Its isotopes date a later trade."))
+          Coverage.Rationale("Its isotopes date a later trade.")
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text("")))
+        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Coverage.Rationale(""))
       )
     )
     val (f, ws) = fixCov(ok).fold(ps => fail(ps.mkString("; ")), identity)
@@ -966,9 +966,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("iso2024_new"),
-          Problem.Unclassified(Legacy.Text("Its isotopes date a later trade."))
+          Coverage.Rationale("Its isotopes date a later trade.")
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text("")))
+        Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Coverage.Rationale(""))
       )
     )
     assertEquals((f.body, ws), (Generated, Nil))
@@ -982,11 +982,11 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("knapp2016_tin"),
-          Problem.Unclassified(Legacy.Text("not needed"))
+          Coverage.Rationale("not needed")
         ),
         Coverage
-          .Reason(com.histmersion.api.library.Citekey("zz1999_gone"), Problem.Unclassified(Legacy.Text("never read"))),
-        Coverage.Reason(com.histmersion.api.library.Citekey("egypt2001_old"), Problem.Unclassified(Legacy.Text("")))
+          .Reason(com.histmersion.api.library.Citekey("zz1999_gone"), Coverage.Rationale("never read")),
+        Coverage.Reason(com.histmersion.api.library.Citekey("egypt2001_old"), Coverage.Rationale(""))
       )
     )
     val ps = fixCov(bad).left.toOption.get
@@ -1014,7 +1014,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
-      List(Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Problem.Unclassified(Legacy.Text(""))))
+      List(Coverage.Reason(com.histmersion.api.library.Citekey("knapp2016_tin"), Coverage.Rationale("")))
     )
     assert(fixCov(cite).isRight, fixCov(cite))
     // an article without a filter takes no reasons

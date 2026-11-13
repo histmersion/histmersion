@@ -432,29 +432,27 @@ object CompileArticle:
             )
           )
           .modify(_.reason)
-          .setTo(Problem.Unclassified(Legacy.Text(Option(r.reason).map(_.sentence.trim).getOrElse(""))))
+          .setTo(Coverage.Rationale(s"${Option(r.reason).map(w => s"$w".trim).getOrElse("")}"))
       )
     val reasonProblems = stated.flatMap { r =>
       if !inFilterKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
       else if citesAllKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
-      else if r.reason.sentence.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
+      else if s"${r.reason}".isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
       else Coverage.Reason.merge(Map.empty, List(r)).left.toOption
     }
     val writerReasons = stated
-      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.sentence.nonEmpty)
+      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && s"${r.reason}".nonEmpty)
       .map(r =>
-        r.citekey -> Problem.Unclassified(
-          Legacy.Text(r.reason.sentence.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
-        )
+        r.citekey -> Coverage.Rationale(s"${s"${r.reason}".replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)}")
       )
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
       (evidence.notUsed
         .filterNot(n => citesAll(n.citekey))
-        .map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> n.reason)
+        .map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> Coverage.Rationale(s"${n.reason.sentence}"))
         .toMap ++ writerReasons)
     val unexplained =
       evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(com.histmersion.api.library.Citekey(ck.value)))
@@ -485,7 +483,7 @@ object CompileArticle:
       Left(problems.map((text => Problem.Unclassified(Legacy.Text(text)))))
     else
       val summary = Option(a.summary).map(s => Article.SummaryText(s.value.trim)).filter(_.value.nonEmpty)
-      val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: ${r.sentence}") ++
+      val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: $r") ++
         unexplained.map(ck => s"$ck: claims extracted but neither cited nor given a reason")
       Right(
         (

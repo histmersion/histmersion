@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.research.Coverage
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -229,8 +231,8 @@ class SourceDeleteSuite extends DbSuite:
         Nil,
         None,
         reasons = Map(
-          com.histmersion.api.library.Citekey(Del) -> Problem.Unclassified(Legacy.Text("off topic")),
-          com.histmersion.api.library.Citekey(Other) -> Problem.Unclassified(Legacy.Text("kept"))
+          com.histmersion.api.library.Citekey(Del) -> Coverage.Rationale("off topic"),
+          com.histmersion.api.library.Citekey(Other) -> Coverage.Rationale("kept")
         )
       )
     )
@@ -405,7 +407,7 @@ class SourceDeleteSuite extends DbSuite:
     assertEquals(
       ArticleFixtures
         .load(ds, com.histmersion.domain.research.Slug("zzdel_article"))
-        .map(_.reasons.view.mapValues(_.sentence).toMap),
+        .map(_.reasons.view.mapValues(w => s"$w").toMap),
       Some(Map(Other -> "kept"))
     )
     // the queue item that mentions it is left as it is

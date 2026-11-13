@@ -133,7 +133,7 @@ object ArticlePatches:
             Right(
               Coverage.Reason(
                 Citekey(r.value.take(i).trim),
-                Problem.Unclassified(Legacy.Text(r.value.drop(i + 1).trim))
+                Coverage.Rationale(s"${r.value.drop(i + 1).trim}")
               )
             )
           case _ =>

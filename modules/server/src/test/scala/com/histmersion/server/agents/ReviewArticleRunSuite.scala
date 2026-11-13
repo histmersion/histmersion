@@ -854,7 +854,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(!after.article.body.value.contains("## Not used"), after.article.body)
     assertEquals(after.coverage.map(_.drift), Some(Nil))
     assertEquals(
-      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey.value: String, e.reason.map(_.sentence))),
+      after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey.value: String, e.reason.map(w => s"$w"))),
       List((Ck2, Some("Its isotopes speak to the cargo's origin, not its route.")))
     )
     val fixStep = steps

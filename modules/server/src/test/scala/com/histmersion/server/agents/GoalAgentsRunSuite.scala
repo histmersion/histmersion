@@ -604,7 +604,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, onlyCk.trim)
     val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.sentence), identity)
     assertEquals(
-      cov.notUsed.map(e => (e.source.citekey.value: String, e.reason.map(_.sentence))),
+      cov.notUsed.map(e => (e.source.citekey.value: String, e.reason.map(w => s"$w"))),
       List((Ck2, Some("Its isotope study dates a later trade.")))
     )
     assertEquals(cov.drift, Nil)

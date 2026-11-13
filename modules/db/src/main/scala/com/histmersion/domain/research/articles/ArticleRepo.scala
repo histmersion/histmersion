@@ -25,7 +25,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.{EventArticleRef, Period}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.SourceColumns.given
-import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource}
+import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource, Coverage}
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
@@ -93,17 +93,17 @@ private[articles] object ArticleRepo:
     a.filter.map(_.asJson.withoutNulls.noSpaces)
   private def reasonsJson(a: Article): String =
     Json
-      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> Json.fromString(v.sentence))*)
+      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> Json.fromString(s"$v"))*)
       .noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
     json.flatMap(j => Jsonb.read[Article.Filter](Jsonb.JsonText(j)))
-  private[articles] def reasonsOf(json: String): Map[Citekey, Problem] =
+  private[articles] def reasonsOf(json: String): Map[Citekey, Coverage.Rationale] =
     Jsonb
       .read[Map[String, String]](Jsonb.JsonText(json))
       .getOrElse(Map.empty)
-      .map((ck, reason) => Citekey(ck) -> Problem.Unclassified(Legacy.Text(reason)))
+      .map((ck, reason) => Citekey(ck) -> Coverage.Rationale(s"$reason"))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
