@@ -1,9 +1,10 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.Period
 
-import io.circe.ACursor
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -22,14 +23,14 @@ private[domain] object JsonRead:
   type Unencoded = Unencoded.T
   object Unencoded extends Newtype[String, Pure]
 
-  def str(c: ACursor, k: Key): Option[Text] =
+  def str(c: Cursor, k: Key): Option[Text] =
     c.downField(k.value)
       .focus
       .flatMap(j => j.asString.orElse(j.asNumber.map(_.toString)))
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Text(_))
-  def strs(c: ACursor, k: Key): List[Text] =
+  def strs(c: Cursor, k: Key): List[Text] =
     c.downField(k.value)
       .focus
       .toList
@@ -37,12 +38,12 @@ private[domain] object JsonRead:
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Text(_))
-  def long(c: ACursor, k: Key): Option[Number] =
+  def long(c: Cursor, k: Key): Option[Number] =
     c.downField(k.value)
       .focus
       .flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
       .map(Number(_))
-  def bool(c: ACursor, k: Key): Option[Boolean] =
+  def bool(c: Cursor, k: Key): Option[Boolean] =
     c.downField(k.value).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
   def enc(s: Unencoded): Encoded = Encoded(URLEncoder.encode(s.value, UTF_8))
   def range(a: Option[DeepTime.SignedYear], b: Option[DeepTime.SignedYear]): Option[Period] =

@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What every approval's list shows of a proposal about a record of a domain (a source's status or edge, the library's
@@ -10,14 +12,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class ProposalEvidence(
     evidence: Option[ProposalEvidence.Evidence] = None,
     quote: Option[ProposalEvidence.Quote] = None
-) derives KindlingsCodecAsObject
+) derives JsonCodec
 
 object ProposalEvidence:
   type Evidence = Evidence.T
   object Evidence extends Newtype[String, Pure]:
-    given io.circe.Encoder[Evidence] = io.circe.Encoder.encodeString.contramap(_.value)
-    given io.circe.Decoder[Evidence] = io.circe.Decoder.decodeString.map(Evidence(_))
+    given JsonValueCodec[Evidence] = JsonCodec.mapped[Evidence, String](_.value, b => Right(Evidence(b)))
   type Quote = Quote.T
   object Quote extends Newtype[String, Pure]:
-    given io.circe.Encoder[Quote] = io.circe.Encoder.encodeString.contramap(_.value)
-    given io.circe.Decoder[Quote] = io.circe.Decoder.decodeString.map(Quote(_))
+    given JsonValueCodec[Quote] = JsonCodec.mapped[Quote, String](_.value, b => Right(Quote(b)))

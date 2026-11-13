@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -22,8 +25,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import hearth.kindlings.optics.syntax.*
-import io.circe.Json
-import io.circe.syntax.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{
   Acquire,

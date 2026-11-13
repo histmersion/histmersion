@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -118,7 +122,7 @@ class OpsHttpSuite extends DbSuite:
       assertEquals(es, 200)
       assert(eb.startsWith("# "), eb.take(80))
       val (is, ib) =
-        post(s"$url/api/queue/acquire/import", io.circe.Json.obj("text" -> io.circe.Json.fromString(eb)).noSpaces)
+        post(s"$url/api/queue/acquire/import", Json.obj("text" -> Json.fromString(eb)).noSpaces)
       assertEquals(is, 200, ib)
       assertEquals(get(s"$url/api/queue/acquire/export")._2, eb, "export → import → export is stable")
 
@@ -216,8 +220,7 @@ class OpsHttpSuite extends DbSuite:
         assertEquals(post(s"$url/api/goals/zzgoals-sub/links", """{"kind":"query","ref":"zz drought"}""")._1, 200)
 
         // the web UI's links both ways: an item names the goals that link it; a goal's link names the item's list
-        val listing = io.circe.parser
-          .decode[QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
+        val listing = RawJson.decode[QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
           .fold(e => fail(e.toString), identity)
         assertEquals(listing.goals.find(_.item == gone).map(_.goals.map(_.slug)), Some(List("zzgoals-sub")))
         assertEquals(listing.goals.find(_.item == ok).flatMap(_.goals.headOption).map(_.title), Some("ZZ sub goal"))
@@ -263,11 +266,10 @@ class OpsHttpSuite extends DbSuite:
       val (s, body) = send(req)
       b.stop()
       assertEquals(s, 200, body)
-      val tools = io.circe.parser
-        .parse(body.dropWhile(_ != '{'))
+      val tools = RawJson.parse(body.dropWhile(_ != '{'))
         .toOption
-        .flatMap(_.hcursor.downField("result").downField("tools").values)
-        .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toList)
+        .flatMap(_.cursor.downField("result").downField("tools").values)
+        .map(_.flatMap(_.cursor.downField("name").as[String].toOption).toList)
         .getOrElse(Nil)
       assert(tools.size > 40, tools.toString)
       // every {{tool:x}} placeholder in the canonical agents and skills names a tool /mcp really has
@@ -323,11 +325,11 @@ class OpsHttpSuite extends DbSuite:
           json(s"$url/api/articles/zzhttp_check")
             .PUT(
               HttpRequest.BodyPublishers.ofString(
-                io.circe.Json
+                Json
                   .obj(
-                    "title" -> io.circe.Json.fromString("Zz check"),
-                    "kind" -> io.circe.Json.fromString("index"),
-                    "body" -> io.circe.Json.fromString(body)
+                    "title" -> Json.fromString("Zz check"),
+                    "kind" -> Json.fromString("index"),
+                    "body" -> Json.fromString(body)
                   )
                   .noSpaces
               )
@@ -339,7 +341,7 @@ class OpsHttpSuite extends DbSuite:
           """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
         val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
         assertEquals(s, 200, r)
-        val check = io.circe.parser.decode[Article.Edits.ArticleCheck](r).toOption.get
+        val check = RawJson.decode[Article.Edits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
           check.problems.exists(_.sentence.contains("zzhttp_ghost")) && check.problems.exists(

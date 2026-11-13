@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -18,8 +21,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.util.ocr.ConverterClient
-import io.circe.Json
-import io.circe.syntax.*
 
 import java.nio.file.Path
 import com.histmersion.db.*

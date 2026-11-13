@@ -24,7 +24,7 @@ api   ── the CONTRACT on the wire (JVM + JS): wire records in `api.<domain>`
          media, research, personal) and `api.<area>` (aliases, backup, basemap, checks, exchange, instance,
          jobs, json, maintenance, ocr, plugins, settings, text, ui, views), an entity's parts on its companion
          (`Source.Patch`, `Article.View`); what every layer shares at the root (`Api`, `Markdown`, `Wording`,
-         `Write`, the vocabulary codecs). Tapir endpoint defs, circe codecs + schemas, Markdown.
+         `Write`, the vocabulary codecs). Tapir endpoint defs, JSON codecs + schemas, Markdown.
          NO database code, NO side effects, NO refined constraint (the server validates).   depends on values ONLY
 config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
 files ── the local files client and server exchange or keep: the `.hmx` bundle's tar and canonical JSON and
@@ -54,7 +54,7 @@ upstreams ── the clients and parsers of the upstream services the host and f
               datings), one package per service (`upstreams.openalex`, `.archiveorg`, `.core`, `.pmc`,
               `.europepmc`, `.wikidata`, `.jats`, `.landing`, `.dating`, `.media`, `.unpaywall`) and the shared
               mechanisms (`.parse`, `.http`, `.identifiers`, `.settings`); the host's own records of them in
-              `domain.library.acquisition`; registers nothing.   depends on plugin-api ONLY (+ circe, sttp core)
+              `domain.library.acquisition`; registers nothing.   depends on plugin-api ONLY (+ sttp core)
 plugins/fetchers ─ the first-party acquisition plugins (archive-org, oa-unpaywall, oa-core, oa-openalex,
               oa-landing, pmc, arxiv).                           upstreams (+ plugin-testkit for tests)
 plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, events-wikidata).
@@ -65,9 +65,9 @@ plugins/media ─ the first-party media collections (media-wikidata, media-depic
 plugins/gazetteers ─ the first-party network gazetteers (gazetteer-cliopatria, gazetteer-awmc,
               gazetteer-chronontology).                          upstreams (+ plugin-testkit for tests)
 plugins/ai-http ─ the first-party HTTP AI providers (ai-anthropic, ai-openai, ai-local) over the SPI's AiHttp.
-                                       plugin-api (+ circe, sttp core; plugin-testkit for tests)
+                                       plugin-api (+ sttp core; plugin-testkit for tests)
 plugins/calibre ─ the first-party `calibre` plugin: the local Calibre library as a source collection (calibredb,
-              the sqlite3 fallback, the write-back).        plugin-api + circe (+ plugin-testkit for tests)
+              the sqlite3 fallback, the write-back).        plugin-api (+ plugin-testkit for tests)
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
@@ -143,7 +143,7 @@ Adding an operation to a feature in its own package:
    of the entity's properties (`Approval.Kind`). Its JSON, schema, column, setting and CLI argument
    come from the generic instances (`util.json.NewtypeCodecs`, `util.database.NewtypeColumns`,
    `config.NewtypeReaders`, `cli.NewtypeArguments`); add a round-trip test.
-2. `api.<domain>` — the input and output records, an entity's on the entity's companion (`Source.Patch`), `derives KindlingsCodecAsObject,
+2. `api.<domain>` — the input and output records, an entity's on the entity's companion (`Source.Patch`), `derives JsonCodec,
    KindlingsSchema`; the Tapir endpoint in the feature's endpoints object, added to `Api.all` in its place (route
    matching and `tools/list` depend on the order); how the output renders as Markdown. Every surface returns
    Markdown.
@@ -265,7 +265,7 @@ package com.histmersion.domain                // no codecs, no SQL
 final case class Source(citekey: Citekey, title: Title, period: Period)
 
 package com.histmersion.api                   // the wire shape; reuses domain values
-final case class SourceView(citekey: Citekey, title: Title, start: Year, end: Year) derives KindlingsCodecAsObject
+final case class SourceView(citekey: Citekey, title: Title, start: Year, end: Year) derives JsonCodec
 
 package com.histmersion.db                    // the instances the DB layer needs, in the DB layer
 given DbCodec[Citekey] = DbCodec[String].biMap(Citekey.applyUnsafe, _.value)
@@ -346,7 +346,7 @@ Type-class instances that Kindlings derives are requested in the type's `derives
 separate `given … = …derived` line.
 
 ```scala
-final case class BuildStamp(version: Version, commit: CommitId) derives KindlingsCodecAsObject, KindlingsSchema
+final case class BuildStamp(version: Version, commit: CommitId) derives JsonCodec, KindlingsSchema
 ```
 
 ### 8. Lenses and loops, not copies and reallocating folds
@@ -566,11 +566,15 @@ only to keep one file consistent.
 ## Kindlings: codecs, schemas and config are derived, not written
 
 ```scala
-final case class SearchHit(…) derives KindlingsCodecAsObject, KindlingsSchema
+final case class SearchHit(…) derives JsonCodec, KindlingsSchema
 ```
 
-Circe codec and Tapir schema come from the **same** API case class, so the JSON on the wire and the
-OpenAPI/MCP schema advertised to clients cannot drift. A domain type's instances live in the API or DB
+The jsoniter-scala codec (`util.json.JsonCodec`, two Kindlings derivations: one that reads and one that writes) and the Tapir
+schema come from the **same** API case class, so the JSON on the wire and the OpenAPI/MCP schema advertised to clients
+cannot drift. JSON no record describes is Kindlings' AST (`hearth.kindlings.jsoniterjson.Json`, read and written through
+`util.json.RawJson`, walked with `util.json.Cursor`). circe is gone from our code: the two libraries that still speak it,
+Chimp and sttp-ai, meet our codecs in one adapter each (`util.mcp.ChimpJson`, `domain.automation.agents.SttpAiJson`;
+`ContractsSuite` rule `circe`, `ClasspathSuite`). A domain type's instances live in the API or DB
 module that needs them, never on its companion (*Coding practices* 3); a newtype's instance maps its
 base type's. Config is the same idea:
 `derives ConfigReader` (kindlings-sconfig-derivation) over `reference.conf`.

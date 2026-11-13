@@ -1,9 +1,8 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -35,4 +34,4 @@ object EventPatch:
   type Wikidata = Wikidata.T
   object Wikidata extends Newtype[String, Pure]
 
-  given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])
+  given JsonCodec[EventPatch] = StrictJson.codec(JsonCodec.derived[EventPatch])

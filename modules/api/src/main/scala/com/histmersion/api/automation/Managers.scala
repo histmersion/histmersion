@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -164,7 +164,7 @@ object Managers:
       kind: Article.Kind.Wire,
       filter: Article.Filter,
       why: Problem = Problem.Unclassified(Legacy.Text(""))
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -193,7 +193,7 @@ object Managers:
       dailyUsd: Option[ManagerConfig.DailyUsd] = None,
       autoApprove: Option[ManagerConfig.AutoApprove] = None,
       extendMinNew: Option[ManagerConfig.ExtendMinNew] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -387,7 +387,7 @@ object Managers:
       stopped: ItemCounts.Stopped = ItemCounts.Stopped(0),
       failed: ItemCounts.Failed = ItemCounts.Failed(0),
       cancelled: ItemCounts.Cancelled = ItemCounts.Cancelled(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def open: ItemCounts.Open = ItemCounts.Open((pending).value + (held).value + (active).value)
@@ -452,7 +452,7 @@ object Managers:
       at: ManagerEvent.At = ManagerEvent.At(""),
       kind: ManagerEvent.Kind = ManagerEvent.Kind(""),
       text: ManagerEvent.Text = ManagerEvent.Text("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -488,7 +488,7 @@ object Managers:
       tokensToday: ManagerInfo.TokensToday = ManagerInfo.TokensToday((0).toLong),
       backlog: ManagerInfo.Backlog = ManagerInfo.Backlog(0),
       backlogDays: Option[ManagerInfo.BacklogDays] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -527,7 +527,7 @@ object Managers:
       hint: Option[Hold.Hint] = None,
       untilApproval: Option[Hold.UntilApproval] = None,
       focus: Option[Hold.Focus] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -552,7 +552,7 @@ object Managers:
       churn: RunMark.Churn = RunMark.Churn(false),
       pairsBefore: Option[RunMark.PairsBefore] = None,
       pairsAfter: Option[RunMark.PairsAfter] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -580,7 +580,7 @@ object Managers:
       spec: Option[ArticleSpec] = None,
       filterHits: Option[ItemState.FilterHits] = None,
       oa: Option[OaWork] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -604,7 +604,7 @@ object Managers:
       why: Problem = Problem.Unclassified(Legacy.Text("")),
       foundBy: Option[OaWork.FoundBy] = None,
       acquireText: Option[OaWork.AcquireText] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -633,7 +633,7 @@ object Managers:
       createdAt: ManagerItem.CreatedAt = ManagerItem.CreatedAt(""),
       updatedAt: ManagerItem.UpdatedAt = ManagerItem.UpdatedAt(""),
       run: Option[Agents.RunInfo] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -675,7 +675,7 @@ object Managers:
       untilSource: Option[HintEffect.UntilSource] = None,
       priority: Option[HintEffect.Priority] = None,
       config: Option[ManagerConfig] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object HintEffect:
@@ -711,7 +711,7 @@ object Managers:
       effect: HintEffect,
       by: HintProposal.By = HintProposal.By(""),
       why: Problem = Problem.Unclassified(Legacy.Text(""))
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -736,7 +736,7 @@ object Managers:
       uses: ManagerHint.Uses = ManagerHint.Uses(0),
       proposal: Option[ManagerHint.Proposal] = None,
       proposed: Option[HintEffect] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -765,7 +765,7 @@ object Managers:
       current: List[ManagerItem] = Nil,
       hints: List[ManagerHint] = Nil,
       events: List[ManagerEvent] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -774,7 +774,7 @@ object Managers:
       total: ItemPage.Total,
       offset: ItemPage.Offset,
       limit: ItemPage.Limit
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -787,7 +787,7 @@ object Managers:
     object Limit extends Newtype[Int, Pure]
 
   final case class EventPage(events: List[ManagerEvent], before: Option[EventPage.Before] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -803,7 +803,7 @@ object Managers:
       config: ManagerConfig = ManagerConfig(),
       paused: Option[ManagerCreate.Paused] = None,
       cron: Option[ManagerCreate.Cron] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -815,7 +815,7 @@ object Managers:
     object Cron extends Newtype[String, Pure]
 
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[ManagerUpdate.Cron] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -827,7 +827,7 @@ object Managers:
       kind: EnqueueRequest.Kind,
       target: EnqueueRequest.Target,
       priority: Option[EnqueueRequest.Priority] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -842,7 +842,7 @@ object Managers:
       managerId: ManagerInfo.Id,
       items: List[ManagerItem] = Nil,
       skipped: List[EnqueueResult.Skipped] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -856,7 +856,7 @@ object Managers:
       until: Option[ItemPatch.Until] = None,
       untilSource: Option[ItemPatch.UntilSource] = None,
       reason: Option[Problem] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object ItemPatch:
@@ -880,7 +880,7 @@ object Managers:
       author: Option[HintAdd.Author] = None,
       propose: Option[HintAdd.Propose] = None,
       suggest: Option[HintAdd.Suggest] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import io.scalaland.chimney.dsl.*
@@ -889,7 +891,6 @@ private[places] object PlaceRepo:
           wdClass.map(CatalogRecord.Wikidata.Class(_)),
           SiteTypes.p31Of(p31.map(CatalogRecord.Wikidata.P31Json(_)))
         )
-        import io.circe.Json
         val propsObj = Json
           .obj(
             "id" -> Json.fromString(id),

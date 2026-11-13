@@ -1,6 +1,7 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -9,14 +10,13 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.catalogue.{EventEdge, EventParticipant}
 import com.histmersion.api.research.Article
-import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class DeleteBlocker(
     kind: DeleteBlocker.Kind,
     id: DeleteBlocker.Id,
     title: Option[DeleteBlocker.Title] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object DeleteBlocker:
@@ -43,6 +43,5 @@ object DeleteBlocker:
       def all: Array[Kind] = values
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
-    given Encoder[Kind] = WireEnum.encoder
-    given Decoder[Kind] = WireEnum.decoder
+    given JsonValueCodec[Kind] = WireEnum.codec
     given Schema[Kind] = WireEnum.schema

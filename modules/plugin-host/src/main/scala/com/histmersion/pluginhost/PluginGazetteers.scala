@@ -1,5 +1,8 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -165,7 +168,7 @@ object PluginGazetteers:
     text match
       case None    => Right(None)
       case Some(t) =>
-        io.circe.parser.parse(t) match
+        RawJson.parse(t) match
           case Right(j) if j.isObject => Right(Some(t))
           case _ => Left(Problem.Unclassified(Legacy.Text(s"its ${what.value} is not a JSON object")))
 

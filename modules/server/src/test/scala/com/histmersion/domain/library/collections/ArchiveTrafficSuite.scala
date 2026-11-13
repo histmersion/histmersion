@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.collections
+import com.histmersion.util.json.RawJson.*
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -18,7 +20,6 @@ import com.histmersion.domain.library.ArchiveId
 import com.histmersion.domain.library.search.Search
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -153,7 +154,7 @@ class ArchiveTrafficSuite extends DbSuite:
       wire.out.clear()
       val a = answer
       sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
-    def show[A: io.circe.Encoder](r: Either[Api.Error, A]): String =
+    def show[A: JsonValueCodec](r: Either[Api.Error, A]): String =
       r.fold(e => s"refused: ${e.message.sentence}", _.asJson.spaces2)
     step("archive search bronze")(show(surface.search(Search.Query("bronze"), None)))
     step("archive search bronze --rows 2")(

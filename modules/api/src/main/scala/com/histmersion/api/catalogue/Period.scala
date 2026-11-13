@@ -5,9 +5,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.StrictJson
 import com.histmersion.api.WireEnum
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -28,7 +27,7 @@ object Period:
       period: HistoricalPeriod,
       parent: Option[HistoricalPeriod] = None,
       children: List[HistoricalPeriod] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -39,7 +38,7 @@ object Period:
       skipped: List[SkippedPeriod] = Nil,
       skippedCount: ImportResult.SkippedCount = ImportResult.SkippedCount(0),
       removed: ImportResult.Removed = ImportResult.Removed(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -58,7 +57,7 @@ object Period:
   final case class Input(start: Year, end: Year) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
 
-    given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
+    given JsonCodec[Input] = StrictJson.codec(JsonCodec.derived[Input])
 
   final case class Row(periodStart: Option[Year], periodEnd: Option[Year])
 
@@ -86,6 +85,5 @@ object Period:
       def wire(e: Skip): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
       def fromWire(s: WireEnumValues.Wire): Option[Skip] = values.find(wire(_) == s)
 
-    given io.circe.Encoder[Skip] = WireEnum.encoder
-    given io.circe.Decoder[Skip] = WireEnum.decoder
+    given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[Skip] = WireEnum.codec
     given Schema[Skip] = WireEnum.schema

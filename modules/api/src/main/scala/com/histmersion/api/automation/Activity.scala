@@ -3,7 +3,7 @@ package api.automation
 
 import com.histmersion.util.problem.Problem
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -87,7 +87,7 @@ object Activity:
       approval: Option[Entry.Approval] = None,
       target: Option[Entry.Target] = None,
       targetKind: Option[Entry.TargetKind] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def entryKind: Option[EntryKind] = EntryKind.parse(kind)
@@ -123,7 +123,7 @@ object Activity:
   final case class Counts(
       running: Counts.Running = Counts.Running(0),
       problemsWeek: Counts.ProblemsWeek = Counts.ProblemsWeek(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -136,7 +136,7 @@ object Activity:
     object ProblemsWeek extends Newtype[Int, Pure]
 
   final case class Page(entries: List[Entry], next: Option[Page.Next] = None, counts: Counts = Counts())
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

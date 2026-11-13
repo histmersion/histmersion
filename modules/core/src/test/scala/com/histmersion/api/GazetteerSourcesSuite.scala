@@ -1,5 +1,6 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -11,7 +12,6 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import io.circe.parser.parse
 import com.histmersion.api.catalogue.{
   GazDescription,
   Gazetteer,
@@ -32,7 +32,7 @@ import com.histmersion.api.catalogue.Year
   */
 class GazetteerSourcesSuite extends munit.FunSuite:
 
-  private def json(s: String) = parse(s).fold(e => fail(e.getMessage), identity)
+  private def json(s: String) = RawJson.parse(s).fold(e => fail(e), identity)
 
   test("ExternalId: prefixed ids and authority URIs, normalised; anything else is no identity"):
     assertEquals(
@@ -276,8 +276,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
     assert(Gazetteer.PointAreaSources.contains("tgn"))
     val r = Gazetteer.fromFeature(
-      io.circe.parser
-        .parse(
+      RawJson.parse(
           """{"@id":"http://vocab.getty.edu/tgn/7001393","type":"Feature","properties":{"title":"Roma","kind":"site"},
         |"geometry":{"type":"Point","coordinates":[12.483,41.883]}}""".stripMargin
         )

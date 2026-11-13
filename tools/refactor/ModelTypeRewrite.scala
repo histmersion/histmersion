@@ -3,6 +3,11 @@ import scala.meta._
 import metaconfig.{ConfDecoder, Configured, generic}
 
 object ModelTypeRewrite {
+  case class TypeSite(owner: String, target: String, path: List[Int], constructors: List[String], factory: String = "")
+  object TypeSite {
+    implicit val surface: generic.Surface[TypeSite] = generic.deriveSurface[TypeSite]
+    implicit val decoder: ConfDecoder[TypeSite] = generic.deriveDecoder(TypeSite("","",Nil,Nil)).noTypos
+  }
   case class Record(owner: String, parameters: List[String], fields: Map[String,String], optionalFields: List[String] = Nil, listFields: List[String] = Nil, setFields: List[String] = Nil, nestedFields: Map[String,List[String]] = Map.empty, callbackFields: List[String] = Nil)
   object Record {
     implicit val surface: generic.Surface[Record] = generic.deriveSurface[Record]
@@ -15,7 +20,7 @@ object ModelTypeRewrite {
     listResults: List[String] = Nil, listKnownValues: List[String] = Nil,
     containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty,
     widenNumericBoundaries: Boolean = false, setResults: List[String] = Nil, setKnownValues: List[String] = Nil,
-    widenStringTypes: List[String] = Nil, optionalNormalizers: List[String] = Nil)
+    widenStringTypes: List[String] = Nil, optionalNormalizers: List[String] = Nil, typeSites: List[TypeSite] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -51,6 +56,9 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     require(p.scalarBoundaryCalls.values.forall(_.forall(_ >= 0)))
     require(p.containerBoundaryCalls.values.forall(_.forall(_ >= 0)))
     require(p.widenStringTypes.forall(t => p.primitiveTypes.get(t).contains("java/lang/String#")), "String extraction requires a reviewed String base")
+    require(p.typeSites.map(s => (s.owner,s.path,s.factory)).distinct.size == p.typeSites.size)
+    p.typeSites.foreach(s => require(s.owner.nonEmpty && p.primitiveTypes.contains(s.target) && s.path.forall(_ >= 0) &&
+      s.constructors.size == s.path.size && (s.factory.isEmpty || s.path.nonEmpty), "Invalid reviewed type site"))
     Configured.ok(new ModelTypeRewrite(p))
   }
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -136,6 +144,33 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       case a: Term.Apply => resultSymbol(a.fun)
       case a: Term.ApplyType => resultSymbol(a.fun)
       case _ => t.symbol.value
+    }
+    def atPath(t: Type, path: List[Int], constructors: List[String]): Type = path match {
+      case Nil => t
+      case index :: rest => t match {
+        case a: Type.Apply if a.tpe.symbol.value == constructors.head && a.argClause.values.isDefinedAt(index) =>
+          atPath(a.argClause.values(index),rest,constructors.tail)
+        case _ => sys.error("Reviewed type path changed: " + t.structure)
+      }
+    }
+    def typeSitePatches(names: List[Pat], declared: Option[Type], rhs: Option[Term]): Patch = {
+      val selected = policy.typeSites.filter(s => names.exists {
+        case Pat.Var(n) => n.symbol.value == s.owner
+        case _ => false
+      })
+      selected.map { s =>
+        require(names.size == 1,"Reviewed type site requires a single binding")
+        if(s.factory.isEmpty) change(atPath(declared.getOrElse(sys.error("Missing reviewed binding type")),s.path,s.constructors),s.target,"")
+        else rhs match {
+          case Some(a: Term.ApplyType) if resultSymbol(a.fun) == s.factory && s.constructors.head == s.factory && a.targClause.values.isDefinedAt(s.path.head) =>
+            change(atPath(a.targClause.values(s.path.head),s.path.tail,s.constructors.tail),s.target,"")
+          case _ => sys.error("Reviewed binding factory changed: " + s.owner)
+        }
+      }.asPatch
+    }
+    val bindingTypes = doc.tree.collect {
+      case d: Defn.Val => typeSitePatches(d.pats,d.decltpe,Some(d.rhs))
+      case d: Defn.Var => typeSitePatches(d.pats,d.decltpe,d.rhs)
     }
     val wrappedScalars = scala.collection.mutable.Set.empty[(Int,Int)]
     def wrap(t: Term, replacement: String, shape: String): Patch = {
@@ -240,6 +275,6 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         case _ => Patch.empty
       }
     }
-    ((declarations ++ calls ++ boundaries ++ normalization).asPatch + codec).atomic
+    ((bindingTypes ++ declarations ++ calls ++ boundaries ++ normalization).asPatch + codec).atomic
   }
 }

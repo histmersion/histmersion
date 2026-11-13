@@ -1,9 +1,10 @@
 package com.histmersion
 package api.personal
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.api.Api
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import com.histmersion.api.ItemKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Activity

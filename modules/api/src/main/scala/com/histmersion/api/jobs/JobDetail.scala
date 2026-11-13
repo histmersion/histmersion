@@ -1,12 +1,13 @@
 package com.histmersion
 package api.jobs
-import io.circe.{Codec, Decoder, DecodingFailure, HCursor, Json, JsonObject}
-import sttp.tapir.Schema
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import sttp.tapir.SchemaType.SProduct
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.circe.{Decoder, Encoder, Json}
+import com.histmersion.util.json.RawJson.*
 import sttp.tapir.SchemaType.SProductField
 import sttp.tapir.{FieldName, Schema}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -35,18 +36,18 @@ object JobDetail:
 
   private def fields: List[Field[?]] = RegisteredJobKinds.all.details
 
-  given Codec.AsObject[JobDetail] = new Codec.AsObject[JobDetail]:
-    def encodeObject(d: JobDetail): JsonObject =
-      JsonObject.fromIterable(fields.map(f => f.name.value -> d.values.getOrElse(f.name, f.defaultJson)))
-    def apply(c: HCursor): Decoder.Result[JobDetail] =
-      if !c.value.isObject then Left(DecodingFailure("JobDetail", c.history))
-      else
+  given JsonValueCodec[JobDetail] = JsonCodec.mapped[JobDetail, Json](
+    d => Json.Obj(JsonObject.fromIterable(fields.map(f => f.name.value -> d.values.getOrElse(f.name, f.defaultJson)))),
+    json =>
+      json.asObject.toRight("JobDetail").flatMap { o =>
         val read = fields.map(f =>
-          c.downField(f.name.value).focus.filterNot(_.isNull).fold(Right(None))(j => f.canonical(j)).map(f.name -> _)
+          o(f.name.value).filterNot(_.isNull).fold(Right(None))(j => f.canonical(j)).map(f.name -> _)
         )
         read
           .collectFirst { case Left(e) => e }
           .toLeft(JobDetail(read.collect { case Right((n, Some(j))) => n -> j }.toMap))
+      }
+  )
 
   given Schema[JobDetail] =
     Schema(SProduct(fields.map(_.schemaField)), Some(Schema.SName("com.histmersion.api.jobs.JobDetail")))
@@ -61,23 +62,22 @@ object JobDetail:
   private given CanEqual[Json, Json] = CanEqual.derived
 
   final class Field[A](val name: Field.Name, val default: A)(using
-      encoder: Encoder[A],
-      decoder: Decoder[A],
+      codec: JsonValueCodec[A],
       schema: Schema[A]
   ):
-    private[histmersion] lazy val defaultJson: Json = encoder(default)
+    private[histmersion] lazy val defaultJson: Json = default.asJson
 
     /** The field's value in `d`: what the job recorded, else the default. */
-    def of(d: JobDetail): A = d.json(name).flatMap(decoder.decodeJson(_).toOption).getOrElse(default)
+    def of(d: JobDetail): A = d.json(name).flatMap(_.as[A].toOption).getOrElse(default)
 
     /** A detail holding this field alone. */
     def apply(a: A): JobDetail = empty.set(this, a)
 
     /** `a` as the detail keeps it: `None` for the default, which a detail does not hold. */
-    private[histmersion] def jsonOf(a: A): Option[Json] = Option(encoder(a)).filterNot(_ == defaultJson)
+    private[histmersion] def jsonOf(a: A): Option[Json] = Option(a.asJson).filterNot(_ == defaultJson)
 
     /** The value `json` holds, read and written again in this field's terms — or why it is not one. */
-    private[histmersion] def canonical(json: Json): Decoder.Result[Option[Json]] = decoder.decodeJson(json).map(jsonOf)
+    private[histmersion] def canonical(json: Json): Either[String, Option[Json]] = json.as[A].map(jsonOf)
 
     /** The field in the detail's schema: optional, as a field with a default is. */
     private[histmersion] def schemaField: SProductField[JobDetail] =

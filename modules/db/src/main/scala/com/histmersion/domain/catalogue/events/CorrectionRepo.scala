@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
-import io.circe.Json
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.NewtypeColumns.given

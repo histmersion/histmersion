@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -67,7 +70,7 @@ class StepFailureSuite extends munit.FunSuite:
     val raw = """{"notes": 5}"""
     val f =
       LibraryAnswers.notes.codec
-        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+        .decodeJson(RawJson.parse(raw).toOption.get)
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
@@ -80,7 +83,7 @@ class StepFailureSuite extends munit.FunSuite:
     val raw = """{"findings":[{"claim":"x"}]}"""
     val f =
       LibraryAnswers.findings.codec
-        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+        .decodeJson(RawJson.parse(raw).toOption.get)
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
@@ -103,7 +106,7 @@ class StepFailureSuite extends munit.FunSuite:
     // sttp-ai's HTTP loop: out of turns after an undecodable answer, the last decoder error is the cause
     val df = io.circe.DecodingFailure(
       "Got value '5' with wrong type, expecting string",
-      List(io.circe.CursorOp.DownField("notes"))
+      List(CursorOp.DownField("notes"))
     )
     val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
     val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
@@ -139,7 +142,7 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
-      io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
+      Json.fromString(text).noSpaces + ""","usage":{}}"""
     val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))
     val f = r.finalAnswer.swap.toOption.get
     val p = Engine.answerProblem(f, r.finishReason)

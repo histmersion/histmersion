@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -7,8 +9,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.api.library.{CalibreEntryCheck, Citekey, DeleteBlocker, DeleteCount, DeletePart, Edge}
 import com.histmersion.api.library.Source
 
@@ -103,12 +103,12 @@ class SourceDeleteSuite extends munit.FunSuite:
       .setTo(List(Edge(Citekey("cline2014_1177"), Ck, Edge.Kind.Challenges)))
     val json = d.asJson.noSpaces
     assert(json.contains("\"part\":\"edges-in\"") && json.contains("\"kind\":\"article\""), json)
-    assertEquals(decode[Source.Deletion](json), Right(d))
+    assertEquals(RawJson.decode[Source.Deletion](json), Right(d))
 
   test("the request is strict: an unknown key is refused"):
     assertEquals(
-      decode[Source.DeleteRequest]("""{"apply":true}"""),
+      RawJson.decode[Source.DeleteRequest]("""{"apply":true}"""),
       Right(Source.DeleteRequest(Source.DeleteRequest.Apply(true)))
     )
-    assertEquals(decode[Source.DeleteRequest]("{}"), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(false))))
-    assert(decode[Source.DeleteRequest]("""{"apply":true,"force":true}""").isLeft)
+    assertEquals(RawJson.decode[Source.DeleteRequest]("{}"), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(false))))
+    assert(RawJson.decode[Source.DeleteRequest]("""{"apply":true,"force":true}""").isLeft)

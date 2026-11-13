@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -22,6 +22,5 @@ object DriftKind:
     def all: Array[DriftKind] = values
     def wire(e: DriftKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[DriftKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
-  given Encoder[DriftKind] = WireEnum.encoder
-  given Decoder[DriftKind] = WireEnum.decoder
+  given JsonValueCodec[DriftKind] = WireEnum.codec
   given Schema[DriftKind] = WireEnum.schema

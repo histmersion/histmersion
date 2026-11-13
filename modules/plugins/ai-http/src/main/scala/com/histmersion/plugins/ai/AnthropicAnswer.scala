@@ -1,11 +1,13 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
-import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
-import io.circe.DecodingFailure.Reason.WrongTypeExpectation
-import io.circe.parser.parse
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -20,12 +22,12 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
   def turn: Either[Problem, AiTurn] =
     if (status).value / 100 != 2 then Left(Problem.Unclassified(Legacy.Text((body).value)))
     else
-      parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
+      RawJson.parse((body).value).flatMap(AnthropicAnswer.message(_)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
-          parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
+          RawJson.parse((body).value).flatMap(AnthropicAnswer.error(_)) match
             case Right(message) => Left(message)
-            case Left(e)        => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
+            case Left(e)        => Left(Problem.Unclassified(Legacy.Text(e)))
 
 object AnthropicAnswer:
 
@@ -34,20 +36,17 @@ object AnthropicAnswer:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
 
-  private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
-    if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))
-
   /** An error answer's message: `{"error": {"type": …, "message": …}}`. */
-  val error: Decoder[Problem] = Decoder.instance { c =>
+  val error: Cursor.Read[Problem] = Cursor.Read { c =>
     for
-      _ <- objectAt(c)
-      m <- c.downField("error").as(using errorDetail)
+      _ <- c.anObject
+      m <- c.downField("error").read(errorDetail)
     yield m
   }
 
-  private val errorDetail: Decoder[Problem] = Decoder.instance { c =>
+  private val errorDetail: Cursor.Read[Problem] = Cursor.Read { c =>
     for
-      _ <- objectAt(c)
+      _ <- c.anObject
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
     yield Problem.Unclassified(Legacy.Text(m))
@@ -63,13 +62,13 @@ object AnthropicAnswer:
 
   private val Known = Set("image", "tool_result", "document", "web_search_tool_result")
 
-  private val block: Decoder[Block] = Decoder.instance { c =>
+  private val block: Cursor.Read[Block] = Cursor.Read { c =>
     c.downField("type").as[Option[String]].flatMap {
-      case Some("text") => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(s => Block.Text(AiTurn.Text(s)))
-      case Some("thinking") => objectAt(c).flatMap(_ => c.downField("thinking").as[String]).map(_ => Block.Other)
+      case Some("text") => c.anObject.flatMap(_ => c.downField("text").as[String]).map(s => Block.Text(AiTurn.Text(s)))
+      case Some("thinking") => c.anObject.flatMap(_ => c.downField("thinking").as[String]).map(_ => Block.Other)
       case Some(t @ ("tool_use" | "server_tool_use")) =>
         for
-          _ <- objectAt(c)
+          _ <- c.anObject
           id <- c.downField("id").as[String]
           name <- c.downField("name").as[String]
           input <- c.downField("input").as[Map[String, Json]]
@@ -81,15 +80,15 @@ object AnthropicAnswer:
             )
           else Block.Other
       case Some(t) if Known(t) => Right(Block.Other)
-      case other               => Left(DecodingFailure(s"no content block of type $other", c.history))
+      case other               => Left(s"no content block of type $other")
     }
   }
 
-  private def optionalInt(c: ACursor): Either[DecodingFailure, Option[Int]] = c.as[Option[Int]]
+  private def optionalInt(c: Cursor): Either[String, Option[Int]] = c.as[Option[Int]]
 
-  private val usage: Decoder[AiUsage] = Decoder.instance { c =>
+  private val usage: Cursor.Read[AiUsage] = Cursor.Read { c =>
     for
-      _ <- objectAt(c)
+      _ <- c.anObject
       in <- c.downField("input_tokens").as[Int]
       out <- c.downField("output_tokens").as[Int]
       read <- optionalInt(c.downField("cache_read_input_tokens"))
@@ -105,17 +104,17 @@ object AnthropicAnswer:
   }
 
   /** A message answer as the turn it says. */
-  val message: Decoder[AiTurn] = Decoder.instance { c =>
+  val message: Cursor.Read[AiTurn] = Cursor.Read { c =>
     for
-      _ <- objectAt(c)
+      _ <- c.anObject
       _ <- c.downField("id").as[String]
       _ <- c.downField("type").as[String]
       _ <- c.downField("role").as[String]
-      blocks <- c.downField("content").as(using Decoder.decodeList(using block))
+      blocks <- c.downField("content").read(Cursor.Read.list(block))
       model <- c.downField("model").as[String]
       stop <- c.downField("stop_reason").as[Option[String]]
       _ <- c.downField("stop_sequence").as[Option[String]]
-      u <- c.downField("usage").as(using usage)
+      u <- c.downField("usage").read(usage)
     yield AiTurn(
       blocks.collectFirst { case Block.Text(t) => t }.getOrElse(AiTurn.Text("")),
       blocks.collect { case Block.ToolUse(call) => call },

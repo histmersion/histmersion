@@ -1,10 +1,11 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.DbCodec
-import io.circe.Json
 import com.histmersion.util.database.NewtypeColumns.given
 
 /** A `corrections` row: a person's value for one field, with what upstream said then and at the last refresh. */

@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -16,7 +17,6 @@ import com.histmersion.domain.automation.managers.Zero
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.CompareRuns
 import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report, Reviewer, Severity, Verdict}
-import io.circe.syntax.*
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.automation.Agents
 

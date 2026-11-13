@@ -1,5 +1,7 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -16,10 +18,8 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.Write
 import com.histmersion.api.{GeoPoint, Write, YearFmt}
 import com.histmersion.api.{WireEnum, YearFmt}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
-import io.circe.Json
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -181,7 +181,7 @@ object Place:
       .schema
       .modify(_.kind)(_.description(s"one of ${Place.Kind.all.mkString(", ")}"))
       .modify(_.source)(_.description("where the coordinates come from (a gazetteer id, a map, a publication)"))
-    given Codec.AsObject[Add] = StrictJson.codec(KindlingsCodecAsObject.derived[Add])
+    given JsonCodec[Add] = StrictJson.codec(JsonCodec.derived[Add])
 
   /** What a place's page shows of the gazetteer: the row, its geometry, the hierarchy around it and its records. The
     * gazetteer's own record ([[PlaceEntry]]) and the page the server answers (`PlaceDetail`, which adds the place's
@@ -231,7 +231,7 @@ object Place:
       findings: Counts.Findings,
       articles: Counts.Articles,
       events: Counts.Events
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -265,8 +265,7 @@ object Place:
       def all: Array[Dating] = values
       def wire(e: Dating): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[Dating] = parse(Wire((s).value))
-    given io.circe.Encoder[Dating] = WireEnum.encoder
-    given io.circe.Decoder[Dating] = WireEnum.decoder
+    given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[Dating] = WireEnum.codec
     given Schema[Dating] = WireEnum.schema
 
     def describe(dating: Dating, start: Option[Year], end: Option[Year]): Description = dating match
@@ -278,7 +277,7 @@ object Place:
       text: Description.Text,
       lang: Description.Lang = Name.Lang(""),
       source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Source("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -293,7 +292,7 @@ object Place:
       label: Option[Designation.Label] = None,
       start: Option[Designation.Start] = None,
       end: Option[Designation.End] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema
 
   object Designation:
@@ -448,7 +447,7 @@ object Place:
       certainty: Option[Footprint.Certainty] = None,
       accuracyM: Option[Footprint.AccuracyM] = None,
       citekey: Option[Citekey] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Footprint:
@@ -481,7 +480,7 @@ object Place:
       findingsBefore: Gone.FindingsBefore,
       findingsAfter: Gone.FindingsAfter,
       unlocated: Gone.Unlocated
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -511,7 +510,7 @@ object Place:
       contested: Hit.Contested = Hit.Contested(false),
       dating: Dating = Dating.Stated,
       importSource: Option[Hit.ImportSource] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def toSummary: Summary =
@@ -535,7 +534,7 @@ object Place:
       relations: ImportResult.Relations,
       failed: List[ImportResult.Failed] = Nil,
       job: Option[ImportResult.Job] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -558,7 +557,7 @@ object Place:
       scheme: Link.Scheme,
       externalId: Link.ExternalId,
       relation: Link.Relation = Link.Relation("close_match")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Link:
@@ -631,7 +630,7 @@ object Place:
       .derived[MergeIn]
       .schema
       .modify(_.into)(_.description("the id of the place it is the same as"))
-    given Codec.AsObject[MergeIn] = StrictJson.codec(KindlingsCodecAsObject.derived[MergeIn])
+    given JsonCodec[MergeIn] = StrictJson.codec(JsonCodec.derived[MergeIn])
 
   final case class Name(
       name: Name.Value,
@@ -657,7 +656,7 @@ object Place:
     object Name extends Newtype[String, Pure]
     export Place.Name.Lang
 
-    given Codec.AsObject[NameAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[NameAdd])
+    given JsonCodec[NameAdd] = StrictJson.codec(JsonCodec.derived[NameAdd])
 
   final case class NameChanged(
       placeId: Id,
@@ -667,7 +666,7 @@ object Place:
       added: NameChanged.Added,
       changed: NameChanged.Changed,
       wasImported: NameChanged.WasImported = NameChanged.WasImported(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -692,7 +691,7 @@ object Place:
     object Name extends Newtype[String, Pure]
     export Place.Name.Lang
 
-    given Codec.AsObject[NameRemove] = StrictJson.codec(KindlingsCodecAsObject.derived[NameRemove])
+    given JsonCodec[NameRemove] = StrictJson.codec(JsonCodec.derived[NameRemove])
 
   final case class Override(
       placeId: Id,
@@ -710,7 +709,7 @@ object Place:
       lon: Option[Longitude] = None,
       sourceLat: Option[Latitude] = None,
       sourceLon: Option[Longitude] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -740,7 +739,7 @@ object Place:
       lonBefore: Option[Longitude] = None,
       latAfter: Option[Latitude] = None,
       lonAfter: Option[Longitude] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -796,7 +795,7 @@ object Place:
         _.description("latitude of the place's corrected point (with pointLon); only for a place known by a point")
       )
       .modify(_.pointLon)(_.description("longitude of the place's corrected point (with pointLat)"))
-    given Codec.AsObject[OverrideSet] = StrictJson.codec(KindlingsCodecAsObject.derived[OverrideSet])
+    given JsonCodec[OverrideSet] = StrictJson.codec(JsonCodec.derived[OverrideSet])
 
   object Overrides:
     type PointText = PointText.T
@@ -913,7 +912,7 @@ object Place:
       located: RebuildResult.Located,
       unlocated: RebuildResult.Unlocated,
       places: RebuildResult.Places
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -936,7 +935,7 @@ object Place:
       periods: List[Record.Periods] = Nil,
       designations: List[Designation] = Nil,
       registers: List[Register] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema:
     def isEmpty: Boolean = (dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty)
 
@@ -957,7 +956,7 @@ object Place:
       case other                              => DateSourceText(other)
 
   final case class Register(property: Register.Property, id: Register.Id)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema:
     def name: Register.Name = Register.names.getOrElse(property, Register.Name((property).value))
 
@@ -1030,7 +1029,7 @@ object Place:
   final case class RemoveIn(reason: Option[Problem] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object RemoveIn:
 
-    given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
+    given JsonCodec[RemoveIn] = StrictJson.codec(JsonCodec.derived[RemoveIn])
 
   object Shape:
     type IsAreaKind = Summary.Kind
@@ -1062,7 +1061,7 @@ object Place:
       contested: Summary.Contested = Summary.Contested(false),
       dating: Dating = Dating.Stated,
       importSource: Option[Summary.ImportSource] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def when: Dating.Description = Dating.describe(dating, periodStart, periodEnd)
@@ -1110,8 +1109,7 @@ object Place:
       def all: Array[TimeBasis] = values
       def wire(e: TimeBasis): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[TimeBasis] = parse(Wire((s).value))
-    given io.circe.Encoder[TimeBasis] = WireEnum.encoder
-    given io.circe.Decoder[TimeBasis] = WireEnum.decoder
+    given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[TimeBasis] = WireEnum.codec
     given Schema[TimeBasis] = WireEnum.schema
 
     def of(kind: OfKind, modern: Boolean, imported: Boolean, undated: Boolean, hasGeometry: Boolean): TimeBasis =
@@ -1144,7 +1142,7 @@ object Place:
       depth: TreeRow.Depth,
       findings: TreeRow.Findings,
       contested: TreeRow.Contested = TreeRow.Contested(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1164,7 +1162,7 @@ object Place:
       typeLabel: Type.TypeLabel,
       period: Option[Period] = None,
       citekey: Option[Citekey] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

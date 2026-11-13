@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -34,8 +35,7 @@ import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.automation.{AgentsMarkdown, Managers}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Article
@@ -278,7 +278,7 @@ object ProposeArticlesPipeline:
       title: Title,
       filter: Option[Article.Filter],
       cited: List[Citekey]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   /** The area as the planner sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
@@ -293,7 +293,7 @@ object ProposeArticlesPipeline:
       queries: List[Loaded.Queries],
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Loaded:
     type Notes = Notes.T
@@ -308,7 +308,7 @@ object ProposeArticlesPipeline:
     object Topics extends Newtype[String, Pure]
 
   final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object Recorded:
     type Line = Line.T

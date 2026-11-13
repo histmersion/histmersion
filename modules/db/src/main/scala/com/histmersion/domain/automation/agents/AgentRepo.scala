@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -579,7 +581,7 @@ object AgentRepo:
             )
           )
       case _ =>
-        base.withArticleProposal(Jsonb.read[io.circe.Json](r.proposal)).getOrElse {
+        base.withArticleProposal(Jsonb.read[Json](r.proposal)).getOrElse {
           val p = Jsonb.read[ProposalEvidence](r.proposal)
           base
             .modify(_.evidence)

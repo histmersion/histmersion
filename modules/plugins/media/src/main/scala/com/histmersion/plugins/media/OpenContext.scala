@@ -1,9 +1,13 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.{ACursor, Json}
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -74,7 +78,7 @@ object OpenContext:
 
   /** Pure: the records of a search answer, in its order. */
   def records(json: Json, licences: LicenceReader): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("oc-api:has-results").focus.flatMap(_.asArray) match
       case Some(rows) => Right(rows.toList.map(record(_, licences)))
       // no results: Open Context leaves the list out
@@ -88,7 +92,7 @@ object OpenContext:
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
   def record(json: Json, licences: LicenceReader): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.str("uri")
       .flatMap(u => uuidOf(Plugin.Http.Url(u)))
       .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.Url(u))))
@@ -206,10 +210,10 @@ object OpenContext:
     val first = s.split("\\s+").headOption.getOrElse("").toLowerCase(Locale.ROOT).stripSuffix(".")
     s.exists(_.isDigit) || s.length <= 2 || Roman.matches(s) || UnitWords(first)
 
-  private def num(c: ACursor, k: String): Option[Long] =
+  private def num(c: Cursor, k: String): Option[Long] =
     c.downField(k)
       .focus
-      .flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
+      .flatMap(j => j.asNumber.flatMap(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
       .map(d => math.round(d))
 
   /** Pure: Open Context's own citation form — creators (year) "label from context". In project. Open Context. ARK. —
@@ -237,9 +241,9 @@ object OpenContext:
     * licence read AGAIN from the item: a missing or different licence refuses it.
     */
   def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     val files = c.downField("oc-gen:has-files").focus.flatMap(_.asArray).toList.flatten.flatMap { f =>
-      val h = f.hcursor
+      val h = f.cursor
       for t <- h.str("type"); u <- h.str("id") yield t -> u
     }
     def file(t: String) = files.find(_._1 == t).map(_._2)
@@ -249,14 +253,14 @@ object OpenContext:
       .flatMap(_.asArray)
       .toList
       .flatten
-      .flatMap(l => l.hcursor.str("id"))
+      .flatMap(l => l.cursor.str("id"))
     val subjects = c
       .downField("dc-terms:subject")
       .focus
       .flatMap(_.asArray)
       .toList
       .flatten
-      .flatMap(l => l.hcursor.str("label"))
+      .flatMap(l => l.cursor.str("label"))
     if !c.str("category").forall(_ == "oc-gen:image") then Left(Problem.Unclassified(Legacy.Text("not an image")))
     else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then
       Left(Problem.Unclassified(Legacy.Text(Withheld)))

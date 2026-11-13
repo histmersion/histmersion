@@ -1,5 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -18,7 +21,6 @@ import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.research.workflows.ReviewComparison
-import io.circe.syntax.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Confidence
@@ -271,7 +273,7 @@ class CompareRunsSuite extends munit.FunSuite:
         Step.Name("findings-3"),
         output = Some(
           Step.Output(
-            io.circe.Json
+            Json
               .obj("findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))).asJson)
               .noSpaces
           )

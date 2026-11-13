@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -10,8 +14,6 @@ import com.histmersion.plugins.calibre.{CalibreFixture, CalibrePlugin}
 import com.histmersion.plugin as spi
 import com.augustnagro.magnum.*
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -579,7 +581,7 @@ class AcquisitionOracleSuite extends DbSuite:
     parser
       .parse(payload)
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
+      .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
   private def source(title: String, year: Int, authors: List[String], doi: Option[String], status: String): String =
@@ -818,7 +820,7 @@ class AcquisitionOracleSuite extends DbSuite:
   /** A re-check of every open item, and its job once it has run. */
   private def recheck(url: String): String =
     val r = post(s"$url/api/queue/acquire/recheck", """{"all":true}""")
-    val job = parser.parse(r.drop(4)).toOption.flatMap(_.hcursor.downField("job").downField("id").as[String].toOption)
+    val job = RawJson.parse(r.drop(4)).toOption.flatMap(_.cursor.downField("job").downField("id").as[String].toOption)
     job.fold(r)(id => s"$r\njob: ${awaitJob(url, id)}")
 
   private def acquireList(url: String, log: Log): Unit =
@@ -856,7 +858,7 @@ class AcquisitionOracleSuite extends DbSuite:
     parser
       .parse(a.drop(4))
       .toOption
-      .flatMap(_.hcursor.downField(name).focus)
+      .flatMap(_.cursor.downField(name).focus)
       .fold(s"${a.take(3)} (no $name)")(j => s"200 ${j.noSpaces}")
 
   private def candidates(url: String, log: Log): Unit =
@@ -972,7 +974,7 @@ class AcquisitionOracleSuite extends DbSuite:
     MsRe.replaceAllIn(DayRe.replaceAllIn(t3, "DAY"), "N ms")
 
   private def json(text: String, port: Int): String =
-    parser.parse(text) match
+    RawJson.parse(text) match
       case Right(j) => normalise(j.spaces2SortKeys, port)
       case Left(_)  => normalise(text, port)
 

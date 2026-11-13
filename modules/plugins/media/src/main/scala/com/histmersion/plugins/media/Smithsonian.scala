@@ -1,9 +1,13 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.{ACursor, Json}
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -50,7 +54,7 @@ object Smithsonian:
 
   /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
   def unitOf(json: Json): Option[Unit] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("content")
       .downField("descriptiveNonRepeating")
       .str("unit_code")
@@ -80,7 +84,7 @@ object Smithsonian:
     * `{response: {error}}`) is a `Left`.
     */
   def records(json: Json, excludedUnits: List[Unit] = Nil): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     val resp = c.downField("response")
     resp.downField("rows").focus.flatMap(_.asArray) match
       case Some(rows)                              => Right(rows.toList.map(record(_, excludedUnits)))
@@ -91,9 +95,9 @@ object Smithsonian:
           case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
           case e  => e)))
 
-  private def labelled(c: ACursor, field: String): List[(Label, String)] =
+  private def labelled(c: Cursor, field: String): List[(Label, String)] =
     c.downField(field).focus.flatMap(_.asArray).toList.flatten.flatMap { e =>
-      val h = e.hcursor
+      val h = e.cursor
       h.str("content").map(v => Label(h.str("label").getOrElse("").toLowerCase(Locale.ROOT)) -> v)
     }
 
@@ -101,7 +105,7 @@ object Smithsonian:
     * with that reason, whatever its licence.
     */
   def record(json: Json, excludedUnits: List[Unit] = Nil): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     val cont = c.downField("content")
     val dnr = cont.downField("descriptiveNonRepeating")
     val free = cont.downField("freetext")
@@ -130,7 +134,7 @@ object Smithsonian:
           .flatMap(_.asArray)
           .toList
           .flatten
-          .map(_.hcursor)
+          .map(_.cursor)
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[Problem, MediaRights] = cc0 match
@@ -144,13 +148,13 @@ object Smithsonian:
                   .Text(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
               )
             )
-        def resource(m: ACursor, label: String) =
+        def resource(m: Cursor, label: String) =
           m.downField("resources")
             .focus
             .flatMap(_.asArray)
             .toList
             .flatten
-            .map(_.hcursor)
+            .map(_.cursor)
             .find(r => r.str("label").exists(_.equalsIgnoreCase(label)))
             .flatMap(_.str("url"))
         val image = cc0.flatMap(m => resource(m, "Screen Image").orElse(m.str("content")))
@@ -162,7 +166,7 @@ object Smithsonian:
           v.split(",").toList.map(_.trim).filter(_.nonEmpty).map((if l.value.isEmpty then "place" else l.value) -> _)
         )
         val levels = idx.downField("geoLocation").focus.flatMap(_.asArray).toList.flatten.flatMap { g =>
-          val h = g.hcursor
+          val h = g.cursor
           h.keys.toList.flatten.filter(_.matches("L[0-9]+")).sortBy(k => -k.drop(1).toInt).flatMap { k =>
             val l = h.downField(k)
             l.str("content").map(v => l.str("type").getOrElse(k).toLowerCase(Locale.ROOT) -> v)

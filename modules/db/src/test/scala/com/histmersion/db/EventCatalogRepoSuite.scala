@@ -1,5 +1,8 @@
 package com.histmersion
 package db
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -423,17 +426,16 @@ class EventCatalogRepoSuite extends DbSuite:
         sql"""UPDATE places SET properties = '{"feature_types":"settlement,temple-2"}'::jsonb WHERE id = 'zqec_site'""".update
           .run()
     def siteType: Option[String] =
-      val json = io.circe.parser
-        .parse(PlaceFixtures.geoJson(ds, Some(KindWire("site")), None, PlaceFixtures.Limit(5000)).value)
+      val json = RawJson.parse(PlaceFixtures.geoJson(ds, Some(KindWire("site")), None, PlaceFixtures.Limit(5000)).value)
         .toOption
         .get
-      json.hcursor
+      json.cursor
         .downField("features")
         .focus
         .flatMap(_.asArray)
         .toList
         .flatten
-        .map(_.hcursor.downField("properties"))
+        .map(_.cursor.downField("properties"))
         .find(_.get[String]("id").toOption.contains("zqec_site"))
         .flatMap(_.get[String]("siteType").toOption)
     assertEquals(siteType, Some("sanctuary"))

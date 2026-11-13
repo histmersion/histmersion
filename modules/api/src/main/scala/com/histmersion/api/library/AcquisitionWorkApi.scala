@@ -2,7 +2,7 @@ package com.histmersion
 package api.library
 import com.histmersion.api.automation.ManagersApi
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import com.histmersion.api.Api
 
 /** The acquisition list's work the managers' endpoints sit beside: the repair of its ingest backlog and its legal

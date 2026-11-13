@@ -1,5 +1,6 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -21,7 +22,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -256,7 +256,7 @@ class MediaCollectionsJobSuite extends DbSuite:
 
         val (ds0, db0) = post(s"$url/api/media/import", """{"provider":"aic","dryRun":true,"place":"zqmc_site"}""")
         assertEquals(ds0, 200, db0)
-        val dry = decode[MediaImportReport](db0).fold(e => fail(s"$e: $db0"), identity)
+        val dry = RawJson.decode[MediaImportReport](db0).fold(e => fail(s"$e: $db0"), identity)
         assertEquals(
           dry.samples.map(s => (s.key, s.basis)),
           List(("9001", "place_of_origin = Zqmcenai; 1400–1300 BCE within 1600–1100 BCE"))
@@ -268,7 +268,7 @@ class MediaCollectionsJobSuite extends DbSuite:
 
         val (js, jb) = post(s"$url/api/media/import/job", """{"provider":"aic","dryRun":false,"place":"zqmc_site"}""")
         assertEquals(js, 202, jb)
-        val job = decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity)
+        val job = RawJson.decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity)
         assert(
           job.detail
             .flatMap(ImportJobKinds.Media.of)
@@ -277,7 +277,7 @@ class MediaCollectionsJobSuite extends DbSuite:
         )
         @annotation.tailrec
         def until(n: Int): JobInfo =
-          val j = decode[JobInfo](get(s"$url/api/jobs/${job.id}")._2).fold(e => fail(e.toString), identity)
+          val j = RawJson.decode[JobInfo](get(s"$url/api/jobs/${job.id}")._2).fold(e => fail(e.toString), identity)
           if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(n - 1) }
         val end = until(400)
         assertEquals(end.status, "done", end.toString)
@@ -290,7 +290,7 @@ class MediaCollectionsJobSuite extends DbSuite:
         assertEquals(basis, Some("place_of_origin = Zqmcenai; 1400–1300 BCE within 1600–1100 BCE"))
         val (ss, sb) = get(s"$url/api/media/$uid")
         assertEquals(ss, 200, sb)
-        val item = decode[MediaItem](sb).fold(e => fail(s"$e: $sb"), identity)
+        val item = RawJson.decode[MediaItem](sb).fold(e => fail(s"$e: $sb"), identity)
         assertEquals(
           (item.provider, item.license, item.kind),
           (Some(MediaProvider.ArtInstitute), Some("CC0-1.0"), Some(AssetKind.Photo))

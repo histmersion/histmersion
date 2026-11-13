@@ -1,13 +1,13 @@
 package com.histmersion
 package api.personal
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.api.ItemKind
 import com.histmersion.api.Paging
 
@@ -63,14 +63,14 @@ class TargetSuite extends munit.FunSuite:
     assertEquals(point.identity, None)
 
   test("the wire: kinds by name, out-of-range coordinates and unknown kinds refused"):
-    assertEquals(decode[Target](point.asJson.noSpaces), Right(point))
+    assertEquals(RawJson.decode[Target](point.asJson.noSpaces), Right(point))
     assert(point.asJson.noSpaces.contains("\"kind\":\"point\""))
     assert(
-      decode[Target]("""{"kind":"point","lat":91,"lon":0}""").isRight
+      RawJson.decode[Target]("""{"kind":"point","lat":91,"lon":0}""").isRight
     ) // the API layer accepts it; the server refuses it
-    assert(decode[Target]("""{"kind":"nonsense"}""").isLeft)
+    assert(RawJson.decode[Target]("""{"kind":"nonsense"}""").isLeft)
     assertEquals(
-      decode[Target]("""{"kind":"source","id":" zz "}""").map(_.id.map(v => v.value: String)),
+      RawJson.decode[Target]("""{"kind":"source","id":" zz "}""").map(_.id.map(v => v.value: String)),
       Right(Some("zz"))
     )
 

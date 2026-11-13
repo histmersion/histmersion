@@ -1,5 +1,6 @@
 package com.histmersion
 package server
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -10,7 +11,6 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.domain.library.acquisition.*
-import io.circe.Json
 import com.histmersion.config.LoadedConfig
 import com.histmersion.domain.library.Doi
 

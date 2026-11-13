@@ -1,9 +1,10 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.server.agents.{CliOutcomes, Codex}
 
-import io.circe.{Json, JsonObject}
 import com.histmersion.api.VocabularyCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -111,7 +112,7 @@ object StrictJsonSchema:
     ref.filter(r => o.size > 1 && !seen(r)).flatMap(r => defs.get(r).flatMap(_.asObject).map(r -> _)) match
       case Some((r, d)) =>
         // the definition, with this node's own keywords on top (its description wins)
-        convertObject(o.remove("$ref").toList.foldLeft(d)((acc, kv) => acc.add(kv._1, kv._2)), defs, seen + r)
+        convertObject(o.remove("$ref").toList.foldLeft(d)((acc, kv) => acc.updated(kv._1, kv._2)), defs, seen + r)
       case None =>
         val str = types(o).contains("string")
         val kept = o.filter((k, v) =>
@@ -131,9 +132,9 @@ object StrictJsonSchema:
           val props = c("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
           val required = o("required").flatMap(_.asArray).toList.flatten.flatMap(_.asString).toSet
           val strictProps = props.toList.map((k, v) => k -> (if required(k) then v else nullable(v)))
-          c.add("properties", Json.fromFields(strictProps))
-            .add("required", Json.fromValues(strictProps.map((k, _) => Json.fromString(k))))
-            .add("additionalProperties", Json.False)
+          c.updated("properties", Json.fromFields(strictProps))
+            .updated("required", Json.fromValues(strictProps.map((k, _) => Json.fromString(k))))
+            .updated("additionalProperties", Json.False)
 
   private val NullSchema = Json.obj("type" -> Json.fromString("null"))
 
@@ -143,9 +144,9 @@ object StrictJsonSchema:
     val structural = List("$ref", "enum", "const", "anyOf").exists(o.contains) || ts.contains("object")
     if isNullable(o) then v
     else if !structural && ts.nonEmpty then
-      Json.fromJsonObject(o.add("type", Json.fromValues((ts :+ "null").map(Json.fromString))))
+      Json.fromJsonObject(o.updated("type", Json.fromValues((ts :+ "null").map(Json.fromString))))
     else if o.contains("anyOf") && o.keys.forall(Set("anyOf", "description", "title")) then
-      Json.fromJsonObject(o.add("anyOf", Json.fromValues(o("anyOf").flatMap(_.asArray).toVector.flatten :+ NullSchema)))
+      Json.fromJsonObject(o.updated("anyOf", Json.fromValues(o("anyOf").flatMap(_.asArray).toVector.flatten :+ NullSchema)))
     else
       // the description stays on the outer schema, where a reader of the property looks for it
       val labels = List("description", "title").flatMap(k => o(k).map(k -> _))

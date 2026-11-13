@@ -1,12 +1,11 @@
 package com.histmersion
 package api.personal
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
@@ -20,7 +19,7 @@ final case class Note(
     title: Title,
     createdAt: Note.At = Note.At(""),
     updatedAt: Note.At = Note.At("")
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -31,19 +30,18 @@ object Note:
   object At extends Newtype[String, Pure]
 
   final case class Edit(text: Text, ifUpdatedAt: Option[At] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   type Id = Id.T
 
   object Id extends Newtype[String, Pure]:
-    given Encoder[Id] = Encoder.encodeString.contramap(_.value)
-    given Decoder[Id] = Decoder.decodeString.map(Id(_))
+    given JsonValueCodec[Id] = JsonCodec.mapped[Id, String](_.value, b => Right(Id(b)))
     given Schema[Id] = Schema.string[Id]
 
   final case class New(target: Target, text: Text, title: Option[Title] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -60,6 +58,5 @@ object Note:
       else if t.length > MaxChars then
         Left(Problem.Unclassified(Legacy.Text(s"a note is at most $MaxChars characters (this one: ${t.length})")))
       else Right(Text(t))
-    given Encoder[Text] = Encoder.encodeString.contramap(_.value)
-    given Decoder[Text] = Decoder.decodeString.map(Text(_))
+    given JsonValueCodec[Text] = JsonCodec.mapped[Text, String](_.value, b => Right(Text(b)))
     given Schema[Text] = Schema.string[Text]

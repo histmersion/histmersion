@@ -1,9 +1,8 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -24,4 +23,4 @@ object EventLinksRequest:
   type Reject = Reject.T
   object Reject extends Newtype[String, Pure]
 
-  given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])
+  given JsonCodec[EventLinksRequest] = StrictJson.codec(JsonCodec.derived[EventLinksRequest])

@@ -1,12 +1,13 @@
 package com.histmersion
 package domain.personal
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.personal.PersonalMarkdown
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -27,7 +28,7 @@ object PersonalTools:
       kind: Option[BookmarksInput.Kind] = None,
       query: Option[BookmarksInput.Query] = None,
       limit: Option[BookmarksInput.Limit] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -45,7 +46,7 @@ object PersonalTools:
       item: Option[NotesInput.Item] = None,
       query: Option[NotesInput.Query] = None,
       limit: Option[NotesInput.Limit] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

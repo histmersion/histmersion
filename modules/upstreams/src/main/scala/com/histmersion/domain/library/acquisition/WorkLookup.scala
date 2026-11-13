@@ -1,10 +1,13 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{Doi, WorkKey, Year}
-import io.circe.Json
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.upstreams.parse.AcquireParse

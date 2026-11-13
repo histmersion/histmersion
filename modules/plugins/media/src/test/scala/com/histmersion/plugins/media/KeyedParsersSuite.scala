@@ -1,12 +1,14 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
-import io.circe.Json
-import io.circe.parser.parse
 
 /** The parsers of the two key-gated collections: Smithsonian Open Access and Europeana. The Smithsonian fixture's rows
   * are three real records of the Smithsonian's open-data dump (National Museum of Asian Art, read 2026-10-26;
@@ -18,7 +20,7 @@ import io.circe.parser.parse
 class KeyedParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
-    parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
+    RawJson.parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
       .fold(e => fail(e.toString), identity)
 
   private val licences = HostLicences
@@ -108,38 +110,38 @@ class KeyedParsersSuite extends munit.FunSuite:
     assertEquals(rs(2).geography.head, "origin" -> "Lake Tai region")
 
   test("Smithsonian: a record whose image is not CC0, or that has no image, is refused with the reason"):
-    val row = fixture("si-search.json").hcursor.downField("response").downField("rows").downArray.focus.get
+    val row = fixture("si-search.json").cursor.downField("response").downField("rows").downArray.focus.get
     val restricted =
-      parse(row.noSpaces.replace("\"access\":\"CC0\"", "\"access\":\"Usage conditions apply\"")).toOption.get
+      RawJson.parse(row.noSpaces.replace("\"access\":\"CC0\"", "\"access\":\"Usage conditions apply\"")).toOption.get
     assertEquals(
       Smithsonian.record(restricted).map(_.rights.left.toOption.map(_.legacyText)),
       Right(Some("no CC0 image (usage.access Usage conditions apply)"))
     )
-    val none = parse(row.noSpaces.replace("\"online_media\"", "\"x_online_media\"")).toOption.get
+    val none = RawJson.parse(row.noSpaces.replace("\"online_media\"", "\"x_online_media\"")).toOption.get
     assertEquals(
       Smithsonian.record(none).map(_.rights.left.toOption.map(_.legacyText)),
       Right(Some("no image on the record"))
     )
     // an accession or collection date is not the object's date
-    val accession = parse(row.noSpaces.replace("\"label\":\"Date\"", "\"label\":\"Accession Date\"")).toOption.get
+    val accession = RawJson.parse(row.noSpaces.replace("\"label\":\"Date\"", "\"label\":\"Accession Date\"")).toOption.get
     assertEquals(Smithsonian.record(accession).map(_.period), Right(None))
 
   test("Smithsonian: error answers — api.data.gov's key errors and EDAN's — are Lefts; an empty answer is no rows"):
-    val gov = parse(
+    val gov = RawJson.parse(
       """{"error":{"code":"API_KEY_INVALID","message":"An invalid api_key was supplied. Get one at https://api.si.edu:443"}}"""
     ).toOption.get
     assertEquals(
       Smithsonian.records(gov).left.map(_.legacyText),
       Left("API_KEY_INVALID: An invalid api_key was supplied. Get one at https://api.si.edu:443")
     )
-    val edan = parse(
+    val edan = RawJson.parse(
       """{"status":400,"responseCode":0,"response":{"error":"bad request: one of your params did not pass validation"}}"""
     ).toOption.get
     assertEquals(
       Smithsonian.records(edan).left.map(_.legacyText),
       Left("bad request: one of your params did not pass validation")
     )
-    val empty = parse(
+    val empty = RawJson.parse(
       """{"status":200,"responseCode":1,"response":{"rows":[],"rowCount":0,"message":"content found"}}"""
     ).toOption.get
     assertEquals(Smithsonian.records(empty), Right(Nil))
@@ -150,10 +152,10 @@ class KeyedParsersSuite extends munit.FunSuite:
       "\"Orkney\" AND online_media_type:Images AND NOT unit_code:(NMNHINV OR NMNHBIRDS)"
     )
     assertEquals(Smithsonian.query(MediaPlace.Label("Orkney")), "\"Orkney\" AND online_media_type:Images")
-    val row = fixture("si-search.json").hcursor.downField("response").downField("rows").downArray.focus.get
+    val row = fixture("si-search.json").cursor.downField("response").downField("rows").downArray.focus.get
     assertEquals(Smithsonian.unitOf(row), Some("FSG"))
     assertEquals(Smithsonian.record(row, List(Smithsonian.Unit("NMNHINV"))).map(_.withheld), Right(None))
-    val specimen = parse(row.noSpaces.replace("\"FSG\"", "\"NMNHINV\"")).toOption.get
+    val specimen = RawJson.parse(row.noSpaces.replace("\"FSG\"", "\"NMNHINV\"")).toOption.get
     assertEquals(
       Smithsonian.record(specimen, List(Smithsonian.Unit("nmnhinv"))).map(_.withheld),
       Right(Some("an excluded unit (NMNHINV)"))
@@ -294,14 +296,14 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
 
   test("Europeana: errors — a refused key is a Left with Europeana's message; no items is an empty list"):
-    val bad = parse(
+    val bad = RawJson.parse(
       """{"success":false,"error":"API key is invalid","message":"Please register for an API key","code":"401_key_invalid"}"""
     ).toOption.get
     assertEquals(
       Europeana.records(bad, api, licences).left.map(_.legacyText),
       Left("API key is invalid: Please register for an API key")
     )
-    val none = parse("""{"success":true,"itemsCount":0,"totalResults":0}""").toOption.get
+    val none = RawJson.parse("""{"success":true,"itemsCount":0,"totalResults":0}""").toOption.get
     assertEquals(Europeana.records(none, api, licences), Right(Nil))
 
   test("Europeana: the Record API reads the licence again — the shown web resource's, else the aggregation's"):
@@ -311,7 +313,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       Right(Some("https://images.fixture.example/lion-gate.jpg"))
     )
     val text = fixture("eu-record.json").noSpaces
-    val differs = parse(
+    val differs = RawJson.parse(
       text.replace(
         "\"webResourceEdmRights\":{\"def\":[\"http://creativecommons.org/licenses/by-sa/4.0/\"]}",
         "\"webResourceEdmRights\":{\"def\":[\"http://creativecommons.org/licenses/by-nc/4.0/\"]}"
@@ -321,10 +323,10 @@ class KeyedParsersSuite extends munit.FunSuite:
       Europeana.item(differs, rec, licences).left.toOption.map(_.legacyText),
       Some("the full record's licence (CC-BY-NC-4.0) differs from the search's (CC-BY-SA-4.0)")
     )
-    val noResource = parse(text.replace("\"webResourceEdmRights\"", "\"x\"")).toOption.get
+    val noResource = RawJson.parse(text.replace("\"webResourceEdmRights\"", "\"x\"")).toOption.get
     assert(Europeana.item(noResource, rec, licences).isRight, "the aggregation's edmRights answers")
     val neither =
-      parse(text.replace("\"webResourceEdmRights\"", "\"x\"").replace("\"edmRights\"", "\"y\"")).toOption.get
+      RawJson.parse(text.replace("\"webResourceEdmRights\"", "\"x\"").replace("\"edmRights\"", "\"y\"")).toOption.get
     assertEquals(
       Europeana.item(neither, rec, licences).left.toOption.map(_.legacyText),
       Some("no licence on the full record")
@@ -385,7 +387,7 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     assertEquals(Europeana.excludedType(List(Europeana.Exclusions.Types("Sculpture")), ex), None)
     val rec = Europeana.records(fixture("eu-search.json"), api, licences).toOption.get.head.toOption.get
-    val specimen = parse(
+    val specimen = RawJson.parse(
       fixture("eu-record.json").noSpaces.replace(
         "\"dctermsSpatial\"",
         "\"dcType\":{\"en\":[\"Preserved Specimen\"]},\"dctermsSpatial\""

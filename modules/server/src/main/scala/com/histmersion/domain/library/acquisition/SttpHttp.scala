@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
@@ -8,7 +10,6 @@ import com.histmersion.config.AcquireConfig
 import com.histmersion.domain.{CoreQuota, HttpPolicy}
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, PolicyHttp, SttpTransport}
-import io.circe.Json
 
 /** The real client: the host's acquisition client ([[PolicyHttp]] — the one outbound policy, a bot challenge the end of
   * a request) as the three verbs the acquisition clients read.
@@ -36,11 +37,10 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
 
   def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
     text(url, headers).flatMap(s =>
-      io.circe.parser
-        .parse(s.value)
+      RawJson.parse(s.value)
         .left
         .map(e =>
-          Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: ${e.getMessage}")))
+          Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e")))
         )
     )
 

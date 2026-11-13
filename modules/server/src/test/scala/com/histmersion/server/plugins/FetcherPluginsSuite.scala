@@ -1,5 +1,7 @@
 package com.histmersion
 package server.plugins
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -14,7 +16,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.{Fetch, WorkKey}
 import com.histmersion.domain.library.acquisition.*
-import io.circe.Json
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
@@ -351,10 +352,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
       answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(t =>
-        io.circe.parser
-          .parse(t.value)
+        RawJson.parse(t.value)
           .left
-          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e))))
       )
 
   /** The index steps and the landing step of a generation built over `http`, run in today's order with one memo for the

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.media.assets
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
@@ -25,7 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrl):
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
-  def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, io.circe.Json] =
+  def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, Json] =
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     assets.figure(citekey, safeName) match
       case None =>

@@ -5,8 +5,8 @@ import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.api.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
 import com.histmersion.util.data.exchange.BundleFormat
@@ -50,8 +50,8 @@ final case class BundleEntities(
     * set of entries.
     */
   def payloads: List[(String, Array[Byte])] =
-    def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
-    def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
+    def stamped[A: JsonValueCodec](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
+    def plain[A: JsonValueCodec](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
       Bundle.Kind.Source.file -> stamped(sources),
       Bundle.Kind.Finding.file -> stamped(findings),
@@ -83,7 +83,7 @@ final case class BundleEntities(
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
-    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
+    def of[A: JsonValueCodec](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
     (of(Bundle.Kind.Source, sources)(_.uid, _.citekey.value) ++
       of(Bundle.Kind.Finding, findings)(_.uid, _.id.value) ++
@@ -195,7 +195,7 @@ object BundleEntities:
     */
   def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[String]) =
     val problems = List.newBuilder[String]
-    def read[A: Decoder](path: String, stamped: Boolean): List[A] =
+    def read[A: JsonValueCodec](path: String, stamped: Boolean): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
         BundleFormat.decodeLine[A](l, stamped) match
           case Right(a) => Some(a)

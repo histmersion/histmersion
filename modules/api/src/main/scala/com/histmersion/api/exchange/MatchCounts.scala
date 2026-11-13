@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -16,7 +16,7 @@ final case class MatchCounts(
     undecided: MatchCounts.Undecided = MatchCounts.Undecided(0),
     unmatched: MatchCounts.Unmatched = MatchCounts.Unmatched(0),
     deletedHere: MatchCounts.DeletedHere = MatchCounts.DeletedHere(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.json.RawJson
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.Problem
 
@@ -78,8 +79,7 @@ class GazetteerStoreSuite extends DbSuite:
 
   private def steady(json: List[String]): String =
     json.map { j =>
-      io.circe.parser
-        .parse(j)
+      RawJson.parse(j)
         .fold(e => fail(e.toString), identity)
         .mapObject(_.filterKeys(k => !k.endsWith("_at") && k != "uid" && k != "origin"))
         .noSpaces + "\n"

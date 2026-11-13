@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,7 +15,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.domain.library.LibraryTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.tapir.Schema
@@ -114,8 +117,8 @@ class AgentSchemaSuite extends munit.FunSuite:
   test("a property named title is kept"):
     val t = AgentTool.fromFunction[AgentSchemaSuite.Titled]("t", "d")(_ => "")
     val js = Toolbox.inputSchema(t)
-    assert(js.hcursor.downField("properties").downField("title").succeeded, js.noSpaces)
-    assert(js.hcursor.downField("title").failed, js.noSpaces)
+    assert(js.cursor.downField("properties").downField("title").succeeded, js.noSpaces)
+    assert(js.cursor.downField("title").failed, js.noSpaces)
 
   test("the agent search, facets and get_source take what steps use, mapped onto the same handlers"):
     val search = schema(LibraryAgentTools.Search)
@@ -161,29 +164,28 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
-    import io.circe.parser.decode
     // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
     assertEquals(
-      decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
+      RawJson.decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
       Right(AgentSearchInput(topics = List(Filter.Topics("dragon_slaying_myth")), limit = Some(Filter.Limit(50))))
     )
     assertEquals(
-      decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""),
+      RawJson.decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""),
       Right(AgentGetSourceInput(Citekey.assume("x")))
     )
     assertEquals(
-      decode[AgentFacetsInput]("""{"field":"tags"}"""),
+      RawJson.decode[AgentFacetsInput]("""{"field":"tags"}"""),
       Right(AgentFacetsInput(AgentFacetsInput.Field("tags")))
     )
-    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
+    assertEquals(RawJson.decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
     val t = box.tool(LibraryAgentTools.Search).get
     assert(
-      t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
+      t.codec.decodeJson(Json.obj("topics" -> Json.arr(Json.fromString("a")))).isRight,
       "the codec the agent endpoints decode with"
     )
 
 object AgentSchemaSuite:
   final case class Titled(title: String)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

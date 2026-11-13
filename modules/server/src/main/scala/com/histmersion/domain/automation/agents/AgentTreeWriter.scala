@@ -1,13 +1,15 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
-import io.circe.Json
-import io.circe.syntax.*
 
 private[agents] object AgentTreeWriter:
   private val Manifest =
@@ -21,10 +23,9 @@ private[agents] object AgentTreeWriter:
         Store.Key.of(name).fold(error => throw IllegalArgumentException(error.sentence), identity)
       store.makeDirectory().fold(error => throw java.io.IOException(error.message.sentence), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
-        io.circe.parser
-          .parse(blob.text().value)
+        RawJson.parse(blob.text().value)
           .toOption
-          .flatMap(_.hcursor.downField("files").as[Map[String, String]].toOption)
+          .flatMap(_.cursor.downField("files").as[Map[String, String]].toOption)
           .map(_.keys.toList)
           .getOrElse(Nil)
       }

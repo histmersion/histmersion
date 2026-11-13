@@ -1,5 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -320,12 +323,11 @@ object ArticleCli:
         case (Some(e), None) =>
           read(e)
             .flatMap(t =>
-              io.circe.parser
-                .decode[List[Article.Edits.EditAnswer]](t)
+              RawJson.decode[List[Article.Edits.EditAnswer]](t)
                 .left
                 .map(err =>
                   Cli.Error(
-                    Problem.Unclassified(Legacy.Text(s"$e: not a JSON list of edits (${err.getMessage})")),
+                    Problem.Unclassified(Legacy.Text(s"$e: not a JSON list of edits ($err)")),
                     exitCode = ExitCode.Usage
                   )
                 )

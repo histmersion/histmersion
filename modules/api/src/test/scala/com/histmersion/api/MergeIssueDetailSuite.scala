@@ -1,12 +1,12 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.Json
-import io.circe.syntax.*
 
 import java.util.UUID
 import com.histmersion.api.exchange.{IssueField, IssuePlace, IssueSide, IssueSpan}

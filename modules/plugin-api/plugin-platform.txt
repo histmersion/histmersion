@@ -10,19 +10,19 @@
 # against the old version may stop linking.
 #
 # sconfig, kindlings-sconfig-derivation and iron are also plugin-api's own dependencies (its POM lists them):
-# the SPI's signatures name their types (ConfigReader, and since SPI 2 the Iron newtypes Year, Doi, …).
+# the SPI's signatures name their types (ConfigReader, and since SPI 2 the Iron newtypes Year, Doi, …). JSON is
+# jsoniter-scala with Kindlings' derivation and AST, which plugin-api's JSON module (histmersion-json) brings.
 #
 # group:artifact:version
 org.scala-lang:scala3-library_3:3.10.0
 org.ekrich:sconfig_3:2.1.0
 com.kubuszok:kindlings-sconfig-derivation_3:0.3.3
-io.circe:circe-core_3:0.14.17
-io.circe:circe-parser_3:0.14.17
-com.kubuszok:kindlings-circe-derivation_3:0.3.3
-org.typelevel:cats-core_3:2.13.0
+com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3:2.41.5
+com.kubuszok:kindlings-jsoniter-derivation_3:0.3.3
+com.kubuszok:kindlings-jsoniter-json_3:0.3.3
 com.softwaremill.sttp.client4:core_3:4.1.0
 com.softwaremill.sttp.tapir:tapir-core_3:1.14.0
-com.softwaremill.sttp.tapir:tapir-json-circe_3:1.14.0
+com.softwaremill.sttp.tapir:tapir-jsoniter-scala_3:1.14.0
 com.kubuszok:kindlings-tapir-schema-derivation_3:0.3.3
 com.softwaremill.ox:core_3:1.0.2
 io.github.iltotore:iron_3:3.4.1

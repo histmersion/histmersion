@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
@@ -78,7 +81,7 @@ private[evidence] object EvidenceBundleRepo:
           Bundle.EventCandidate.Score(r.score.value),
           Bundle.EventCandidate.Status(r.status.value),
           r.findings.map(f => Bundle.EventCandidate.Findings(f.value)),
-          io.circe.parser.parse(r.passages.value).getOrElse(io.circe.Json.arr()),
+          RawJson.parse(r.passages.value).getOrElse(Json.arr()),
           r.reasons.map(x => Bundle.EventCandidate.Reasons(x.value)),
           Bundle.EventCandidate.ComputedAt(r.computedAt.value)
         )
@@ -119,7 +122,7 @@ private[evidence] object EvidenceBundleRepo:
         .toMap
       w.es.eventCandidates.foreach { c =>
         for id <- eventIds(c.eventUid); ck <- w.citekeyHere(c.sourceUid) do
-          val passages = BundleFormat.printer.print(c.passages)
+          val passages = BundleFormat.print(c.passages)
           here.get((id.value, ck.value)) match
             case None =>
               sql"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons, computed_at)

@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -16,8 +20,6 @@ import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi
 import com.histmersion.server.media.{FakeMediaHttp, MediaWire}
 import com.augustnagro.magnum.*
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -421,7 +423,7 @@ class MediaOracleSuite extends DbSuite:
     parser
       .parse(payload)
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
+      .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
   private def awaitJob(url: String, id: String, left: Int = 600): String =
@@ -848,7 +850,7 @@ class MediaOracleSuite extends DbSuite:
             if digest(k) && v.isString then k -> Json.fromString("DIGEST") else k -> walk(v)
           })
       )
-    parser.parse(text) match
+    RawJson.parse(text) match
       case Right(j) => normalise(walk(j).spaces2SortKeys, names)
       case Left(_)  => normalise(text, names)
 
@@ -1300,12 +1302,12 @@ class MediaOracleSuite extends DbSuite:
     parser
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           if c.downField("condition").focus.forall(_.isNull)
@@ -1321,12 +1323,12 @@ class MediaOracleSuite extends DbSuite:
     parser
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           kind <- c.downField("kind").as[String].toOption

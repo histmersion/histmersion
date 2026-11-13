@@ -1,7 +1,7 @@
 package com.histmersion
 package api.basemap
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import sttp.model.{Header, HeaderNames, StatusCode}
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo

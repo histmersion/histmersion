@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -20,7 +20,7 @@ final case class ArchiveItem(
     description: Option[ArchiveItem.Description] = None,
     lendingOnly: ArchiveItem.LendingOnly = ArchiveItem.LendingOnly(false),
     files: List[ArchiveFile] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

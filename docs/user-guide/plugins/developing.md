@@ -51,10 +51,9 @@ anything:
 |---|---|
 | Scala 3 standard library | the language |
 | sconfig, kindlings sconfig derivation | settings (the API is built on them) |
-| circe (core, parser), kindlings circe derivation | JSON |
-| cats | functional data types (circe uses it) |
+| jsoniter-scala (core), kindlings jsoniter derivation and JSON AST | JSON |
 | sttp client 4 | HTTP models (for requests, still use `ctx.http`) |
-| tapir (core, circe JSON), kindlings tapir schema derivation | endpoint and schema descriptions |
+| tapir (core, jsoniter JSON), kindlings tapir schema derivation | endpoint and schema descriptions |
 | ox | direct-style concurrency |
 | iron | refined types |
 
@@ -191,7 +190,7 @@ naming the library and both versions:
 
 ```text
 refused:
-  - doi-mirror-0.1.0.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — …
+  - doi-mirror-0.1.0.jar needs com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3 2.42.0, but this Histmersion ships 2.41.5 — …
 ```
 
 Build against the platform's version instead, or wait for a Histmersion that ships the newer one.

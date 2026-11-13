@@ -2,7 +2,7 @@ package com.histmersion
 package api
 
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import sttp.model.StatusCode
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.checks.{FormatCheck, FormatReport, Lint}

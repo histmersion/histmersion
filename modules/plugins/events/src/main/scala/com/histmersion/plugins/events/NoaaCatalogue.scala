@@ -1,10 +1,14 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
-import io.circe.{ACursor, Json}
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -52,8 +56,8 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t.value).toOption)
-      .flatMap(j => NoaaCatalogue.datasetOf(stored.id).flatMap(NoaaCatalogue.record(_, j.hcursor)))
+      .flatMap(t => RawJson.parse(t.value).toOption)
+      .flatMap(j => NoaaCatalogue.datasetOf(stored.id).flatMap(NoaaCatalogue.record(_, j.cursor)))
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
 
 object NoaaCatalogue:
@@ -98,11 +102,11 @@ object NoaaCatalogue:
     * are dropped; very doubtful (1) and questionable (2) ones are `contested`.
     */
   def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("items").focus.flatMap(_.asArray) match
       case None        => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
       case Some(items) =>
-        Right((items.toList.flatMap(i => record(dataset, i.hcursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
+        Right((items.toList.flatMap(i => record(dataset, i.cursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 
   /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
   def datasetOf(providerId: CatalogueEvent.Id): Option[Dataset] =
@@ -122,7 +126,7 @@ object NoaaCatalogue:
     )
 
   /** Pure: one item of a dataset's answer as an event. */
-  def record(dataset: Dataset, i: ACursor): Option[CatalogueEvent] =
+  def record(dataset: Dataset, i: Cursor): Option[CatalogueEvent] =
     import JsonFields.*
     val kind = dataset match
       case Earthquakes => "earthquake"

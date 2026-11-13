@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -74,7 +75,7 @@ class BundleMergeSuite extends munit.FunSuite:
           None,
           None,
           Bundle.EventCatalogue.Historicity("attested"),
-          io.circe.Json.obj(),
+          Json.obj(),
           Bundle.EventCatalogue.RetrievedAt("2026-10-05T00:00:00.000000Z")
         )
       ),
@@ -86,7 +87,7 @@ class BundleMergeSuite extends munit.FunSuite:
           Bundle.EventCandidate.Score(1.0),
           Bundle.EventCandidate.Status("proposed"),
           Nil,
-          io.circe.Json.arr(),
+          Json.arr(),
           Nil,
           Bundle.EventCandidate.ComputedAt("2026-10-05T00:00:00.000000Z")
         )

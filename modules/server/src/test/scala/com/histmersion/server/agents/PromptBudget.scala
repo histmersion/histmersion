@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,8 +22,6 @@ import com.histmersion.domain.automation.agents.{
 
 import com.histmersion.domain.automation.workflows.ToolName
 
-import io.circe.Json
-import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import java.nio.file.{Files, Path}

@@ -86,7 +86,7 @@ modules/api/src/main/scala/com/histmersion/api/WireEnumValues.scala	json	lists a
 modules/api/src/main/scala/com/histmersion/api/catalogue/Gazetteer.scala	json	reads gazetteer download files into place records
 modules/api/src/main/scala/com/histmersion/api/catalogue/Lpf.scala	json	reads Linked Places Format JSON into place records
 modules/api/src/main/scala/com/histmersion/api/catalogue/PeriodO.scala	json	reads the PeriodO dataset JSON into period records
-modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	json	gives every newtype its JSON encoder and decoder from its base type
+modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	json	gives every newtype its JSON codec from its base type
 modules/api/src/main/scala/com/histmersion/api/json/Schema.scala	json	builds the Tapir schema that describes the JSON of a type
 modules/core/src/main/scala/com/histmersion/domain/JsonRead.scala	json	reads fields out of a stored JSON document for the collection APIs
 modules/core/src/main/scala/com/histmersion/util/json/StoredIdCodecs.scala	json	decodes the ids held in stored checkpoint and run JSON
@@ -265,3 +265,8 @@ modules/api/src/main/scala/com/histmersion/api/problem/Answer.scala	render	maps 
 modules/api/src/main/scala/com/histmersion/api/problem/Column.scala	render	writes the frozen sentence a text column keeps for a problem and reads a column's text back as the case
 modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	render	maps the problems a command failed with, and where it met them, to the CLI's exit code
 modules/server/src/main/scala/com/histmersion/util/problem/ProblemLog.scala	render	writes a problem's log line: its group and case, its fields by name, its sentence
+modules/json/src/main/scala/com/histmersion/util/json/Cursor.scala	json	walks JSON no record describes and finds where a text broke off
+modules/json/src/main/scala/com/histmersion/util/json/JsonCodec.scala	json	derives the records' JSON codecs and gives the base types' and containers'
+modules/json/src/main/scala/com/histmersion/util/json/RawJson.scala	json	reads and writes JSON no record describes, as text circe wrote
+modules/server/src/main/scala/com/histmersion/domain/automation/agents/SttpAiJson.scala	json	the one place sttp-ai's circe codecs and JSON Schemas meet ours
+modules/server/src/main/scala/com/histmersion/util/mcp/ChimpJson.scala	json	the one place Chimp's circe decoders meet our codecs

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventCount(key: EventCount.Key, n: EventCount.N)
-    derives KindlingsCodecAsObject,
+    derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventCount:

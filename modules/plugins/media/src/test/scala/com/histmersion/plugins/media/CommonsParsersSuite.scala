@@ -1,5 +1,9 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -8,8 +12,6 @@ import com.histmersion.config.AppConfig
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{FirstPartySettings, HostLicences}
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.circe.Json
-import io.circe.parser.parse as json
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -56,7 +58,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     )
     assert(!t.value.contains("extmetadata") && !t.value.contains("maxlag"), t)
 
-  private val imageinfo = json(
+  private val imageinfo = RawJson.parse(
     """{"query":{
     "normalized":[{"from":"File:a.jpg","to":"File:A.jpg"}],
     "pages":[
@@ -83,7 +85,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(a.meta.get(Commons.File.MetaKey("Flag")), Some("true"))
 
   test("imageinfo: an API error is a Left for the whole answer"):
-    val err = json("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
+    val err = RawJson.parse("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
     assertEquals(Commons.imageInfo(err).left.toOption.map(_.legacyText.takeWhile(_ != ':')), Some("maxlag"))
 
   // ── rights ───────────────────────────────────────────────────────────────────────────────────

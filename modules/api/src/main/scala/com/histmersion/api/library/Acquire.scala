@@ -9,7 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.jobs.JobInfo
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -344,7 +344,7 @@ object Acquire:
         outcome: AcquireCheck.Outcome,
         reason: Problem,
         checks: AcquireCheck.Checks = AcquireCheck.Checks(1)
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -362,7 +362,7 @@ object Acquire:
         id: Option[RecheckRequest.Id] = None,
         by: Option[RecheckRequest.By] = None,
         all: RecheckRequest.All = RecheckRequest.All(false)
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -384,7 +384,7 @@ object Acquire:
         action: RecheckRow.Action = RecheckRow.Action(""),
         detail: RecheckRow.Detail = RecheckRow.Detail(""),
         citekey: Option[Citekey] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -409,7 +409,7 @@ object Acquire:
         rows: List[RecheckRow] = Nil,
         note: Option[RecheckResult.Note] = None,
         job: Option[JobInfo] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -441,7 +441,7 @@ object Acquire:
         since: RecheckJob.Since = RecheckJob.Since(""),
         by: RecheckJob.By = RecheckJob.By(""),
         resumes: Option[RecheckJob.Resumes] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
     object RecheckJob:
@@ -482,7 +482,7 @@ object Acquire:
         nextPass: Option[RecheckStatus.NextPass] = None,
         note: Option[RecheckStatus.Note] = None,
         job: Option[RecheckStatus.Job] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 

@@ -1,5 +1,8 @@
 package com.histmersion
 package util.plugins
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -7,9 +10,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.{parser, Printer}
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
@@ -30,7 +31,6 @@ object PluginKit:
     private def nonEmpty: Boolean = id.value.nonEmpty
 
   /** JSON as these files are written: two-space indented, absent options left out. */
-  private val printer = Printer.spaces2.copy(dropNullValues = true)
 
   // ── digests ───────────────────────────────────────────────────────────────────────────────────
 
@@ -65,17 +65,16 @@ object PluginKit:
     )
 
   def parseSet(text: String): Either[Problem, PluginSet] =
-    parser.decode[PluginSet](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugin-set.json: ${e.getMessage}")))
+    RawJson.decode[PluginSet](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugin-set.json: $e")))
 
-  def renderSet(s: PluginSet): String = s.asJson.printWith(printer)
+  def renderSet(s: PluginSet): String = s.asJson.withoutNulls.spaces2
 
   def parseJars(text: String): Either[Problem, List[PluginJar]] =
-    parser
-      .decode[List[PluginJar]](text)
+    RawJson.decode[List[PluginJar]](text)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"plugin description: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"plugin description: $e")))
 
-  def renderJars(js: List[PluginJar]): String = js.asJson.printWith(printer)
+  def renderJars(js: List[PluginJar]): String = js.asJson.withoutNulls.spaces2
 
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
@@ -250,7 +249,7 @@ object PluginKit:
       addedAt: Installed.AddedAt,
       plugins: List[PluginDescription] = Nil,
       signer: Option[Installed.Signer] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Installed:
     type File = PluginJar.File
@@ -264,7 +263,7 @@ object PluginKit:
     type Signer = Signer.T
     object Signer extends Newtype[String, Pure]
 
-  final case class Index(jars: List[Installed] = Nil) derives KindlingsCodecAsObject:
+  final case class Index(jars: List[Installed] = Nil) derives JsonCodec:
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file.value))
     def drop(file: Installed.File): Index = Index(jars.filterNot(_.file == file))
 
@@ -273,9 +272,9 @@ object PluginKit:
       jars.find(j => j.plugins.exists(_.id == id) && j.signer.nonEmpty).flatMap(_.signer)
 
   def parseIndex(text: String): Either[Problem, Index] =
-    parser.decode[Index](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugins index: ${e.getMessage}")))
+    RawJson.decode[Index](text).left.map(e => Problem.Unclassified(Legacy.Text(s"plugins index: $e")))
 
-  def renderIndex(i: Index): String = i.asJson.printWith(printer)
+  def renderIndex(i: Index): String = i.asJson.withoutNulls.spaces2
 
   /** The plugin id a jar file belongs to: the index's, else `<id>` of the `<id>-<version>.jar` name. */
   def idsOf(file: Installed.File, index: Index): List[PluginDescription.Id] =
@@ -344,7 +343,7 @@ object PluginKit:
 
   // ── the relink kit's manifest ─────────────────────────────────────────────────────────────────
 
-  final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+  final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives JsonCodec
 
   object KitFile:
     type File = File.T
@@ -363,7 +362,7 @@ object PluginKit:
       spiVersion: PluginSet.SpiVersion,
       mainClass: KitManifest.MainClass,
       files: List[KitFile]
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def label: String = s"$version${commit.fold("")(c => s" ($c)")}"
 
   object KitManifest:
@@ -381,16 +380,15 @@ object PluginKit:
   val KitFormat: KitManifest.Format = KitManifest.Format(1)
 
   def parseKit(text: String): Either[Problem, KitManifest] =
-    parser
-      .decode[KitManifest](text)
+    RawJson.decode[KitManifest](text)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"kit.json: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"kit.json: $e")))
       .filterOrElse(
         _.format <= KitFormat,
         Problem.Unclassified(Legacy.Text(s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)"))
       )
 
-  def renderKit(k: KitManifest): String = k.asJson.printWith(printer)
+  def renderKit(k: KitManifest): String = k.asJson.withoutNulls.spaces2
 
   /** `SHA256SUMS`, the format `shasum -a 256 -c` / `sha256sum -c` read: `<sha256>  <path>`, sorted. */
   def sha256sums(files: List[KitFile]): String =

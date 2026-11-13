@@ -1,10 +1,12 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Ascii, WireEnumValues}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -12,7 +14,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Goal
-import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -31,7 +32,7 @@ final case class MergeIssue(
     decision: Option[MergeDecision] = None,
     decidedBy: Option[MergeIssue.DecidedBy] = None,
     detail: Option[IssueDetail] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def open: Boolean = (severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty)

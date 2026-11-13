@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,7 +16,6 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import io.circe.parser.parse
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
   EventLead,
@@ -487,14 +487,14 @@ class EventLinksSuite extends munit.FunSuite:
     )
 
   test("Wikidata claims: P31 values of each item, deprecated ones dropped"):
-    val js = parse("""{"entities":{"Q1":{"claims":{"P31":[
+    val js = RawJson.parse("""{"entities":{"Q1":{"claims":{"P31":[
       {"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q755017"}}}},
       {"rank":"deprecated","mainsnak":{"datavalue":{"value":{"id":"Q515"}}}}]}},"Q2":{"claims":{}}}}""").toOption.get
     assertEquals(
       EventProviders.WikidataEvents.claims(js, EventProviders.WikidataProperty("P31")),
       Right(Map("Q1" -> List("Q755017"), "Q2" -> Nil))
     )
-    val names = parse("""{"entities":{"Q1":{"labels":{"en":{"value":"Siege of X"},"de":{"value":"Belagerung von X"}},
+    val names = RawJson.parse("""{"entities":{"Q1":{"labels":{"en":{"value":"Siege of X"},"de":{"value":"Belagerung von X"}},
       "aliases":{"en":[{"value":"X siege"}]}}}}""").toOption.get
     assertEquals(
       EventProviders.WikidataEvents.names(names).map(_("Q1").toSet),

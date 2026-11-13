@@ -1,11 +1,13 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.PlanQuota.*
-import io.circe.parser
 
 import java.nio.file.Files
 import com.histmersion.util.storage.Stores
@@ -45,7 +47,7 @@ class PlanPoolsSuite extends munit.FunSuite:
       | "rateLimitUpsell":{"cta":"reset_usage"}}""".stripMargin
 
   test("codex: windows keyed by LENGTH and bucket; a reached limit refused; ordinaryUsageAllowed false is a refusal"):
-    val (rs, refusal, plan) = PlanPools.codexReadings(parser.parse(Captured).toOption.get, Now(1000L))
+    val (rs, refusal, plan) = PlanPools.codexReadings(RawJson.parse(Captured).toOption.get, Now(1000L))
     val got = rs.map(r => s"${r.limit} ${r.kind} ${r.usedPct} ${r.rejected} ${r.model.getOrElse("-")}").toSet
     assertEquals(got, Set("codex 10080m 100.0 true -", "gpt-reserve 10080m 0.0 false gpt-5.6-luna"))
     assertEquals(rs.find(_.limit.value == "codex").flatMap(_.resetsAt), Some(1791625500000L))
@@ -55,7 +57,7 @@ class PlanPoolsSuite extends munit.FunSuite:
   test("codex: a plan whose primary is the 5-hour window and secondary the week"):
     val j = """{"rateLimits":{"limitId":"codex","primary":{"usedPercent":2,"windowDurationMins":300,"resetsAt":1790552145},
               |"secondary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1791138940},"planType":"plus","rateLimitReachedType":null}}""".stripMargin
-    val (rs, refusal, _) = PlanPools.codexReadings(parser.parse(j).toOption.get, Now(0L))
+    val (rs, refusal, _) = PlanPools.codexReadings(RawJson.parse(j).toOption.get, Now(0L))
     assertEquals(rs.map(_.kind).toSet, Set("300m", "10080m"))
     assertEquals(refusal, None)
 
@@ -83,7 +85,7 @@ class PlanPoolsSuite extends munit.FunSuite:
     val home = Files.createDirectories(dir.resolve("home"))
     val r = PlanPools.readCodex(CodexConfig.Command(script.toString), home, AgentsConfig.DoctorTimeoutSeconds(10))
     assert(r.isRight, r)
-    assertEquals(r.toOption.get.hcursor.downField("ordinaryUsageAllowed").as[Boolean], Right(false))
+    assertEquals(r.toOption.get.cursor.downField("ordinaryUsageAllowed").as[Boolean], Right(false))
     val sent = Files.readString(log)
     assertEquals(sent.linesIterator.size, 3, sent)
     assert(!sent.contains("Credit") && !sent.contains("consume"), sent)

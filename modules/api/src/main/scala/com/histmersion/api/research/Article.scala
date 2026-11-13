@@ -1,4 +1,5 @@
 package com.histmersion.api.research
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -21,10 +22,8 @@ import com.histmersion.api.{ListPatch, StrictJson}
 import com.histmersion.api.{Plural, StatusCount}
 import com.histmersion.api.{Plural, WireEnum}
 import com.histmersion.api.library.Source
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
-import io.circe.{Decoder, Encoder}
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -322,7 +321,7 @@ object Article:
       )
 
   final case class Deleted(slug: Slug, deleted: Deleted.Value)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -362,12 +361,11 @@ object Article:
         def all: Array[Op] = values
         def wire(e: Op): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
         def fromWire(s: WireEnumValues.Wire): Option[Op] = parse(Wire((s).value))
-      given Encoder[Op] = WireEnum.encoder
-      given Decoder[Op] = WireEnum.decoder
+      given JsonValueCodec[Op] = WireEnum.codec
       given Schema[Op] = WireEnum.schema
 
     final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None)
-        derives KindlingsCodecAsObject
+        derives JsonCodec
     object EditAnswer:
       export Edits.{Anchor, NewText as Text}
 
@@ -437,7 +435,7 @@ object Article:
         anchor: EditResult.Anchor,
         text: EditResult.Text,
         problem: Option[Problem] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
       def applied: Boolean = (problem.isEmpty)
@@ -578,7 +576,7 @@ object Article:
         edits: scala.List[EditAnswer] = Nil,
         body: Option[Body] = None,
         kind: Option[Kind.Wire] = None
-    ) derives KindlingsCodecAsObject:
+    ) derives JsonCodec:
       def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
@@ -605,7 +603,7 @@ object Article:
         wordsBefore: ArticleCheck.WordsBefore,
         wordsAfter: ArticleCheck.WordsAfter,
         body: Body
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
       def clean: Boolean = (problems.isEmpty)
@@ -699,7 +697,7 @@ object Article:
         )
       )
 
-    given Codec.AsObject[Filter] = StrictJson.codec(KindlingsCodecAsObject.derived[Filter])
+    given JsonCodec[Filter] = StrictJson.codec(JsonCodec.derived[Filter])
 
     private[api] def quoted(s: String): String = ("\"" + (s).replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
 
@@ -749,7 +747,7 @@ object Article:
       mtime: Option[Import.Mtime] = None,
       force: Import.Force = Import.Force(false),
       strict: Import.Strict = Import.Strict(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -780,12 +778,11 @@ object Article:
       def fromWire(s: WireEnumValues.Wire): Option[Kind] =
         values.find(_.toString.equalsIgnoreCase((s).value))
 
-    given Encoder[Kind] = WireEnum.encoder
-    given Decoder[Kind] = WireEnum.decoder
+    given JsonValueCodec[Kind] = WireEnum.codec
     given Schema[Kind] = WireEnum.schema
 
   final case class KindCount(kind: Kind.Wire, count: KindCount.Count)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -977,7 +974,7 @@ object Article:
       offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
       next: Option[com.histmersion.api.Offset] = None,
       kinds: scala.List[KindCount] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(articles.size))
@@ -1037,7 +1034,7 @@ object Article:
     object Section extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export Article.{Regions, UpdatedAt as IfUpdatedAt}
 
-    given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
+    given JsonCodec[Patch] = StrictJson.codec(JsonCodec.derived[Patch])
 
   object Plans:
     type Markdown = Markdown.T
@@ -1052,7 +1049,7 @@ object Article:
         citedIn: FilterProposal.CitedIn = FilterProposal.CitedIn(0),
         missed: scala.List[FilterProposal.Missed] = Nil,
         sample: scala.List[FilterProposal.Sample] = Nil
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
       def recall: FilterProposal.Recall = if cited == FilterProposal.Cited(0) then FilterProposal.Recall(1.0)
@@ -1084,7 +1081,7 @@ object Article:
         hits: ProposedArticle.Hits = ProposedArticle.Hits(0),
         overlap: ProposedArticle.Overlap = ProposedArticle.Overlap(0.0),
         overlapWith: Option[ProposedArticle.OverlapWith] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -1101,7 +1098,7 @@ object Article:
         rationale: ArticlePlan.Rationale = ArticlePlan.Rationale(""),
         articles: scala.List[ProposedArticle] = Nil,
         dropped: scala.List[ArticlePlan.Dropped] = Nil
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
       def isEmpty: Boolean = (articles.isEmpty)
@@ -1157,7 +1154,7 @@ object Article:
     export Article.{Regions, Tags}
     export com.histmersion.api.catalogue.{Year as PeriodEnd, Year as PeriodStart}
 
-    given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
+    given JsonCodec[Put] = StrictJson.codec(JsonCodec.derived[Put])
 
     def of(a: Article): Put = Put(
       a.title,
@@ -1182,7 +1179,7 @@ object Article:
       rounds: scala.List[ReviewRound] = Nil,
       goals: scala.List[ReviewGoal] = Nil,
       approvals: scala.List[ReviewApproval] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object ReviewView:
@@ -1259,7 +1256,7 @@ object Article:
       periodEnd: Option[Row.PeriodEnd],
       updatedAt: Option[Row.UpdatedAt] = None,
       uid: Option[java.util.UUID] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1279,7 +1276,7 @@ object Article:
       periodEnd: Option[Summary.PeriodEnd],
       updatedAt: Option[Summary.UpdatedAt] = None,
       review: Option[ReviewBadge] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1295,7 +1292,7 @@ object Article:
       updatedAt: Version.UpdatedAt,
       createdAt: Version.CreatedAt,
       wordCount: Version.WordCount
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1316,7 +1313,7 @@ object Article:
       summary: Option[SummaryText],
       updatedAt: VersionFull.UpdatedAt,
       createdAt: VersionFull.CreatedAt
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1329,6 +1326,6 @@ object Article:
       sourcesCited: scala.List[CitedSource],
       formatting: scala.List[FormatIssue] = Nil,
       coverage: Option[Coverage] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

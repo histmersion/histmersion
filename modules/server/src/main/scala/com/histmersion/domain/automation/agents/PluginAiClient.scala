@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -7,10 +9,8 @@ import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
-import sttp.apispec.circe.*
 import sttp.client4.Backend
 import sttp.shared.Identity
 import io.github.iltotore.iron.constraint.any.Pure
@@ -94,16 +94,16 @@ object PluginAiClient:
 
   /** Pure: a tool as the provider is told about it. */
   def tool(t: AgentTool[Identity, ?]): AiTool =
-    AiTool(AiTool.Name(t.name), AiTool.Description(t.description), AiTool.InputSchema(t.rawJsonSchema.noSpaces))
+    AiTool(AiTool.Name(t.name), AiTool.Description(t.description), AiTool.InputSchema(SttpAiJson.inputSchema(t).noSpaces))
 
   /** Pure: the answer's JSON Schema (text), the `$schema` marker dropped. */
   def schemaJson(s: ResponseSchema[?]): String =
-    s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces
+    SttpAiJson.answerSchema(s).asObject.fold(Json.Null)(o => Json.fromJsonObject(o.remove("$schema"))).noSpaces
 
   /** Pure: the answer's JSON Schema (text) as sttp-ai's own providers render it, nulls dropped, the `$schema` marker
     * kept.
     */
-  def renderedSchema(s: ResponseSchema[?]): String = s.schema.asJson.deepDropNullValues.noSpaces
+  def renderedSchema(s: ResponseSchema[?]): String = SttpAiJson.answerSchema(s).noSpaces
 
   /** Pure: the provider's answer → sttp-ai's. */
   def response(t: AiTurn, model: ModelRef): AgentResponse =

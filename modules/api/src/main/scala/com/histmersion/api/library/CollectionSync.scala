@@ -3,8 +3,7 @@ package api.library
 
 import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -15,7 +14,7 @@ final case class CollectionSync(
     gaps: CollectionGaps,
     applied: CollectionSync.Applied,
     pushes: List[CollectionSync.Push]
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -29,7 +28,7 @@ object CollectionSync:
       citekey: Citekey,
       id: Option[Push.Id],
       error: Option[Problem]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -41,7 +40,7 @@ object CollectionSync:
   final case class Request(
       apply: Request.Apply = Request.Apply(false),
       limit: Option[Request.Limit] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

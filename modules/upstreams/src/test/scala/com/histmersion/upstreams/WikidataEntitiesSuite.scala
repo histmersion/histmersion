@@ -1,7 +1,8 @@
 package com.histmersion
 package upstreams
-
-import io.circe.parser.parse as json
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.upstreams.wikidata.WikidataItem
@@ -11,7 +12,7 @@ import com.histmersion.upstreams.wikidata.WikidataItem
   */
 class WikidataEntitiesSuite extends munit.FunSuite:
 
-  private val entities = json("""{"entities":{
+  private val entities = RawJson.parse("""{"entities":{
     "Q1":{"id":"Q1","claims":{
       "P18":[
         {"mainsnak":{"snaktype":"value","datavalue":{"value":"B.jpg"}},"rank":"normal"},
@@ -48,7 +49,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
     assertEquals(WikidataStatement.best(normals, WikidataStatement.BestPer(0)), Nil)
 
   test("an API error (maxlag) is a Left with its code"):
-    val err = json("""{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 11 seconds lagged."}}""").toOption.get
+    val err = RawJson.parse("""{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 11 seconds lagged."}}""").toOption.get
     assertEquals(
       WikidataEntities
         .items(err, Set(WikidataStatement.Property("P18")))

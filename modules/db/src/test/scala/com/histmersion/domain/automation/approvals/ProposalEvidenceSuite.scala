@@ -1,11 +1,11 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
-import io.circe.syntax.*
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source

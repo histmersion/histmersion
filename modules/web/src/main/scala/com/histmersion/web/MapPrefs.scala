@@ -1,5 +1,8 @@
 package com.histmersion
 package web
+import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,7 +26,7 @@ final case class MapPrefs(
     contours: Option[MapPrefs.Contours] = None,
     depthPhysical: Option[MapPrefs.DepthPhysical] = None,
     depthReadable: Option[MapPrefs.DepthReadable] = None
-) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+) derives com.histmersion.util.json.JsonCodec,
       CanEqual:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
@@ -62,6 +65,6 @@ object MapPrefs:
   /** Kept as one JSON value; anything unreadable is no options at all. */
   given FieldCodec[MapPrefs]:
     def encode(a: MapPrefs) =
-      if a == MapPrefs() then Nil else List(FieldCodec.Token(io.circe.syntax.EncoderOps(a).asJson.noSpaces))
+      if a == MapPrefs() then Nil else List(FieldCodec.Token(writeToString(a)))
     def decode(vs: List[FieldCodec.Token]) =
-      Some(vs.headOption.flatMap(v => io.circe.parser.decode[MapPrefs](v.value).toOption).getOrElse(MapPrefs()))
+      Some(vs.headOption.flatMap(v => RawJson.decode[MapPrefs](v.value).toOption).getOrElse(MapPrefs()))

@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -84,7 +86,6 @@ class YearsSuite extends munit.FunSuite:
     assertEquals(Years.isoAstronomical(Years.Iso.Wire("x")), None)
 
   test("fromJson: numbers, decimal numbers and strings through the given reader"):
-    import io.circe.Json
     assertEquals(Years.fromJson(Json.fromLong(-1400), _ => None), Some(-1400L))
     assertEquals(Years.fromJson(Json.fromDoubleOrNull(-1400.0), _ => None), Some(-1400L))
     assertEquals(Years.fromJson(Json.fromString("1400 BCE"), raw => Lpf.parseYear(raw.value)), Some(-1400L))

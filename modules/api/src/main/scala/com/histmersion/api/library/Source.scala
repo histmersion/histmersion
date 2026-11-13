@@ -15,9 +15,8 @@ import com.histmersion.api.Write.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.{ListPatch, StrictJson}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import java.util.UUID
 import scala.annotation.tailrec
 import sttp.tapir.Schema
@@ -114,7 +113,7 @@ object Source:
         values.find(_.toString.equalsIgnoreCase((s).value))
 
   final case class Alias(alias: Alias.Value, citekey: Citekey)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -136,7 +135,7 @@ object Source:
       state: Candidate.State = Candidate.State(Candidates.State.New.wire.value),
       firstSeen: Candidate.FirstSeen = _root_.com.histmersion.api.library.Source.Candidate.FirstSeen(""),
       lastSeen: Candidate.LastSeen = _root_.com.histmersion.api.library.Source.Candidate.LastSeen("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -298,7 +297,7 @@ object Source:
 
     export Api.Apply
 
-    given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
+    given JsonCodec[DeleteRequest] = StrictJson.codec(JsonCodec.derived[DeleteRequest])
 
   final case class Deletion(
       citekey: Citekey,
@@ -314,7 +313,7 @@ object Source:
       mentions: List[Deletion.Mentions] = Nil,
       calibreId: Option[CalibreId] = None,
       logEntry: Option[Deletion.LogEntry] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def refused: Boolean = (blockers.nonEmpty)
@@ -359,7 +358,7 @@ object Source:
       provenance: Option[Provenance] = None,
       uid: Option[java.util.UUID] = None,
       origin: Option[java.util.UUID] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -371,7 +370,7 @@ object Source:
       depth: Graph.Depth,
       nodes: List[GraphNode],
       links: List[GraphLink]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -462,7 +461,7 @@ object Source:
       score: Option[Match.Score] = None,
       why: List[Problem] = Nil,
       issue: Option[Match.Issue] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Match:
@@ -506,7 +505,7 @@ object Source:
         CanEqual
   object Patch:
 
-    given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
+    given JsonCodec[Patch] = StrictJson.codec(JsonCodec.derived[Patch])
 
   final case class Put(
       title: Title,
@@ -533,7 +532,7 @@ object Source:
         com.histmersion.api.json.Schema
   object Put:
 
-    given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
+    given JsonCodec[Put] = StrictJson.codec(JsonCodec.derived[Put])
 
     def of(s: Source): Put = Put(
       title = s.title,
@@ -615,7 +614,7 @@ object Source:
       counts: Rename.Counts,
       /** Calibre never stores the citekey, but the host-side originals directory is keyed by it. */
       calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -647,7 +646,7 @@ object Source:
       findings: List[Finding.Row],
       formatting: List[FormatIssue] = Nil,
       illustration: Option[MediaThumb] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

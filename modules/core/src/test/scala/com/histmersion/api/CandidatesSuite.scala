@@ -1,5 +1,6 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -7,7 +8,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.parser.parse
 
 import java.time.LocalDate
 import com.histmersion.api.library.{
@@ -90,7 +90,7 @@ class CandidatesSuite extends munit.FunSuite:
     )
 
   test("Europe PMC's answer: DOI, title, authors, year, journal, open access, abstract"):
-    val j = parse(
+    val j = RawJson.parse(
       """{"resultList":{"result":[{"doi":"10.1234/e","title":"Bronze.","authorString":"Doe J, Roe K.","pubYear":"2026",
       "journalTitle":"J Arch","isOpenAccess":"Y","abstractText":"<p>Text</p>"},{"title":"No DOI","pubYear":"2025"}]}}"""
     ).toOption.get
@@ -110,7 +110,7 @@ class CandidatesSuite extends munit.FunSuite:
     assertEquals(ws(1).doi, None)
 
   test("CORE's answer: DOI, title, authors, year, publisher, a full text is open access"):
-    val j = parse("""{"results":[{"doi":"10.1234/c","title":"T","yearPublished":2026,"authors":[{"name":"A B"}],
+    val j = RawJson.parse("""{"results":[{"doi":"10.1234/c","title":"T","yearPublished":2026,"authors":[{"name":"A B"}],
       "publisher":"P","downloadUrl":"https://core.ac.uk/x.pdf","arxivId":null}]}""").toOption.get
     assertEquals(
       Candidates.coreWorks(j),
@@ -150,7 +150,7 @@ class CandidatesSuite extends munit.FunSuite:
     )
 
   test("OpenAlex's work: its authors' ids in byline order"):
-    val j = parse(
+    val j = RawJson.parse(
       """{"authorships":[{"author":{"id":"https://openalex.org/A1"}},{"author":{"id":"https://openalex.org/A22"}}]}"""
     ).toOption.get
     assertEquals(Candidates.openalexAuthorIds(j), List("A1", "A22"))

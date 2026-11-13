@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -32,7 +35,6 @@ import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.jobs.{Job, JobRepo}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
-import io.circe.syntax.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
 

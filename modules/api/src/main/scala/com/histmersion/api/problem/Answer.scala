@@ -1,13 +1,14 @@
 package com.histmersion
 package api
 package problem
+import util.json.RawJson.*
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import hearth.kindlings.circederivation.{Configuration, KindlingsCodecAsObject}
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Decoder, DecodingFailure, Encoder, Json, JsonObject}
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.model.StatusCode
-import sttp.tapir.json.circe.schemaForCirceJson
 
 import json.NewtypeCodecs.given
 import util.problem.{NonEmptyVector, Problem, Problems}
@@ -20,12 +21,12 @@ import Text.sentence
   * not render problems themselves. The companion maps a problem to its HTTP status, by group (and by case where a group
   * mixes them).
   */
-final case class Answer(problems: Vector[Entry]) derives KindlingsCodecAsObject, KindlingsSchema
+final case class Answer(problems: Vector[Entry]) derives JsonCodec, KindlingsSchema
 
 object Answer:
   /** One problem on the wire. */
   final case class Entry(group: Group, `case`: Case, data: Json, text: Sentence)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema
 
   /** The group a problem belongs to, by its name (`Invalid`). */
@@ -96,7 +97,7 @@ object Answer:
 
   extension (answer: Answer)
     /** The problems a body lists; a body that lists none, or a case this client does not know, is a failure. */
-    def decoded: Either[DecodingFailure, Problems] =
+    def decoded: Either[String, Problems] =
       val read = answer.problems.map(_.problem)
       read
         .collectFirst { case Left(failure) => failure }
@@ -105,72 +106,68 @@ object Answer:
           NonEmptyVector
             .from(all)
             .map[Problems](nev => if nev.size == 1 then nev.head else nev)
-            .toRight(DecodingFailure("no problems", Nil))
+            .toRight("no problems")
         )
 
   extension (entry: Entry)
     /** The problem one entry of the body names. */
-    def problem: Either[DecodingFailure, Problem] =
+    def problem: Either[String, Problem] =
       val wrapped = Json.obj(s"${entry.`case`}" -> entry.data)
       Problem.Group.values
         .find(g => g.productPrefix == s"${entry.group}")
-        .toRight(DecodingFailure(s"no group ${entry.group}", Nil))
-        .flatMap[DecodingFailure, Problem] {
-          case Problem.Group.Invalid      => invalid.decodeJson(wrapped)
-          case Problem.Group.NotFound     => notFound.decodeJson(wrapped)
-          case Problem.Group.Conflict     => conflict.decodeJson(wrapped)
-          case Problem.Group.Refused      => refused.decodeJson(wrapped)
-          case Problem.Group.Upstream     => upstream.decodeJson(wrapped)
-          case Problem.Group.Io           => io.decodeJson(wrapped)
-          case Problem.Group.Config       => config.decodeJson(wrapped)
-          case Problem.Group.Plugin       => plugin.decodeJson(wrapped)
-          case Problem.Group.Run          => run.decodeJson(wrapped)
-          case Problem.Group.Content      => content.decodeJson(wrapped)
-          case Problem.Group.Internal     => internal.decodeJson(wrapped)
-          case Problem.Group.Unclassified => unclassified.decodeJson(entry.data)
-          case Problem.Group.Stored       => stored.decodeJson(wrapped)
+        .toRight(s"no group ${entry.group}")
+        .flatMap[String, Problem] {
+          case Problem.Group.Invalid      => wrapped.as(using invalid)
+          case Problem.Group.NotFound     => wrapped.as(using notFound)
+          case Problem.Group.Conflict     => wrapped.as(using conflict)
+          case Problem.Group.Refused      => wrapped.as(using refused)
+          case Problem.Group.Upstream     => wrapped.as(using upstream)
+          case Problem.Group.Io           => wrapped.as(using io)
+          case Problem.Group.Config       => wrapped.as(using config)
+          case Problem.Group.Plugin       => wrapped.as(using plugin)
+          case Problem.Group.Run          => wrapped.as(using run)
+          case Problem.Group.Content      => wrapped.as(using content)
+          case Problem.Group.Internal     => wrapped.as(using internal)
+          case Problem.Group.Unclassified => entry.data.as(using unclassified)
+          case Problem.Group.Stored       => wrapped.as(using stored)
         }
 
   // ---- the derived codecs of the cases' fields ----------------------------------------------------------------
 
-  /** Code words as strings (`"Read"`), a case's defaults honoured. */
-  private given Configuration = Configuration.default.withDefaults.withEnumAsStrings
+  private given [A: JsonValueCodec] => JsonValueCodec[NonEmptyVector[A]] =
+    JsonCodec.mapped[NonEmptyVector[A], Vector[A]](_.toVector, NonEmptyVector.from(_).toRight("an empty list"))
 
-  private given [A] => (elements: Encoder[A]) => Encoder[NonEmptyVector[A]] =
-    Encoder.encodeVector[A].contramap(_.toVector)
+  // code words as strings (`"Read"`), a case's defaults honoured
 
-  private given [A] => (elements: Decoder[A]) => Decoder[NonEmptyVector[A]] =
-    Decoder.decodeVector[A].emap(NonEmptyVector.from(_).toRight("an empty list"))
-
-  private val invalid = summon[KindlingsCodecAsObject[Invalid]]
-  private val notFound = summon[KindlingsCodecAsObject[NotFound]]
-  private val conflict = summon[KindlingsCodecAsObject[Conflict]]
-  private val refused = summon[KindlingsCodecAsObject[Refused]]
-  private val upstream = summon[KindlingsCodecAsObject[Upstream]]
-  private val io = summon[KindlingsCodecAsObject[Io]]
-  private val config = summon[KindlingsCodecAsObject[Config]]
-  private val plugin = summon[KindlingsCodecAsObject[Plugin]]
-  private val run = summon[KindlingsCodecAsObject[Problem.Run]]
-  private val content = summon[KindlingsCodecAsObject[Content]]
-  private val internal = summon[KindlingsCodecAsObject[Internal]]
-  private val unclassified = summon[KindlingsCodecAsObject[Unclassified]]
-  private val stored = summon[KindlingsCodecAsObject[Stored]]
+  private val invalid = JsonCodec.derivedWords[Invalid]
+  private val notFound = JsonCodec.derivedWords[NotFound]
+  private val conflict = JsonCodec.derivedWords[Conflict]
+  private val refused = JsonCodec.derivedWords[Refused]
+  private val upstream = JsonCodec.derivedWords[Upstream]
+  private val io = JsonCodec.derivedWords[Io]
+  private val config = JsonCodec.derivedWords[Config]
+  private val plugin = JsonCodec.derivedWords[Plugin]
+  private val run = JsonCodec.derivedWords[Problem.Run]
+  private val content = JsonCodec.derivedWords[Content]
+  private val internal = JsonCodec.derivedWords[Internal]
+  private val unclassified = JsonCodec.derivedWords[Unclassified]
+  private val stored = JsonCodec.derivedWords[Stored]
 
   extension (problem: Problem)
     /** The case's name and its fields, as the group's derived codec writes them. */
     private def encoded: (String, Json) =
       val wrapped: JsonObject = problem match
-        case p: Invalid      => invalid.encodeObject(p)
-        case p: NotFound     => notFound.encodeObject(p)
-        case p: Conflict     => conflict.encodeObject(p)
-        case p: Refused      => refused.encodeObject(p)
-        case p: Upstream     => upstream.encodeObject(p)
-        case p: Io           => io.encodeObject(p)
-        case p: Config       => config.encodeObject(p)
-        case p: Plugin       => plugin.encodeObject(p)
-        case p: Problem.Run  => run.encodeObject(p)
-        case p: Content      => content.encodeObject(p)
-        case p: Internal     => internal.encodeObject(p)
-        case p: Unclassified => JsonObject.singleton("Unclassified", Json.fromJsonObject(unclassified.encodeObject(p)))
-        case p: Stored       => stored.encodeObject(p)
+        case p: Invalid => p.asJson(using invalid).asObject.getOrElse(JsonObject.empty)
+        case p: NotFound => p.asJson(using notFound).asObject.getOrElse(JsonObject.empty)
+        case p: Conflict => p.asJson(using conflict).asObject.getOrElse(JsonObject.empty)
+        case p: Refused => p.asJson(using refused).asObject.getOrElse(JsonObject.empty)
+        case p: Upstream => p.asJson(using upstream).asObject.getOrElse(JsonObject.empty)
+        case p: Io => p.asJson(using io).asObject.getOrElse(JsonObject.empty)
+        case p: Config => p.asJson(using config).asObject.getOrElse(JsonObject.empty)
+        case p: Plugin => p.asJson(using plugin).asObject.getOrElse(JsonObject.empty)
+        case p: Problem.Run => p.asJson(using run).asObject.getOrElse(JsonObject.empty)
+        case p: Content => p.asJson(using content).asObject.getOrElse(JsonObject.empty)
+        case p: Internal => p.asJson(using internal).asObject.getOrElse(JsonObject.empty)
+        case p: Unclassified => JsonObject("Unclassified" -> p.asJson(using unclassified))
+        case p: Stored => p.asJson(using stored).asObject.getOrElse(JsonObject.empty)
       wrapped.toList.headOption.getOrElse(("", Json.obj()))

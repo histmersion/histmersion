@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.database.given
 
@@ -11,7 +13,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.circe.Json
 import com.histmersion.api.catalogue.{Gazetteer, GazGeometry, GazRecord}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.catalogue.Place
@@ -32,7 +33,6 @@ import com.histmersion.api.catalogue.Place
   */
 private[places] object GazetteerRepo:
 
-  private val Json0 = io.circe.Printer.noSpaces
 
   /** A seed place's own identifiers as `place_links` (V071): Pleiades ids (a `pleiades_…` id and its `pleiades_uri`),
     * the Wikidata and GeoNames ids Natural Earth carries in `properties`, and the Wikidata item a curated place cites
@@ -206,7 +206,7 @@ private[places] object GazetteerRepo:
         val linkedRows =
           sql"""SELECT DISTINCT k.scheme, k.eid, p.id, p.import_source,
                        (l.import_source = '' OR (l.import_source = p.import_source AND l.import_ref = p.import_ref))
-                FROM jsonb_to_recordset(${Json0.print(keys)}::jsonb) AS k(scheme text, eid text)
+                FROM jsonb_to_recordset(${keys.noSpaces}::jsonb) AS k(scheme text, eid text)
                 JOIN place_links l ON l.scheme = k.scheme AND l.external_id = k.eid
                 JOIN places p ON p.id = l.place_id"""
             .query[(String, String, Place.Id, Option[Place.Match.ImportSource], Boolean)]
@@ -349,7 +349,7 @@ private[places] object GazetteerRepo:
                        ${SqlLiteral(
               RangeSql.range("d.lo", "d.hi")
             )}, d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su
-                FROM jsonb_to_recordset(${Json0.print(doc)}::jsonb)
+                FROM jsonb_to_recordset(${doc.noSpaces}::jsonb)
                   AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, su boolean,
                        source text, props text, ref text)
                 ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
@@ -381,7 +381,7 @@ private[places] object GazetteerRepo:
           )
         )
       }*)
-      val text = Json0.print(doc)
+      val text = doc.noSpaces
       val refs = rows.map(_._1.ref)
       val removed =
         sql"""DELETE FROM place_names n
@@ -418,7 +418,7 @@ private[places] object GazetteerRepo:
             )
           )
       }*)
-      val text = Json0.print(doc)
+      val text = doc.noSpaces
       val refs = rows.map(_._1.ref)
       val removed =
         sql"""DELETE FROM place_descriptions x
@@ -461,7 +461,7 @@ private[places] object GazetteerRepo:
           )
         }
       }*)
-      val text = Json0.print(doc)
+      val text = doc.noSpaces
       val refs = rows.map(_._1.ref)
       val removed =
         sql"""DELETE FROM place_links l

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.json.RawJson.*
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -19,8 +23,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.Pipeline
 import AcquisitionSweepRules.{Candidate, Ranking}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -245,7 +248,7 @@ final class AcquisitionSweepPipeline(
     val (q, s) = found.stored.toList.partition((doi, _) => picked.contains(doi))
     ctx.write(
       s"candidates of goal ${ctx.run.target}: ${q.size} queued, ${s.size} seen",
-      io.circe.Json.obj("queued" -> q.map(_._2).asJson, "seen" -> s.map(_._2).asJson)
+      Json.obj("queued" -> q.map(_._2).asJson, "seen" -> s.map(_._2).asJson)
     )(
       upstream().markCandidates(q.map(_._2), Candidates.State.Queued.wire).fold(_ => 0, _.value) +
         upstream().markCandidates(s.map(_._2), Candidates.State.Seen.wire).fold(_ => 0, _.value)
@@ -313,7 +316,7 @@ final class AcquisitionSweepPipeline(
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
-      io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
+      Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
     )(upstream().ingestLegal(doi).map { r =>
       val _ =
         goals.link(
@@ -378,7 +381,7 @@ final class AcquisitionSweepPipeline(
       )
       ctx.write(
         s"ingest backlog of $mid: ${c.doi} for goal $goal",
-        io.circe.Json.obj("doi" -> c.doi.asJson, "title" -> c.title.asJson, "why" -> p.why.asJson)
+        Json.obj("doi" -> c.doi.asJson, "title" -> c.title.asJson, "why" -> p.why.asJson)
       )(backlog.add(mid, goal, w))(IngestBacklog.Placement.New)
     }
     Parked(
@@ -402,17 +405,12 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
-  given io.circe.KeyEncoder[Problem] =
-    io.circe.KeyEncoder.encodeKeyString.contramap(_.sentence)
-  given io.circe.KeyDecoder[Problem] =
-    io.circe.KeyDecoder.decodeKeyString.map((text => Problem.Unclassified(Legacy.Text(text))))
-  given io.circe.KeyEncoder[Doi] = io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
-  given io.circe.KeyDecoder[Doi] = io.circe.KeyDecoder.decodeKeyString.map(Doi.assume(_))
-
+  given JsonKeyCodec[Problem] = JsonCodec.key[Problem](_.sentence, k => Right(Problem.Unclassified(Legacy.Text(k))))
+  given JsonKeyCodec[Doi] = JsonCodec.key[Doi](_.value, k => Right((Doi.assume(_))(k)))
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
   def picked(c: ManagerContext, run: Run.Id): List[Picked] =
     c.stepOutput(run, StepRecord.Name("rank"))
-      .flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption)
+      .flatMap(o => RawJson.decode[List[Picked]](o.value).toOption)
       .getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
@@ -423,23 +421,23 @@ object AcquisitionSweepPipeline:
       candidates: List[Candidate],
       skipped: Map[Problem, AcquisitionSweepRules.SkipCount],
       stored: Map[Doi, Source.Candidate.Id] = Map.empty
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
-  final case class Picked(candidate: Candidate, why: Problem) derives KindlingsCodecAsObject
+  final case class Picked(candidate: Candidate, why: Problem) derives JsonCodec
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
-  final case class Ingested(doi: Doi, citekey: Citekey) derives KindlingsCodecAsObject
+  final case class Ingested(doi: Doi, citekey: Citekey) derives JsonCodec
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
-  final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives KindlingsCodecAsObject
+  final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives JsonCodec
 
   /** What the ingest step of a run with a backlog did. */
-  final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject
+  final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives JsonCodec
 
   /** What the backlog step did: picks waiting in a backlog (new entries and ones joined), and picks the corpus or the
     * acquisition list had already.
     */
-  final case class Parked(waiting: Parked.Waiting, known: Parked.Known) derives KindlingsCodecAsObject
+  final case class Parked(waiting: Parked.Waiting, known: Parked.Known) derives JsonCodec
 
   object Parked:
     type Waiting = Waiting.T

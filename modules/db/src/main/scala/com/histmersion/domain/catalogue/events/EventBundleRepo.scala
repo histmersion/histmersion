@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.domain.catalogue.places.PlacesCarried
 import com.histmersion.util.data.exchange.BundleImport
@@ -157,7 +160,7 @@ private[events] object EventBundleRepo:
         r.magnitude.map(v => Bundle.EventCatalogue.Magnitude(v.value)),
         r.deaths.map(v => Bundle.EventCatalogue.Deaths(v.value)),
         Bundle.EventCatalogue.Historicity(r.historicity.value),
-        io.circe.parser.parse(r.record.value).getOrElse(io.circe.Json.obj()),
+        RawJson.parse(r.record.value).getOrElse(Json.obj()),
         Bundle.EventCatalogue.RetrievedAt(r.retrievedAt.value)
       )
     }
@@ -316,7 +319,7 @@ private[events] object EventBundleRepo:
             newer(here.get((c.provider.value, c.providerId.value)), Some(Bundle.UpdatedAt(c.retrievedAt.value)))
           )
           .foreach { id =>
-            val record = BundleFormat.printer.print(c.record)
+            val record = BundleFormat.print(c.record)
             sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                   end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record, retrieved_at)
                 VALUES (${c.provider}, ${c.providerId}, $id, ${c.url}, ${c.label}, ${c.kind}, ${c.notBefore},

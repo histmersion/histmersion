@@ -1,7 +1,9 @@
 package com.histmersion
 package api.personal
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.JsonCodec
 
-import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema
@@ -9,6 +11,5 @@ import sttp.tapir.Schema
 type ItemKey = ItemKey.T
 
 object ItemKey extends Newtype[String, Pure]:
-  given Encoder[ItemKey] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ItemKey] = Decoder.decodeString.map(s => ItemKey(s.trim))
+  given JsonValueCodec[ItemKey] = JsonCodec.mapped[ItemKey, String](_.value, s => Right(ItemKey(s.trim)))
   given Schema[ItemKey] = Schema.string[ItemKey]

@@ -1,8 +1,7 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.syntax.*
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -21,7 +20,7 @@ final case class Correction(
     label: Option[Correction.Label] = None,
     createdAt: Correction.CreatedAt = Correction.CreatedAt(""),
     checkedAt: Option[Correction.CheckedAt] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object Correction:
@@ -54,7 +53,7 @@ object Correction:
       kept: Counts.Kept = Counts.Kept(0),
       retired: Counts.Retired = Counts.Retired(0),
       conflicts: Counts.Conflicts = Counts.Conflicts(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
@@ -80,7 +79,7 @@ object Correction:
     object Conflicts extends Newtype[Int, Pure]
 
   final case class List(total: List.Total, corrections: scala.List[Correction])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

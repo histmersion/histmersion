@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.ToolResultCap
@@ -84,9 +85,3 @@ object ResearchAgentTools:
   val CheckEdits: ToolName = ToolName("check_edits")
   val ArticleCoverage: ToolName = ToolName("article_coverage")
 
-/** Scala defaults hold when an agent's arguments are decoded — `get_article {"slug":…}` needs no `parts` (without it
-  * every optional argument was required, and an agent spent turns on "Missing required field", 2026-10-16). Not strict:
-  * a stray argument is ignored rather than costing a turn.
-  */
-private given hearth.kindlings.circederivation.Configuration =
-  hearth.kindlings.circederivation.Configuration.default.withDefaults

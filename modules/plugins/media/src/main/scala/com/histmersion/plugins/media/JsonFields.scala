@@ -1,14 +1,17 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.plugin.{Period, Year}
-import io.circe.ACursor
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 
 /** A field as text: a string, or a number written out; blank is none. */
-extension (c: ACursor)
+extension (c: Cursor)
   def str(k: String): Option[String] =
     c.downField(k).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
 

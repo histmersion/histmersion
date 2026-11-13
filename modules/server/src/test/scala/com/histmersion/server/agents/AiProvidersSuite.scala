@@ -20,7 +20,7 @@ import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.plugin.*
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import org.ekrich.config.ConfigFactory
 import sttp.ai.core.agent.*
@@ -47,7 +47,7 @@ import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiCapabilities
 import com.histmersion.domain.automation.agents.PluginAiClient
 
-final case class Ping(word: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class Ping(word: String) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
 /** AI providers as plugins (docs/research-plugins.md §22–§23), no database and no network: the six built-ins registered
   * and switched off like any plugin; a third-party provider registered beside them and refused under a host name; the

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import com.histmersion.api.library.Label
 import com.histmersion.api.given
 

@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -63,9 +65,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Nil
     )
     // from the wire, as the live probe answered
-    val wire = io.circe.parser
-      .decode[ProbeAnswer]("""{"citekey":"huxley1956_catalogue","title":"","year":null}""")
-      .fold(e => fail(e.getMessage), identity)
+    val wire = RawJson.decode[ProbeAnswer]("""{"citekey":"huxley1956_catalogue","title":"","year":null}""")
+      .fold(e => fail(e), identity)
     assertEquals(wire.problems(Some(ProbeAnswer.RecordYear(1956))).size, 2)
 
   // ── enrich-source ─────────────────────────────────────────────────────────────────────────────
@@ -578,7 +579,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Nil
     )
     // a null `fixed` is not read as false: the answer does not decode, so the step asks again
-    assert(io.circe.parser.decode[CheckAnswer]("""{"id":"R1","fixed":null,"quote":"Tin reached","note":"x"}""").isLeft)
+    assert(RawJson.decode[CheckAnswer]("""{"id":"R1","fixed":null,"quote":"Tin reached","note":"x"}""").isLeft)
 
   test("recheck: a not-fixed check with no note, or a finding with no where, fails; empty lessons are dropped"):
     def recheck(a: RecheckAnswer) =

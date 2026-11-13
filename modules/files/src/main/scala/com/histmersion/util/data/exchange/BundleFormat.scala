@@ -1,11 +1,14 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import io.circe.{Decoder, Encoder, Json, JsonObject, Printer}
-import io.circe.parser
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
@@ -20,8 +23,8 @@ import com.histmersion.api.ByteCount
   *
   * ==Canonical JSON==
   * One line per record: keys sorted, no whitespace, absent (`None`) fields left out rather than written as `null`. That
-  * is RFC 8785 (JCS) in spirit — the same value always prints to the same bytes — though numbers print as circe prints
-  * them, not by JCS's ECMAScript rule; both ends of a bundle are this code, so they agree.
+  * is RFC 8785 (JCS) in spirit — the same value always prints to the same bytes — though numbers print as they were
+  * read or as the codecs write them, not by JCS's ECMAScript rule; both ends of a bundle are this code, so they agree.
   *
   * ==rev==
   * `rev` is the sha256 of a record's canonical JSON without `rev` and `updatedAt`: two records with the same content
@@ -29,7 +32,8 @@ import com.histmersion.api.ByteCount
   * remember what was merged.
   */
 object BundleFormat:
-  val printer: Printer = Printer.noSpaces.copy(sortKeys = true, dropNullValues = true)
+  /** The canonical text of a JSON value. */
+  def print(json: Json): String = json.canonical.noSpaces
 
   /** Fields a rev does NOT cover. */
   val Unrevved: Set[String] = Set("rev", "updatedAt")
@@ -49,24 +53,24 @@ object BundleFormat:
 
   /** The rev of a record already in JSON form. */
   def revOf(obj: JsonObject): String =
-    sha256Hex(printer.print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k))))).value
+    sha256Hex(print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k))))).value
 
   /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it holds, is replaced
     * by the computed one.
     */
-  def stamp[A](a: A)(using enc: Encoder.AsObject[A]): Stamped =
-    val obj = enc.encodeObject(a)
+  def stamp[A](a: A)(using JsonValueCodec[A]): Stamped =
+    val obj = a.asJson.asObject.getOrElse(JsonObject.empty)
     val rev = revOf(obj)
-    Stamped(rev, printer.print(Json.fromJsonObject(obj.add("rev", Json.fromString(rev)))))
+    Stamped(rev, print(Json.fromJsonObject(obj.updated("rev", Json.fromString(rev)))))
 
   /** A line that is not a stamped record carries no rev: it is printed as it is. */
-  def line[A](a: A)(using enc: Encoder.AsObject[A]): String = printer.print(enc(a))
+  def line[A](a: A)(using JsonValueCodec[A]): String = print(a.asJson)
 
   final case class Stamped(rev: String, line: String)
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
-  def decodeLine[A](line: String, stamped: Boolean)(using dec: Decoder[A]): Either[Problem, A] =
-    parser.parse(line).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.message}"))).flatMap { json =>
+  def decodeLine[A](line: String, stamped: Boolean)(using JsonValueCodec[A]): Either[Problem, A] =
+    RawJson.parse(line).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e"))).flatMap { json =>
       val revOk =
         if !stamped then Right(())
         else
@@ -77,12 +81,7 @@ object BundleFormat:
               case Some(r)                    =>
                 Left(Problem.Unclassified(Legacy.Text(s"rev $r does not match its content (${revOf(obj)})")))
           }
-      revOk.flatMap(_ =>
-        dec
-          .decodeJson(json)
-          .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"${e.message} at ${e.pathToRootString.getOrElse("")}")))
-      )
+      revOk.flatMap(_ => json.as[A].left.map(e => Problem.Unclassified(Legacy.Text(e))))
     }
 
   // ── the bundle id ──────────────────────────────────────────────────────────────────────────
@@ -111,13 +110,13 @@ object BundleFormat:
   // ── the manifest ───────────────────────────────────────────────────────────────────────────
 
   def manifestBytes(m: Bundle.Manifest): Array[Byte] =
-    (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
+    (line(m) + "\n").getBytes(UTF_8)
 
   def parseManifest(bytes: Array[Byte]): Either[Problem, Bundle.Manifest] =
-    parser
+    RawJson
       .decode[Bundle.Manifest](String(bytes, UTF_8))
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"manifest.json: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"manifest.json: $e")))
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.

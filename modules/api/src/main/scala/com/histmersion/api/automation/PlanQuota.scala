@@ -4,7 +4,7 @@ package api.automation
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
@@ -366,7 +366,7 @@ object PlanQuota:
       ageSeconds: WindowStatus.AgeSeconds,
       source: WindowStatus.Source,
       why: Option[Problem] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -411,7 +411,7 @@ object PlanQuota:
       refresh: Option[PoolStatus.Refresh] = None,
       refreshesToday: PoolStatus.RefreshesToday = PoolStatus.RefreshesToday(0),
       lastRefresh: Option[RefreshInfo] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -452,7 +452,7 @@ object PlanQuota:
       trigger: RefreshInfo.Trigger,
       ok: RefreshInfo.Ok,
       detail: RefreshInfo.Detail
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -469,7 +469,7 @@ object PlanQuota:
     object Detail extends Newtype[String, Pure]
 
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -481,7 +481,7 @@ object PlanQuota:
       refreshed: PoolRefreshed.Refreshed,
       detail: PoolRefreshed.Detail,
       status: PoolStatus
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -493,7 +493,7 @@ object PlanQuota:
     object Detail extends Newtype[String, Pure]
 
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -507,7 +507,7 @@ object PlanQuota:
       fallthrough: List[QuotaInfo.Fallthrough],
       now: QuotaInfo.Now,
       cooldowns: List[Cooldown] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -518,7 +518,7 @@ object PlanQuota:
     object Now extends Newtype[String, Pure]
 
   final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Problem)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -528,7 +528,7 @@ object PlanQuota:
     object Until extends Newtype[String, Pure]
 
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -539,7 +539,7 @@ object PlanQuota:
     object Floors extends Newtype[String, Pure]
 
   final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -552,7 +552,7 @@ object PlanQuota:
       kind: ModWindow.Kind,
       percentUsed: ModWindow.PercentUsed,
       resetsAt: Option[ModWindow.ResetsAt] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -563,7 +563,7 @@ object PlanQuota:
     object ResetsAt extends Newtype[String, Pure]
 
   final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -575,7 +575,7 @@ object PlanQuota:
       allow: GuardAnswer.Allow,
       reason: Option[Problem] = None,
       resetsAt: Option[GuardAnswer.ResetsAt] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

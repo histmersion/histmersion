@@ -1,6 +1,10 @@
 package com.histmersion
 package upstreams.parse
-import io.circe.{ACursor, Json}
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.domain.library.acquisition.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 import com.histmersion.upstreams.archiveorg.{ArchiveFile, ArchiveItem}
 import com.histmersion.upstreams.europepmc.EuropePmcHit
@@ -36,7 +40,7 @@ object AcquireParse:
   type AvailabilityCode = AvailabilityCode.T
   object AvailabilityCode extends Newtype[String, Pure]
 
-  private def str(c: ACursor, keys: String*): Option[String] =
+  private def str(c: Cursor, keys: String*): Option[String] =
     (keys
       .foldLeft(c)(_.downField(_))
       .as[String]
@@ -44,13 +48,13 @@ object AcquireParse:
       .map(_.trim)
       .filter(_.nonEmpty))
       .map(refactorValue => (refactorValue))
-  private def int(c: ACursor, keys: String*): Option[Int] =
+  private def int(c: Cursor, keys: String*): Option[Int] =
     (keys.foldLeft(c)(_.downField(_)).as[Int].toOption).map(refactorValue2 => (refactorValue2))
-  private def bool(c: ACursor, keys: String*): Boolean =
+  private def bool(c: Cursor, keys: String*): Boolean =
     (keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false))
-  private def arr(c: ACursor, keys: String*): List[Json] =
+  private def arr(c: Cursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
-  private def strings(c: ACursor, keys: String*): List[String] =
+  private def strings(c: Cursor, keys: String*): List[String] =
     (arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => (refactorValue3))
 
   /** The trailing path segment of an OpenAlex URI (`https://openalex.org/W123` → `W123`). */
@@ -78,8 +82,8 @@ object AcquireParse:
 
   /** One OpenAlex `work` → the normalised [[WorkRef]] (the port of `discover.py::normalize_work`). */
   def openalexWork(json: Json): WorkRef =
-    val c = json.hcursor
-    val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
+    val c = json.cursor
+    val authors = arr(c, "authorships").flatMap(a => str(a.cursor, "author", "display_name"))
     val doi = str(c, "doi").flatMap(doiOf)
     val title = str(c, "display_name").map {
       val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(((refactorValue6)))
@@ -91,7 +95,7 @@ object AcquireParse:
       // the arXiv preprint of a paywalled paper is usually the best OA location, so look there too
       arxivId = (str(c.downField("best_oa_location"), "landing_page_url").toList ++
         str(c, "open_access", "oa_url").toList ++
-        arr(c, "locations").flatMap(l => str(l.hcursor, "landing_page_url"))).flatMap {
+        arr(c, "locations").flatMap(l => str(l.cursor, "landing_page_url"))).flatMap {
         val refactorFunction3 = arxivIdFromUrl;
         (refactorValue7) => refactorFunction3(RepositoryLanding.Candidate.Url((refactorValue7)))
       }.headOption,
@@ -111,34 +115,34 @@ object AcquireParse:
       oaLicence = str(c.downField("best_oa_location"), "license")
         .orElse(
           arr(c, "locations")
-            .filter(l => ((bool(l.hcursor, "is_oa")) == (true)))
-            .flatMap(l => str(l.hcursor, "license"))
+            .filter(l => ((bool(l.cursor, "is_oa")) == (true)))
+            .flatMap(l => str(l.cursor, "license"))
             .headOption
         )
         .map(WorkRef.OaLicence(_))
     )
 
   /** The open locations' landing pages and PDFs, the best location first. */
-  private def openalexOaLocations(c: ACursor): List[WorkRef.OaLocations] =
+  private def openalexOaLocations(c: Cursor): List[WorkRef.OaLocations] =
     val best = c.downField("best_oa_location")
-    val open = arr(c, "locations").filter(l => (bool(l.hcursor, "is_oa")))
+    val open = arr(c, "locations").filter(l => (bool(l.cursor, "is_oa")))
     ((List(str(best, "landing_page_url"), str(best, "pdf_url")).flatten ++
-      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct).map(
+      open.flatMap(l => List(str(l.cursor, "landing_page_url"), str(l.cursor, "pdf_url")).flatten)).distinct).map(
       refactorValue17 => WorkRef.OaLocations(refactorValue17)
     )
 
   /** An OpenAlex `/works` search page. */
   def openalexWorks(json: Json): List[WorkRef] =
-    arr(json.hcursor, "results").map(openalexWork)
+    arr(json.cursor, "results").map(openalexWork)
 
   /** OA locations OpenAlex knows about, best first — catches green-OA repository PDFs (PMC, bioRxiv) that Unpaywall's
     * `best_oa_location` sometimes misses.
     */
   def openalexPdfUrls(json: Json): List[EuropePmcHit.PdfUrls] =
-    val c = json.hcursor
+    val c = json.cursor
     val oa = str(c, "open_access", "oa_url").toList
     val best = str(c.downField("best_oa_location"), "pdf_url").toList
-    val rest = arr(c, "locations").flatMap(l => str(l.hcursor, "pdf_url"))
+    val rest = arr(c, "locations").flatMap(l => str(l.cursor, "pdf_url"))
     ((best ++ oa ++ rest).distinct).map(refactorValue18 => EuropePmcHit.PdfUrls((refactorValue18)))
 
   private def arxivIdFromUrl(url: RepositoryLanding.Candidate.Url): Option[ArxivId] =
@@ -166,11 +170,11 @@ object AcquireParse:
 
   /** A Crossref `works/{doi}` message → [[WorkRef]] (the metadata fallback when OpenAlex misses). */
   def crossrefWork(json: Json): WorkRef =
-    val m = json.hcursor.downField("message")
-    val c = if m.succeeded then m else json.hcursor
+    val m = json.cursor.downField("message")
+    val c = if m.succeeded then m else json.cursor
     val authors = arr(c, "author")
       .map { a =>
-        val h = a.hcursor
+        val h = a.cursor
         List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
       }
       .filter(_.nonEmpty)
@@ -209,7 +213,7 @@ object AcquireParse:
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
   def crossrefWorks(json: Json): List[WorkRef] =
-    json.hcursor.downField("message").downField("items").values.toList.flatten.map(crossrefWork)
+    json.cursor.downField("message").downField("items").values.toList.flatten.map(crossrefWork)
 
   /** Crossref abstracts are JATS XML fragments. */
   private def stripTags(s: String): String =
@@ -217,10 +221,10 @@ object AcquireParse:
 
   /** The deposited `reference[]` array — structured, often carrying DOIs, and free of tokens. */
   def crossrefReferences(json: Json): List[RefRow] =
-    val m = json.hcursor.downField("message")
-    val c = if m.succeeded then m else json.hcursor
+    val m = json.cursor.downField("message")
+    val c = if m.succeeded then m else json.cursor
     arr(c, "reference").map { r =>
-      val h = r.hcursor
+      val h = r.cursor
       RefRow(
         title = str(h, "article-title").orElse(str(h, "volume-title")).map(RefRow.Title(_)),
         authors = str(h, "author").toList.map(RefRow.Authors(_)),
@@ -232,10 +236,10 @@ object AcquireParse:
 
   /** `update-to`: the retraction / correction / expression-of-concern notices attached to a DOI. */
   def crossrefUpdates(json: Json): List[UpdateNotice] =
-    val m = json.hcursor.downField("message")
-    val c = if m.succeeded then m else json.hcursor
+    val m = json.cursor.downField("message")
+    val c = if m.succeeded then m else json.cursor
     arr(c, "update-to").map { u =>
-      val h = u.hcursor
+      val h = u.cursor
       UpdateNotice(
         str(h, "type").map(UpdateNotice.Kind(_)),
         str(h, "label").map(UpdateNotice.Label(_)),
@@ -248,9 +252,9 @@ object AcquireParse:
   /** `(pdf urls best-first, oa_status)`. Unpaywall's `best_oa_location` first, then every other location it lists.
     */
   def unpaywall(json: Json): (List[RepositoryLanding.Candidate.Url], Option[OaAccess.Status]) =
-    val c = json.hcursor
+    val c = json.cursor
     val best = str(c.downField("best_oa_location"), "url_for_pdf").toList
-    val rest = arr(c, "oa_locations").flatMap(l => str(l.hcursor, "url_for_pdf"))
+    val rest = arr(c, "oa_locations").flatMap(l => str(l.cursor, "url_for_pdf"))
     (
       ((best ++ rest).distinct).map(refactorValue32 => RepositoryLanding.Candidate.Url((refactorValue32))),
       (str(c, "oa_status")).map(refactorValue33 => OaAccess.Status((refactorValue33)))
@@ -260,7 +264,7 @@ object AcquireParse:
     * best location — the PDF when there is one, else its landing page.
     */
   def unpaywallAccess(json: Json): OaAccess =
-    val c = json.hcursor
+    val c = json.cursor
     val best = c.downField("best_oa_location")
     OaAccess(
       OaAccess.IsOa(bool(c, "is_oa")),
@@ -278,13 +282,13 @@ object AcquireParse:
     */
   def europepmcHit(json: Json, doi: Doi): Option[EuropePmcHit] =
     val want = doiOf(doi.value)
-    arr(json.hcursor, "resultList", "result")
-      .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(doiOf) == want)
+    arr(json.cursor, "resultList", "result")
+      .find(r => want.isDefined && str(r.cursor, "doi").flatMap(doiOf) == want)
       .map { r =>
-        val c = r.hcursor
+        val c = r.cursor
         val pdfs = arr(c, "fullTextUrlList", "fullTextUrl")
           .flatMap { u =>
-            val h = u.hcursor
+            val h = u.cursor
             val isPdf = str(h, "documentStyle").exists((_).equalsIgnoreCase("pdf"))
             val free = str(h, "availabilityCode").exists(a => EuropePmcFree(AvailabilityCode((a).toUpperCase)))
             if isPdf && free then str(h, "url").filter((_).startsWith("http")) else None
@@ -318,7 +322,7 @@ object AcquireParse:
 
   /** A dataset metadata record (`metadata/<pmcid>.<v>.json`). */
   def pmcRecord(json: Json): Option[PmcRecord] =
-    val c = json.hcursor
+    val c = json.cursor
     str(c, "pmcid").filter((PmcId).matches).map { id =>
       PmcRecord(
         PmcRecord.Pmcid(id),
@@ -345,7 +349,7 @@ object AcquireParse:
   private val S3Url = """^s3://[a-z0-9.-]+/(PMC\d+\.\d+/[A-Za-z0-9_-][A-Za-z0-9._-]*)(?:\?md5=([0-9a-fA-F]{32}))?$""".r
 
   def coreDownloadUrls(json: Json): List[RepositoryLanding.Candidate.Url] =
-    arr(json.hcursor, "results").flatMap(r => str(r.hcursor, "downloadUrl").map(RepositoryLanding.Candidate.Url(_)))
+    arr(json.cursor, "results").flatMap(r => str(r.cursor, "downloadUrl").map(RepositoryLanding.Candidate.Url(_)))
 
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
 
@@ -353,8 +357,8 @@ object AcquireParse:
     * `isInfluential` flag and `contexts` — the signals the host classifies a citation by.
     */
   def s2Citations(json: Json): List[FollowupRow] =
-    arr(json.hcursor, "data").map { d =>
-      val h = d.hcursor
+    arr(json.cursor, "data").map { d =>
+      val h = d.cursor
       val cp = h.downField("citingPaper")
       FollowupRow(
         title = str(cp, "title").map(FollowupRow.Title(_)),
@@ -372,7 +376,7 @@ object AcquireParse:
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[Offset] = int(json.hcursor, "next").map(Offset(_))
+  def s2Next(json: Json): Option[Offset] = int(json.cursor, "next").map(Offset(_))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -383,13 +387,13 @@ object AcquireParse:
     * circumvention anywhere in this pipeline.
     */
   def archiveItem(identifier: ArchiveId, json: Json): ArchiveItem =
-    val c = json.hcursor
+    val c = json.cursor
     val m = c.downField("metadata")
     val yr = str(m, "year").orElse(str(m, "date")).map((_).take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
     val creators =
       (str(m, "creator").toList ++ strings(m, "creator")).distinct.filterNot(_.startsWith("http"))
     val files = arr(c, "files").flatMap { f =>
-      val h = f.hcursor
+      val h = f.cursor
       val name = str(h, "name").getOrElse("")
       val ext = name.toLowerCase.split("\\.").lastOption.getOrElse("")
       Option.when(ext == "pdf" || ext == "epub") {
@@ -418,8 +422,8 @@ object AcquireParse:
 
   /** `advancedsearch.php` docs → identifiers with the little metadata the index carries. */
   def archiveSearch(json: Json): List[ArchiveItem] =
-    arr(json.hcursor, "response", "docs").flatMap { d =>
-      val h = d.hcursor
+    arr(json.cursor, "response", "docs").flatMap { d =>
+      val h = d.cursor
       str(h, "identifier").map { id =>
         ArchiveItem(
           identifier = ArchiveItem.Identifier(id),
@@ -451,10 +455,10 @@ object AcquireParse:
 
   /** The article title from `action=parse&prop=wikitext` (after redirects). */
   def wikiTitle(json: Json): Option[WorkKey.Title] =
-    (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => WorkKey.Title((refactorValue58)))
+    (str(json.cursor.downField("parse"), "title")).map(refactorValue58 => WorkKey.Title((refactorValue58)))
 
   def wikiText(json: Json): Option[Wikitext] =
-    (json.hcursor
+    (json.cursor
       .downField("parse")
       .downField("wikitext")
       .downField("*")

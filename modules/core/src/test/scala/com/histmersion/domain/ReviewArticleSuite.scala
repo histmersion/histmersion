@@ -1,5 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -1824,7 +1827,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("a Report checkpointed before spot-checks existed still decodes"):
     val old =
       """{"reviewer":"rules","verdict":"PASS","findings":[],"explainBack":null,"emptySlots":[],"proposals":[],"checks":[]}"""
-    assertEquals(io.circe.parser.decode[Report](old).map(_.spotChecks), Right(Nil))
+    assertEquals(RawJson.decode[Report](old).map(_.spotChecks), Right(Nil))
 
   // ── a finding's problem is stored as a sentence (review_ledgers.ledger, agent_steps.output) ──────────────────
 
@@ -1901,13 +1904,13 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("a ledger finding keeps its stored problem sentence through the JSON codec"):
     storedSentences.foreach { p =>
       val json =
-        s"""{"id":"M1","reviewer":"mechanical","severity":"major","kind":"citation","where":"body","quote":"","problem":${io.circe.Json
+        s"""{"id":"M1","reviewer":"mechanical","severity":"major","kind":"citation","where":"body","quote":"","problem":${Json
             .fromString(s"$p")
             .noSpaces},"fix":"f","evidence":[],"escalated":false,"pair":null}"""
-      val f = io.circe.parser.decode[Finding](json).fold(e => fail(e.getMessage), identity)
+      val f = RawJson.decode[Finding](json).fold(e => fail(e), identity)
       assertEquals(f.problem, p)
       assertEquals(
-        io.circe.parser.decode[Finding](io.circe.syntax.EncoderOps(f).asJson.noSpaces).map(_.problem),
+        RawJson.decode[Finding]((f).asJson.noSpaces).map(_.problem),
         Right(p)
       )
     }

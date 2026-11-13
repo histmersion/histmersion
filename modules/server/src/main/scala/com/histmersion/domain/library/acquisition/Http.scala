@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.domain.HttpPolicy
@@ -7,7 +8,6 @@ import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.upstreams.landing.RepositoryLanding
-import io.circe.Json
 import Http.Failure
 
 /** The ONE seam between the acquisition toolset and the network.

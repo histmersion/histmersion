@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.Problem
 
@@ -9,9 +10,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Json
 import java.util.UUID
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -123,7 +123,7 @@ object Bundle:
       ))
       .map(refactorValue => Sha256(refactorValue))
 
-  final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives KindlingsCodecAsObject
+  final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives JsonCodec
 
   object Alias:
     export com.histmersion.api.library.Citekey as Value
@@ -143,7 +143,7 @@ object Bundle:
       period: Option[Range],
       updatedAt: Article.UpdatedAt,
       rev: Article.Rev = Article.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Article:
     export com.histmersion.api.research.ReviewGoal.Slug
@@ -161,7 +161,7 @@ object Bundle:
     object Rev extends Newtype[String, Pure]
 
   final case class ArticleAlias(alias: ArticleAlias.Alias, articleUid: UUID, createdAt: ArticleAlias.CreatedAt)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object ArticleAlias:
     export com.histmersion.api.research.ReviewGoal.Slug as Alias
@@ -177,7 +177,7 @@ object Bundle:
       versionOf: ArticleVersion.VersionOf,
       updatedAt: ArticleVersion.UpdatedAt,
       rev: ArticleVersion.Rev = ArticleVersion.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object ArticleVersion:
     type BodySha256 = BodySha256.T
@@ -198,7 +198,7 @@ object Bundle:
       citedBy: Option[Assessment.CitedBy],
       influential: Option[Assessment.Influential],
       verdict: Assessment.Verdict
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Assessment:
     type CheckedAt = CheckedAt.T
@@ -228,7 +228,7 @@ object Bundle:
       period: Option[Range],
       updatedAt: Asset.UpdatedAt,
       rev: Asset.Rev = Asset.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Asset:
     type Extension = Extension.T
@@ -270,7 +270,7 @@ object Bundle:
       notes: Option[AssetLink.Notes],
       updatedAt: AssetLink.UpdatedAt,
       rev: AssetLink.Rev = AssetLink.Rev("")
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
 
     /** What the link points at: the target's uid when the link has one, else its id. */
     def target: AssetLink.Target = AssetLink.Target.of(targetUid, targetId)
@@ -319,7 +319,7 @@ object Bundle:
       createdAt: Attestation.CreatedAt,
       updatedAt: Attestation.UpdatedAt,
       rev: Attestation.Rev = Attestation.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Attestation:
     type TargetType = TargetType.T
@@ -356,7 +356,7 @@ object Bundle:
     object Rev extends Newtype[String, Pure]
 
   final case class Blobs(count: Blobs.Count, bytes: ByteCount)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -377,7 +377,7 @@ object Bundle:
       createdAt: Correction.CreatedAt,
       updatedAt: Correction.UpdatedAt,
       checkedAt: Option[Correction.CheckedAt]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Correction:
     type TargetKind = TargetKind.T
@@ -402,7 +402,7 @@ object Bundle:
     type CheckedAt = CheckedAt.T
     object CheckedAt extends Newtype[String, Pure]
 
-  final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject, CanEqual
+  final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives JsonCodec, CanEqual
 
   object Edge:
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
@@ -440,7 +440,7 @@ object Bundle:
       central: Option[Event.Central] = None,
       plusMinus: Option[Event.PlusMinus] = None,
       datingMethod: Option[Event.DatingMethod] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Event:
     export com.histmersion.api.catalogue.Event.Id
@@ -482,7 +482,7 @@ object Bundle:
     object DatingMethod extends Newtype[String, Pure]
 
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object EventAlias:
     export com.histmersion.api.catalogue.Event.Id as Alias
@@ -499,7 +499,7 @@ object Bundle:
       passages: Json,
       reasons: List[EventCandidate.Reasons],
       computedAt: EventCandidate.ComputedAt
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object EventCandidate:
     type Score = Score.T
@@ -532,7 +532,7 @@ object Bundle:
       historicity: EventCatalogue.Historicity,
       record: Json,
       retrievedAt: EventCatalogue.RetrievedAt
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object EventCatalogue:
     type Provider = Provider.T
@@ -563,7 +563,7 @@ object Bundle:
     type RetrievedAt = RetrievedAt.T
     object RetrievedAt extends Newtype[String, Pure]
 
-  final case class EventCheck(eventUid: UUID, checkedAt: EventCheck.CheckedAt) derives KindlingsCodecAsObject
+  final case class EventCheck(eventUid: UUID, checkedAt: EventCheck.CheckedAt) derives JsonCodec
 
   object EventCheck:
     type CheckedAt = CheckedAt.T
@@ -578,7 +578,7 @@ object Bundle:
       notAfter: Option[EventDating.NotAfter],
       method: Option[EventDating.Method],
       note: Option[EventDating.Note]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object EventDating:
     type NotBefore = NotBefore.T
@@ -600,7 +600,7 @@ object Bundle:
       citekey: Citekey,
       sourceUid: Option[UUID],
       note: Option[EventEdge.Note]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object EventEdge:
     type Kind = Kind.T
@@ -613,7 +613,7 @@ object Bundle:
       role: EventParticipant.Role,
       citekey: Option[Citekey],
       sourceUid: Option[UUID]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object EventParticipant:
     type Actor = Actor.T
@@ -634,7 +634,7 @@ object Bundle:
       case _                  => (false)
 
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: ByteCount, sha256: Sha256)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -700,7 +700,7 @@ object Bundle:
       significance: Option[Finding.Significance],
       updatedAt: Finding.UpdatedAt,
       rev: Finding.Rev = Finding.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Finding:
     export com.histmersion.api.library.Finding.Id
@@ -739,7 +739,7 @@ object Bundle:
       budgetUsd: Option[Goal.BudgetUsd] = None,
       links: Option[List[GoalLink]] = None,
       schedules: Option[List[GoalSchedule]] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Goal:
     export com.histmersion.api.research.ReviewGoal.Slug
@@ -764,7 +764,7 @@ object Bundle:
     object BudgetUsd extends Newtype[Double, Pure]
 
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object GoalAlias:
     export com.histmersion.api.research.ReviewGoal.Slug as Alias
@@ -777,7 +777,7 @@ object Bundle:
       refUid: Option[UUID],
       note: Option[GoalLink.Note],
       createdAt: GoalLink.CreatedAt
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         CanEqual:
 
     /** What the link points at: the goal's or article's uid when the link has one, else its label. */
@@ -805,7 +805,7 @@ object Bundle:
       cron: GoalSchedule.Cron,
       enabled: GoalSchedule.Enabled,
       budgetUsd: Option[GoalSchedule.BudgetUsd]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         CanEqual
 
   object GoalSchedule:
@@ -830,7 +830,7 @@ object Bundle:
       mergeId: Option[UUID] = None,
       issues: List[MergeIssue] = Nil,
       planHash: Option[ImportResult.PlanHash] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def changed: ChangedCount = ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
@@ -852,7 +852,7 @@ object Bundle:
     export MergePlan.PlanHash
 
   final case class Instance(id: UUID, label: Option[Instance.Label] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -870,7 +870,7 @@ object Bundle:
       deleted: KindCounts.Deleted = KindCounts.Deleted(0),
       skippedDeleted: KindCounts.SkippedDeleted = KindCounts.SkippedDeleted(0),
       held: KindCounts.Held = KindCounts.Held(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def changed: ChangedCount = ChangedCount((inserted).value + (updated).value + (deleted).value)
@@ -905,7 +905,7 @@ object Bundle:
       files: List[FileInfo],
       blobs: Blobs,
       reference: Reference
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -932,7 +932,7 @@ object Bundle:
       parentId: Option[Period.ParentId],
       updatedAt: Period.UpdatedAt,
       rev: Period.Rev = Period.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Period:
     type Id = Id.T
@@ -966,7 +966,7 @@ object Bundle:
       types: List[PlaceType],
       updatedAt: Place.UpdatedAt,
       rev: Place.Rev = Place.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Place:
     export com.histmersion.api.catalogue.Place.Id
@@ -983,7 +983,7 @@ object Bundle:
     object Rev extends Newtype[String, Pure]
 
   final case class PlaceAlias(alias: PlaceAlias.Alias, placeUid: UUID, createdAt: PlaceAlias.CreatedAt)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object PlaceAlias:
     export com.histmersion.api.catalogue.Place.Id as Alias
@@ -991,7 +991,7 @@ object Bundle:
     object CreatedAt extends Newtype[String, Pure]
 
   final case class PlaceLink(scheme: PlaceLink.Scheme, externalId: PlaceLink.ExternalId, relation: PlaceLink.Relation)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object PlaceLink:
     export com.histmersion.api.catalogue.LinkScheme.Wire as Scheme
@@ -1001,7 +1001,7 @@ object Bundle:
     object Relation extends Newtype[String, Pure]
 
   final case class PlaceName(name: PlaceName.Name, lang: Option[PlaceName.Lang], period: Option[Range])
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object PlaceName:
     type Name = Name.T
@@ -1010,7 +1010,7 @@ object Bundle:
     object Lang extends Newtype[String, Pure]
 
   final case class PlaceRelation(parentId: PlaceRelation.ParentId, kind: PlaceRelation.Kind, period: Option[Range])
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object PlaceRelation:
     export com.histmersion.api.catalogue.Place.Id as ParentId
@@ -1018,7 +1018,7 @@ object Bundle:
     object Kind extends Newtype[String, Pure]
 
   final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[Citekey])
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object PlaceType:
     type TypeLabel = TypeLabel.T
@@ -1036,7 +1036,7 @@ object Bundle:
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,
       rev: QueueItem.Rev = QueueItem.Rev("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object QueueItem:
     export com.histmersion.api.automation.Queue.Wire as List
@@ -1058,14 +1058,14 @@ object Bundle:
   /** Both bounds inclusive: Postgres keeps an `int8range` as `[lower, upper)`, so `upper − 1` is applied on the way out
     * and undone on the way in.
     */
-  final case class Range(start: Option[Year] = None, end: Option[Year] = None) derives KindlingsCodecAsObject, CanEqual
+  final case class Range(start: Option[Year] = None, end: Option[Year] = None) derives JsonCodec, CanEqual
 
   final case class Reference(
       places: Reference.Places,
       placesDigest: Reference.PlacesDigest,
       periods: Reference.Periods,
       periodsDigest: Reference.PeriodsDigest
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual
@@ -1084,7 +1084,7 @@ object Bundle:
       placeId: SiteType.PlaceId,
       siteType: Option[SiteType.Value],
       checkedAt: Option[SiteType.CheckedAt]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object SiteType:
     export com.histmersion.api.catalogue.Place.Id as PlaceId
@@ -1120,7 +1120,7 @@ object Bundle:
       rev: Source.Rev = Source.Rev(""),
       /** Absent when there are none, so a line written before the field existed keeps its rev. */
       isbns: Option[List[Source.Isbns]] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Source:
     type Topics = Topics.T
@@ -1158,14 +1158,14 @@ object Bundle:
       kind: Kind,
       origin: UUID,
       deletedAt: Tombstone.DeletedAt
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Tombstone:
     type DeletedAt = DeletedAt.T
     object DeletedAt extends Newtype[String, Pure]
 
   final case class UnresolvedEdge(srcUid: UUID, dst: UnresolvedEdge.Dst, kind: UnresolvedEdge.Kind)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         CanEqual
 
   object UnresolvedEdge:
@@ -1174,7 +1174,7 @@ object Bundle:
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
   final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -1187,7 +1187,7 @@ object Bundle:
       manifest: Option[Manifest],
       blobsChecked: VerifyResult.BlobsChecked,
       problems: List[VerifyResult.Problems]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

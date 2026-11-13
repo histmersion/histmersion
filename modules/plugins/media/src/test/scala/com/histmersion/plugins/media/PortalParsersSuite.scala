@@ -1,5 +1,9 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -8,8 +12,6 @@ import com.histmersion.plugin.*
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.pluginhost.{HostLicences, PluginMedia}
-import io.circe.Json
-import io.circe.parser.parse
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.media.imports.MediaRecord
 
@@ -22,7 +24,7 @@ import com.histmersion.domain.media.imports.MediaRecord
 class PortalParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
-    parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
+    RawJson.parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
       .fold(e => fail(e.toString), identity)
 
   private val licences = HostLicences
@@ -111,15 +113,15 @@ class PortalParsersSuite extends munit.FunSuite:
     assert(bowls.imageUrl.exists(_.value.contains("ia-thumbnails")), "the search names only the thumbnail")
     assertEquals(bowls.withheld, None)
     assertEquals(recs(3).withheld, Some("human remains (Open Context flags them; not shown)"))
-    assertEquals(OpenContext.records(parse("""{"totalResults":0}""").toOption.get, licences), Right(Nil))
+    assertEquals(OpenContext.records(RawJson.parse("""{"totalResults":0}""").toOption.get, licences), Right(Nil))
 
   test("Open Context: a record without a licence, or with an unreadable one, cannot be used"):
-    val row = fixture("oc-search.json").hcursor.downField("oc-api:has-results").downArray.focus.get
+    val row = fixture("oc-search.json").cursor.downField("oc-api:has-results").downArray.focus.get
     val none =
       OpenContext.record(row.mapObject(_.remove("License [URI]")), licences).fold(e => fail(e.legacyText), identity)
     assertEquals(none.rights.left.map(_.legacyText), Left("no licence on the record"))
     val odd = OpenContext.record(
-      row.mapObject(_.add("License [URI]", Json.arr(Json.fromString("https://example.org/t")))),
+      row.mapObject(_.updated("License [URI]", Json.arr(Json.fromString("https://example.org/t")))),
       licences
     )
     assert(odd.toOption.get.rights.left.exists(_.legacyText.startsWith("licence not readable")))
@@ -150,7 +152,7 @@ class PortalParsersSuite extends munit.FunSuite:
       done.originalUrl,
       Some("https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg")
     )
-    val nc = parse(item.noSpaces.replace("licenses/by/4.0", "licenses/by-nc/4.0")).toOption.get
+    val nc = RawJson.parse(item.noSpaces.replace("licenses/by/4.0", "licenses/by-nc/4.0")).toOption.get
     assert(OpenContext.item(nc, rec, licences).left.exists(_.legacyText.contains("differs")))
     assert(
       OpenContext
@@ -158,7 +160,7 @@ class PortalParsersSuite extends munit.FunSuite:
         .left
         .exists(_.legacyText.contains("no licence"))
     )
-    val bones = parse(item.noSpaces.replace("\"Religion\"", "\"Human remains (Archaeology)\"")).toOption.get
+    val bones = RawJson.parse(item.noSpaces.replace("\"Religion\"", "\"Human remains (Archaeology)\"")).toOption.get
     assert(OpenContext.item(bones, rec, licences).left.exists(_.legacyText.contains("human remains")))
 
   test("Open Context: the short licence name of a label"):
@@ -324,4 +326,4 @@ class PortalParsersSuite extends munit.FunSuite:
         )
       )
     )
-    assert(PleiadesLinks.links(parse("""{"message":"not found"}""").toOption.get).isLeft)
+    assert(PleiadesLinks.links(RawJson.parse("""{"message":"not found"}""").toOption.get).isLeft)

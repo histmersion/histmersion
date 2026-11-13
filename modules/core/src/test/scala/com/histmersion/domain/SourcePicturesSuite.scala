@@ -1,5 +1,8 @@
 package com.histmersion
 package domain
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,7 +17,6 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import io.circe.parser.parse
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportReport, MediaProvider, MediaSourceLine}
 import com.histmersion.api.media.MediaItem
@@ -39,9 +41,9 @@ class SourcePicturesSuite extends munit.FunSuite:
 
   test("the paper the converter cut up: the map on page 2, not the logo, the masthead or the badge"):
     val json =
-      parse(scala.io.Source.fromResource("figures/paper.json")(using scala.io.Codec.UTF8).mkString).toOption.get
-    val figs = json.hcursor.downField("figures").values.get.toList.map { j =>
-      val c = j.hcursor
+      RawJson.parse(scala.io.Source.fromResource("figures/paper.json")(using scala.io.Codec.UTF8).mkString).toOption.get
+    val figs = json.cursor.downField("figures").values.get.toList.map { j =>
+      val c = j.cursor
       FigurePick.Figure(
         Figure.Name(c.get[String]("name").toOption.get),
         c.get[Int]("width").toOption.map(Figure.Width(_)),

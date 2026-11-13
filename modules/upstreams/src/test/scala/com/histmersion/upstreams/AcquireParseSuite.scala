@@ -1,7 +1,8 @@
 package com.histmersion
 package upstreams
-
-import io.circe.parser.parse
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.upstreams.archiveorg.ArchiveFile
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.unpaywall.OaAccess
@@ -15,7 +16,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 class AcquireParseSuite extends munit.FunSuite:
 
   private def fixture(name: String) =
-    parse(scala.io.Source.fromResource(s"acquire/$name").mkString).fold(throw _, identity)
+    RawJson.parse(scala.io.Source.fromResource(s"acquire/$name").mkString).fold(e => throw IllegalArgumentException(e), identity)
 
   // ── OpenAlex ────────────────────────────────────────────────────────────────────────────────
   test("OpenAlex work → WorkRef"):
@@ -35,12 +36,12 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(w.arxivId, Some("1502.02783"))
 
   test("OpenAlex: the open locations (best first) and the licence of a gold work"):
-    val json = parse("""{"doi":"https://doi.org/10.3390/rel10040258","display_name":"A","open_access":{"is_oa":true,
+    val json = RawJson.parse("""{"doi":"https://doi.org/10.3390/rel10040258","display_name":"A","open_access":{"is_oa":true,
       |"oa_status":"gold","oa_url":"https://www.mdpi.com/2077-1444/10/4/258/pdf"},
       |"best_oa_location":{"landing_page_url":"https://www.mdpi.com/2077-1444/10/4/258","pdf_url":"https://www.mdpi.com/2077-1444/10/4/258/pdf","license":"cc-by"},
       |"locations":[{"is_oa":true,"landing_page_url":"https://www.mdpi.com/2077-1444/10/4/258","pdf_url":null,"license":"cc-by"},
       |{"is_oa":true,"landing_page_url":"https://doaj.org/article/x","license":null},
-      |{"is_oa":false,"landing_page_url":"https://closed.example/x"}]}""".stripMargin).fold(throw _, identity)
+      |{"is_oa":false,"landing_page_url":"https://closed.example/x"}]}""".stripMargin).fold(e => throw IllegalArgumentException(e), identity)
     val w = AcquireParse.openalexWork(json)
     assertEquals(
       w.oaLocations,
@@ -116,7 +117,7 @@ class AcquireParseSuite extends munit.FunSuite:
       )
     )
     val closed =
-      io.circe.parser.parse("""{"is_oa": false, "oa_status": "closed", "best_oa_location": null}""").toOption.get
+      RawJson.parse("""{"is_oa": false, "oa_status": "closed", "best_oa_location": null}""").toOption.get
     assertEquals(
       AcquireParse.unpaywallAccess(closed),
       OaAccess(isOa = OaAccess.IsOa(false), status = Some(OaAccess.Status("closed")), url = None)
@@ -184,8 +185,7 @@ class AcquireParseSuite extends munit.FunSuite:
     )
     assertEquals(AcquireParse.inlineMarkup("H<sub>2</sub>O  and <b>more</b>"), "H2O and more")
     val w = AcquireParse.crossrefWork(
-      io.circe.parser
-        .parse(
+      RawJson.parse(
           """{"DOI":"10.1/x","title":["The <i>Iliad</i> and <scp>Troy</scp>"],"author":[{"given":"A","family":"B"}]}"""
         )
         .toOption

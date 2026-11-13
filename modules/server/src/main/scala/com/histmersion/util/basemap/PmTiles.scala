@@ -1,5 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -10,7 +12,6 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import scala.util.Using
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Blob, RandomReader}
-import io.circe.Json
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -558,8 +559,7 @@ object PmTiles:
         )
         decompress(CompressedBytes(bytes), h.internalCompression)
           .flatMap(b =>
-            io.circe.parser
-              .parse(String(b.value: Array[Byte], "UTF-8"))
+            RawJson.parse(String(b.value: Array[Byte], "UTF-8"))
               .left
-              .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: ${e.getMessage}")))
+              .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: $e")))
           )

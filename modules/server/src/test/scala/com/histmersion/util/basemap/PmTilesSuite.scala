@@ -1,10 +1,12 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
-import io.circe.Json
 
 import java.nio.file.Files
 
@@ -144,7 +146,7 @@ class PmTilesSuite extends munit.FunSuite:
       assertEquals(r.header.maxZoom, 3)
       assertEquals(r.header.addressedTiles, 85L)
       assert(r.header.tileContents.value < 85L, "the identical tiles are stored once")
-      assertEquals(r.metadata.hcursor.get[String]("name"), Right("test"))
+      assertEquals(r.metadata.cursor.get[String]("name"), Right("test"))
       assertEquals(
         r.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))),
         Right(Some("2/1/3"))

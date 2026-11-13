@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import scala.annotation.tailrec
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -29,6 +29,5 @@ object MetadataField:
     def wire(e: MetadataField): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
     def fromWire(s: WireEnumValues.Wire): Option[MetadataField] = MetadataField.fromWire(Wire((s).value))
 
-  given Encoder[MetadataField] = WireEnum.encoder
-  given Decoder[MetadataField] = WireEnum.decoder
+  given JsonValueCodec[MetadataField] = WireEnum.codec
   given Schema[MetadataField] = WireEnum.schema

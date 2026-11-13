@@ -1,11 +1,11 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.library.RepairAcquire
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.syntax.*
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets.UTF_8

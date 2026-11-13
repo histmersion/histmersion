@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -113,7 +115,7 @@ private[sources] object SourceBundleRepo:
         r.sourceUid,
         Bundle.Assessment.CheckedAt(r.checkedAt.value),
         Bundle.Assessment.Retracted(r.retracted.value),
-        Jsonb.read[io.circe.Json](Jsonb.JsonText(r.notices.value)).getOrElse(io.circe.Json.arr()),
+        Jsonb.read[Json](Jsonb.JsonText(r.notices.value)).getOrElse(Json.arr()),
         r.citedBy.map(x => Bundle.Assessment.CitedBy(x.value)),
         r.influential.map(x => Bundle.Assessment.Influential(x.value)),
         Bundle.Assessment.Verdict(r.verdict.value)
@@ -305,7 +307,7 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.es.assessments.foreach { a =>
       sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
-            SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.printer.print(
+            SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.print(
           a.notices
         )}::jsonb,
                    ${a.citedBy}, ${a.influential}, ${a.verdict}

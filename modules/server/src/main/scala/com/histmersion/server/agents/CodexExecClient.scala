@@ -18,10 +18,7 @@ import com.histmersion.domain.automation.agents.{
 import com.histmersion.config.CodexConfig
 import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.api.automation.PlanQuota
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

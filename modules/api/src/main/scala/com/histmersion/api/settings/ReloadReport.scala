@@ -1,6 +1,6 @@
 package com.histmersion
 package api.settings
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -18,7 +18,7 @@ final case class ReloadReport(
     errors: List[ReloadReport.Errors] = Nil,
     warnings: List[ReloadReport.Warnings] = Nil,
     file: Option[ReloadReport.File] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def ok: Boolean = (errors.isEmpty)

@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -241,7 +243,7 @@ class PlacesHttpSuite extends DbSuite:
       assertEquals(post(s"$url/api/places/import", countsDoc.value)._1, 200)
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
-      val about = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
+      val about = RawJson.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
       assertEquals(about.build.version.value: String, Version.version.value: String)
       // the AGPL's network clause: everyone using the server is offered the source of what is running
       assertEquals(about.build.licence, Some("AGPL-3.0-or-later"))
@@ -296,7 +298,7 @@ class PlacesHttpSuite extends DbSuite:
       val url = s"http://127.0.0.1:${b.port}"
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
-      val st = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity).storage
+      val st = RawJson.decode[About](ab).fold(e => fail(s"$e: $ab"), identity).storage
       assert(!st.measuring.value, ab)
       val db = st.entries.find(_.key.value == "database").getOrElse(fail(s"no database entry: $ab"))
       assert(db.bytes.exists(_.value > 0) && db.detail.exists(_.value.endsWith("_test")), db)
@@ -306,7 +308,7 @@ class PlacesHttpSuite extends DbSuite:
       assertEquals(st.backups.map(_.count), Some(1))
       assert(st.volumes.nonEmpty, ab)
       // the second About within the TTL answers the same measurement
-      val again = io.circe.parser.decode[About](get(s"$url/api/about")._2).fold(e => fail(e.toString), identity).storage
+      val again = RawJson.decode[About](get(s"$url/api/about")._2).fold(e => fail(e.toString), identity).storage
       assertEquals(again.measuredAt, st.measuredAt)
       b.stop()
     }

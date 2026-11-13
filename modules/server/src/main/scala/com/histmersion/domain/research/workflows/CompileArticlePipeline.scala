@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -21,8 +23,7 @@ import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, DraftMode, LinkK
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.NeighborTarget
 import com.histmersion.api.Api
@@ -487,7 +488,7 @@ final class CompileArticlePipeline(
 object CompileArticlePipeline:
 
   def written(c: ManagerContext, run: Run.Id): Option[Written] =
-    c.stepOutput(run, StepRecord.Name("write")).flatMap(o => io.circe.parser.decode[Written](o.value).toOption)
+    c.stepOutput(run, StepRecord.Name("write")).flatMap(o => RawJson.decode[Written](o.value).toOption)
 
   /** The kind of a new article when the run names none. */
   val DefaultKind = "concept"
@@ -507,7 +508,7 @@ object CompileArticlePipeline:
       tags: List[Article.Filter.Tags],
       filter: Option[Article.Filter] = None,
       reasons: List[Coverage.Reason] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
   final case class Found(
@@ -515,11 +516,11 @@ object CompileArticlePipeline:
       total: RowCount,
       sources: List[SourceFact],
       toExtract: List[Citekey]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
   final case class Written(written: Written.Value, why: Problem, previousVersion: Option[Written.PreviousVersion])
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object Written:
     type Value = Value.T

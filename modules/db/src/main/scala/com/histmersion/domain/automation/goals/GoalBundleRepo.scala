@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -76,7 +78,7 @@ private[goals] object GoalBundleRepo:
         r.parentUid,
         Bundle.Goal.CreatedAt(r.createdAt.value),
         Bundle.Goal.UpdatedAt(r.updatedAt.value),
-        plan = r.plan.flatMap(p => Jsonb.read[io.circe.Json](Jsonb.JsonText(p.value))),
+        plan = r.plan.flatMap(p => Jsonb.read[Json](Jsonb.JsonText(p.value))),
         planApprovedAt = r.planApprovedAt.map(a => Bundle.Goal.PlanApprovedAt(a.value)),
         budgetUsd = r.budgetUsd.map(b => Bundle.Goal.BudgetUsd(b.toDouble)),
         links = links
@@ -171,7 +173,7 @@ private[goals] object GoalBundleRepo:
     given DbCon = w.transaction
     val goals = w.es.goals.filter(g => w.writes(g.uid))
     goals.foreach { g =>
-      val plan = g.plan.map(BundleFormat.printer.print)
+      val plan = g.plan.map(BundleFormat.print)
       val usd = g.budgetUsd.map(b => BigDecimal(b.value))
       sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at,
               plan, plan_approved_at, budget_usd)

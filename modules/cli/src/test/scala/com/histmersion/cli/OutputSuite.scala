@@ -1,5 +1,9 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.monovore.decline.Command
@@ -51,7 +55,7 @@ class OutputSuite extends munit.FunSuite:
       )
     val js = Output.json(List(Calibre.Json.Book.of(b)))
     assertEquals(
-      io.circe.parser.parse(js).toOption.flatMap(_.asArray).flatMap(_.headOption).map(_.asObject.get.keys.toList),
+      RawJson.parse(js).toOption.flatMap(_.asArray).flatMap(_.headOption).map(_.asObject.get.keys.toList),
       Some(List("id", "title", "authors", "year", "publisher", "tags", "identifiers", "formats"))
     )
     assert(js.contains("\"year\" : 1999"), js)

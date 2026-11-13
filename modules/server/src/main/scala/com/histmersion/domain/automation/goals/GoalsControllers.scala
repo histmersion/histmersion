@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.exchange.Bundle
@@ -93,7 +95,7 @@ final class GoalsControllers(
         Nil,
         goals.links(slug),
         schedules.getOrElse(g.slug, Nil),
-        plan.flatMap(j => io.circe.parser.decode[Plan](j.value).toOption),
+        plan.flatMap(j => RawJson.decode[Plan](j.value).toOption),
         budget.map(b => GoalView.BudgetUsd(b.toDouble))
       )
     }

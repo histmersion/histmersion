@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -12,7 +12,7 @@ final case class SpatialHierarchyResult(
     polygonPlaces: SpatialHierarchyResult.PolygonPlaces,
     pointPlaces: SpatialHierarchyResult.PointPlaces,
     job: Option[SpatialHierarchyResult.Job.Id] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

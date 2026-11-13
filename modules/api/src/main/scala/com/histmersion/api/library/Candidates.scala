@@ -1,8 +1,11 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.{ACursor, Json}
 import com.histmersion.api.given
 
 object Candidates:
@@ -74,12 +77,12 @@ object Candidates:
       .modify(_.openalexId)
       .setTo(a.openalexId.orElse(b.openalexId))
 
-  private def str(c: ACursor, k: String): Option[String] =
+  private def str(c: Cursor, k: String): Option[String] =
     (c.get[String]((k)).toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue4 => (refactorValue4))
 
   def europepmcWorks(json: Json): List[WorkRef] =
-    json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
-      val c = r.hcursor
+    json.cursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
+      val c = r.cursor
       WorkRef(
         doi = (str(c, ("doi"))).map((com).histmersion.api.library.Doi.apply),
         title = (str(c, ("title")).map((_).stripSuffix("."))).map(Title.apply),
@@ -103,8 +106,8 @@ object Candidates:
 
   /** CORE holds full texts, so a work with one is open access by CORE's nature. */
   def coreWorks(json: Json): List[WorkRef] =
-    json.hcursor.downField("results").values.toList.flatten.map { r =>
-      val c = r.hcursor
+    json.cursor.downField("results").values.toList.flatten.map { r =>
+      val c = r.cursor
       WorkRef(
         doi = (str(c, ("doi"))).map((com).histmersion.api.library.Doi.apply),
         title = (str(c, ("title"))).map((com).histmersion.api.library.Title.apply),
@@ -114,7 +117,7 @@ object Candidates:
           .values
           .toList
           .flatten
-          .flatMap(a => str(a.hcursor, ("name"))))
+          .flatMap(a => str(a.cursor, ("name"))))
           .map((com).histmersion.api.library.AuthorName.apply),
         venue = (str(c, ("publisher"))).map((com).histmersion.api.library.Venue.apply),
         isOa = WorkRef.IsOa(str(c, "downloadUrl").isDefined),
@@ -151,12 +154,12 @@ object Candidates:
     }
 
   def openalexAuthorIds(json: Json): List[AuthorId] =
-    (json.hcursor
+    (json.cursor
       .downField("authorships")
       .values
       .toList
       .flatten
-      .flatMap(a => a.hcursor.downField("author").get[String]("id").toOption)
+      .flatMap(a => a.cursor.downField("author").get[String]("id").toOption)
       .map(_.split("/").last)
       .filter(_.startsWith("A")))
       .map(refactorValue2 => AuthorId(refactorValue2))

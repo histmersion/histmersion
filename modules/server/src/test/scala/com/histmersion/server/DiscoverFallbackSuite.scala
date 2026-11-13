@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -13,7 +16,6 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpAnswer
-import io.circe.Json
 import com.histmersion.config.AcquireConfig
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.pluginhost.upstreamSettings
@@ -38,7 +40,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   private val cfg = AppConfig.load().acquire
   private val crossrefPage =
-    io.circe.parser.parse(scala.io.Source.fromResource("acquire/crossref_search.json").mkString).toOption.get
+    RawJson.parse(scala.io.Source.fromResource("acquire/crossref_search.json").mkString).toOption.get
 
   /** OpenAlex answers 503; Crossref answers the captured page. Records what was asked. */
   final private class OpenAlexDown extends Http:
@@ -85,16 +87,14 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
   // failed and the record came from Crossref, which carries no access information at all ──
   private val crossrefWork =
-    io.circe.parser
-      .parse("""{"status": "ok", "message": {"DOI": "10.1038/s41598-022-07284-3",
+    RawJson.parse("""{"status": "ok", "message": {"DOI": "10.1038/s41598-022-07284-3",
       "title": ["New insights on commemoration of the dead"], "type": "journal-article",
       "container-title": ["Scientific Reports"], "author": [{"given": "Eline", "family": "Schotsmans"}],
       "issued": {"date-parts": [[2022]]}}}""")
       .toOption
       .get
   private val unpaywallGold =
-    io.circe.parser
-      .parse("""{"doi": "10.1038/s41598-022-07284-3", "is_oa": true, "oa_status": "gold",
+    RawJson.parse("""{"doi": "10.1038/s41598-022-07284-3", "is_oa": true, "oa_status": "gold",
       "best_oa_location": {"url": "https://www.nature.com/articles/s41598-022-07284-3",
         "url_for_pdf": "https://www.nature.com/articles/s41598-022-07284-3.pdf"}}""")
       .toOption

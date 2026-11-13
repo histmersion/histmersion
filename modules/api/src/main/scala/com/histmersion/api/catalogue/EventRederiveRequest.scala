@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class EventRederiveRequest(
     provider: Option[EventRederiveRequest.Provider] = None,
     dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

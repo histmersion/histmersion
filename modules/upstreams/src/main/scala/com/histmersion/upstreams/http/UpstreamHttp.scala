@@ -1,8 +1,11 @@
 package com.histmersion
 package upstreams.http
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.plugin.Header
-import io.circe.Json
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.plugin.Plugin
@@ -24,5 +27,5 @@ extension (http: Plugin.Http)
   /** One GET answered as JSON; an answer that is none says so, with the URL. */
   def json(url: String, headers: Map[String, String] = Map.empty): Either[String, Json] =
     text(url, headers).flatMap(s =>
-      io.circe.parser.parse(s).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}")
+      RawJson.parse(s).left.map(e => s"$url returned unparseable JSON: $e")
     )

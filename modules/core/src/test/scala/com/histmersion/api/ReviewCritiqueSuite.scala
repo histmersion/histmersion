@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -766,5 +768,5 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   test("a ledger written before the checklist still decodes (no pair, no set-aside)"):
     val old =
       """{"slug":"tin","entries":[{"finding":{"id":"S1","reviewer":"skeptic","severity":"major","kind":"missing-critique","where":"w","quote":"q","problem":"p","fix":"f","evidence":[],"escalated":false},"run":"4b43b0ae-e356-24cd-95b9-10189b3dc231","round":1,"status":"open","claimed":false,"notFixed":null,"reopened":0,"closed":null}],"lessons":[],"task":null}"""
-    val l = io.circe.parser.decode[Ledger](old).toOption.get
+    val l = RawJson.decode[Ledger](old).toOption.get
     assertEquals(l.entries.map(_.finding.pair), List(None))

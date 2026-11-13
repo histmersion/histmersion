@@ -3,7 +3,6 @@ package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 
-import io.circe.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional

@@ -1,16 +1,15 @@
 package com.histmersion
 package api.personal
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
-import io.circe.Decoder
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Target(
@@ -22,7 +21,7 @@ final case class Target(
     from: Option[Year] = None,
     to: Option[Year] = None,
     view: Option[ViewState] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def itemKey: Option[ItemKey] = Option.when(kind.isItem)(id).flatten
@@ -30,7 +29,7 @@ final case class Target(
   def identity: Option[Target.Identity] = itemKey.map(k => Target.Identity(s"${kind.wire}:$k"))
 
 object Target:
-  given Decoder[com.histmersion.api.personal.ItemKey] = com.histmersion.api.personal.ItemKey.given_Decoder_ItemKey
+  given JsonValueCodec[ItemKey] = ItemKey.given_JsonValueCodec_ItemKey
 
   type Identity = Identity.T
   object Identity extends Newtype[String, Pure]

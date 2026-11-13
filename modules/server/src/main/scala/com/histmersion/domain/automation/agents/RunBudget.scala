@@ -9,8 +9,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
-import io.circe.parser.decode
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
 

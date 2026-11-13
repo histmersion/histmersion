@@ -1,5 +1,7 @@
 package com.histmersion
 package db
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -40,14 +42,14 @@ class SiteTypesSqlSuite extends DbSuite:
       ft: Option[String],
       fcode: Option[String],
       cls: Option[String],
-      p31: Option[io.circe.Json]
+      p31: Option[Json]
   ): Option[String] =
-    val props = io.circe.Json
+    val props = Json
       .fromFields(
-        ft.map("feature_types" -> io.circe.Json.fromString(_)).toList ++ fcode.map(
-          "fcode" -> io.circe.Json.fromString(_)
+        ft.map("feature_types" -> Json.fromString(_)).toList ++ fcode.map(
+          "fcode" -> Json.fromString(_)
         ) ++
-          cls.map("class" -> io.circe.Json.fromString(_)) ++ p31.map("p31" -> _)
+          cls.map("class" -> Json.fromString(_)) ++ p31.map("p31" -> _)
       )
       .noSpaces
     val q = Sql.of(
@@ -69,7 +71,7 @@ class SiteTypesSqlSuite extends DbSuite:
       cls: Option[Wikidata.Class] = None,
       p31: List[Wikidata.Class] = Nil
   )(using munit.Location): Unit =
-    val json = Option.when(p31.nonEmpty)(io.circe.Json.arr(p31.map(c => io.circe.Json.fromString(c.value))*))
+    val json = Option.when(p31.nonEmpty)(Json.arr(p31.map(c => Json.fromString(c.value))*))
     assertEquals(
       sqlType(kind.value, stored.map(_.value), ft.map(_.value), fcode.map(_.value), cls.map(_.value), json),
       SiteTypes.of(
@@ -111,7 +113,7 @@ class SiteTypesSqlSuite extends DbSuite:
     same(polity, p31 = List(q("Q23413")))
     // a p31 that is no array counts as none
     assertEquals(
-      sqlType("site", None, None, None, Some("Q486972"), Some(io.circe.Json.fromString("Q23413"))),
+      sqlType("site", None, None, None, Some("Q486972"), Some(Json.fromString("Q23413"))),
       Some("settlement")
     )
 

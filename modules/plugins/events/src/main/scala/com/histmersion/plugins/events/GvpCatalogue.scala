@@ -1,10 +1,13 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
-import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -70,7 +73,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
     */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t.value).toOption)
+      .flatMap(t => RawJson.parse(t.value).toOption)
       .flatMap(GvpCatalogue.record)
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
       .orElse(Option.when(stored.central.isEmpty)(GvpCatalogue.fromBefore088(stored)))
@@ -109,7 +112,7 @@ object GvpCatalogue:
     * `contested`. Years are GVP's signed years (BCE negative), ± its stated uncertainty.
     */
   def parse(json: Json): Either[Problem, (List[CatalogueEvent], Option[Count])] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
         Left(
@@ -129,11 +132,11 @@ object GvpCatalogue:
     */
   def record(f: Json): Option[CatalogueEvent] =
     import JsonFields.*
-    val p = f.hcursor.downField("properties")
+    val p = f.cursor.downField("properties")
     val coords =
-      f.hcursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
+      f.cursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
     val (lon, lat) =
-      (coords.headOption.flatMap(_.asNumber).map(_.toDouble), coords.lift(1).flatMap(_.asNumber).map(_.toDouble))
+      (coords.headOption.flatMap(_.asNumber).flatMap(_.toDouble), coords.lift(1).flatMap(_.asNumber).flatMap(_.toDouble))
     val activity = str(p, JsonFields.Key("Activity_Type")).map(_.value).getOrElse("")
     for
       num <- long(p, JsonFields.Key("Eruption_Number"))

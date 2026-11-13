@@ -3,7 +3,7 @@ package api.automation
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -14,7 +14,7 @@ import com.histmersion.api.jobs.JobKinds
 object AgentScheduler:
 
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -32,7 +32,7 @@ object AgentScheduler:
       target: Started.Target,
       goal: Option[Goal.Slug] = None,
       why: Problem = Problem.Unclassified(Legacy.Text(""))
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -61,7 +61,7 @@ object AgentScheduler:
       why: Problem = Problem.Unclassified(Legacy.Text("")),
       behind: List[Waiting.Behind] = Nil,
       position: Waiting.Position = Waiting.Position(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -88,7 +88,7 @@ object AgentScheduler:
     object Position extends Newtype[Int, Pure]
 
   final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0))
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -107,7 +107,7 @@ object AgentScheduler:
       priority: TypeLine.Priority = TypeLine.Priority(0),
       recent: TypeLine.Recent = TypeLine.Recent(0),
       waiting: TypeLine.Waiting = TypeLine.Waiting(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -142,7 +142,7 @@ object AgentScheduler:
       stop: Option[SchedulerStatus.Stop] = None,
       settings: List[SchedulerStatus.Settings] = Nil,
       changes: List[SchedulerStatus.Changes] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -169,7 +169,7 @@ object AgentScheduler:
     object Changes extends Newtype[String, Pure]
 
   final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -191,7 +191,7 @@ object AgentScheduler:
       position: WhyInfo.Position = WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,
       approval: Option[WhyInfo.Approval] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

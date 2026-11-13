@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.api.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -24,7 +28,6 @@ import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
-import io.circe.syntax.*
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
@@ -152,8 +155,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
 
   /** An edit as JSON. */
   private def edit(op: String, anchor: String, text: String = null) =
-    val t = Option(text).fold("null")(io.circe.Json.fromString(_).noSpaces)
-    s"""{"op":"$op","anchor":${io.circe.Json.fromString(anchor).noSpaces},"text":$t}"""
+    val t = Option(text).fold("null")(Json.fromString(_).noSpaces)
+    s"""{"op":"$op","anchor":${Json.fromString(anchor).noSpaces},"text":$t}"""
 
   /** The edit that turns Body into Revised (it answers "tin is not defined"). */
   private val gloss =
@@ -239,7 +242,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       checks: List[String] = Nil,
       notMaterial: List[(String, String)] = Nil
   ) =
-    val nm = notMaterial.map((p, r) => s"""{"pair":"$p","reason":${io.circe.Json.fromString(r).noSpaces}}""")
+    val nm = notMaterial.map((p, r) => s"""{"pair":"$p","reason":${Json.fromString(r).noSpaces}}""")
     s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"proposals":[${proposals.mkString(
         ","
       )}],"claimsChecked":6,"checks":[${checks.mkString(",")}],"notMaterial":[${nm.mkString(",")}]}"""
@@ -260,10 +263,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
 
   /** A verification pass's answer: checks (id, fixed, quote of the current text), new findings, lessons. */
   private def check(id: String, fixed: Boolean, quote: String, note: String = "checked") =
-    s"""{"id":"$id","fixed":$fixed,"quote":${io.circe.Json.fromString(quote).noSpaces},"note":"$note"}"""
+    s"""{"id":"$id","fixed":$fixed,"quote":${Json.fromString(quote).noSpaces},"note":"$note"}"""
   private def recheck(checks: List[String], findings: List[String] = Nil, lessons: List[String] = Nil) =
     s"""{"checks":[${checks.mkString(",")}],"findings":[${findings
-        .mkString(",")}],"lessons":[${lessons.map(l => io.circe.Json.fromString(l).noSpaces).mkString(",")}]}"""
+        .mkString(",")}],"lessons":[${lessons.map(l => Json.fromString(l).noSpaces).mkString(",")}]}"""
 
   /** The rules reviewer's check that the gloss fixed R1. */
   private val glossFixed = recheck(
@@ -364,8 +367,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val merged =
-      io.circe.parser
-        .decode[ReviewArticle.Merged](steps.find(_.name.value == "merge-1").get.output.get.value)
+      RawJson.decode[ReviewArticle.Merged](steps.find(_.name.value == "merge-1").get.output.get.value)
         .toOption
         .get
     assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
@@ -536,7 +538,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val fixStep = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
       .find(_.name.value == "fixer-1")
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[ReviewArticle.Fix](o.value).toOption)
+      .flatMap(o => RawJson.decode[ReviewArticle.Fix](o.value).toOption)
       .get
     assertEquals(
       fixStep.edits.map(e => (e.index, e.op.wire, e.anchor, e.applied)),
@@ -677,8 +679,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       run.warnings.exists(w => w.value.contains("S1 evidence dropped") && w.value.contains("not in the record")),
       run.warnings
     )
-    val merged = io.circe.parser
-      .decode[ReviewArticle.Merged](
+    val merged = RawJson.decode[ReviewArticle.Merged](
         connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
           .find(_.name.value == "merge-1")
           .get
@@ -713,7 +714,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val direct =
       h.research.articles
-        .check(Slug, io.circe.parser.decode[Article.Edits.ArticleCheckRequest](args).toOption.get)
+        .check(Slug, RawJson.decode[Article.Edits.ArticleCheckRequest](args).toOption.get)
         .toOption
         .get
     val run = start(
@@ -836,8 +837,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
 
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
-    val mech1 = io.circe.parser
-      .decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-1").get.output.get.value)
+    val mech1 = RawJson.decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-1").get.output.get.value)
       .toOption
       .get
     assertEquals(mech1.map(f => (f.id, f.kind, f.major)), List(("M1", "coverage", true), ("M2", "coverage", true)))
@@ -860,12 +860,11 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val fixStep = steps
       .find(_.name.value == "fixer-1")
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[ReviewArticle.Fix](o.value).toOption)
+      .flatMap(o => RawJson.decode[ReviewArticle.Fix](o.value).toOption)
       .get
     assertEquals(fixStep.reasons.map(_.citekey.value: String), List(Ck2))
     assertEquals(
-      io.circe.parser
-        .decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-2").get.output.get.value)
+      RawJson.decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-2").get.output.get.value)
         .toOption
         .get,
       Nil
@@ -919,7 +918,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val patched = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
       .find(_.name.value == "patch-1")
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[ReviewArticle.Patched](o.value).toOption)
+      .flatMap(o => RawJson.decode[ReviewArticle.Patched](o.value).toOption)
     assertEquals(
       patched,
       Some(
@@ -1444,8 +1443,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("cold"), 1, "the count's MAJOR verdict is corrected, not sent back")
-    val merged = io.circe.parser
-      .decode[ReviewArticle.Merged](
+    val merged = RawJson.decode[ReviewArticle.Merged](
         connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
           .find(_.name.value == "merge-1")
           .get
@@ -1592,7 +1590,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val snap2 = steps
       .find(_.name.value == "snapshot-2")
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[ReviewArticle.Snapshot](o.value).toOption)
+      .flatMap(o => RawJson.decode[ReviewArticle.Snapshot](o.value).toOption)
       .get
     assertEquals(snap2.body.value.trim, Revised.value.trim)
     assert(
@@ -1601,7 +1599,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val patch = steps.find(_.name.value == "patch-1").get
     assertEquals(
-      patch.output.flatMap(o => io.circe.parser.decode[ReviewArticle.Patched](o.value).toOption),
+      patch.output.flatMap(o => RawJson.decode[ReviewArticle.Patched](o.value).toOption),
       Some(
         ReviewArticle.Patched(
           written = ReviewArticle.Patched.Written(false),
@@ -1630,7 +1628,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val led = steps
       .find(_.name.value == "ledger-2")
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[ReviewLedger.Ledger](o.value).toOption)
+      .flatMap(o => RawJson.decode[ReviewLedger.Ledger](o.value).toOption)
       .get
     assertEquals(
       led.entries.map(e => (e.id, e.status)),
@@ -1824,7 +1822,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     // the retry is told what was missing
     assert(retryPoints(userPrompt(c.requests.get("rules").asScala.toList(1).head)).exists(_.startsWith("spot-checks:")))
-    val report = io.circe.parser.decode[ReviewArticle.Report](steps(1).output.get.value).toOption.get
+    val report = RawJson.decode[ReviewArticle.Report](steps(1).output.get.value).toOption.get
     assertEquals(report.spotChecks.map(s => (s.citekey, s.tool, s.verdict)), List((Ck, "get_source", "attributable")))
 
   test("#1840: on the last attempt an answer without verified spot-checks is kept, with a warning on the run"):

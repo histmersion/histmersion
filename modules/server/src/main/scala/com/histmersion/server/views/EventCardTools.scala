@@ -1,5 +1,6 @@
 package com.histmersion
 package server.views
+import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -17,9 +18,8 @@ import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventSummary
@@ -44,7 +44,7 @@ object EventCardTools:
       title: Option[EventsInput.Title] = None,
       limit: Option[EventsInput.Limit] = None,
       offset: Option[EventsInput.Offset] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object EventsInput:
     type Query = Api.EventQuery.Text
     val Query: Api.EventQuery.Text.type = Api.EventQuery.Text
@@ -137,7 +137,7 @@ object EventCardTools:
       .modify(_.lon)(_.description("The event's own point, longitude (with lat)"))
       .modify(_.historicity)(_.description("attested|inferred|contested|legendary|mythic"))
       .modify(_.wikidata)(_.description("The Wikidata item the event is (Q…); \"\" clears it"))
-    given Codec.AsObject[PatchEventInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchEventInput]) // #813
+    given JsonCodec[PatchEventInput] = StrictJson.codec(JsonCodec.derived[PatchEventInput]) // #813
 
   def apply(events: EventsControllers, page: EventCardView) =
     val listTool =

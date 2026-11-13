@@ -1,12 +1,13 @@
 package com.histmersion
 package plugins.ai
-
-import io.circe.parser.parse
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 
 /** The schema repairs each API needs, as pure functions over JSON. */
 class SchemaJsonSuite extends munit.FunSuite:
 
-  private def schema(s: String) = SchemaJson(parse(s).fold(e => fail(e.getMessage), identity))
+  private def schema(s: String) = SchemaJson(RawJson.parse(s).fold(e => fail(e), identity))
   private def text(s: SchemaJson) = s.json.noSpaces
 
   test("a tool's input for Anthropic: an object type and empty properties where none are given"):

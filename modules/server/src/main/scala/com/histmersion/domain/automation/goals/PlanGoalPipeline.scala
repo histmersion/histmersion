@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -23,8 +24,7 @@ import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.automation.worklists.WorkListControllers
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 
 import javax.sql.DataSource
 import com.histmersion.api.VocabularyCodecs.given
@@ -332,7 +332,7 @@ object PlanGoalPipeline:
       linked: List[Loaded.Linked],
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags0]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Loaded:
     type Notes = Notes.T
@@ -356,4 +356,4 @@ object PlanGoalPipeline:
       created: PlanGoal.CreatedCount,
       linked: PlanGoal.LinkedCount,
       queued: PlanGoal.QueuedCount
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec

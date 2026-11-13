@@ -1,5 +1,10 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.JsonObject
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -13,7 +18,6 @@ import com.histmersion.util.storage.{RandomReader, Store}
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.util.storage.ByteSource
-import io.circe.Json
 
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
@@ -255,10 +259,9 @@ object BasemapFetch:
           get(h.metadataOffset, h.metadataLength)
             .flatMap((b, _) => PmTiles.decompress(PmTiles.CompressedBytes(b.value), h.internalCompression))
             .flatMap(b =>
-              io.circe.parser
-                .parse(String(b.value, "UTF-8"))
+              RawJson.parse(String(b.value, "UTF-8"))
                 .left
-                .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: ${e.getMessage}")))
+                .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: $e")))
             )
       region = clip(bbox, h)
       top = math.min(maxZoom.value, h.maxZoom.value)
@@ -493,21 +496,21 @@ object BasemapFetch:
       layer: Basemap.Layer,
       filter: Option[(Filtered, FilterSpec)] = None
   ): Json =
-    val src = p.metadata.asObject.getOrElse(io.circe.JsonObject.empty)
+    val src = p.metadata.asObject.getOrElse(JsonObject.empty)
     val layers = src("vector_layers").flatMap(_.asArray) match
       case Some(ls) if dropped.nonEmpty =>
-        src.add(
+        src.updated(
           "vector_layers",
           Json.fromValues(
-            ls.filterNot(l => l.hcursor.get[String]("id").toOption.exists(id => dropped.exists(_.value == id)))
+            ls.filterNot(l => l.cursor.get[String]("id").toOption.exists(id => dropped.exists(_.value == id)))
           )
         )
       case _ => src
     val b = p.bbox
     Json.fromJsonObject(
       layers
-        .add("attribution", Json.fromString(attribution.value))
-        .add(
+        .updated("attribution", Json.fromString(attribution.value))
+        .updated(
           "histmersion",
           Json
             .obj(
@@ -551,7 +554,7 @@ object BasemapFetch:
     val file = Store.Key.applyUnsafe("state.json")
     if work.isDirectory(Store.Key.Root) && !work
         .get(file)
-        .flatMap(f => io.circe.parser.parse(f.text().value).toOption)
+        .flatMap(f => RawJson.parse(f.text().value).toOption)
         .contains(state)
     then work.list().foreach(f => work.delete(f.key))
     work.makeDirectory().left.foreach(e => throw IOException(e.message.sentence))

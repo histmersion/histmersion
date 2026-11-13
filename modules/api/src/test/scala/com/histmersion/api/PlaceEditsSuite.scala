@@ -1,5 +1,9 @@
 package com.histmersion
 package api
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -9,7 +13,6 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.PlacesMarkdown
 
-import io.circe.parser.parse
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, Period, Year}
 import com.histmersion.api.catalogue.Place
 
@@ -67,8 +70,8 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(r.place.source, Some("Wikidata Q1003020"))
     assertEquals(
       r.place.geometry
-        .flatMap(g => parse(g.value).toOption)
-        .flatMap(_.hcursor.downField("coordinates").as[List[Double]].toOption),
+        .flatMap(g => RawJson.parse(g.value).toOption)
+        .flatMap(_.cursor.downField("coordinates").as[List[Double]].toOption),
       Some(List(15.98, 45.81))
     )
     assertEquals(
@@ -254,10 +257,10 @@ class PlaceEditsSuite extends munit.FunSuite:
 
   test("an override body: unknown keys refused, absent ones defaulted"):
     assert(
-      parse("""{"kind":"region","why":"x"}""").flatMap(_.as[Place.OverrideSet]).isLeft
+      RawJson.parse("""{"kind":"region","why":"x"}""").flatMap(_.as[Place.OverrideSet]).isLeft
     )
     assertEquals(
-      parse("""{"reset":true}""").flatMap(_.as[Place.OverrideSet]),
+      RawJson.parse("""{"reset":true}""").flatMap(_.as[Place.OverrideSet]),
       Right(Place.OverrideSet(reset = Place.OverrideSet.Reset(true)))
     )
 
@@ -421,7 +424,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      parse("""{"pointLat":38.5,"pointLon":57.5,"reason":"r"}""").flatMap(
+      RawJson.parse("""{"pointLat":38.5,"pointLon":57.5,"reason":"r"}""").flatMap(
         _.as[Place.OverrideSet]
       ),
       Right(

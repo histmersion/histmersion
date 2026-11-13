@@ -1,5 +1,8 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -355,13 +358,13 @@ class BasemapFetchSuite extends munit.FunSuite:
         Right(None),
         "outside the region"
       )
-      assertEquals(f.metadata.hcursor.downField("histmersion").get[String]("build"), Right("planet"))
+      assertEquals(f.metadata.cursor.downField("histmersion").get[String]("build"), Right("planet"))
       assertEquals(
-        f.metadata.hcursor.downField("vector_layers").as[List[Json]].map(_.size),
+        f.metadata.cursor.downField("vector_layers").as[List[Json]].map(_.size),
         Right(4),
         "earth, water, landcover, landuse"
       )
-      assertEquals(f.metadata.hcursor.downField("histmersion").get[String]("drop"), Right("roads; places"))
+      assertEquals(f.metadata.cursor.downField("histmersion").get[String]("drop"), Right("roads; places"))
     finally f.close()
 
   test("an interrupted download resumes: the parts already there are not asked for again"):
@@ -464,4 +467,4 @@ class BasemapFetchSuite extends munit.FunSuite:
       Path.of("/y/maps")
     )
 
-  private type Json = io.circe.Json
+  private type Json = Json

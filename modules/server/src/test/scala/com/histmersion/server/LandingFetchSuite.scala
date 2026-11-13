@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -11,7 +13,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.*
-import io.circe.Json
 
 /** Repository landing pages in the OA chain (#1580), against a fake upstream answering from records and pages captured
   * on 2026-10-16 (`acquire/landing/`; the publisher, journal and challenge pages are synthetic and say so) — no
@@ -39,10 +40,9 @@ class LandingFetchSuite extends munit.FunSuite:
       answer(url).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(s =>
-        io.circe.parser
-          .parse(s.value)
+        RawJson.parse(s.value)
           .left
-          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e))))
       )
 
   private def cfg = AppConfig.load().acquire

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
@@ -348,7 +349,7 @@ class GazetteerLoadSuite extends DbSuite:
       Gazetteer.Extract.Licence("ODC-By 1.0"),
       Some(Gazetteer.Extract.Attribution("Getty Thesaurus of Geographic Names (TGN), ODC-By 1.0"))
     )
-    Files.writeString(manifestOf(s), io.circe.syntax.EncoderOps(Gazetteer.Manifest(m.extracts :+ x)).asJson.spaces2)
+    Files.writeString(manifestOf(s), (Gazetteer.Manifest(m.extracts :+ x)).asJson.spaces2)
     s
 
   dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):

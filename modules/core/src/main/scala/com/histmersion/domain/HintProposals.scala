@@ -6,7 +6,7 @@ import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -38,7 +38,7 @@ object HintProposals:
       untilSource: Option[HintAnswer.UntilSource] = None,
       priority: Option[HintAnswer.Priority] = None,
       settings: List[HintAnswer.Settings] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object HintAnswer:
     type Action = Action.T
     object Action extends Newtype[String, Pure]
@@ -162,4 +162,4 @@ object HintProposals:
     * warnings.
     */
   final case class Proposed(effect: Option[HintEffect], why: Problem, problems: List[Description] = Nil)
-      derives KindlingsCodecAsObject
+      derives JsonCodec

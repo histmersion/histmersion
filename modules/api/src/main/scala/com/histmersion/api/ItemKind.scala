@@ -1,6 +1,6 @@
 package com.histmersion
 package api
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -43,6 +43,5 @@ object ItemKind:
     def all: Array[ItemKind] = values
     def wire(e: ItemKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[ItemKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
-  given Encoder[ItemKind] = WireEnum.encoder
-  given Decoder[ItemKind] = WireEnum.decoder
+  given JsonValueCodec[ItemKind] = WireEnum.codec
   given Schema[ItemKind] = WireEnum.schema

@@ -1,5 +1,7 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -10,8 +12,6 @@ import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import io.circe.Json
-import io.circe.parser.parse
 import com.histmersion.api.basemap.Basemap
 
 /** The physical names: Natural Earth's classes and names, where a polygon's name goes, the zooms, the region,
@@ -25,7 +25,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
   private val Y = BasemapLabels.WorldY
 
   private def feature(props: String, geometry: String): Json =
-    parse(s"""{"type":"Feature","properties":$props,"geometry":$geometry}""").fold(e => fail(e.toString), identity)
+    RawJson.parse(s"""{"type":"Feature","properties":$props,"geometry":$geometry}""").fold(e => fail(e.toString), identity)
 
   test("Natural Earth's classes: the physical ones kept, never a reservoir, a canal or a settlement"):
     assertEquals(BasemapLabels.kindOf(BasemapLabels.FeatureClass("Range/mtn")), Some("range"))
@@ -40,7 +40,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
       .foreach(c => assertEquals(BasemapLabels.kindOf(c), None, c))
 
   test("names: Natural Earth's own and each language, upper-case keys too, Chinese as Protomaps names it"):
-    val p = parse(
+    val p = RawJson.parse(
       """{"NAME":"Taurus Mts.","NAME_EN":"Taurus Mountains","NAME_TR":"Toros Dağları","NAME_ZH":"托罗斯山脉","NAME_ZHT":"托羅斯山脈","NAMEALT":null,"name_xyzw":"no"}"""
     ).toOption.flatMap(_.asObject).get
     assertEquals(
@@ -55,7 +55,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
     )
 
   test("the zoom a name starts at: min_label, else min_zoom, else scalerank; rounded"):
-    def z(s: String) = BasemapLabels.minZoomOf(parse(s).toOption.flatMap(_.asObject).get)
+    def z(s: String) = BasemapLabels.minZoomOf(RawJson.parse(s).toOption.flatMap(_.asObject).get)
     assertEquals(z("""{"MIN_LABEL": 6.7, "min_zoom": 2}"""), 7)
     assertEquals(z("""{"min_label": 3.2}"""), 3)
     assertEquals(z("""{"min_zoom": 5}"""), 5)

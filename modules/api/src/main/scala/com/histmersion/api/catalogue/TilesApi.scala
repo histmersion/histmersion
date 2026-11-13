@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import sttp.model.{HeaderNames, StatusCode}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Filter

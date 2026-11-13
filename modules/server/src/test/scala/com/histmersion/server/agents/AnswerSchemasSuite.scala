@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -10,8 +14,6 @@ import com.histmersion.domain.library.workflows.*
 import com.histmersion.domain.automation.agents.{AnswerSchemas, StrictJsonSchema}
 import com.histmersion.domain.automation.managers.Zero
 
-import io.circe.{parser, Json, JsonObject}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 
 import java.nio.file.{Files, Paths}
@@ -106,8 +108,8 @@ class AnswerSchemasSuite extends munit.FunSuite:
       unsupported ++ badFormat ++ bareRef ++ untyped ++ obj
     }
 
-  private def strict(s: ResponseSchema[?]): Json = parser.parse(Codex.outputSchemaJson(s).value).toOption.get
-  private def derived(s: ResponseSchema[?]): Json = parser.parse(Codex.schemaJson(s).value).toOption.get
+  private def strict(s: ResponseSchema[?]): Json = RawJson.parse(Codex.outputSchemaJson(s).value).toOption.get
+  private def derived(s: ResponseSchema[?]): Json = RawJson.parse(Codex.schemaJson(s).value).toOption.get
 
   test("every step schema has a name, and they are all listed"):
     assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
@@ -201,7 +203,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   test("#1461 the cold reader's emptySlots is an array of the four slot names, in both forms Claude and Codex get"):
     for js <- List(derived(ResearchAnswers.coldReader), strict(ResearchAnswers.coldReader)) do
-      val p = js.hcursor.downField("properties").downField("emptySlots")
+      val p = js.cursor.downField("properties").downField("emptySlots")
       val items = p.downField("items").success.orElse(p.downField("anyOf").downN(0).downField("items").success)
       assertEquals(
         items.flatMap(_.downField("enum").as[List[String]].toOption),

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.media
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.media.MediaMarkdown
@@ -11,9 +12,8 @@ import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.domain.media.links.AssetLinksControllers
 import com.histmersion.api.StrictJson
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.library.Citekey
@@ -34,7 +34,7 @@ object MediaTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class AssetsInput(citekey: Citekey)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -65,7 +65,7 @@ object MediaTools:
       .modify(_.citekey)(_.description("Source citekey"))
       .modify(_.name)(_.description("Asset file name"))
       .modify(_.kind)(_.description("Asset kind: figure, photo, map, plan, scan"))
-    given Codec.AsObject[PatchAssetInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchAssetInput]) // #813
+    given JsonCodec[PatchAssetInput] = StrictJson.codec(JsonCodec.derived[PatchAssetInput]) // #813
 
   final case class AssetLinksInput(
       citekey: Option[Citekey] = None,
@@ -75,7 +75,7 @@ object MediaTools:
       relation: Option[AssetLinksInput.Relation] = None,
       xywh: Option[AssetLinksInput.Xywh] = None,
       notes: Option[AssetLinksInput.Notes] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object AssetLinksInput:
     type Asset = Asset.T
     object Asset extends Newtype[String, Pure]
@@ -98,7 +98,7 @@ object MediaTools:
       .modify(_.targetId)(_.description("Filter by target id"))
       .modify(_.relation)(_.description("Set to create a link: depicts, taken_at, illustrates, page_of"))
 
-  final case class DeleteAssetLinkInput(id: DeleteAssetLinkInput.Id) derives KindlingsCodecAsObject
+  final case class DeleteAssetLinkInput(id: DeleteAssetLinkInput.Id) derives JsonCodec
   object DeleteAssetLinkInput:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]

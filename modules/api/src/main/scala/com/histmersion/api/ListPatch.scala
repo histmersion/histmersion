@@ -2,9 +2,8 @@ package com.histmersion
 package api
 
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 
@@ -18,4 +17,4 @@ object ListPatch:
 
   export Write.{ListItem as Add, ListItem as Remove, ListItem as Replace}
 
-  given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])
+  given JsonCodec[ListPatch] = StrictJson.codec(JsonCodec.derived[ListPatch])

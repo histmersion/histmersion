@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -11,8 +12,7 @@ import com.histmersion.api.{Plural, WireEnum}
 import com.histmersion.api.research.CritiqueRef
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.{Decoder, Encoder}
+import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
@@ -74,8 +74,7 @@ object ReviewLedger:
       def all: Array[Status] = values
       def wire(e: Status): WireEnumValues.Wire = e.wire
       def fromWire(s: WireEnumValues.Wire): Option[Status] = parse(s)
-    given Encoder[Status] = WireEnum.encoder
-    given Decoder[Status] = WireEnum.decoder
+    given JsonValueCodec[Status] = WireEnum.codec
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
   enum LessonSource(val wire: WireEnumValues.Wire) derives CanEqual:
@@ -88,8 +87,7 @@ object ReviewLedger:
       def all: Array[LessonSource] = values
       def wire(e: LessonSource): WireEnumValues.Wire = e.wire
       def fromWire(s: WireEnumValues.Wire): Option[LessonSource] = parse(s)
-    given Encoder[LessonSource] = WireEnum.encoder
-    given Decoder[LessonSource] = WireEnum.decoder
+    given JsonValueCodec[LessonSource] = WireEnum.codec
 
   /** How a finding was closed: by whom (a reviewer's wire name, `fixer`, or `mechanical` for code), in which pass of
     * which run, and the evidence — the quote of the fixed text, or the record's sentence of a rejection (with its
@@ -102,7 +100,7 @@ object ReviewLedger:
       note: Closure.Note = Closure.Note(""),
       quote: Closure.Quote = Closure.Quote(""),
       citekey: Option[Citekey] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Closure:
     type By = ReviewArticle.Reviewer.Wire
@@ -134,7 +132,7 @@ object ReviewLedger:
       closed: Option[Closure] = None,
       notFixedCount: Entry.NotFixedCount = Entry.NotFixedCount(0),
       deferred: Option[Entry.Deferred] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def id: Finding.Id = finding.id
     def open: Boolean = status == Status.Open
     def major: Boolean = finding.major
@@ -161,7 +159,7 @@ object ReviewLedger:
     val Deferred: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
 
   final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object Lesson:
     type Text = ReviewArticle.Recheck.Lessons
@@ -177,7 +175,7 @@ object ReviewLedger:
       entries: List[Entry] = Nil,
       lessons: List[Lesson] = Nil,
       task: Option[Ledger.Task] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def open: List[Entry] = entries.filter(_.open)
     def openMajors: List[Entry] = open.filter(_.major)
     def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)
@@ -593,14 +591,14 @@ object ReviewLedger:
   /** A run of changed paragraphs of the new body (with its margin), under the heading it sits in, and the paragraphs of
     * the old body that are gone.
     */
-  final case class Passage(heading: Option[Passage.Heading], text: Passage.Text) derives KindlingsCodecAsObject
+  final case class Passage(heading: Option[Passage.Heading], text: Passage.Text) derives JsonCodec
 
   object Passage:
     type Heading = Heading.T
     object Heading extends Newtype[String, Pure]
     type Text = Text.T
     object Text extends Newtype[String, Pure]
-  final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives KindlingsCodecAsObject:
+  final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives JsonCodec:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
@@ -696,7 +694,7 @@ object ReviewLedger:
     )
 
   /** One closed finding a revision would reopen, and why. */
-  final case class Regression(id: Regression.Id, why: Problem) derives KindlingsCodecAsObject:
+  final case class Regression(id: Regression.Id, why: Problem) derives JsonCodec:
     def line: String = s"$id (closed): ${why.sentence}"
 
   object Regression:

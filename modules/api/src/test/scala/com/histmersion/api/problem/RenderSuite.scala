@@ -1,9 +1,10 @@
 package com.histmersion
 package api
 package problem
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
-import io.circe.parser.decode
-import io.circe.syntax.*
 
 import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
@@ -115,7 +116,7 @@ class RenderSuite extends munit.FunSuite:
       assertEquals(s"${e.group}", p.group.productPrefix)
       assertEquals(s"${e.`case`}", p.productPrefix)
       assertEquals(s"${e.text}", p.sentence)
-      assertEquals(decode[Answer.Entry](e.asJson.noSpaces).flatMap(_.problem), Right(p))
+      assertEquals(RawJson.decode[Answer.Entry](e.asJson.noSpaces).flatMap(_.problem), Right(p))
   }
 
   test("English sentences tell the cases apart"):
@@ -124,13 +125,13 @@ class RenderSuite extends munit.FunSuite:
   test("a body lists every problem in order and decodes back to the same problems"):
     val one: Problems = examples.head
     val many: Problems = Problems.of(examples.head, examples.tail*)
-    assertEquals(decode[Answer](one.answer.asJson.noSpaces).flatMap(_.decoded), Right(one))
-    assertEquals(decode[Answer](many.answer.asJson.noSpaces).flatMap(_.decoded), Right(many))
+    assertEquals(RawJson.decode[Answer](one.answer.asJson.noSpaces).flatMap(_.decoded), Right(one))
+    assertEquals(RawJson.decode[Answer](many.answer.asJson.noSpaces).flatMap(_.decoded), Right(many))
     assertEquals(many.answer.problems.map(e => s"${e.`case`}"), examples.map(_.productPrefix))
     assertEquals(many.sentences, examples.map(_.sentence))
-    assert(decode[Answer]("""{"problems":[]}""").flatMap(_.decoded).isLeft, "a body with no problem is no answer")
+    assert(RawJson.decode[Answer]("""{"problems":[]}""").flatMap(_.decoded).isLeft, "a body with no problem is no answer")
     assert(
-      decode[Answer]("""{"problems":[{"group":"Nope","case":"X","data":{},"text":""}]}""").flatMap(_.decoded).isLeft
+      RawJson.decode[Answer]("""{"problems":[{"group":"Nope","case":"X","data":{},"text":""}]}""").flatMap(_.decoded).isLeft
     )
 
   test("the status of several problems is the first one's; a spent allowance says when to retry"):

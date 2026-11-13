@@ -5,7 +5,6 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.server.agents.PlanPools
 
 import com.histmersion.api.automation.PlanQuota.*
-import io.circe.{parser, Json}
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure

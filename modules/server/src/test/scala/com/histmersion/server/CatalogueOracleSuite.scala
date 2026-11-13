@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
@@ -10,8 +14,6 @@ import com.histmersion.config.*
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.server.media.FakeMediaHttp
 import com.augustnagro.magnum.*
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import ox.supervised
 
 import java.io.ByteArrayInputStream
@@ -163,7 +165,7 @@ class CatalogueOracleSuite extends DbSuite:
     parser
       .parse(payload)
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
+      .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
   private def awaitJob(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 600): String =
@@ -455,7 +457,7 @@ class CatalogueOracleSuite extends DbSuite:
           -1320,
           -1280,
           None,
-          List("geometry" -> parser.parse(polygon(33.5, 38.5, 35.8, 40.5)).toOption.get.noSpaces.asJson)
+          List("geometry" -> RawJson.parse(polygon(33.5, 38.5, 35.8, 40.5)).toOption.get.noSpaces.asJson)
         )
       )
     )
@@ -534,14 +536,14 @@ class CatalogueOracleSuite extends DbSuite:
       "attestation missing source",
       post(s"$url/api/attestations", """{"citekey":"zznone1900_x","targetType":"place","targetId":"zz_hill"}""")
     )
-    val a3id = parser.parse(a3.drop(4)).toOption.flatMap(_.hcursor.downField("id").as[Long].toOption).getOrElse(0L)
+    val a3id = RawJson.parse(a3.drop(4)).toOption.flatMap(_.cursor.downField("id").as[Long].toOption).getOrElse(0L)
     val _ = step("attestation patch", send("PATCH", s"$url/api/attestations/$a3id", """{"note":"patched"}"""))
     val _ = step("event links recompute", post(s"$url/api/events/zz_battle/links", """{"recompute":true}"""))
     val links = get(s"$url/api/events/zz_battle/links").drop(4)
     val firstCandidate = parser
       .parse(links)
       .toOption
-      .flatMap(_.hcursor.downField("candidates").downArray.downField("citekey").as[String].toOption)
+      .flatMap(_.cursor.downField("candidates").downArray.downField("citekey").as[String].toOption)
     firstCandidate.foreach(ck =>
       val _ = step("event links confirm", post(s"$url/api/events/zz_battle/links", s"""{"confirm":["$ck"]}"""))
     )
@@ -822,7 +824,7 @@ class CatalogueOracleSuite extends DbSuite:
             if digest(k) && v.isString then k -> Json.fromString("DIGEST") else k -> walk(v)
           })
       )
-    parser.parse(text) match
+    RawJson.parse(text) match
       case Right(j) => normalise(walk(j).spaces2SortKeys, names)
       case Left(_)  => normalise(text, names)
 
@@ -1183,12 +1185,12 @@ class CatalogueOracleSuite extends DbSuite:
     parser
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           if c.downField("condition").focus.forall(_.isNull)
@@ -1224,12 +1226,12 @@ class CatalogueOracleSuite extends DbSuite:
     parser
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .toList
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           kind <- c.downField("kind").as[String].toOption

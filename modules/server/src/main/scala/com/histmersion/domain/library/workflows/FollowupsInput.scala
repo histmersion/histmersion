@@ -3,7 +3,7 @@ package domain.library.workflows
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -13,7 +13,7 @@ final case class FollowupsInput(
     id: FollowupsInput.Id,
     since: Option[FollowupsInput.Since] = None,
     limit: Option[FollowupsInput.Limit] = None
-) derives KindlingsCodecAsObject
+) derives JsonCodec
 object FollowupsInput:
   type Id = Id.T
   object Id extends Newtype[String, Pure]

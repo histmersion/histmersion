@@ -1,11 +1,12 @@
 package com.histmersion
 package api.library
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
@@ -29,27 +30,26 @@ object MetadataPatch:
 
   export Source.Provenance
 
-  private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
+  private val derived: JsonCodec[MetadataPatch] = JsonCodec.derived[MetadataPatch]
 
-  given Codec.AsObject[MetadataPatch] = Codec.AsObject.from(
-    StrictJson.decoder(Decoder.instance { c =>
-      c.value.asObject match
-        case None    => derived(c)
-        case Some(o) =>
-          val nulls = o.toList.collect { case (k, v) if v.isNull => k }
-          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(MetadataField.Wire(k)).toRight(k))
-          if refused.nonEmpty then
-            Left(
-              DecodingFailure(
+  given JsonCodec[MetadataPatch] = StrictJson.codec(
+    JsonCodec.mapped[MetadataPatch, Json](
+      m => m.asJson(using derived).dropNullValues,
+      json =>
+        json.asObject match
+          case None    => json.as(using derived)
+          case Some(o) =>
+            val nulls = o.toList.collect { case (k, v) if v.isNull => k }
+            val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(MetadataField.Wire(k)).toRight(k))
+            if refused.nonEmpty then
+              Left(
                 s"metadata.${refused.mkString(", metadata.")} cannot be cleared — null is accepted only on " +
-                  s"${MetadataField.values.map(MetadataField.wireOf).mkString(", ")}; omit a field to leave it alone",
-                c.history
+                  s"${MetadataField.values.map(MetadataField.wireOf).mkString(", ")}; omit a field to leave it alone"
               )
-            )
-          else
-            derived
-              .decodeJson(Json.fromJsonObject(o.filter((_, v) => !v.isNull)))
-              .map(m => m.modify(_.clear).setTo((m.clear ++ cleared).distinct))
-    }),
-    Encoder.AsObject.instance(m => derived.encodeObject(m).filter((_, v) => !v.isNull))
+            else
+              Json
+                .fromJsonObject(o.filter((_, v) => !v.isNull))
+                .as(using derived)
+                .map(m => m.modify(_.clear).setTo((m.clear ++ cleared).distinct))
+    )
   )

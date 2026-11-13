@@ -1,5 +1,9 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -7,7 +11,6 @@ import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.config.BasemapOnDemandConfig
 import com.histmersion.util.storage.{ByteSource, Store}
 
-import io.circe.Json
 
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
@@ -126,7 +129,7 @@ final class OnDemandTiles(
           val fromDisk = scala.util
             .Try {
               val j =
-                io.circe.parser.parse(remoteFiles.get(OnDemandTiles.RemoteJson).get.text().value).toOption.get.hcursor
+                RawJson.parse(remoteFiles.get(OnDemandTiles.RemoteJson).get.text().value).toOption.get.cursor
               val head = remoteFiles.get(OnDemandTiles.Head).get.bytes().value
               (
                 j.get[String]("url").toOption.get,

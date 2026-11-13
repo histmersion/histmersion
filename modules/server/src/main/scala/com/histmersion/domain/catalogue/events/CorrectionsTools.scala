@@ -1,12 +1,13 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -25,7 +26,7 @@ object CorrectionsTools:
       status: Option[EventCorrectionsInput.Status] = None,
       id: Option[EventCorrectionsInput.Id] = None,
       limit: Option[EventCorrectionsInput.Limit] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object EventCorrectionsInput:
     type Status = Status.T
     object Status extends Newtype[String, Pure]

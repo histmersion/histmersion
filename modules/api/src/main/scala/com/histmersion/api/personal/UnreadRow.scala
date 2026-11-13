@@ -1,8 +1,7 @@
 package com.histmersion
 package api.personal
 
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
@@ -21,7 +20,7 @@ final case class UnreadRow(
     status: Option[UnreadRow.Status] = None,
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

@@ -1,5 +1,8 @@
 package com.histmersion
 package util.basemap
+import hearth.kindlings.jsoniterjson.JsonObject
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -8,7 +11,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.storage.Store
 
-import io.circe.Json
 
 import scala.collection.mutable
 import com.histmersion.api.basemap.Basemap
@@ -112,19 +114,19 @@ object BasemapLabels:
     case c     => c
 
   /** A property by name, whatever its case (Natural Earth's polygon files use upper case). */
-  private def prop(p: io.circe.JsonObject, k: String): Option[Json] =
+  private def prop(p: JsonObject, k: String): Option[Json] =
     p(k).orElse(p(k.toUpperCase(java.util.Locale.ROOT))).filterNot(_.isNull)
 
-  private def text(p: io.circe.JsonObject, k: String): Option[String] =
+  private def text(p: JsonObject, k: String): Option[String] =
     prop(p, k).flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
 
-  private def number(p: io.circe.JsonObject, k: String): Option[Double] =
-    prop(p, k).flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
+  private def number(p: JsonObject, k: String): Option[Double] =
+    prop(p, k).flatMap(j => j.asNumber.flatMap(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
 
   /** The names a feature carries: `name` (Natural Earth's own, mostly English or local), `name:en`, and `name:<code>`
     * for each `name_<code>`.
     */
-  def names(p: io.circe.JsonObject): List[(Language, Name)] =
+  def names(p: JsonObject): List[(Language, Name)] =
     val own = text(p, "name").toList.map(n => Language("name") -> Name(n))
     val langs = p.keys.toList
       .map(_.toLowerCase(java.util.Locale.ROOT))
@@ -139,7 +141,7 @@ object BasemapLabels:
   /** The map zoom a feature is labelled from: Natural Earth's `min_label`, else `min_zoom`, else its `scalerank`; a
     * fraction rounds to the nearer zoom. Pure.
     */
-  def minZoomOf(p: io.circe.JsonObject): Label.MinZoom =
+  def minZoomOf(p: JsonObject): Label.MinZoom =
     Label.MinZoom(
       number(p, "min_label")
         .orElse(number(p, "min_zoom"))
@@ -152,8 +154,8 @@ object BasemapLabels:
 
   private def coords(j: Json): Option[(Label.Lon, Label.Lat)] =
     j.asArray.flatMap(a =>
-      for x <- a.lift(0).flatMap(_.asNumber); y <- a.lift(1).flatMap(_.asNumber)
-      yield (Label.Lon(x.toDouble), Label.Lat(y.toDouble))
+      for x <- a.lift(0).flatMap(_.asNumber).flatMap(_.toDouble); y <- a.lift(1).flatMap(_.asNumber).flatMap(_.toDouble)
+      yield (Label.Lon(x), Label.Lat(y))
     )
 
   private def ring(j: Json): Vector[(Label.Lon, Label.Lat)] = j.asArray.map(_.flatMap(coords)).getOrElse(Vector.empty)
@@ -217,11 +219,11 @@ object BasemapLabels:
   /** One GeoJSON feature as a label, when its class is kept and it has a name. */
   def label(f: Json): Option[Label] =
     for
-      p <- f.hcursor.downField("properties").focus.flatMap(_.asObject)
+      p <- f.cursor.downField("properties").focus.flatMap(_.asObject)
       kind <- text(p, "featurecla").flatMap(c => kindOf(FeatureClass(c)))
       ns = names(p)
       if ns.exists(_._1.value == "name") || ns.exists(_._1.value == "name:en")
-      g <- f.hcursor.downField("geometry").focus.flatMap(_.asObject)
+      g <- f.cursor.downField("geometry").focus.flatMap(_.asObject)
       typ <- g("type").flatMap(_.asString)
       cs <- g("coordinates")
       placed <- typ match
@@ -251,7 +253,7 @@ object BasemapLabels:
 
   /** Every kept label of one GeoJSON FeatureCollection. */
   def parse(file: FileName, doc: Json): Either[Problem, List[Label]] =
-    doc.hcursor
+    doc.cursor
       .downField("features")
       .focus
       .flatMap(_.asArray)

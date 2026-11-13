@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence

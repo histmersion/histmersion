@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -23,7 +27,6 @@ import com.histmersion.domain.automation.agents.{AgentRepo, PlanQuotaRepo}
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps, ServerWiring}
-import io.circe.parser
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -130,7 +133,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     @volatile var probeOut: List[String] = Nil
     @volatile var probeArgs: List[String] = Nil
     @volatile var auth: String = """{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}"""
-    @volatile var codex: Either[Problem, io.circe.Json] = Left(Problem.Unclassified(Legacy.Text("no app-server here")))
+    @volatile var codex: Either[Problem, Json] = Left(Problem.Unclassified(Legacy.Text("no app-server here")))
     @volatile var hold: Option[(CountDownLatch, CountDownLatch)] = None
     def seams: PlanPools.Seams = PlanPools.Seams(
       (_, _, _) => { codexReads.incrementAndGet(); codex },
@@ -710,7 +713,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         )
         val (s, body) = post(s"$url/refresh", """{"pool":"claude-plan"}""", Some("zz-key"))
         assertEquals(s, 200, body)
-        val j = parser.parse(body).toOption.get.hcursor.downField("pools").downArray
+        val j = RawJson.parse(body).toOption.get.cursor.downField("pools").downArray
         assertEquals(j.downField("refreshed").as[Boolean], Right(true), body)
         assert(j.downField("detail").as[String].exists(_.contains("five_hour 12% used")), body)
         assertEquals(j.downField("status").downField("refreshesToday").as[Int], Right(1), body)

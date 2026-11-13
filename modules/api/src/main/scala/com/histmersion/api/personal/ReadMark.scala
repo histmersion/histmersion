@@ -1,8 +1,7 @@
 package com.histmersion
 package api.personal
 
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
@@ -16,7 +15,7 @@ final case class ReadMark(
     read: ReadMark.Read = ReadMark.Read(false),
     readAt: Option[ReadMark.ReadAt] = None,
     openedAt: Option[ReadMark.OpenedAt] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -31,6 +30,6 @@ object ReadMark:
   object OpenedAt extends Newtype[String, Pure]
 
   final case class Set(kind: ItemKind, id: ItemKey, read: Read, title: Option[com.histmersion.api.library.Title] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

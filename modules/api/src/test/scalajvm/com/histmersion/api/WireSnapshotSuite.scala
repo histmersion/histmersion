@@ -1,5 +1,6 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.catalogue.EventsMarkdown
@@ -13,7 +14,6 @@ import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.api.library.Confidence
 import hearth.kindlings.optics.syntax.*
-import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}

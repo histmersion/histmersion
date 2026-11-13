@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
@@ -21,22 +24,21 @@ object NaturalEarthLand:
 
   /** The polygon geometries of a GeoJSON FeatureCollection, each as its own GeoJSON text. Pure. */
   def geometries(rawJson: String): Either[Problem, List[PlaceDetailRow.Geometry]] =
-    io.circe.parser
-      .parse(rawJson)
+    RawJson.parse(rawJson)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
       .flatMap { doc =>
-        doc.hcursor
+        doc.cursor
           .downField("features")
           .focus
           .flatMap(_.asArray)
           .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
           .map(_.toList.flatMap { f =>
-            f.hcursor
+            f.cursor
               .downField("geometry")
               .focus
               .filter { g =>
-                g.hcursor.downField("type").as[String].toOption.exists(t => t == "Polygon" || t == "MultiPolygon")
+                g.cursor.downField("type").as[String].toOption.exists(t => t == "Polygon" || t == "MultiPolygon")
               }
               .map(g => PlaceDetailRow.Geometry(g.noSpaces))
           })

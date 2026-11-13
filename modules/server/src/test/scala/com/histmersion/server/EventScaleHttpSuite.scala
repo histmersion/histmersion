@@ -1,5 +1,6 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,7 +9,6 @@ import hearth.kindlings.optics.syntax.*
 import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.api.views.EventDetail
-import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.catalogue.{Event, EventGeo}
@@ -58,7 +58,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
             |"geometry":"{\"type\":\"Point\",\"coordinates\":[36.5,34.55]}"}""".stripMargin
         )
         assertEquals(ps, 200, pb)
-        val d0 = decode[EventDetail](pb).fold(e => fail(e.getMessage), identity)
+        val d0 = RawJson.decode[EventDetail](pb).fold(e => fail(e), identity)
         assertEquals((d0.event.scale, d0.event.scaleStated), ("local", false))
 
         // a value that is no scale is refused, and nothing changes
@@ -69,7 +69,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
 
         val (s1, b1) = patch(s"$url/api/events/$Id", """{"scale":"regional"}""")
         assertEquals(s1, 200, b1)
-        assertEquals(decode[EventDetail](b1).map(d => (d.event.scale, d.event.scaleStated)), Right(("regional", true)))
+        assertEquals(RawJson.decode[EventDetail](b1).map(d => (d.event.scale, d.event.scaleStated)), Right(("regional", true)))
         val (s2, b2) = get(s"$url/api/events/$Id")
         assertEquals(s2, 200, b2)
         assert(b2.contains("\"scale\":\"regional\""), b2)
@@ -77,7 +77,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         // the map feed — before `events/{id}`, so `geo` is not an event id
         val (gs, gb) = get(s"$url/api/events/geo?text=Zqes%20HTTP")
         assertEquals(gs, 200, gb)
-        val geo = decode[EventGeo.List](gb).fold(e => fail(s"${e.getMessage}: $gb"), identity)
+        val geo = RawJson.decode[EventGeo.List](gb).fold(e => fail(s"$e: $gb"), identity)
         val ours = geo.events.find(_.id == Id).getOrElse(fail(gb))
         assertEquals((ours.lat, ours.lon, ours.anchor, ours.scale), (34.55, 36.5, "event", "regional"))
         assertEquals(ours.outline, None, "a point has no outline to draw")
@@ -90,7 +90,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         )
         assertEquals(ms, 200, mb)
         assert(mb.contains("**Scale:** local (derived)"), mb)
-        val after = decode[EventDetail](get(s"$url/api/events/$Id")._2).fold(e => fail(e.getMessage), identity)
+        val after = RawJson.decode[EventDetail](get(s"$url/api/events/$Id")._2).fold(e => fail(e), identity)
         assertEquals((after.event.scale, after.event.scaleStated), ("local", false))
         assert(after.geometry.exists(_.value.contains("36.6")), after.geometry.toString)
         val (_, refused) = mcp(
@@ -138,7 +138,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         val (ps, pb) = patch(s"$url/api/events/$geoId", """{"geometry":"POLYGON((0 0,1 0,1 1,0 0))"}""")
         assertEquals(ps, 400, pb)
         assert(
-          decode[EventDetail](get(s"$url/api/events/$geoId")._2).toOption
+          RawJson.decode[EventDetail](get(s"$url/api/events/$geoId")._2).toOption
             .flatMap(_.geometry)
             .exists(_.value.contains("36.5")),
           "a refused PATCH changes nothing"
@@ -147,7 +147,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         // "" clears it
         val (cl, clb) = patch(s"$url/api/events/$geoId", """{"geometry":""}""")
         assertEquals(cl, 200, clb)
-        assertEquals(decode[EventDetail](clb).map(_.geometry), Right(None))
+        assertEquals(RawJson.decode[EventDetail](clb).map(_.geometry), Right(None))
       finally
         delete(s"$url/api/events/$geoId")
         b.stop()

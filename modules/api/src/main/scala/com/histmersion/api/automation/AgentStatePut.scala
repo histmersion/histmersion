@@ -1,9 +1,8 @@
 package com.histmersion
 package api.automation
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -19,4 +18,4 @@ object AgentStatePut:
   type Value = Value.T
   object Value extends Newtype[String, Pure]
 
-  given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])
+  given JsonCodec[AgentStatePut] = StrictJson.codec(JsonCodec.derived[AgentStatePut])

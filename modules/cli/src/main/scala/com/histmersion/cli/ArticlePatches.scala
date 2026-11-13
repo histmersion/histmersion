@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -181,10 +183,9 @@ object ArticlePatches:
   private def parse(json: Option[PatchJson]): Either[Cli.Error, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
-      io.circe.parser
-        .decode[Article.Patch](s.value)
+      RawJson.decode[Article.Patch](s.value)
         .left
-        .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(s"--json: ${e.getMessage}")), exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(s"--json: $e")), exitCode = ExitCode.Usage))
 
   private def read[A](file: Option[TextFile])(wrap: String => A): Either[Cli.Error, Option[A]] = file match
     case None    => Right(None)

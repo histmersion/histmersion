@@ -1,11 +1,13 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.api.automation.AgentStateEntry
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
-import io.circe.{Json, JsonObject}
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
@@ -55,20 +57,19 @@ object AgentStateService:
       val b = k.value.getBytes("UTF-8")
       (b.length, b.map(x => f"${x & 0xff}%02x").mkString)
 
-    private def jsonb(j: Json): Json =
-      j.arrayOrObject(
-        j,
-        a => Json.fromValues(a.map(jsonb)),
-        o =>
-          Json.fromJsonObject(
-            JsonObject.fromIterable(
-              o.toList.sortBy((k, _) => keyOrder(AgentStateRecord.Key(k))).map((k, v) => k -> jsonb(v))
-            )
-          )
-      )
+    private def jsonb(j: Json): Json = j match
+      case Json.Arr(a) => Json.fromValues(a.map(jsonb))
+      case Json.Obj(o) =>
+        Json.fromJsonObject(
+          JsonObject.fromIterable(o.toList.sortBy((k, _) => keyOrder(AgentStateRecord.Key(k))).map((k, v) => k -> jsonb(v)))
+        )
+      case other => other
 
-    private val printer =
-      io.circe.Printer.noSpaces.copy(colonRight = " ", objectCommaRight = " ", arrayCommaRight = " ")
+    /** `jsonb::text`: compact, with `", "` and `": "` between. */
+    private def print(j: Json): String = j match
+      case Json.Arr(a) => a.map(print).mkString("[", ", ", "]")
+      case Json.Obj(o) => o.fields.map((k, v) => s"${Json.fromString(k).noSpaces}: ${print(v)}").mkString("{", ", ", "}")
+      case other       => other.noSpaces
 
     private def entry(key: AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(
       AgentStateEntry.Key(key.value),
@@ -79,14 +80,13 @@ object AgentStateService:
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1.value).map(entry)
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
     def set(key: AgentStateRecord.Key, value: SetValue): Unit =
-      val j = io.circe.parser
-        .parse(value.value)
+      val j = RawJson.parse(value.value)
         .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
       val at = Instant.now(clock)
       val _ =
         state.updateAndGet(
           _.modify(_.agentState)
-            .using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(printer.print(jsonb(j))), at)))
+            .using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(print(jsonb(j))), at)))
         )
     def delete(key: AgentStateRecord.Key): Boolean =
       state.getAndUpdate(_.modify(_.agentState).using(_ - key)).agentState.contains(key)

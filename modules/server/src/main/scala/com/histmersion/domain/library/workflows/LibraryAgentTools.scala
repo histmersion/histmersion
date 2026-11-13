@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
@@ -214,9 +215,3 @@ object LibraryAgentTools:
   val Query: ToolName = ToolName("query")
   val Followups: ToolName = ToolName("followups")
 
-/** Scala defaults hold when an agent's arguments are decoded — `search {"topics":[…]}` needs no `tags: []` (without it
-  * every list was required, and a Codex skeptic step spent ~3 calls a step on "Missing required field", 2026-10-16).
-  * Not strict: a stray argument is ignored rather than costing a turn.
-  */
-private given hearth.kindlings.circederivation.Configuration =
-  hearth.kindlings.circederivation.Configuration.default.withDefaults

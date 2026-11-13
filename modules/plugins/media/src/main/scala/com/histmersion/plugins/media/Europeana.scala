@@ -1,9 +1,13 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.{ACursor, Json}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
@@ -153,7 +157,7 @@ object Europeana:
   /** Pure: the values of a field that may be a string, an array of strings, a LangMap (`{"en": [..]}`) or an array of
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
-  private def values(c: ACursor, field: Field): List[String] =
+  private def values(c: Cursor, field: Field): List[String] =
     def ofJson(j: Json): List[String] =
       j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
         val langs = o.keys.toList.sortBy(k => if k == "en" then 0 else if k == "def" then 1 else 2)
@@ -170,7 +174,7 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
         case "" => Problem.Unclassified(Legacy.Text("the search failed"))
@@ -189,7 +193,7 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.str("id").filter(_.startsWith("/")).toRight(Problem.Unclassified(Legacy.Text("no Europeana id"))).map { id =>
       val title =
         values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
@@ -255,12 +259,12 @@ object Europeana:
       licences: LicenceReader,
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     if c.bool("success").contains(false) then
       Left(Problem.Unclassified(Legacy.Text(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": "))))
     else
       val obj = c.downField("object")
-      val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
+      val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.cursor)
       val types =
         obj
           .downField("proxies")
@@ -268,10 +272,10 @@ object Europeana:
           .flatMap(_.asArray)
           .toList
           .flatten
-          .map(_.hcursor)
+          .map(_.cursor)
           .flatMap(values(_, Field("dcType")))
           .map(Exclusions.Types(_))
-      val firstAggregation: Either[Problem, ACursor] = excludedType(types, ex) match
+      val firstAggregation: Either[Problem, Cursor] = excludedType(types, ex) match
         case Some(t) => Left(Problem.Unclassified(Legacy.Text(s"an excluded type (${t.value})")))
         case None    => aggs.headOption.toRight(Problem.Unclassified(Legacy.Text("no aggregation on the record")))
       firstAggregation.flatMap { agg =>
@@ -282,7 +286,7 @@ object Europeana:
           .flatMap(_.asArray)
           .toList
           .flatten
-          .map(_.hcursor)
+          .map(_.cursor)
           .find(r => shownBy.isDefined && r.str("about") == shownBy)
         val stated =
           resource

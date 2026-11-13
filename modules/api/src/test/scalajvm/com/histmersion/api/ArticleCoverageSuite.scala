@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -464,13 +466,12 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
 
   test("JSON: a filter with an unknown key is refused (strict, #813)"):
-    assert(io.circe.parser.decode[Article.Filter]("""{"topic":["x"]}""").isLeft)
+    assert(RawJson.decode[Article.Filter]("""{"topic":["x"]}""").isLeft)
     assertEquals(
-      io.circe.parser.decode[Article.Filter]("""{"topics":["x"]}"""),
+      RawJson.decode[Article.Filter]("""{"topics":["x"]}"""),
       Right(Article.Filter(topics = List(Filter.Topics("x"))))
     )
     assert(
-      io.circe.parser
-        .decode[Article.Patch]("""{"filter":{"query":"tin"},"reasons":[{"citekey":"a2019_tin","reason":"x"}]}""")
+      RawJson.decode[Article.Patch]("""{"filter":{"query":"tin"},"reasons":[{"citekey":"a2019_tin","reason":"x"}]}""")
         .isRight
     )

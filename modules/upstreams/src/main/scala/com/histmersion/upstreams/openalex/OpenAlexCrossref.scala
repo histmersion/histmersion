@@ -1,9 +1,11 @@
 package com.histmersion
 package upstreams.openalex
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
-
-import io.circe.Json
 import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkLookup, WorkRef}
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse

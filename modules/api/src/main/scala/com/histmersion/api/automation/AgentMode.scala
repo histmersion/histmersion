@@ -1,6 +1,6 @@
 package com.histmersion
 package api.automation
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -62,7 +62,7 @@ object AgentMode:
       )(Step.Autopilot(Step.Autopilot.On(false)))
 
   final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

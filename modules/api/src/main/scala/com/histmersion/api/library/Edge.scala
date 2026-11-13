@@ -4,9 +4,8 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.StrictJson
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -59,4 +58,4 @@ object Edge:
         com.histmersion.api.json.Schema
   object Input:
 
-    given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
+    given JsonCodec[Input] = StrictJson.codec(JsonCodec.derived[Input])

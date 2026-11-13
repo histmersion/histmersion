@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -11,7 +12,7 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.Write
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
@@ -31,7 +32,7 @@ object EventLinksTools:
       to: Option[Year] = None,
       kind: Option[Api.EventQuery.Kind] = None,
       limit: Option[Filter.Limit] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object EventLinksInput:
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]

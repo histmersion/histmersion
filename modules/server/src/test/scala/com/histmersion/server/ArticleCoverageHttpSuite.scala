@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -107,11 +110,11 @@ class ArticleCoverageHttpSuite extends DbSuite:
         // ── an article that records its filter and one reason (PATCH JSON) ─────────────────────
         val (ps, pb) = put(
           s"$url/api/articles/$Slug",
-          io.circe.Json
+          Json
             .obj(
-              "title" -> io.circe.Json.fromString("Tin"),
-              "kind" -> io.circe.Json.fromString("concept"),
-              "body" -> io.circe.Json.fromString(Body)
+              "title" -> Json.fromString("Tin"),
+              "kind" -> Json.fromString("concept"),
+              "body" -> Json.fromString(Body)
             )
             .noSpaces
         )
@@ -132,7 +135,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         // ── GET …/coverage: computed against the live corpus ──────────────────────────────────
         val (gs, gb) = get(s"$url/api/articles/$Slug/coverage")
         assertEquals(gs, 200, gb)
-        val c = io.circe.parser.decode[Coverage](gb).fold(e => fail(e.getMessage), identity)
+        val c = RawJson.decode[Coverage](gb).fold(e => fail(e), identity)
         assertEquals((c.total, c.checked), (5, 5))
         assertEquals(c.cited.map(_.citekey), List(Cited1, Cited2).sortBy[String](_.value))
         assertEquals(
@@ -158,7 +161,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         )
 
         // ── the article as every reader sees it: the generated sections after the body ────────
-        val view = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val view = RawJson.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(view.coverage, Some(c))
         assertEquals(view.article.body.value.trim, Body.trim, "the body never holds the generated sections")
         val md = ArticleMarkdown.article(view)
@@ -174,7 +177,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assert(!view.sourcesCited.exists(_.citekey == NoWhy), view.sourcesCited)
 
         // ── brief (the link preview's read): the same article, without the per-read work ─────
-        val brief = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
+        val brief = RawJson.decode[Article.View](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
         assertEquals(brief.coverage, None)
         assertEquals(brief.formatting, Nil)
         assertEquals(brief.modify(_.formatting).setTo(view.formatting).modify(_.coverage).setTo(view.coverage), view)
@@ -192,9 +195,9 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assert(exported.contains(s"filter:\n  topics:\n  - $Topic\n  extra_queries:\n  - synoikism\n"), exported)
         assert(exported.contains(s"reasons:\n  $Why: About Egypt, not the Aegean\n  $Cited1: stale\n"), exported)
         val imp =
-          io.circe.Json.obj("text" -> io.circe.Json.fromString(exported), "force" -> io.circe.Json.True).noSpaces
+          Json.obj("text" -> Json.fromString(exported), "force" -> Json.True).noSpaces
         assertEquals(post(s"$url/api/articles/import", imp)._1, 200)
-        val again = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val again = RawJson.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(again.article.body.value.trim, Body.trim, "the import kept the body, not the generated block")
         assertEquals(again.coverage.map(_.reasons), Some(c.reasons), "and the reasons came back from the frontmatter")
 
@@ -231,7 +234,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
           s"""{"critiqueReasons":[{"src":"$Cited2","dst":"$Critic","reason":"The article cites it for the wreck's date only."}]}"""
         )
         assertEquals(rs, 200, rb)
-        val reasoned = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val reasoned = RawJson.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(
           reasoned.coverage.toList
             .flatMap(_.critiques)
@@ -257,8 +260,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
           200
         )
         assertEquals(
-          io.circe.parser
-            .decode[Coverage](get(s"$url/api/articles/$Slug/coverage")._2)
+          RawJson.decode[Coverage](get(s"$url/api/articles/$Slug/coverage")._2)
             .toOption
             .get
             .critiques

@@ -1,10 +1,11 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode, QuotaGuard}
 
-import io.circe.Json
-import io.circe.syntax.*
 
 /** The per-runtime trees, as pure functions from the canonical definitions to `relative path → text`
   * (docs/research-agent-runtimes.md §2.2). Nothing here touches the disk; [[AgentTrees]] writes.
@@ -66,8 +67,7 @@ object AgentGenerator:
   // ── shared pieces ──────────────────────────────────────────────────────────────────────────────
 
   /** JSON as people write it (`"key": value`, two spaces) — the checked-in files diff cleanly. */
-  private val Printer = io.circe.Printer.spaces2.copy(colonLeft = "")
-  def pretty(j: Json): String = Printer.print(j) + "\n"
+  def pretty(j: Json): String = j.written + "\n"
 
   /** A skill as a runtime reads it: placeholders rendered; `allowed-tools` kept only for the person's own Claude Code
     * (permissions belong to the agent role everywhere else).

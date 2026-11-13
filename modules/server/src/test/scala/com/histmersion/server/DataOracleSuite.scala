@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 
 import hearth.kindlings.optics.syntax.*
 
@@ -22,7 +25,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
 import com.augustnagro.magnum.*
-import io.circe.{parser, Json}
 import ox.supervised
 
 import java.io.ByteArrayInputStream
@@ -581,7 +583,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
             else k -> walk(v)
           })
       )
-    parser.parse(text) match
+    RawJson.parse(text) match
       case Right(j) => normalise(walk(j).spaces2SortKeys, names)
       case Left(_)  => normalise(text, names)
 
@@ -602,10 +604,10 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         val _ = in.skip((512 - size % 512) % 512)
         val path = if prefix.isEmpty then name else s"$prefix/$name"
         if path == "manifest.json" then
-          val m = parser.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
+          val m = RawJson.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
           val kept = m
             .mapObject(_.remove("createdAt").remove("bundleId"))
-            .hcursor
+            .cursor
             .downField("files")
             .withFocus(_.mapArray(_.map(_.mapObject(_.remove("sha256")))))
             .top
@@ -693,15 +695,15 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       val open = parser
         .parse(p0)
         .toOption
-        .flatMap(_.hcursor.downField("issues").focus)
+        .flatMap(_.cursor.downField("issues").focus)
         .flatMap(_.asArray)
         .getOrElse(Vector.empty)
         .flatMap(i =>
-          i.hcursor
+          i.cursor
             .downField("id")
             .as[String]
             .toOption
-            .filter(_ => i.hcursor.downField("decision").focus.forall(_.isNull))
+            .filter(_ => i.cursor.downField("decision").focus.forall(_.isNull))
         )
       val resolutions =
         s"""{"resolve":[${open.map(id => s"""{"issue":"$id","decision":"keep-right"}""").mkString(",")}]}"""
@@ -714,9 +716,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         )
       )
       val p1 = ok(postJson(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$resolutions}"""))
-      val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
+      val decided = RawJson.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
       val template = MergeResolutions.Text.template(
-        parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity),
+        RawJson.decode[MergePlan](p1).fold(e => fail(e.toString), identity),
         decided
       )
       val md = template.value + "\n" + ok(
@@ -758,11 +760,11 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val issueNames = parser
       .parse(plan)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           label <- c
@@ -801,11 +803,11 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       s"# every rule\n${json(lint, names2)}\n# the safe fixes on a copy\n${json(fixedResult, names2)}\n"
     )
     compare("notes.txt", normalise(notes, names2))
-    val aboutJson = parser.parse(about).fold(e => fail(e.toString), identity)
+    val aboutJson = RawJson.parse(about).fold(e => fail(e.toString), identity)
     val kept = Json.obj(
-      "counts" -> aboutJson.hcursor.downField("counts").focus.getOrElse(Json.Null),
-      "jobs" -> aboutJson.hcursor.downField("jobs").focus.getOrElse(Json.Null),
-      "storage" -> aboutJson.hcursor.downField("storage").focus.getOrElse(Json.Null)
+      "counts" -> aboutJson.cursor.downField("counts").focus.getOrElse(Json.Null),
+      "jobs" -> aboutJson.cursor.downField("jobs").focus.getOrElse(Json.Null),
+      "storage" -> aboutJson.cursor.downField("storage").focus.getOrElse(Json.Null)
     )
     compare("storage.txt", json(kept.noSpaces, names2) + "\n")
     assert(sameAsWork, "the restored database differs from work")

@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
-import io.circe.{Json, JsonObject}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
@@ -32,10 +35,9 @@ object Awmc extends DownloadedGazetteer:
   )
 
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
-    io.circe.parser
-      .parse(text.value)
+    RawJson.parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))

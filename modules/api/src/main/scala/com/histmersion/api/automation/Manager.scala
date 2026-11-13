@@ -4,7 +4,7 @@ package api.automation
 import com.histmersion.api.given
 import com.histmersion.api.json.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -44,7 +44,7 @@ object Manager:
     * [[Status.render]]ed from the two and stored as that text; [[Status.parse]] reads every line `render` writes.
     */
   final case class Status(kind: Status.Wire, detail: Status.Detail)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         Schema
 

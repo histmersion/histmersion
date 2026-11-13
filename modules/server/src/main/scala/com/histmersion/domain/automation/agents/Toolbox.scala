@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import sttp.ai.core.agent.AgentTool
@@ -21,13 +23,13 @@ final class Toolbox(contributed: List[ToolContribution]):
 
 object Toolbox:
   /** A tool's input schema as `/mcp/agent/<agent>` lists it, and so as every turn of a step re-sends it. */
-  def inputSchema(t: AgentTool[Identity, ?]): io.circe.Json =
-    import sttp.apispec.circe.*
-    import io.circe.syntax.*
-    def untitled(j: io.circe.Json) = j.mapObject(_.remove("title"))
-    untitled(t.jsonSchema.asJson.deepDropNullValues).mapObject { o =>
+  def inputSchema(t: AgentTool[Identity, ?]): Json =
+    def untitled(j: Json) = j.asObject.fold(j)(o => Json.fromJsonObject(o.remove("title")))
+    untitled(SttpAiJson.inputSchema(t)).asObject.fold(Json.Null) { o =>
       val top = o.remove("$schema")
-      top("$defs")
-        .flatMap(_.asObject)
-        .fold(top)(ds => top.add("$defs", io.circe.Json.fromJsonObject(ds.mapValues(untitled))))
+      Json.fromJsonObject(
+        top("$defs")
+          .flatMap(_.asObject)
+          .fold(top)(ds => top.updated("$defs", Json.fromJsonObject(ds.mapValues(untitled))))
+      )
     }

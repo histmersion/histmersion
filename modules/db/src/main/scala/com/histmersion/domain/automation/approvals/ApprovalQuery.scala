@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters

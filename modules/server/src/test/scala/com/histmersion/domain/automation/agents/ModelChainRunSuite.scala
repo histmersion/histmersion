@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -576,11 +579,10 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         .POST(HttpRequest.BodyPublishers.ofString(body))
         .build()
     )
-    def names(body: String) = io.circe.parser
-      .parse(body.dropWhile(_ != '{'))
+    def names(body: String) = RawJson.parse(body.dropWhile(_ != '{'))
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("tools").values)
-      .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toSet)
+      .flatMap(_.cursor.downField("result").downField("tools").values)
+      .map(_.flatMap(_.cursor.downField("name").as[String].toOption).toSet)
       .getOrElse(Set.empty)
     val off = baseCfg
       .modify(_.agents)

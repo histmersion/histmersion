@@ -1,5 +1,7 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -49,7 +51,7 @@ object EventGeometry:
     if WktShape.matches(t) then
       Left(Problem.Unclassified(Legacy.Text(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")))
     else
-      io.circe.parser.parse(t) match
+      RawJson.parse(t) match
         case Left(_) =>
           Left(Problem.Unclassified(Legacy.Text(s"geometry is not GeoJSON: expected an object such as $Example")))
         case Right(j) =>

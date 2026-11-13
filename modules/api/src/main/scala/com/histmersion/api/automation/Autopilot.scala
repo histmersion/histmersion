@@ -3,7 +3,7 @@ package api.automation
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Autopilot:
 
   final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -28,7 +28,7 @@ object Autopilot:
       kind: ManagerBrief.Kind,
       state: ManagerBrief.State,
       note: Option[ManagerBrief.Note] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -54,7 +54,7 @@ object Autopilot:
       doneLast7: GoalProgress.DoneLast7 = GoalProgress.DoneLast7(0),
       open: GoalProgress.Open = GoalProgress.Open(0),
       etaDays: Option[GoalProgress.EtaDays] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -83,7 +83,7 @@ object Autopilot:
       kind: ApprovalRule.Kind,
       mode: ApprovalRule.Mode,
       cap: ApprovalRule.Cap = ApprovalRule.Cap("")
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -106,7 +106,7 @@ object Autopilot:
       open: FocusGoal.Open = FocusGoal.Open(0),
       doneLast7: FocusGoal.DoneLast7 = FocusGoal.DoneLast7(0),
       etaDays: Option[FocusGoal.EtaDays] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -137,7 +137,7 @@ object Autopilot:
       code: FocusWaiting.Code,
       why: Problem = Problem.Unclassified(Legacy.Text("")),
       pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -159,7 +159,7 @@ object Autopilot:
       held: FocusInfo.Held = FocusInfo.Held(0),
       note: Option[FocusInfo.Note] = None,
       changes: List[FocusInfo.Changes] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -184,7 +184,7 @@ object Autopilot:
       goal: Option[Goal.Slug] = None,
       value: Option[FocusSet.Value] = None,
       by: Option[FocusSet.By] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object FocusSet:
@@ -204,7 +204,7 @@ object Autopilot:
       drained: DrainInfo.Drained = DrainInfo.Drained(false),
       drainedAt: Option[DrainInfo.DrainedAt] = None,
       inFlight: DrainInfo.InFlight = DrainInfo.InFlight(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -221,7 +221,7 @@ object Autopilot:
     object InFlight extends Newtype[Int, Pure]
 
   final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

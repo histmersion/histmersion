@@ -1,7 +1,10 @@
 package com.histmersion
 package server.agents
+import hearth.kindlings.jsoniterjson.JsonObject
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
-import io.circe.{Json, JsonObject}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -129,7 +132,7 @@ trait RunTranscripts extends munit.FunSuite:
       query(
         transcriptDs,
         s"SELECT to_jsonb(x)::text FROM $t x WHERE (x.xmin::text::bigint) >= $startXid"
-      ).flatMap(r => io.circe.parser.parse(r).toOption.flatMap(_.asObject)).map(t -> _)
+      ).flatMap(r => RawJson.parse(r).toOption.flatMap(_.asObject)).map(t -> _)
     }
     val lines = rows.map((t, o) => s"$t ${RunTranscripts.masked(Json.fromJsonObject(o)).noSpaces}")
     val noted = notes.synchronized(notes.toList).map(RunTranscripts.maskText(_, long = false))
@@ -189,7 +192,7 @@ object RunTranscripts:
         if key == "sha256" || (idKey(key) && s.forall(_.isDigit) && s.nonEmpty) then
           Json.fromString(if key == "sha256" then "SHA" else "ID")
         else
-          val inner = if s.startsWith("{") || s.startsWith("[") then io.circe.parser.parse(s).toOption else None
+          val inner = if s.startsWith("{") || s.startsWith("[") then RawJson.parse(s).toOption else None
           inner match
             case Some(p) if p.isObject || p.isArray => Json.fromString(masked(p, key).noSpaces)
             case _                                  => Json.fromString(maskText(s))

@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -212,7 +214,7 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(Decision.parse(Agents.Decision.Wire("accept")), None)
 
   test("RunParams: missing options decode as their defaults"):
-    assertEquals(io.circe.parser.decode[RunParams]("{}"), Right(RunParams()))
+    assertEquals(RawJson.decode[RunParams]("{}"), Right(RunParams()))
     assert(!RunParams().fixes)
     assert(RunParams(fix = Some(Agents.RunRequest.Fix(true))).fixes)
 
@@ -252,7 +254,7 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(Origin.parse(Agents.Origin.Wire("scheduler")), Some(Origin.Scheduler))
     // a run stored before P3 reads its new options as absent
     assertEquals(
-      io.circe.parser.decode[RunParams]("""{"fix":true}"""),
+      RawJson.decode[RunParams]("""{"fix":true}"""),
       Right(RunParams(fix = Some(Agents.RunRequest.Fix(true))))
     )
 

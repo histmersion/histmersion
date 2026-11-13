@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.library.search
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.library.Query
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object QueryTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class QueryInput(sql: QueryInput.Sql) derives KindlingsCodecAsObject
+  final case class QueryInput(sql: QueryInput.Sql) derives JsonCodec
   object QueryInput:
     type Sql = Sql.T
     object Sql extends Newtype[String, Pure]
@@ -24,7 +25,7 @@ object QueryTools:
       .schema
       .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
-  final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class SchemaInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   def apply(queries: QueryControllers) =
     val query =

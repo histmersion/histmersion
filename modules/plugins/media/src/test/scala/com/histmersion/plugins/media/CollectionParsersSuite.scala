@@ -1,12 +1,14 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
-import io.circe.Json
-import io.circe.parser.parse
 
 /** The collections' parsers (#1446): each API's answer read into a [[MediaItem]] — the licence as the record itself
   * states it, the place fields most specific first, the dates as signed years. Fixtures are trimmed real answers (Met,
@@ -16,7 +18,7 @@ import io.circe.parser.parse
 class CollectionParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
-    parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
+    RawJson.parse(scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString)
       .fold(e => fail(e.toString), identity)
 
   private val Cc0Url = "https://creativecommons.org/publicdomain/zero/1.0/"
@@ -41,7 +43,7 @@ class CollectionParsersSuite extends munit.FunSuite:
       Right(List(252448L, 248284L, 252447L, 252446L, 253574L))
     )
     assertEquals(MetCollection.ids(Json.obj("total" -> Json.fromInt(0), "objectIDs" -> Json.Null)), Right(Nil))
-    assert(MetCollection.ids(parse("""{"message":"retired"}""").toOption.get).isLeft)
+    assert(MetCollection.ids(RawJson.parse("""{"message":"retired"}""").toOption.get).isLeft)
 
   test(
     "Met: an object's licence from isPublicDomain, astronomical years moved one back, place fields most specific first"
@@ -60,7 +62,7 @@ class CollectionParsersSuite extends munit.FunSuite:
       Licence.Read(Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0))
     )
     assertEquals(rights.credit, "Terracotta animal figurine, The Metropolitan Museum of Art, CC0")
-    val closed = fixture("met-object.json").mapObject(_.add("isPublicDomain", Json.False))
+    val closed = fixture("met-object.json").mapObject(_.updated("isPublicDomain", Json.False))
     assert(MetCollection.record(closed).toOption.get.rights.isLeft, "not public domain: refused, never assumed")
     assertEquals(MetCollection.year(MetCollection.Year(0)), -1L)
     assertEquals(MetCollection.year(MetCollection.Year(1200)), 1200L)
@@ -177,7 +179,7 @@ class CollectionParsersSuite extends munit.FunSuite:
       .toOption
       .get
     assert(late.rights.isLeft, "after max-year: may be in copyright")
-    val restricted = parse(
+    val restricted = RawJson.parse(
       fixture("loc-item.json").noSpaces.replace("No known restrictions on publication.", "Rights status not evaluated.")
     ).toOption.get
     assert(

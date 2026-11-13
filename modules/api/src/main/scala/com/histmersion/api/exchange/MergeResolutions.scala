@@ -3,7 +3,7 @@ package api.exchange
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -15,7 +15,7 @@ final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,
     policy: MergePolicy = MergePolicy(),
     bundle: Option[UUID] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def overriddenBy(later: MergeResolutions): MergeResolutions =

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -27,7 +27,7 @@ final case class MergeTally(
     redirects: MergeTally.Redirects = MergeTally.Redirects(0),
     placesMerged: MergeTally.PlacesMerged = MergeTally.PlacesMerged(0),
     periodsMerged: MergeTally.PeriodsMerged = MergeTally.PeriodsMerged(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

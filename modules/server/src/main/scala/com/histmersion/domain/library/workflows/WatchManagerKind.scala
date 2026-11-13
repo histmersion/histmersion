@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.automation.agents.AgentRepo
@@ -137,7 +140,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
   private def closeLine(c: ManagerContext, run: Run.Id): Option[String] =
-    c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => io.circe.parser.decode[String](o.value).toOption)
+    c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => RawJson.decode[String](o.value).toOption)
 
   def target(
       m: ManagerInfo,

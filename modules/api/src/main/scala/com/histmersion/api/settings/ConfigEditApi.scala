@@ -1,7 +1,7 @@
 package com.histmersion
 package api.settings
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import sttp.model.StatusCode
 import com.histmersion.api.given
 import com.histmersion.api.Api

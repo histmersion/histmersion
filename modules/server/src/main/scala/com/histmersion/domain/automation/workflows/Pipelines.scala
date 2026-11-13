@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.workflows
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
@@ -7,7 +8,6 @@ import com.histmersion.domain.automation.agents.RunCtx
 
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.worklists.WorkListControllers
-import io.circe.syntax.*
 import com.histmersion.api.automation.Queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Agents

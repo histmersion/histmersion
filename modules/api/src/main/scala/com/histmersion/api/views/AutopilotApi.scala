@@ -1,7 +1,7 @@
 package com.histmersion
 package api.views
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import com.histmersion.api.automation.{AgentMode, Autopilot, ManagersApi}
 import com.histmersion.api.given
 import com.histmersion.api.Api

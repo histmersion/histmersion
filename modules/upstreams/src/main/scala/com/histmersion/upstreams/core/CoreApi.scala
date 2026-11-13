@@ -1,10 +1,13 @@
 package com.histmersion
 package upstreams.core
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.Header
 import com.histmersion.plugin.UpstreamQuota
-import io.circe.Json
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.library.acquisition.CoreEndpoint
@@ -60,12 +63,11 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
                 )
               )
             else
-              io.circe.parser
-                .parse(String(a.body.value, UTF_8))
+              RawJson.parse(String(a.body.value, UTF_8))
                 .left
                 .map(e =>
                   CoreFailure.Failed(
-                    Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: ${e.getMessage}"))
+                    Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e"))
                   )
                 )
 

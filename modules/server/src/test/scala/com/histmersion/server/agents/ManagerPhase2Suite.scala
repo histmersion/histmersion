@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -26,7 +28,6 @@ import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.server.{Deps, ServerWiring}
-import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant

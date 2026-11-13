@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -257,7 +259,7 @@ class WriteSuite extends munit.FunSuite:
   // sent to the target's patch became target → target
   test("edges: a src other than the patched citekey is refused, never rewritten into a self-edge"):
     val json = """{"edges":{"add":[{"src":"kassian2024_rebuttal","dst":"haak2015_massive","kind":"refutes"}]}}"""
-    val p = io.circe.parser.decode[Source.Patch](json).toOption.get
+    val p = RawJson.decode[Source.Patch](json).toOption.get
     val e = Source.Write.applyPatch(existing, p).swap.toOption.get
     assert(e.message.sentence.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
     assert(e.message.sentence.contains("patch 'kassian2024_rebuttal'"), e)
@@ -267,7 +269,7 @@ class WriteSuite extends munit.FunSuite:
 
   test("edges: src is optional and defaults to the patched citekey; a self-edge is refused"):
     val p =
-      io.circe.parser.decode[Source.Patch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
+      RawJson.decode[Source.Patch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
     assertEquals(
       Source.Write.applyPatch(existing, p).map(_.edges.last),
       Right(Edge(Citekey(ck), Citekey("x2020_y"), Edge.Kind.Challenges))
@@ -276,7 +278,7 @@ class WriteSuite extends munit.FunSuite:
     assert(Source.Write.applyEdges(Citekey(ck), existing.edges, self).isLeft)
 
   test("edges: an unknown kind is refused when the patch is decoded"):
-    assert(io.circe.parser.decode[Source.Patch]("""{"edges":{"add":[{"dst":"a","kind":"disagrees"}]}}""").isLeft)
+    assert(RawJson.decode[Source.Patch]("""{"edges":{"add":[{"dst":"a","kind":"disagrees"}]}}""").isLeft)
 
   test("edges: a src naming the OLD citekey of a renamed source counts as the source itself"):
     val p = Source.Patch(edges =
@@ -333,8 +335,7 @@ class WriteSuite extends munit.FunSuite:
 
   // #766: put rewrote any edge src to the citekey, the pattern #698 fixed for patch only
   test("put: a src naming another source is refused, never rewritten"):
-    val in = io.circe.parser
-      .decode[Source.Put]("""{"title":"T","edges":[{"src":"kassian2024_rebuttal","dst":"x2020_y","kind":"refutes"}]}""")
+    val in = RawJson.decode[Source.Put]("""{"title":"T","edges":[{"src":"kassian2024_rebuttal","dst":"x2020_y","kind":"refutes"}]}""")
       .toOption
       .get
     val e = Source.Write.applyPut(Citekey(ck), in).swap.toOption.get
@@ -414,14 +415,13 @@ class WriteSuite extends munit.FunSuite:
 
   // #395: status was a free String — an unknown value silently became "unassessed"
   test("a status in a write must be one the store knows; the wire spelling round-trips"):
-    import io.circe.parser.decode
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     assertEquals(
-      decode[Source.Patch]("""{"metadata":{"status":"superseded"}}""").map(_.metadata.flatMap(_.status)),
+      RawJson.decode[Source.Patch]("""{"metadata":{"status":"superseded"}}""").map(_.metadata.flatMap(_.status)),
       Right(Some(Source.Status.Superseded))
     )
-    assert(decode[Source.Patch]("""{"metadata":{"status":"supersceded"}}""").isLeft, "a misspelling is refused")
-    assert(decode[Source.Put]("""{"title":"T","status":"bogus"}""").isLeft)
+    assert(RawJson.decode[Source.Patch]("""{"metadata":{"status":"supersceded"}}""").isLeft, "a misspelling is refused")
+    assert(RawJson.decode[Source.Put]("""{"title":"T","status":"bogus"}""").isLeft)
     assertEquals(
       Source
         .Put(Title("T"), status = Some(Source.Status.Contested))
@@ -433,16 +433,15 @@ class WriteSuite extends munit.FunSuite:
 
   // a split left a volume record with doi = "" — neither a DOI nor "none"
   test("a blank DOI or venue is stored as none; in a patch, \"\" clears the field"):
-    import io.circe.parser.decode
     val put = Source.Write.applyPut(
       Citekey("zz_blank"),
       Source.Put(Title("T"), doi = (Some("  ")).map(Doi.apply), venue = (Some("")).map(Source.Venue.apply))
     )
     assertEquals(put.map(s => (s.doi, s.venue)), Right((None, None)))
     val existing = put.toOption.get.copy(doi = Some(Doi("10.1/x")), venue = Some(Source.Venue("V")))
-    val cleared = decode[Source.Patch]("""{"metadata":{"doi":"","venue":" "}}""").toOption.get
+    val cleared = RawJson.decode[Source.Patch]("""{"metadata":{"doi":"","venue":" "}}""").toOption.get
     assertEquals(Source.Write.applyPatch(existing, cleared).map(s => (s.doi, s.venue)), Right((None, None)))
-    val kept = decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get
+    val kept = RawJson.decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get
     assertEquals(
       Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)),
       Right((Some(Doi("10.1/x")), Some(Source.Venue("V"))))
@@ -450,22 +449,20 @@ class WriteSuite extends munit.FunSuite:
 
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):
-    import io.circe.parser.decode
     val ex = existing.modify(_.calibreId).setTo(Some(Source.CalibreId("1805")))
-    val p = decode[Source.Patch](
+    val p = RawJson.decode[Source.Patch](
       """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}"""
     ).toOption.get
     assertEquals(p.metadata.map(_.clear.toSet), Some(MetadataField.values.toSet))
     val out = Source.Write.applyPatch(ex, p).toOption.get
     assertEquals((out.doi, out.venue, out.year, out.provenance, out.calibreId), (None, None, None, None, None))
     val kept =
-      Source.Write.applyPatch(ex, decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get).toOption.get
+      Source.Write.applyPatch(ex, RawJson.decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get).toOption.get
     assertEquals((kept.doi, kept.year, kept.calibreId), (ex.doi, ex.year, ex.calibreId))
 
   test("metadata: null on a field that cannot be cleared is refused, not ignored"):
-    import io.circe.parser.decode
-    val e = decode[Source.Patch]("""{"metadata":{"title":null}}""").swap.toOption.get
-    assert(e.getMessage.contains("metadata.title cannot be cleared"), e.getMessage)
+    val e = RawJson.decode[Source.Patch]("""{"metadata":{"title":null}}""").swap.toOption.get
+    assert(e.contains("metadata.title cannot be cleared"), e)
 
   test("metadata: a field both set and cleared is refused"):
     val p = Source.Patch(metadata =
@@ -474,12 +471,11 @@ class WriteSuite extends munit.FunSuite:
     assert(Source.Write.applyPatch(existing, p).swap.toOption.get.message.sentence.contains("both set and cleared"))
 
   test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
-    import io.circe.parser.decode
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val m = MetadataPatch(title = (Some("T")).map(Title.apply), clear = List(MetadataField.Doi))
     val json = Source.Patch(metadata = Some(m)).asJson.noSpaces
     assert(!json.contains("\"venue\""), json)
-    assertEquals(decode[Source.Patch](json).map(_.metadata), Right(Some(m)))
+    assertEquals(RawJson.decode[Source.Patch](json).map(_.metadata), Right(Some(m)))
 
   // #721: metadata.calibreId was not part of the patch at all
   test("metadata: calibreId re-links the source; it must be a Calibre entry number"):
@@ -490,47 +486,41 @@ class WriteSuite extends munit.FunSuite:
 
   // ── #813: an unknown or misplaced key is refused, naming the key and the expected shape ─────────
   test("strict: an unknown top-level key in a patch is refused, with the keys that are accepted"):
-    import io.circe.parser.decode
-    val e = decode[Source.Patch]("""{"tagz":{"add":["x"]},"summary":"s"}""").swap.toOption.get.getMessage
+    val e = RawJson.decode[Source.Patch]("""{"tagz":{"add":["x"]},"summary":"s"}""").swap.toOption.get
     assert(e.contains("unknown key 'tagz'"), e)
     assert(e.contains("expected only: metadata, summary, body, notes"), e)
 
   test("strict: a key that belongs in a nested part says where it goes"):
-    import io.circe.parser.decode
-    val e = decode[Source.Patch]("""{"status":"current","title":"T"}""").swap.toOption.get.getMessage
+    val e = RawJson.decode[Source.Patch]("""{"status":"current","title":"T"}""").swap.toOption.get
     assert(e.contains("unknown keys 'status', 'title'"), e)
     assert(e.contains("'status' belongs under 'metadata' (metadata.status)"), e)
     assert(e.contains("'title' belongs under 'metadata' (metadata.title)"), e)
 
   test("strict: nested parts are strict too, and the message carries the path"):
-    import io.circe.parser.decode
-    val tags = decode[Source.Patch]("""{"tags":{"items":["x"]}}""").swap.toOption.get.getMessage
+    val tags = RawJson.decode[Source.Patch]("""{"tags":{"items":["x"]}}""").swap.toOption.get
     assert(tags.contains("tags: unknown key 'items'; expected only: add, remove, replace"), tags)
-    val f = decode[Source.Patch]("""{"findings":{"add":[{"claim":"c","date":-1200}]}}""").swap.toOption.get.getMessage
+    val f = RawJson.decode[Source.Patch]("""{"findings":{"add":[{"claim":"c","date":-1200}]}}""").swap.toOption.get
     assert(f.contains("unknown key 'date'"), f)
     assert(f.contains("findings.add"), f)
-    val meta = decode[Source.Patch]("""{"metadata":{"stauts":"current"}}""").swap.toOption.get.getMessage
+    val meta = RawJson.decode[Source.Patch]("""{"metadata":{"stauts":"current"}}""").swap.toOption.get
     assert(meta.contains("metadata: unknown key 'stauts'"), meta)
 
   test("strict: an array where an object is expected names the expected shape"):
-    import io.circe.parser.decode
-    val e = decode[Source.Patch]("""{"tags":["a","b"]}""").swap.toOption.get.getMessage
+    val e = RawJson.decode[Source.Patch]("""{"tags":["a","b"]}""").swap.toOption.get
     assert(e.contains("tags: expected an object with keys add, remove, replace; got an array"), e)
 
   test("strict: put, articles and the other write inputs refuse unknown keys"):
-    import io.circe.parser.decode
-    assert(decode[Source.Put]("""{"title":"T","citekey":"x"}""").isLeft)
-    assert(decode[Source.Put]("""{"title":"T","edges":[{"dst":"a","kind":"refutes","weight":1}]}""").isLeft)
-    assert(decode[Article.Patch]("""{"appendix":"x"}""").isLeft)
-    assert(decode[Article.Put]("""{"title":"T","kind":"concept","body":"b","period":{"start":1,"end":2}}""").isLeft)
-    assert(decode[Goal.Patch]("""{"state":"done"}""").isLeft)
-    assert(decode[EventPatch]("""{"name":"x"}""").isLeft)
-    assert(decode[Attestation.Patch]("""{"quoted":"x"}""").isLeft)
-    assert(decode[Queue.QueuePatch]("""{"done":true}""").isLeft)
+    assert(RawJson.decode[Source.Put]("""{"title":"T","citekey":"x"}""").isLeft)
+    assert(RawJson.decode[Source.Put]("""{"title":"T","edges":[{"dst":"a","kind":"refutes","weight":1}]}""").isLeft)
+    assert(RawJson.decode[Article.Patch]("""{"appendix":"x"}""").isLeft)
+    assert(RawJson.decode[Article.Put]("""{"title":"T","kind":"concept","body":"b","period":{"start":1,"end":2}}""").isLeft)
+    assert(RawJson.decode[Goal.Patch]("""{"state":"done"}""").isLeft)
+    assert(RawJson.decode[EventPatch]("""{"name":"x"}""").isLeft)
+    assert(RawJson.decode[Attestation.Patch]("""{"quoted":"x"}""").isLeft)
+    assert(RawJson.decode[Queue.QueuePatch]("""{"done":true}""").isLeft)
 
   test("strict: what the encoders write decodes again (the CLI and the web UI never send a refused key)"):
-    import io.circe.parser.decode
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val p = Source.Patch(
       metadata = Some(MetadataPatch(title = (Some("T")).map(Title.apply), clear = List(MetadataField.Doi))),
       summary = Some(Source.Summary("s")),
@@ -544,25 +534,24 @@ class WriteSuite extends munit.FunSuite:
       period = Some(Period.Input(Year(-10), Year(10))),
       ifUpdatedAt = Some(Source.UpdatedAt("t"))
     )
-    assertEquals(decode[Source.Patch](p.asJson.noSpaces), Right(p))
+    assertEquals(RawJson.decode[Source.Patch](p.asJson.noSpaces), Right(p))
     val put = Source.Put.of(existing)
-    assertEquals(decode[Source.Put](put.asJson.noSpaces), Right(put))
+    assertEquals(RawJson.decode[Source.Put](put.asJson.noSpaces), Right(put))
     val ap =
       Article.Patch(
         append = Some(Article.Patch.Append("x")),
         tags = Some(ListPatch(add = List(Write.ListItem("t")))),
         period = Some(Period.Input(Year(1), Year(2)))
       )
-    assertEquals(decode[Article.Patch](ap.asJson.noSpaces), Right(ap))
+    assertEquals(RawJson.decode[Article.Patch](ap.asJson.noSpaces), Right(ap))
 
   test("strict: metadata null-clears still work alongside the key check"):
-    import io.circe.parser.decode
     assertEquals(
-      decode[Source.Patch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
+      RawJson.decode[Source.Patch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
       Right(Some(List(MetadataField.Doi)))
     )
     assert(
-      decode[Source.Patch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.getMessage.contains("unknown key 'isbn'")
+      RawJson.decode[Source.Patch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.contains("unknown key 'isbn'")
     )
 
   test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):

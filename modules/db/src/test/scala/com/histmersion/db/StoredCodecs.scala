@@ -1,8 +1,10 @@
 package com.histmersion
 package db
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
-import io.circe.{Decoder, Encoder, Json}
-import io.circe.parser.parse
 import org.scalacheck.Gen
 
 import com.histmersion.util.data.exchange.BundleFormat
@@ -14,14 +16,14 @@ import com.histmersion.util.database.Jsonb
 object StoredCodecs:
   final class Codec[A](val write: (A, Boolean) => String, val decode: String => Either[String, A])
   object Codec:
-    given [A: {Encoder, Decoder}] => Codec[A] = Codec(
+    given [A: JsonValueCodec] => Codec[A] = Codec(
       (a, drop) => s"${Jsonb.write(a, if drop then Jsonb.DropNulls(true) else Jsonb.DropNulls(false))}",
       t => Jsonb.decode[A](Jsonb.JsonText(s"$t")).left.map(e => s"$e")
     )
 
   final class BundleCodec[A](val stamp: A => String, val line: A => String, val decode: (String, Boolean) => Either[String, A])
   object BundleCodec:
-    given [A: {Encoder.AsObject, Decoder}] => BundleCodec[A] = BundleCodec(
+    given [A: JsonValueCodec] => BundleCodec[A] = BundleCodec(
       a => BundleFormat.stamp(a).line,
       a => BundleFormat.line(a),
       (l, stamped) => BundleFormat.decodeLine[A](l, stamped).left.map(e => s"$e")
@@ -29,12 +31,12 @@ object StoredCodecs:
 
   type JsonAst = Json
   object JsonAst:
-    def parse(text: String): Option[Json] = io.circe.parser.parse(text).toOption
+    def parse(text: String): Option[Json] = RawJson.parse(text).toOption
     def print(j: Json): String = j.noSpaces
 
   /** The same JSON value: numbers compared by value, objects by their fields in any order. */
   def sameJson(a: String, b: String): Boolean =
-    (parse(a), parse(b)) match
+    (RawJson.parse(a), RawJson.parse(b)) match
       case (Right(x), Right(y)) => same(x, y)
       case _                    => false
 

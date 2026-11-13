@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.BBox
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -289,7 +289,7 @@ object Basemap:
       maxZoom: Focus.MaxZoom,
       tiles: Focus.Tiles,
       fetchedAt: Option[Focus.FetchedAt] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -359,7 +359,7 @@ object Basemap:
       error: Option[Problem] = None,
       onDemand: Option[OnDemand] = None,
       focus: List[Focus] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def deepest: Option[Focus.MaxZoom] =
@@ -402,7 +402,7 @@ object Basemap:
       bytes: ByteCount,
       maxBytes: OnDemand.MaxBytes,
       offlineUntil: Option[OnDemand.OfflineUntil] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -419,7 +419,7 @@ object Basemap:
     object OfflineUntil extends Newtype[String, Pure]
 
   final case class Region(name: Region.Name, bbox: Region.Bbox)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -440,7 +440,7 @@ object Basemap:
     object Cache extends Newtype[Boolean, Pure]
 
   final case class Removed(removed: List[Removed.Value], bytes: ByteCount)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -460,7 +460,7 @@ object Basemap:
       styles: List[StyleState] = Nil,
       mapMaxZoom: Status.MapMaxZoom = Status.MapMaxZoom(16),
       regions: List[Region] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema,
         CanEqual:
@@ -484,7 +484,7 @@ object Basemap:
     object MapMaxZoom extends Newtype[Int, Pure]
 
   final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

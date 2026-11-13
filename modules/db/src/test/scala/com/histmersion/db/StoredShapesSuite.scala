@@ -31,6 +31,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
 import StoredCodecs.{BundleCodec, Codec, JsonAst, JsonSamples, sameJson}
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Every JSON shape the user's data holds — the `jsonb` columns and the `.hmx` bundle's lines — as the circe codecs
   * wrote it, kept as fixtures (`stored-shapes/<name>.jsonl`, one document per line) and read back by today's codecs:

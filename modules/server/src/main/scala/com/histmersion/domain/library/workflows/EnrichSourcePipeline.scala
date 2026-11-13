@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -15,7 +18,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.EnrichSource.*
-import io.circe.syntax.*
 
 import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
@@ -377,8 +379,8 @@ final class EnrichSourcePipeline(
     val acquire = ctx.run.acquireItem.map(id =>
       ctx.write(
         s"tick off acquisition item $id",
-        io.circe.Json
-          .obj("item" -> io.circe.Json.fromInt(id.value), "fulfilledBy" -> io.circe.Json.fromString(ck.value))
+        Json
+          .obj("item" -> Json.fromInt(id.value), "fulfilledBy" -> Json.fromString(ck.value))
       )(
         tickOff(id, ck, ctx.run.id)
       )(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})")

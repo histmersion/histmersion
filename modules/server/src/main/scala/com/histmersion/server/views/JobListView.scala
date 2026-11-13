@@ -1,5 +1,7 @@
 package com.histmersion
 package server.views
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.{JobInfo, JobState}

@@ -1,11 +1,12 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.storage.{ByteSource, Reservation, Store}
 import com.histmersion.{ByteCount, ByteOffset}
 import hearth.kindlings.optics.syntax.*
-import io.circe.Json
 
 import java.io.{BufferedOutputStream, IOException, OutputStream}
 import java.security.MessageDigest

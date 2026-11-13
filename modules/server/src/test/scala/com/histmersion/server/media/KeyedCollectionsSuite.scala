@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -344,7 +346,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     )
     val text = fx("si-search.json")
     // the first row as a specimen of the invertebrate zoology department; the second dated after 1500
-    val rows = io.circe.parser.parse(text).toOption.get.hcursor.downField("response").downField("rows")
+    val rows = RawJson.parse(text).toOption.get.cursor.downField("response").downField("rows")
     val bead = rows.downArray.focus.get.noSpaces.replace("\"FSG\"", "\"NMNHINV\"")
     val tile = rows.downArray.right.focus.get.noSpaces.replace("late 12th-early 13th century", "1890")
     val third = rows.downArray.right.right.focus.get.noSpaces

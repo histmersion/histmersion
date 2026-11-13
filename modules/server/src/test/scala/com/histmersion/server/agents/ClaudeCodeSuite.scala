@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -389,13 +392,13 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(
       ClaudeCode
         .jsonInText(ClaudeCode.Result.Text("a\n```json\n{\"x\":1}\n```\nb {not}"))
-        .flatMap(_.hcursor.get[Int]("x").toOption),
+        .flatMap(_.cursor.get[Int]("x").toOption),
       Some(1)
     )
     assertEquals(
       ClaudeCode
         .jsonInText(ClaudeCode.Result.Text("so: {\"x\": {\"y\": 2}} done"))
-        .flatMap(_.hcursor.downField("x").get[Int]("y").toOption),
+        .flatMap(_.cursor.downField("x").get[Int]("y").toOption),
       Some(2)
     )
     assertEquals(ClaudeCode.jsonInText(ClaudeCode.Result.Text("no json here")), None)
@@ -480,7 +483,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(ClaudeCode.parse(stream(Init, Turn1, Tool1, Turn2, Success)).firstCall, Some(10L), "2.1.289's shape")
     assertEquals(
       ClaudeCode.firstCallTokens(
-        io.circe.parser.parse("""{"usage":{"input_tokens":0,"output_tokens":0}}""").toOption.get
+        RawJson.parse("""{"usage":{"input_tokens":0,"output_tokens":0}}""").toOption.get
       ),
       None
     )

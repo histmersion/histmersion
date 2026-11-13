@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity

@@ -1,10 +1,13 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import sttp.tapir.*
-import sttp.tapir.json.circe.*
+import sttp.tapir.json.jsoniter.*
 import sttp.model.StatusCode
 import com.histmersion.api.aliases.{InstanceInfo, LabelRename, LabelRenamed}
 import com.histmersion.api.automation.{
@@ -96,7 +99,7 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.research.Article
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.AnyEndpoint
@@ -2627,12 +2630,12 @@ object Api:
       )
 
   /** Registered before the image endpoint so Tapir matches it first. */
-  lazy val iiifInfo: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, io.circe.Json, Any] =
+  lazy val iiifInfo: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, Json, Any] =
     (endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[Error])
-      .out(jsonBody[io.circe.Json])
+      .out(jsonBody[Json])
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*"))))
       .mapIn[(Bundle.Asset.Uid, Bundle.Asset.Variant)]((refactorDecoded104: (String, String)) =>
         (Bundle.Asset.Uid((refactorDecoded104)._1), Bundle.Asset.Variant((refactorDecoded104)._2))
@@ -2696,7 +2699,7 @@ object Api:
       )
 
   final case class Error(message: Problem, code: Option[Error.Code] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Error:

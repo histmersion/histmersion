@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.testsupport.ComparedByValue.given
 

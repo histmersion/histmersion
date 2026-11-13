@@ -6,7 +6,7 @@ import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -19,7 +19,7 @@ final case class CritiqueReason(
     dst: Citekey,
     reason: Problem,
     by: Option[CritiqueReason.By] = None
-) derives KindlingsCodecAsObject:
+) derives JsonCodec:
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:

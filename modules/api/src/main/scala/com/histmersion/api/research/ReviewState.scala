@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -40,6 +40,5 @@ object ReviewState:
     def all: Array[ReviewState] = values
     def wire(e: ReviewState): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[ReviewState] = parse(Wire((s).value))
-  given Encoder[ReviewState] = WireEnum.encoder
-  given Decoder[ReviewState] = WireEnum.decoder
+  given JsonValueCodec[ReviewState] = WireEnum.codec
   given Schema[ReviewState] = WireEnum.schema

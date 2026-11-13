@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `met`: The Metropolitan Museum of Art Collection API (https://metmuseum.github.io/), no key. Search is
@@ -66,7 +69,7 @@ object MetCollection:
 
   /** Pure: the object ids of a search answer (`objectIDs` may be `null` when nothing matched). */
   def ids(json: Json): Either[Problem, List[ObjectId]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.str("message")
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
       .map(m => Left(Problem.Unclassified(Legacy.Text(m))))
@@ -93,7 +96,7 @@ object MetCollection:
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
   def record(json: Json): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.long("objectID").toRight(Problem.Unclassified(Legacy.Text(c.str("message").getOrElse("no objectID")))).map { id =>
       val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")
       val artist = c.str("artistDisplayName")

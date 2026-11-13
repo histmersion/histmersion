@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -761,7 +762,7 @@ object SiteTypes:
       untyped: Report.Untyped = Report.Untyped(0),
       requests: Report.Requests = Report.Requests(0),
       failed: List[Report.Failed] = Nil
-  ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+  ) derives com.histmersion.util.json.JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Report:
@@ -800,7 +801,7 @@ object SiteTypes:
       dryRun: Request.DryRun = Request.DryRun(false),
       limit: Option[Request.Limit] = None,
       refresh: Request.Refresh = Request.Refresh(false)
-  ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+  ) derives com.histmersion.util.json.JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

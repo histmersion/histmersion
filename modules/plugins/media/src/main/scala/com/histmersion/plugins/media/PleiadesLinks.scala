@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.{GazetteerPlace, Plugin}
-import io.circe.Json
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -82,7 +85,7 @@ object PleiadesLinks:
 
   /** Pure: the picture links of a place record, in its order, one per URL. */
   def links(json: Json): Either[Problem, List[PleiadesLink]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("references").focus.flatMap(_.asArray) match
       case None =>
         Left(
@@ -94,7 +97,7 @@ object PleiadesLinks:
         Right(
           refs.toList
             .flatMap { r =>
-              val h = r.hcursor
+              val h = r.cursor
               val cito = h.str("type").orElse(h.str("citationTypeURI").map(_.split("/").last)).getOrElse("reference")
               (h.str("accessURI").toList ++ h.str("alternateURI").toList)
                 .flatMap(u =>

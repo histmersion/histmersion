@@ -3,7 +3,7 @@ package api.checks
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -41,7 +41,7 @@ object Lint:
   object Markdown extends Newtype[String, Pure]
 
   final case class LintItem(citekey: Citekey, detail: LintItem.Detail)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -65,7 +65,7 @@ object Lint:
       description: LintRuleReport.Description,
       count: LintRuleReport.Count,
       items: List[LintItem]
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -75,7 +75,7 @@ object Lint:
     object Count extends Newtype[Int, Pure]
 
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def total: IssueCount = IssueCount(rules.map(r => (r.count).value).sum)
@@ -98,7 +98,7 @@ object Lint:
       placesRelocated: LintFixResult.PlacesRelocated = LintFixResult.PlacesRelocated(0),
       pointAreasRemoved: LintFixResult.PointAreasRemoved = LintFixResult.PointAreasRemoved(0),
       pointAreasRemaining: LintFixResult.PointAreasRemaining = LintFixResult.PointAreasRemaining(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

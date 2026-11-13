@@ -7,7 +7,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -49,7 +49,7 @@ object PlanGoal:
       title: SubGoalAnswer.Title,
       notes: Option[SubGoalAnswer.Notes] = None,
       tags: List[SubGoalAnswer.Tags] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object SubGoalAnswer:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
@@ -68,7 +68,7 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
-  final case class WorkAnswer(doi: WorkAnswer.Doi, why: Problem) derives KindlingsCodecAsObject
+  final case class WorkAnswer(doi: WorkAnswer.Doi, why: Problem) derives JsonCodec
   object WorkAnswer:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
@@ -84,7 +84,7 @@ object PlanGoal:
       subGoals: List[SubGoalAnswer] = Nil,
       queries: List[PlanAnswer.Queries] = Nil,
       works: List[WorkAnswer] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object PlanAnswer:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
@@ -101,7 +101,7 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
-  final case class ProposedWork(doi: Doi, why: Problem) derives KindlingsCodecAsObject
+  final case class ProposedWork(doi: Doi, why: Problem) derives JsonCodec
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
@@ -110,7 +110,7 @@ object PlanGoal:
       queries: List[Proposed.Queries],
       works: List[ProposedWork],
       dropped: List[Proposed.Dropped]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Proposed:
     type Rationale = Rationale.T

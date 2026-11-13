@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.AttestationsMarkdown
@@ -8,9 +9,8 @@ import chimp.server.*
 import com.histmersion.api.{Markdown, StrictJson}
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
@@ -26,7 +26,7 @@ object AttestationsTools:
       targetId: Option[Attestation.TargetId] = None,
       limit: Option[PageSize] = None,
       offset: Option[Offset] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object AttestationsInput:
     given Schema[AttestationsInput] = KindlingsSchema
       .derived[AttestationsInput]
@@ -69,10 +69,10 @@ object AttestationsTools:
       .modify(_.canvas)(_.description("IIIF canvas URI"))
       .modify(_.xywh)(_.description("IIIF region 'x,y,w,h'"))
       .modify(_.ctsUrn)(_.description("CTS URN for classical texts"))
-    given Codec.AsObject[AttestationPutInput] =
-      StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
+    given JsonCodec[AttestationPutInput] =
+      StrictJson.codec(JsonCodec.derived[AttestationPutInput]) // #813
 
-  final case class DeleteAttestationInput(id: Attestation.Id) derives KindlingsCodecAsObject
+  final case class DeleteAttestationInput(id: Attestation.Id) derives JsonCodec
   object DeleteAttestationInput:
     given Schema[DeleteAttestationInput] = KindlingsSchema
       .derived[DeleteAttestationInput]

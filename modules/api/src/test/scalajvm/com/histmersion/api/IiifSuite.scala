@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -123,7 +125,7 @@ class IiifSuite extends munit.FunSuite:
   test("infoJson produces valid structure"):
     val json =
       Iiif.infoJson(Iiif.ImageId("http://example.com/iiif/test/fig1.png"), ImageSize.Width(800), ImageSize.Height(600))
-    val cursor = json.hcursor
+    val cursor = json.cursor
     assertEquals(cursor.get[String]("@context"), Right(Iiif.ApiContext))
     assertEquals(cursor.get[String]("id"), Right("http://example.com/iiif/test/fig1.png"))
     assertEquals(cursor.get[String]("type"), Right("ImageService3"))

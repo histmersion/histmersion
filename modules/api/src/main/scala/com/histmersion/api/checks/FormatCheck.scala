@@ -1,6 +1,6 @@
 package com.histmersion
 package api.checks
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -11,7 +11,7 @@ final case class FormatCheck(
     text: FormatCheck.Text,
     field: FormatField = FormatField.Body,
     fix: FormatCheck.Fix = FormatCheck.Fix(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

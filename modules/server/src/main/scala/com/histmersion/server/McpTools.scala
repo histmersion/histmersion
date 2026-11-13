@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+import com.histmersion.util.mcp.ChimpJson.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -11,10 +14,9 @@ import com.histmersion.api.automation.AgentStateMarkdown
 import com.histmersion.api.automation.GoalsMarkdown
 
 import chimp.server.*
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.{Api, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -639,8 +641,8 @@ final class McpTools(
 object McpTools:
   export com.histmersion.util.mcp.ToolInputs.given
 
-  // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
-  final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  // JSON codec + tapir Schema both derived from each input by Kindlings → matching by construction.
+  final case class PingInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   /** The `config` tool's input: what to do with the server's configuration. */
   final case class ConfigInput(
@@ -649,7 +651,7 @@ object McpTools:
       value: Option[String] = None,
       prefix: Option[String] = None,
       literalConsent: Option[Boolean] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ConfigInput:
     given Schema[ConfigInput] = KindlingsSchema
       .derived[ConfigInput]
@@ -662,7 +664,7 @@ object McpTools:
         _.description("set: a credential may be written as value:… (the key itself in the file)")
       )
 
-  final case class BackupInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class BackupInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
   final case class IngestInput(
@@ -678,7 +680,7 @@ object McpTools:
       doi: Option[String] = None,
       provenance: Option[String] = None,
       acquireItem: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
@@ -696,7 +698,7 @@ object McpTools:
       )
 
   final case class JobControlInput(id: String, action: String)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -706,7 +708,7 @@ object McpTools:
       goal: Option[String] = None,
       limit: Option[Int] = None,
       before: Option[String] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -719,7 +721,7 @@ object McpTools:
       since: Option[String] = None,
       until: Option[String] = None,
       subject: Option[String] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def filter: ListFilters.JobFilter =
       ListFilters.JobFilter(
         status.toList.map(ListFilters.JobFilter.Status(_)),
@@ -751,7 +753,7 @@ object McpTools:
       status: Option[String] = None,
       limit: Option[Int] = None,
       offset: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object GoalsInput:
     given Schema[GoalsInput] = KindlingsSchema
       .derived[GoalsInput]
@@ -778,7 +780,7 @@ object McpTools:
       .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
       .modify(_.periodStart)(_.description("Signed year the goal's period begins (BCE negative); alone = from then on"))
       .modify(_.periodEnd)(_.description("Signed year the goal's period ends (BCE negative); alone = until then"))
-    given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
+    given JsonCodec[GoalPutInput] = StrictJson.codec(JsonCodec.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
       slug: String,
@@ -804,12 +806,12 @@ object McpTools:
         _.description("New end of the period (signed year, BCE negative); given alone, the start stays as stored")
       )
       .modify(_.budgetUsd)(_.description("Cost cap (USD) of the agent runs started for this goal; 0 clears it"))
-    given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
+    given JsonCodec[GoalPatchInput] = StrictJson.codec(JsonCodec.derived[GoalPatchInput]) // #813
 
   final case class AgentStateInput(
       key: Option[String] = None,
       value: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object AgentStateInput:
     given Schema[AgentStateInput] = KindlingsSchema
       .derived[AgentStateInput]
@@ -817,7 +819,7 @@ object McpTools:
       .modify(_.key)(_.description("State key to get or set (omit for listing all keys)"))
       .modify(_.value)(_.description("JSON string value to set (omit to just read the key)"))
 
-  final case class DeleteAgentStateInput(key: String) derives KindlingsCodecAsObject
+  final case class DeleteAgentStateInput(key: String) derives JsonCodec
   object DeleteAgentStateInput:
     given Schema[DeleteAgentStateInput] = KindlingsSchema
       .derived[DeleteAgentStateInput]
@@ -841,7 +843,7 @@ object McpTools:
       .modify(_.resolve)(_.description("Issue id → decision, e.g. {\"S-3c1e7a2b\": \"map:guterbock1997_hittite\"}"))
       .modify(_.editions)(_.description("merge | separate: answers every year-gap (edition) question at once"))
       .modify(_.all)(_.description("List every default, info line and match, not only the first few"))
-    given Codec.AsObject[MergePlanInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergePlanInput])
+    given JsonCodec[MergePlanInput] = StrictJson.codec(JsonCodec.derived[MergePlanInput])
 
   /** What the `merges` tool does. */
   enum MergesAction derives CanEqual:
@@ -867,7 +869,7 @@ object McpTools:
       .modify(_.id)(_.description("A merge id, or its first characters (show; ledger of one merge)"))
       .modify(_.uid)(_.description("ledger: the record — a uid (here, or merged away) or a citekey"))
       .modify(_.limit)(_.description("How many merges / ledger rows (default 50 / 200)"))
-    given Codec.AsObject[MergesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergesInput])
+    given JsonCodec[MergesInput] = StrictJson.codec(JsonCodec.derived[MergesInput])
 
   /** Input of the `rename_label` tool (V042, V053, V055). */
   final case class RenameLabelInput(kind: String, from: String, to: String)
@@ -878,4 +880,4 @@ object McpTools:
       .modify(_.kind)(_.description("article | event | goal | place"))
       .modify(_.from)(_.description("The current slug (article, goal) or id (event, place)"))
       .modify(_.to)(_.description("The new one: lower-case letters, digits, '_', '.' and '-'"))
-    given Codec.AsObject[RenameLabelInput] = StrictJson.codec(KindlingsCodecAsObject.derived[RenameLabelInput])
+    given JsonCodec[RenameLabelInput] = StrictJson.codec(JsonCodec.derived[RenameLabelInput])
