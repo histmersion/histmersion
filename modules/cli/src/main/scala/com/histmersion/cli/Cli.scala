@@ -768,6 +768,18 @@ object Cli:
         sys.exit(3)
 
   private def runCommand(args: Array[String])(using console: Console): Unit =
+    if CommandLine.handles(args.toSeq) then runParsed(CommandLine.parse(args.toSeq)) else runDeclined(args)
+
+  /** A command line [[CommandLine]] (scallop) parsed: the exit code is decided here, at the edge. */
+  private def runParsed(outcome: CommandLine.Outcome)(using console: Console): Unit =
+    outcome match
+      case CommandLine.Outcome.Help(text)            => out.println(text); sys.exit(0)
+      case CommandLine.Outcome.Failed(problem, help) =>
+        err.println(s"error: ${problem.sentence}\n\n$help"); sys.exit(ExitCode.Usage.value)
+      case CommandLine.Outcome.Run(server, tok, cmd) =>
+        finish(server.map(_.value), tok.map(_.value), c => ArticleCli.run(c, cmd))
+
+  private def runDeclined(args: Array[String])(using console: Console): Unit =
     command.parse(args.toList, sys.env) match
       case Left(help) =>
         // A8: --help should exit 0, not 1. Decline's Help has an `errors` field — empty means
@@ -775,13 +787,17 @@ object Cli:
         val isHelp = args.contains("--help") || args.contains("-h")
         if isHelp then { out.println(help); sys.exit(0) }
         else { err.println(help.toString); sys.exit(1) }
-      case Right((server, tok, run)) =>
-        val url = server.getOrElse(Settings.app.cli.serverUrl.value)
-        val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
-        run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
-          case Right(())                     => ()
-          case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
-          case Left(e)                       => err.println(s"error: ${e.message.sentence}"); sys.exit(e.exitCode.value)
+      case Right((server, tok, run)) => finish(server, tok, run)
+
+  private def finish(server: Option[String], tok: Option[String], run: Client => Either[Error, Unit])(using
+      console: Console
+  ): Unit =
+    val url = server.getOrElse(Settings.app.cli.serverUrl.value)
+    val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
+    run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
+      case Right(())                     => ()
+      case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
+      case Left(e)                       => err.println(s"error: ${e.message.sentence}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(

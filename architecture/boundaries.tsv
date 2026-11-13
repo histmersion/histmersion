@@ -12,6 +12,7 @@ modules/cli/src/main/scala/com/histmersion/cli/BundleCmd.scala	cli-args	parses `
 modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses `histmersion calibre` arguments
 modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	cli-args	the scallop adapter: the one file that declares scallop options and parses a command line into a typed command
 modules/cli/src/main/scala/com/histmersion/cli/ConfigCmd.scala	cli-args	parses `histmersion config` arguments
 modules/cli/src/main/scala/com/histmersion/cli/DeleteCmd.scala	cli-args	parses `histmersion delete` arguments
 modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	cli-args	parses `histmersion events` arguments

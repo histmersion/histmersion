@@ -13,6 +13,8 @@ import com.histmersion.api.exchange.Bundle
 import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
+import com.histmersion.cli.NewtypeArguments.given
+import com.histmersion.api.exchange.MergeMarkdown
 import com.histmersion.api.Api
 import com.histmersion.config.*
 
@@ -200,30 +202,24 @@ object ArticleCli:
   /** The filter flags are the shared ones: they select SOURCES, and an article is listed when it cites one of them
     * (`--title` is the article's own title). The positional query is the article's own full text.
     */
-  private def list(using console: Console) =
+  private val list =
     Opts.subcommand("list", "List/search compiled articles (the filter flags select the sources they cite)") {
       (
         Opts.argument[String]("query").orNone,
         Opts
-          .option[String]("kind", s"Article kind (${Articles.Kinds.mkString("|")})")
+          .option[Api.ArticleQuery.Kind]("kind", s"Article kind (${Articles.Kinds.mkString("|")})")
           .orNone,
         FilterFlags.opts,
         Output.jsonFlag
-      ).mapN { (q, kind, f, json) => (c: Client) =>
-        c.listArticles(
-          Api.ArticleQuery(
-            f,
-            kind.map(Api.ArticleQuery.Kind(_)),
-            q.map(_.trim).filter(_.nonEmpty).map(Api.ArticleQuery.Text(_))
-          )
-        ).map(r => Output.emit(json, r)(ArticleMarkdown.list))
+      ).mapN { (q, kind, f, json) =>
+        ArticleCommand.Listing(q.map(_.trim).filter(_.nonEmpty).map(Api.ArticleQuery.Text(_)), kind, f, json)
       }
     }
 
-  private def get(using console: Console) =
+  private val get =
     Opts.subcommand("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)") {
       (
-        Opts.argument[String]("slug"),
+        Opts.argument[ReviewGoal.Slug]("slug"),
         Opts
           .option[String](
             "parts",
@@ -231,75 +227,48 @@ object ArticleCli:
           )
           .orNone,
         Output.jsonFlag
-      ).mapN { (slug, parts, json) => (c: Client) =>
-        c.getArticle(ReviewGoal.Slug(slug)).map { v =>
-          val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
-          Output.emit(json, v)(ArticleMarkdown.article(_, ps.map(Article.Part(_))))
-        }
-      }
+      ).mapN((slug, parts, json) => ArticleCommand.Get(slug, ArticleCommand.parts(parts), json))
     }
 
   private val strictFlag =
     Opts
       .flag("strict", "Refuse the write when the Markdown has a formatting error (default: write, then list them)")
       .orFalse
+      .map(Cli.Strict(_))
 
-  private def put(using console: Console) =
+  private val put =
     Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
       (
-        Opts.argument[String]("file.md"),
-        Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone,
+        Opts.argument[Path]("file.md"),
+        Opts.option[Article.Kind.Wire]("kind", "Kind when the frontmatter has no `type:`").orNone,
         strictFlag
-      )
-        .mapN { (file, kind, strict) => (c: Client) =>
-          val p = Path.of(file)
-          if !Files.isRegularFile(p) then
-            Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
-          else
-            // an explicit `put` is always deliberate → force past the "newer in DB" guard
-            val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
-            val req =
-              toImport(p, fallback, force = Api.Overwrite(true)).modify(_.strict).setTo(Article.Import.Strict(strict))
-            c.importArticle(req).map { r =>
-              report(r)
-              // the import answers with counts only: ask for the article's formatting problems by the
-              // slug the note itself declares (as the server parsed it), so the writer sees them now
-              val slug = ArticleNote
-                .parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback)
-                .map(_.slug)
-                .filter(_.value.nonEmpty)
-              if r.imported.value > 0 then
-                slug.foreach(s =>
-                  c.lintArticle(ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues)))
-                )
-            }
-        }
+      ).mapN(ArticleCommand.Put.apply)
     }
 
   /** `article lint <slug> [--fix]` — what in the article will not display as written. */
-  private def lint(using console: Console) = Opts.subcommand(
+  private val lint = Opts.subcommand(
     "lint",
     "Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)"
   ) {
     (
-      Opts.argument[String]("slug"),
-      Opts.flag("fix", "Apply the repairs that never change wording, then report what is left").orFalse,
+      Opts.argument[ReviewGoal.Slug]("slug"),
+      Opts
+        .flag("fix", "Apply the repairs that never change wording, then report what is left")
+        .orFalse
+        .map(ArticleCommand.Fix(_)),
       Output.jsonFlag
-    ).mapN { (slug, fix, json) => (c: Client) =>
-      (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug)))
-        .map(r => Output.emit(json, r)(FormatMarkdown.report))
-    }
+    ).mapN(ArticleCommand.Lint.apply)
   }
 
   /** `article check <slug> (--edits-file f.json | --body-file f.md) [--kind k]` — dry-run a change as the review
     * pipeline checks its fixer's answer: nothing is written.
     */
-  private def check(using console: Console) = Opts.subcommand(
+  private val check = Opts.subcommand(
     "check",
     "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing"
   ) {
     (
-      Opts.argument[String]("slug"),
+      Opts.argument[ReviewGoal.Slug]("slug"),
       Opts
         .option[String](
           "edits-file",
@@ -308,78 +277,36 @@ object ArticleCli:
         .orNone,
       Opts.option[String]("body-file", "Instead of edits: a whole draft body (Markdown) to check").orNone,
       Opts
-        .option[String](
+        .option[Article.Kind.Wire](
           "kind",
           "Check the section set of this kind instead of the article's (index = none, for a fragment)"
         )
         .orNone,
       Output.jsonFlag
-    ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
-      def read(f: String) =
-        val p = Path.of(f)
-        if Files.isRegularFile(p) then Right(Files.readString(p))
-        else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
-      val req = (editsFile, bodyFile) match
-        case (Some(e), None) =>
-          read(e)
-            .flatMap(t =>
-              RawJson
-                .decode[List[Article.Edits.EditAnswer]](t)
-                .left
-                .map(err =>
-                  Cli.Error(
-                    Problem.Unclassified(Legacy.Text(s"$e: not a JSON list of edits ($err)")),
-                    exitCode = ExitCode.Usage
-                  )
-                )
-            )
-            .map(es => Article.Edits.ArticleCheckRequest(edits = es, kind = kind.map(Article.Kind.Wire(_))))
-        case (None, Some(b)) =>
-          read(b).map(t =>
-            Article.Edits.ArticleCheckRequest(
-              body = Some(Article.Body(FileFormat.splitFrontmatter(FileFormat.Text(t))._2.value)),
-              kind = kind.map(Article.Kind.Wire(_))
-            )
-          )
-        case _ =>
-          Left(
-            Cli.Error(
-              Problem.Unclassified(Legacy.Text("give --edits-file or --body-file (one of them)")),
-              exitCode = ExitCode.Usage
-            )
-          )
-      req
-        .flatMap(c.checkArticle(ReviewGoal.Slug(slug), _))
-        .map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
+    ).tupled.mapValidated { (slug, edits, body, kind, json) =>
+      ArticleCommand
+        .draft(edits.map(Path.of(_)), body.map(Path.of(_)))
+        .map(ArticleCommand.Check(slug, _, kind, json))
+        .leftMap(_.sentence)
+        .toValidatedNel
     }
   }
 
-  private def delete(using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
-    Opts
-      .argument[String]("slug")
-      .map(slug =>
-        (c: Client) => c.deleteArticle(ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}"))
-      )
+  private val delete = Opts.subcommand("delete", "Remove one article (its links go with it)") {
+    Opts.argument[ReviewGoal.Slug]("slug").map(ArticleCommand.Delete(_))
   }
 
-  private def exportCmd(using console: Console) =
+  private val exportCmd =
     Opts.subcommand("export", "Write each article to <dir>/<kind>/<slug>.md") {
-      Opts.argument[String]("dir").map { dir => (c: Client) =>
-        val out = Path.of(dir)
-        val _ = Files.createDirectories(out)
-        exportAll(c, out).map(_ => ())
-      }
+      Opts.argument[Path]("dir").map(ArticleCommand.Export(_))
     }
 
-  private def importCmd(using console: Console) =
+  private val importCmd =
     Opts.subcommand("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)") {
-      (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
-        .mapN { (dir, force) => (c: Client) =>
-          val p = Path.of(dir)
-          if !Files.isDirectory(p) then
-            Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir")), exitCode = ExitCode.Usage))
-          else Right(report(importAll(c, p, Api.Overwrite(force), Set(WikiLayout.SourcesDir))))
-        }
+      (
+        Opts.argument[Path]("dir"),
+        Opts.flag("force", "Overwrite articles newer than the files").orFalse.map(Api.Overwrite(_))
+      ).mapN(ArticleCommand.Import.apply)
     }
 
   /** The filter flags of `article patch` (#958): any of them REPLACES the article's recorded filter with the one they
@@ -437,115 +364,180 @@ object ArticleCli:
       .map(_.map((text => Problem.Unclassified(Legacy.Text(text)))))
 
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
-  private def coverage(using console: Console) = Opts.subcommand(
+  private val coverage = Opts.subcommand(
     "coverage",
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
-    (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleCoverage(ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
-    }
+    (Opts.argument[ReviewGoal.Slug]("slug"), Output.jsonFlag).mapN(ArticleCommand.Coverage.apply)
   }
 
   /** `article review <slug>` — where the article stands with the review panel, and its review history. */
-  private def review(using console: Console) = Opts.subcommand(
+  private val review = Opts.subcommand(
     "review",
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
-    (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleReview(ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
-    }
+    (Opts.argument[ReviewGoal.Slug]("slug"), Output.jsonFlag).mapN(ArticleCommand.Review.apply)
   }
 
-  private def patch(using console: Console) =
+  private val patch =
     Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
       (
-        Opts.argument[String]("slug"),
-        Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
-        Opts.option[String]("title", "New title").orNone,
-        Opts.option[String]("summary", "New summary (the one-paragraph lede)").orNone,
-        Opts.option[String]("kind", s"New kind (${Articles.Kinds.mkString("|")})").orNone,
-        Opts.option[String]("body-file", "File whose Markdown REPLACES the body").orNone,
-        Opts.option[String]("append-file", "File whose Markdown is APPENDED to the body").orNone,
-        Opts.option[String]("tags-add", "Comma-separated tags to add").orNone,
-        Opts.option[String]("tags-remove", "Comma-separated tags to remove").orNone,
-        Opts.option[String]("tags-replace", "Comma-separated tags replacing the current set").orNone,
-        Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
-        Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -1300,-1100)").orNone,
-        Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
+        Opts.argument[ReviewGoal.Slug]("slug"),
+        (
+          Opts
+            .option[ArticlePatches.PatchJson](
+              "json",
+              "A whole ArticlePatch as JSON (the flags below override its parts)"
+            )
+            .orNone,
+          Opts.option[Article.Title]("title", "New title").orNone,
+          Opts.option[Article.SummaryText]("summary", "New summary (the one-paragraph lede)").orNone,
+          Opts.option[Article.Kind.Wire]("kind", s"New kind (${Articles.Kinds.mkString("|")})").orNone,
+          Opts.option[ArticlePatches.TextFile]("body-file", "File whose Markdown REPLACES the body").orNone,
+          Opts.option[ArticlePatches.TextFile]("append-file", "File whose Markdown is APPENDED to the body").orNone,
+          Opts.option[ArticlePatches.CsvText]("tags-add", "Comma-separated tags to add").orNone,
+          Opts.option[ArticlePatches.CsvText]("tags-remove", "Comma-separated tags to remove").orNone,
+          Opts.option[ArticlePatches.CsvText]("tags-replace", "Comma-separated tags replacing the current set").orNone,
+          Opts.option[ArticlePatches.CsvText]("regions", "Comma-separated regions replacing the current list").orNone,
+          Opts
+            .option[ArticlePatches.FilterFlags.Period](
+              "period",
+              "start,end as signed years, BCE negative (e.g. -1300,-1100)"
+            )
+            .orNone,
+          Opts.option[Article.UpdatedAt]("if-updated-at", "Precondition: the updatedAt you last read").orNone
+        ).mapN(ArticleCommand.Edit.apply),
         strictFlag,
         filterFlags,
         reasonFlags,
         critiqueReasonFlags
-      ).mapN {
-        (
-            slug,
-            json,
-            title,
-            summary,
-            kind,
-            bodyF,
-            appendF,
-            tAdd,
-            tRem,
-            tRep,
-            regions,
-            period,
-            ifUpd,
-            strict,
-            ff,
-            rs,
-            crs
-        ) => (c: Client) =>
-          ArticlePatches
-            .build(
-              json.map(ArticlePatches.PatchJson(_)),
-              title.map(Article.Title(_)),
-              summary.map(Article.SummaryText(_)),
-              kind.map(Article.Kind.Wire(_)),
-              bodyF.map(ArticlePatches.TextFile(_)),
-              appendF.map(ArticlePatches.TextFile(_)),
-              tAdd.map(ArticlePatches.CsvText(_)),
-              tRem.map(ArticlePatches.CsvText(_)),
-              tRep.map(ArticlePatches.CsvText(_)),
-              regions.map(ArticlePatches.CsvText(_)),
-              period.map(ArticlePatches.FilterFlags.Period(_)),
-              ifUpd.map(Article.UpdatedAt(_))
-            )
-            .flatMap(ArticlePatches.withCoverage(_, ff, rs))
-            .flatMap(ArticlePatches.withCritiques(_, crs))
-            .flatMap(p =>
-              c.patchArticle(ReviewGoal.Slug(slug), p, Cli.Strict(strict)).map { v =>
-                Cli.out.println(ArticleMarkdown.article(v))
-                v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
-              }
-            )
-      }
+      ).mapN(ArticleCommand.Patch.apply)
     }
 
-  private def versions(using console: Console) = Opts.subcommand("versions", "Show the edit history of one article") {
-    Opts
-      .argument[String]("slug")
-      .map(slug =>
-        (c: Client) =>
-          c.articleVersions(ReviewGoal.Slug(slug))
-            .map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
-      )
+  private val versions = Opts.subcommand("versions", "Show the edit history of one article") {
+    Opts.argument[ReviewGoal.Slug]("slug").map(ArticleCommand.Versions(_))
   }
 
-  private def versionCmd(using console: Console) =
+  private val versionCmd =
     Opts.subcommand("version", "Show one historical version's full body") {
-      (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-        c.articleVersion(ReviewGoal.Slug(slug), Article.VersionId(id))
-          .map(v => Cli.out.println(ArticleMarkdown.version(v)))
-      }
+      (Opts.argument[ReviewGoal.Slug]("slug"), Opts.argument[Article.VersionId]("id"))
+        .mapN(ArticleCommand.Version.apply)
     }
 
-  /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
+  private val rename =
+    LabelRenameCmd
+      .args(Bundle.Kind.Article)
+      .map((from, to, json) => ArticleCommand.Rename(ReviewGoal.Slug(from), to, json))
+
+  /** The `article` command group as decline parses it: the typed command it asked for. */
+  val opts: Opts[ArticleCommand] =
     Opts.subcommand(
       "article",
       "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"
     ) {
       list orElse get orElse put orElse patch orElse lint orElse check orElse coverage orElse review orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
-        LabelRenameCmd(Bundle.Kind.Article)
+        rename
     }
+
+  /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
+    opts.map(cmd => (c: Client) => run(c, cmd))
+
+  private def usage(problem: Problem): Cli.Error = Cli.Error(problem, exitCode = ExitCode.Usage)
+
+  private def readFile(p: Path): Either[Cli.Error, String] =
+    if Files.isRegularFile(p) then Right(Files.readString(p))
+    else Left(usage(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
+
+  /** Carry out one `article` command against the server. */
+  def run(c: Client, cmd: ArticleCommand)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case ArticleCommand.Listing(text, kind, f, json) =>
+        c.listArticles(Api.ArticleQuery(f, kind, text)).map(r => Output.emit(json, r)(ArticleMarkdown.list))
+      case ArticleCommand.Get(slug, parts, json) =>
+        c.getArticle(slug).map(v => Output.emit(json, v)(ArticleMarkdown.article(_, parts.toList)))
+      case ArticleCommand.Put(p, kind, strict) =>
+        if !Files.isRegularFile(p) then usage(Problem.Unclassified(Legacy.Text(s"no such file: $p"))).asLeft
+        else
+          // an explicit `put` is always deliberate → force past the "newer in DB" guard
+          val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
+          val req = toImport(p, fallback, force = Api.Overwrite(true))
+            .modify(_.strict)
+            .setTo(Article.Import.Strict(strict.value))
+          c.importArticle(req).map { r =>
+            report(r)
+            // the import answers with counts only: ask for the article's formatting problems by the
+            // slug the note itself declares (as the server parsed it), so the writer sees them now
+            val slug = ArticleNote
+              .parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback)
+              .map(_.slug)
+              .filter(_.value.nonEmpty)
+            if r.imported.value > 0 then
+              slug.foreach(s =>
+                c.lintArticle(ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues)))
+              )
+          }
+      case ArticleCommand.Lint(slug, fix, json) =>
+        (if fix.value then c.fixArticleFormat(slug) else c.lintArticle(slug))
+          .map(r => Output.emit(json, r)(FormatMarkdown.report))
+      case ArticleCommand.Check(slug, draft, kind, json) =>
+        val req = draft match
+          case ArticleCommand.Draft.Edits(e) =>
+            readFile(e)
+              .flatMap(t =>
+                RawJson
+                  .decode[List[Article.Edits.EditAnswer]](t)
+                  .left
+                  .map(err => usage(Problem.Unclassified(Legacy.Text(s"$e: not a JSON list of edits ($err)"))))
+              )
+              .map(es => Article.Edits.ArticleCheckRequest(edits = es, kind = kind))
+          case ArticleCommand.Draft.Body(b) =>
+            readFile(b).map(t =>
+              Article.Edits.ArticleCheckRequest(
+                body = Some(Article.Body(FileFormat.splitFrontmatter(FileFormat.Text(t))._2.value)),
+                kind = kind
+              )
+            )
+        req.flatMap(c.checkArticle(slug, _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
+      case ArticleCommand.Coverage(slug, json) =>
+        c.articleCoverage(slug).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
+      case ArticleCommand.Review(slug, json) =>
+        c.articleReview(slug).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
+      case ArticleCommand.Delete(slug) =>
+        c.deleteArticle(slug).map(d => Cli.out.println(s"deleted ${d.slug}"))
+      case ArticleCommand.Export(out) =>
+        val _ = Files.createDirectories(out)
+        exportAll(c, out).map(_ => ())
+      case ArticleCommand.Import(p, force) =>
+        if !Files.isDirectory(p) then usage(Problem.Unclassified(Legacy.Text(s"not a directory: $p"))).asLeft
+        else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
+      case ArticleCommand.Patch(slug, e, strict, ff, rs, crs) =>
+        ArticlePatches
+          .build(
+            e.json,
+            e.title,
+            e.summary,
+            e.kind,
+            e.body,
+            e.append,
+            e.tagsAdd,
+            e.tagsRemove,
+            e.tagsReplace,
+            e.regions,
+            e.period,
+            e.ifUpdatedAt
+          )
+          .flatMap(ArticlePatches.withCoverage(_, ff, rs))
+          .flatMap(ArticlePatches.withCritiques(_, crs))
+          .flatMap(p =>
+            c.patchArticle(slug, p, strict).map { v =>
+              Cli.out.println(ArticleMarkdown.article(v))
+              v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
+            }
+          )
+      case ArticleCommand.Versions(slug) =>
+        c.articleVersions(slug).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug.value), vs)))
+      case ArticleCommand.Version(slug, id) =>
+        c.articleVersion(slug, id).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+      case ArticleCommand.Rename(from, to, json) =>
+        c.renameArticle(from, to).map(x => Output.emit(json, x)(MergeMarkdown.renamed))
