@@ -44,23 +44,47 @@ object OpsArgs:
     def help: String = "List the tables and columns `query` can read (from information_schema)"
     def conf(): Subcommand = LeafSchema()
 
-  final private class LeafLint() extends Leaf("histmersion", "lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") with SharedFlags:
+  final private class LeafLint()
+      extends Leaf(
+        "histmersion",
+        "lint",
+        s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})"
+      )
+      with SharedFlags:
     private val rules_ = values[String]("rule", "Run only this rule (repeatable)")
-    private val fix_ = flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)")
+    private val fix_ = flag(
+      "fix",
+      "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)"
+    )
     private val article_ = value[String]("article", "Check only this article's formatting (a slug)")
-    private val source_ = value[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)")
-    private val file_ = value[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)")
+    private val source_ =
+      value[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)")
+    private val file_ =
+      value[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(Ops.Command.Lint(rules_.getOrElse(Nil), fix_.getOrElse(false), article_.toOption, source_.toOption, file_.toOption, json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      Ops.Command.Lint(
+        rules_.getOrElse(Nil),
+        fix_.getOrElse(false),
+        article_.toOption,
+        source_.toOption,
+        file_.toOption,
+        json_()
+      )
+    )
 
-  final private class LeafQuery() extends Leaf("histmersion", "query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") with SharedFlags:
+  final private class LeafQuery()
+      extends Leaf("histmersion", "query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)")
+      with SharedFlags:
     private val sql_ = arg[String]("sql")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(Ops.Command.Query(sql_(), json_()))
 
-  final private class LeafSchema() extends Leaf("histmersion", "schema", "List the tables and columns `query` can read (from information_schema)") with SharedFlags:
+  final private class LeafSchema()
+      extends Leaf("histmersion", "schema", "List the tables and columns `query` can read (from information_schema)")
+      with SharedFlags:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(Ops.Command.Schema(json_()))
@@ -142,7 +166,8 @@ object OpsArgs:
         )
       else
         Right(
-          Ops.QueueCmd.Recheck(dryRun_.getOrElse(false), limit_.toOption, id_.toOption, all, noWait_.getOrElse(false), json_())
+          Ops.QueueCmd
+            .Recheck(dryRun_.getOrElse(false), limit_.toOption, id_.toOption, all, noWait_.getOrElse(false), json_())
         )
 
   final private class LeafDone() extends Leaf(QueueParent, "done", "Mark an item done"):
@@ -173,7 +198,11 @@ object OpsArgs:
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Export(dir_()))
 
   final private class LeafImport()
-      extends Leaf(QueueParent, "import", "Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists)"):
+      extends Leaf(
+        QueueParent,
+        "import",
+        "Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists)"
+      ):
     private val dir_ = arg[String]("dir")
 
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Import(dir_()))

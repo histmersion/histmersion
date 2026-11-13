@@ -13,6 +13,9 @@ modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses 
 modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
 modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	cli-args	the scallop adapter: the one file that declares scallop options and parses a command line into a typed command
+modules/cli/src/main/scala/com/histmersion/cli/commandline/AcquireArgs.scala	cli-args	the scallop adapter of `histmersion acquire`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/EventsArgs.scala	cli-args	the scallop adapter of `histmersion events`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/PlacesArgs.scala	cli-args	the scallop adapter of `histmersion places`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/GoalsArgs.scala	cli-args	the scallop adapter of `histmersion goals`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/IngestArgs.scala	cli-args	the scallop adapter of `histmersion ingest`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/LabelRenameArgs.scala	cli-args	the scallop adapter of `histmersion labelrename`: declares its options, parses them into typed commands

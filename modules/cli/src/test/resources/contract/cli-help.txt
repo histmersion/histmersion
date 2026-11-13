@@ -1431,7 +1431,7 @@ Options and flags:
         Print the job id and return instead of following it
 
 ==== histmersion places sources
-Usage: histmersion places sources 
+Usage: histmersion places sources
 
 The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported
 
@@ -1453,7 +1453,7 @@ Options and flags:
         Print the job id and return instead of following it
 
 ==== histmersion places rebuild
-Usage: histmersion places rebuild 
+Usage: histmersion places rebuild
 
 Re-materialise which findings fall in which places
 
@@ -1780,7 +1780,7 @@ Options and flags:
         At most this many
 
 ==== histmersion events catalogues
-Usage: histmersion events catalogues 
+Usage: histmersion events catalogues
 
 The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them
 

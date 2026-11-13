@@ -73,7 +73,15 @@ object CommandLine:
     commandline.IngestArgs.AssetsEntry,
     commandline.IngestArgs.JobsEntry,
     commandline.GoalsArgs.GoalsEntry,
-    commandline.MediaArgs.MediaEntry
+    commandline.MediaArgs.MediaEntry,
+    commandline.PlacesArgs.PlacesEntry,
+    commandline.EventsArgs.EventsEntry,
+    commandline.AcquireArgs.DiscoverEntry,
+    commandline.AcquireArgs.RefsEntry,
+    commandline.AcquireArgs.AssessEntry,
+    commandline.AcquireArgs.FollowupsEntry,
+    commandline.AcquireArgs.IngestEntry,
+    commandline.AcquireArgs.ArchiveEntry
   )
 
   private val Globals = Set("--server", "--token")

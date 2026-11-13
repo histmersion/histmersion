@@ -65,8 +65,7 @@ class PlacesCmdSuite extends munit.FunSuite:
 
   // ── #987: names and places added by hand ─────────────────────────────────────────────────────
 
-  private val cmd = com.monovore.decline.Command("histmersion", "test")(PlacesCmd.command)
-  private def parses(args: String*) = cmd.parse(args.toList, Map.empty).isRight
+  private def parses(args: String*) = Parsing.parses(args*)
 
   test("places name add|rm|list and places add parse; a place needs its coordinates and a source"):
     assert(parses("places", "name", "add", "pleiades_678430", "Lake Kinneret", "--lang", "en"))

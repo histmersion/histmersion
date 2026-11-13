@@ -37,22 +37,30 @@ object IngestArgs:
       "or one job by id; `jobs pause|resume|cancel <id>` controls one"
     def conf(): Subcommand = GroupJobs()
 
-  final private class LeafReocr() extends Leaf("histmersion", "reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") with SharedFlags:
+  final private class LeafReocr()
+      extends Leaf(
+        "histmersion",
+        "reocr",
+        "Convert a source's stored original again (e.g. under the slow, accurate OCR path)"
+      )
+      with SharedFlags:
     private val ck_ = arg[String]("citekey")
     private val quality_ = flag("quality", "Slow, accurate OCR (docling)")
     private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
 
-    def command: Either[Problem, Cli.Command] = Right(IngestCmd.Command.Reocr(ck_(), quality_.getOrElse(false), noWait_.getOrElse(false)))
+    def command: Either[Problem, Cli.Command] = Right(
+      IngestCmd.Command.Reocr(ck_(), quality_.getOrElse(false), noWait_.getOrElse(false))
+    )
 
-  final private class LeafAssets() extends Leaf("histmersion", "assets", "The figures stored with a source, and the URLs they are served at") with SharedFlags:
+  final private class LeafAssets()
+      extends Leaf("histmersion", "assets", "The figures stored with a source, and the URLs they are served at")
+      with SharedFlags:
     private val ck_ = arg[String]("citekey")
 
     def command: Either[Problem, Cli.Command] = Right(IngestCmd.Command.Assets(ck_()))
 
   /** `jobs [<id>] [filters]` lists (or shows one); `jobs pause|resume|cancel <id>` control one. */
-  final private class GroupJobs()
-      extends Leaf("histmersion", "jobs", JobsEntry.help)
-      with SharedFlags:
+  final private class GroupJobs() extends Leaf("histmersion", "jobs", JobsEntry.help) with SharedFlags:
     private val id_ = arg[String]("id", required = false)
     private val filter_ = jobFilter()
     private val limit_ = value[Int]("limit", "Max rows")

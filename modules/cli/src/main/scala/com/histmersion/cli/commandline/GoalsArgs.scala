@@ -32,32 +32,61 @@ object GoalsArgs:
     private val offset_ = value[Int]("offset", "Skip this many (the list's footer names the next offset)")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(GoalsCmd.Command.Listing(status_.toOption, limit_.toOption, offset_.toOption, json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      GoalsCmd.Command.Listing(status_.toOption, limit_.toOption, offset_.toOption, json_())
+    )
 
-  final private class LeafGet() extends Leaf("histmersion goals", "get", "Show one goal: sub-goals, links, schedules, approved plan") with SharedFlags:
+  final private class LeafGet()
+      extends Leaf("histmersion goals", "get", "Show one goal: sub-goals, links, schedules, approved plan")
+      with SharedFlags:
     private val slug_ = arg[String]("slug")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(GoalsCmd.Command.Get(slug_(), json_()))
 
-  final private class LeafUpdate() extends Leaf("histmersion goals", "update", "Update goal fields (patch)") with SharedFlags:
+  final private class LeafUpdate()
+      extends Leaf("histmersion goals", "update", "Update goal fields (patch)")
+      with SharedFlags:
     private val slug_ = arg[String]("slug")
     private val title_ = value[String]("title", "New title")
     private val status_ = value[String]("status", s"New status: ${Goal.Status.all.mkString("|")}")
     private val notes_ = value[String]("notes", "Progress notes")
     private val budget_ = value[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)")
-    private val from_ = value[Long]("from", "Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set")
-    private val to_ = value[Long]("to", "Signed year the goal's period ends (BCE negative); alone, the start stays as set")
+    private val from_ = value[Long](
+      "from",
+      "Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set"
+    )
+    private val to_ =
+      value[Long]("to", "Signed year the goal's period ends (BCE negative); alone, the start stays as set")
 
-    def command: Either[Problem, Cli.Command] = Right(GoalsCmd.Command.Update(slug_(), title_.toOption, status_.toOption, notes_.toOption, budget_.toOption, from_.toOption, to_.toOption))
+    def command: Either[Problem, Cli.Command] = Right(
+      GoalsCmd.Command.Update(
+        slug_(),
+        title_.toOption,
+        status_.toOption,
+        notes_.toOption,
+        budget_.toOption,
+        from_.toOption,
+        to_.toOption
+      )
+    )
 
-  final private class LeafPlan() extends Leaf("histmersion goals", "plan", "Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)") with SharedFlags:
+  final private class LeafPlan()
+      extends Leaf(
+        "histmersion goals",
+        "plan",
+        "Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)"
+      )
+      with SharedFlags:
     private val slug_ = arg[String]("slug")
     private val model_ = modelFlag()
-    private val budget_ = value[Double]("budget-usd", "This run's cost cap in USD (default: the goal's, then agents.budgets.run-usd)")
+    private val budget_ =
+      value[Double]("budget-usd", "This run's cost cap in USD (default: the goal's, then agents.budgets.run-usd)")
     private val fol_ = followFlag()
 
-    def command: Either[Problem, Cli.Command] = Right(GoalsCmd.Command.Plan(slug_(), model_(), budget_.toOption, fol_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      GoalsCmd.Command.Plan(slug_(), model_(), budget_.toOption, fol_())
+    )
 
   /** One target, as `--source`, `--article`, `--query` or `--item`: exactly one of them. */
   final private class LeafLink()
@@ -93,7 +122,9 @@ object GoalsArgs:
             )
           )
 
-  final private class LeafUnlink() extends Leaf("histmersion goals", "unlink", "Remove one link of a goal") with SharedFlags:
+  final private class LeafUnlink()
+      extends Leaf("histmersion goals", "unlink", "Remove one link of a goal")
+      with SharedFlags:
     private val slug_ = arg[String]("slug")
     private given ValueConverter[LinkKind.Wire] = reading(k =>
       LinkKind
@@ -142,7 +173,12 @@ object GoalsArgs:
         case (true, _) =>
           Left(
             Problem.Invalid.Inconsistent(
-              NonEmptyVector.of(Problem.Field("--remove"), Problem.Field("--cron"), Problem.Field("--off"), Problem.Field("--budget-usd")),
+              NonEmptyVector.of(
+                Problem.Field("--remove"),
+                Problem.Field("--cron"),
+                Problem.Field("--off"),
+                Problem.Field("--budget-usd")
+              ),
               Problem.Invalid.Exclusion.AtMostOne
             )
           )
@@ -154,8 +190,25 @@ object GoalsArgs:
             )
           )
 
-  final private class LeafSchedules() extends Leaf("histmersion goals", "schedules", "Every goal's schedules, the next due first") with SharedFlags:
+  final private class LeafSchedules()
+      extends Leaf("histmersion goals", "schedules", "Every goal's schedules, the next due first")
+      with SharedFlags:
     def command: Either[Problem, Cli.Command] = Right(GoalsCmd.Command.Schedules())
 
-  final private class GroupGoals() extends Group("histmersion", "goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename"):
-    holds(LeafListing(), LeafGet(), LeafUpdate(), LeafPlan(), LeafLink(), LeafUnlink(), LeafSchedule(), LeafSchedules(), LabelRenameArgs.leaf("histmersion goals", Bundle.Kind.Goal))
+  final private class GroupGoals()
+      extends Group(
+        "histmersion",
+        "goals",
+        "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename"
+      ):
+    holds(
+      LeafListing(),
+      LeafGet(),
+      LeafUpdate(),
+      LeafPlan(),
+      LeafLink(),
+      LeafUnlink(),
+      LeafSchedule(),
+      LeafSchedules(),
+      LabelRenameArgs.leaf("histmersion goals", Bundle.Kind.Goal)
+    )

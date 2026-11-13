@@ -134,9 +134,9 @@ class ListOptsSuite extends munit.FunSuite:
     assert(Parsing.parses("jobs", "cancel", "4f1c", "--json"))
 
   test("ingest takes --legal-only for an identifier"):
-    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal-only").isRight)
-    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal-only", "--refetch", "--json").isRight)
-    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal").isLeft)
+    assert(Parsing.parses("ingest", "10.1038/zz1", "--legal-only"))
+    assert(Parsing.parses("ingest", "10.1038/zz1", "--legal-only", "--refetch", "--json"))
+    assert(!Parsing.parses("ingest", "10.1038/zz1", "--legal"))
 
   test("the next-page line repeats every filter, a list option once per value"):
     val f = ApprovalFilter(
